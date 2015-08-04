@@ -655,41 +655,41 @@ public final class Mysqlx {
        */
       SESS_AUTHENTICATE_OK(4, 4),
       /**
-       * <code>SESS_AUTHENTICATE_FAIL = 5;</code>
-       */
-      SESS_AUTHENTICATE_FAIL(5, 5),
-      /**
        * <code>NOTICE = 11;</code>
        *
        * <pre>
        * NOTICE has to stay at 11 forever
        * </pre>
        */
-      NOTICE(6, 11),
+      NOTICE(5, 11),
       /**
-       * <code>SQL_COLUMN_META_DATA = 12;</code>
+       * <code>RESULTSET_COLUMN_META_DATA = 12;</code>
        */
-      SQL_COLUMN_META_DATA(7, 12),
+      RESULTSET_COLUMN_META_DATA(6, 12),
       /**
-       * <code>SQL_ROW = 13;</code>
+       * <code>RESULTSET_ROW = 13;</code>
        */
-      SQL_ROW(8, 13),
+      RESULTSET_ROW(7, 13),
       /**
-       * <code>SQL_RESULT_FETCH_DONE = 14;</code>
+       * <code>RESULTSET_FETCH_DONE = 14;</code>
        */
-      SQL_RESULT_FETCH_DONE(9, 14),
+      RESULTSET_FETCH_DONE(8, 14),
       /**
-       * <code>SQL_RESULT_FETCH_SUSPENDED = 15;</code>
+       * <code>RESULTSET_FETCH_SUSPENDED = 15;</code>
        */
-      SQL_RESULT_FETCH_SUSPENDED(10, 15),
+      RESULTSET_FETCH_SUSPENDED(9, 15),
       /**
-       * <code>SQL_RESULT_FETCH_DONE_MORE_RESULTSETS = 16;</code>
+       * <code>RESULTSET_FETCH_DONE_MORE_RESULTSETS = 16;</code>
        */
-      SQL_RESULT_FETCH_DONE_MORE_RESULTSETS(11, 16),
+      RESULTSET_FETCH_DONE_MORE_RESULTSETS(10, 16),
       /**
        * <code>SQL_STMT_EXECUTE_OK = 17;</code>
        */
-      SQL_STMT_EXECUTE_OK(12, 17),
+      SQL_STMT_EXECUTE_OK(11, 17),
+      /**
+       * <code>RESULTSET_FETCH_DONE_MORE_OUT_PARAMS = 18;</code>
+       */
+      RESULTSET_FETCH_DONE_MORE_OUT_PARAMS(12, 18),
       ;
 
       /**
@@ -713,10 +713,6 @@ public final class Mysqlx {
        */
       public static final int SESS_AUTHENTICATE_OK_VALUE = 4;
       /**
-       * <code>SESS_AUTHENTICATE_FAIL = 5;</code>
-       */
-      public static final int SESS_AUTHENTICATE_FAIL_VALUE = 5;
-      /**
        * <code>NOTICE = 11;</code>
        *
        * <pre>
@@ -725,29 +721,33 @@ public final class Mysqlx {
        */
       public static final int NOTICE_VALUE = 11;
       /**
-       * <code>SQL_COLUMN_META_DATA = 12;</code>
+       * <code>RESULTSET_COLUMN_META_DATA = 12;</code>
        */
-      public static final int SQL_COLUMN_META_DATA_VALUE = 12;
+      public static final int RESULTSET_COLUMN_META_DATA_VALUE = 12;
       /**
-       * <code>SQL_ROW = 13;</code>
+       * <code>RESULTSET_ROW = 13;</code>
        */
-      public static final int SQL_ROW_VALUE = 13;
+      public static final int RESULTSET_ROW_VALUE = 13;
       /**
-       * <code>SQL_RESULT_FETCH_DONE = 14;</code>
+       * <code>RESULTSET_FETCH_DONE = 14;</code>
        */
-      public static final int SQL_RESULT_FETCH_DONE_VALUE = 14;
+      public static final int RESULTSET_FETCH_DONE_VALUE = 14;
       /**
-       * <code>SQL_RESULT_FETCH_SUSPENDED = 15;</code>
+       * <code>RESULTSET_FETCH_SUSPENDED = 15;</code>
        */
-      public static final int SQL_RESULT_FETCH_SUSPENDED_VALUE = 15;
+      public static final int RESULTSET_FETCH_SUSPENDED_VALUE = 15;
       /**
-       * <code>SQL_RESULT_FETCH_DONE_MORE_RESULTSETS = 16;</code>
+       * <code>RESULTSET_FETCH_DONE_MORE_RESULTSETS = 16;</code>
        */
-      public static final int SQL_RESULT_FETCH_DONE_MORE_RESULTSETS_VALUE = 16;
+      public static final int RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE = 16;
       /**
        * <code>SQL_STMT_EXECUTE_OK = 17;</code>
        */
       public static final int SQL_STMT_EXECUTE_OK_VALUE = 17;
+      /**
+       * <code>RESULTSET_FETCH_DONE_MORE_OUT_PARAMS = 18;</code>
+       */
+      public static final int RESULTSET_FETCH_DONE_MORE_OUT_PARAMS_VALUE = 18;
 
 
       public final int getNumber() { return value; }
@@ -759,14 +759,14 @@ public final class Mysqlx {
           case 2: return CONN_CAPABILITIES;
           case 3: return SESS_AUTHENTICATE_CONTINUE;
           case 4: return SESS_AUTHENTICATE_OK;
-          case 5: return SESS_AUTHENTICATE_FAIL;
           case 11: return NOTICE;
-          case 12: return SQL_COLUMN_META_DATA;
-          case 13: return SQL_ROW;
-          case 14: return SQL_RESULT_FETCH_DONE;
-          case 15: return SQL_RESULT_FETCH_SUSPENDED;
-          case 16: return SQL_RESULT_FETCH_DONE_MORE_RESULTSETS;
+          case 12: return RESULTSET_COLUMN_META_DATA;
+          case 13: return RESULTSET_ROW;
+          case 14: return RESULTSET_FETCH_DONE;
+          case 15: return RESULTSET_FETCH_SUSPENDED;
+          case 16: return RESULTSET_FETCH_DONE_MORE_RESULTSETS;
           case 17: return SQL_STMT_EXECUTE_OK;
+          case 18: return RESULTSET_FETCH_DONE_MORE_OUT_PARAMS;
           default: return null;
         }
       }
@@ -2489,30 +2489,31 @@ public final class Mysqlx {
   static {
     java.lang.String[] descriptorData = {
       "\n\014mysqlx.proto\022\006Mysqlx\032\020mysqlx_sql.proto" +
-      "\032\021mysqlx_crud.proto\032\024mysqlx_session.prot" +
-      "o\032\027mysqlx_connection.proto\032\023mysqlx_expec" +
-      "t.proto\032\023mysqlx_notice.proto\"\264\002\n\016ClientM" +
-      "essages\"\241\002\n\004Type\022\030\n\024CON_CAPABILITIES_GET" +
-      "\020\001\022\030\n\024CON_CAPABILITIES_SET\020\002\022\r\n\tCON_CLOS" +
-      "E\020\003\022\033\n\027SESS_AUTHENTICATE_START\020\004\022\036\n\032SESS" +
-      "_AUTHENTICATE_CONTINUE\020\005\022\016\n\nSESS_RESET\020\006" +
-      "\022\016\n\nSESS_CLOSE\020\007\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r" +
-      "\n\tCRUD_FIND\020\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_U",
-      "PDATE\020\023\022\017\n\013CRUD_DELETE\020\024\022\017\n\013EXPECT_OPEN\020" +
-      "\030\022\020\n\014EXPECT_CLOSE\020\031\"\313\002\n\016ServerMessages\"\270" +
-      "\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERROR\020\001\022\025\n\021CONN_CAPAB" +
-      "ILITIES\020\002\022\036\n\032SESS_AUTHENTICATE_CONTINUE\020" +
-      "\003\022\030\n\024SESS_AUTHENTICATE_OK\020\004\022\032\n\026SESS_AUTH" +
-      "ENTICATE_FAIL\020\005\022\n\n\006NOTICE\020\013\022\030\n\024SQL_COLUM" +
-      "N_META_DATA\020\014\022\013\n\007SQL_ROW\020\r\022\031\n\025SQL_RESULT" +
-      "_FETCH_DONE\020\016\022\036\n\032SQL_RESULT_FETCH_SUSPEN" +
-      "DED\020\017\022)\n%SQL_RESULT_FETCH_DONE_MORE_RESU" +
-      "LTSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\"\021\n\002Ok\022",
-      "\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010severity\030\001 \001(\016" +
-      "2\026.Mysqlx.Error.Severity:\005ERROR\022\014\n\004code\030" +
-      "\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" \n" +
-      "\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001B\036\n\034com.m" +
-      "ysql.cj.mysqlx.protobuf"
+      "\032\026mysqlx_resultset.proto\032\021mysqlx_crud.pr" +
+      "oto\032\024mysqlx_session.proto\032\027mysqlx_connec" +
+      "tion.proto\032\023mysqlx_expect.proto\032\023mysqlx_" +
+      "notice.proto\"\264\002\n\016ClientMessages\"\241\002\n\004Type" +
+      "\022\030\n\024CON_CAPABILITIES_GET\020\001\022\030\n\024CON_CAPABI" +
+      "LITIES_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n\027SESS_AUTH" +
+      "ENTICATE_START\020\004\022\036\n\032SESS_AUTHENTICATE_CO" +
+      "NTINUE\020\005\022\016\n\nSESS_RESET\020\006\022\016\n\nSESS_CLOSE\020\007" +
+      "\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r\n\tCRUD_FIND\020\021\022\017\n",
+      "\013CRUD_INSERT\020\022\022\017\n\013CRUD_UPDATE\020\023\022\017\n\013CRUD_" +
+      "DELETE\020\024\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014EXPECT_CLOS" +
+      "E\020\031\"\342\002\n\016ServerMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022" +
+      "\t\n\005ERROR\020\001\022\025\n\021CONN_CAPABILITIES\020\002\022\036\n\032SES" +
+      "S_AUTHENTICATE_CONTINUE\020\003\022\030\n\024SESS_AUTHEN" +
+      "TICATE_OK\020\004\022\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_COL" +
+      "UMN_META_DATA\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RE" +
+      "SULTSET_FETCH_DONE\020\016\022\035\n\031RESULTSET_FETCH_" +
+      "SUSPENDED\020\017\022(\n$RESULTSET_FETCH_DONE_MORE" +
+      "_RESULTSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(",
+      "\n$RESULTSET_FETCH_DONE_MORE_OUT_PARAMS\020\022" +
+      "\"\021\n\002Ok\022\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010severit" +
+      "y\030\001 \001(\0162\026.Mysqlx.Error.Severity:\005ERROR\022\014" +
+      "\n\004code\030\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003" +
+      " \002(\t\" \n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001B\036" +
+      "\n\034com.mysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2526,6 +2527,7 @@ public final class Mysqlx {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           com.mysql.cj.mysqlx.protobuf.MysqlxSql.getDescriptor(),
+          com.mysql.cj.mysqlx.protobuf.MysqlxResultset.getDescriptor(),
           com.mysql.cj.mysqlx.protobuf.MysqlxCrud.getDescriptor(),
           com.mysql.cj.mysqlx.protobuf.MysqlxSession.getDescriptor(),
           com.mysql.cj.mysqlx.protobuf.MysqlxConnection.getDescriptor(),
@@ -2557,6 +2559,7 @@ public final class Mysqlx {
         internal_static_Mysqlx_Error_descriptor,
         new java.lang.String[] { "Severity", "Code", "SqlState", "Msg", });
     com.mysql.cj.mysqlx.protobuf.MysqlxSql.getDescriptor();
+    com.mysql.cj.mysqlx.protobuf.MysqlxResultset.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxCrud.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxSession.getDescriptor();
     com.mysql.cj.mysqlx.protobuf.MysqlxConnection.getDescriptor();

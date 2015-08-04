@@ -14,61 +14,33 @@ public final class MysqlxSession {
 
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     boolean hasMechName();
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     java.lang.String getMechName();
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     com.google.protobuf.ByteString
         getMechNameBytes();
 
     /**
      * <code>optional bytes auth_data = 2;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     boolean hasAuthData();
     /**
      * <code>optional bytes auth_data = 2;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     com.google.protobuf.ByteString getAuthData();
 
     /**
      * <code>optional bytes initial_response = 3;</code>
-     *
-     * <pre>
-     *initial response
-     * </pre>
      */
     boolean hasInitialResponse();
     /**
      * <code>optional bytes initial_response = 3;</code>
-     *
-     * <pre>
-     *initial response
-     * </pre>
      */
     com.google.protobuf.ByteString getInitialResponse();
   }
@@ -78,6 +50,9 @@ public final class MysqlxSession {
    * <pre>
    * the initial message send from the client to the server to start the
    * authentication proccess
+   * :param mech_name: authentication mechanism name
+   * :param auth_data: authentication data
+   * :param initial_response: initial response
    * :Returns: :protobuf:msg:`Mysqlx.Session::AuthenticateContinue`
    * </pre>
    */
@@ -190,20 +165,12 @@ public final class MysqlxSession {
     private java.lang.Object mechName_;
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     public boolean hasMechName() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     public java.lang.String getMechName() {
       java.lang.Object ref = mechName_;
@@ -221,10 +188,6 @@ public final class MysqlxSession {
     }
     /**
      * <code>required string mech_name = 1;</code>
-     *
-     * <pre>
-     * authentication mechanism name
-     * </pre>
      */
     public com.google.protobuf.ByteString
         getMechNameBytes() {
@@ -244,20 +207,12 @@ public final class MysqlxSession {
     private com.google.protobuf.ByteString authData_;
     /**
      * <code>optional bytes auth_data = 2;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
      * <code>optional bytes auth_data = 2;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
@@ -267,20 +222,12 @@ public final class MysqlxSession {
     private com.google.protobuf.ByteString initialResponse_;
     /**
      * <code>optional bytes initial_response = 3;</code>
-     *
-     * <pre>
-     *initial response
-     * </pre>
      */
     public boolean hasInitialResponse() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>optional bytes initial_response = 3;</code>
-     *
-     * <pre>
-     *initial response
-     * </pre>
      */
     public com.google.protobuf.ByteString getInitialResponse() {
       return initialResponse_;
@@ -422,6 +369,9 @@ public final class MysqlxSession {
      * <pre>
      * the initial message send from the client to the server to start the
      * authentication proccess
+     * :param mech_name: authentication mechanism name
+     * :param auth_data: authentication data
+     * :param initial_response: initial response
      * :Returns: :protobuf:msg:`Mysqlx.Session::AuthenticateContinue`
      * </pre>
      */
@@ -568,20 +518,12 @@ public final class MysqlxSession {
       private java.lang.Object mechName_ = "";
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public boolean hasMechName() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public java.lang.String getMechName() {
         java.lang.Object ref = mechName_;
@@ -599,10 +541,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public com.google.protobuf.ByteString
           getMechNameBytes() {
@@ -619,10 +557,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public Builder setMechName(
           java.lang.String value) {
@@ -636,10 +570,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public Builder clearMechName() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -649,10 +579,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>required string mech_name = 1;</code>
-       *
-       * <pre>
-       * authentication mechanism name
-       * </pre>
        */
       public Builder setMechNameBytes(
           com.google.protobuf.ByteString value) {
@@ -668,30 +594,18 @@ public final class MysqlxSession {
       private com.google.protobuf.ByteString authData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes auth_data = 2;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
        * <code>optional bytes auth_data = 2;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
       /**
        * <code>optional bytes auth_data = 2;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder setAuthData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -704,10 +618,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>optional bytes auth_data = 2;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder clearAuthData() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -719,30 +629,18 @@ public final class MysqlxSession {
       private com.google.protobuf.ByteString initialResponse_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes initial_response = 3;</code>
-       *
-       * <pre>
-       *initial response
-       * </pre>
        */
       public boolean hasInitialResponse() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
        * <code>optional bytes initial_response = 3;</code>
-       *
-       * <pre>
-       *initial response
-       * </pre>
        */
       public com.google.protobuf.ByteString getInitialResponse() {
         return initialResponse_;
       }
       /**
        * <code>optional bytes initial_response = 3;</code>
-       *
-       * <pre>
-       *initial response
-       * </pre>
        */
       public Builder setInitialResponse(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -755,10 +653,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>optional bytes initial_response = 3;</code>
-       *
-       * <pre>
-       *initial response
-       * </pre>
        */
       public Builder clearInitialResponse() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -784,18 +678,10 @@ public final class MysqlxSession {
 
     /**
      * <code>required bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     boolean hasAuthData();
     /**
      * <code>required bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     com.google.protobuf.ByteString getAuthData();
   }
@@ -805,6 +691,7 @@ public final class MysqlxSession {
    * <pre>
    * send by client or server after a :protobuf:msg:`Mysqlx.Session::AuthenticateStart` to
    * exchange more auth data
+   * :param auth_data: authentication data
    * :Returns: :protobuf:msg:`Mysqlx.Session::AuthenticateContinue`
    * </pre>
    */
@@ -906,20 +793,12 @@ public final class MysqlxSession {
     private com.google.protobuf.ByteString authData_;
     /**
      * <code>required bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
      * <code>required bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
@@ -1045,6 +924,7 @@ public final class MysqlxSession {
      * <pre>
      * send by client or server after a :protobuf:msg:`Mysqlx.Session::AuthenticateStart` to
      * exchange more auth data
+     * :param auth_data: authentication data
      * :Returns: :protobuf:msg:`Mysqlx.Session::AuthenticateContinue`
      * </pre>
      */
@@ -1171,30 +1051,18 @@ public final class MysqlxSession {
       private com.google.protobuf.ByteString authData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
        * <code>required bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
       /**
        * <code>required bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder setAuthData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1207,10 +1075,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>required bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder clearAuthData() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1236,18 +1100,10 @@ public final class MysqlxSession {
 
     /**
      * <code>optional bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     boolean hasAuthData();
     /**
      * <code>optional bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     com.google.protobuf.ByteString getAuthData();
   }
@@ -1256,6 +1112,7 @@ public final class MysqlxSession {
    *
    * <pre>
    * sent by the server after successful authentication
+   * :param auth_data: authentication data
    * </pre>
    */
   public static final class AuthenticateOk extends
@@ -1356,20 +1213,12 @@ public final class MysqlxSession {
     private com.google.protobuf.ByteString authData_;
     /**
      * <code>optional bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
      * <code>optional bytes auth_data = 1;</code>
-     *
-     * <pre>
-     * authentication data
-     * </pre>
      */
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
@@ -1490,6 +1339,7 @@ public final class MysqlxSession {
      *
      * <pre>
      * sent by the server after successful authentication
+     * :param auth_data: authentication data
      * </pre>
      */
     public static final class Builder extends
@@ -1611,30 +1461,18 @@ public final class MysqlxSession {
       private com.google.protobuf.ByteString authData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
        * <code>optional bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
       /**
        * <code>optional bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder setAuthData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1647,10 +1485,6 @@ public final class MysqlxSession {
       }
       /**
        * <code>optional bytes auth_data = 1;</code>
-       *
-       * <pre>
-       * authentication data
-       * </pre>
        */
       public Builder clearAuthData() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1668,490 +1502,6 @@ public final class MysqlxSession {
     }
 
     // @@protoc_insertion_point(class_scope:Mysqlx.Session.AuthenticateOk)
-  }
-
-  public interface AuthenticateFailOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Session.AuthenticateFail)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    boolean hasMsg();
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    java.lang.String getMsg();
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getMsgBytes();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Session.AuthenticateFail}
-   *
-   * <pre>
-   * sent by the server when authentication fails
-   * </pre>
-   */
-  public static final class AuthenticateFail extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Session.AuthenticateFail)
-      AuthenticateFailOrBuilder {
-    // Use AuthenticateFail.newBuilder() to construct.
-    private AuthenticateFail(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private AuthenticateFail(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final AuthenticateFail defaultInstance;
-    public static AuthenticateFail getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public AuthenticateFail getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private AuthenticateFail(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000001;
-              msg_ = bs;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSession.internal_static_Mysqlx_Session_AuthenticateFail_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxSession.internal_static_Mysqlx_Session_AuthenticateFail_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.class, com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<AuthenticateFail> PARSER =
-        new com.google.protobuf.AbstractParser<AuthenticateFail>() {
-      public AuthenticateFail parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new AuthenticateFail(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<AuthenticateFail> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int MSG_FIELD_NUMBER = 1;
-    private java.lang.Object msg_;
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    public boolean hasMsg() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    public java.lang.String getMsg() {
-      java.lang.Object ref = msg_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          msg_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string msg = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getMsgBytes() {
-      java.lang.Object ref = msg_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        msg_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    private void initFields() {
-      msg_ = "";
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getMsgBytes());
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getMsgBytes());
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Session.AuthenticateFail}
-     *
-     * <pre>
-     * sent by the server when authentication fails
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Session.AuthenticateFail)
-        com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFailOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSession.internal_static_Mysqlx_Session_AuthenticateFail_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSession.internal_static_Mysqlx_Session_AuthenticateFail_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.class, com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        msg_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSession.internal_static_Mysqlx_Session_AuthenticateFail_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail result = new com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.msg_ = msg_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail.getDefaultInstance()) return this;
-        if (other.hasMsg()) {
-          bitField0_ |= 0x00000001;
-          msg_ = other.msg_;
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.lang.Object msg_ = "";
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public boolean hasMsg() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public java.lang.String getMsg() {
-        java.lang.Object ref = msg_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            msg_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getMsgBytes() {
-        java.lang.Object ref = msg_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          msg_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public Builder setMsg(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        msg_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public Builder clearMsg() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        msg_ = getDefaultInstance().getMsg();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string msg = 1;</code>
-       */
-      public Builder setMsgBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        msg_ = value;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Session.AuthenticateFail)
-    }
-
-    static {
-      defaultInstance = new AuthenticateFail(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Session.AuthenticateFail)
   }
 
   public interface ResetOrBuilder extends
@@ -2816,11 +2166,6 @@ public final class MysqlxSession {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Session_AuthenticateOk_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Session_AuthenticateFail_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Session_AuthenticateFail_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Session_Reset_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -2844,9 +2189,8 @@ public final class MysqlxSession {
       "\n\tauth_data\030\002 \001(\014\022\030\n\020initial_response\030\003 " +
       "\001(\014\")\n\024AuthenticateContinue\022\021\n\tauth_data" +
       "\030\001 \002(\014\"#\n\016AuthenticateOk\022\021\n\tauth_data\030\001 " +
-      "\001(\014\"\037\n\020AuthenticateFail\022\013\n\003msg\030\001 \001(\t\"\007\n\005" +
-      "Reset\"\007\n\005CloseB\036\n\034com.mysql.cj.mysqlx.pr" +
-      "otobuf"
+      "\001(\014\"\007\n\005Reset\"\007\n\005CloseB\036\n\034com.mysql.cj.my" +
+      "sqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2878,20 +2222,14 @@ public final class MysqlxSession {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Session_AuthenticateOk_descriptor,
         new java.lang.String[] { "AuthData", });
-    internal_static_Mysqlx_Session_AuthenticateFail_descriptor =
-      getDescriptor().getMessageTypes().get(3);
-    internal_static_Mysqlx_Session_AuthenticateFail_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Session_AuthenticateFail_descriptor,
-        new java.lang.String[] { "Msg", });
     internal_static_Mysqlx_Session_Reset_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_Mysqlx_Session_Reset_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Session_Reset_descriptor,
         new java.lang.String[] { });
     internal_static_Mysqlx_Session_Close_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_Mysqlx_Session_Close_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Session_Close_descriptor,

@@ -2379,12 +2379,16 @@ public final class MysqlxNotice {
       TRX_COMMITTED(6, 7),
       /**
        * <code>TRX_ROLLEDBACK = 9;</code>
+       */
+      TRX_ROLLEDBACK(7, 9),
+      /**
+       * <code>PRODUCED_MESSAGE = 10;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      TRX_ROLLEDBACK(7, 9),
+      PRODUCED_MESSAGE(8, 10),
       ;
 
       /**
@@ -2417,12 +2421,16 @@ public final class MysqlxNotice {
       public static final int TRX_COMMITTED_VALUE = 7;
       /**
        * <code>TRX_ROLLEDBACK = 9;</code>
+       */
+      public static final int TRX_ROLLEDBACK_VALUE = 9;
+      /**
+       * <code>PRODUCED_MESSAGE = 10;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      public static final int TRX_ROLLEDBACK_VALUE = 9;
+      public static final int PRODUCED_MESSAGE_VALUE = 10;
 
 
       public final int getNumber() { return value; }
@@ -2437,6 +2445,7 @@ public final class MysqlxNotice {
           case 6: return ROWS_MATCHED;
           case 7: return TRX_COMMITTED;
           case 9: return TRX_ROLLEDBACK;
+          case 10: return PRODUCED_MESSAGE;
           default: return null;
         }
       }
@@ -3012,15 +3021,16 @@ public final class MysqlxNotice {
       "\007WARNING\022\014\n\004code\030\002 \002(\r\022\013\n\003msg\030\003 \002(\t\"\036\n\005L" +
       "evel\022\010\n\004NOTE\020\001\022\013\n\007WARNING\020\002\"P\n\026SessionVa" +
       "riableChanged\022\r\n\005param\030\001 \002(\t\022\'\n\005value\030\002 " +
-      "\001(\0132\030.Mysqlx.Datatypes.Scalar\"\247\002\n\023Sessio",
+      "\001(\0132\030.Mysqlx.Datatypes.Scalar\"\275\002\n\023Sessio",
       "nStateChanged\022;\n\005param\030\001 \002(\0162,.Mysqlx.No" +
       "tice.SessionStateChanged.Parameter\022\'\n\005va" +
-      "lue\030\002 \001(\0132\030.Mysqlx.Datatypes.Scalar\"\251\001\n\t" +
+      "lue\030\002 \001(\0132\030.Mysqlx.Datatypes.Scalar\"\277\001\n\t" +
       "Parameter\022\022\n\016CURRENT_SCHEMA\020\001\022\023\n\017ACCOUNT" +
       "_EXPIRED\020\002\022\027\n\023GENERATED_INSERT_ID\020\003\022\021\n\rR" +
       "OWS_AFFECTED\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n\014ROWS_M" +
       "ATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022\022\n\016TRX_ROLLE" +
-      "DBACK\020\tB\036\n\034com.mysql.cj.mysqlx.protobuf"
+      "DBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020\nB\036\n\034com.mys" +
+      "ql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

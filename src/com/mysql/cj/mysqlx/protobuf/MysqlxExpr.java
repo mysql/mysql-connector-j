@@ -109,8 +109,10 @@ public final class MysqlxExpr {
    *       : variable |
    *       : `literal` |
    *       : placeholder
-   * In prepared commands, `placeholder` are substituded with a value from the row.
-   * given in `PreparedExecuteStmt` or `ExecuteStmt`, in order of appearance.
+   * If expression type is PLACEHOLDER then it refers to the value of a parameter
+   * specified when executing a statement (see `args` field of `StmtExecute` command).
+   * Field `position` (which must be present for such an expression) gives 0-based
+   * position of the parameter in the parameter list.
    * </pre>
    */
   public static final class Expr extends
@@ -749,8 +751,10 @@ public final class MysqlxExpr {
      *       : variable |
      *       : `literal` |
      *       : placeholder
-     * In prepared commands, `placeholder` are substituded with a value from the row.
-     * given in `PreparedExecuteStmt` or `ExecuteStmt`, in order of appearance.
+     * If expression type is PLACEHOLDER then it refers to the value of a parameter
+     * specified when executing a statement (see `args` field of `StmtExecute` command).
+     * Field `position` (which must be present for such an expression) gives 0-based
+     * position of the parameter in the parameter list.
      * </pre>
      */
     public static final class Builder extends
@@ -3152,7 +3156,8 @@ public final class MysqlxExpr {
    * Protobuf type {@code Mysqlx.Expr.ColumnIdentifier}
    *
    * <pre>
-   * col_identifier: doc_path, col&#64;.doc_path, tbl.col&#64;.doc_path col, tbl.col, schema.tbl.col
+   * col_identifier (table): col&#64;doc_path, tbl.col&#64;doc_path col, tbl.col, schema.tbl.col
+   * col_identifier (document): doc_path
    * .. productionlist::
    *   col_identifier: string "." string "." string |
    *             : string "." string |
@@ -3590,7 +3595,8 @@ public final class MysqlxExpr {
      * Protobuf type {@code Mysqlx.Expr.ColumnIdentifier}
      *
      * <pre>
-     * col_identifier: doc_path, col&#64;.doc_path, tbl.col&#64;.doc_path col, tbl.col, schema.tbl.col
+     * col_identifier (table): col&#64;doc_path, tbl.col&#64;doc_path col, tbl.col, schema.tbl.col
+     * col_identifier (document): doc_path
      * .. productionlist::
      *   col_identifier: string "." string "." string |
      *             : string "." string |
@@ -5228,69 +5234,67 @@ public final class MysqlxExpr {
    * <pre>
    * operator: ``&lt;&lt;(a, b)``
    * .. note::
-   *   while the name of the operators are out of the scope of the protocola
    *   Non-authoritative list of operators implemented (case sensitive):
-   *   Unary:
-   *   * ``!``
-   *   * ``sign_plus``
-   *   * ``sign_minus``
-   *   * ``~``
-   *   Binary:
-   *   * ``&amp;&amp;``
-   *   * ``||``
-   *   * ``xor``
-   *   * ``==``
-   *   * ``!=``
-   *   * ``&gt;``
-   *   * ``&gt;=``
-   *   * ``&lt;``
-   *   * ``&lt;=``
-   *   * ``&amp;``
-   *   * ``|``
-   *   * ``^``
-   *   * ``&lt;&lt;``
-   *   * ``&gt;&gt;``
-   *   * ``+``
-   *   * ``-``
-   *   * ``*``
-   *   * ``/``
-   *   * ``div``
-   *   * ``%``
-   *   * ``is``
-   *   * ``is_not``
-   *   * ``regexp``
-   *   * ``not_regexp``
-   *   * ``like``
-   *   * ``not_like``
-   *   (Using special representation, with more than 2 params)
-   *   * ``in`` (param[0] IN (param[1], param[2], ...))
-   *   * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
-   *   Ternary:
-   *   * ``between``
-   *   * ``between_not``
-   *   * ``date_add``
-   *   * ``date_sub``
-   *   Units for date_add/date_sub:
-   *    * ``MICROSECOND``
-   *    * ``SECOND``
-   *    * ``MINUTE``
-   *    * ``HOUR``
-   *    * ``DAY``
-   *    * ``WEEK``
-   *    * ``MONTH``
-   *    * ``QUARTER``
-   *    * ``YEAR``
-   *    * ``SECOND_MICROSECOND``
-   *    * ``MINUTE_MICROSECOND``
-   *    * ``MINUTE_SECOND``
-   *    * ``HOUR_MICROSECOND``
-   *    * ``HOUR_SECOND``
-   *    * ``HOUR_MINUTE``
-   *    * ``DAY_MICROSECOND``
-   *    * ``DAY_SECOND``
-   *    * ``DAY_MINUTE``
-   *    * ``DAY_HOUR``
-   * 
+   *   Unary
+   *     * ``!``
+   *     * ``sign_plus``
+   *     * ``sign_minus``
+   *     * ``~``
+   *   Binary
+   *     * ``&amp;&amp;``
+   *     * ``||``
+   *     * ``xor``
+   *     * ``==``
+   *     * ``!=``
+   *     * ``&gt;``
+   *     * ``&gt;=``
+   *     * ``&lt;``
+   *     * ``&lt;=``
+   *     * ``&amp;``
+   *     * ``|``
+   *     * ``^``
+   *     * ``&lt;&lt;``
+   *     * ``&gt;&gt;``
+   *     * ``+``
+   *     * ``-``
+   *     * ``*``
+   *     * ``/``
+   *     * ``div``
+   *     * ``%``
+   *     * ``is``
+   *     * ``is_not``
+   *     * ``regexp``
+   *     * ``not_regexp``
+   *     * ``like``
+   *     * ``not_like``
+   *   Using special representation, with more than 2 params
+   *     * ``in`` (param[0] IN (param[1], param[2], ...))
+   *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
+   *   Ternary
+   *     * ``between``
+   *     * ``between_not``
+   *     * ``date_add``
+   *     * ``date_sub``
+   *   Units for date_add/date_sub
+   *     * ``MICROSECOND``
+   *     * ``SECOND``
+   *     * ``MINUTE``
+   *     * ``HOUR``
+   *     * ``DAY``
+   *     * ``WEEK``
+   *     * ``MONTH``
+   *     * ``QUARTER``
+   *     * ``YEAR``
+   *     * ``SECOND_MICROSECOND``
+   *     * ``MINUTE_MICROSECOND``
+   *     * ``MINUTE_SECOND``
+   *     * ``HOUR_MICROSECOND``
+   *     * ``HOUR_SECOND``
+   *     * ``HOUR_MINUTE``
+   *     * ``DAY_MICROSECOND``
+   *     * ``DAY_SECOND``
+   *     * ``DAY_MINUTE``
+   *     * ``DAY_HOUR``
    * .. productionlist::
    *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
    * </pre>
@@ -5612,69 +5616,67 @@ public final class MysqlxExpr {
      * <pre>
      * operator: ``&lt;&lt;(a, b)``
      * .. note::
-     *   while the name of the operators are out of the scope of the protocola
      *   Non-authoritative list of operators implemented (case sensitive):
-     *   Unary:
-     *   * ``!``
-     *   * ``sign_plus``
-     *   * ``sign_minus``
-     *   * ``~``
-     *   Binary:
-     *   * ``&amp;&amp;``
-     *   * ``||``
-     *   * ``xor``
-     *   * ``==``
-     *   * ``!=``
-     *   * ``&gt;``
-     *   * ``&gt;=``
-     *   * ``&lt;``
-     *   * ``&lt;=``
-     *   * ``&amp;``
-     *   * ``|``
-     *   * ``^``
-     *   * ``&lt;&lt;``
-     *   * ``&gt;&gt;``
-     *   * ``+``
-     *   * ``-``
-     *   * ``*``
-     *   * ``/``
-     *   * ``div``
-     *   * ``%``
-     *   * ``is``
-     *   * ``is_not``
-     *   * ``regexp``
-     *   * ``not_regexp``
-     *   * ``like``
-     *   * ``not_like``
-     *   (Using special representation, with more than 2 params)
-     *   * ``in`` (param[0] IN (param[1], param[2], ...))
-     *   * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
-     *   Ternary:
-     *   * ``between``
-     *   * ``between_not``
-     *   * ``date_add``
-     *   * ``date_sub``
-     *   Units for date_add/date_sub:
-     *    * ``MICROSECOND``
-     *    * ``SECOND``
-     *    * ``MINUTE``
-     *    * ``HOUR``
-     *    * ``DAY``
-     *    * ``WEEK``
-     *    * ``MONTH``
-     *    * ``QUARTER``
-     *    * ``YEAR``
-     *    * ``SECOND_MICROSECOND``
-     *    * ``MINUTE_MICROSECOND``
-     *    * ``MINUTE_SECOND``
-     *    * ``HOUR_MICROSECOND``
-     *    * ``HOUR_SECOND``
-     *    * ``HOUR_MINUTE``
-     *    * ``DAY_MICROSECOND``
-     *    * ``DAY_SECOND``
-     *    * ``DAY_MINUTE``
-     *    * ``DAY_HOUR``
-     * 
+     *   Unary
+     *     * ``!``
+     *     * ``sign_plus``
+     *     * ``sign_minus``
+     *     * ``~``
+     *   Binary
+     *     * ``&amp;&amp;``
+     *     * ``||``
+     *     * ``xor``
+     *     * ``==``
+     *     * ``!=``
+     *     * ``&gt;``
+     *     * ``&gt;=``
+     *     * ``&lt;``
+     *     * ``&lt;=``
+     *     * ``&amp;``
+     *     * ``|``
+     *     * ``^``
+     *     * ``&lt;&lt;``
+     *     * ``&gt;&gt;``
+     *     * ``+``
+     *     * ``-``
+     *     * ``*``
+     *     * ``/``
+     *     * ``div``
+     *     * ``%``
+     *     * ``is``
+     *     * ``is_not``
+     *     * ``regexp``
+     *     * ``not_regexp``
+     *     * ``like``
+     *     * ``not_like``
+     *   Using special representation, with more than 2 params
+     *     * ``in`` (param[0] IN (param[1], param[2], ...))
+     *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
+     *   Ternary
+     *     * ``between``
+     *     * ``between_not``
+     *     * ``date_add``
+     *     * ``date_sub``
+     *   Units for date_add/date_sub
+     *     * ``MICROSECOND``
+     *     * ``SECOND``
+     *     * ``MINUTE``
+     *     * ``HOUR``
+     *     * ``DAY``
+     *     * ``WEEK``
+     *     * ``MONTH``
+     *     * ``QUARTER``
+     *     * ``YEAR``
+     *     * ``SECOND_MICROSECOND``
+     *     * ``MINUTE_MICROSECOND``
+     *     * ``MINUTE_SECOND``
+     *     * ``HOUR_MICROSECOND``
+     *     * ``HOUR_SECOND``
+     *     * ``HOUR_MINUTE``
+     *     * ``DAY_MICROSECOND``
+     *     * ``DAY_SECOND``
+     *     * ``DAY_MINUTE``
+     *     * ``DAY_HOUR``
      * .. productionlist::
      *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
      * </pre>

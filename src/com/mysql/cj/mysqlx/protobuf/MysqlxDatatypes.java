@@ -98,6 +98,10 @@ public final class MysqlxDatatypes {
   }
   /**
    * Protobuf type {@code Mysqlx.Datatypes.Scalar}
+   *
+   * <pre>
+   * a scalar
+   * </pre>
    */
   public static final class Scalar extends
       com.google.protobuf.GeneratedMessage implements
@@ -391,24 +395,19 @@ public final class MysqlxDatatypes {
       com.google.protobuf.ByteString getValue();
 
       /**
-       * <code>optional string charset = 2;</code>
+       * <code>optional uint64 collation = 2;</code>
        */
-      boolean hasCharset();
+      boolean hasCollation();
       /**
-       * <code>optional string charset = 2;</code>
+       * <code>optional uint64 collation = 2;</code>
        */
-      java.lang.String getCharset();
-      /**
-       * <code>optional string charset = 2;</code>
-       */
-      com.google.protobuf.ByteString
-          getCharsetBytes();
+      long getCollation();
     }
     /**
      * Protobuf type {@code Mysqlx.Datatypes.Scalar.String}
      *
      * <pre>
-     * a string with a charset
+     * a string with a charset/collation
      * </pre>
      */
     public static final class String extends
@@ -465,10 +464,9 @@ public final class MysqlxDatatypes {
                 value_ = input.readBytes();
                 break;
               }
-              case 18: {
-                com.google.protobuf.ByteString bs = input.readBytes();
+              case 16: {
                 bitField0_ |= 0x00000002;
-                charset_ = bs;
+                collation_ = input.readUInt64();
                 break;
               }
             }
@@ -526,51 +524,24 @@ public final class MysqlxDatatypes {
         return value_;
       }
 
-      public static final int CHARSET_FIELD_NUMBER = 2;
-      private java.lang.Object charset_;
+      public static final int COLLATION_FIELD_NUMBER = 2;
+      private long collation_;
       /**
-       * <code>optional string charset = 2;</code>
+       * <code>optional uint64 collation = 2;</code>
        */
-      public boolean hasCharset() {
+      public boolean hasCollation() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional string charset = 2;</code>
+       * <code>optional uint64 collation = 2;</code>
        */
-      public java.lang.String getCharset() {
-        java.lang.Object ref = charset_;
-        if (ref instanceof java.lang.String) {
-          return (java.lang.String) ref;
-        } else {
-          com.google.protobuf.ByteString bs = 
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            charset_ = s;
-          }
-          return s;
-        }
-      }
-      /**
-       * <code>optional string charset = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getCharsetBytes() {
-        java.lang.Object ref = charset_;
-        if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          charset_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
+      public long getCollation() {
+        return collation_;
       }
 
       private void initFields() {
         value_ = com.google.protobuf.ByteString.EMPTY;
-        charset_ = "";
+        collation_ = 0L;
       }
       private byte memoizedIsInitialized = -1;
       public final boolean isInitialized() {
@@ -593,7 +564,7 @@ public final class MysqlxDatatypes {
           output.writeBytes(1, value_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          output.writeBytes(2, getCharsetBytes());
+          output.writeUInt64(2, collation_);
         }
         getUnknownFields().writeTo(output);
       }
@@ -610,7 +581,7 @@ public final class MysqlxDatatypes {
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
           size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(2, getCharsetBytes());
+            .computeUInt64Size(2, collation_);
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSerializedSize = size;
@@ -694,7 +665,7 @@ public final class MysqlxDatatypes {
        * Protobuf type {@code Mysqlx.Datatypes.Scalar.String}
        *
        * <pre>
-       * a string with a charset
+       * a string with a charset/collation
        * </pre>
        */
       public static final class Builder extends
@@ -735,7 +706,7 @@ public final class MysqlxDatatypes {
           super.clear();
           value_ = com.google.protobuf.ByteString.EMPTY;
           bitField0_ = (bitField0_ & ~0x00000001);
-          charset_ = "";
+          collation_ = 0L;
           bitField0_ = (bitField0_ & ~0x00000002);
           return this;
         }
@@ -772,7 +743,7 @@ public final class MysqlxDatatypes {
           if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
             to_bitField0_ |= 0x00000002;
           }
-          result.charset_ = charset_;
+          result.collation_ = collation_;
           result.bitField0_ = to_bitField0_;
           onBuilt();
           return result;
@@ -792,10 +763,8 @@ public final class MysqlxDatatypes {
           if (other.hasValue()) {
             setValue(other.getValue());
           }
-          if (other.hasCharset()) {
-            bitField0_ |= 0x00000002;
-            charset_ = other.charset_;
-            onChanged();
+          if (other.hasCollation()) {
+            setCollation(other.getCollation());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           return this;
@@ -863,78 +832,34 @@ public final class MysqlxDatatypes {
           return this;
         }
 
-        private java.lang.Object charset_ = "";
+        private long collation_ ;
         /**
-         * <code>optional string charset = 2;</code>
+         * <code>optional uint64 collation = 2;</code>
          */
-        public boolean hasCharset() {
+        public boolean hasCollation() {
           return ((bitField0_ & 0x00000002) == 0x00000002);
         }
         /**
-         * <code>optional string charset = 2;</code>
+         * <code>optional uint64 collation = 2;</code>
          */
-        public java.lang.String getCharset() {
-          java.lang.Object ref = charset_;
-          if (!(ref instanceof java.lang.String)) {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            if (bs.isValidUtf8()) {
-              charset_ = s;
-            }
-            return s;
-          } else {
-            return (java.lang.String) ref;
-          }
+        public long getCollation() {
+          return collation_;
         }
         /**
-         * <code>optional string charset = 2;</code>
+         * <code>optional uint64 collation = 2;</code>
          */
-        public com.google.protobuf.ByteString
-            getCharsetBytes() {
-          java.lang.Object ref = charset_;
-          if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            charset_ = b;
-            return b;
-          } else {
-            return (com.google.protobuf.ByteString) ref;
-          }
-        }
-        /**
-         * <code>optional string charset = 2;</code>
-         */
-        public Builder setCharset(
-            java.lang.String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-          charset_ = value;
+        public Builder setCollation(long value) {
+          bitField0_ |= 0x00000002;
+          collation_ = value;
           onChanged();
           return this;
         }
         /**
-         * <code>optional string charset = 2;</code>
+         * <code>optional uint64 collation = 2;</code>
          */
-        public Builder clearCharset() {
+        public Builder clearCollation() {
           bitField0_ = (bitField0_ & ~0x00000002);
-          charset_ = getDefaultInstance().getCharset();
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>optional string charset = 2;</code>
-         */
-        public Builder setCharsetBytes(
-            com.google.protobuf.ByteString value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-          charset_ = value;
+          collation_ = 0L;
           onChanged();
           return this;
         }
@@ -1263,6 +1188,10 @@ public final class MysqlxDatatypes {
     }
     /**
      * Protobuf type {@code Mysqlx.Datatypes.Scalar}
+     *
+     * <pre>
+     * a scalar
+     * </pre>
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -5072,26 +5001,26 @@ public final class MysqlxDatatypes {
   static {
     java.lang.String[] descriptorData = {
       "\n\026mysqlx_datatypes.proto\022\020Mysqlx.Datatyp" +
-      "es\"\364\002\n\006Scalar\022+\n\004type\030\001 \002(\0162\035.Mysqlx.Dat" +
+      "es\"\366\002\n\006Scalar\022+\n\004type\030\001 \002(\0162\035.Mysqlx.Dat" +
       "atypes.Scalar.Type\022\024\n\014v_signed_int\030\002 \001(\022" +
       "\022\026\n\016v_unsigned_int\030\003 \001(\004\022\020\n\010v_opaque\030\005 \001" +
       "(\014\022\020\n\010v_double\030\006 \001(\001\022\017\n\007v_float\030\007 \001(\002\022\016\n" +
       "\006v_bool\030\010 \001(\010\0221\n\010v_string\030\t \001(\0132\037.Mysqlx" +
-      ".Datatypes.Scalar.String\032(\n\006String\022\r\n\005va" +
-      "lue\030\001 \002(\014\022\017\n\007charset\030\002 \001(\t\"m\n\004Type\022\n\n\006V_" +
-      "SINT\020\001\022\n\n\006V_UINT\020\002\022\n\n\006V_NULL\020\003\022\014\n\010V_OCTE" +
-      "TS\020\004\022\014\n\010V_DOUBLE\020\005\022\013\n\007V_FLOAT\020\006\022\n\n\006V_BOO",
-      "L\020\007\022\014\n\010V_STRING\020\010\"}\n\006Object\0221\n\003fld\030\001 \003(\013" +
-      "2$.Mysqlx.Datatypes.Object.ObjectField\032@" +
-      "\n\013ObjectField\022\013\n\003key\030\001 \002(\t\022$\n\005value\030\002 \002(" +
-      "\0132\025.Mysqlx.Datatypes.Any\"-\n\005Array\022$\n\005val" +
-      "ue\030\001 \003(\0132\025.Mysqlx.Datatypes.Any\"\323\001\n\003Any\022" +
-      "(\n\004type\030\001 \002(\0162\032.Mysqlx.Datatypes.Any.Typ" +
-      "e\022(\n\006scalar\030\002 \001(\0132\030.Mysqlx.Datatypes.Sca" +
-      "lar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Obje" +
-      "ct\022&\n\005array\030\004 \001(\0132\027.Mysqlx.Datatypes.Arr" +
-      "ay\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005AR",
-      "RAY\020\003B\036\n\034com.mysql.cj.mysqlx.protobuf"
+      ".Datatypes.Scalar.String\032*\n\006String\022\r\n\005va" +
+      "lue\030\001 \002(\014\022\021\n\tcollation\030\002 \001(\004\"m\n\004Type\022\n\n\006" +
+      "V_SINT\020\001\022\n\n\006V_UINT\020\002\022\n\n\006V_NULL\020\003\022\014\n\010V_OC" +
+      "TETS\020\004\022\014\n\010V_DOUBLE\020\005\022\013\n\007V_FLOAT\020\006\022\n\n\006V_B",
+      "OOL\020\007\022\014\n\010V_STRING\020\010\"}\n\006Object\0221\n\003fld\030\001 \003" +
+      "(\0132$.Mysqlx.Datatypes.Object.ObjectField" +
+      "\032@\n\013ObjectField\022\013\n\003key\030\001 \002(\t\022$\n\005value\030\002 " +
+      "\002(\0132\025.Mysqlx.Datatypes.Any\"-\n\005Array\022$\n\005v" +
+      "alue\030\001 \003(\0132\025.Mysqlx.Datatypes.Any\"\323\001\n\003An" +
+      "y\022(\n\004type\030\001 \002(\0162\032.Mysqlx.Datatypes.Any.T" +
+      "ype\022(\n\006scalar\030\002 \001(\0132\030.Mysqlx.Datatypes.S" +
+      "calar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Ob" +
+      "ject\022&\n\005array\030\004 \001(\0132\027.Mysqlx.Datatypes.A" +
+      "rray\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005",
+      "ARRAY\020\003B\036\n\034com.mysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -5116,7 +5045,7 @@ public final class MysqlxDatatypes {
     internal_static_Mysqlx_Datatypes_Scalar_String_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Datatypes_Scalar_String_descriptor,
-        new java.lang.String[] { "Value", "Charset", });
+        new java.lang.String[] { "Value", "Collation", });
     internal_static_Mysqlx_Datatypes_Object_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Mysqlx_Datatypes_Object_fieldAccessorTable = new

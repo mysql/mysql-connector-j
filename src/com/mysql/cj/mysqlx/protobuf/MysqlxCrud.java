@@ -1125,82 +1125,27 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getSourceOrBuilder();
 
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
-    boolean hasTargetAlias();
+    boolean hasAlias();
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
-    java.lang.String getTargetAlias();
+    java.lang.String getAlias();
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
     com.google.protobuf.ByteString
-        getTargetAliasBytes();
-
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> 
-        getTargetPathList();
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem getTargetPath(int index);
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    int getTargetPathCount();
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
-        getTargetPathOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getTargetPathOrBuilder(
-        int index);
+        getAliasBytes();
   }
   /**
    * Protobuf type {@code Mysqlx.Crud.Projection}
    *
    * <pre>
-   * ``source`` is the expression identifying an element from the source data, which can include a column identifier or any expression
-   * ``target_alias`` optional alias, used for TABLE operations
-   * ``target_path``  for DOCUMENTs, it can be a path expression, including subpaths, which will be converted to nested documents
+   * a projection
+   * :param source: the expression identifying an element from the source data
+   *                which can include a column identifier or any expression
+   * :param alias: optional alias
    * </pre>
    */
   public static final class Projection extends
@@ -1268,15 +1213,7 @@ public final class MysqlxCrud {
             case 18: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              targetAlias_ = bs;
-              break;
-            }
-            case 26: {
-              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-                targetPath_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem>();
-                mutable_bitField0_ |= 0x00000004;
-              }
-              targetPath_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.PARSER, extensionRegistry));
+              alias_ = bs;
               break;
             }
           }
@@ -1287,9 +1224,6 @@ public final class MysqlxCrud {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-          targetPath_ = java.util.Collections.unmodifiableList(targetPath_);
-        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -1343,27 +1277,19 @@ public final class MysqlxCrud {
       return source_;
     }
 
-    public static final int TARGET_ALIAS_FIELD_NUMBER = 2;
-    private java.lang.Object targetAlias_;
+    public static final int ALIAS_FIELD_NUMBER = 2;
+    private java.lang.Object alias_;
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
-    public boolean hasTargetAlias() {
+    public boolean hasAlias() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
-    public java.lang.String getTargetAlias() {
-      java.lang.Object ref = targetAlias_;
+    public java.lang.String getAlias() {
+      java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
@@ -1371,91 +1297,31 @@ public final class MysqlxCrud {
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (bs.isValidUtf8()) {
-          targetAlias_ = s;
+          alias_ = s;
         }
         return s;
       }
     }
     /**
-     * <code>optional string target_alias = 2;</code>
-     *
-     * <pre>
-     * for TABLE
-     * </pre>
+     * <code>optional string alias = 2;</code>
      */
     public com.google.protobuf.ByteString
-        getTargetAliasBytes() {
-      java.lang.Object ref = targetAlias_;
+        getAliasBytes() {
+      java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        targetAlias_ = b;
+        alias_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int TARGET_PATH_FIELD_NUMBER = 3;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> targetPath_;
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> getTargetPathList() {
-      return targetPath_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
-        getTargetPathOrBuilderList() {
-      return targetPath_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    public int getTargetPathCount() {
-      return targetPath_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem getTargetPath(int index) {
-      return targetPath_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-     *
-     * <pre>
-     * for DOCUMENT
-     * </pre>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getTargetPathOrBuilder(
-        int index) {
-      return targetPath_.get(index);
-    }
-
     private void initFields() {
       source_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      targetAlias_ = "";
-      targetPath_ = java.util.Collections.emptyList();
+      alias_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1471,12 +1337,6 @@ public final class MysqlxCrud {
         memoizedIsInitialized = 0;
         return false;
       }
-      for (int i = 0; i < getTargetPathCount(); i++) {
-        if (!getTargetPath(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -1488,10 +1348,7 @@ public final class MysqlxCrud {
         output.writeMessage(1, source_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getTargetAliasBytes());
-      }
-      for (int i = 0; i < targetPath_.size(); i++) {
-        output.writeMessage(3, targetPath_.get(i));
+        output.writeBytes(2, getAliasBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -1508,11 +1365,7 @@ public final class MysqlxCrud {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getTargetAliasBytes());
-      }
-      for (int i = 0; i < targetPath_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, targetPath_.get(i));
+          .computeBytesSize(2, getAliasBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1596,9 +1449,10 @@ public final class MysqlxCrud {
      * Protobuf type {@code Mysqlx.Crud.Projection}
      *
      * <pre>
-     * ``source`` is the expression identifying an element from the source data, which can include a column identifier or any expression
-     * ``target_alias`` optional alias, used for TABLE operations
-     * ``target_path``  for DOCUMENTs, it can be a path expression, including subpaths, which will be converted to nested documents
+     * a projection
+     * :param source: the expression identifying an element from the source data
+     *                which can include a column identifier or any expression
+     * :param alias: optional alias
      * </pre>
      */
     public static final class Builder extends
@@ -1630,7 +1484,6 @@ public final class MysqlxCrud {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getSourceFieldBuilder();
-          getTargetPathFieldBuilder();
         }
       }
       private static Builder create() {
@@ -1645,14 +1498,8 @@ public final class MysqlxCrud {
           sourceBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
-        targetAlias_ = "";
+        alias_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
-        if (targetPathBuilder_ == null) {
-          targetPath_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000004);
-        } else {
-          targetPathBuilder_.clear();
-        }
         return this;
       }
 
@@ -1692,16 +1539,7 @@ public final class MysqlxCrud {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.targetAlias_ = targetAlias_;
-        if (targetPathBuilder_ == null) {
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            targetPath_ = java.util.Collections.unmodifiableList(targetPath_);
-            bitField0_ = (bitField0_ & ~0x00000004);
-          }
-          result.targetPath_ = targetPath_;
-        } else {
-          result.targetPath_ = targetPathBuilder_.build();
-        }
+        result.alias_ = alias_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1721,36 +1559,10 @@ public final class MysqlxCrud {
         if (other.hasSource()) {
           mergeSource(other.getSource());
         }
-        if (other.hasTargetAlias()) {
+        if (other.hasAlias()) {
           bitField0_ |= 0x00000002;
-          targetAlias_ = other.targetAlias_;
+          alias_ = other.alias_;
           onChanged();
-        }
-        if (targetPathBuilder_ == null) {
-          if (!other.targetPath_.isEmpty()) {
-            if (targetPath_.isEmpty()) {
-              targetPath_ = other.targetPath_;
-              bitField0_ = (bitField0_ & ~0x00000004);
-            } else {
-              ensureTargetPathIsMutable();
-              targetPath_.addAll(other.targetPath_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.targetPath_.isEmpty()) {
-            if (targetPathBuilder_.isEmpty()) {
-              targetPathBuilder_.dispose();
-              targetPathBuilder_ = null;
-              targetPath_ = other.targetPath_;
-              bitField0_ = (bitField0_ & ~0x00000004);
-              targetPathBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getTargetPathFieldBuilder() : null;
-            } else {
-              targetPathBuilder_.addAllMessages(other.targetPath_);
-            }
-          }
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1764,12 +1576,6 @@ public final class MysqlxCrud {
         if (!getSource().isInitialized()) {
           
           return false;
-        }
-        for (int i = 0; i < getTargetPathCount(); i++) {
-          if (!getTargetPath(i).isInitialized()) {
-            
-            return false;
-          }
         }
         return true;
       }
@@ -1909,32 +1715,24 @@ public final class MysqlxCrud {
         return sourceBuilder_;
       }
 
-      private java.lang.Object targetAlias_ = "";
+      private java.lang.Object alias_ = "";
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
-      public boolean hasTargetAlias() {
+      public boolean hasAlias() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
-      public java.lang.String getTargetAlias() {
-        java.lang.Object ref = targetAlias_;
+      public java.lang.String getAlias() {
+        java.lang.Object ref = alias_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           if (bs.isValidUtf8()) {
-            targetAlias_ = s;
+            alias_ = s;
           }
           return s;
         } else {
@@ -1942,383 +1740,55 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
       public com.google.protobuf.ByteString
-          getTargetAliasBytes() {
-        java.lang.Object ref = targetAlias_;
+          getAliasBytes() {
+        java.lang.Object ref = alias_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          targetAlias_ = b;
+          alias_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
-      public Builder setTargetAlias(
+      public Builder setAlias(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        targetAlias_ = value;
+        alias_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
-      public Builder clearTargetAlias() {
+      public Builder clearAlias() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        targetAlias_ = getDefaultInstance().getTargetAlias();
+        alias_ = getDefaultInstance().getAlias();
         onChanged();
         return this;
       }
       /**
-       * <code>optional string target_alias = 2;</code>
-       *
-       * <pre>
-       * for TABLE
-       * </pre>
+       * <code>optional string alias = 2;</code>
        */
-      public Builder setTargetAliasBytes(
+      public Builder setAliasBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        targetAlias_ = value;
+        alias_ = value;
         onChanged();
         return this;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> targetPath_ =
-        java.util.Collections.emptyList();
-      private void ensureTargetPathIsMutable() {
-        if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-          targetPath_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem>(targetPath_);
-          bitField0_ |= 0x00000004;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> targetPathBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> getTargetPathList() {
-        if (targetPathBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(targetPath_);
-        } else {
-          return targetPathBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public int getTargetPathCount() {
-        if (targetPathBuilder_ == null) {
-          return targetPath_.size();
-        } else {
-          return targetPathBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem getTargetPath(int index) {
-        if (targetPathBuilder_ == null) {
-          return targetPath_.get(index);
-        } else {
-          return targetPathBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder setTargetPath(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem value) {
-        if (targetPathBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureTargetPathIsMutable();
-          targetPath_.set(index, value);
-          onChanged();
-        } else {
-          targetPathBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder setTargetPath(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder builderForValue) {
-        if (targetPathBuilder_ == null) {
-          ensureTargetPathIsMutable();
-          targetPath_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          targetPathBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder addTargetPath(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem value) {
-        if (targetPathBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureTargetPathIsMutable();
-          targetPath_.add(value);
-          onChanged();
-        } else {
-          targetPathBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder addTargetPath(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem value) {
-        if (targetPathBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureTargetPathIsMutable();
-          targetPath_.add(index, value);
-          onChanged();
-        } else {
-          targetPathBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder addTargetPath(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder builderForValue) {
-        if (targetPathBuilder_ == null) {
-          ensureTargetPathIsMutable();
-          targetPath_.add(builderForValue.build());
-          onChanged();
-        } else {
-          targetPathBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder addTargetPath(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder builderForValue) {
-        if (targetPathBuilder_ == null) {
-          ensureTargetPathIsMutable();
-          targetPath_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          targetPathBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder addAllTargetPath(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem> values) {
-        if (targetPathBuilder_ == null) {
-          ensureTargetPathIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, targetPath_);
-          onChanged();
-        } else {
-          targetPathBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder clearTargetPath() {
-        if (targetPathBuilder_ == null) {
-          targetPath_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000004);
-          onChanged();
-        } else {
-          targetPathBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public Builder removeTargetPath(int index) {
-        if (targetPathBuilder_ == null) {
-          ensureTargetPathIsMutable();
-          targetPath_.remove(index);
-          onChanged();
-        } else {
-          targetPathBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder getTargetPathBuilder(
-          int index) {
-        return getTargetPathFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getTargetPathOrBuilder(
-          int index) {
-        if (targetPathBuilder_ == null) {
-          return targetPath_.get(index);  } else {
-          return targetPathBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
-           getTargetPathOrBuilderList() {
-        if (targetPathBuilder_ != null) {
-          return targetPathBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(targetPath_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder addTargetPathBuilder() {
-        return getTargetPathFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder addTargetPathBuilder(
-          int index) {
-        return getTargetPathFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.DocumentPathItem target_path = 3;</code>
-       *
-       * <pre>
-       * for DOCUMENT
-       * </pre>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder> 
-           getTargetPathBuilderList() {
-        return getTargetPathFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
-          getTargetPathFieldBuilder() {
-        if (targetPathBuilder_ == null) {
-          targetPathBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItemOrBuilder>(
-                  targetPath_,
-                  ((bitField0_ & 0x00000004) == 0x00000004),
-                  getParentForChildren(),
-                  isClean());
-          targetPath_ = null;
-        }
-        return targetPathBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.Projection)
@@ -3481,17 +2951,17 @@ public final class MysqlxCrud {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    boolean hasField();
+    boolean hasExpr();
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField();
+    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getExpr();
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder();
+    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getExprOrBuilder();
 
     /**
      * <code>optional .Mysqlx.Crud.Order.Direction direction = 2 [default = ASC];</code>
@@ -3561,12 +3031,12 @@ public final class MysqlxCrud {
             case 10: {
               com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = field_.toBuilder();
+                subBuilder = expr_.toBuilder();
               }
-              field_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
+              expr_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(field_);
-                field_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(expr_);
+                expr_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000001;
               break;
@@ -3704,25 +3174,25 @@ public final class MysqlxCrud {
     }
 
     private int bitField0_;
-    public static final int FIELD_FIELD_NUMBER = 1;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr field_;
+    public static final int EXPR_FIELD_NUMBER = 1;
+    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr expr_;
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    public boolean hasField() {
+    public boolean hasExpr() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField() {
-      return field_;
+    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getExpr() {
+      return expr_;
     }
     /**
-     * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+     * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder() {
-      return field_;
+    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getExprOrBuilder() {
+      return expr_;
     }
 
     public static final int DIRECTION_FIELD_NUMBER = 2;
@@ -3741,7 +3211,7 @@ public final class MysqlxCrud {
     }
 
     private void initFields() {
-      field_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      expr_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
       direction_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Direction.ASC;
     }
     private byte memoizedIsInitialized = -1;
@@ -3750,11 +3220,11 @@ public final class MysqlxCrud {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasField()) {
+      if (!hasExpr()) {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (!getField().isInitialized()) {
+      if (!getExpr().isInitialized()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3766,7 +3236,7 @@ public final class MysqlxCrud {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, field_);
+        output.writeMessage(1, expr_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeEnum(2, direction_.getNumber());
@@ -3782,7 +3252,7 @@ public final class MysqlxCrud {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, field_);
+          .computeMessageSize(1, expr_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -3901,7 +3371,7 @@ public final class MysqlxCrud {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getFieldFieldBuilder();
+          getExprFieldBuilder();
         }
       }
       private static Builder create() {
@@ -3910,10 +3380,10 @@ public final class MysqlxCrud {
 
       public Builder clear() {
         super.clear();
-        if (fieldBuilder_ == null) {
-          field_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+        if (exprBuilder_ == null) {
+          expr_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
         } else {
-          fieldBuilder_.clear();
+          exprBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
         direction_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Direction.ASC;
@@ -3949,10 +3419,10 @@ public final class MysqlxCrud {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        if (fieldBuilder_ == null) {
-          result.field_ = field_;
+        if (exprBuilder_ == null) {
+          result.expr_ = expr_;
         } else {
-          result.field_ = fieldBuilder_.build();
+          result.expr_ = exprBuilder_.build();
         }
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
@@ -3974,8 +3444,8 @@ public final class MysqlxCrud {
 
       public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order other) {
         if (other == com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance()) return this;
-        if (other.hasField()) {
-          mergeField(other.getField());
+        if (other.hasExpr()) {
+          mergeExpr(other.getExpr());
         }
         if (other.hasDirection()) {
           setDirection(other.getDirection());
@@ -3985,11 +3455,11 @@ public final class MysqlxCrud {
       }
 
       public final boolean isInitialized() {
-        if (!hasField()) {
+        if (!hasExpr()) {
           
           return false;
         }
-        if (!getField().isInitialized()) {
+        if (!getExpr().isInitialized()) {
           
           return false;
         }
@@ -4015,120 +3485,120 @@ public final class MysqlxCrud {
       }
       private int bitField0_;
 
-      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr field_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr expr_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> fieldBuilder_;
+          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> exprBuilder_;
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public boolean hasField() {
+      public boolean hasExpr() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField() {
-        if (fieldBuilder_ == null) {
-          return field_;
+      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getExpr() {
+        if (exprBuilder_ == null) {
+          return expr_;
         } else {
-          return fieldBuilder_.getMessage();
+          return exprBuilder_.getMessage();
         }
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public Builder setField(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (fieldBuilder_ == null) {
+      public Builder setExpr(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
+        if (exprBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          field_ = value;
+          expr_ = value;
           onChanged();
         } else {
-          fieldBuilder_.setMessage(value);
+          exprBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public Builder setField(
+      public Builder setExpr(
           com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (fieldBuilder_ == null) {
-          field_ = builderForValue.build();
+        if (exprBuilder_ == null) {
+          expr_ = builderForValue.build();
           onChanged();
         } else {
-          fieldBuilder_.setMessage(builderForValue.build());
+          exprBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public Builder mergeField(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (fieldBuilder_ == null) {
+      public Builder mergeExpr(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
+        if (exprBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              field_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
-            field_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(field_).mergeFrom(value).buildPartial();
+              expr_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
+            expr_ =
+              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(expr_).mergeFrom(value).buildPartial();
           } else {
-            field_ = value;
+            expr_ = value;
           }
           onChanged();
         } else {
-          fieldBuilder_.mergeFrom(value);
+          exprBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public Builder clearField() {
-        if (fieldBuilder_ == null) {
-          field_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
+      public Builder clearExpr() {
+        if (exprBuilder_ == null) {
+          expr_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
           onChanged();
         } else {
-          fieldBuilder_.clear();
+          exprBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getFieldBuilder() {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getExprBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
-        return getFieldFieldBuilder().getBuilder();
+        return getExprFieldBuilder().getBuilder();
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder() {
-        if (fieldBuilder_ != null) {
-          return fieldBuilder_.getMessageOrBuilder();
+      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getExprOrBuilder() {
+        if (exprBuilder_ != null) {
+          return exprBuilder_.getMessageOrBuilder();
         } else {
-          return field_;
+          return expr_;
         }
       }
       /**
-       * <code>required .Mysqlx.Expr.Expr field = 1;</code>
+       * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getFieldFieldBuilder() {
-        if (fieldBuilder_ == null) {
-          fieldBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getExprFieldBuilder() {
+        if (exprBuilder_ == null) {
+          exprBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  getField(),
+                  getExpr(),
                   getParentForChildren(),
                   isClean());
-          field_ = null;
+          expr_ = null;
         }
-        return fieldBuilder_;
+        return exprBuilder_;
       }
 
       private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Direction direction_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Direction.ASC;
@@ -5200,6879 +4670,6 @@ public final class MysqlxCrud {
     // @@protoc_insertion_point(class_scope:Mysqlx.Crud.UpdateOperation)
   }
 
-  public interface PrepareFindOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Crud.PrepareFind)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    boolean hasCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    boolean hasDataModel();
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel();
-
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> 
-        getProjectionList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection getProjection(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    int getProjectionCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder> 
-        getProjectionOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder getProjectionOrBuilder(
-        int index);
-
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    boolean hasCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    boolean hasLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder();
-
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> 
-        getOrderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    int getOrderCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index);
-
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> 
-        getGroupingList();
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGrouping(int index);
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    int getGroupingCount();
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-        getGroupingOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingOrBuilder(
-        int index);
-
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    boolean hasGroupingCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGroupingCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingCriteriaOrBuilder();
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Crud.PrepareFind}
-   *
-   * <pre>
-   * Query a key-value collection
-   * ``stmt_id`` has to be unique to the session and not in use yet
-   * :param stmt_id: session unique, not in use statement-id
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PrepareFind extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Crud.PrepareFind)
-      PrepareFindOrBuilder {
-    // Use PrepareFind.newBuilder() to construct.
-    private PrepareFind(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareFind(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareFind defaultInstance;
-    public static PrepareFind getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareFind getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareFind(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 18: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = collection_.toBuilder();
-              }
-              collection_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(collection_);
-                collection_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
-              break;
-            }
-            case 24: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(3, rawValue);
-              } else {
-                bitField0_ |= 0x00000004;
-                dataModel_ = value;
-              }
-              break;
-            }
-            case 34: {
-              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                projection_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection>();
-                mutable_bitField0_ |= 0x00000008;
-              }
-              projection_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.PARSER, extensionRegistry));
-              break;
-            }
-            case 42: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000008) == 0x00000008)) {
-                subBuilder = criteria_.toBuilder();
-              }
-              criteria_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(criteria_);
-                criteria_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000008;
-              break;
-            }
-            case 50: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000010) == 0x00000010)) {
-                subBuilder = limit_.toBuilder();
-              }
-              limit_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(limit_);
-                limit_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000010;
-              break;
-            }
-            case 58: {
-              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-                order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000040;
-              }
-              order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
-              break;
-            }
-            case 66: {
-              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-                grouping_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>();
-                mutable_bitField0_ |= 0x00000080;
-              }
-              grouping_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry));
-              break;
-            }
-            case 74: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000020) == 0x00000020)) {
-                subBuilder = groupingCriteria_.toBuilder();
-              }
-              groupingCriteria_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(groupingCriteria_);
-                groupingCriteria_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000020;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-          projection_ = java.util.Collections.unmodifiableList(projection_);
-        }
-        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-          order_ = java.util.Collections.unmodifiableList(order_);
-        }
-        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-          grouping_ = java.util.Collections.unmodifiableList(grouping_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareFind_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareFind_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareFind> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareFind>() {
-      public PrepareFind parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareFind(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareFind> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int COLLECTION_FIELD_NUMBER = 2;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_;
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public boolean hasCollection() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-      return collection_;
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-      return collection_;
-    }
-
-    public static final int DATA_MODEL_FIELD_NUMBER = 3;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_;
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public boolean hasDataModel() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-      return dataModel_;
-    }
-
-    public static final int PROJECTION_FIELD_NUMBER = 4;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> projection_;
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> getProjectionList() {
-      return projection_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder> 
-        getProjectionOrBuilderList() {
-      return projection_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    public int getProjectionCount() {
-      return projection_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection getProjection(int index) {
-      return projection_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder getProjectionOrBuilder(
-        int index) {
-      return projection_.get(index);
-    }
-
-    public static final int CRITERIA_FIELD_NUMBER = 5;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_;
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    public boolean hasCriteria() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-      return criteria_;
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-      return criteria_;
-    }
-
-    public static final int LIMIT_FIELD_NUMBER = 6;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_;
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    public boolean hasLimit() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-      return limit_;
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-      return limit_;
-    }
-
-    public static final int ORDER_FIELD_NUMBER = 7;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_;
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    public int getOrderCount() {
-      return order_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-      return order_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index) {
-      return order_.get(index);
-    }
-
-    public static final int GROUPING_FIELD_NUMBER = 8;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> grouping_;
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> getGroupingList() {
-      return grouping_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-        getGroupingOrBuilderList() {
-      return grouping_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    public int getGroupingCount() {
-      return grouping_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGrouping(int index) {
-      return grouping_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingOrBuilder(
-        int index) {
-      return grouping_.get(index);
-    }
-
-    public static final int GROUPING_CRITERIA_FIELD_NUMBER = 9;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr groupingCriteria_;
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    public boolean hasGroupingCriteria() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGroupingCriteria() {
-      return groupingCriteria_;
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingCriteriaOrBuilder() {
-      return groupingCriteria_;
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      projection_ = java.util.Collections.emptyList();
-      criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      order_ = java.util.Collections.emptyList();
-      grouping_ = java.util.Collections.emptyList();
-      groupingCriteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCollection()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCollection().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      for (int i = 0; i < getProjectionCount(); i++) {
-        if (!getProjection(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasCriteria()) {
-        if (!getCriteria().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasLimit()) {
-        if (!getLimit().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      for (int i = 0; i < getOrderCount(); i++) {
-        if (!getOrder(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      for (int i = 0; i < getGroupingCount(); i++) {
-        if (!getGrouping(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasGroupingCriteria()) {
-        if (!getGroupingCriteria().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeEnum(3, dataModel_.getNumber());
-      }
-      for (int i = 0; i < projection_.size(); i++) {
-        output.writeMessage(4, projection_.get(i));
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeMessage(5, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeMessage(6, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        output.writeMessage(7, order_.get(i));
-      }
-      for (int i = 0; i < grouping_.size(); i++) {
-        output.writeMessage(8, grouping_.get(i));
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeMessage(9, groupingCriteria_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(3, dataModel_.getNumber());
-      }
-      for (int i = 0; i < projection_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, projection_.get(i));
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, order_.get(i));
-      }
-      for (int i = 0; i < grouping_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(8, grouping_.get(i));
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(9, groupingCriteria_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Crud.PrepareFind}
-     *
-     * <pre>
-     * Query a key-value collection
-     * ``stmt_id`` has to be unique to the session and not in use yet
-     * :param stmt_id: session unique, not in use statement-id
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Crud.PrepareFind)
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFindOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareFind_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareFind_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getCollectionFieldBuilder();
-          getProjectionFieldBuilder();
-          getCriteriaFieldBuilder();
-          getLimitFieldBuilder();
-          getOrderFieldBuilder();
-          getGroupingFieldBuilder();
-          getGroupingCriteriaFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        if (projectionBuilder_ == null) {
-          projection_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000008);
-        } else {
-          projectionBuilder_.clear();
-        }
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000020);
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
-        } else {
-          orderBuilder_.clear();
-        }
-        if (groupingBuilder_ == null) {
-          grouping_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
-        } else {
-          groupingBuilder_.clear();
-        }
-        if (groupingCriteriaBuilder_ == null) {
-          groupingCriteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-        } else {
-          groupingCriteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000100);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareFind_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind result = new com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        if (collectionBuilder_ == null) {
-          result.collection_ = collection_;
-        } else {
-          result.collection_ = collectionBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.dataModel_ = dataModel_;
-        if (projectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
-            projection_ = java.util.Collections.unmodifiableList(projection_);
-            bitField0_ = (bitField0_ & ~0x00000008);
-          }
-          result.projection_ = projection_;
-        } else {
-          result.projection_ = projectionBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        if (criteriaBuilder_ == null) {
-          result.criteria_ = criteria_;
-        } else {
-          result.criteria_ = criteriaBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        if (limitBuilder_ == null) {
-          result.limit_ = limit_;
-        } else {
-          result.limit_ = limitBuilder_.build();
-        }
-        if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
-            order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000040);
-          }
-          result.order_ = order_;
-        } else {
-          result.order_ = orderBuilder_.build();
-        }
-        if (groupingBuilder_ == null) {
-          if (((bitField0_ & 0x00000080) == 0x00000080)) {
-            grouping_ = java.util.Collections.unmodifiableList(grouping_);
-            bitField0_ = (bitField0_ & ~0x00000080);
-          }
-          result.grouping_ = grouping_;
-        } else {
-          result.grouping_ = groupingBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
-          to_bitField0_ |= 0x00000020;
-        }
-        if (groupingCriteriaBuilder_ == null) {
-          result.groupingCriteria_ = groupingCriteria_;
-        } else {
-          result.groupingCriteria_ = groupingCriteriaBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasCollection()) {
-          mergeCollection(other.getCollection());
-        }
-        if (other.hasDataModel()) {
-          setDataModel(other.getDataModel());
-        }
-        if (projectionBuilder_ == null) {
-          if (!other.projection_.isEmpty()) {
-            if (projection_.isEmpty()) {
-              projection_ = other.projection_;
-              bitField0_ = (bitField0_ & ~0x00000008);
-            } else {
-              ensureProjectionIsMutable();
-              projection_.addAll(other.projection_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.projection_.isEmpty()) {
-            if (projectionBuilder_.isEmpty()) {
-              projectionBuilder_.dispose();
-              projectionBuilder_ = null;
-              projection_ = other.projection_;
-              bitField0_ = (bitField0_ & ~0x00000008);
-              projectionBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getProjectionFieldBuilder() : null;
-            } else {
-              projectionBuilder_.addAllMessages(other.projection_);
-            }
-          }
-        }
-        if (other.hasCriteria()) {
-          mergeCriteria(other.getCriteria());
-        }
-        if (other.hasLimit()) {
-          mergeLimit(other.getLimit());
-        }
-        if (orderBuilder_ == null) {
-          if (!other.order_.isEmpty()) {
-            if (order_.isEmpty()) {
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000040);
-            } else {
-              ensureOrderIsMutable();
-              order_.addAll(other.order_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.order_.isEmpty()) {
-            if (orderBuilder_.isEmpty()) {
-              orderBuilder_.dispose();
-              orderBuilder_ = null;
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000040);
-              orderBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getOrderFieldBuilder() : null;
-            } else {
-              orderBuilder_.addAllMessages(other.order_);
-            }
-          }
-        }
-        if (groupingBuilder_ == null) {
-          if (!other.grouping_.isEmpty()) {
-            if (grouping_.isEmpty()) {
-              grouping_ = other.grouping_;
-              bitField0_ = (bitField0_ & ~0x00000080);
-            } else {
-              ensureGroupingIsMutable();
-              grouping_.addAll(other.grouping_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.grouping_.isEmpty()) {
-            if (groupingBuilder_.isEmpty()) {
-              groupingBuilder_.dispose();
-              groupingBuilder_ = null;
-              grouping_ = other.grouping_;
-              bitField0_ = (bitField0_ & ~0x00000080);
-              groupingBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getGroupingFieldBuilder() : null;
-            } else {
-              groupingBuilder_.addAllMessages(other.grouping_);
-            }
-          }
-        }
-        if (other.hasGroupingCriteria()) {
-          mergeGroupingCriteria(other.getGroupingCriteria());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasCollection()) {
-          
-          return false;
-        }
-        if (!getCollection().isInitialized()) {
-          
-          return false;
-        }
-        for (int i = 0; i < getProjectionCount(); i++) {
-          if (!getProjection(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasCriteria()) {
-          if (!getCriteria().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasLimit()) {
-          if (!getLimit().isInitialized()) {
-            
-            return false;
-          }
-        }
-        for (int i = 0; i < getOrderCount(); i++) {
-          if (!getOrder(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        for (int i = 0; i < getGroupingCount(); i++) {
-          if (!getGrouping(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasGroupingCriteria()) {
-          if (!getGroupingCriteria().isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareFind) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> collectionBuilder_;
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public boolean hasCollection() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-        if (collectionBuilder_ == null) {
-          return collection_;
-        } else {
-          return collectionBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          collection_ = value;
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder builderForValue) {
-        if (collectionBuilder_ == null) {
-          collection_ = builderForValue.build();
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder mergeCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              collection_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance()) {
-            collection_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.newBuilder(collection_).mergeFrom(value).buildPartial();
-          } else {
-            collection_ = value;
-          }
-          onChanged();
-        } else {
-          collectionBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder clearCollection() {
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-          onChanged();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder getCollectionBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getCollectionFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-        if (collectionBuilder_ != null) {
-          return collectionBuilder_.getMessageOrBuilder();
-        } else {
-          return collection_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> 
-          getCollectionFieldBuilder() {
-        if (collectionBuilder_ == null) {
-          collectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder>(
-                  getCollection(),
-                  getParentForChildren(),
-                  isClean());
-          collection_ = null;
-        }
-        return collectionBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public boolean hasDataModel() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-        return dataModel_;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder setDataModel(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000004;
-        dataModel_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder clearDataModel() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        onChanged();
-        return this;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> projection_ =
-        java.util.Collections.emptyList();
-      private void ensureProjectionIsMutable() {
-        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          projection_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection>(projection_);
-          bitField0_ |= 0x00000008;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder> projectionBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> getProjectionList() {
-        if (projectionBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(projection_);
-        } else {
-          return projectionBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public int getProjectionCount() {
-        if (projectionBuilder_ == null) {
-          return projection_.size();
-        } else {
-          return projectionBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection getProjection(int index) {
-        if (projectionBuilder_ == null) {
-          return projection_.get(index);
-        } else {
-          return projectionBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder setProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.set(index, value);
-          onChanged();
-        } else {
-          projectionBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder setProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder addProjection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.add(value);
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder addProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.add(index, value);
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder addProjection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.add(builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder addProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder addAllProjection(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection> values) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, projection_);
-          onChanged();
-        } else {
-          projectionBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder clearProjection() {
-        if (projectionBuilder_ == null) {
-          projection_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000008);
-          onChanged();
-        } else {
-          projectionBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public Builder removeProjection(int index) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.remove(index);
-          onChanged();
-        } else {
-          projectionBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder getProjectionBuilder(
-          int index) {
-        return getProjectionFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder getProjectionOrBuilder(
-          int index) {
-        if (projectionBuilder_ == null) {
-          return projection_.get(index);  } else {
-          return projectionBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder> 
-           getProjectionOrBuilderList() {
-        if (projectionBuilder_ != null) {
-          return projectionBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(projection_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder addProjectionBuilder() {
-        return getProjectionFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder addProjectionBuilder(
-          int index) {
-        return getProjectionFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder> 
-           getProjectionBuilderList() {
-        return getProjectionFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder> 
-          getProjectionFieldBuilder() {
-        if (projectionBuilder_ == null) {
-          projectionBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ProjectionOrBuilder>(
-                  projection_,
-                  ((bitField0_ & 0x00000008) == 0x00000008),
-                  getParentForChildren(),
-                  isClean());
-          projection_ = null;
-        }
-        return projectionBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> criteriaBuilder_;
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public boolean hasCriteria() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-        if (criteriaBuilder_ == null) {
-          return criteria_;
-        } else {
-          return criteriaBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public Builder setCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          criteria_ = value;
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public Builder setCriteria(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (criteriaBuilder_ == null) {
-          criteria_ = builderForValue.build();
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public Builder mergeCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010) &&
-              criteria_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
-            criteria_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(criteria_).mergeFrom(value).buildPartial();
-          } else {
-            criteria_ = value;
-          }
-          onChanged();
-        } else {
-          criteriaBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public Builder clearCriteria() {
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-          onChanged();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getCriteriaBuilder() {
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return getCriteriaFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-        if (criteriaBuilder_ != null) {
-          return criteriaBuilder_.getMessageOrBuilder();
-        } else {
-          return criteria_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getCriteriaFieldBuilder() {
-        if (criteriaBuilder_ == null) {
-          criteriaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  getCriteria(),
-                  getParentForChildren(),
-                  isClean());
-          criteria_ = null;
-        }
-        return criteriaBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public boolean hasLimit() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-        if (limitBuilder_ == null) {
-          return limit_;
-        } else {
-          return limitBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public Builder setLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          limit_ = value;
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000020;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public Builder setLimit(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder builderForValue) {
-        if (limitBuilder_ == null) {
-          limit_ = builderForValue.build();
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000020;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020) &&
-              limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
-            limit_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
-          } else {
-            limit_ = value;
-          }
-          onChanged();
-        } else {
-          limitBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000020;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public Builder clearLimit() {
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-          onChanged();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000020);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000020;
-        onChanged();
-        return getLimitFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-        if (limitBuilder_ != null) {
-          return limitBuilder_.getMessageOrBuilder();
-        } else {
-          return limit_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> 
-          getLimitFieldBuilder() {
-        if (limitBuilder_ == null) {
-          limitBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder>(
-                  getLimit(),
-                  getParentForChildren(),
-                  isClean());
-          limit_ = null;
-        }
-        return limitBuilder_;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
-        java.util.Collections.emptyList();
-      private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
-          order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000040;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> orderBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-        if (orderBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(order_);
-        } else {
-          return orderBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public int getOrderCount() {
-        if (orderBuilder_ == null) {
-          return order_.size();
-        } else {
-          return orderBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);
-        } else {
-          return orderBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.set(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder addOrder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder addOrder(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder addAllOrder(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> values) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, order_);
-          onChanged();
-        } else {
-          orderBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder clearOrder() {
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
-          onChanged();
-        } else {
-          orderBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public Builder removeOrder(int index) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.remove(index);
-          onChanged();
-        } else {
-          orderBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder getOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-          int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);  } else {
-          return orderBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-           getOrderOrBuilderList() {
-        if (orderBuilder_ != null) {
-          return orderBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(order_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder() {
-        return getOrderFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder> 
-           getOrderBuilderList() {
-        return getOrderFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-          getOrderFieldBuilder() {
-        if (orderBuilder_ == null) {
-          orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
-                  order_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
-                  getParentForChildren(),
-                  isClean());
-          order_ = null;
-        }
-        return orderBuilder_;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> grouping_ =
-        java.util.Collections.emptyList();
-      private void ensureGroupingIsMutable() {
-        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
-          grouping_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>(grouping_);
-          bitField0_ |= 0x00000080;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> groupingBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> getGroupingList() {
-        if (groupingBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(grouping_);
-        } else {
-          return groupingBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public int getGroupingCount() {
-        if (groupingBuilder_ == null) {
-          return grouping_.size();
-        } else {
-          return groupingBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGrouping(int index) {
-        if (groupingBuilder_ == null) {
-          return grouping_.get(index);
-        } else {
-          return groupingBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder setGrouping(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (groupingBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureGroupingIsMutable();
-          grouping_.set(index, value);
-          onChanged();
-        } else {
-          groupingBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder setGrouping(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (groupingBuilder_ == null) {
-          ensureGroupingIsMutable();
-          grouping_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          groupingBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder addGrouping(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (groupingBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureGroupingIsMutable();
-          grouping_.add(value);
-          onChanged();
-        } else {
-          groupingBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder addGrouping(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (groupingBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureGroupingIsMutable();
-          grouping_.add(index, value);
-          onChanged();
-        } else {
-          groupingBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder addGrouping(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (groupingBuilder_ == null) {
-          ensureGroupingIsMutable();
-          grouping_.add(builderForValue.build());
-          onChanged();
-        } else {
-          groupingBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder addGrouping(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (groupingBuilder_ == null) {
-          ensureGroupingIsMutable();
-          grouping_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          groupingBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder addAllGrouping(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> values) {
-        if (groupingBuilder_ == null) {
-          ensureGroupingIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, grouping_);
-          onChanged();
-        } else {
-          groupingBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder clearGrouping() {
-        if (groupingBuilder_ == null) {
-          grouping_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
-          onChanged();
-        } else {
-          groupingBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public Builder removeGrouping(int index) {
-        if (groupingBuilder_ == null) {
-          ensureGroupingIsMutable();
-          grouping_.remove(index);
-          onChanged();
-        } else {
-          groupingBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getGroupingBuilder(
-          int index) {
-        return getGroupingFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingOrBuilder(
-          int index) {
-        if (groupingBuilder_ == null) {
-          return grouping_.get(index);  } else {
-          return groupingBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-           getGroupingOrBuilderList() {
-        if (groupingBuilder_ != null) {
-          return groupingBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(grouping_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder addGroupingBuilder() {
-        return getGroupingFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder addGroupingBuilder(
-          int index) {
-        return getGroupingFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder> 
-           getGroupingBuilderList() {
-        return getGroupingFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getGroupingFieldBuilder() {
-        if (groupingBuilder_ == null) {
-          groupingBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  grouping_,
-                  ((bitField0_ & 0x00000080) == 0x00000080),
-                  getParentForChildren(),
-                  isClean());
-          grouping_ = null;
-        }
-        return groupingBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr groupingCriteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> groupingCriteriaBuilder_;
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public boolean hasGroupingCriteria() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getGroupingCriteria() {
-        if (groupingCriteriaBuilder_ == null) {
-          return groupingCriteria_;
-        } else {
-          return groupingCriteriaBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public Builder setGroupingCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (groupingCriteriaBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          groupingCriteria_ = value;
-          onChanged();
-        } else {
-          groupingCriteriaBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000100;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public Builder setGroupingCriteria(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (groupingCriteriaBuilder_ == null) {
-          groupingCriteria_ = builderForValue.build();
-          onChanged();
-        } else {
-          groupingCriteriaBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000100;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public Builder mergeGroupingCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (groupingCriteriaBuilder_ == null) {
-          if (((bitField0_ & 0x00000100) == 0x00000100) &&
-              groupingCriteria_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
-            groupingCriteria_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(groupingCriteria_).mergeFrom(value).buildPartial();
-          } else {
-            groupingCriteria_ = value;
-          }
-          onChanged();
-        } else {
-          groupingCriteriaBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000100;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public Builder clearGroupingCriteria() {
-        if (groupingCriteriaBuilder_ == null) {
-          groupingCriteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-          onChanged();
-        } else {
-          groupingCriteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000100);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getGroupingCriteriaBuilder() {
-        bitField0_ |= 0x00000100;
-        onChanged();
-        return getGroupingCriteriaFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingCriteriaOrBuilder() {
-        if (groupingCriteriaBuilder_ != null) {
-          return groupingCriteriaBuilder_.getMessageOrBuilder();
-        } else {
-          return groupingCriteria_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getGroupingCriteriaFieldBuilder() {
-        if (groupingCriteriaBuilder_ == null) {
-          groupingCriteriaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  getGroupingCriteria(),
-                  getParentForChildren(),
-                  isClean());
-          groupingCriteria_ = null;
-        }
-        return groupingCriteriaBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.PrepareFind)
-    }
-
-    static {
-      defaultInstance = new PrepareFind(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Crud.PrepareFind)
-  }
-
-  public interface PrepareInsertOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Crud.PrepareInsert)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    boolean hasCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    boolean hasDataModel();
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel();
-
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> 
-        getProjectionList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column getProjection(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    int getProjectionCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder> 
-        getProjectionOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder getProjectionOrBuilder(
-        int index);
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Crud.PrepareInsert}
-   *
-   * <pre>
-   * Prepare a insert into a collection
-   * ``stmt_id`` has to be unique to the session and not in use yet
-   * :param stmt_id: session unique, not in use statement-id
-   * :param collection: collection to insert into
-   * :param projection: name of the columns to insert data into
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PrepareInsert extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Crud.PrepareInsert)
-      PrepareInsertOrBuilder {
-    // Use PrepareInsert.newBuilder() to construct.
-    private PrepareInsert(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareInsert(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareInsert defaultInstance;
-    public static PrepareInsert getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareInsert getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareInsert(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 18: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = collection_.toBuilder();
-              }
-              collection_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(collection_);
-                collection_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
-              break;
-            }
-            case 24: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(3, rawValue);
-              } else {
-                bitField0_ |= 0x00000004;
-                dataModel_ = value;
-              }
-              break;
-            }
-            case 34: {
-              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                projection_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column>();
-                mutable_bitField0_ |= 0x00000008;
-              }
-              projection_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.PARSER, extensionRegistry));
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-          projection_ = java.util.Collections.unmodifiableList(projection_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareInsert_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareInsert_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareInsert> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareInsert>() {
-      public PrepareInsert parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareInsert(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareInsert> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int COLLECTION_FIELD_NUMBER = 2;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_;
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public boolean hasCollection() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-      return collection_;
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-      return collection_;
-    }
-
-    public static final int DATA_MODEL_FIELD_NUMBER = 3;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_;
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public boolean hasDataModel() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-      return dataModel_;
-    }
-
-    public static final int PROJECTION_FIELD_NUMBER = 4;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> projection_;
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> getProjectionList() {
-      return projection_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder> 
-        getProjectionOrBuilderList() {
-      return projection_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    public int getProjectionCount() {
-      return projection_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column getProjection(int index) {
-      return projection_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder getProjectionOrBuilder(
-        int index) {
-      return projection_.get(index);
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      projection_ = java.util.Collections.emptyList();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCollection()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCollection().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      for (int i = 0; i < getProjectionCount(); i++) {
-        if (!getProjection(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeEnum(3, dataModel_.getNumber());
-      }
-      for (int i = 0; i < projection_.size(); i++) {
-        output.writeMessage(4, projection_.get(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(3, dataModel_.getNumber());
-      }
-      for (int i = 0; i < projection_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, projection_.get(i));
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Crud.PrepareInsert}
-     *
-     * <pre>
-     * Prepare a insert into a collection
-     * ``stmt_id`` has to be unique to the session and not in use yet
-     * :param stmt_id: session unique, not in use statement-id
-     * :param collection: collection to insert into
-     * :param projection: name of the columns to insert data into
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Crud.PrepareInsert)
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsertOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareInsert_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareInsert_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getCollectionFieldBuilder();
-          getProjectionFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        if (projectionBuilder_ == null) {
-          projection_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000008);
-        } else {
-          projectionBuilder_.clear();
-        }
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareInsert_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert result = new com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        if (collectionBuilder_ == null) {
-          result.collection_ = collection_;
-        } else {
-          result.collection_ = collectionBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.dataModel_ = dataModel_;
-        if (projectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
-            projection_ = java.util.Collections.unmodifiableList(projection_);
-            bitField0_ = (bitField0_ & ~0x00000008);
-          }
-          result.projection_ = projection_;
-        } else {
-          result.projection_ = projectionBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasCollection()) {
-          mergeCollection(other.getCollection());
-        }
-        if (other.hasDataModel()) {
-          setDataModel(other.getDataModel());
-        }
-        if (projectionBuilder_ == null) {
-          if (!other.projection_.isEmpty()) {
-            if (projection_.isEmpty()) {
-              projection_ = other.projection_;
-              bitField0_ = (bitField0_ & ~0x00000008);
-            } else {
-              ensureProjectionIsMutable();
-              projection_.addAll(other.projection_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.projection_.isEmpty()) {
-            if (projectionBuilder_.isEmpty()) {
-              projectionBuilder_.dispose();
-              projectionBuilder_ = null;
-              projection_ = other.projection_;
-              bitField0_ = (bitField0_ & ~0x00000008);
-              projectionBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getProjectionFieldBuilder() : null;
-            } else {
-              projectionBuilder_.addAllMessages(other.projection_);
-            }
-          }
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasCollection()) {
-          
-          return false;
-        }
-        if (!getCollection().isInitialized()) {
-          
-          return false;
-        }
-        for (int i = 0; i < getProjectionCount(); i++) {
-          if (!getProjection(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareInsert) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> collectionBuilder_;
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public boolean hasCollection() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-        if (collectionBuilder_ == null) {
-          return collection_;
-        } else {
-          return collectionBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          collection_ = value;
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder builderForValue) {
-        if (collectionBuilder_ == null) {
-          collection_ = builderForValue.build();
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder mergeCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              collection_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance()) {
-            collection_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.newBuilder(collection_).mergeFrom(value).buildPartial();
-          } else {
-            collection_ = value;
-          }
-          onChanged();
-        } else {
-          collectionBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder clearCollection() {
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-          onChanged();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder getCollectionBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getCollectionFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-        if (collectionBuilder_ != null) {
-          return collectionBuilder_.getMessageOrBuilder();
-        } else {
-          return collection_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> 
-          getCollectionFieldBuilder() {
-        if (collectionBuilder_ == null) {
-          collectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder>(
-                  getCollection(),
-                  getParentForChildren(),
-                  isClean());
-          collection_ = null;
-        }
-        return collectionBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public boolean hasDataModel() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-        return dataModel_;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder setDataModel(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000004;
-        dataModel_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder clearDataModel() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        onChanged();
-        return this;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> projection_ =
-        java.util.Collections.emptyList();
-      private void ensureProjectionIsMutable() {
-        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          projection_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column>(projection_);
-          bitField0_ |= 0x00000008;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder> projectionBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> getProjectionList() {
-        if (projectionBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(projection_);
-        } else {
-          return projectionBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public int getProjectionCount() {
-        if (projectionBuilder_ == null) {
-          return projection_.size();
-        } else {
-          return projectionBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column getProjection(int index) {
-        if (projectionBuilder_ == null) {
-          return projection_.get(index);
-        } else {
-          return projectionBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder setProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.set(index, value);
-          onChanged();
-        } else {
-          projectionBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder setProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder addProjection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.add(value);
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder addProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column value) {
-        if (projectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureProjectionIsMutable();
-          projection_.add(index, value);
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder addProjection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.add(builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder addProjection(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder builderForValue) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          projectionBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder addAllProjection(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column> values) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, projection_);
-          onChanged();
-        } else {
-          projectionBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder clearProjection() {
-        if (projectionBuilder_ == null) {
-          projection_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000008);
-          onChanged();
-        } else {
-          projectionBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public Builder removeProjection(int index) {
-        if (projectionBuilder_ == null) {
-          ensureProjectionIsMutable();
-          projection_.remove(index);
-          onChanged();
-        } else {
-          projectionBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder getProjectionBuilder(
-          int index) {
-        return getProjectionFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder getProjectionOrBuilder(
-          int index) {
-        if (projectionBuilder_ == null) {
-          return projection_.get(index);  } else {
-          return projectionBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder> 
-           getProjectionOrBuilderList() {
-        if (projectionBuilder_ != null) {
-          return projectionBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(projection_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder addProjectionBuilder() {
-        return getProjectionFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder addProjectionBuilder(
-          int index) {
-        return getProjectionFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Column projection = 4;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder> 
-           getProjectionBuilderList() {
-        return getProjectionFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder> 
-          getProjectionFieldBuilder() {
-        if (projectionBuilder_ == null) {
-          projectionBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.ColumnOrBuilder>(
-                  projection_,
-                  ((bitField0_ & 0x00000008) == 0x00000008),
-                  getParentForChildren(),
-                  isClean());
-          projection_ = null;
-        }
-        return projectionBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.PrepareInsert)
-    }
-
-    static {
-      defaultInstance = new PrepareInsert(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Crud.PrepareInsert)
-  }
-
-  public interface PrepareUpdateOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Crud.PrepareUpdate)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    boolean hasCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    boolean hasDataModel();
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel();
-
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    boolean hasCriteria();
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria();
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    boolean hasLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder();
-
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> 
-        getOrderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    int getOrderCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index);
-
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> 
-        getOperationList();
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation getOperation(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    int getOperationCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder> 
-        getOperationOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder getOperationOrBuilder(
-        int index);
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Crud.PrepareUpdate}
-   *
-   * <pre>
-   * Prepare a update of rows in a collection
-   * ``stmt_id`` has to be unique to the session and not in use yet
-   * :param stmt_id: session unique, not in use statement-id
-   * :param collection: collection to change
-   * :param data_model: datamodel that the operations refer to
-   * :param criteria: filter expression to match rows that the operations will apply on
-   * :param limit: limits the number of rows to match
-   * :param order: specifies order of matched rows
-   * :param operation: list of operations to be applied. Valid operations will depend on the data_model.
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   */
-  public static final class PrepareUpdate extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Crud.PrepareUpdate)
-      PrepareUpdateOrBuilder {
-    // Use PrepareUpdate.newBuilder() to construct.
-    private PrepareUpdate(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareUpdate(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareUpdate defaultInstance;
-    public static PrepareUpdate getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareUpdate getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareUpdate(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 18: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = collection_.toBuilder();
-              }
-              collection_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(collection_);
-                collection_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
-              break;
-            }
-            case 24: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(3, rawValue);
-              } else {
-                bitField0_ |= 0x00000004;
-                dataModel_ = value;
-              }
-              break;
-            }
-            case 34: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000008) == 0x00000008)) {
-                subBuilder = criteria_.toBuilder();
-              }
-              criteria_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(criteria_);
-                criteria_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000008;
-              break;
-            }
-            case 42: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000010) == 0x00000010)) {
-                subBuilder = limit_.toBuilder();
-              }
-              limit_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(limit_);
-                limit_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000010;
-              break;
-            }
-            case 50: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-                order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000020;
-              }
-              order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
-              break;
-            }
-            case 58: {
-              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-                operation_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation>();
-                mutable_bitField0_ |= 0x00000040;
-              }
-              operation_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.PARSER, extensionRegistry));
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-          order_ = java.util.Collections.unmodifiableList(order_);
-        }
-        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-          operation_ = java.util.Collections.unmodifiableList(operation_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareUpdate_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareUpdate_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareUpdate> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareUpdate>() {
-      public PrepareUpdate parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareUpdate(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareUpdate> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int COLLECTION_FIELD_NUMBER = 2;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_;
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public boolean hasCollection() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-      return collection_;
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-      return collection_;
-    }
-
-    public static final int DATA_MODEL_FIELD_NUMBER = 3;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_;
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public boolean hasDataModel() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-      return dataModel_;
-    }
-
-    public static final int CRITERIA_FIELD_NUMBER = 4;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_;
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public boolean hasCriteria() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-      return criteria_;
-    }
-    /**
-     * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-      return criteria_;
-    }
-
-    public static final int LIMIT_FIELD_NUMBER = 5;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_;
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public boolean hasLimit() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-      return limit_;
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-      return limit_;
-    }
-
-    public static final int ORDER_FIELD_NUMBER = 6;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_;
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public int getOrderCount() {
-      return order_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-      return order_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index) {
-      return order_.get(index);
-    }
-
-    public static final int OPERATION_FIELD_NUMBER = 7;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> operation_;
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> getOperationList() {
-      return operation_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder> 
-        getOperationOrBuilderList() {
-      return operation_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    public int getOperationCount() {
-      return operation_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation getOperation(int index) {
-      return operation_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder getOperationOrBuilder(
-        int index) {
-      return operation_.get(index);
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      order_ = java.util.Collections.emptyList();
-      operation_ = java.util.Collections.emptyList();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCollection()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCriteria()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCollection().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCriteria().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (hasLimit()) {
-        if (!getLimit().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      for (int i = 0; i < getOrderCount(); i++) {
-        if (!getOrder(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      for (int i = 0; i < getOperationCount(); i++) {
-        if (!getOperation(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeEnum(3, dataModel_.getNumber());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeMessage(4, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeMessage(5, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        output.writeMessage(6, order_.get(i));
-      }
-      for (int i = 0; i < operation_.size(); i++) {
-        output.writeMessage(7, operation_.get(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(3, dataModel_.getNumber());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, order_.get(i));
-      }
-      for (int i = 0; i < operation_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, operation_.get(i));
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Crud.PrepareUpdate}
-     *
-     * <pre>
-     * Prepare a update of rows in a collection
-     * ``stmt_id`` has to be unique to the session and not in use yet
-     * :param stmt_id: session unique, not in use statement-id
-     * :param collection: collection to change
-     * :param data_model: datamodel that the operations refer to
-     * :param criteria: filter expression to match rows that the operations will apply on
-     * :param limit: limits the number of rows to match
-     * :param order: specifies order of matched rows
-     * :param operation: list of operations to be applied. Valid operations will depend on the data_model.
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::PrepareStmtOk` or :protobuf:msg:`Mysqlx::Error`
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Crud.PrepareUpdate)
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdateOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareUpdate_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareUpdate_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getCollectionFieldBuilder();
-          getCriteriaFieldBuilder();
-          getLimitFieldBuilder();
-          getOrderFieldBuilder();
-          getOperationFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000008);
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
-        } else {
-          orderBuilder_.clear();
-        }
-        if (operationBuilder_ == null) {
-          operation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
-        } else {
-          operationBuilder_.clear();
-        }
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareUpdate_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate result = new com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        if (collectionBuilder_ == null) {
-          result.collection_ = collection_;
-        } else {
-          result.collection_ = collectionBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.dataModel_ = dataModel_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        if (criteriaBuilder_ == null) {
-          result.criteria_ = criteria_;
-        } else {
-          result.criteria_ = criteriaBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        if (limitBuilder_ == null) {
-          result.limit_ = limit_;
-        } else {
-          result.limit_ = limitBuilder_.build();
-        }
-        if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
-            order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000020);
-          }
-          result.order_ = order_;
-        } else {
-          result.order_ = orderBuilder_.build();
-        }
-        if (operationBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
-            operation_ = java.util.Collections.unmodifiableList(operation_);
-            bitField0_ = (bitField0_ & ~0x00000040);
-          }
-          result.operation_ = operation_;
-        } else {
-          result.operation_ = operationBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasCollection()) {
-          mergeCollection(other.getCollection());
-        }
-        if (other.hasDataModel()) {
-          setDataModel(other.getDataModel());
-        }
-        if (other.hasCriteria()) {
-          mergeCriteria(other.getCriteria());
-        }
-        if (other.hasLimit()) {
-          mergeLimit(other.getLimit());
-        }
-        if (orderBuilder_ == null) {
-          if (!other.order_.isEmpty()) {
-            if (order_.isEmpty()) {
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
-            } else {
-              ensureOrderIsMutable();
-              order_.addAll(other.order_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.order_.isEmpty()) {
-            if (orderBuilder_.isEmpty()) {
-              orderBuilder_.dispose();
-              orderBuilder_ = null;
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
-              orderBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getOrderFieldBuilder() : null;
-            } else {
-              orderBuilder_.addAllMessages(other.order_);
-            }
-          }
-        }
-        if (operationBuilder_ == null) {
-          if (!other.operation_.isEmpty()) {
-            if (operation_.isEmpty()) {
-              operation_ = other.operation_;
-              bitField0_ = (bitField0_ & ~0x00000040);
-            } else {
-              ensureOperationIsMutable();
-              operation_.addAll(other.operation_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.operation_.isEmpty()) {
-            if (operationBuilder_.isEmpty()) {
-              operationBuilder_.dispose();
-              operationBuilder_ = null;
-              operation_ = other.operation_;
-              bitField0_ = (bitField0_ & ~0x00000040);
-              operationBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getOperationFieldBuilder() : null;
-            } else {
-              operationBuilder_.addAllMessages(other.operation_);
-            }
-          }
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasCollection()) {
-          
-          return false;
-        }
-        if (!hasCriteria()) {
-          
-          return false;
-        }
-        if (!getCollection().isInitialized()) {
-          
-          return false;
-        }
-        if (!getCriteria().isInitialized()) {
-          
-          return false;
-        }
-        if (hasLimit()) {
-          if (!getLimit().isInitialized()) {
-            
-            return false;
-          }
-        }
-        for (int i = 0; i < getOrderCount(); i++) {
-          if (!getOrder(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        for (int i = 0; i < getOperationCount(); i++) {
-          if (!getOperation(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareUpdate) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> collectionBuilder_;
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public boolean hasCollection() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-        if (collectionBuilder_ == null) {
-          return collection_;
-        } else {
-          return collectionBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          collection_ = value;
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder builderForValue) {
-        if (collectionBuilder_ == null) {
-          collection_ = builderForValue.build();
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder mergeCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              collection_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance()) {
-            collection_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.newBuilder(collection_).mergeFrom(value).buildPartial();
-          } else {
-            collection_ = value;
-          }
-          onChanged();
-        } else {
-          collectionBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder clearCollection() {
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-          onChanged();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder getCollectionBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getCollectionFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-        if (collectionBuilder_ != null) {
-          return collectionBuilder_.getMessageOrBuilder();
-        } else {
-          return collection_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> 
-          getCollectionFieldBuilder() {
-        if (collectionBuilder_ == null) {
-          collectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder>(
-                  getCollection(),
-                  getParentForChildren(),
-                  isClean());
-          collection_ = null;
-        }
-        return collectionBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public boolean hasDataModel() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-        return dataModel_;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder setDataModel(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000004;
-        dataModel_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder clearDataModel() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> criteriaBuilder_;
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public boolean hasCriteria() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-        if (criteriaBuilder_ == null) {
-          return criteria_;
-        } else {
-          return criteriaBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder setCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          criteria_ = value;
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder setCriteria(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (criteriaBuilder_ == null) {
-          criteria_ = builderForValue.build();
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder mergeCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008) &&
-              criteria_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
-            criteria_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(criteria_).mergeFrom(value).buildPartial();
-          } else {
-            criteria_ = value;
-          }
-          onChanged();
-        } else {
-          criteriaBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder clearCriteria() {
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-          onChanged();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000008);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getCriteriaBuilder() {
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return getCriteriaFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-        if (criteriaBuilder_ != null) {
-          return criteriaBuilder_.getMessageOrBuilder();
-        } else {
-          return criteria_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getCriteriaFieldBuilder() {
-        if (criteriaBuilder_ == null) {
-          criteriaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  getCriteria(),
-                  getParentForChildren(),
-                  isClean());
-          criteria_ = null;
-        }
-        return criteriaBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public boolean hasLimit() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-        if (limitBuilder_ == null) {
-          return limit_;
-        } else {
-          return limitBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder setLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          limit_ = value;
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder setLimit(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder builderForValue) {
-        if (limitBuilder_ == null) {
-          limit_ = builderForValue.build();
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010) &&
-              limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
-            limit_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
-          } else {
-            limit_ = value;
-          }
-          onChanged();
-        } else {
-          limitBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder clearLimit() {
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-          onChanged();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return getLimitFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-        if (limitBuilder_ != null) {
-          return limitBuilder_.getMessageOrBuilder();
-        } else {
-          return limit_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> 
-          getLimitFieldBuilder() {
-        if (limitBuilder_ == null) {
-          limitBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder>(
-                  getLimit(),
-                  getParentForChildren(),
-                  isClean());
-          limit_ = null;
-        }
-        return limitBuilder_;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
-        java.util.Collections.emptyList();
-      private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-          order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000020;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> orderBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-        if (orderBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(order_);
-        } else {
-          return orderBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public int getOrderCount() {
-        if (orderBuilder_ == null) {
-          return order_.size();
-        } else {
-          return orderBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);
-        } else {
-          return orderBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.set(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addAllOrder(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> values) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, order_);
-          onChanged();
-        } else {
-          orderBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder clearOrder() {
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
-          onChanged();
-        } else {
-          orderBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder removeOrder(int index) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.remove(index);
-          onChanged();
-        } else {
-          orderBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder getOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-          int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);  } else {
-          return orderBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-           getOrderOrBuilderList() {
-        if (orderBuilder_ != null) {
-          return orderBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(order_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder() {
-        return getOrderFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder> 
-           getOrderBuilderList() {
-        return getOrderFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-          getOrderFieldBuilder() {
-        if (orderBuilder_ == null) {
-          orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
-                  order_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
-                  getParentForChildren(),
-                  isClean());
-          order_ = null;
-        }
-        return orderBuilder_;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> operation_ =
-        java.util.Collections.emptyList();
-      private void ensureOperationIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
-          operation_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation>(operation_);
-          bitField0_ |= 0x00000040;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder> operationBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> getOperationList() {
-        if (operationBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(operation_);
-        } else {
-          return operationBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public int getOperationCount() {
-        if (operationBuilder_ == null) {
-          return operation_.size();
-        } else {
-          return operationBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation getOperation(int index) {
-        if (operationBuilder_ == null) {
-          return operation_.get(index);
-        } else {
-          return operationBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder setOperation(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation value) {
-        if (operationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOperationIsMutable();
-          operation_.set(index, value);
-          onChanged();
-        } else {
-          operationBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder setOperation(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder builderForValue) {
-        if (operationBuilder_ == null) {
-          ensureOperationIsMutable();
-          operation_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          operationBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder addOperation(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation value) {
-        if (operationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOperationIsMutable();
-          operation_.add(value);
-          onChanged();
-        } else {
-          operationBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder addOperation(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation value) {
-        if (operationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOperationIsMutable();
-          operation_.add(index, value);
-          onChanged();
-        } else {
-          operationBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder addOperation(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder builderForValue) {
-        if (operationBuilder_ == null) {
-          ensureOperationIsMutable();
-          operation_.add(builderForValue.build());
-          onChanged();
-        } else {
-          operationBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder addOperation(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder builderForValue) {
-        if (operationBuilder_ == null) {
-          ensureOperationIsMutable();
-          operation_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          operationBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder addAllOperation(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation> values) {
-        if (operationBuilder_ == null) {
-          ensureOperationIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, operation_);
-          onChanged();
-        } else {
-          operationBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder clearOperation() {
-        if (operationBuilder_ == null) {
-          operation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
-          onChanged();
-        } else {
-          operationBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public Builder removeOperation(int index) {
-        if (operationBuilder_ == null) {
-          ensureOperationIsMutable();
-          operation_.remove(index);
-          onChanged();
-        } else {
-          operationBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder getOperationBuilder(
-          int index) {
-        return getOperationFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder getOperationOrBuilder(
-          int index) {
-        if (operationBuilder_ == null) {
-          return operation_.get(index);  } else {
-          return operationBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder> 
-           getOperationOrBuilderList() {
-        if (operationBuilder_ != null) {
-          return operationBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(operation_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder addOperationBuilder() {
-        return getOperationFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder addOperationBuilder(
-          int index) {
-        return getOperationFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder> 
-           getOperationBuilderList() {
-        return getOperationFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder> 
-          getOperationFieldBuilder() {
-        if (operationBuilder_ == null) {
-          operationBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperationOrBuilder>(
-                  operation_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
-                  getParentForChildren(),
-                  isClean());
-          operation_ = null;
-        }
-        return operationBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.PrepareUpdate)
-    }
-
-    static {
-      defaultInstance = new PrepareUpdate(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Crud.PrepareUpdate)
-  }
-
-  public interface PrepareDeleteOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Crud.PrepareDelete)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    boolean hasStmtId();
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    int getStmtId();
-
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    boolean hasCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection();
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    boolean hasDataModel();
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel();
-
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    boolean hasCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria();
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
-
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    boolean hasLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit();
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder();
-
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> 
-        getOrderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index);
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    int getOrderCount();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index);
-  }
-  /**
-   * Protobuf type {@code Mysqlx.Crud.PrepareDelete}
-   *
-   * <pre>
-   * Prepare to delete documents from a Collection
-   * ``stmt_id`` has to be unique to the session and not in use yet
-   * :param stmt_id: session unique, not in use statement-id
-   * </pre>
-   */
-  public static final class PrepareDelete extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Crud.PrepareDelete)
-      PrepareDeleteOrBuilder {
-    // Use PrepareDelete.newBuilder() to construct.
-    private PrepareDelete(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private PrepareDelete(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final PrepareDelete defaultInstance;
-    public static PrepareDelete getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public PrepareDelete getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareDelete(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              stmtId_ = input.readUInt32();
-              break;
-            }
-            case 18: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = collection_.toBuilder();
-              }
-              collection_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(collection_);
-                collection_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
-              break;
-            }
-            case 24: {
-              int rawValue = input.readEnum();
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(3, rawValue);
-              } else {
-                bitField0_ |= 0x00000004;
-                dataModel_ = value;
-              }
-              break;
-            }
-            case 34: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000008) == 0x00000008)) {
-                subBuilder = criteria_.toBuilder();
-              }
-              criteria_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(criteria_);
-                criteria_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000008;
-              break;
-            }
-            case 42: {
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000010) == 0x00000010)) {
-                subBuilder = limit_.toBuilder();
-              }
-              limit_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(limit_);
-                limit_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000010;
-              break;
-            }
-            case 50: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-                order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>();
-                mutable_bitField0_ |= 0x00000020;
-              }
-              order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-          order_ = java.util.Collections.unmodifiableList(order_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareDelete_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareDelete_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<PrepareDelete> PARSER =
-        new com.google.protobuf.AbstractParser<PrepareDelete>() {
-      public PrepareDelete parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareDelete(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareDelete> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int STMT_ID_FIELD_NUMBER = 1;
-    private int stmtId_;
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public boolean hasStmtId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required uint32 stmt_id = 1;</code>
-     */
-    public int getStmtId() {
-      return stmtId_;
-    }
-
-    public static final int COLLECTION_FIELD_NUMBER = 2;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_;
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public boolean hasCollection() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-      return collection_;
-    }
-    /**
-     * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-      return collection_;
-    }
-
-    public static final int DATA_MODEL_FIELD_NUMBER = 3;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_;
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public boolean hasDataModel() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-      return dataModel_;
-    }
-
-    public static final int CRITERIA_FIELD_NUMBER = 4;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_;
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public boolean hasCriteria() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-      return criteria_;
-    }
-    /**
-     * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-      return criteria_;
-    }
-
-    public static final int LIMIT_FIELD_NUMBER = 5;
-    private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_;
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public boolean hasLimit() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-      return limit_;
-    }
-    /**
-     * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-      return limit_;
-    }
-
-    public static final int ORDER_FIELD_NUMBER = 6;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_;
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-        getOrderOrBuilderList() {
-      return order_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public int getOrderCount() {
-      return order_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-      return order_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-     */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-        int index) {
-      return order_.get(index);
-    }
-
-    private void initFields() {
-      stmtId_ = 0;
-      collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      order_ = java.util.Collections.emptyList();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasStmtId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasCollection()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCollection().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (hasCriteria()) {
-        if (!getCriteria().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasLimit()) {
-        if (!getLimit().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      for (int i = 0; i < getOrderCount(); i++) {
-        if (!getOrder(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeUInt32(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeEnum(3, dataModel_.getNumber());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeMessage(4, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeMessage(5, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        output.writeMessage(6, order_.get(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(1, stmtId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, collection_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(3, dataModel_.getNumber());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, criteria_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, limit_);
-      }
-      for (int i = 0; i < order_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, order_.get(i));
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code Mysqlx.Crud.PrepareDelete}
-     *
-     * <pre>
-     * Prepare to delete documents from a Collection
-     * ``stmt_id`` has to be unique to the session and not in use yet
-     * :param stmt_id: session unique, not in use statement-id
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Crud.PrepareDelete)
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDeleteOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareDelete_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareDelete_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.class, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getCollectionFieldBuilder();
-          getCriteriaFieldBuilder();
-          getLimitFieldBuilder();
-          getOrderFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        stmtId_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000008);
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
-        } else {
-          orderBuilder_.clear();
-        }
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.internal_static_Mysqlx_Crud_PrepareDelete_descriptor;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete getDefaultInstanceForType() {
-        return com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.getDefaultInstance();
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete build() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete buildPartial() {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete result = new com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.stmtId_ = stmtId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        if (collectionBuilder_ == null) {
-          result.collection_ = collection_;
-        } else {
-          result.collection_ = collectionBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.dataModel_ = dataModel_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        if (criteriaBuilder_ == null) {
-          result.criteria_ = criteria_;
-        } else {
-          result.criteria_ = criteriaBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        if (limitBuilder_ == null) {
-          result.limit_ = limit_;
-        } else {
-          result.limit_ = limitBuilder_.build();
-        }
-        if (orderBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
-            order_ = java.util.Collections.unmodifiableList(order_);
-            bitField0_ = (bitField0_ & ~0x00000020);
-          }
-          result.order_ = order_;
-        } else {
-          result.order_ = orderBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete) {
-          return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete other) {
-        if (other == com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete.getDefaultInstance()) return this;
-        if (other.hasStmtId()) {
-          setStmtId(other.getStmtId());
-        }
-        if (other.hasCollection()) {
-          mergeCollection(other.getCollection());
-        }
-        if (other.hasDataModel()) {
-          setDataModel(other.getDataModel());
-        }
-        if (other.hasCriteria()) {
-          mergeCriteria(other.getCriteria());
-        }
-        if (other.hasLimit()) {
-          mergeLimit(other.getLimit());
-        }
-        if (orderBuilder_ == null) {
-          if (!other.order_.isEmpty()) {
-            if (order_.isEmpty()) {
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
-            } else {
-              ensureOrderIsMutable();
-              order_.addAll(other.order_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.order_.isEmpty()) {
-            if (orderBuilder_.isEmpty()) {
-              orderBuilder_.dispose();
-              orderBuilder_ = null;
-              order_ = other.order_;
-              bitField0_ = (bitField0_ & ~0x00000020);
-              orderBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getOrderFieldBuilder() : null;
-            } else {
-              orderBuilder_.addAllMessages(other.order_);
-            }
-          }
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasStmtId()) {
-          
-          return false;
-        }
-        if (!hasCollection()) {
-          
-          return false;
-        }
-        if (!getCollection().isInitialized()) {
-          
-          return false;
-        }
-        if (hasCriteria()) {
-          if (!getCriteria().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasLimit()) {
-          if (!getLimit().isInitialized()) {
-            
-            return false;
-          }
-        }
-        for (int i = 0; i < getOrderCount(); i++) {
-          if (!getOrder(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxCrud.PrepareDelete) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private int stmtId_ ;
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public boolean hasStmtId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public int getStmtId() {
-        return stmtId_;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder setStmtId(int value) {
-        bitField0_ |= 0x00000001;
-        stmtId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required uint32 stmt_id = 1;</code>
-       */
-      public Builder clearStmtId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        stmtId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> collectionBuilder_;
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public boolean hasCollection() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection getCollection() {
-        if (collectionBuilder_ == null) {
-          return collection_;
-        } else {
-          return collectionBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          collection_ = value;
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder setCollection(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder builderForValue) {
-        if (collectionBuilder_ == null) {
-          collection_ = builderForValue.build();
-          onChanged();
-        } else {
-          collectionBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder mergeCollection(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection value) {
-        if (collectionBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              collection_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance()) {
-            collection_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.newBuilder(collection_).mergeFrom(value).buildPartial();
-          } else {
-            collection_ = value;
-          }
-          onChanged();
-        } else {
-          collectionBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public Builder clearCollection() {
-        if (collectionBuilder_ == null) {
-          collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
-          onChanged();
-        } else {
-          collectionBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder getCollectionBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getCollectionFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
-        if (collectionBuilder_ != null) {
-          return collectionBuilder_.getMessageOrBuilder();
-        } else {
-          return collection_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder> 
-          getCollectionFieldBuilder() {
-        if (collectionBuilder_ == null) {
-          collectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.CollectionOrBuilder>(
-                  getCollection(),
-                  getParentForChildren(),
-                  isClean());
-          collection_ = null;
-        }
-        return collectionBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public boolean hasDataModel() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel getDataModel() {
-        return dataModel_;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder setDataModel(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000004;
-        dataModel_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
-       */
-      public Builder clearDataModel() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> criteriaBuilder_;
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public boolean hasCriteria() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getCriteria() {
-        if (criteriaBuilder_ == null) {
-          return criteria_;
-        } else {
-          return criteriaBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder setCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          criteria_ = value;
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder setCriteria(
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
-        if (criteriaBuilder_ == null) {
-          criteria_ = builderForValue.build();
-          onChanged();
-        } else {
-          criteriaBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder mergeCriteria(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
-        if (criteriaBuilder_ == null) {
-          if (((bitField0_ & 0x00000008) == 0x00000008) &&
-              criteria_ != com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance()) {
-            criteria_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder(criteria_).mergeFrom(value).buildPartial();
-          } else {
-            criteria_ = value;
-          }
-          onChanged();
-        } else {
-          criteriaBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000008;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public Builder clearCriteria() {
-        if (criteriaBuilder_ == null) {
-          criteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-          onChanged();
-        } else {
-          criteriaBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000008);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getCriteriaBuilder() {
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return getCriteriaFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
-        if (criteriaBuilder_ != null) {
-          return criteriaBuilder_.getMessageOrBuilder();
-        } else {
-          return criteria_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
-          getCriteriaFieldBuilder() {
-        if (criteriaBuilder_ == null) {
-          criteriaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
-                  getCriteria(),
-                  getParentForChildren(),
-                  isClean());
-          criteria_ = null;
-        }
-        return criteriaBuilder_;
-      }
-
-      private com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> limitBuilder_;
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public boolean hasLimit() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit getLimit() {
-        if (limitBuilder_ == null) {
-          return limit_;
-        } else {
-          return limitBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder setLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          limit_ = value;
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder setLimit(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder builderForValue) {
-        if (limitBuilder_ == null) {
-          limit_ = builderForValue.build();
-          onChanged();
-        } else {
-          limitBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder mergeLimit(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit value) {
-        if (limitBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010) &&
-              limit_ != com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance()) {
-            limit_ =
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.newBuilder(limit_).mergeFrom(value).buildPartial();
-          } else {
-            limit_ = value;
-          }
-          onChanged();
-        } else {
-          limitBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000010;
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public Builder clearLimit() {
-        if (limitBuilder_ == null) {
-          limit_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.getDefaultInstance();
-          onChanged();
-        } else {
-          limitBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        return this;
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder getLimitBuilder() {
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return getLimitFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
-        if (limitBuilder_ != null) {
-          return limitBuilder_.getMessageOrBuilder();
-        } else {
-          return limit_;
-        }
-      }
-      /**
-       * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder> 
-          getLimitFieldBuilder() {
-        if (limitBuilder_ == null) {
-          limitBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.LimitOrBuilder>(
-                  getLimit(),
-                  getParentForChildren(),
-                  isClean());
-          limit_ = null;
-        }
-        return limitBuilder_;
-      }
-
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> order_ =
-        java.util.Collections.emptyList();
-      private void ensureOrderIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-          order_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order>(order_);
-          bitField0_ |= 0x00000020;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> orderBuilder_;
-
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> getOrderList() {
-        if (orderBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(order_);
-        } else {
-          return orderBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public int getOrderCount() {
-        if (orderBuilder_ == null) {
-          return order_.size();
-        } else {
-          return orderBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order getOrder(int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);
-        } else {
-          return orderBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.set(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder setOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order value) {
-        if (orderBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureOrderIsMutable();
-          order_.add(index, value);
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addOrder(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder builderForValue) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          orderBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder addAllOrder(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order> values) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, order_);
-          onChanged();
-        } else {
-          orderBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder clearOrder() {
-        if (orderBuilder_ == null) {
-          order_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
-          onChanged();
-        } else {
-          orderBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public Builder removeOrder(int index) {
-        if (orderBuilder_ == null) {
-          ensureOrderIsMutable();
-          order_.remove(index);
-          onChanged();
-        } else {
-          orderBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder getOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
-          int index) {
-        if (orderBuilder_ == null) {
-          return order_.get(index);  } else {
-          return orderBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-           getOrderOrBuilderList() {
-        if (orderBuilder_ != null) {
-          return orderBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(order_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder() {
-        return getOrderFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder addOrderBuilder(
-          int index) {
-        return getOrderFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
-       */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder> 
-           getOrderBuilderList() {
-        return getOrderFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder> 
-          getOrderFieldBuilder() {
-        if (orderBuilder_ == null) {
-          orderBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxCrud.OrderOrBuilder>(
-                  order_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
-                  getParentForChildren(),
-                  isClean());
-          order_ = null;
-        }
-        return orderBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.PrepareDelete)
-    }
-
-    static {
-      defaultInstance = new PrepareDelete(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Crud.PrepareDelete)
-  }
-
   public interface FindOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Mysqlx.Crud.Find)
       com.google.protobuf.MessageOrBuilder {
@@ -12233,15 +4830,6 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getGroupingCriteriaOrBuilder();
-
-    /**
-     * <code>optional bool compact_metadata = 10;</code>
-     */
-    boolean hasCompactMetadata();
-    /**
-     * <code>optional bool compact_metadata = 10;</code>
-     */
-    boolean getCompactMetadata();
   }
   /**
    * Protobuf type {@code Mysqlx.Crud.Find}
@@ -12250,23 +4838,17 @@ public final class MysqlxCrud {
    * Find Documents/Rows in a Collection/Table
    * .. uml::
    *   client -&gt; server: Find
-   *   loop has more columns
-   *   server --&gt; client: ColumnMetaData
-   *   end
-   *   loop has more rows
-   *   server --&gt; client: Row
-   *   end
-   *   server --&gt; client: CursorFetchDone
-   *   server --&gt; client: StmtExecuteOk
+   *   ... one or more Resultset ...
    * :param collection: collection to insert into
    * :param data_model: datamodel that the operations refer to
    * :param projection: list of column projections that shall be returned
+   * :param args: values for parameters used in filter expression
    * :param criteria: filter criteria
    * :param limit: numbers of rows that shall be skipped and returned
    * :param order: sort-order in which the rows/document shall be returned in
    * :param grouping: column expression list for aggregation (GROUP BY)
    * :param grouping_criteria: filter criteria for aggregated groups
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` and further packets or :protobuf:msg:`Mysqlx::Error`
+   * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
   public static final class Find extends
@@ -12403,11 +4985,6 @@ public final class MysqlxCrud {
                 groupingCriteria_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000010;
-              break;
-            }
-            case 80: {
-              bitField0_ |= 0x00000020;
-              compactMetadata_ = input.readBool();
               break;
             }
             case 90: {
@@ -12709,21 +5286,6 @@ public final class MysqlxCrud {
       return groupingCriteria_;
     }
 
-    public static final int COMPACT_METADATA_FIELD_NUMBER = 10;
-    private boolean compactMetadata_;
-    /**
-     * <code>optional bool compact_metadata = 10;</code>
-     */
-    public boolean hasCompactMetadata() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
-    }
-    /**
-     * <code>optional bool compact_metadata = 10;</code>
-     */
-    public boolean getCompactMetadata() {
-      return compactMetadata_;
-    }
-
     private void initFields() {
       collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
       dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
@@ -12734,7 +5296,6 @@ public final class MysqlxCrud {
       order_ = java.util.Collections.emptyList();
       grouping_ = java.util.Collections.emptyList();
       groupingCriteria_ = com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance();
-      compactMetadata_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -12823,9 +5384,6 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeMessage(9, groupingCriteria_);
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeBool(10, compactMetadata_);
-      }
       for (int i = 0; i < args_.size(); i++) {
         output.writeMessage(11, args_.get(i));
       }
@@ -12869,10 +5427,6 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(9, groupingCriteria_);
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(10, compactMetadata_);
       }
       for (int i = 0; i < args_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -12963,23 +5517,17 @@ public final class MysqlxCrud {
      * Find Documents/Rows in a Collection/Table
      * .. uml::
      *   client -&gt; server: Find
-     *   loop has more columns
-     *   server --&gt; client: ColumnMetaData
-     *   end
-     *   loop has more rows
-     *   server --&gt; client: Row
-     *   end
-     *   server --&gt; client: CursorFetchDone
-     *   server --&gt; client: StmtExecuteOk
+     *   ... one or more Resultset ...
      * :param collection: collection to insert into
      * :param data_model: datamodel that the operations refer to
      * :param projection: list of column projections that shall be returned
+     * :param args: values for parameters used in filter expression
      * :param criteria: filter criteria
      * :param limit: numbers of rows that shall be skipped and returned
      * :param order: sort-order in which the rows/document shall be returned in
      * :param grouping: column expression list for aggregation (GROUP BY)
      * :param grouping_criteria: filter criteria for aggregated groups
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::ColumnMetaData` and further packets or :protobuf:msg:`Mysqlx::Error`
+     * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
     public static final class Builder extends
@@ -13076,8 +5624,6 @@ public final class MysqlxCrud {
           groupingCriteriaBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000100);
-        compactMetadata_ = false;
-        bitField0_ = (bitField0_ & ~0x00000200);
         return this;
       }
 
@@ -13178,10 +5724,6 @@ public final class MysqlxCrud {
         } else {
           result.groupingCriteria_ = groupingCriteriaBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
-          to_bitField0_ |= 0x00000020;
-        }
-        result.compactMetadata_ = compactMetadata_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -13316,9 +5858,6 @@ public final class MysqlxCrud {
         }
         if (other.hasGroupingCriteria()) {
           mergeGroupingCriteria(other.getGroupingCriteria());
-        }
-        if (other.hasCompactMetadata()) {
-          setCompactMetadata(other.getCompactMetadata());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -14856,38 +7395,6 @@ public final class MysqlxCrud {
         return groupingCriteriaBuilder_;
       }
 
-      private boolean compactMetadata_ ;
-      /**
-       * <code>optional bool compact_metadata = 10;</code>
-       */
-      public boolean hasCompactMetadata() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
-      }
-      /**
-       * <code>optional bool compact_metadata = 10;</code>
-       */
-      public boolean getCompactMetadata() {
-        return compactMetadata_;
-      }
-      /**
-       * <code>optional bool compact_metadata = 10;</code>
-       */
-      public Builder setCompactMetadata(boolean value) {
-        bitField0_ |= 0x00000200;
-        compactMetadata_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool compact_metadata = 10;</code>
-       */
-      public Builder clearCompactMetadata() {
-        bitField0_ = (bitField0_ & ~0x00000200);
-        compactMetadata_ = false;
-        onChanged();
-        return this;
-      }
-
       // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.Find)
     }
 
@@ -14982,7 +7489,7 @@ public final class MysqlxCrud {
    * :param data_model: datamodel that the operations refer to
    * :param projection: name of the columns to insert data into
    * :param row: set of rows to insert into the collection/table
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or :protobuf:msg:`Mysqlx::Error`
+   * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
   public static final class Insert extends
@@ -15124,27 +7631,27 @@ public final class MysqlxCrud {
         com.google.protobuf.MessageOrBuilder {
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+      java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> 
           getFieldList();
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index);
+      com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField(int index);
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
       int getFieldCount();
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+      java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
           getFieldOrBuilderList();
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
+      com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder(
           int index);
     }
     /**
@@ -15201,10 +7708,10 @@ public final class MysqlxCrud {
               }
               case 10: {
                 if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                  field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                  field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>();
                   mutable_bitField0_ |= 0x00000001;
                 }
-                field_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+                field_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.PARSER, extensionRegistry));
                 break;
               }
             }
@@ -15250,36 +7757,36 @@ public final class MysqlxCrud {
       }
 
       public static final int FIELD_FIELD_NUMBER = 1;
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> field_;
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> field_;
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getFieldList() {
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> getFieldList() {
         return field_;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
           getFieldOrBuilderList() {
         return field_;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
       public int getFieldCount() {
         return field_.size();
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index) {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField(int index) {
         return field_.get(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+       * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder(
           int index) {
         return field_.get(index);
       }
@@ -15556,22 +8063,22 @@ public final class MysqlxCrud {
         }
         private int bitField0_;
 
-        private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> field_ =
+        private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> field_ =
           java.util.Collections.emptyList();
         private void ensureFieldIsMutable() {
           if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-            field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(field_);
+            field_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr>(field_);
             bitField0_ |= 0x00000001;
            }
         }
 
         private com.google.protobuf.RepeatedFieldBuilder<
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> fieldBuilder_;
+            com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> fieldBuilder_;
 
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getFieldList() {
+        public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> getFieldList() {
           if (fieldBuilder_ == null) {
             return java.util.Collections.unmodifiableList(field_);
           } else {
@@ -15579,7 +8086,7 @@ public final class MysqlxCrud {
           }
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public int getFieldCount() {
           if (fieldBuilder_ == null) {
@@ -15589,9 +8096,9 @@ public final class MysqlxCrud {
           }
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getField(int index) {
+        public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr getField(int index) {
           if (fieldBuilder_ == null) {
             return field_.get(index);
           } else {
@@ -15599,10 +8106,10 @@ public final class MysqlxCrud {
           }
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder setField(
-            int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+            int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
           if (fieldBuilder_ == null) {
             if (value == null) {
               throw new NullPointerException();
@@ -15616,10 +8123,10 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder setField(
-            int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+            int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
           if (fieldBuilder_ == null) {
             ensureFieldIsMutable();
             field_.set(index, builderForValue.build());
@@ -15630,9 +8137,9 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public Builder addField(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+        public Builder addField(com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
           if (fieldBuilder_ == null) {
             if (value == null) {
               throw new NullPointerException();
@@ -15646,10 +8153,10 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder addField(
-            int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+            int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr value) {
           if (fieldBuilder_ == null) {
             if (value == null) {
               throw new NullPointerException();
@@ -15663,10 +8170,10 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder addField(
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+            com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
           if (fieldBuilder_ == null) {
             ensureFieldIsMutable();
             field_.add(builderForValue.build());
@@ -15677,10 +8184,10 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder addField(
-            int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+            int index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder builderForValue) {
           if (fieldBuilder_ == null) {
             ensureFieldIsMutable();
             field_.add(index, builderForValue.build());
@@ -15691,10 +8198,10 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder addAllField(
-            java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+            java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr> values) {
           if (fieldBuilder_ == null) {
             ensureFieldIsMutable();
             com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -15706,7 +8213,7 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder clearField() {
           if (fieldBuilder_ == null) {
@@ -15719,7 +8226,7 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
         public Builder removeField(int index) {
           if (fieldBuilder_ == null) {
@@ -15732,16 +8239,16 @@ public final class MysqlxCrud {
           return this;
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getFieldBuilder(
+        public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder getFieldBuilder(
             int index) {
           return getFieldFieldBuilder().getBuilder(index);
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getFieldOrBuilder(
+        public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder(
             int index) {
           if (fieldBuilder_ == null) {
             return field_.get(index);  } else {
@@ -15749,9 +8256,9 @@ public final class MysqlxCrud {
           }
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+        public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
              getFieldOrBuilderList() {
           if (fieldBuilder_ != null) {
             return fieldBuilder_.getMessageOrBuilderList();
@@ -15760,33 +8267,33 @@ public final class MysqlxCrud {
           }
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addFieldBuilder() {
+        public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder addFieldBuilder() {
           return getFieldFieldBuilder().addBuilder(
-              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+              com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance());
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addFieldBuilder(
+        public com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder addFieldBuilder(
             int index) {
           return getFieldFieldBuilder().addBuilder(
-              index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+              index, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.getDefaultInstance());
         }
         /**
-         * <code>repeated .Mysqlx.Datatypes.Any field = 1;</code>
+         * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
          */
-        public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+        public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder> 
              getFieldBuilderList() {
           return getFieldFieldBuilder().getBuilderList();
         }
         private com.google.protobuf.RepeatedFieldBuilder<
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+            com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder> 
             getFieldFieldBuilder() {
           if (fieldBuilder_ == null) {
             fieldBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-                com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+                com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder>(
                     field_,
                     ((bitField0_ & 0x00000001) == 0x00000001),
                     getParentForChildren(),
@@ -16077,7 +8584,7 @@ public final class MysqlxCrud {
      * :param data_model: datamodel that the operations refer to
      * :param projection: name of the columns to insert data into
      * :param row: set of rows to insert into the collection/table
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or :protobuf:msg:`Mysqlx::Error`
+     * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
     public static final class Builder extends
@@ -17000,25 +9507,25 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
         getArgsList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     int getArgsCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index);
@@ -17092,10 +9599,11 @@ public final class MysqlxCrud {
    * :param collection: collection to change
    * :param data_model: datamodel that the operations refer to
    * :param criteria: filter expression to match rows that the operations will apply on
+   * :param args: values for parameters used in filter expression
    * :param limit: limits the number of rows to match
    * :param order: specifies order of matched rows
    * :param operation: list of operations to be applied. Valid operations will depend on the data_model.
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::ExecuteStmtOk` or :protobuf:msg:`Mysqlx::Error`
+   * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
   public static final class Update extends
@@ -17213,7 +9721,7 @@ public final class MysqlxCrud {
               operation_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.PARSER, extensionRegistry));
               break;
             }
-            case 90: {
+            case 66: {
               if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
                 args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
                 mutable_bitField0_ |= 0x00000008;
@@ -17327,35 +9835,35 @@ public final class MysqlxCrud {
       return criteria_;
     }
 
-    public static final int ARGS_FIELD_NUMBER = 11;
+    public static final int ARGS_FIELD_NUMBER = 8;
     private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
       return args_.get(index);
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index) {
@@ -17532,7 +10040,7 @@ public final class MysqlxCrud {
         output.writeMessage(7, operation_.get(i));
       }
       for (int i = 0; i < args_.size(); i++) {
-        output.writeMessage(11, args_.get(i));
+        output.writeMessage(8, args_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -17569,7 +10077,7 @@ public final class MysqlxCrud {
       }
       for (int i = 0; i < args_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(11, args_.get(i));
+          .computeMessageSize(8, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -17657,10 +10165,11 @@ public final class MysqlxCrud {
      * :param collection: collection to change
      * :param data_model: datamodel that the operations refer to
      * :param criteria: filter expression to match rows that the operations will apply on
+     * :param args: values for parameters used in filter expression
      * :param limit: limits the number of rows to match
      * :param order: specifies order of matched rows
      * :param operation: list of operations to be applied. Valid operations will depend on the data_model.
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::ExecuteStmtOk` or :protobuf:msg:`Mysqlx::Error`
+     * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
     public static final class Builder extends
@@ -18277,7 +10786,7 @@ public final class MysqlxCrud {
           com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
         if (argsBuilder_ == null) {
@@ -18287,7 +10796,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public int getArgsCount() {
         if (argsBuilder_ == null) {
@@ -18297,7 +10806,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
         if (argsBuilder_ == null) {
@@ -18307,7 +10816,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder setArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
@@ -18324,7 +10833,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder setArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -18338,7 +10847,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
         if (argsBuilder_ == null) {
@@ -18354,7 +10863,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder addArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
@@ -18371,7 +10880,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder addArgs(
           com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -18385,7 +10894,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder addArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -18399,7 +10908,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder addAllArgs(
           java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
@@ -18414,7 +10923,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder clearArgs() {
         if (argsBuilder_ == null) {
@@ -18427,7 +10936,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public Builder removeArgs(int index) {
         if (argsBuilder_ == null) {
@@ -18440,14 +10949,14 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
           int index) {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
           int index) {
@@ -18457,7 +10966,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
            getArgsOrBuilderList() {
@@ -18468,14 +10977,14 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
         return getArgsFieldBuilder().addBuilder(
             com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
           int index) {
@@ -18483,7 +10992,7 @@ public final class MysqlxCrud {
             index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
        */
       public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
            getArgsBuilderList() {
@@ -19151,25 +11660,25 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
         getArgsList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     int getArgsCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index);
@@ -19218,7 +11727,11 @@ public final class MysqlxCrud {
    * Delete documents/rows from a Collection/Table
    * :param collection: collection to change
    * :param data_model: datamodel that the operations refer to
-   * :Returns: :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or :protobuf:msg:`Mysqlx::Error
+   * :param criteria: filter expression to match rows that the operations will apply on
+   * :param args: values for parameters used in filter expression
+   * :param limit: limits the number of rows to match
+   * :param order: specifies order of matched rows
+   * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
   public static final class Delete extends
@@ -19328,7 +11841,7 @@ public final class MysqlxCrud {
               order_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order.PARSER, extensionRegistry));
               break;
             }
-            case 90: {
+            case 50: {
               if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
                 args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
                 mutable_bitField0_ |= 0x00000008;
@@ -19439,35 +11952,35 @@ public final class MysqlxCrud {
       return criteria_;
     }
 
-    public static final int ARGS_FIELD_NUMBER = 11;
+    public static final int ARGS_FIELD_NUMBER = 6;
     private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
       return args_.get(index);
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
      */
     public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index) {
@@ -19599,7 +12112,7 @@ public final class MysqlxCrud {
         output.writeMessage(5, order_.get(i));
       }
       for (int i = 0; i < args_.size(); i++) {
-        output.writeMessage(11, args_.get(i));
+        output.writeMessage(6, args_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -19632,7 +12145,7 @@ public final class MysqlxCrud {
       }
       for (int i = 0; i < args_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(11, args_.get(i));
+          .computeMessageSize(6, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -19719,7 +12232,11 @@ public final class MysqlxCrud {
      * Delete documents/rows from a Collection/Table
      * :param collection: collection to change
      * :param data_model: datamodel that the operations refer to
-     * :Returns: :protobuf:msg:`Mysqlx.Sql::StmtExecuteOk` or :protobuf:msg:`Mysqlx::Error
+     * :param criteria: filter expression to match rows that the operations will apply on
+     * :param args: values for parameters used in filter expression
+     * :param limit: limits the number of rows to match
+     * :param order: specifies order of matched rows
+     * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
     public static final class Builder extends
@@ -20288,7 +12805,7 @@ public final class MysqlxCrud {
           com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
         if (argsBuilder_ == null) {
@@ -20298,7 +12815,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public int getArgsCount() {
         if (argsBuilder_ == null) {
@@ -20308,7 +12825,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
         if (argsBuilder_ == null) {
@@ -20318,7 +12835,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder setArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
@@ -20335,7 +12852,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder setArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -20349,7 +12866,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
         if (argsBuilder_ == null) {
@@ -20365,7 +12882,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder addArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
@@ -20382,7 +12899,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder addArgs(
           com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -20396,7 +12913,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder addArgs(
           int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
@@ -20410,7 +12927,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder addAllArgs(
           java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
@@ -20425,7 +12942,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder clearArgs() {
         if (argsBuilder_ == null) {
@@ -20438,7 +12955,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public Builder removeArgs(int index) {
         if (argsBuilder_ == null) {
@@ -20451,14 +12968,14 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
           int index) {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
           int index) {
@@ -20468,7 +12985,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
            getArgsOrBuilderList() {
@@ -20479,14 +12996,14 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
         return getArgsFieldBuilder().addBuilder(
             com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
           int index) {
@@ -20494,7 +13011,7 @@ public final class MysqlxCrud {
             index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
        */
       public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
            getArgsBuilderList() {
@@ -20913,26 +13430,6 @@ public final class MysqlxCrud {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Crud_UpdateOperation_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Crud_PrepareFind_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Crud_PrepareFind_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Crud_PrepareInsert_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Crud_PrepareInsert_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Crud_PrepareUpdate_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Crud_PrepareUpdate_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Crud_PrepareDelete_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Mysqlx_Crud_PrepareDelete_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Crud_Find_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -20970,79 +13467,51 @@ public final class MysqlxCrud {
       "_expr.proto\032\026mysqlx_datatypes.proto\"[\n\006C" +
       "olumn\022\014\n\004name\030\001 \001(\t\022\r\n\005alias\030\002 \001(\t\0224\n\rdo" +
       "cument_path\030\003 \003(\0132\035.Mysqlx.Expr.Document" +
-      "PathItem\"y\n\nProjection\022!\n\006source\030\001 \002(\0132\021" +
-      ".Mysqlx.Expr.Expr\022\024\n\014target_alias\030\002 \001(\t\022" +
-      "2\n\013target_path\030\003 \003(\0132\035.Mysqlx.Expr.Docum" +
-      "entPathItem\"*\n\nCollection\022\014\n\004name\030\001 \002(\t\022" +
-      "\016\n\006schema\030\002 \001(\t\"*\n\005Limit\022\021\n\trow_count\030\001 " +
-      "\002(\004\022\016\n\006offset\030\002 \001(\004\"\177\n\005Order\022 \n\005field\030\001 ",
-      "\002(\0132\021.Mysqlx.Expr.Expr\0224\n\tdirection\030\002 \001(" +
-      "\0162\034.Mysqlx.Crud.Order.Direction:\003ASC\"\036\n\t" +
-      "Direction\022\007\n\003ASC\020\001\022\010\n\004DESC\020\002\"\232\002\n\017UpdateO" +
-      "peration\022-\n\006source\030\001 \002(\0132\035.Mysqlx.Expr.C" +
-      "olumnIdentifier\022:\n\toperation\030\002 \002(\0162\'.Mys" +
-      "qlx.Crud.UpdateOperation.UpdateType\022 \n\005v" +
-      "alue\030\003 \001(\0132\021.Mysqlx.Expr.Expr\"z\n\nUpdateT" +
-      "ype\022\007\n\003SET\020\001\022\017\n\013ITEM_REMOVE\020\002\022\014\n\010ITEM_SE" +
-      "T\020\003\022\020\n\014ITEM_REPLACE\020\004\022\016\n\nITEM_MERGE\020\005\022\020\n" +
-      "\014ARRAY_INSERT\020\006\022\020\n\014ARRAY_APPEND\020\007\"\342\002\n\013Pr",
-      "epareFind\022\017\n\007stmt_id\030\001 \002(\r\022+\n\ncollection" +
-      "\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_" +
-      "model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022+\n\np" +
-      "rojection\030\004 \003(\0132\027.Mysqlx.Crud.Projection" +
-      "\022#\n\010criteria\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022!\n" +
-      "\005limit\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005orde" +
-      "r\030\007 \003(\0132\022.Mysqlx.Crud.Order\022#\n\010grouping\030" +
-      "\010 \003(\0132\021.Mysqlx.Expr.Expr\022,\n\021grouping_cri" +
-      "teria\030\t \001(\0132\021.Mysqlx.Expr.Expr\"\242\001\n\rPrepa" +
-      "reInsert\022\017\n\007stmt_id\030\001 \002(\r\022+\n\ncollection\030",
-      "\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_m" +
-      "odel\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022\'\n\npr" +
-      "ojection\030\004 \003(\0132\023.Mysqlx.Crud.Column\"\225\002\n\r" +
-      "PrepareUpdate\022\017\n\007stmt_id\030\001 \002(\r\022+\n\ncollec" +
-      "tion\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\nd" +
-      "ata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022" +
-      "#\n\010criteria\030\004 \002(\0132\021.Mysqlx.Expr.Expr\022!\n\005" +
-      "limit\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order" +
-      "\030\006 \003(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030" +
-      "\007 \003(\0132\034.Mysqlx.Crud.UpdateOperation\"\344\001\n\r",
-      "PrepareDelete\022\017\n\007stmt_id\030\001 \002(\r\022+\n\ncollec" +
-      "tion\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\nd" +
-      "ata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022" +
-      "#\n\010criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022!\n\005" +
-      "limit\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order" +
-      "\030\006 \003(\0132\022.Mysqlx.Crud.Order\"\211\003\n\004Find\022+\n\nc" +
-      "ollection\030\002 \002(\0132\027.Mysqlx.Crud.Collection" +
-      "\022*\n\ndata_model\030\003 \001(\0162\026.Mysqlx.Crud.DataM" +
-      "odel\022+\n\nprojection\030\004 \003(\0132\027.Mysqlx.Crud.P" +
-      "rojection\022#\n\010criteria\030\005 \001(\0132\021.Mysqlx.Exp",
-      "r.Expr\022#\n\004args\030\013 \003(\0132\025.Mysqlx.Datatypes." +
-      "Any\022!\n\005limit\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!" +
-      "\n\005order\030\007 \003(\0132\022.Mysqlx.Crud.Order\022#\n\010gro" +
-      "uping\030\010 \003(\0132\021.Mysqlx.Expr.Expr\022,\n\021groupi" +
-      "ng_criteria\030\t \001(\0132\021.Mysqlx.Expr.Expr\022\030\n\020" +
-      "compact_metadata\030\n \001(\010\"\347\001\n\006Insert\022+\n\ncol" +
-      "lection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022*" +
-      "\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMod" +
-      "el\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud.Col" +
-      "umn\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert.Ty",
-      "pedRow\0320\n\010TypedRow\022$\n\005field\030\001 \003(\0132\025.Mysq" +
-      "lx.Datatypes.Any\"\242\002\n\006Update\022+\n\ncollectio" +
-      "n\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata" +
-      "_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010" +
-      "criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004arg" +
+      "PathItem\">\n\nProjection\022!\n\006source\030\001 \002(\0132\021" +
+      ".Mysqlx.Expr.Expr\022\r\n\005alias\030\002 \001(\t\"*\n\nColl" +
+      "ection\022\014\n\004name\030\001 \002(\t\022\016\n\006schema\030\002 \001(\t\"*\n\005" +
+      "Limit\022\021\n\trow_count\030\001 \002(\004\022\016\n\006offset\030\002 \001(\004" +
+      "\"~\n\005Order\022\037\n\004expr\030\001 \002(\0132\021.Mysqlx.Expr.Ex" +
+      "pr\0224\n\tdirection\030\002 \001(\0162\034.Mysqlx.Crud.Orde",
+      "r.Direction:\003ASC\"\036\n\tDirection\022\007\n\003ASC\020\001\022\010" +
+      "\n\004DESC\020\002\"\232\002\n\017UpdateOperation\022-\n\006source\030\001" +
+      " \002(\0132\035.Mysqlx.Expr.ColumnIdentifier\022:\n\to" +
+      "peration\030\002 \002(\0162\'.Mysqlx.Crud.UpdateOpera" +
+      "tion.UpdateType\022 \n\005value\030\003 \001(\0132\021.Mysqlx." +
+      "Expr.Expr\"z\n\nUpdateType\022\007\n\003SET\020\001\022\017\n\013ITEM" +
+      "_REMOVE\020\002\022\014\n\010ITEM_SET\020\003\022\020\n\014ITEM_REPLACE\020" +
+      "\004\022\016\n\nITEM_MERGE\020\005\022\020\n\014ARRAY_INSERT\020\006\022\020\n\014A" +
+      "RRAY_APPEND\020\007\"\357\002\n\004Find\022+\n\ncollection\030\002 \002" +
+      "(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mode",
+      "l\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022+\n\nproje" +
+      "ction\030\004 \003(\0132\027.Mysqlx.Crud.Projection\022#\n\010" +
+      "criteria\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004arg" +
       "s\030\013 \003(\0132\025.Mysqlx.Datatypes.Any\022!\n\005limit\030" +
-      "\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003(\013" +
-      "2\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(\0132" +
-      "\034.Mysqlx.Crud.UpdateOperation\"\361\001\n\006Delete" +
-      "\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Colle",
-      "ction\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud." +
-      "DataModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Exp" +
-      "r.Expr\022#\n\004args\030\013 \003(\0132\025.Mysqlx.Datatypes." +
-      "Any\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022!" +
-      "\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.Order*$\n\tDat" +
-      "aModel\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002B\036\n\034com.m" +
-      "ysql.cj.mysqlx.protobuf"
+      "\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 \003(\013" +
+      "2\022.Mysqlx.Crud.Order\022#\n\010grouping\030\010 \003(\0132\021" +
+      ".Mysqlx.Expr.Expr\022,\n\021grouping_criteria\030\t" +
+      " \001(\0132\021.Mysqlx.Expr.Expr\"\343\001\n\006Insert\022+\n\nco" +
+      "llection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022" +
+      "*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMo",
+      "del\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud.Co" +
+      "lumn\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert.T" +
+      "ypedRow\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021.Mys" +
+      "qlx.Expr.Expr\"\242\002\n\006Update\022+\n\ncollection\030\002" +
+      " \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mo" +
+      "del\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010cri" +
+      "teria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004args\030\010" +
+      " \003(\0132\025.Mysqlx.Datatypes.Any\022!\n\005limit\030\005 \001" +
+      "(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003(\0132\022." +
+      "Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(\0132\034.M",
+      "ysqlx.Crud.UpdateOperation\"\361\001\n\006Delete\022+\n" +
+      "\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Collecti" +
+      "on\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Dat" +
+      "aModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Expr.E" +
+      "xpr\022#\n\004args\030\006 \003(\0132\025.Mysqlx.Datatypes.Any" +
+      "\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005o" +
+      "rder\030\005 \003(\0132\022.Mysqlx.Crud.Order*$\n\tDataMo" +
+      "del\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002B\036\n\034com.mysq" +
+      "l.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -21069,7 +13538,7 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Projection_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Projection_descriptor,
-        new java.lang.String[] { "Source", "TargetAlias", "TargetPath", });
+        new java.lang.String[] { "Source", "Alias", });
     internal_static_Mysqlx_Crud_Collection_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_Mysqlx_Crud_Collection_fieldAccessorTable = new
@@ -21087,45 +13556,21 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Order_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Order_descriptor,
-        new java.lang.String[] { "Field", "Direction", });
+        new java.lang.String[] { "Expr", "Direction", });
     internal_static_Mysqlx_Crud_UpdateOperation_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_Mysqlx_Crud_UpdateOperation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_UpdateOperation_descriptor,
         new java.lang.String[] { "Source", "Operation", "Value", });
-    internal_static_Mysqlx_Crud_PrepareFind_descriptor =
-      getDescriptor().getMessageTypes().get(6);
-    internal_static_Mysqlx_Crud_PrepareFind_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Crud_PrepareFind_descriptor,
-        new java.lang.String[] { "StmtId", "Collection", "DataModel", "Projection", "Criteria", "Limit", "Order", "Grouping", "GroupingCriteria", });
-    internal_static_Mysqlx_Crud_PrepareInsert_descriptor =
-      getDescriptor().getMessageTypes().get(7);
-    internal_static_Mysqlx_Crud_PrepareInsert_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Crud_PrepareInsert_descriptor,
-        new java.lang.String[] { "StmtId", "Collection", "DataModel", "Projection", });
-    internal_static_Mysqlx_Crud_PrepareUpdate_descriptor =
-      getDescriptor().getMessageTypes().get(8);
-    internal_static_Mysqlx_Crud_PrepareUpdate_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Crud_PrepareUpdate_descriptor,
-        new java.lang.String[] { "StmtId", "Collection", "DataModel", "Criteria", "Limit", "Order", "Operation", });
-    internal_static_Mysqlx_Crud_PrepareDelete_descriptor =
-      getDescriptor().getMessageTypes().get(9);
-    internal_static_Mysqlx_Crud_PrepareDelete_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_Mysqlx_Crud_PrepareDelete_descriptor,
-        new java.lang.String[] { "StmtId", "Collection", "DataModel", "Criteria", "Limit", "Order", });
     internal_static_Mysqlx_Crud_Find_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_Mysqlx_Crud_Find_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Find_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Args", "Limit", "Order", "Grouping", "GroupingCriteria", "CompactMetadata", });
+        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Args", "Limit", "Order", "Grouping", "GroupingCriteria", });
     internal_static_Mysqlx_Crud_Insert_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_Mysqlx_Crud_Insert_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Insert_descriptor,
@@ -21137,13 +13582,13 @@ public final class MysqlxCrud {
         internal_static_Mysqlx_Crud_Insert_TypedRow_descriptor,
         new java.lang.String[] { "Field", });
     internal_static_Mysqlx_Crud_Update_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_Mysqlx_Crud_Update_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Update_descriptor,
         new java.lang.String[] { "Collection", "DataModel", "Criteria", "Args", "Limit", "Order", "Operation", });
     internal_static_Mysqlx_Crud_Delete_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_Mysqlx_Crud_Delete_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Delete_descriptor,
