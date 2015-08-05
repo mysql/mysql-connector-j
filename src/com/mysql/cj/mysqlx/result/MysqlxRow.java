@@ -24,22 +24,14 @@
 package com.mysql.cj.mysqlx.result;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;

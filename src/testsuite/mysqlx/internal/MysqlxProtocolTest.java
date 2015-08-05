@@ -428,7 +428,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDisableNotices("warnings");
         this.protocol.readStatementExecuteOk();
 
-        this.protocol.sendSqlStatement("select 1/0");
+        this.protocol.sendSqlStatement("select CAST('abc' as CHAR(1))");
         this.protocol.getRowInputStream(this.protocol.readMetadata(DEFAULT_METADATA_CHARSET)).next();
         StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
         assertEquals(0, ok.getWarnings().size());
@@ -436,7 +436,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendEnableNotices("warnings");
         this.protocol.readStatementExecuteOk();
 
-        this.protocol.sendSqlStatement("select 1/0");
+        this.protocol.sendSqlStatement("select CAST('abc' as CHAR(1))");
         this.protocol.getRowInputStream(this.protocol.readMetadata(DEFAULT_METADATA_CHARSET)).next();
         ok = this.protocol.readStatementExecuteOk();
         assertEquals(1, ok.getWarnings().size());

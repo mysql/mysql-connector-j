@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
@@ -35,6 +36,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.FunctionCall;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Identifier;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 
 /**
@@ -50,17 +52,17 @@ public class ExprUnparser {
         infixOperators.add("or");
     }
 
-    /**
-     * Convert an "Any" (scalar) to a string.
-     */
-    static String anyToString(Any e) {
-        switch (e.getType()) {
-            case SCALAR:
-                return scalarToString(e.getScalar());
-            default:
-                throw new IllegalArgumentException("Unknown type tag: " + e.getType());
-        }
-    }
+    // /**
+    //  * Convert an "Any" (scalar) to a string.
+    //  */
+    // static String anyToString(Any e) {
+    //     switch (e.getType()) {
+    //         case SCALAR:
+    //             return scalarToString(e.getScalar());
+    //         default:
+    //             throw new IllegalArgumentException("Unknown type tag: " + e.getType());
+    //     }
+    // }
 
     /**
      * Scalar to string.
@@ -194,6 +196,19 @@ public class ExprUnparser {
         }
     }
 
+    static String objectToString(Object o) {
+        String fields = o.getFldList().stream()
+                .map(f -> new StringBuilder()
+                        .append("'")
+                        .append(f.getKey())
+                        .append("'")
+                        .append(":")
+                        .append(exprToString(f.getValue()))
+                        .toString())
+                .collect(Collectors.joining(", "));
+        return new StringBuilder("{").append(fields).append("}").toString();
+    }
+
     /**
      * Escape a string literal.
      */
@@ -218,7 +233,7 @@ public class ExprUnparser {
     public static String exprToString(Expr e) {
         switch (e.getType()) {
             case LITERAL:
-                return anyToString(e.getConstant());
+                return scalarToString(e.getLiteral());
             case IDENT:
                 return columnIdentifierToString(e.getIdentifier());
             case FUNC_CALL:
@@ -229,6 +244,8 @@ public class ExprUnparser {
                 return "@" + quoteIdentifier(e.getVariable());
             case PLACEHOLDER:
                 return ":" + e.getPosition();
+            case OBJECT:
+                return objectToString(e.getObject());
             default:
                 throw new IllegalArgumentException("Unknown type tag: " + e.getType());
         }

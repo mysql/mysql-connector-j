@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -33,7 +35,6 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
@@ -41,6 +42,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object.ObjectField;
 
 /**
  * Expression parser tests.
@@ -200,8 +203,7 @@ public class ExprParserTest {
         assertEquals("a", identA.getIdentifier().getName());
         Expr literalXyz = andLeft.getOperator().getParam(1);
         assertEquals(Expr.Type.LITERAL, literalXyz.getType());
-        assertEquals(Any.Type.SCALAR, literalXyz.getConstant().getType());
-        Scalar scalarXyz = literalXyz.getConstant().getScalar();
+        Scalar scalarXyz = literalXyz.getLiteral();
         assertEquals(Scalar.Type.V_STRING, scalarXyz.getType());
         assertEquals("xyz", scalarXyz.getVString().getValue().toStringUtf8());
 
@@ -220,8 +222,8 @@ public class ExprParserTest {
         assertEquals(DocumentPathItem.Type.MEMBER, countId.getDocumentPath(0).getType());
         assertEquals("count", countId.getDocumentPath(0).getValue());
         Expr addition = andRight.getOperator().getParam(1);
-        Scalar addLeftScalar = addition.getOperator().getParam(0).getConstant().getScalar();
-        Scalar addRightScalar = addition.getOperator().getParam(1).getConstant().getScalar();
+        Scalar addLeftScalar = addition.getOperator().getParam(0).getLiteral();
+        Scalar addRightScalar = addition.getOperator().getParam(1).getLiteral();
         assertEquals(Expr.Type.OPERATOR, addition.getType());
         assertEquals("+", addition.getOperator().getName());
         assertEquals(2, addition.getOperator().getParamCount());
@@ -239,11 +241,11 @@ public class ExprParserTest {
         assertEquals(2, orderSpec.size());
         Order o1 = orderSpec.get(0);
         assertFalse(o1.hasDirection());
-        assertEquals("a", ExprUnparser.exprToString(o1.getField()));
+        assertEquals("a", ExprUnparser.exprToString(o1.getExpr()));
         Order o2 = orderSpec.get(1);
         assertTrue(o2.hasDirection());
         assertEquals(Order.Direction.DESC, o2.getDirection());
-        assertEquals("b", ExprUnparser.exprToString(o2.getField()));
+        assertEquals("b", ExprUnparser.exprToString(o2.getExpr()));
     }
 
     @Test
@@ -253,14 +255,14 @@ public class ExprParserTest {
         Order o1 = orderSpec.get(0);
         assertTrue(o1.hasDirection());
         assertEquals(Order.Direction.DESC, o1.getDirection());
-        assertEquals("field not in(\"a\", func(\"b\", 2.0), \"c\")", ExprUnparser.exprToString(o1.getField()));
+        assertEquals("field not in(\"a\", func(\"b\", 2.0), \"c\")", ExprUnparser.exprToString(o1.getExpr()));
         Order o2 = orderSpec.get(1);
         assertFalse(o2.hasDirection());
-        assertEquals("(1 - a@**[0].*)", ExprUnparser.exprToString(o2.getField()));
+        assertEquals("(1 - a@**[0].*)", ExprUnparser.exprToString(o2.getExpr()));
         Order o3 = orderSpec.get(2);
         assertTrue(o3.hasDirection());
         assertEquals(Order.Direction.ASC, o3.getDirection());
-        assertEquals("(((now() + @.b) + c) > 2)", ExprUnparser.exprToString(o3.getField()));
+        assertEquals("(((now() + @.b) + c) > 2)", ExprUnparser.exprToString(o3.getExpr()));
     }
 
     @Test
@@ -326,54 +328,99 @@ public class ExprParserTest {
     }
 
     @Test
+    public void testJsonLiteral() {
+        Expr e = new ExprParser("{'a':1, 'b':\"a string\"}").parse();
+
+        assertEquals("{'a':1, 'b':\"a string\"}", ExprUnparser.exprToString(e));
+
+        assertEquals(Expr.Type.OBJECT, e.getType());
+        Object o = e.getObject();
+        assertEquals(2, o.getFldCount());
+        ObjectField of;
+
+        of = o.getFld(0);
+        assertEquals("a", of.getKey());
+        e = of.getValue();
+        assertEquals(Expr.Type.LITERAL, e.getType());
+        assertEquals(1, e.getLiteral().getVSignedInt());
+
+        of = o.getFld(1);
+        assertEquals("b", of.getKey());
+        e = of.getValue();
+        assertEquals(Expr.Type.LITERAL, e.getType());
+        assertEquals("a string", e.getLiteral().getVString().getValue().toStringUtf8());
+    }
+
+    @Test
     public void testTrivialDocumentProjection() {
         List<Projection> proj;
 
-        proj = new ExprParser("@.a as @.a").parseDocumentProjection();
+        proj = new ExprParser("@.a as a").parseDocumentProjection();
         assertEquals(1, proj.size());
-        assertEquals(1, proj.get(0).getTargetPathCount());
-        List<DocumentPathItem> paths = proj.get(0).getSource().getIdentifier().getDocumentPathList();
-        assertEquals(1, paths.size());
-        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
-        assertEquals("a", paths.get(0).getValue());
+        assertTrue(proj.get(0).hasAlias());
+        assertEquals("a", proj.get(0).getAlias());
 
-        proj = new ExprParser("@.a as @.a, @.b as @.b, @.c as @.c").parseDocumentProjection();
+        proj = new ExprParser("@.a as a, @.b as b, @.c as c").parseDocumentProjection();
     }
 
     @Test
     public void testExprAsPathDocumentProjection() {
-        List<Projection> projList = new ExprParser("@.a as @.b, (1 + 1) * 100 as @.x, 2 as @[42]").parseDocumentProjection();
+        List<Projection> projList = new ExprParser("@.a as b, (1 + 1) * 100 as x, 2 as j42").parseDocumentProjection();
 
         assertEquals(3, projList.size());
 
-        // check @.a as @.b
-        Projection p = projList.get(0);
-        List<DocumentPathItem> paths = p.getSource().getIdentifier().getDocumentPathList();
+        // check @.a as b
+        Projection proj = projList.get(0);
+        List<DocumentPathItem> paths = proj.getSource().getIdentifier().getDocumentPathList();
         assertEquals(1, paths.size());
         assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
         assertEquals("a", paths.get(0).getValue());
 
-        assertEquals(1, p.getTargetPathCount());
-        paths = p.getTargetPathList();
-        assertEquals(1, paths.size());
-        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
-        assertEquals("b", paths.get(0).getValue());
+        assertEquals("b", proj.getAlias());
 
-        // check (1 + 1) * 100 as @.x
-        p = projList.get(1);
-        assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(p.getSource()));
-        paths = p.getTargetPathList();
-        assertEquals(1, paths.size());
-        assertEquals(DocumentPathItem.Type.MEMBER, paths.get(0).getType());
-        assertEquals("x", paths.get(0).getValue());
+        // check (1 + 1) * 100 as x
+        proj = projList.get(1);
+        assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(proj.getSource()));
+        assertEquals("x", proj.getAlias());
 
-        // check 2
-        p = projList.get(2);
-        paths = p.getTargetPathList();
-        assertEquals(1, p.getTargetPathCount());
-        assertEquals(DocumentPathItem.Type.ARRAY_INDEX, paths.get(0).getType());
-        assertEquals(42, paths.get(0).getIndex());
-        assertEquals("2", ExprUnparser.exprToString(p.getSource()));
+        // check 2 as j42
+        proj = projList.get(2);
+        assertEquals("2", ExprUnparser.exprToString(proj.getSource()));
+        assertEquals("j42", proj.getAlias());
+    }
+
+    @Test
+    public void testJsonConstructorAsDocumentProjection() {
+        // same as we use in find().field("{...}")
+        String projString = "{'a':'value for a', 'b':1+1, 'c'::bindvar, 'd':a@.member[22], 'e':{'nested':'doc'}}";
+        List<Projection> projList = new ExprParser(projString).parseDocumentProjection();
+        assertEquals(1, projList.size());
+        assertFalse(projList.get(0).hasAlias());
+        assertEquals(Expr.Type.OBJECT, projList.get(0).getSource().getType());
+
+        Iterator<ObjectField> fields = projList.get(0).getSource().getObject().getFldList().iterator();
+
+        Arrays.stream(new String[][] {
+                    new String[] {"a", "\"value for a\""},
+                    new String[] {"b", "(1 + 1)"},
+                    new String[] {"c", ":0"},
+                    new String[] {"d", "a@.member[22]"},
+                    new String[] {"e", "{'nested':\"doc\"}"}})
+                .forEach(pair -> {
+                            ObjectField f = fields.next();
+                            assertEquals(pair[0], f.getKey());
+                            assertEquals(pair[1], ExprUnparser.exprToString(f.getValue()));
+                        });
+        assertFalse(fields.hasNext());
+    }
+
+    @Test
+    public void testJsonExprsInDocumentProjection() {
+        // this is not a single doc as the project but multiple docs as embedded fields
+        String projString = "{'a':1} as a, {'b':2} as b";
+        List<Projection> projList = new ExprParser(projString).parseDocumentProjection();
+        assertEquals(2, projList.size());
+        // TODO: verification of remaining elements
     }
 
     @Test
@@ -411,10 +458,10 @@ public class ExprParserTest {
         List<Projection> proj = new ExprParser("a, b as c").parseTableSelectProjection();
         assertEquals(2, proj.size());
         assertEquals("a", ExprUnparser.exprToString(proj.get(0).getSource()));
-        assertFalse(proj.get(0).hasTargetAlias());
+        assertFalse(proj.get(0).hasAlias());
         assertEquals("b", ExprUnparser.exprToString(proj.get(1).getSource()));
-        assertTrue(proj.get(1).hasTargetAlias());
-        assertEquals("c", proj.get(1).getTargetAlias());
+        assertTrue(proj.get(1).hasAlias());
+        assertEquals("c", proj.get(1).getAlias());
     }
 
     @Test
@@ -424,9 +471,9 @@ public class ExprParserTest {
         assertEquals(2, proj.size());
 
         assertEquals("((1 + 1) * 100)", ExprUnparser.exprToString(proj.get(0).getSource()));
-        assertEquals("one-o-two", proj.get(0).getTargetAlias());
+        assertEquals("one-o-two", proj.get(0).getAlias());
 
-        assertEquals("a is 'a'", proj.get(1).getSource().getConstant().getScalar().getVString().getValue().toStringUtf8());
-        assertEquals("what is 'a'", proj.get(1).getTargetAlias());
+        assertEquals("a is 'a'", proj.get(1).getSource().getLiteral().getVString().getValue().toStringUtf8());
+        assertEquals("what is 'a'", proj.get(1).getAlias());
     }
 }

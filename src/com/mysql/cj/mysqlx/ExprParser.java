@@ -41,6 +41,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.FunctionCall;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Identifier;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object;
+import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object.ObjectField;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 
 // Grammar includes precedence & associativity of binary operators:
@@ -97,7 +99,7 @@ public class ExprParser {
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC, AS
+        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY
     }
 
     /**
@@ -288,6 +290,12 @@ public class ExprParser {
                         break;
                     case ']':
                         this.tokens.add(new Token(TokenType.RSQBRACKET, c));
+                        break;
+                    case '{':
+                        this.tokens.add(new Token(TokenType.LCURLY, c));
+                        break;
+                    case '}':
+                        this.tokens.add(new Token(TokenType.RCURLY, c));
                         break;
                     case '~':
                         this.tokens.add(new Token(TokenType.NEG, c));
@@ -643,6 +651,21 @@ public class ExprParser {
                 consumeToken(TokenType.RPAREN);
                 return e;
             }
+            case LCURLY: { // JSON object
+                Object.Builder builder = Object.newBuilder();
+                List<Map<String, Expr>> pairs = parseCommaSeparatedList(() -> {
+                            String key = consumeToken(TokenType.LSTRING);
+                            consumeToken(TokenType.COLON);
+                            Expr value = expr();
+                            return Collections.singletonMap(key, value);
+                        });
+                consumeToken(TokenType.RCURLY);
+                pairs.stream()
+                        .map(pair -> pair.entrySet().iterator().next())
+                        .map(e -> ObjectField.newBuilder().setKey(e.getKey()).setValue(e.getValue()))
+                        .forEach(builder::addFld);
+                return Expr.newBuilder().setType(Expr.Type.OBJECT).setObject(builder.build()).build();
+            }
             case PLUS:
             case MINUS:
                 if (currentTokenTypeEquals(TokenType.LNUM_INT) || currentTokenTypeEquals(TokenType.LNUM_DOUBLE)) {
@@ -874,9 +897,12 @@ public class ExprParser {
      */
     private <T> List<T> parseCommaSeparatedList(Supplier<T> elementParser) {
         List<T> elements = new ArrayList<>();
-        while (this.tokenPos < this.tokens.size()) {
-            if (this.tokenPos > 0) {
+        boolean first = true;
+        while (first || currentTokenTypeEquals(TokenType.COMMA)) {
+            if (!first) {
                 consumeToken(TokenType.COMMA);
+            } else {
+                first = false;
             }
             elements.add(elementParser.get());
         }
@@ -889,7 +915,7 @@ public class ExprParser {
     public List<Order> parseOrderSpec() {
         return parseCommaSeparatedList(() -> {
                     Order.Builder builder = Order.newBuilder();
-                    builder.setField(expr());
+                    builder.setExpr(expr());
                     if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
                         consumeToken(TokenType.ORDERBY_ASC);
                         builder.setDirection(Order.Direction.ASC);
@@ -910,7 +936,7 @@ public class ExprParser {
                     builder.setSource(expr());
                     if (currentTokenTypeEquals(TokenType.AS)) {
                         consumeToken(TokenType.AS);
-                        builder.setTargetAlias(consumeToken(TokenType.IDENT));
+                        builder.setAlias(consumeToken(TokenType.IDENT));
                     }
                     return builder.build();
                 });
@@ -935,13 +961,23 @@ public class ExprParser {
      * Parse a document projection which is similar to SELECT but with document paths as the target alias.
      */
     public List<Projection> parseDocumentProjection() {
+        // try to parse a single, unaliased json constructor as the document projection
+        if (this.tokens.get(0).type == TokenType.LCURLY && this.tokens.get(this.tokens.size()-1).type == TokenType.RCURLY) {
+            Expr docProjection = expr();
+            if (this.tokenPos == this.tokens.size()) {
+                return Collections.singletonList(Projection.newBuilder().setSource(docProjection).build());
+            } else {
+                // reset for list parsing
+                this.tokenPos = 0;
+            }
+        }
+        // else parse a list of aliased expressions
         return parseCommaSeparatedList(() -> {
                     Projection.Builder builder = Projection.newBuilder();
                     builder.setSource(expr());
                     // alias is not optional for document projection
                     consumeToken(TokenType.AS);
-                    consumeToken(TokenType.AT);
-                    builder.addAllTargetPath(documentPath());
+                    builder.setAlias(consumeToken(TokenType.IDENT));
                     return builder.build();
                 });
     }

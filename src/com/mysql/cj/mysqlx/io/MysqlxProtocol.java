@@ -92,15 +92,16 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData.FieldType;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
@@ -341,17 +342,11 @@ public class MysqlxProtocol implements Protocol {
         throw new NullPointerException("TODO: expose this via ServerVersion so calls look like x.getServerVersion().meetsMinimum(major, minor, subminor)");
     }
 
-    /**
-     * @todo not sure how to best expose this in a cross-protocol way. It should expose the state returned in an OK message.
-     */
     public void readOk() {
         this.reader.read(Ok.class);
     }
 
     public void readAuthenticateOk() {
-        // if (this.reader.getNextMessageClass() == AuthenticateFail.class) {
-        //     AuthenticateFail msg = this.reader.read(AuthenticateFail.class);
-        // }
         this.reader.read(AuthenticateOk.class);
     }
 
@@ -437,12 +432,13 @@ public class MysqlxProtocol implements Protocol {
      * @todo see how this feels after continued use
      */
     public StatementExecuteOk readStatementExecuteOk() {
-        if (this.reader.getNextMessageClass() == ResultFetchDone.class) {
+        if (this.reader.getNextMessageClass() == FetchDone.class) {
             // consume this
             // TODO: work out a formal model for how post-row data is handled
-            this.reader.read(ResultFetchDone.class);
+            this.reader.read(FetchDone.class);
         }
 
+        long rowsAffected = 0;
         Long lastInsertId = null;
         // TODO: don't use DevApi interfaces here!
         List<com.mysql.cj.api.x.Warning> warnings = new ArrayList<>();
@@ -460,26 +456,33 @@ public class MysqlxProtocol implements Protocol {
                     // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
                     //     // TODO: ignored for now
                     //     throw new RuntimeException("Got a session variable changed: " + notice);
-                    // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                    //     // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
-                    //     Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
-                    //     SessionStateChanged msg = parser.parseFrom(notice.getPayload());
-                    //     switch (msg.getParam()) {
-                    //         case CURRENT_SCHEMA:
-                    //         case ACCOUNT_EXPIRED:
-                    //         case GENERATED_INSERT_ID:
-                    //             // TODO:
-                    //         case ROWS_AFFECTED:
-                    //             // TODO:
-                    //         case ROWS_FOUND:
-                    //         case ROWS_MATCHED:
-                    //         case TRX_COMMITTED:
-                    //         case TRX_ROLLEDBACK:
-                    //             // TODO: propagate state
-                    //         default:
-                    //             // TODO: log warning
-                    //             throw new NullPointerException("Got a SessionStateChanged notice!: type=" + msg.getParam());
-                    //     }
+                    } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                        // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
+                        Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
+                        SessionStateChanged msg = parser.parseFrom(notice.getPayload());
+                        switch (msg.getParam()) {
+                            case GENERATED_INSERT_ID:
+                                // TODO: handle > 2^63-1?
+                                lastInsertId = msg.getValue().getVUnsignedInt();
+                                break;
+                            case ROWS_AFFECTED:
+                                // TODO: handle > 2^63-1?
+                                rowsAffected = msg.getValue().getVUnsignedInt();
+                                break;
+                            case PRODUCED_MESSAGE:
+                                System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
+                                break;
+                            case CURRENT_SCHEMA:
+                            case ACCOUNT_EXPIRED:
+                            case ROWS_FOUND:
+                            case ROWS_MATCHED:
+                            case TRX_COMMITTED:
+                            case TRX_ROLLEDBACK:
+                                // TODO: propagate state
+                            default:
+                                // TODO: log warning
+                                throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
+                        }
                 } else {
                     // TODO: error?
                     throw new RuntimeException("Got an unknown notice: " + notice);
@@ -595,15 +598,13 @@ public class MysqlxProtocol implements Protocol {
             // System.err.println("length (was returning 0 for all types): " + length);
             short flags = (short) col.getFlags();
             int decimals = col.getFractionalDigits();
-            String collationName = col.getCharset();
-            // TODO: support custom character set
-            // TODO: we'll be returning to collation indexes
-            Integer collationIndex = COLLATION_NAME_TO_COLLATION_INDEX.get(collationName);
-            if (collationIndex == null) {
-                collationIndex = 0;
+            int collationIndex = 0;
+            if (col.hasCollation()) {
+                // TODO: support custom character set
+                collationIndex = (int) col.getCollation();
             }
             Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals,
-                    collationIndex, collationName);
+                    collationIndex, CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[collationIndex]);
             // flags translation
             if (col.getType().equals(FieldType.UINT)) {
                 // special case. c.f. "streaming_command_delegate.cc"
@@ -753,14 +754,15 @@ public class MysqlxProtocol implements Protocol {
     // TODO: unused
     public void sendDocInsert(String schemaName, String collectionName, String json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.buildAny(json)).build());
+        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(json)).build());
         this.writer.write(builder.build());
     }
 
     public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        List<TypedRow> rowsAsMessages = json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.buildAny(str)).build()).collect(Collectors.toList());
-        builder.addAllRow(rowsAsMessages);
+        json.stream()
+                .map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str)).build())
+                .forEach(builder::addRow);
         this.writer.write(builder.build());
     }
 

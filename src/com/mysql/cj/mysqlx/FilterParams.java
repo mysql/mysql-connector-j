@@ -39,7 +39,6 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
  * @todo better documentation
  */
 public class FilterParams {
-    // TODO: private Expr[] order? or straight to MysqlxCrud.Order? 
     private Long limit;
     private Long offset;
     private List<Order> order;

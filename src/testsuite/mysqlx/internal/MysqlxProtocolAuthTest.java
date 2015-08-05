@@ -30,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**
@@ -84,9 +86,9 @@ public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
             protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
             protocol.readAuthenticateOk();
             fail("Auth using wrong password should fail");
-        } catch (Exception ex) {
-            // TODO: need better exception type here with auth fail details?
-            assertEquals("Unexpected message class. Expected 'AuthenticateOk' but actually received 'AuthenticateFail'", ex.getMessage());
+        } catch (MysqlxError ex) {
+            assertEquals(MysqlErrorNumbers.ER_ACCESS_DENIED_ERROR, ex.getErrorCode());
+            assertEquals("ERROR 1045 (HY000) Invalid user or password", ex.getMessage());
         }
     }
 }

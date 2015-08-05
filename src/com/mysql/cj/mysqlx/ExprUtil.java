@@ -43,80 +43,74 @@ public class ExprUtil {
      * Proto-buf helper to build a LITERAL Expr with a Scalar NULL type.
      */
     public static Expr buildLiteralNullScalar() {
-        return buildLiteralExpr(nullAny());
+        return buildLiteralExpr(nullScalar());
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(double d) {
-        return buildLiteralExpr(anyOf(d));
+        return buildLiteralExpr(scalarOf(d));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(long l) {
-        return buildLiteralExpr(anyOf(l));
+        return buildLiteralExpr(scalarOf(l));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(String str) {
-        return buildLiteralExpr(anyOf(str));
+        return buildLiteralExpr(scalarOf(str));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(byte[] bytes) {
-        return buildLiteralExpr(anyOf(bytes));
+        return buildLiteralExpr(scalarOf(bytes));
     }
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type (wrapped in Any).
      */
     public static Expr buildLiteralScalar(boolean b) {
-        return buildLiteralExpr(anyOf(b));
+        return buildLiteralExpr(scalarOf(b));
     }
 
     /**
      * Wrap an Any value in a LITERAL expression.
      */
-    public static Expr buildLiteralExpr(Any any) {
-        return Expr.newBuilder().setType(Expr.Type.LITERAL).setConstant(any).build();
+    public static Expr buildLiteralExpr(Scalar scalar) {
+        return Expr.newBuilder().setType(Expr.Type.LITERAL).setLiteral(scalar).build();
     }
 
-    public static Any nullAny() {
-        Scalar nullScalar = Scalar.newBuilder().setType(Scalar.Type.V_NULL).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(nullScalar).build();
+    public static Scalar nullScalar() {
+        return Scalar.newBuilder().setType(Scalar.Type.V_NULL).build();
     }
 
-    public static Any anyOf(double d) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_DOUBLE).setVDouble(d).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    public static Scalar scalarOf(double d) {
+        return Scalar.newBuilder().setType(Scalar.Type.V_DOUBLE).setVDouble(d).build();
     }
 
-    public static Any anyOf(long l) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_SINT).setVSignedInt(l).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    public static Scalar scalarOf(long l) {
+        return Scalar.newBuilder().setType(Scalar.Type.V_SINT).setVSignedInt(l).build();
     }
 
-    public static Any anyOf(String str) {
+    public static Scalar scalarOf(String str) {
         Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+        return Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
     }
 
-    public static Any anyOf(byte[] bytes) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    public static Scalar scalarOf(byte[] bytes) {
+        return Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
     }
 
-    public static Any anyOf(boolean b) {
-        Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_BOOL).setVBool(b).build();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    public static Scalar scalarOf(boolean b) {
+        return Scalar.newBuilder().setType(Scalar.Type.V_BOOL).setVBool(b).build();
     }
 
     /**
@@ -134,9 +128,9 @@ public class ExprUtil {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }
 
-    // TODO: remove this once insert supports expressions
     public static Any argObjectToAny(Object value) {
-        return argObjectToExpr(value).getConstant();
+        Scalar s = argObjectToExpr(value).getLiteral();
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
     }
 
     public static Expr argObjectToExpr(Object value) {

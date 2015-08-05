@@ -36,11 +36,6 @@ public class UpdateSpec {
     }
 
     public UpdateSpec setValue(Object value) {
-        // TODO: this needs to be a JSON string so we need to escape & quote it properly. Alfredo says this is going to be changed so we can distinguish between
-        // JSON docs and strings
-        if (value != null && value.getClass() == String.class) {
-            value = "\"" + value + "\"";
-        }
         this.value = ExprUtil.argObjectToExpr(value);
         return this;
     }

@@ -43,15 +43,14 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionVariableChanged;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDoneMoreResultsets;
+import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateFail;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ColumnMetaData;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDone;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.ResultFetchDoneMoreResultsets;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.Row;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
@@ -92,12 +91,11 @@ public class MessageConstants {
         messageClassToParser.put(Error.class, Error.getDefaultInstance().getParserForType());
         messageClassToParser.put(Ok.class, Ok.getDefaultInstance().getParserForType());
         messageClassToParser.put(AuthenticateContinue.class, AuthenticateContinue.getDefaultInstance().getParserForType());
-        messageClassToParser.put(AuthenticateFail.class, AuthenticateFail.getDefaultInstance().getParserForType());
         messageClassToParser.put(AuthenticateOk.class, AuthenticateOk.getDefaultInstance().getParserForType());
         messageClassToParser.put(ColumnMetaData.class, ColumnMetaData.getDefaultInstance().getParserForType());
+        messageClassToParser.put(FetchDone.class, FetchDone.getDefaultInstance().getParserForType());
+        messageClassToParser.put(FetchDoneMoreResultsets.class, FetchDoneMoreResultsets.getDefaultInstance().getParserForType());
         messageClassToParser.put(Frame.class, Frame.getDefaultInstance().getParserForType());
-        messageClassToParser.put(ResultFetchDone.class, ResultFetchDone.getDefaultInstance().getParserForType());
-        messageClassToParser.put(ResultFetchDoneMoreResultsets.class, ResultFetchDoneMoreResultsets.getDefaultInstance().getParserForType());
         messageClassToParser.put(Row.class, Row.getDefaultInstance().getParserForType());
         messageClassToParser.put(StmtExecuteOk.class, StmtExecuteOk.getDefaultInstance().getParserForType());
         // embedded notices (no type tags)
@@ -107,14 +105,13 @@ public class MessageConstants {
 
         messageClassToType.put(Error.class, ServerMessages.Type.ERROR_VALUE);
         messageClassToType.put(Ok.class, ServerMessages.Type.OK_VALUE);
-        messageClassToType.put(AuthenticateFail.class, ServerMessages.Type.SESS_AUTHENTICATE_FAIL_VALUE);
         messageClassToType.put(AuthenticateContinue.class, ServerMessages.Type.SESS_AUTHENTICATE_CONTINUE_VALUE);
         messageClassToType.put(AuthenticateOk.class, ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE);
-        messageClassToType.put(ColumnMetaData.class, ServerMessages.Type.SQL_COLUMN_META_DATA_VALUE);
+        messageClassToType.put(ColumnMetaData.class, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
+        messageClassToType.put(FetchDone.class, ServerMessages.Type.RESULTSET_FETCH_DONE_VALUE);
+        messageClassToType.put(FetchDoneMoreResultsets.class, ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE);
         messageClassToType.put(Frame.class, ServerMessages.Type.NOTICE_VALUE);
-        messageClassToType.put(ResultFetchDone.class, ServerMessages.Type.SQL_RESULT_FETCH_DONE_VALUE);
-        messageClassToType.put(ResultFetchDoneMoreResultsets.class, ServerMessages.Type.SQL_RESULT_FETCH_DONE_MORE_RESULTSETS_VALUE);
-        messageClassToType.put(Row.class, ServerMessages.Type.SQL_ROW_VALUE);
+        messageClassToType.put(Row.class, ServerMessages.Type.RESULTSET_ROW_VALUE);
         messageClassToType.put(StmtExecuteOk.class, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
         for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : messageClassToType.entrySet()) {
             messageTypeToClass.put(entry.getValue(), entry.getKey());

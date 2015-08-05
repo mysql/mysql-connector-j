@@ -49,8 +49,7 @@ public class InsertParams {
     }
 
     public void addRow(List<Object> row) {
-        // TODO: move this to argObjectToExpr when protocol is updated to support it
-        this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(ExprUtil::argObjectToAny).collect(Collectors.toList())).build());
+        this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(ExprUtil::argObjectToExpr).collect(Collectors.toList())).build());
     }
 
     public Object getRows() {
@@ -62,7 +61,7 @@ public class InsertParams {
         TypedRow.Builder rowBuilder = TypedRow.newBuilder();
         fieldsAndValues.entrySet().stream().forEach(e -> {
                     this.projection.add(new ExprParser(e.getKey()).parseTableInsertField());
-                    rowBuilder.addField(ExprUtil.argObjectToAny(e.getValue()));
+                    rowBuilder.addField(ExprUtil.argObjectToExpr(e.getValue()));
                 });
         this.rows.add(rowBuilder.build()) ;
     }
