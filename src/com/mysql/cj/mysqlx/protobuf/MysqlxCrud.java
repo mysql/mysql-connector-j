@@ -4734,27 +4734,27 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> 
         getArgsList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index);
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
     int getArgsCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index);
 
     /**
@@ -4989,10 +4989,10 @@ public final class MysqlxCrud {
             }
             case 90: {
               if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>();
                 mutable_bitField0_ |= 0x00000010;
               }
-              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry));
               break;
             }
           }
@@ -5140,36 +5140,36 @@ public final class MysqlxCrud {
     }
 
     public static final int ARGS_FIELD_NUMBER = 11;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
     }
@@ -6443,22 +6443,22 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_ =
         java.util.Collections.emptyList();
       private void ensureArgsIsMutable() {
         if (!((bitField0_ & 0x00000010) == 0x00000010)) {
-          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>(args_);
           bitField0_ |= 0x00000010;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> argsBuilder_;
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
         if (argsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(args_);
         } else {
@@ -6466,7 +6466,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public int getArgsCount() {
         if (argsBuilder_ == null) {
@@ -6476,9 +6476,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);
         } else {
@@ -6486,10 +6486,10 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -6503,10 +6503,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.set(index, builderForValue.build());
@@ -6517,9 +6517,9 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -6533,10 +6533,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -6550,10 +6550,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder addArgs(
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(builderForValue.build());
@@ -6564,10 +6564,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(index, builderForValue.build());
@@ -6578,10 +6578,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder addAllArgs(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> values) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -6593,7 +6593,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder clearArgs() {
         if (argsBuilder_ == null) {
@@ -6606,7 +6606,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
       public Builder removeArgs(int index) {
         if (argsBuilder_ == null) {
@@ -6619,16 +6619,16 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder getArgsBuilder(
           int index) {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
           int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);  } else {
@@ -6636,9 +6636,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
            getArgsOrBuilderList() {
         if (argsBuilder_ != null) {
           return argsBuilder_.getMessageOrBuilderList();
@@ -6647,33 +6647,33 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder() {
         return getArgsFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder(
           int index) {
         return getArgsFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 11;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder> 
            getArgsBuilderList() {
         return getArgsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
           getArgsFieldBuilder() {
         if (argsBuilder_ == null) {
           argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder>(
                   args_,
                   ((bitField0_ & 0x00000010) == 0x00000010),
                   getParentForChildren(),
@@ -9507,27 +9507,27 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> 
         getArgsList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index);
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
     int getArgsCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index);
 
     /**
@@ -9723,10 +9723,10 @@ public final class MysqlxCrud {
             }
             case 66: {
               if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>();
                 mutable_bitField0_ |= 0x00000008;
               }
-              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry));
               break;
             }
           }
@@ -9836,36 +9836,36 @@ public final class MysqlxCrud {
     }
 
     public static final int ARGS_FIELD_NUMBER = 8;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
     }
@@ -10773,22 +10773,22 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_ =
         java.util.Collections.emptyList();
       private void ensureArgsIsMutable() {
         if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>(args_);
           bitField0_ |= 0x00000008;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> argsBuilder_;
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
         if (argsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(args_);
         } else {
@@ -10796,7 +10796,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public int getArgsCount() {
         if (argsBuilder_ == null) {
@@ -10806,9 +10806,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);
         } else {
@@ -10816,10 +10816,10 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -10833,10 +10833,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.set(index, builderForValue.build());
@@ -10847,9 +10847,9 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -10863,10 +10863,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -10880,10 +10880,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder addArgs(
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(builderForValue.build());
@@ -10894,10 +10894,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(index, builderForValue.build());
@@ -10908,10 +10908,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder addAllArgs(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> values) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -10923,7 +10923,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder clearArgs() {
         if (argsBuilder_ == null) {
@@ -10936,7 +10936,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
       public Builder removeArgs(int index) {
         if (argsBuilder_ == null) {
@@ -10949,16 +10949,16 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder getArgsBuilder(
           int index) {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
           int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);  } else {
@@ -10966,9 +10966,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
            getArgsOrBuilderList() {
         if (argsBuilder_ != null) {
           return argsBuilder_.getMessageOrBuilderList();
@@ -10977,33 +10977,33 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder() {
         return getArgsFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder(
           int index) {
         return getArgsFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 8;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder> 
            getArgsBuilderList() {
         return getArgsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
           getArgsFieldBuilder() {
         if (argsBuilder_ == null) {
           argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder>(
                   args_,
                   ((bitField0_ & 0x00000008) == 0x00000008),
                   getParentForChildren(),
@@ -11660,27 +11660,27 @@ public final class MysqlxCrud {
     com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder();
 
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> 
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> 
         getArgsList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index);
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index);
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
     int getArgsCount();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList();
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index);
 
     /**
@@ -11843,10 +11843,10 @@ public final class MysqlxCrud {
             }
             case 50: {
               if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>();
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>();
                 mutable_bitField0_ |= 0x00000008;
               }
-              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry));
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry));
               break;
             }
           }
@@ -11953,36 +11953,36 @@ public final class MysqlxCrud {
     }
 
     public static final int ARGS_FIELD_NUMBER = 6;
-    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_;
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
     /**
-     * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
-    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
     }
@@ -12792,22 +12792,22 @@ public final class MysqlxCrud {
         return criteriaBuilder_;
       }
 
-      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> args_ =
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_ =
         java.util.Collections.emptyList();
       private void ensureArgsIsMutable() {
         if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any>(args_);
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>(args_);
           bitField0_ |= 0x00000008;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> argsBuilder_;
 
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> getArgsList() {
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
         if (argsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(args_);
         } else {
@@ -12815,7 +12815,7 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public int getArgsCount() {
         if (argsBuilder_ == null) {
@@ -12825,9 +12825,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any getArgs(int index) {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);
         } else {
@@ -12835,10 +12835,10 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -12852,10 +12852,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder setArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.set(index, builderForValue.build());
@@ -12866,9 +12866,9 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -12882,10 +12882,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any value) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
         if (argsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -12899,10 +12899,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder addArgs(
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(builderForValue.build());
@@ -12913,10 +12913,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder addArgs(
-          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           args_.add(index, builderForValue.build());
@@ -12927,10 +12927,10 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder addAllArgs(
-          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any> values) {
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> values) {
         if (argsBuilder_ == null) {
           ensureArgsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -12942,7 +12942,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder clearArgs() {
         if (argsBuilder_ == null) {
@@ -12955,7 +12955,7 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
       public Builder removeArgs(int index) {
         if (argsBuilder_ == null) {
@@ -12968,16 +12968,16 @@ public final class MysqlxCrud {
         return this;
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder getArgsBuilder(
           int index) {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
           int index) {
         if (argsBuilder_ == null) {
           return args_.get(index);  } else {
@@ -12985,9 +12985,9 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
            getArgsOrBuilderList() {
         if (argsBuilder_ != null) {
           return argsBuilder_.getMessageOrBuilderList();
@@ -12996,33 +12996,33 @@ public final class MysqlxCrud {
         }
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder() {
         return getArgsFieldBuilder().addBuilder(
-            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder(
           int index) {
         return getArgsFieldBuilder().addBuilder(
-            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
-       * <code>repeated .Mysqlx.Datatypes.Any args = 6;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
        */
-      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder> 
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder> 
            getArgsBuilderList() {
         return getArgsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder> 
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
           getArgsFieldBuilder() {
         if (argsBuilder_ == null) {
           argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.AnyOrBuilder>(
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder>(
                   args_,
                   ((bitField0_ & 0x00000008) == 0x00000008),
                   getParentForChildren(),
@@ -13481,37 +13481,37 @@ public final class MysqlxCrud {
       "Expr.Expr\"z\n\nUpdateType\022\007\n\003SET\020\001\022\017\n\013ITEM" +
       "_REMOVE\020\002\022\014\n\010ITEM_SET\020\003\022\020\n\014ITEM_REPLACE\020" +
       "\004\022\016\n\nITEM_MERGE\020\005\022\020\n\014ARRAY_INSERT\020\006\022\020\n\014A" +
-      "RRAY_APPEND\020\007\"\357\002\n\004Find\022+\n\ncollection\030\002 \002" +
+      "RRAY_APPEND\020\007\"\362\002\n\004Find\022+\n\ncollection\030\002 \002" +
       "(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mode",
       "l\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022+\n\nproje" +
       "ction\030\004 \003(\0132\027.Mysqlx.Crud.Projection\022#\n\010" +
-      "criteria\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004arg" +
-      "s\030\013 \003(\0132\025.Mysqlx.Datatypes.Any\022!\n\005limit\030" +
-      "\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 \003(\013" +
-      "2\022.Mysqlx.Crud.Order\022#\n\010grouping\030\010 \003(\0132\021" +
-      ".Mysqlx.Expr.Expr\022,\n\021grouping_criteria\030\t" +
-      " \001(\0132\021.Mysqlx.Expr.Expr\"\343\001\n\006Insert\022+\n\nco" +
-      "llection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022" +
-      "*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMo",
-      "del\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud.Co" +
-      "lumn\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert.T" +
-      "ypedRow\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021.Mys" +
-      "qlx.Expr.Expr\"\242\002\n\006Update\022+\n\ncollection\030\002" +
-      " \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mo" +
-      "del\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010cri" +
-      "teria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022#\n\004args\030\010" +
-      " \003(\0132\025.Mysqlx.Datatypes.Any\022!\n\005limit\030\005 \001" +
-      "(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003(\0132\022." +
-      "Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(\0132\034.M",
-      "ysqlx.Crud.UpdateOperation\"\361\001\n\006Delete\022+\n" +
+      "criteria\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004arg" +
+      "s\030\013 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005lim" +
+      "it\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 " +
+      "\003(\0132\022.Mysqlx.Crud.Order\022#\n\010grouping\030\010 \003(" +
+      "\0132\021.Mysqlx.Expr.Expr\022,\n\021grouping_criteri" +
+      "a\030\t \001(\0132\021.Mysqlx.Expr.Expr\"\343\001\n\006Insert\022+\n" +
       "\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Collecti" +
-      "on\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Dat" +
-      "aModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Expr.E" +
-      "xpr\022#\n\004args\030\006 \003(\0132\025.Mysqlx.Datatypes.Any" +
-      "\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005o" +
-      "rder\030\005 \003(\0132\022.Mysqlx.Crud.Order*$\n\tDataMo" +
-      "del\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002B\036\n\034com.mysq" +
-      "l.cj.mysqlx.protobuf"
+      "on\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Dat",
+      "aModel\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud" +
+      ".Column\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Inser" +
+      "t.TypedRow\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021." +
+      "Mysqlx.Expr.Expr\"\245\002\n\006Update\022+\n\ncollectio" +
+      "n\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata" +
+      "_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010" +
+      "criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004arg" +
+      "s\030\010 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005lim" +
+      "it\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 " +
+      "\003(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003",
+      "(\0132\034.Mysqlx.Crud.UpdateOperation\"\364\001\n\006Del" +
+      "ete\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Co" +
+      "llection\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Cr" +
+      "ud.DataModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx." +
+      "Expr.Expr\022&\n\004args\030\006 \003(\0132\030.Mysqlx.Datatyp" +
+      "es.Scalar\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.L" +
+      "imit\022!\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.Order*" +
+      "$\n\tDataModel\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002B\036\n" +
+      "\034com.mysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
