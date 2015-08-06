@@ -103,6 +103,8 @@ public class FilterParams {
     }
 
     public void clearArgs() {
-        this.args = null;
+        if (this.args != null) {
+            this.args.clear();
+        }
     }
 }
