@@ -9,3 +9,7 @@
 *.swp
 *.DS_Store
 *.diff
+*.dot
+*.dot.png
+*.class
+.project.el
