@@ -51,9 +51,9 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 //
 // AtomicExpr: [Unary]OpExpr | Identifier | FunctionCall | '(' Expr ')'
 //
-// MulDivExpr: ^ (STAR/SLASH/MOD ^)*
+// AddSubIntervalExpr: ^ (ADD/SUB ^)* | (ADD/SUB 'INTERVAL' ^ UNIT)*
 //
-// AddSubOrIntervalExpr: ^ (ADD/SUB ^)* | (ADD/SUB 'INTERVAL' ^ UNIT)*
+// MulDivExpr: ^ (STAR/SLASH/MOD ^)*
 //
 // ShiftExpr: ^ (LSHIFT/RSHIFT ^)*
 //
@@ -89,6 +89,7 @@ public class ExprParser {
     public ExprParser(String s) {
         this.string = s;
         lex();
+        // java.util.stream.IntStream.range(0, this.tokens.size()).forEach(i -> System.err.println("[" + i + "] = " + this.tokens.get(i)));
     }
 
     /**
@@ -99,7 +100,7 @@ public class ExprParser {
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY
+        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR
     }
 
     /**
@@ -337,7 +338,10 @@ public class ExprParser {
                         }
                         break;
                     case '.':
-                        if (i + 1 < this.string.length() && Character.isDigit(this.string.charAt(i + 1))) {
+                        if (nextCharEquals(i, '*')) {
+                            i++;
+                            this.tokens.add(new Token(TokenType.DOTSTAR, ".*"));
+                        } else if (i + 1 < this.string.length() && Character.isDigit(this.string.charAt(i + 1))) {
                             i = lexNumber(i);
                         } else {
                             this.tokens.add(new Token(TokenType.DOT, c));
@@ -502,10 +506,6 @@ public class ExprParser {
         } else if (currentTokenTypeEquals(TokenType.LSTRING)) {
             consumeToken(TokenType.LSTRING);
             memberName = t.value;
-        } else if (currentTokenTypeEquals(TokenType.STAR)) {
-            consumeToken(TokenType.STAR);
-            memberName = "*";
-            return DocumentPathItem.newBuilder().setType(DocumentPathItem.Type.MEMBER_ASTERISK).build();
         } else {
             throw new WrongArgumentException("Expected token type IDENT or LSTRING in JSON path at token pos " + this.tokenPos);
         }
@@ -546,6 +546,9 @@ public class ExprParser {
         while (true) {
             if (currentTokenTypeEquals(TokenType.DOT)) {
                 items.add(docPathMember());
+            } else if (currentTokenTypeEquals(TokenType.DOTSTAR)) {
+                consumeToken(TokenType.DOTSTAR);
+                items.add(DocumentPathItem.newBuilder().setType(DocumentPathItem.Type.MEMBER_ASTERISK).build());
             } else if (currentTokenTypeEquals(TokenType.LSQBRACKET)) {
                 items.add(docPathArrayLoc());
             } else if (currentTokenTypeEquals(TokenType.DOUBLESTAR)) {
@@ -653,17 +656,18 @@ public class ExprParser {
             }
             case LCURLY: { // JSON object
                 Object.Builder builder = Object.newBuilder();
-                List<Map<String, Expr>> pairs = parseCommaSeparatedList(() -> {
-                            String key = consumeToken(TokenType.LSTRING);
-                            consumeToken(TokenType.COLON);
-                            Expr value = expr();
-                            return Collections.singletonMap(key, value);
-                        });
+                if (currentTokenTypeEquals(TokenType.LSTRING)) {
+                    parseCommaSeparatedList(() -> {
+                                String key = consumeToken(TokenType.LSTRING);
+                                consumeToken(TokenType.COLON);
+                                Expr value = expr();
+                                return Collections.singletonMap(key, value);
+                            }).stream()
+                            .map(pair -> pair.entrySet().iterator().next())
+                            .map(e -> ObjectField.newBuilder().setKey(e.getKey()).setValue(e.getValue()))
+                            .forEach(builder::addFld);
+                }
                 consumeToken(TokenType.RCURLY);
-                pairs.stream()
-                        .map(pair -> pair.entrySet().iterator().next())
-                        .map(e -> ObjectField.newBuilder().setKey(e.getKey()).setValue(e.getValue()))
-                        .forEach(builder::addFld);
                 return Expr.newBuilder().setType(Expr.Type.OBJECT).setObject(builder.build()).build();
             }
             case PLUS:
@@ -675,6 +679,7 @@ public class ExprParser {
                 }
             case NOT:
             case NEG:
+            case BANG:
                 return buildUnaryOp(t.value, atomicExpr());
             case LSTRING:
                 return ExprUtil.buildLiteralScalar(t.value);
@@ -729,63 +734,57 @@ public class ExprParser {
         return lhs;
     }
 
-    Expr mulDivExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.STAR, TokenType.SLASH, TokenType.MOD }, this::atomicExpr);
-    }
-
-    Expr addSubOrIntervalExpr() {
-        Expr lhs = mulDivExpr();
-        while (true) {
-            if (!(currentTokenTypeEquals(TokenType.PLUS) || currentTokenTypeEquals(TokenType.MINUS))) {
-                return lhs;
-            }
+    Expr addSubIntervalExpr() {
+        Expr lhs = atomicExpr();
+        while ((currentTokenTypeEquals(TokenType.PLUS) || currentTokenTypeEquals(TokenType.MINUS)) && nextTokenTypeEquals(TokenType.INTERVAL)) {
             Token op = this.tokens.get(this.tokenPos);
             this.tokenPos++;
             Operator.Builder builder = Operator.newBuilder().addParam(lhs);
-            if (currentTokenTypeEquals(TokenType.INTERVAL)) {
-                // INTERVAL expression
-                consumeToken(TokenType.INTERVAL);
 
-                if (op.type == TokenType.PLUS) {
-                    builder.setName("date_add");
-                } else {
-                    builder.setName("date_sub");
-                }
+            // INTERVAL expression
+            consumeToken(TokenType.INTERVAL);
 
-                builder.addParam(mulDivExpr()); // amount
-
-                // ensure next token is an interval unit
-                if (currentTokenTypeEquals(TokenType.MICROSECOND) || currentTokenTypeEquals(TokenType.SECOND) || currentTokenTypeEquals(TokenType.MINUTE)
-                        || currentTokenTypeEquals(TokenType.HOUR) || currentTokenTypeEquals(TokenType.DAY) || currentTokenTypeEquals(TokenType.WEEK)
-                        || currentTokenTypeEquals(TokenType.MONTH) || currentTokenTypeEquals(TokenType.QUARTER) || currentTokenTypeEquals(TokenType.YEAR)
-                        || currentTokenTypeEquals(TokenType.SECOND_MICROSECOND) || currentTokenTypeEquals(TokenType.MINUTE_MICROSECOND)
-                        || currentTokenTypeEquals(TokenType.MINUTE_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MICROSECOND)
-                        || currentTokenTypeEquals(TokenType.HOUR_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MINUTE)
-                        || currentTokenTypeEquals(TokenType.DAY_MICROSECOND) || currentTokenTypeEquals(TokenType.DAY_SECOND)
-                        || currentTokenTypeEquals(TokenType.DAY_MINUTE) || currentTokenTypeEquals(TokenType.DAY_HOUR)
-                        || currentTokenTypeEquals(TokenType.YEAR_MONTH)) {
-                } else {
-                    throw new WrongArgumentException("Expected interval units at " + this.tokenPos);
-                }
-                // xplugin demands that intervals be sent uppercase
-                // TODO: we need to propagate the appropriate encoding here? it's ascii but it might not *always* be a superset encoding??
-                builder.addParam(ExprUtil.buildLiteralScalar(this.tokens.get(this.tokenPos).value.toUpperCase().getBytes()));
-                this.tokenPos++;
+            if (op.type == TokenType.PLUS) {
+                builder.setName("date_add");
             } else {
-                // add/sub expression
-                builder.setName(op.value);
-                builder.addParam(mulDivExpr());
+                builder.setName("date_sub");
             }
+
+            builder.addParam(bitExpr()); // amount
+
+            // ensure next token is an interval unit
+            if (currentTokenTypeEquals(TokenType.MICROSECOND) || currentTokenTypeEquals(TokenType.SECOND) || currentTokenTypeEquals(TokenType.MINUTE)
+                    || currentTokenTypeEquals(TokenType.HOUR) || currentTokenTypeEquals(TokenType.DAY) || currentTokenTypeEquals(TokenType.WEEK)
+                    || currentTokenTypeEquals(TokenType.MONTH) || currentTokenTypeEquals(TokenType.QUARTER) || currentTokenTypeEquals(TokenType.YEAR)
+                    || currentTokenTypeEquals(TokenType.SECOND_MICROSECOND) || currentTokenTypeEquals(TokenType.MINUTE_MICROSECOND)
+                    || currentTokenTypeEquals(TokenType.MINUTE_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MICROSECOND)
+                    || currentTokenTypeEquals(TokenType.HOUR_SECOND) || currentTokenTypeEquals(TokenType.HOUR_MINUTE)
+                    || currentTokenTypeEquals(TokenType.DAY_MICROSECOND) || currentTokenTypeEquals(TokenType.DAY_SECOND)
+                    || currentTokenTypeEquals(TokenType.DAY_MINUTE) || currentTokenTypeEquals(TokenType.DAY_HOUR)
+                    || currentTokenTypeEquals(TokenType.YEAR_MONTH)) {
+            } else {
+                throw new WrongArgumentException("Expected interval units at " + this.tokenPos);
+            }
+            // xplugin demands that intervals be sent uppercase
+            // TODO: we need to propagate the appropriate encoding here? it's ascii but it might not *always* be a superset encoding??
+            builder.addParam(ExprUtil.buildLiteralScalar(this.tokens.get(this.tokenPos).value.toUpperCase().getBytes()));
+            this.tokenPos++;
+
             lhs = Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(builder.build()).build();
         }
+        return lhs;
+    }
+
+    Expr mulDivExpr() {
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.STAR, TokenType.SLASH, TokenType.MOD }, this::addSubIntervalExpr);
     }
 
     Expr addSubExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.PLUS, TokenType.MINUS }, this::addSubOrIntervalExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.PLUS, TokenType.MINUS }, this::mulDivExpr);
     }
 
     Expr shiftExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.LSHIFT, TokenType.RSHIFT }, this::addSubOrIntervalExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.LSHIFT, TokenType.RSHIFT }, this::addSubExpr);
     }
 
     Expr bitExpr() {
@@ -798,61 +797,58 @@ public class ExprParser {
 
     Expr ilriExpr() {
         Expr lhs = compExpr();
-        boolean isNot = false;
-        if (currentTokenTypeEquals(TokenType.NOT)) {
-            consumeToken(TokenType.NOT);
-            isNot = true;
-        }
-        if (this.tokenPos < this.tokens.size()) {
-            List<Expr> params = new ArrayList<>();
-            params.add(lhs);
-            String opName = this.tokens.get(this.tokenPos).value.toLowerCase();
-            switch (this.tokens.get(this.tokenPos).type) {
-                case IS: // for IS, NOT comes AFTER
-                    consumeToken(TokenType.IS);
-                    if (currentTokenTypeEquals(TokenType.NOT)) {
-                        consumeToken(TokenType.NOT);
-                        opName = "is_not";
-                    }
-                    params.add(compExpr());
-                    break;
-                case IN:
-                    consumeToken(TokenType.IN);
-                    params.addAll(parenExprList());
-                    break;
-                case LIKE:
-                    consumeToken(TokenType.LIKE);
-                    params.add(compExpr());
-                    if (currentTokenTypeEquals(TokenType.ESCAPE)) {
-                        consumeToken(TokenType.ESCAPE);
-                        // add as a third (optional) param
-                        params.add(compExpr());
-                    }
-                    break;
-                case BETWEEN:
-                    consumeToken(TokenType.BETWEEN);
-                    params.add(compExpr());
-                    assertTokenAt(this.tokenPos, TokenType.AND);
-                    consumeToken(TokenType.AND);
-                    params.add(compExpr());
-                    break;
-                case REGEXP:
-                    consumeToken(TokenType.REGEXP);
-                    params.addAll(parenExprList());
-                    break;
-                default:
-                    if (isNot) {
-                        throw new WrongArgumentException("Unknown token after NOT at pos: " + this.tokenPos);
-                    }
-                    opName = null; // not an ILRI operator
+        List<TokenType> expected = Arrays.asList(new TokenType[] {TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT});
+        while (this.tokenPos < this.tokens.size() && expected.contains(this.tokens.get(this.tokenPos).type)) {
+            boolean isNot = false;
+            if (currentTokenTypeEquals(TokenType.NOT)) {
+                consumeToken(TokenType.NOT);
+                isNot = true;
             }
-            if (opName != null) {
+            if (this.tokenPos < this.tokens.size()) {
+                List<Expr> params = new ArrayList<>();
+                params.add(lhs);
+                String opName = this.tokens.get(this.tokenPos).value.toLowerCase();
+                switch (this.tokens.get(this.tokenPos).type) {
+                    case IS: // for IS, NOT comes AFTER
+                        consumeToken(TokenType.IS);
+                        if (currentTokenTypeEquals(TokenType.NOT)) {
+                            consumeToken(TokenType.NOT);
+                            opName = "is_not";
+                        }
+                        params.add(compExpr());
+                        break;
+                    case IN:
+                        consumeToken(TokenType.IN);
+                        params.addAll(parenExprList());
+                        break;
+                    case LIKE:
+                        consumeToken(TokenType.LIKE);
+                        params.add(compExpr());
+                        if (currentTokenTypeEquals(TokenType.ESCAPE)) {
+                            consumeToken(TokenType.ESCAPE);
+                            // add as a third (optional) param
+                            params.add(compExpr());
+                        }
+                        break;
+                    case BETWEEN:
+                        consumeToken(TokenType.BETWEEN);
+                        params.add(compExpr());
+                        assertTokenAt(this.tokenPos, TokenType.AND);
+                        consumeToken(TokenType.AND);
+                        params.add(compExpr());
+                        break;
+                    case REGEXP:
+                        consumeToken(TokenType.REGEXP);
+                        params.add(compExpr());
+                        break;
+                    default:
+                        throw new WrongArgumentException("Unknown token after NOT at pos: " + this.tokenPos);
+                }
                 if (isNot) {
-                    opName = opName + "_not";
+                    opName = "not_" + opName;
                 }
                 Operator.Builder builder = Operator.newBuilder().setName(opName).addAllParam(params);
-                Expr opExpr = Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(builder.build()).build();
-                return opExpr;
+                lhs = Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(builder.build()).build();
             }
         }
         return lhs;

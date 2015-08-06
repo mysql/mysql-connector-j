@@ -94,8 +94,7 @@ public class ExprUnparser {
         for (DocumentPathItem item : items) {
             switch (item.getType()) {
                 case MEMBER:
-                    // TODO: need some JSON-rules quoting
-                    docPathString.append(".").append(item.getValue());
+                    docPathString.append(".").append(quoteDocumentPathMember(item.getValue()));
                     break;
                 case MEMBER_ASTERISK:
                     docPathString.append(".*");
@@ -174,19 +173,22 @@ public class ExprUnparser {
         for (Expr p : e.getParamList()) {
             params.add(exprToString(p));
         }
-        if ("between".equals(name) || "between_not".equals(name)) {
-            name = name.replaceAll("between_not", "not between");
+        if ("between".equals(name) || "not_between".equals(name)) {
+            name = name.replaceAll("not_between", "not between");
             return String.format("(%s %s %s AND %s)", params.get(0), name, params.get(1), params.get(2));
-        } else if ("in".equals(name) || "in_not".equals(name)) {
-            name = name.replaceAll("in_not", "not in");
+        } else if ("in".equals(name) || "not_in".equals(name)) {
+            name = name.replaceAll("not_in", "not in");
             return String.format("%s %s%s", params.get(0), name, paramListToString(params.subList(1, params.size())));
-        } else if ("like".equals(name) || "like_not".equals(name)) {
-            name = name.replaceAll("like_not", "not like");
+        } else if ("like".equals(name) || "not_like".equals(name)) {
+            name = name.replaceAll("not_like", "not like");
             String s = String.format("%s %s %s", params.get(0), name, params.get(1));
             if (params.size() == 3) {
                 s += " ESCAPE " + params.get(2);
             }
             return s;
+        } else if ("regexp".equals(name) || "not_regexp".equals("name")) {
+            name = name.replaceAll("not_regexp", "not regexp");
+            return String.format("(%s %s %s)", params.get(0), name, params.get(1));
         } else if ((name.length() < 3 || infixOperators.contains(name)) && params.size() == 2) {
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
         } else if (params.size() == 1) {
@@ -200,7 +202,7 @@ public class ExprUnparser {
         String fields = o.getFldList().stream()
                 .map(f -> new StringBuilder()
                         .append("'")
-                        .append(f.getKey())
+                        .append(quoteJsonKey(f.getKey()))
                         .append("'")
                         .append(":")
                         .append(exprToString(f.getValue()))
@@ -225,6 +227,17 @@ public class ExprUnparser {
             return "`" + ident.replaceAll("`", "``") + "`";
         }
         return ident;
+    }
+
+    public static String quoteJsonKey(String key) {
+        return key.replaceAll("'", "\\\\'");
+    }
+
+    public static String quoteDocumentPathMember(String member) {
+        if (!member.matches("[a-zA-Z0-9_]*")) {
+            return "\"" + member.replaceAll("\"", "\\\\\"") + "\"";
+        }
+        return member;
     }
 
     /**
