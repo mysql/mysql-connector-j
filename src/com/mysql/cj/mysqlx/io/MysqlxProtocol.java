@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toMap;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -76,6 +76,9 @@ import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
@@ -145,12 +148,14 @@ public class MysqlxProtocol implements Protocol {
     private Closeable managedResource;
     /** @TODO what is this */
     private PropertySet propertySet;
+    private Map<String, Any> capabilities;
 
     public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network, PropertySet propSet) {
         this.reader = reader;
         this.writer = writer;
         this.managedResource = network;
         this.propertySet = propSet;
+        this.capabilities = getCapabilities();
     }
 
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propSet) {
@@ -207,6 +212,17 @@ public class MysqlxProtocol implements Protocol {
 
     public long getLastPacketReceivedTimeMs() {
         throw new NullPointerException("TODO");
+    }
+
+    /**
+     * Get the capabilities from the server.
+     * <p>
+     * <b>NOTE:</b> This must be called before authentication.
+     * @return capabilities mapped by name
+     */
+    private Map<String, Any> getCapabilities() {
+        this.writer.write(CapabilitiesGet.getDefaultInstance());
+        return this.reader.read(Capabilities.class).getCapabilitiesList().stream().collect(toMap(Capability::getName, Capability::getValue));
     }
 
     public void sendSaslMysql41AuthStart() {
@@ -493,7 +509,7 @@ public class MysqlxProtocol implements Protocol {
         }
 
         this.reader.read(StmtExecuteOk.class);
-        return new StatementExecuteOk(0, lastInsertId, warnings);
+        return new StatementExecuteOk(rowsAffected, lastInsertId, warnings);
     }
 
     /**
@@ -777,6 +793,10 @@ public class MysqlxProtocol implements Protocol {
 
     public void sendSessionClose() {
         this.writer.write(Close.getDefaultInstance());
+    }
+
+    public String getPluginVersion() {
+        return this.capabilities.get("plugin.version").getScalar().getVString().getValue().toStringUtf8();
     }
 
     public void close() throws IOException {

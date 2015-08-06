@@ -470,4 +470,9 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
         this.protocol.readStatementExecuteOk();
     }
+
+    @Test
+    public void testCapabilities() {
+        this.protocol.getPluginVersion();
+    }
 }
