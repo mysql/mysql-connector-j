@@ -199,5 +199,31 @@ public class CollectionFindTest extends CollectionTest {
         docs.next();
     }
 
+    @Test
+    // these are important to test the "operator" (BETWEEN/REGEXP/etc) to function representation in the protocol
+    public void testIlriExpressions() {
+        this.collection.add("{\"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute();
+
+        FetchedDocs docs;
+
+        // TODO: this is a known problem on the server with JSON value types (with IS NULL too)
+        // docs = this.collection.find("@.c IS TRUE AND @.c IS NOT FALSE").execute();
+        // docs.next();
+
+        docs = this.collection.find("@.b IN (1,100) AND @.b NOT IN (2, 200)").execute();
+        docs.next();
+
+        docs = this.collection.find("@.a LIKE '%5432' AND @.a NOT LIKE '%xxx'").execute();
+        docs.next();
+
+        docs = this.collection.find("@.b between 99 and 101 and @.b not between 101 and 102").execute();
+        docs.next();
+
+        docs = this.collection.find("@.a REGEXP '5432'").execute();
+        docs.next();
+        docs = this.collection.find("@.a NOT REGEXP '5432'").execute();
+        assertFalse(docs.hasNext());
+    }
+
     // TODO: test rest of expressions
 }
