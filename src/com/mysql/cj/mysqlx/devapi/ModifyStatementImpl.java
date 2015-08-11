@@ -73,8 +73,9 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
         throw new NullPointerException("TODO: not supported in xplugin");
     }
 
-    public ModifyStatement arrayInsert(String field, int position, Object value) {
-        throw new NullPointerException("TODO: not supported in xplugin");
+    public ModifyStatement arrayInsert(String field, Object value) {
+        this.updates.add(new UpdateSpec(UpdateType.ARRAY_INSERT, field).setValue(value));
+        return this;
     }
 
     public ModifyStatement arrayAppend(String docPath, Object value) {

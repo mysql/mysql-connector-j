@@ -62,7 +62,7 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T, RE
         // TODO: should have alternative versions for different document forms? String vs JsonDoc?
         ModifyStatement merge(String document);
 
-        ModifyStatement arrayInsert(String field, int position, Object value);
+        ModifyStatement arrayInsert(String field, Object value);
 
         ModifyStatement arrayAppend(String field, Object value);
 

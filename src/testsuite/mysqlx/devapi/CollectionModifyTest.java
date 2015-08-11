@@ -52,7 +52,7 @@ public class CollectionModifyTest extends CollectionTest {
     }
 
     @Test
-    public void testCollectionModifySet() {
+    public void testSet() {
         this.collection.add("{}").execute();
 
         this.collection.modify().set("@.x", "Value for x").execute();
@@ -63,7 +63,7 @@ public class CollectionModifyTest extends CollectionTest {
     }
 
     @Test
-    public void testCollectionModifyUnset() {
+    public void testUnset() {
         this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
 
         this.collection.modify().unset("@.x").unset("@.y").execute();
@@ -75,7 +75,7 @@ public class CollectionModifyTest extends CollectionTest {
     }
 
     @Test
-    public void testCollectionReplace() {
+    public void testReplace() {
         this.collection.add("{\"x\":100}").execute();
         this.collection.modify().change("@.x", "99").execute();
 
@@ -85,7 +85,7 @@ public class CollectionModifyTest extends CollectionTest {
     }
 
     @Test
-    public void testCollectionArrayAppend() {
+    public void testArrayAppend() {
         this.collection.add("{\"x\":[8,16,32]}").execute();
         this.collection.modify().arrayAppend("@.x", "64").execute();
 
@@ -97,5 +97,23 @@ public class CollectionModifyTest extends CollectionTest {
         assertEquals(new Integer(32), ((JsonNumber) xArray.get(2)).getInteger());
         // TODO: better arrayAppend() overloads?
         assertEquals("64", ((JsonString) xArray.get(3)).getString());
+        assertEquals(4, xArray.size());
+    }
+
+    @Test
+    public void testArrayInsert() {
+        this.collection.add("{\"x\":[1,2]}").execute();
+        this.collection.modify().arrayInsert("@.x[1]", 43).execute();
+        // same as append
+        this.collection.modify().arrayInsert("@.x[3]", 44).execute();
+
+        DbDocs d = this.collection.find().execute().all();
+        JsonDoc jd = (JsonDoc) d.next();
+        JsonArray xArray = (JsonArray) jd.get("x");
+        assertEquals(new Integer(1), ((JsonNumber) xArray.get(0)).getInteger());
+        assertEquals(new Integer(43), ((JsonNumber) xArray.get(1)).getInteger());
+        assertEquals(new Integer(2), ((JsonNumber) xArray.get(2)).getInteger());
+        assertEquals(new Integer(44), ((JsonNumber) xArray.get(3)).getInteger());
+        assertEquals(4, xArray.size());
     }
 }
