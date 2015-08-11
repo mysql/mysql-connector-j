@@ -60,9 +60,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        // verify existence
         FetchedDocs docs = this.collection.find("@.firstName like '%Fra%'").execute();
-        // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
         JsonString val = (JsonString) jd.get("lastName");
@@ -77,9 +75,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        // verify existence
         FetchedDocs docs = this.collection.find("@.lastName like 'O\\'Kee%'").execute();
-        // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
         JsonString val = (JsonString) jd.get("lastName");
@@ -96,9 +92,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        // verify existence
         FetchedDocs docs = this.collection.find("@.z >= 44.22").execute();
-        // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
         JsonString val = (JsonString) jd.get("y");
@@ -111,9 +105,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertNull(res.getLastDocumentId());
 
-        // verify existence
         FetchedDocs docs = this.collection.find("@._id == 'Id#1'").execute();
-        // TODO: JsonDoc/DbDoc equivalence? slippery slope, or approaching unification?
         DbDoc d = docs.next();
         JsonDoc jd = (JsonDoc) d;
         JsonString val = (JsonString) jd.get("name");

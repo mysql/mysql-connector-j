@@ -70,15 +70,11 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public ModifyStatement merge(String document) {
-        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
-    }
-
-    public ModifyStatement arraySplice(String field, int start, int end, Object value) {
-        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
+        throw new NullPointerException("TODO: not supported in xplugin");
     }
 
     public ModifyStatement arrayInsert(String field, int position, Object value) {
-        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
+        throw new NullPointerException("TODO: not supported in xplugin");
     }
 
     public ModifyStatement arrayAppend(String docPath, Object value) {
@@ -87,10 +83,6 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public ModifyStatement arrayDelete(String field, int position) {
-        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
-    }
-
-    public ModifyStatement arrayRemove(String field, Object value) {
-        throw new NullPointerException("TODO: not supported in xplugin as of 2015-07-19");
+        throw new NullPointerException("TODO: not supported in xplugin");
     }
 }
