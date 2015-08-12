@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import static java.util.stream.Collectors.toMap;
 
 import javax.security.auth.callback.Callback;
@@ -665,6 +666,36 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
+    /**
+     * Apply the given filter params to the builder object (represented by the method args). Abstract the process of setting the filter params on the operation
+     * message builder.
+     *
+     * @param filterParams the filter params to apply
+     * @param setOrder the "builder.addAllOrder()" method reference
+     * @param setLimit the "builder.setLimit()" method reference
+     * @param setCriteria the "builder.setCriteria()" method reference
+     * @param setArgs the "builder.addAllArgs()" method reference
+     */
+    private void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
+            Consumer<List<Scalar>> setArgs) {
+        if (filterParams.getOrder() != null) {
+            setOrder.accept((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            setLimit.accept(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            setCriteria.accept((Expr) filterParams.getCriteria());
+        }
+        if (filterParams.getArgs() != null) {
+            setArgs.accept((List<Scalar>) filterParams.getArgs());
+        }
+    }
+
     public void sendFind(String schemaName, String collectionName, FindParams findParams, boolean isRelational) {
         Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         builder.setDataModel(isRelational ? DataModel.TABLE : DataModel.DOCUMENT);
@@ -677,24 +708,7 @@ public class MysqlxProtocol implements Protocol {
         if (findParams.getGroupingCriteria() != null) {
             builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
         }
-        FilterParams filterParams = findParams;
-        // TODO: abstract this (already requested Rafal to do it)
-        if (filterParams.getOrder() != null) {
-            builder.addAllOrder((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            builder.setLimit(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            builder.setCriteria((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
-        }
+        applyFilterParams(findParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         this.writer.write(builder.build());
     }
 
@@ -709,23 +723,7 @@ public class MysqlxProtocol implements Protocol {
             }
             builder.addOperation(opBuilder.build());
         });
-        // TODO: abstract this (already requested Rafal to do it)
-        if (filterParams.getOrder() != null) {
-            builder.addAllOrder((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            builder.setLimit(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            builder.setCriteria((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
-        }
+        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         this.writer.write(builder.build());
     }
 
@@ -735,45 +733,13 @@ public class MysqlxProtocol implements Protocol {
         ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
                 .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
                 .forEach(builder::addOperation);
-        // TODO: abstract this (already requested Rafal to do it)
-        if (filterParams.getOrder() != null) {
-            builder.addAllOrder((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            builder.setLimit(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            builder.setCriteria((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
-        }
+        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         this.writer.write(builder.build());
     }
 
     public void sendDocDelete(String schemaName, String collectionName, FilterParams filterParams) {
         Delete.Builder builder = Delete.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        // TODO: abstract this (already requested Rafal to do it)
-        if (filterParams.getOrder() != null) {
-            builder.addAllOrder((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            builder.setLimit(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            builder.setCriteria((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
-        }
+        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         this.writer.write(builder.build());
     }
 
