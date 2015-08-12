@@ -31,7 +31,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
-import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
 /**
@@ -43,7 +43,7 @@ public class FilterParams {
     private Long offset;
     private List<Order> order;
     private Expr criteria;
-    private List<Any> args;
+    private List<Scalar> args;
     private Map<String, Integer> placeholderNameToPosition;
 
     public FilterParams() {
@@ -92,6 +92,10 @@ public class FilterParams {
         }
     }
 
+    public Object getArgs() {
+        return this.args;
+    }
+
     public void addArg(String name, Object value) {
         if (this.args == null) {
             throw new WrongArgumentException("No placeholders");
@@ -99,7 +103,7 @@ public class FilterParams {
         if (this.placeholderNameToPosition.get(name) == null) {
             throw new WrongArgumentException("Unknown placeholder :" + name);
         }
-        this.args.add(this.placeholderNameToPosition.get(name), ExprUtil.argObjectToAny(value));
+        this.args.add(this.placeholderNameToPosition.get(name), ExprUtil.argObjectToScalar(value));
     }
 
     public void clearArgs() {

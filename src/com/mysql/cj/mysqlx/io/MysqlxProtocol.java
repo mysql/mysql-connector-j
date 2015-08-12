@@ -92,6 +92,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
@@ -691,6 +692,9 @@ public class MysqlxProtocol implements Protocol {
         if (filterParams.getCriteria() != null) {
             builder.setCriteria((Expr) filterParams.getCriteria());
         }
+        if (filterParams.getArgs() != null) {
+            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
+        }
         this.writer.write(builder.build());
     }
 
@@ -719,7 +723,9 @@ public class MysqlxProtocol implements Protocol {
         if (filterParams.getCriteria() != null) {
             builder.setCriteria((Expr) filterParams.getCriteria());
         }
-        // TODO: additional params?
+        if (filterParams.getArgs() != null) {
+            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
+        }
         this.writer.write(builder.build());
     }
 
@@ -743,7 +749,9 @@ public class MysqlxProtocol implements Protocol {
         if (filterParams.getCriteria() != null) {
             builder.setCriteria((Expr) filterParams.getCriteria());
         }
-        // TODO: additional params?
+        if (filterParams.getArgs() != null) {
+            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
+        }
         this.writer.write(builder.build());
     }
 
@@ -763,7 +771,9 @@ public class MysqlxProtocol implements Protocol {
         if (filterParams.getCriteria() != null) {
             builder.setCriteria((Expr) filterParams.getCriteria());
         }
-        // TODO: additional params?
+        if (filterParams.getArgs() != null) {
+            builder.addAllArgs((List<Scalar>) filterParams.getArgs());
+        }
         this.writer.write(builder.build());
     }
 

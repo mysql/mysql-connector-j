@@ -48,7 +48,6 @@ public class BindTest extends CollectionTest {
     }
 
     @Test
-    @Ignore("Rafal's protocol changes for this not yet implemented in xplugin")
     public void removeWithBind() {
         this.collection.add("{\"x\":1}").execute();
         this.collection.add("{\"x\":2}").execute();
@@ -63,7 +62,6 @@ public class BindTest extends CollectionTest {
     }
 
     @Test
-    @Ignore("Rafal's protocol changes for this not yet implemented in xplugin")
     public void removeWithNamedBinds() {
         this.collection.add("{\"x\":1}").execute();
         this.collection.add("{\"x\":2}").execute();
@@ -71,7 +69,7 @@ public class BindTest extends CollectionTest {
 
         assertEquals(3, this.collection.count());
 
-        assertTrue(this.collection.find("@.x = 3").execute().hasNext());
+        assertTrue(this.collection.find("@.x = ?").bind(new Object[] {3}).execute().hasNext());
         Map<String, Object> params = new HashMap<>();
         params.put("thePlaceholder", 3);
         this.collection.remove("@.x = :thePlaceholder").bind(params).execute();

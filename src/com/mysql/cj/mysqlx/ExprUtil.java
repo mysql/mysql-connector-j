@@ -128,9 +128,8 @@ public class ExprUtil {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }
 
-    public static Any argObjectToAny(Object value) {
-        Scalar s = argObjectToExpr(value).getLiteral();
-        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    public static Scalar argObjectToScalar(Object value) {
+        return argObjectToExpr(value).getLiteral();
     }
 
     public static Expr argObjectToExpr(Object value) {
