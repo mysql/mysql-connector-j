@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -67,6 +68,7 @@ public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
     }
 
     @Test
+    @Ignore("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuth() throws Exception {
         protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
         protocol.readAuthenticateOk();
@@ -81,6 +83,7 @@ public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
     }
 
     @Test
+    @Ignore("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuthFailure() throws Exception {
         try {
             protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
