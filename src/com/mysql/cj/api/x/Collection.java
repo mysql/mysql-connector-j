@@ -50,6 +50,8 @@ public interface Collection extends DatabaseObject {
      */
     AddStatement add(JsonDoc document);
 
+    AddStatement add(JsonDoc documents[]);
+
     FindStatement find();
 
     FindStatement find(String searchCondition);

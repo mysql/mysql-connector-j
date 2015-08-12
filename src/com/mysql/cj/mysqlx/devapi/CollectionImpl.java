@@ -87,6 +87,10 @@ public class CollectionImpl implements Collection {
         return new AddStatementImpl(this, doc);
     }
 
+    public AddStatement add(JsonDoc[] docs) {
+        return new AddStatementImpl(this, docs);
+    }
+
     public FindStatement find() {
         return find(null);
     }
