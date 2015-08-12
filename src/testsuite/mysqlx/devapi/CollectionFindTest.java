@@ -225,5 +225,13 @@ public class CollectionFindTest extends CollectionTest {
         assertFalse(docs.hasNext());
     }
 
+    @Test
+    public void cast() {
+        this.collection.add("{\"x\":100}").execute();
+
+        JsonDoc d = this.collection.find().fields("CAST(@.x as SIGNED) as x").execute().next();
+        assertEquals(new Integer(100), ((JsonNumber) d.get("x")).getInteger());
+    }
+
     // TODO: test rest of expressions
 }

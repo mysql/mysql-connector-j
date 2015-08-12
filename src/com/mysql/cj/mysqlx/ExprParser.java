@@ -100,7 +100,7 @@ public class ExprParser {
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR
+        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY
     }
 
     /**
@@ -173,6 +173,16 @@ public class ExprParser {
         reservedWords.put("asc", TokenType.ORDERBY_ASC);
         reservedWords.put("desc", TokenType.ORDERBY_DESC);
         reservedWords.put("as", TokenType.AS);
+        reservedWords.put("cast", TokenType.CAST);
+        reservedWords.put("decimal", TokenType.DECIMAL);
+        reservedWords.put("unsigned", TokenType.UNSIGNED);
+        reservedWords.put("signed", TokenType.SIGNED);
+        reservedWords.put("integer", TokenType.INTEGER);
+        reservedWords.put("date", TokenType.DATE);
+        reservedWords.put("time", TokenType.TIME);
+        reservedWords.put("datetime", TokenType.DATETIME);
+        reservedWords.put("char", TokenType.CHAR);
+        reservedWords.put("binary", TokenType.BINARY);
     }
 
     /**
@@ -669,6 +679,47 @@ public class ExprParser {
                 }
                 consumeToken(TokenType.RCURLY);
                 return Expr.newBuilder().setType(Expr.Type.OBJECT).setObject(builder.build()).build();
+            }
+            case CAST: {
+                consumeToken(TokenType.LPAREN);
+                Operator.Builder builder = Operator.newBuilder().setName(TokenType.CAST.toString().toLowerCase());
+                builder.addParam(expr());
+                consumeToken(TokenType.AS);
+                StringBuilder typeStr = new StringBuilder(this.tokens.get(this.tokenPos).value.toUpperCase());
+                // ensure next token is a valid type argument to CAST
+                if (currentTokenTypeEquals(TokenType.DECIMAL)) {
+                    this.tokenPos++;
+                    if (currentTokenTypeEquals(TokenType.LPAREN)) {
+                        typeStr.append(consumeToken(TokenType.LPAREN));
+                        typeStr.append(consumeToken(TokenType.LNUM_INT));
+                        if (currentTokenTypeEquals(TokenType.COMMA)) {
+                            typeStr.append(consumeToken(TokenType.COMMA));
+                            typeStr.append(consumeToken(TokenType.LNUM_INT));
+                        }
+                        typeStr.append(consumeToken(TokenType.RPAREN));
+                    }
+                } else if (currentTokenTypeEquals(TokenType.CHAR) || currentTokenTypeEquals(TokenType.BINARY)) {
+                    this.tokenPos++;
+                    if (currentTokenTypeEquals(TokenType.LPAREN)) {
+                        typeStr.append(consumeToken(TokenType.LPAREN));
+                        typeStr.append(consumeToken(TokenType.LNUM_INT));
+                        typeStr.append(consumeToken(TokenType.RPAREN));
+                    }
+                } else if (currentTokenTypeEquals(TokenType.UNSIGNED) || currentTokenTypeEquals(TokenType.SIGNED)) {
+                    this.tokenPos++;
+                    if (currentTokenTypeEquals(TokenType.INTEGER)) {
+                        // don't add optional INTEGER to type string argument
+                        consumeToken(TokenType.INTEGER);
+                    }
+                } else if (currentTokenTypeEquals(TokenType.DATE) || currentTokenTypeEquals(TokenType.DATETIME) || currentTokenTypeEquals(TokenType.TIME)) {
+                    this.tokenPos++;
+                } else {
+                    throw new WrongArgumentException("Expected valid CAST type argument at " + this.tokenPos);
+                }
+                consumeToken(TokenType.RPAREN);
+                // TODO charset?
+                builder.addParam(ExprUtil.buildLiteralScalar(typeStr.toString().getBytes()));
+                return Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(builder.build()).build();
             }
             case PLUS:
             case MINUS:

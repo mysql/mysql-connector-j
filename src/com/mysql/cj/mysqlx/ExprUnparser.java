@@ -189,6 +189,8 @@ public class ExprUnparser {
         } else if ("regexp".equals(name) || "not_regexp".equals("name")) {
             name = name.replaceAll("not_regexp", "not regexp");
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
+        } else if ("cast".equals(name)) {
+            return String.format("cast(%s AS %s)", params.get(0), params.get(1).replaceAll("\"", ""));
         } else if ((name.length() < 3 || infixOperators.contains(name)) && params.size() == 2) {
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
         } else if (params.size() == 1) {

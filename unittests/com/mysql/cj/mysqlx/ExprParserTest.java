@@ -150,8 +150,8 @@ public class ExprParserTest {
         checkParseRoundTrip("jess.age not BeTweeN 30 and death", "(jess.age not between 30 AND death)");
         checkParseRoundTrip("a + b * c + d", "((a + (b * c)) + d)");
         checkParseRoundTrip("x > 10 and Y >= -20", "((x > 10) && (Y >= -20))");
-        checkParseRoundTrip("a is true and b is null and C + 1 > 40 and (time == now() or hungry())",
-                "((((a is TRUE) && (b is NULL)) && ((C + 1) > 40)) && ((time == now()) || hungry()))");
+        checkParseRoundTrip("a is true and b is null and C + 1 > 40 and (thetime == now() or hungry())",
+                "((((a is TRUE) && (b is NULL)) && ((C + 1) > 40)) && ((thetime == now()) || hungry()))");
         checkParseRoundTrip("a + b + -c > 2", "(((a + b) + -c) > 2)");
         checkParseRoundTrip("now () + b + c > 2", "(((now() + b) + c) > 2)");
         checkParseRoundTrip("now () + @.b + c > 2", "(((now() + @.b) + c) > 2)");
@@ -183,6 +183,13 @@ public class ExprParserTest {
         checkParseRoundTrip("'Monty!' REGEXP '.*'", "(\"Monty!\" regexp \".*\")");
         checkParseRoundTrip("a regexp b regexp c", "((a regexp b) regexp c)");
         checkParseRoundTrip("a + b + c", "((a + b) + c)");
+        checkParseRoundTrip("a + cast(b as decimal)", "(a + cast(b AS DECIMAL))");
+        checkParseRoundTrip("a + cast(b as decimal(2))", "(a + cast(b AS DECIMAL(2)))");
+        checkParseRoundTrip("a + cast(b as decimal(1, 2))", "(a + cast(b AS DECIMAL(1,2)))");
+        checkParseRoundTrip("a + cast(b as binary)", "(a + cast(b AS BINARY))");
+        checkParseRoundTrip("a + cast(b as binary(3))", "(a + cast(b AS BINARY(3)))");
+        checkParseRoundTrip("a + cast(b as unsigned)", "(a + cast(b AS UNSIGNED))");
+        checkParseRoundTrip("a + cast(b as unsigned integer)", "(a + cast(b AS UNSIGNED))");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
     }
