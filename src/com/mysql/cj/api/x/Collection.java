@@ -46,16 +46,9 @@ public interface Collection extends DatabaseObject {
     AddStatement add(String jsonString);
 
     /**
-     * Add a document in the form of a DbDoc.
+     * Add a document in the form of a JsonDoc.
      */
-    AddStatement add(DbDoc document);
-
-    /**
-     * TODO: Temporary avoid compiler issues. JsonDoc implements DbDoc and Map and compiler can't decide which version to dispatch.
-     */
-    default AddStatement add(JsonDoc document) {
-        return add((DbDoc) document);
-    }
+    AddStatement add(JsonDoc document);
 
     FindStatement find();
 
@@ -100,7 +93,7 @@ public interface Collection extends DatabaseObject {
      * 
      * @return
      */
-    DbDoc newDoc();
+    JsonDoc newDoc();
 
     /**
      * Collection Index Creation [59]

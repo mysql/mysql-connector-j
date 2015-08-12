@@ -58,7 +58,7 @@ public class CollectionFindTest extends CollectionTest {
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
         FetchedDocs docs = this.collection.find().fields("@._id as _id, @.g as g, 1 + 1 as q").execute();
-        JsonDoc doc = (JsonDoc) docs.next();
+        JsonDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals("1", ((JsonString) doc.get("g")).getString());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
@@ -70,7 +70,7 @@ public class CollectionFindTest extends CollectionTest {
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
         FetchedDocs docs = this.collection.find().fields("{'_id':@._id, 'q':1 + 1, 'g2':-20*@.g}").execute();
-        JsonDoc doc = (JsonDoc) docs.next();
+        JsonDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
@@ -86,18 +86,18 @@ public class CollectionFindTest extends CollectionTest {
         // limit 1, order by ID, save the first ID
         FetchedDocs docs = this.collection.find().orderBy("@._id").limit(1).execute();
         assertTrue(docs.hasNext());
-        String firstId = ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString();
+        String firstId = ((JsonString) docs.next().get("_id")).getString();
         assertTrue(firstId.matches("[a-f0-9]{32}"));
         assertFalse(docs.hasNext());
 
         // limit 3, offset 1, order by ID, make sure we don't see the first ID
         docs = this.collection.find().orderBy("@._id").limit(3).skip(1).execute();
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
+        assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
+        assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
         assertTrue(docs.hasNext());
-        assertNotEquals(firstId, ((JsonString) ((JsonDoc) docs.next()).get("_id")).getString());
+        assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
         assertFalse(docs.hasNext());
     }
 

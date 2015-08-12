@@ -25,9 +25,11 @@ package com.mysql.cj.api.x;
 
 import java.util.Iterator;
 
-public interface DbDocs extends Iterator<DbDoc> {
+import com.mysql.cj.x.json.JsonDoc;
 
-    DbDoc next();
+public interface DbDocs extends Iterator<JsonDoc> {
+
+    JsonDoc next();
 
     long count();
 }

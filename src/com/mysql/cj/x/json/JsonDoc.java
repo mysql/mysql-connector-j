@@ -25,7 +25,6 @@ package com.mysql.cj.x.json;
 
 import java.util.TreeMap;
 
-import com.mysql.cj.api.x.DbDoc;
 import com.mysql.cj.api.x.JsonValue;
 
 /**
@@ -91,7 +90,7 @@ import com.mysql.cj.api.x.JsonValue;
  * doc.toString();
  * </pre>
  */
-public class JsonDoc extends TreeMap<String, JsonValue> implements DbDoc, JsonValue {
+public class JsonDoc extends TreeMap<String, JsonValue> implements JsonValue {
 
     private static final long serialVersionUID = 6557406141541247905L;
 

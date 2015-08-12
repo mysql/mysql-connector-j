@@ -61,7 +61,7 @@ public interface Statement<STMT_T, RES_T> {
         return bind(Arrays.asList(values));
     }
 
-    // default Statement bind(DbDoc document) {
+    // default Statement bind(JsonDoc document) {
     //     throw new UnsupportedOperationException("This statement doesn't support bound parameters");
     // }
 
