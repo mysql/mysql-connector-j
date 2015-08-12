@@ -68,4 +68,11 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T, RE
 
         ModifyStatement arrayDelete(String field, int position);
     }
+
+    interface CreateCollectionIndexStatement extends CollectionStatement<CreateCollectionIndexStatement, Result> {
+        CreateCollectionIndexStatement field(String docPath, String type, boolean notNull);
+    }
+
+    interface DropCollectionIndexStatement extends CollectionStatement<DropCollectionIndexStatement, Result> {
+    }
 }

@@ -124,6 +124,10 @@ public class ExprUtil {
         return a;
     }
 
+    public static Any buildAny(boolean b) {
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(scalarOf(b)).build();
+    }
+
     public static Collection buildCollection(String schemaName, String collectionName) {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }

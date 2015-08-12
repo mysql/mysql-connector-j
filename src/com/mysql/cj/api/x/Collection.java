@@ -26,6 +26,8 @@ package com.mysql.cj.api.x;
 import java.util.Map;
 
 import com.mysql.cj.api.x.CollectionStatement.AddStatement;
+import com.mysql.cj.api.x.CollectionStatement.CreateCollectionIndexStatement;
+import com.mysql.cj.api.x.CollectionStatement.DropCollectionIndexStatement;
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
@@ -71,6 +73,10 @@ public interface Collection extends DatabaseObject {
      * Collection.drop [53]
      */
     void drop();
+
+    CreateCollectionIndexStatement createIndex(String indexName, boolean unique);
+
+    DropCollectionIndexStatement dropIndex(String indexName);
 
     /**
      * Collection.as [41]

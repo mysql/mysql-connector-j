@@ -245,6 +245,18 @@ public class MysqlxSession implements Session {
         }
     }
 
+    public StatementExecuteOk createCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
+        newCommand();
+        this.protocol.sendCreateCollectionIndex(schemaName, collectionName, params);
+        return this.protocol.readStatementExecuteOk();
+    }
+
+    public StatementExecuteOk dropCollectionIndex(String schemaName, String collectionName, String indexName) {
+        newCommand();
+        this.protocol.sendDropCollectionIndex(schemaName, collectionName, indexName);
+        return this.protocol.readStatementExecuteOk();
+    }
+
     private long queryForLong(String sql) {
         newCommand();
         this.protocol.sendSqlStatement(sql);

@@ -29,13 +29,17 @@ import java.util.Map;
 
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.CollectionStatement.AddStatement;
+import com.mysql.cj.api.x.CollectionStatement.CreateCollectionIndexStatement;
+import com.mysql.cj.api.x.CollectionStatement.DropCollectionIndexStatement;
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
 import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.api.x.DbDoc;
+import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonParser;
@@ -112,6 +116,14 @@ public class CollectionImpl implements Collection {
 
     public void drop() {
         this.schema.getSession().getMysqlxSession().dropCollection(this.schema.getName(), this.name);
+    }
+
+    public CreateCollectionIndexStatement createIndex(String indexName, boolean isUnique) {
+        return new CreateCollectionIndexStatementImpl(this, indexName, isUnique);
+    }
+
+    public DropCollectionIndexStatement dropIndex(String indexName) {
+        return new DropCollectionIndexStatementImpl(this, indexName);
     }
 
     // public Collection as(String alias) {

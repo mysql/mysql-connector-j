@@ -69,6 +69,7 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
+import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
@@ -773,6 +774,30 @@ public class MysqlxProtocol implements Protocol {
 
     public String getPluginVersion() {
         return this.capabilities.get("plugin.version").getScalar().getVString().getValue().toStringUtf8();
+    }
+
+    public void sendCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
+        // TODO: check for 0-field params?
+        Any[] args = new Any[4 + (3 * params.getDocPaths().size())];
+        args[0] = ExprUtil.buildAny(schemaName);
+        args[1] = ExprUtil.buildAny(collectionName);
+        args[2] = ExprUtil.buildAny(params.getIndexName());
+        args[3] = ExprUtil.buildAny(params.isUnique());
+        int argPos = 4;
+        for (int i = 0; i < params.getDocPaths().size(); ++i) {
+            args[argPos++] = ExprUtil.buildAny(params.getDocPaths().get(i));
+            args[argPos++] = ExprUtil.buildAny(params.getTypes().get(i));
+            args[argPos++] = ExprUtil.buildAny(params.getNotNulls().get(i));
+        }
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION_INDEX, args);
+    }
+
+    public void sendDropCollectionIndex(String schemaName, String collectionName, String indexName) {
+        Any[] args = new Any[3];
+        args[0] = ExprUtil.buildAny(schemaName);
+        args[1] = ExprUtil.buildAny(collectionName);
+        args[2] = ExprUtil.buildAny(indexName);
+        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION_INDEX, args);
     }
 
     public void close() throws IOException {

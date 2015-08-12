@@ -30,7 +30,9 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqlx.MysqlxError;
 
 public class CollectionTest extends BaseDevApiTest {
     /** Collection for testing. */
@@ -88,5 +90,21 @@ public class CollectionTest extends BaseDevApiTest {
         dropCollection(collName);
         this.schema.createCollection(collName);
         this.schema.getCollection(collName, true);
+    }
+
+    @Test
+    public void createIndex() {
+        this.collection.createIndex("x_idx", true).field(".x", "INT", true).execute();
+        this.collection.add("{'x':'1'}".replaceAll("'", "\"")).execute();
+        this.collection.add("{'x':'2'}".replaceAll("'", "\"")).execute();
+        try {
+            // fail due to duplicate value for unique index on "x"
+            this.collection.add("{'x':'1'}".replaceAll("'", "\"")).execute();
+        } catch (MysqlxError err) {
+            assertEquals(MysqlErrorNumbers.ER_X_DOC_ID_DUPLICATE, err.getErrorCode());
+        }
+        // drop the index and we can now insert what was a duplicate key entry
+        this.collection.dropIndex("x_idx").execute();
+        this.collection.add("{'x':'1'}".replaceAll("'", "\"")).execute();
     }
 }
