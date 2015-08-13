@@ -80,4 +80,15 @@ public class SessionImpl extends AbstractSession implements Session {
         return new SchemaImpl(this, this.defaultSchemaName);
     }
 
+    public void startTransaction() {
+        this.session.update("START TRANSACTION");
+    }
+
+    public void commit() {
+        this.session.update("COMMIT");
+    }
+
+    public void rollback() {
+        this.session.update("ROLLBACK");
+    }
 }

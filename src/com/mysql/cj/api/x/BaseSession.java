@@ -48,6 +48,12 @@ public interface BaseSession {
 
     void close();
 
+    void startTransaction();
+
+    void commit();
+
+    void rollback();
+
     /**
      * Get {@link com.mysql.cj.api.Session} implementation.
      * 

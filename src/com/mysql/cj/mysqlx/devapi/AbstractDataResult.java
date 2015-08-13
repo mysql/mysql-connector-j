@@ -39,6 +39,8 @@ import com.mysql.cj.mysqlx.io.ResultStreamer;
  * @todo
  */
 public abstract class AbstractDataResult<T> implements ResultStreamer {
+    protected int position = -1;
+    protected int count = -1;
     protected RowList rows;
     protected Supplier<StatementExecuteOk> completer;
     protected StatementExecuteOk ok;
@@ -62,13 +64,13 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
         if (r == null) {
             throw new NoSuchElementException();
         }
+        this.position++;
         return rowToData.apply(r);
     }
 
     public long count() {
-        // TODO:
-        //return rows.position();
-        return 0;
+        finishStreaming();
+        return this.count;
     }
 
     public boolean hasNext() {
@@ -87,7 +89,9 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
      */
     public void finishStreaming() {
         if (this.ok == null) {
-            this.rows = new BufferedRowList(this.rows);
+            BufferedRowList remainingRows = new BufferedRowList(this.rows);
+            this.count = 1 + this.position + remainingRows.size();
+            this.rows = remainingRows;
             this.ok = this.completer.get();
         }
     }

@@ -82,4 +82,16 @@ public abstract class AbstractSession implements BaseSession {
         return this.session;
     }
 
+    public void startTransaction() {
+        throw new NullPointerException("TODO:");
+    }
+
+    public void commit() {
+        throw new NullPointerException("TODO:");
+    }
+
+    public void rollback() {
+        throw new NullPointerException("TODO:");
+    }
+
 }
