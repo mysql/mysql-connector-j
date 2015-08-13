@@ -39,4 +39,8 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl
                 .deleteRows(this.table.getSchema().getName(), this.table.getName(), this.filterParams);
         return new UpdateResult(ok, null);
     }
+
+    protected boolean getAllowRelationalColumns() {
+        return true;
+    }
 }

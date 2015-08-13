@@ -747,14 +747,14 @@ public class MysqlxProtocol implements Protocol {
     // TODO: unused
     public void sendDocInsert(String schemaName, String collectionName, String json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(json)).build());
+        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(json, false)).build());
         this.writer.write(builder.build());
     }
 
     public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         json.stream()
-                .map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str)).build())
+                .map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build())
                 .forEach(builder::addRow);
         this.writer.write(builder.build());
     }

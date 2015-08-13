@@ -25,14 +25,14 @@ package com.mysql.cj.mysqlx;
 
 public class TableFindParams extends FindParams {
     public TableFindParams() {
-        super();
+        super(true);
     }
 
     public TableFindParams(String criteriaString) {
-        super(criteriaString);
+        super(criteriaString, true);
     }
 
     public void setFields(String projection) {
-        this.fields = new ExprParser(projection).parseTableSelectProjection();
+        this.fields = new ExprParser(projection, true).parseTableSelectProjection();
     }
 }

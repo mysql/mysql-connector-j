@@ -18,13 +18,11 @@ public class UpdateSpec {
 
     public UpdateSpec(UpdateType updateType, String source) {
         this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
-        // accomodate parser's documentPath() handling by removing "@"
+        // accomodate parser's documentField() handling by removing "@"
         if (source.length() > 0 && source.charAt(0) == '@') {
             source = source.substring(1);
-        } else {
-            throw new WrongArgumentException("Update source should be a document path starting with `@'");
         }
-        this.source = ColumnIdentifier.newBuilder().addAllDocumentPath(new ExprParser(source).documentPath()).build();
+        this.source = new ExprParser(source, false).documentField().getIdentifier();
     }
 
     public Object getUpdateType() {
@@ -36,7 +34,7 @@ public class UpdateSpec {
     }
 
     public UpdateSpec setValue(Object value) {
-        this.value = ExprUtil.argObjectToExpr(value);
+        this.value = ExprUtil.argObjectToExpr(value, false);
         return this;
     }
 

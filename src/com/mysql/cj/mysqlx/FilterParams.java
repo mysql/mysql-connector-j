@@ -45,12 +45,15 @@ public class FilterParams {
     private Expr criteria;
     private List<Scalar> args;
     private Map<String, Integer> placeholderNameToPosition;
+    protected boolean allowRelationalColumns = true;
 
-    public FilterParams() {
+    public FilterParams(boolean allowRelationalColumns) {
+        this.allowRelationalColumns = allowRelationalColumns;
     }
 
-    public FilterParams(String criteriaString) {
+    public FilterParams(String criteriaString, boolean allowRelationalColumns) {
         setCriteria(criteriaString);
+        this.allowRelationalColumns = allowRelationalColumns;
     }
 
     public Object getOrder() {
@@ -60,7 +63,7 @@ public class FilterParams {
 
     public void setOrder(String orderExpression) {
         // TODO: does this support placeholders? how do we prevent it?
-        this.order = new ExprParser(orderExpression).parseOrderSpec();
+        this.order = new ExprParser(orderExpression, this.allowRelationalColumns).parseOrderSpec();
     }
 
     public Long getLimit() {
@@ -84,7 +87,7 @@ public class FilterParams {
     }
 
     public void setCriteria(String criteriaString) {
-        ExprParser parser = new ExprParser(criteriaString);
+        ExprParser parser = new ExprParser(criteriaString, this.allowRelationalColumns);
         this.criteria = parser.parse();
         if (parser.getPositionalPlaceholderCount() > 0) {
             this.placeholderNameToPosition = parser.getPlaceholderNameToPositionMap();

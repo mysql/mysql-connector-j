@@ -30,12 +30,10 @@ import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.TableStatement.UpdateStatement;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
     private TableImpl table;
-    private FilterParams filterParams = new FilterParams();
     private UpdateParams updateParams = new UpdateParams();
 
     /* package private */UpdateStatementImpl(TableImpl table) {
@@ -60,5 +58,9 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
         IntStream.range(0, fieldValuePairs.length).filter(i -> i % 2 == 0)
                 .forEach(i -> this.updateParams.addUpdate((String) fieldValuePairs[i], fieldValuePairs[i + 1]));
         return this;
+    }
+
+    protected boolean getAllowRelationalColumns() {
+        return true;
     }
 }

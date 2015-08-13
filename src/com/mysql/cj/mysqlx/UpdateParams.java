@@ -40,7 +40,7 @@ public class UpdateParams {
     }
 
     public void addUpdate(String path, Object value) {
-        this.updateOps.put(new ExprParser(path).parseTableUpdateField(), ExprUtil.argObjectToExpr(value));
+        this.updateOps.put(new ExprParser(path, true).parseTableUpdateField(), ExprUtil.argObjectToExpr(value, true));
     }
 
     public Object getUpdates() {

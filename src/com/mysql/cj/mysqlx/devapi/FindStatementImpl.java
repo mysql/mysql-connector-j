@@ -24,12 +24,12 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import com.mysql.cj.api.x.CollectionStatement.FindStatement;
+import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.mysqlx.DocFindParams;
-import com.mysql.cj.mysqlx.FindParams;
 
 public class FindStatementImpl implements FindStatement {
     private CollectionImpl collection;
-    private FindParams findParams = new DocFindParams();
+    private DocFindParams findParams = new DocFindParams();
 
     /* package private */FindStatementImpl(CollectionImpl collection, String criteria) {
         this.collection = collection;
@@ -54,6 +54,11 @@ public class FindStatementImpl implements FindStatement {
 
     public FindStatement fields(String projection) {
         this.findParams.setFields(projection);
+        return this;
+    }
+
+    public FindStatement fields(Expression docProjection) {
+        this.findParams.setFields(docProjection);
         return this;
     }
 

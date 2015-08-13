@@ -41,7 +41,7 @@ public class InsertParams {
     private List<TypedRow> rows = new LinkedList<>();
 
     public void setProjection(String[] projection) {
-        this.projection = Arrays.stream(projection).map(p -> new ExprParser(p).parseTableInsertField()).collect(Collectors.toList());
+        this.projection = Arrays.stream(projection).map(p -> new ExprParser(p, true).parseTableInsertField()).collect(Collectors.toList());
     }
 
     public Object getProjection() {
@@ -49,7 +49,7 @@ public class InsertParams {
     }
 
     public void addRow(List<Object> row) {
-        this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(ExprUtil::argObjectToExpr).collect(Collectors.toList())).build());
+        this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(f -> ExprUtil.argObjectToExpr(f, true)).collect(Collectors.toList())).build());
     }
 
     public Object getRows() {
@@ -60,8 +60,8 @@ public class InsertParams {
         this.projection = new ArrayList<>();
         TypedRow.Builder rowBuilder = TypedRow.newBuilder();
         fieldsAndValues.entrySet().stream().forEach(e -> {
-                    this.projection.add(new ExprParser(e.getKey()).parseTableInsertField());
-                    rowBuilder.addField(ExprUtil.argObjectToExpr(e.getValue()));
+                    this.projection.add(new ExprParser(e.getKey(), true).parseTableInsertField());
+                    rowBuilder.addField(ExprUtil.argObjectToExpr(e.getValue(), true));
                 });
         this.rows.add(rowBuilder.build()) ;
     }

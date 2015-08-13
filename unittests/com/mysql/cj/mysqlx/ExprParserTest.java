@@ -403,19 +403,17 @@ public class ExprParserTest {
     @Test
     public void testJsonConstructorAsDocumentProjection() {
         // same as we use in find().field("{...}")
-        String projString = "{'a':'value for a', 'b':1+1, 'c'::bindvar, 'd':a@.member[22], 'e':{'nested':'doc'}}";
-        List<Projection> projList = new ExprParser(projString).parseDocumentProjection();
-        assertEquals(1, projList.size());
-        assertFalse(projList.get(0).hasAlias());
-        assertEquals(Expr.Type.OBJECT, projList.get(0).getSource().getType());
+        String projString = "{'a':'value for a', 'b':1+1, 'c'::bindvar, 'd':@.member[22], 'e':{'nested':'doc'}}";
+        Projection proj = Projection.newBuilder().setSource(new ExprParser(projString, false).parse()).build();
+        assertEquals(Expr.Type.OBJECT, proj.getSource().getType());
 
-        Iterator<ObjectField> fields = projList.get(0).getSource().getObject().getFldList().iterator();
+        Iterator<ObjectField> fields = proj.getSource().getObject().getFldList().iterator();
 
         Arrays.stream(new String[][] {
                     new String[] {"a", "\"value for a\""},
                     new String[] {"b", "(1 + 1)"},
                     new String[] {"c", ":0"},
-                    new String[] {"d", "a@.member[22]"},
+                    new String[] {"d", "@.member[22]"},
                     new String[] {"e", "{'nested':\"doc\"}"}})
                 .forEach(pair -> {
                             ObjectField f = fields.next();
@@ -495,5 +493,17 @@ public class ExprParserTest {
         checkParseRoundTrip("NULL - INTERVAL @ ** [ 89 ] << { '' : { } - @ . V << { '' : { } + { } REGEXP ? << { } - { } < { } | { } << { '' : : 8 + : 26 ^ { } } + { } >> { } } || { } } & { } SECOND", "date_sub(NULL, ((@**[89] << {'':((({} - @.V) << {'':(({} + {}) regexp ((:0 << ({} - {})) < ({} | (({} << ({'':((:1 + :2) ^ {})} + {})) >> {}))))}) || {})}) & {}), \"SECOND\")");
         // TODO: check the validity of this:
         // checkParseRoundTrip("_XJl . F ( `ho` @ [*] [*] - ~ ! { '' : { } LIKE { } && : rkc & 1 & y @ ** . d [*] [*] || { } ^ { } REGEXP { } } || { } - { } ^ { } < { } IN ( ) >= { } IN ( ) )", "");
+    }
+
+    @Test
+    public void unqualifiedDocPaths() {
+        Expr expr = new ExprParser("1 + b[0]", false).parse();
+        assertEquals("(1 + @.b[0])", ExprUnparser.exprToString(expr));
+        expr = new ExprParser("a.*", false).parse();
+        assertEquals("@.a.*", ExprUnparser.exprToString(expr));
+        expr = new ExprParser("bL . vT .*", false).parse();
+        assertEquals("@.bL.vT.*", ExprUnparser.exprToString(expr));
+        expr = new ExprParser("dd ** .X", false).parse();
+        assertEquals("@.dd**.X", ExprUnparser.exprToString(expr));
     }
 }

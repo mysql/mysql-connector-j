@@ -35,6 +35,7 @@ import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
+import static com.mysql.cj.api.x.Expression.expr;
 
 /**
  * @todo
@@ -69,7 +70,7 @@ public class CollectionFindTest extends CollectionTest {
         // use a document as a projection
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
-        FetchedDocs docs = this.collection.find().fields("{'_id':@._id, 'q':1 + 1, 'g2':-20*@.g}").execute();
+        FetchedDocs docs = this.collection.find().fields(expr("{'_id':@._id, 'q':1 + 1, 'g2':-20*@.g}")).execute();
         JsonDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());

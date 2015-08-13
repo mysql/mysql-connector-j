@@ -59,7 +59,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        FetchedDocs docs = this.collection.find("@.firstName like '%Fra%'").execute();
+        FetchedDocs docs = this.collection.find("firstName like '%Fra%'").execute();
         JsonDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
@@ -73,7 +73,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        FetchedDocs docs = this.collection.find("@.lastName like 'O\\'Kee%'").execute();
+        FetchedDocs docs = this.collection.find("lastName like 'O\\'Kee%'").execute();
         JsonDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("O'Keeffe", val.getString());
@@ -101,7 +101,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertNull(res.getLastDocumentId());
 
-        FetchedDocs docs = this.collection.find("@._id == 'Id#1'").execute();
+        FetchedDocs docs = this.collection.find("_id == 'Id#1'").execute();
         JsonDoc d = docs.next();
         JsonString val = (JsonString) d.get("name");
         assertEquals("<unknown>", val.getString());

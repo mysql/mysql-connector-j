@@ -52,4 +52,8 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
         this.filterParams.addArg(argName, value);
         return this;
     }
+
+    protected boolean getAllowRelationalColumns() {
+        return true;
+    }
 }

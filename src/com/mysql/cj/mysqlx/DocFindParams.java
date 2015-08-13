@@ -23,16 +23,25 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.util.Collections;
+
+import com.mysql.cj.api.x.Expression;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
+
 public class DocFindParams extends FindParams {
     public DocFindParams() {
-        super();
+        super(false);
     }
 
     public DocFindParams(String criteriaString) {
-        super(criteriaString);
+        super(criteriaString, false);
+    }
+
+    public void setFields(Expression docProjection) {
+        this.fields = Collections.singletonList(Projection.newBuilder().setSource(new ExprParser(docProjection.getExpressionString(), false).parse()).build());
     }
 
     public void setFields(String projection) {
-        this.fields = new ExprParser(projection).parseDocumentProjection();
+        this.fields = new ExprParser(projection, false).parseDocumentProjection();
     }
 }

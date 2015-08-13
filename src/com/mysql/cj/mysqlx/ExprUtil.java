@@ -133,10 +133,10 @@ public class ExprUtil {
     }
 
     public static Scalar argObjectToScalar(Object value) {
-        return argObjectToExpr(value).getLiteral();
+        return argObjectToExpr(value, false).getLiteral();
     }
 
-    public static Expr argObjectToExpr(Object value) {
+    public static Expr argObjectToExpr(Object value, boolean allowRelationalColumns) {
         if (value == null) {
             return buildLiteralNullScalar();
         } else if (value.getClass() == Boolean.class) {
@@ -156,7 +156,7 @@ public class ExprUtil {
         } else if (value.getClass() == String.class) {
             return buildLiteralScalar((String) value);
         } else if (value.getClass() == Expression.class) {
-            return new ExprParser(((Expression) value).getExpressionString()).parse();
+            return new ExprParser(((Expression) value).getExpressionString(), allowRelationalColumns).parse();
         } else if (value.getClass() == JsonDoc.class) {
             // TODO: check how xplugin handles this
         } else if (value.getClass() == JsonArray.class) {

@@ -29,7 +29,7 @@ import com.mysql.cj.mysqlx.FilterParams;
  * @todo
  */
 public abstract class FilterableStatement<T> {
-    protected FilterParams filterParams = new FilterParams();
+    protected FilterParams filterParams = new FilterParams(getAllowRelationalColumns());
 
     public T where(String searchCondition) {
         this.filterParams.setCriteria(searchCondition);
@@ -50,4 +50,9 @@ public abstract class FilterableStatement<T> {
         this.filterParams.setLimit(numberOfRows);
         return (T) this;
     }
+
+    /**
+     * Should expression parsing allow relational columns?
+     */
+    protected abstract boolean getAllowRelationalColumns();
 }

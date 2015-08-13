@@ -37,6 +37,8 @@ public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T, RE
     interface FindStatement extends CollectionStatement<FindStatement, FetchedDocs> {
         FindStatement fields(String projection);
 
+        FindStatement fields(Expression docProjection);
+
         FindStatement groupBy(String groupBy);
 
         FindStatement having(String having);

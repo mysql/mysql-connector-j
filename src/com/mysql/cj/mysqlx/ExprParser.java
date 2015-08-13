@@ -86,10 +86,18 @@ public class ExprParser {
     /** Number of positional placeholders. */
     int positionalPlaceholderCount = 0;
 
+    /** Are relational columns identifiers allowed? */
+    private boolean allowRelationalColumns;
+
     public ExprParser(String s) {
+        this(s, true);
+    }
+
+    public ExprParser(String s, boolean allowRelationalColumns) {
         this.string = s;
         lex();
         // java.util.stream.IntStream.range(0, this.tokens.size()).forEach(i -> System.err.println("[" + i + "] = " + this.tokens.get(i)));
+        this.allowRelationalColumns = allowRelationalColumns;
     }
 
     /**
@@ -568,13 +576,23 @@ public class ExprParser {
                 break;
             }
         }
-        if (items.size() == 0) {
-            throw new WrongArgumentException("Invalid JSON path at " + this.tokenPos);
-        }
-        if (items.get(items.size() - 1).getType() == DocumentPathItem.Type.DOUBLE_ASTERISK) {
+        if (items.size() > 0 && items.get(items.size() - 1).getType() == DocumentPathItem.Type.DOUBLE_ASTERISK) {
             throw new WrongArgumentException("JSON path may not end in '**' at " + this.tokenPos);
         }
         return items;
+    }
+
+    /**
+     * Parse a document field.
+     */
+    public Expr documentField() {
+        ColumnIdentifier.Builder builder = ColumnIdentifier.newBuilder();
+        if (currentTokenTypeEquals(TokenType.IDENT)) {
+            builder.addDocumentPath(DocumentPathItem.newBuilder().setType(
+                            DocumentPathItem.Type.MEMBER).setValue(consumeToken(TokenType.IDENT)).build());
+        }
+        builder.addAllDocumentPath(documentPath());
+        return Expr.newBuilder().setType(Expr.Type.IDENT).setIdentifier(builder.build()).build();
     }
 
     /**
@@ -609,6 +627,9 @@ public class ExprParser {
         if (currentTokenTypeEquals(TokenType.AT)) {
             consumeToken(TokenType.AT);
             id.addAllDocumentPath(documentPath());
+            if (id.getDocumentPathCount() == 0) {
+                throw new WrongArgumentException("Invalid document path at " + this.tokenPos);
+            }
         }
         return Expr.newBuilder().setType(Expr.Type.IDENT).setIdentifier(id.build()).build();
     }
@@ -654,10 +675,6 @@ public class ExprParser {
                     this.positionalPlaceholderCount++;
                 }
                 return placeholder.build();
-            }
-            case AT: {
-                ColumnIdentifier colId = ColumnIdentifier.newBuilder().addAllDocumentPath(documentPath()).build();
-                return Expr.newBuilder().setType(Expr.Type.IDENT).setIdentifier(colId).build();
             }
             case LPAREN: {
                 Expr e = expr();
@@ -743,6 +760,8 @@ public class ExprParser {
             case TRUE:
             case FALSE:
                 return ExprUtil.buildLiteralScalar(t.type == TokenType.TRUE);
+            case AT:
+                return documentField();
             case IDENT:
                 this.tokenPos--; // stay on the identifier
                 // check for function call which may be: func(...) or schema.func(...)
@@ -751,7 +770,11 @@ public class ExprParser {
                                 this.tokenPos + 3, TokenType.LPAREN))) {
                     return functionCall();
                 } else {
-                    return columnIdentifier();
+                    if (this.allowRelationalColumns) {
+                        return columnIdentifier();
+                    } else {
+                        return documentField();
+                    }
                 }
         }
         throw new WrongArgumentException("Cannot find atomic expression at token pos: " + (this.tokenPos - 1));
@@ -1008,17 +1031,7 @@ public class ExprParser {
      * Parse a document projection which is similar to SELECT but with document paths as the target alias.
      */
     public List<Projection> parseDocumentProjection() {
-        // try to parse a single, unaliased json constructor as the document projection
-        if (this.tokens.get(0).type == TokenType.LCURLY && this.tokens.get(this.tokens.size()-1).type == TokenType.RCURLY) {
-            Expr docProjection = expr();
-            if (this.tokenPos == this.tokens.size()) {
-                return Collections.singletonList(Projection.newBuilder().setSource(docProjection).build());
-            } else {
-                // reset for list parsing
-                this.tokenPos = 0;
-            }
-        }
-        // else parse a list of aliased expressions
+        this.allowRelationalColumns = false;
         return parseCommaSeparatedList(() -> {
                     Projection.Builder builder = Projection.newBuilder();
                     builder.setSource(expr());

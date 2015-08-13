@@ -86,4 +86,8 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     public ModifyStatement arrayDelete(String field, int position) {
         throw new NullPointerException("TODO: not supported in xplugin");
     }
+
+    protected boolean getAllowRelationalColumns() {
+        return false;
+    }
 }
