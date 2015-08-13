@@ -23,8 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import com.mysql.cj.api.x.DeleteStatement;
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.DeleteStatement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
 public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl> implements DeleteStatement {

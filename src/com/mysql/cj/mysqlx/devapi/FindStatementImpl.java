@@ -23,8 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.api.x.CollectionStatement.FindStatement;
 import com.mysql.cj.api.x.Expression;
+import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.mysqlx.DocFindParams;
 
 public class FindStatementImpl implements FindStatement {

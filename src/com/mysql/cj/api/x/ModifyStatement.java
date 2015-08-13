@@ -23,16 +23,23 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+public interface ModifyStatement extends Statement<ModifyStatement, Result> {
+    ModifyStatement sort(String sortFields);
 
-    SelectStatement select(String searchFields);
+    ModifyStatement limit(long numberOfRows);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    ModifyStatement set(String docPath, Object value);
 
+    ModifyStatement change(String docPath, Object value);
+
+    ModifyStatement unset(String fields);
+
+    // TODO: should have alternative versions for different document forms? String vs JsonDoc?
+    ModifyStatement merge(String document);
+
+    ModifyStatement arrayInsert(String field, Object value);
+
+    ModifyStatement arrayAppend(String field, Object value);
+
+    ModifyStatement arrayDelete(String field, int position);
 }

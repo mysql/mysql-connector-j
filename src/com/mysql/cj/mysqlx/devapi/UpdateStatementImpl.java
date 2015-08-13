@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
+import com.mysql.cj.api.x.UpdateStatement;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateParams;

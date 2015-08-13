@@ -26,8 +26,8 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.List;
 import java.util.Map;
 
+import com.mysql.cj.api.x.InsertStatement;
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.api.x.TableStatement.InsertStatement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.InsertParams;
 

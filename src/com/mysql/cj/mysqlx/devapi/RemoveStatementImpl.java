@@ -23,7 +23,7 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
+import com.mysql.cj.api.x.RemoveStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 

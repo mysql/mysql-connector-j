@@ -23,16 +23,18 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+public interface FindStatement extends Statement<FindStatement, FetchedDocs> {
+    FindStatement fields(String projection);
 
-    SelectStatement select(String searchFields);
+    FindStatement fields(Expression docProjection);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    FindStatement groupBy(String groupBy);
 
+    FindStatement having(String having);
+
+    FindStatement orderBy(String sortFields);
+
+    FindStatement skip(long limitOffset);
+
+    FindStatement limit(long numberOfRows);
 }

@@ -29,12 +29,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.TableStatement.SelectStatement;
 import com.mysql.cj.api.x.Row;
 
 /**

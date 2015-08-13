@@ -23,7 +23,7 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.api.x.TableStatement.SelectStatement;
+import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.TableFindParams;
 

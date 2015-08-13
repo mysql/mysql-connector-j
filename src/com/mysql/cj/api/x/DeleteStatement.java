@@ -23,16 +23,11 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+public interface DeleteStatement extends Statement<DeleteStatement, Result> {
+    DeleteStatement where(String searchCondition);
 
-    SelectStatement select(String searchFields);
+    DeleteStatement orderBy(String sortFields);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
-
+    DeleteStatement limit(long numberOfRows);
 }
+

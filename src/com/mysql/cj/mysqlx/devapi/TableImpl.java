@@ -25,13 +25,13 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Map;
 
+import com.mysql.cj.api.x.DeleteStatement;
+import com.mysql.cj.api.x.InsertStatement;
 import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.TableStatement.DeleteStatement;
-import com.mysql.cj.api.x.TableStatement.InsertStatement;
-import com.mysql.cj.api.x.TableStatement.SelectStatement;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
+import com.mysql.cj.api.x.UpdateStatement;
 import com.mysql.cj.mysqlx.ExprUnparser;
 
 public class TableImpl implements Table {

@@ -23,16 +23,18 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+public interface SelectStatement extends Statement<SelectStatement, FetchedRows> {
+    SelectStatement where(String searchCondition);
 
-    SelectStatement select(String searchFields);
+    SelectStatement groupBy(String groupBy);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    SelectStatement having(String having);
 
+    SelectStatement orderBy(String sortFields);
+
+    SelectStatement limit(long numberOfRows);
+
+    SelectStatement offset(long limitOffset);
+
+    //SelectStatement fetch(Object callback); // not supported in v1
 }

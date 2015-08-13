@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.api.x.CollectionStatement;
+import com.mysql.cj.api.x.AddStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -42,7 +42,7 @@ import com.mysql.cj.x.json.JsonString;
 /**
  * @todo
  */
-public class AddStatementImpl implements CollectionStatement.AddStatement {
+public class AddStatementImpl implements AddStatement {
     private CollectionImpl collection;
     private List<JsonDoc> newDocs;
 

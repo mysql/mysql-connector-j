@@ -26,7 +26,7 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
+import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateSpec;

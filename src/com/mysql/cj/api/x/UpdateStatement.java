@@ -23,16 +23,16 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+import java.util.Map;
 
-    SelectStatement select(String searchFields);
+public interface UpdateStatement extends Statement<UpdateStatement, Result> {
+    UpdateStatement set(Map<String, Object> fieldsAndValues);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    UpdateStatement set(Object... fieldValuePairs);
 
+    UpdateStatement where(String searchCondition);
+
+    UpdateStatement orderBy(String sortFields);
+
+    UpdateStatement limit(long numberOfRows);
 }

@@ -25,11 +25,6 @@ package com.mysql.cj.api.x;
 
 import java.util.Map;
 
-import com.mysql.cj.api.x.TableStatement.DeleteStatement;
-import com.mysql.cj.api.x.TableStatement.InsertStatement;
-import com.mysql.cj.api.x.TableStatement.SelectStatement;
-import com.mysql.cj.api.x.TableStatement.UpdateStatement;
-
 public interface Table extends DatabaseObject {
 
     InsertStatement insert();

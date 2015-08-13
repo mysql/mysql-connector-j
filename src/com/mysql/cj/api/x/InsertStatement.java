@@ -23,16 +23,13 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+import java.util.Arrays;
+import java.util.List;
 
-    SelectStatement select(String searchFields);
+public interface InsertStatement extends Statement<UpdateStatement, Result> {
+    InsertStatement values(List<Object> values);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
-
+    default InsertStatement values(Object... values) {
+        return values(Arrays.asList(values));
+    }
 }

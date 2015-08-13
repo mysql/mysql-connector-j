@@ -23,16 +23,12 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
+import com.mysql.cj.x.json.JsonDoc;
 
-    SelectStatement select(String searchFields);
+public interface AddStatement extends Statement<AddStatement, Result> {
+    AddStatement add(String jsonString);
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    AddStatement add(JsonDoc document);
 
+    AddStatement add(JsonDoc documents[]);
 }

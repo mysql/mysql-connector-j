@@ -23,16 +23,6 @@
 
 package com.mysql.cj.api.x;
 
-public interface View extends DatabaseObject {
-
-    SelectStatement select(String searchFields);
-
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
-
+public interface CreateCollectionIndexStatement extends Statement<CreateCollectionIndexStatement, Result> {
+    CreateCollectionIndexStatement field(String docPath, String type, boolean notNull);
 }

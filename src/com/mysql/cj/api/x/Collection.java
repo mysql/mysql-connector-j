@@ -25,12 +25,6 @@ package com.mysql.cj.api.x;
 
 import java.util.Map;
 
-import com.mysql.cj.api.x.CollectionStatement.AddStatement;
-import com.mysql.cj.api.x.CollectionStatement.CreateCollectionIndexStatement;
-import com.mysql.cj.api.x.CollectionStatement.DropCollectionIndexStatement;
-import com.mysql.cj.api.x.CollectionStatement.FindStatement;
-import com.mysql.cj.api.x.CollectionStatement.ModifyStatement;
-import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.x.json.JsonDoc;
 
 public interface Collection extends DatabaseObject {

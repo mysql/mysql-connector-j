@@ -23,7 +23,7 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.api.x.CollectionStatement.CreateCollectionIndexStatement;
+import com.mysql.cj.api.x.CreateCollectionIndexStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.CreateIndexParams;
