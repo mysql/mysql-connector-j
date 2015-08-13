@@ -108,10 +108,10 @@ public class CollectionAddTest extends CollectionTest {
     }
 
     @Test
-    @Ignore("8k docs are causing problems, filed as MYP-147. need a 1MB test too and to respect mysqlx_max_allowed_packet sysvar")
     public void testAddLargeDocument() {
+        int docSize = 255 * 1024;
         StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");
-        for (int i = 0; i < 8*1024; ++i) {
+        for (int i = 0; i < docSize; ++i) {
             b.append('.');
         }
         String s = b.append("\"}").toString();
@@ -119,6 +119,6 @@ public class CollectionAddTest extends CollectionTest {
 
         FetchedDocs docs = this.collection.find().execute();
         JsonDoc d = docs.next();
-        assertEquals(1023*1024, ((JsonString) d.get("large_field")).getString().length());
+        assertEquals(docSize, ((JsonString) d.get("large_field")).getString().length());
     }
 }
