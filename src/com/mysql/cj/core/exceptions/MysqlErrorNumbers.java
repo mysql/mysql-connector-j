@@ -971,6 +971,7 @@ public final class MysqlErrorNumbers {
     public static final int ER_X_EXPR_MISSING_ARG = 5152;
     public static final int ER_X_EXPR_BAD_TYPE_VALUE = 5153;
     public static final int ER_X_EXPR_BAD_VALUE = 5154;
+    public static final int ER_X_EXPR_BAD_REGEX = 5155;
     public static final int ER_X_INVALID_COLLECTION = 5156;
     public static final int ER_X_INVALID_ADMIN_COMMAND = 5157;
     public static final int ER_X_EXPECT_NOT_OPEN = 5158;

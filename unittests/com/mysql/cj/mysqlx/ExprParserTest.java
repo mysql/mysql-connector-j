@@ -190,6 +190,7 @@ public class ExprParserTest {
         checkParseRoundTrip("'Monty!' REGEXP '.*'", "(\"Monty!\" regexp \".*\")");
         checkParseRoundTrip("a regexp b regexp c", "((a regexp b) regexp c)");
         checkParseRoundTrip("a + b + c", "((a + b) + c)");
+        checkParseRoundTrip("a + cast(b as json)", "(a + cast(b AS JSON))");
         checkParseRoundTrip("a + cast(b as decimal)", "(a + cast(b AS DECIMAL))");
         checkParseRoundTrip("a + cast(b as decimal(2))", "(a + cast(b AS DECIMAL(2)))");
         checkParseRoundTrip("a + cast(b as decimal(1, 2))", "(a + cast(b AS DECIMAL(1,2)))");
