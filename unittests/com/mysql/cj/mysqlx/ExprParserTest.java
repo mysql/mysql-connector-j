@@ -94,6 +94,9 @@ public class ExprParserTest {
         checkBadParse("x@ > 1");
         checkBadParse(":>1");
         checkBadParse(":1.1");
+        checkBadParse("cast(x as varchar)");
+        checkBadParse("not");
+        checkBadParse("@.a[-1]");
         // TODO: test bad JSON identifiers (quoting?)
     }
 
@@ -129,6 +132,8 @@ public class ExprParserTest {
         checkParseRoundTrip("1", "1");
         checkParseRoundTrip("1^0", "(1 ^ 0)");
         checkParseRoundTrip("1e1", "10.0");
+        checkParseRoundTrip("-1e1", "-10.0");
+        checkParseRoundTrip("!0", "!0");
         checkParseRoundTrip("1e4", "10000.0");
         checkParseRoundTrip("12e-4", "0.0012");
         checkParseRoundTrip("a + 314.1592e-2", "(a + 3.141592)");
@@ -175,8 +180,10 @@ public class ExprParserTest {
         checkParseRoundTrip("(1 + 3) in (3, 4, 5)", "(1 + 3) in(3, 4, 5)");
         checkParseRoundTrip("`a crazy \"function\"``'name'`(1 + 3) in (3, 4, 5)", "`a crazy \"function\"``'name'`((1 + 3)) in(3, 4, 5)");
         checkParseRoundTrip("a@.b", "a@.b");
+        checkParseRoundTrip("a@.\"bcd\"", "a@.bcd");
         checkParseRoundTrip("a@.*", "a@.*");
         checkParseRoundTrip("a@[0].*", "a@[0].*");
+        checkParseRoundTrip("a@[*].*", "a@[*].*");
         checkParseRoundTrip("a@**[0].*", "a@**[0].*");
         checkParseRoundTrip("@._id", "@._id");
         checkParseRoundTrip("@._id == :0", "(@._id == :0)");
@@ -187,9 +194,14 @@ public class ExprParserTest {
         checkParseRoundTrip("a + cast(b as decimal(2))", "(a + cast(b AS DECIMAL(2)))");
         checkParseRoundTrip("a + cast(b as decimal(1, 2))", "(a + cast(b AS DECIMAL(1,2)))");
         checkParseRoundTrip("a + cast(b as binary)", "(a + cast(b AS BINARY))");
+        checkParseRoundTrip("a + cast(b as DaTe)", "(a + cast(b AS DATE))");
+        checkParseRoundTrip("a + cast(b as char)", "(a + cast(b AS CHAR))");
+        checkParseRoundTrip("a + cast(b as DaTeTiMe)", "(a + cast(b AS DATETIME))");
+        checkParseRoundTrip("a + cast(b as time)", "(a + cast(b AS TIME))");
         checkParseRoundTrip("a + cast(b as binary(3))", "(a + cast(b AS BINARY(3)))");
         checkParseRoundTrip("a + cast(b as unsigned)", "(a + cast(b AS UNSIGNED))");
         checkParseRoundTrip("a + cast(b as unsigned integer)", "(a + cast(b AS UNSIGNED))");
+        checkParseRoundTrip("a is true or a is false", "((a is TRUE) || (a is FALSE))");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
     }
@@ -279,6 +291,8 @@ public class ExprParserTest {
     @Test
     public void testNamedPlaceholders() {
         ExprParser parser = new ExprParser("a = :a and b = :b and (c = 'x' or d = :b)");
+        assertEquals("IDENT(a)", parser.tokens.get(0).toString());
+        assertEquals("EQ", parser.tokens.get(1).toString());
         Expr e = parser.parse();
         assertEquals(new Integer(0), parser.placeholderNameToPosition.get("a"));
         assertEquals(new Integer(1), parser.placeholderNameToPosition.get("b"));
