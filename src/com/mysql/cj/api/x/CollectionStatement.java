@@ -23,9 +23,16 @@
 
 package com.mysql.cj.api.x;
 
+import com.mysql.cj.x.json.JsonDoc;
+
 public interface CollectionStatement<STMT_T, RES_T> extends Statement<STMT_T, RES_T> {
 
     interface AddStatement extends CollectionStatement<AddStatement, Result> {
+        AddStatement add(String jsonString);
+
+        AddStatement add(JsonDoc document);
+
+        AddStatement add(JsonDoc documents[]);
     }
 
     interface RemoveStatement extends CollectionStatement<RemoveStatement, Result> {

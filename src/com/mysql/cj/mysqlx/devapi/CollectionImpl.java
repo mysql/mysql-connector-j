@@ -37,7 +37,6 @@ import com.mysql.cj.api.x.CollectionStatement.RemoveStatement;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
-import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonParser;

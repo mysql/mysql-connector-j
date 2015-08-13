@@ -108,6 +108,16 @@ public class CollectionAddTest extends CollectionTest {
     }
 
     @Test
+    public void testChainedAdd() {
+        String json = "{'_id': '1'}".replaceAll("'", "\"");
+        this.collection.add(json).add(json.replaceAll("1", "2")).execute();
+
+        assertEquals(true, this.collection.find("_id = 1").execute().hasNext());
+        assertEquals(true, this.collection.find("_id = 2").execute().hasNext());
+        assertEquals(false, this.collection.find("_id = 3").execute().hasNext());
+    }
+
+    @Test
     public void testAddLargeDocument() {
         int docSize = 255 * 1024;
         StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");

@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +33,10 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.CollectionStatement;
 import com.mysql.cj.api.x.Result;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonParser;
 import com.mysql.cj.x.json.JsonString;
 
 /**
@@ -51,6 +55,25 @@ public class AddStatementImpl implements CollectionStatement.AddStatement {
     /* package private */AddStatementImpl(CollectionImpl collection, JsonDoc[] newDocs) {
         this.collection = collection;
         this.newDocs = Arrays.asList(newDocs);
+    }
+
+    public AddStatement add(String jsonString) {
+        try {
+            JsonDoc doc = JsonParser.parseDoc(new StringReader(jsonString));
+            return add(doc);
+        } catch (IOException ex) {
+            throw AssertionFailedException.shouldNotHappen(ex);
+        }
+    }
+
+    public AddStatement add(JsonDoc doc) {
+        this.newDocs.add(doc);
+        return this;
+    }
+
+    public AddStatement add(JsonDoc[] docs) {
+        this.newDocs.addAll(Arrays.asList(docs));
+        return this;
     }
 
     public Result execute() {
