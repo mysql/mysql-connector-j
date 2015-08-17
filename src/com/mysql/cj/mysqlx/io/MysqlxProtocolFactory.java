@@ -68,6 +68,9 @@ public class MysqlxProtocolFactory {
     public static MysqlxProtocol getAsyncInstance(String host, int port, PropertySet propertySet) {
         try {
             final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
+            sockChan.setOption(java.net.StandardSocketOptions.TCP_NODELAY, true);
+            sockChan.setOption(java.net.StandardSocketOptions.SO_SNDBUF, 128*1024);
+            sockChan.setOption(java.net.StandardSocketOptions.SO_RCVBUF, 128*1024);
 
             Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(host, port));
             connectPromise.get();
