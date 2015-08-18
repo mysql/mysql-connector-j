@@ -123,14 +123,7 @@ public class LogUtils {
                 Math.max(stackTraceAsString.lastIndexOf("com.mysql.cj.jdbc"), stackTraceAsString.lastIndexOf("com.mysql.cj.fabric")));
 
         if (endInternalMethods != -1) {
-            int endOfLine = -1;
-            int compliancePackage = stackTraceAsString.indexOf("com.mysql.cj.jdbc.compliance", endInternalMethods);
-
-            if (compliancePackage != -1) {
-                endOfLine = compliancePackage - LINE_SEPARATOR_LENGTH;
-            } else {
-                endOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endInternalMethods);
-            }
+            int endOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endInternalMethods);
 
             if (endOfLine != -1) {
                 int nextEndOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endOfLine + LINE_SEPARATOR_LENGTH);

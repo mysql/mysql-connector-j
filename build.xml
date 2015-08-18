@@ -26,7 +26,7 @@
 Compiling Connector/J
 =====================
 
-Connector/J 6.0 supports JDBC4.1. This requires JDBC classes to be compiled with Java 8.
+Connector/J 6.0 supports JDBC4.2. This requires JDBC classes to be compiled with Java 8.
 The variable 'com.mysql.jdbc.jdk' is used to find the compiler when building the driver. Side by side with these, the variable 'com.mysql.jdbc.extra.libs' must
 point to the location of third-party libraries that we don't distribute and are required for compiling. Further details can be found in
 http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
@@ -111,7 +111,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <property name="extra.version" value="" />
     <property name="full.version" value="${version}${extra.version}${snapshot.version}" />
     <property name="fullProdName" value="${prodName}-${full.version}" />
-    <property name="sourceDir" value="./src" />
     <property name="buildDir" value="./build" />
     <property name="distDir" value="./dist" />
     <property name="junit.results" value="${buildDir}/junit" />
@@ -131,9 +130,9 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- The following property are needed for finding the JDK needed for compile and can be passed on the command line to ant via -D switch. -->
     <property name="com.mysql.jdbc.jdk" value="/usr/lib/jvm/jdk1.8" />
 
-    <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to src/lib so user could either
+    <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to lib/ so user could either
        put these jars there or pass different location via ant -D switch. -->
-    <property name="com.mysql.jdbc.extra.libs" value="${sourceDir}/lib" />
+    <property name="com.mysql.jdbc.extra.libs" value="lib" />
 
     <!-- The following property is needed for finding a JVM to execute the tests and can be passed on the command line to ant via -D switch. -->
     <property name="com.mysql.jdbc.testsuite.jvm" value="${com.mysql.jdbc.jdk}" />
@@ -283,6 +282,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <tstamp />
 
         <mkdir dir="${buildDir}" />
+        <mkdir dir="${buildDir}/lib" />
 
         <exec dir="."
               executable="cmd"
@@ -330,24 +330,19 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </filterset>
 
         <copy todir="${buildDir}/${fullProdName}" filtering="true">
-            <fileset dir="unittests" />
-            <fileset dir="${sourceDir}/" excludes="**/CVS">
-                <patternset id="classjar">
-                    <exclude name="**/*.class*" />
-                    <exclude name="**/*.jar" />
-                </patternset>
-            </fileset>
+            <fileset dir="src/build/java" />
+            <fileset file="src/build/misc/pom.xml" />
+            <fileset dir="src/main/java" />
+            <fileset dir="src/main/resources" />
+            <fileset dir="src/test/java" />
+            <fileset dir="src/demo/java" />
 
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
         </copy>
 
-        <copy todir="${buildDir}/${fullProdName}" filtering="false">
-            <fileset dir="${sourceDir}" excludes="**/CVS">
-                <patternset id="dojar">
-                    <include name="**/*.jar*" />
-                </patternset>
-            </fileset>
+        <copy todir="${buildDir}/${fullProdName}/lib" filtering="false">
+            <fileset dir="lib"/>
         </copy>
     </target>
 
@@ -460,7 +455,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <arg line="install:install-file 
                 -Dfile=${mavenUploadDir}/${fullProdName}.jar
                 -Dsources=${mavenUploadDir}/${fullProdName}-sources.jar
-                -DpomFile=${buildDir}/${fullProdName}/doc/sources/pom.xml
+                -DpomFile=${buildDir}/${fullProdName}/pom.xml
                 -DcreateChecksum=true" />
         </exec>
     </target>
@@ -561,11 +556,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </patternset>
 
         <copy todir="${packageDest}">
-            <fileset dir="${buildDir}/${fullProdName}" includes="debug/*, docs/**, *.jar" excludes="docs/sources">
+            <fileset dir="${buildDir}/${fullProdName}" includes="docs/**, *.jar" excludes="docs/sources">
                 <patternset refid="non.test.sources" />
             </fileset>
 
-            <fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, src/demo/**, build.xml, CHANGES, COPYING">
+            <fileset dir="." includes="src/**, lib/*, build.xml, CHANGES, COPYING">
                 <patternset refid="non.test.sources" />
             </fileset>
         </copy>
@@ -639,7 +634,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="true" />
+        <copy file="${buildDir}/${fullProdName}/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="false" />
         <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 

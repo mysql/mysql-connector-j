@@ -224,8 +224,7 @@ public class Jdk14Logger implements Log {
 
             if (!(callerClassName.startsWith("com.mysql.cj.api") || callerClassName.startsWith("com.mysql.cj.core")
                     || callerClassName.startsWith("com.mysql.cj.api.fabric") || callerClassName.startsWith("com.mysql.cj.api.jdbc")
-                    || callerClassName.startsWith("com.mysql.cj.fabric") || callerClassName.startsWith("com.mysql.cj.jdbc"))
-                    || callerClassName.startsWith("com.mysql.cj.jdbc.compliance")) {
+                    || callerClassName.startsWith("com.mysql.cj.fabric") || callerClassName.startsWith("com.mysql.cj.jdbc"))) {
                 return i;
             }
         }
