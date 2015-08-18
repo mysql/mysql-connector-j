@@ -40,19 +40,10 @@ Testing Connector/J
 Connector/J 6.0 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.jdbc.testsuite.url' and by
 calling the target "test". If nothing more is set, these tests run with the JVM referred in the variable 'com.mysql.jdbc.jdk'.
 Alternatively, all tests can be run with a distinct JVM, provided that it is pointed out in the variable 'com.mysql.jdbc.testsuite.jvm'.
-Running the full test suite with different JVMs and different MySQL servers at once is also possible. The variables 'com.mysql.jdbc.testsuite.jvm' and
-'com.mysql.jdbc.testsuite.url' can be suffixed with an index ".1" to ".9" to indicate the multiple alternatives which results in the matrix of all possible
-combinations. The target "test-multijvm" must be called in this case.
 Running only one test set is possible by setting the variable 'test' with the class' fully qualified name. If also a comma separated list of test names is
 provided in the variable 'methods', then only these will be executed.
 
-Targets: "test", "test-multijvm"
-
-
-Compliance, coverage and instrumentation
-========================================
-
-This file ships with targets for these matters. Further details can be found in the respective targets.
+Targets: "test"
 
 
 MySQL Fabric support and testing
@@ -66,7 +57,7 @@ this file.
 Sample 'build.properties' that can be used to compile, build, test and test with multi JVMs
 ===========================================================================================
 ~~~start cut here~~~
-# Basic settings for 'compile', 'test', 'test-multijvm' and targets that depend on these.
+# Basic settings for 'compile', 'test' and targets that depend on these.
 
 # External libraries needed for both compiling and testing:
 # - Further details in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html
@@ -88,18 +79,6 @@ com.mysql.jdbc.testsuite.jvm=&lt;full_path_to_a_jdk_or_jre&gt;
 # - Any of the current MySQL versions.
 # - Mandatory for 'test' target.
 com.mysql.jdbc.testsuite.url=jdbc:mysql://&lt;host&gt;:&lt;port&gt;/&lt;testDB&gt;?user=&lt;user&gt;&amp;password=&lt;pwd&gt;
-
-# Multiple JVM/MySQL tests:
-# - Must point to JDK or JRE home directories.
-# - Mandatory (at least one, at most eight) for 'test-multijdk' target.
-com.mysql.jdbc.testsuite.jvm.1=&lt;full_path_to_a_jdk_or_jre&gt;
-com.mysql.jdbc.testsuite.jvm.2=&lt;full_path_to_a_jdk_or_jre&gt;
-com.mysql.jdbc.testsuite.jvm.3=&lt;full_path_to_a_jdk_or_jre&gt;
-# - URL to the test database(s).
-# - Any of the current MySQL versions.
-# - Mandatory (at least one, at most eight) for 'test-multijdk' target.
-com.mysql.jdbc.testsuite.url.1=jdbc:mysql://&lt;host1&gt;:&lt;port1&gt;/&lt;testDB1&gt;?user=&lt;user1&gt;&amp;password=&lt;pwd1&gt;
-com.mysql.jdbc.testsuite.url.2=jdbc:mysql://&lt;host2&gt;:&lt;port2&gt;/&lt;testDB2&gt;?user=&lt;user2&gt;&amp;password=&lt;pwd2&gt;
 
 # Cancels re-compiling between successive test executions.
 # - Implicit in multiple JVM/MySQL in between iterations.
@@ -244,44 +223,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                         <equals arg1="${jdkcheckexitstatus}" arg2="0" />
                         <contains string="${com.mysql.jdbc.jdk.version}" substring="java version &quot;1.8" casesensitive="true" />
                     </and>
-                </not>
-            </condition>
-        </fail>
-    </target>
-
-
-    <!-- Check provided URL for running unit tests. -->
-    <target name="-testsuite-url-check">
-        <condition property="com.mysql.jdbc.testsuite.url.final" value="${com.mysql.jdbc.testsuite.url.internal}" else="${com.mysql.jdbc.testsuite.url}">
-            <isset property="com.mysql.jdbc.testsuite.url.internal" />
-        </condition>
-
-        <fail message="Set the MySQL database connection string for the test suite in one of the properties, 'com.mysql.jdbc.testsuite.url' or 'com.mysql.jdbc.testsuite.url.N', according to desired target.">
-            <condition>
-                <not>
-                    <or>
-                        <isset property="com.mysql.jdbc.testsuite.url.internal" />
-                        <isset property="com.mysql.jdbc.testsuite.url" />
-                    </or>
-                </not>
-            </condition>
-        </fail>
-    </target>
-
-
-    <!-- Check provided URL for running compliance tests. -->
-    <target name="-compliance-url-check">
-        <condition property="com.mysql.jdbc.compliance.url.final" value="${com.mysql.jdbc.compliance.url.internal}" else="${com.mysql.jdbc.compliance.url}">
-            <isset property="com.mysql.jdbc.compliance.url.internal" />
-        </condition>
-
-        <fail message="Set the MySQL database connection string for the compliance tests in one of the properties, 'com.mysql.jdbc.compliance.url' or 'com.mysql.jdbc.compliance.url.N', according to desired target.">
-            <condition>
-                <not>
-                    <or>
-                        <isset property="com.mysql.jdbc.compliance.url.internal" />
-                        <isset property="com.mysql.jdbc.compliance.url" />
-                    </or>
                 </not>
             </condition>
         </fail>
@@ -472,7 +413,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     </target>
 
 
-    <!-- Copy LICENCE.mysql and replace license commercial headers (Package). -->
+    <!-- Copy LICENSE.mysql and replace license commercial headers (Package). -->
     <target name="-replace-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.commercialBuild">
         <delete file="${packageDest}/COPYING" />
         <copy file="${com.mysql.jdbc.extra.libs}/LICENSE.mysql" toDir="${packageDest}" />
@@ -919,49 +860,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- ******************* -->
 
 
-    <!-- Run the full test suite, single test set or single test, and compliance test suite, against multiple JVMs and server configs. -->
-    <target name="test-all-multi"
-            description="Runs the full test suite, single test set or single test, and compliance test suite, against multiple JVMs and server configs."
-            depends="compile">
-        <delete dir="${buildDir}/junit" />
-        <antcall target="test-multijvm" />
-        <antcall target="test-compliance-multijvm" />
-
-        <fail message="Tests failed. Check logs and/or reports in '${buildDir}/junit'." if="tests.compliance.failed" />
-    </target>
-
-
-    <!-- Run the full test suite, single test set or named test against multiple JVMs and server configs. -->
-    <target name="test-multijvm"
-            description="Runs the full test suite, single test set (variable 'test') or named tests (variables 'test' and 'methods') against multiple JVMs and server configs."
-            depends="compile">
-        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
-            <array8 arrayproperty="com.mysql.jdbc.testsuite.url" outputproperty="url.value" indexproperty="url.index">
-                <local name="test.run" />
-                <condition property="test.run">
-                    <and>
-                        <isset property="jvm.value" />
-                        <isset property="url.value" />
-                    </and>
-                </condition>
-                <antcall target="-test-multijvm-iteration">
-                    <param name="jvm.value" value="${jvm.value}" />
-                    <param name="url.value" value="${url.value}" />
-                    <param name="url.index" value="${url.index}" />
-                    <param name="test.mode" value="testsuite" />
-                    <param name="test.target" value="test" />
-                    <param name="test.run" value="${test.run}" />
-                </antcall>
-            </array8>
-        </array8>
-    </target>
-
-
     <!-- Run the full test suite, single test set or named tests against one JVM and one server config. -->
     <target name="test"
             description="Runs the full test suite, single test set (variable 'test') or named tests (variables 'test' and 'methods') against one JVM and one server config."
-            depends="-testsuite-url-check, -testsuite-jvm-check, compile, -set-test-result-prefix">
-        <property name="junit.unitregress.results" value="${junit.results}/${test.result.prefix}/unitregress" />
+            depends="-testsuite-jvm-check, compile">
+        <property name="junit.unitregress.results" value="${junit.results}/unitregress" />
 
         <mkdir dir="${junit.unitregress.results}/report" />
 
@@ -975,14 +878,14 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
         <local name="test.message.test.mode" />
         <condition property="test.message.test.mode"
-                   value="Running JDBC unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'">
+                   value="Running JDBC unit tests against '${com.mysql.jdbc.testsuite.url}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'">
             <not>
                 <isset property="test" />
             </not>
         </condition>
         <condition property="test.message.test.mode"
-                   value="Running JDBC unit test '${test}', method(s) '${methods}' against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'"
-                   else="Running JDBC unit test '${test}' against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'">
+                   value="Running JDBC unit test '${test}', method(s) '${methods}' against '${com.mysql.jdbc.testsuite.url}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'"
+                   else="Running JDBC unit test '${test}' against '${com.mysql.jdbc.testsuite.url}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'">
             <isset property="test.ismethods" />
         </condition>
         <echo>${test.message.test.mode}</echo>
@@ -990,13 +893,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <junit printsummary="yes"
                fork="on"
                forkmode="once"
-               jvm="${com.mysql.jdbc.testsuite.jvm.java}"
-               errorProperty="tests.failed"
-               failureProperty="tests.failed">
+               jvm="${com.mysql.jdbc.testsuite.jvm.java}">
             <jvmarg value="-Xmx1024m" />
 
             <syspropertyset refid="junit.system.properties" />
-            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}" />
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
@@ -1030,488 +931,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             </fileset>
             <report format="frames" todir="${junit.unitregress.results}/report" />
         </junitreport>
-
-        <!-- Don't fail the build if we're doing multi-tests. -->
-        <fail message="Tests failed. Check logs and/or reports in '${junit.results}'.">
-            <condition>
-                <and>
-                    <equals arg1="${test.result.prefix}" arg2="" />
-                    <isset property="tests.failed" />
-                </and>
-            </condition>
-        </fail>
-
-        <local name="test.message.dontfail" />
-        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test..." else="">
-            <not>
-                <equals arg1="${test.result.prefix}" arg2="" />
-            </not>
-        </condition>
-        <echo>${test.message.dontfail}</echo>
     </target>
-
-
-    <!-- Run compliance test suite against multiple JVMs and server configs. 
-         The JDBC compliance test suite is not shipped with MySQL Connector/J as it is not licensable except from Oracle.
-         The properties com.mysql.jdbc.compliance.url.[1..8] and jdbc.compliance.location must be set prior to running this test. -->
-    <target name="test-compliance-multijvm" description="Runs compliance test suite against multiple JVMs and server configs." depends="compile">
-        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
-            <array8 arrayproperty="com.mysql.jdbc.compliance.url" outputproperty="url.value" indexproperty="url.index">
-                <local name="test.run" />
-                <condition property="test.run">
-                    <and>
-                        <isset property="jvm.value" />
-                        <isset property="url.value" />
-                    </and>
-                </condition>
-                <antcall target="-test-multijvm-iteration">
-                    <param name="jvm.value" value="${jvm.value}" />
-                    <param name="url.value" value="${url.value}" />
-                    <param name="url.index" value="${url.index}" />
-                    <param name="test.mode" value="compliance" />
-                    <param name="test.target" value="test-compliance" />
-                    <param name="test.run" value="${test.run}" />
-                </antcall>
-            </array8>
-        </array8>
-    </target>
-
-
-    <!-- Run compliance test suite against one JVMs and one server config. 
-         The JDBC compliance test suite is not shipped with MySQL Connector/J as it is not licensible except from Oracle.
-         The properties com.mysql.jdbc.compliance.url and jdbc.compliance.location must be set prior to running this test. -->
-    <target name="test-compliance"
-            description="Runs compliance test suite against one JVMs and one server config."
-            depends="-compliance-url-check, -testsuite-jvm-check, compile, -set-test-result-prefix">
-        <property name="junit.compliance.results" value="${junit.results}/${test.result.prefix}/compliance" />
-
-        <mkdir dir="${junit.compliance.results}/report" />
-
-        <echo>Running compliance test suite against '${com.mysql.jdbc.compliance.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}'</echo>
-
-        <junit printsummary="yes"
-               fork="on"
-               forkmode="once"
-               jvm="${com.mysql.jdbc.testsuite.jvm.java}"
-               errorProperty="tests.compliance.failed"
-               failureProperty="tests.compliance.failed">
-            <jvmarg value="-Xmx1024m" />
-
-            <syspropertyset refid="junit.system.properties" />
-            <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url.final}" />
-
-            <classpath>
-                <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
-                <pathelement location="${buildDir}/${fullProdName}" />
-                <pathelement path="${java.class.path}" />
-                <pathelement location="${jdbc.compliance.location}" />
-            </classpath>
-
-            <formatter type="xml" />
-
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.BatchUpdateTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ConnectionTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.DatabaseMetaDataTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.EscapeSyntaxTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.PreparedStatementTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetMetadataTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetTest" />
-            <test todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.StatementTest" />
-        </junit>
-
-        <junitreport todir="${junit.compliance.results}/report">
-            <fileset dir="${junit.compliance.results}">
-                <include name="**/TEST-*.xml" />
-            </fileset>
-            <report format="frames" todir="${junit.compliance.results}/report" />
-        </junitreport>
-
-        <!-- Don't fail the build if we're doing multi-tests. -->
-        <fail message="Tests failed. Check logs and/or reports in '${junit.compliance.results}'.">
-            <condition>
-                <and>
-                    <equals arg1="${test.result.prefix}" arg2="" />
-                    <isset property="tests.compliance.failed" />
-                </and>
-            </condition>
-        </fail>
-
-        <local name="test.message.dontfail" />
-        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test..." else="">
-            <not>
-                <equals arg1="${test.result.prefix}" arg2="" />
-            </not>
-        </condition>
-        <echo>${test.message.dontfail}</echo>
-    </target>
-
-
-    <!-- Run a generic multijvm iteration. -->
-    <target name="-test-multijvm-iteration" if="${test.run}">
-        <make-output-hier jvm="${jvm.value}" jdbcUrl="${url.value}" jdbcUrlIter="${url.index}" junitOutput="${junit.results}" />
-
-        <local name="junit.output" />
-        <loadfile srcfile="${junit.results}/hier" property="junit.output" />
-
-        <antcall target="${test.target}">
-            <param name="com.mysql.jdbc.testsuite.jvm.internal" value="${jvm.value}" />
-            <param name="com.mysql.jdbc.${test.mode}.url.internal" value="${url.value}" />
-            <param name="com.mysql.jdbc.noCleanBetweenCompiles" value="yes" />
-            <param name="test.result.prefix" value="/${junit.output}" />
-        </antcall>
-    </target>
-
-
-    <!-- Set the path where the test results will be stored -->
-    <target name="-set-test-result-prefix" unless="${test.result.prefix}">
-        <property name="test.result.prefix" value="" />
-    </target>
-
-
-    <!-- ******************************************* -->
-    <!-- ***** CODE COVERAGE & INSTRUMENTATION ***** -->
-    <!-- ******************************************* -->
-
-
-    <!-- Following targets are for code coverage and depend on the 'Emma' project which can be downloaded from [http://emma.sourceforge.net/]. -->
-
-    <!-- Turn on EMMA instrumentation/reporting. -->
-    <target name="emma" description="Turns on EMMA instrumentation/reporting.">
-        <!-- directory that contains emma.jar and emma_ant.jar: -->
-        <property name="emma.dir" value="${sourceDir}/lib-coverage" />
-
-        <path id="emma.lib">
-            <pathelement location="${emma.dir}/emma.jar" />
-            <pathelement location="${emma.dir}/emma_ant.jar" />
-        </path>
-
-        <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
-
-        <property name="emma.enabled" value="true" />
-        <property name="emma.coverage.dir" value="${buildDir}/${fullProdName}-coverage" />
-    </target>
-
-
-    <!-- Run the full test suite and compliance test suite, against multiple JVMs and server configs, producing coverage reports. -->
-    <target name="test-all-multi-report"
-            description="Runs the full test suite and compliance test suite, against multiple JVMs and server configs, producing coverage reports."
-            depends="test-coverage-multijvm, test-coverage-compliance-multijvm">
-        <emma enabled="${emma.enabled}">
-            <report sourcepath="${buildDir}/${fullProdName}">
-                <fileset dir="${emma.coverage.dir}">
-                    <include name="*.emma" />
-                </fileset>
-                <txt outfile="${emma.coverage.dir}/coverage.txt" />
-                <html outfile="${emma.coverage.dir}/coverage.html" />
-            </report>
-        </emma>
-    </target>
-
-
-    <!-- Run the full test suite and compliance test suite, against one JVM and one server config, producing coverage reports. -->
-    <target name="test-all-report"
-            description="Runs the full test suite and compliance test suite, against one JVM and one server config, producing coverage reports."
-            depends="test-coverage, test-coverage-compliance">
-        <emma enabled="${emma.enabled}">
-            <report sourcepath="${buildDir}/${fullProdName}">
-                <fileset dir="${emma.coverage.dir}">
-                    <include name="*.emma" />
-                </fileset>
-                <txt outfile="${emma.coverage.dir}/coverage.txt" />
-                <html outfile="${emma.coverage.dir}/coverage.html" />
-            </report>
-        </emma>
-    </target>
-
-
-    <!-- Add bytecode instrumentation. -->
-    <target name="-emma-instrument" depends="init, compile, emma">
-        <emma enabled="${emma.enabled}">
-            <instr instrpathref="built.driver.only.classpath"
-                   destdir="${compiler.output}"
-                   metadatafile="${emma.coverage.dir}/metadata.emma"
-                   merge="true"
-                   mode="overwrite">
-                <filter excludes="*Test*" />
-                <filter excludes="org.junit.*" />
-            </instr>
-        </emma>
-    </target>
-
-
-    <!-- Run the full test suite against multiple JVMs and server configs, collecting coverage data. -->
-    <target name="test-coverage-multijvm"
-            description="Runs the full test suite against multiple JVMs and server configs, collecting coverage data."
-            depends="-emma-instrument">
-        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
-            <array8 arrayproperty="com.mysql.jdbc.testsuite.url" outputproperty="url.value" indexproperty="url.index">
-                <local name="test.run" />
-                <condition property="test.run">
-                    <and>
-                        <isset property="jvm.value" />
-                        <isset property="url.value" />
-                    </and>
-                </condition>
-                <antcall target="-test-multijvm-iteration">
-                    <param name="jvm.value" value="${jvm.value}" />
-                    <param name="url.value" value="${url.value}" />
-                    <param name="url.index" value="${url.index}" />
-                    <param name="test.mode" value="testsuite" />
-                    <param name="test.target" value="test-coverage" />
-                    <param name="test.run" value="${test.run}" />
-                </antcall>
-            </array8>
-        </array8>
-    </target>
-
-
-    <!-- Run the full test suite against one JVMs and one server config, collecting coverage data. -->
-    <target name="test-coverage"
-            description="Runs the full test suite against one JVMs and one server config, collecting coverage data."
-            depends="-testsuite-url-check, -testsuite-jvm-check, -set-test-result-prefix, -emma-instrument">
-        <property name="junit.unitregress.results" value="${junit.results}/${test.result.prefix}/unitregress" />
-
-        <mkdir dir="${junit.unitregress.results}/report" />
-
-        <echo>Running tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}' while collecting coverage data</echo>
-
-        <junit printsummary="yes" fork="on" forkmode="once" jvm="${com.mysql.jdbc.testsuite.jvm.java}">
-            <jvmarg value="-Xmx1024m" />
-            <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
-            <jvmarg value="-Demma.coverage.out.merge=true" />
-
-            <syspropertyset refid="junit.system.properties" />
-            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
-
-            <classpath>
-                <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
-                <pathelement location="${buildDir}/${fullProdName}" />
-                <pathelement path="${java.class.path}" />
-                <pathelement location="${emma.dir}/emma.jar" />
-                <pathelement location="${emma.dir}/emma_ant.jar" />
-            </classpath>
-
-            <formatter type="xml" />
-
-            <batchtest fork="yes" todir="${junit.unitregress.results}">
-                <fileset dir="${buildDir}/${fullProdName}">
-                    <include name="**/*Test.java" />
-                    <exclude name="**/fabric/*.java" />
-                    <exclude name="**/perf/*.java" />
-                </fileset>
-            </batchtest>
-        </junit>
-
-        <junitreport todir="${junit.unitregress.results}/report">
-            <fileset dir="${junit.unitregress.results}">
-                <include name="**/TEST-*.xml" />
-            </fileset>
-            <report format="frames" todir="${junit.unitregress.results}/report" />
-        </junitreport>
-    </target>
-
-
-    <!-- Run compliance test suite against multiple JVMs and server configs, collecting coverage data. -->
-    <target name="test-coverage-compliance-multijvm"
-            description="Runs compliance test suite against multiple JVMs and server configs, collecting coverage data."
-            depends="-emma-instrument">
-        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
-            <array8 arrayproperty="com.mysql.jdbc.compliance.url" outputproperty="url.value" indexproperty="url.index">
-                <local name="test.run" />
-                <condition property="test.run">
-                    <and>
-                        <isset property="jvm.value" />
-                        <isset property="url.value" />
-                    </and>
-                </condition>
-                <antcall target="-test-multijvm-iteration">
-                    <param name="jvm.value" value="${jvm.value}" />
-                    <param name="url.value" value="${url.value}" />
-                    <param name="url.index" value="${url.index}" />
-                    <param name="test.mode" value="compliance" />
-                    <param name="test.target" value="test-coverage-compliance" />
-                    <param name="test.run" value="${test.run}" />
-                </antcall>
-            </array8>
-        </array8>
-    </target>
-
-
-    <!-- Run compliance test suite against one JVM and one server config, collecting coverage data. -->
-    <target name="test-coverage-compliance"
-            description="Runs compliance test suite against one JVM and one server config, collecting coverage data."
-            depends="-compliance-url-check, -testsuite-jvm-check, -set-test-result-prefix, -emma-instrument">
-        <property name="junit.compliance.results" value="${junit.results}/${test.result.prefix}/compliance" />
-
-        <mkdir dir="${junit.compliance.results}/report" />
-
-        <echo>Running compliance test suite against '${com.mysql.jdbc.compliance.url.final}' with jvm '${com.mysql.jdbc.testsuite.jvm.java}' while collecting coverage data</echo>
-
-        <junit printsummary="yes" fork="on" forkmode="once" jvm="${com.mysql.jdbc.testsuite.jvm.java}">
-            <jvmarg value="-Xmx1024m" />
-            <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
-            <jvmarg value="-Demma.coverage.out.merge=true" />
-
-            <syspropertyset refid="junit.system.properties" />
-            <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url.final}" />
-
-            <classpath>
-                <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
-                <pathelement location="${buildDir}/${fullProdName}" />
-                <pathelement path="${java.class.path}" />
-                <pathelement location="${jdbc.compliance.location}" />
-                <pathelement location="${emma.dir}/emma.jar" />
-                <pathelement location="${emma.dir}/emma_ant.jar" />
-            </classpath>
-
-            <formatter type="xml" />
-
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.BatchUpdateTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ConnectionTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.DatabaseMetaDataTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.EscapeSyntaxTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.PreparedStatementTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetMetadataTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.ResultSetTest" />
-            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.cj.jdbc.compliance.tests.StatementTest" />
-        </junit>
-
-        <junitreport todir="${junit.compliance.results}/report">
-            <fileset dir="${junit.compliance.results}">
-                <include name="**/TEST-*.xml" />
-            </fileset>
-            <report format="frames" todir="${junit.compliance.results}/report" />
-        </junitreport>
-    </target>
-
-
-    <!-- ***************************** -->
-    <!-- ***** MACRO DEFINITIONS ***** -->
-    <!-- ***************************** -->
-
-
-    <!-- Executes actions for each element of array properties (properties ending with '.N') of length 8. -->
-    <macrodef name="array8">
-        <attribute name="arrayproperty" />
-        <attribute name="outputproperty" />
-        <attribute name="indexproperty" />
-        <element name="job" implicit="true" />
-        <sequential>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="1">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="2">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="3">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="4">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="5">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="6">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="7">
-                <job />
-            </array-job>
-            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="8">
-                <job />
-            </array-job>
-        </sequential>
-    </macrodef>
-
-
-    <!-- Executes actions for array type macros, defined as elements nested in top level array macro calls. -->
-    <macrodef name="array-job">
-        <attribute name="arrayproperty" />
-        <attribute name="outputproperty" />
-        <attribute name="indexproperty" />
-        <attribute name="indexvalue" />
-        <element name="job" implicit="true" />
-        <sequential>
-            <local name="@{outputproperty}" />
-            <condition property="@{outputproperty}" value="${@{arrayproperty}.@{indexvalue}}">
-                <isset property="@{arrayproperty}.@{indexvalue}" />
-            </condition>
-            <local name="@{indexproperty}" />
-            <condition property="@{indexproperty}" value="@{indexvalue}" else="0">
-                <isset property="@{arrayproperty}.@{indexvalue}" />
-            </condition>
-            <job />
-        </sequential>
-    </macrodef>
-
-
-    <!-- Makes an output directory hierarchy based on MySQL server version, OS information and JVM version. -->
-    <macrodef name="make-output-hier">
-        <attribute name="jvm" />
-        <attribute name="jdbcUrl" />
-        <attribute name="jdbcUrlIter" />
-        <attribute name="junitOutput" />
-
-        <sequential>
-            <local name="jvm.java" />
-            <property name="jvm.java" value="@{jvm}/bin/java" />
-
-            <local name="jvm.version" />
-            <exec executable="${jvm.java}" outputproperty="jvm.version" failonerror="false" failifexecutionfails="false" resultproperty="jvmcheckexitstatus">
-                <arg value="-version" />
-            </exec>
-
-            <fail message="The provided JVM reference is invalid '@{jvm}'. Set the path to a valid JVM(s) (JRE or JDK) home in the properties 'com.mysql.jdbc.testsuite.jvm.[1..8]'.">
-                <condition>
-                    <not>
-                        <and>
-                            <equals arg1="${jvmcheckexitstatus}" arg2="0" />
-                            <matches string="${jvm.version}" pattern="^java version &quot;\d+\.\d+\.\d+_\d+&quot;.*$" casesensitive="true" multiline="true" />
-                        </and>
-                    </not>
-                </condition>
-            </fail>
-
-            <java fork="true" jvm="${jvm.java}" classname="com.mysql.cj.jdbc.util.VersionFSHierarchyMaker">
-                <jvmarg value="-Xmx1024m" />
-                <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
-                <jvmarg value="-Demma.coverage.out.merge=true" />
-
-                <sysproperty key="com.mysql.jdbc.testsuite.url" value="@{jdbcUrl}" />
-
-                <classpath>
-                    <fileset dir="${com.mysql.jdbc.extra.libs}">
-                        <include name="**/*.jar" />
-                    </fileset>
-                    <fileset dir="${buildDir}/${fullProdName}/lib">
-                        <include name="**/*.jar" />
-                    </fileset>
-                    <pathelement location="${buildDir}/${fullProdName}" />
-                    <pathelement path="${java.class.path}" />
-                    <pathelement location="${emma.dir}/emma.jar" />
-                    <pathelement location="${emma.dir}/emma_ant.jar" />
-                </classpath>
-
-                <arg line="@{junitOutput} @{junitOutput}/hier @{jdbcUrlIter}" />
-            </java>
-        </sequential>
-    </macrodef>
 
 
     <!-- ********************************* -->
