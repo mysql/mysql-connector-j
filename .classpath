@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="src/build/java"/>
 	<classpathentry kind="src" path="src/demo/java"/>
 	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="lib" path="lib/jboss-common-jdbc-wrapper.jar"/>
 	<classpathentry kind="lib" path="lib/c3p0-0.9.1-pre6.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>

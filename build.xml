@@ -112,14 +112,25 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <property name="full.version" value="${version}${extra.version}${snapshot.version}" />
     <property name="fullProdName" value="${prodName}-${full.version}" />
     <property name="buildDir" value="./build" />
+    <property name="buildDriverDir" value="${buildDir}/${fullProdName}" />
+    <property name="buildTestDir" value="./buildtest" />
     <property name="distDir" value="./dist" />
-    <property name="junit.results" value="${buildDir}/junit" />
+    <property name="junit.results" value="${buildTestDir}/junit" />
     <property name="debug.enable" value="on" />
     <property name="toPackage" value="${distDir}/toArchive" />
     <property name="packageDest" value="${toPackage}/${fullProdName}" />
 
     <!-- Send class files to correct location if running in eclipse. -->
-    <condition property="compiler.output" value="bin" else="${buildDir}/${fullProdName}">
+    <condition property="compiler.output" value="bin" else="${buildDriverDir}">
+        <or>
+            <isset property="eclipse.running" />
+            <isset property="eclipse.pdebuild.home" />
+            <contains string="${ant.home}" substring="plugins" />
+        </or>
+    </condition>
+
+    <!-- Send class files to correct location if running in eclipse. -->
+    <condition property="compile.test.output" value="bin" else="${buildTestDir}/${fullProdName}">
         <or>
             <isset property="eclipse.running" />
             <isset property="eclipse.pdebuild.home" />
@@ -150,7 +161,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Classpaths settings. -->
     <path id="built.driver.only.classpath">
-        <pathelement location="${buildDir}/${fullProdName}" />
+        <pathelement location="${buildDriverDir}" />
     </path>
 
     <path id="project.build.classpath">
@@ -159,11 +170,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <exclude name="**/javassist-3.15.0-GA.jar" />
         </fileset>
 
-        <fileset dir="${buildDir}/${fullProdName}/lib">
+        <fileset dir="${buildDriverDir}/lib">
             <include name="**/*.jar" />
         </fileset>
 
-        <pathelement location="${buildDir}/${fullProdName}" />
+        <pathelement location="${buildDriverDir}" />
     </path>
 
     <path id="instrumentation.classpath">
@@ -172,6 +183,18 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <pathelement location="${compiler.output}" />
     </path>
 
+    <path id="test.build.classpath">
+        <fileset dir="${com.mysql.jdbc.extra.libs}">
+            <include name="**/*.jar" />
+            <exclude name="**/javassist-3.15.0-GA.jar" />
+        </fileset>
+
+        <fileset dir="${buildDriverDir}">
+            <include name="**/*.jar" />
+        </fileset>
+
+        <pathelement location="${buildTestDir}/${fullProdName}" />
+    </path>
 
     <!-- ************************* -->
     <!-- ***** VERIFICATIONS ***** -->
@@ -282,7 +305,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <tstamp />
 
         <mkdir dir="${buildDir}" />
-        <mkdir dir="${buildDir}/lib" />
 
         <exec dir="."
               executable="cmd"
@@ -329,30 +351,41 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <filter token="MYSQL_CJ_LICENSE_TYPE" value="${licensetype}" />
         </filterset>
 
-        <copy todir="${buildDir}/${fullProdName}" filtering="true">
+        <copy todir="${buildDriverDir}" filtering="true">
             <fileset dir="src/build/java" />
-            <fileset file="src/build/misc/pom.xml" />
+            <fileset dir="src/build/misc" />
             <fileset dir="src/main/java" />
             <fileset dir="src/main/resources" />
-            <fileset dir="src/test/java" />
             <fileset dir="src/demo/java" />
+            <fileset dir="src/demo/resources" />
 
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
         </copy>
 
-        <copy todir="${buildDir}/${fullProdName}/lib" filtering="false">
+        <copy todir="${buildDriverDir}/lib" filtering="false">
             <fileset dir="lib"/>
         </copy>
     </target>
 
+    <target name="-init-copy-test" depends="-init-copy">
+        <tstamp />
+
+        <mkdir dir="${buildTestDir}" />
+
+        <copy todir="${buildTestDir}/${fullProdName}" filtering="true">
+            <fileset dir="src/test/java" />
+            <filterset refid="versionFilterset" />
+            <filterset refid="licenseFilterset" />
+        </copy>
+    </target>
 
     <!-- Fix licensing header in source files. -->
     <target name="-replace-headers-commercial" if="com.mysql.jdbc.commercialBuild">
         <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
                        replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
                        flags="s">
-            <fileset dir="${buildDir}/${fullProdName}" includes="**/*" />
+            <fileset dir="${buildDriverDir}" includes="**/*" />
         </replaceregexp>
     </target>
 
@@ -360,7 +393,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Add commercial license configuration class (Build). -->
     <target name="-init-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
         <copy file="${com.mysql.jdbc.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
-              toFile="${buildDir}/${fullProdName}/com/mysql/cj/core/LicenseConfiguration.java"
+              toFile="${buildDriverDir}/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
@@ -368,7 +401,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Add no-crypto export control class (Build). -->
     <target name="-init-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
         <copy file="${com.mysql.jdbc.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
-              toFile="${buildDir}/${fullProdName}/com/mysql/cj/core/io/ExportControlled.java"
+              toFile="${buildDriverDir}/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
 
@@ -376,7 +409,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Copy commercial license configuration class (Package). -->
     <target name="-copy-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
         <copy file="${com.mysql.jdbc.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
-              toFile="${packageDest}/src/com/mysql/cj/core/LicenseConfiguration.java"
+              toFile="${packageDest}/src/main/java/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
@@ -384,7 +417,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
         <copy file="${com.mysql.jdbc.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
-              toFile="${packageDest}/src/com/mysql/cj/core/io/ExportControlled.java"
+              toFile="${packageDest}/src/main/java/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
 
@@ -430,23 +463,23 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources and docs. -->
     <target name="full-package"
             description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources and docs."
-            depends="full-dist, -make-packages, -create-archives" />
+            depends="real-clean, full-dist, -make-packages, -create-archives" />
 
 
     <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that doesn't contain sources but contain docs. -->
     <target name="full-package-no-sources"
             description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that do _not_ contain sources but contain docs."
-            depends="full-dist, -make-packages, -remove-sources, -create-archives" />
+            depends="real-clean, full-dist, -make-packages, -remove-sources, -create-archives" />
 
 
     <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources but no docs. -->
     <target name="package"
             description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources but no docs."
-            depends="dist, -make-packages, -create-archives" />
+            depends="real-clean, dist, -make-packages, -create-archives" />
 
 
     <!-- Build a distribution 'image' that include docs. -->
-    <target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'." depends="dist, -bundle-docs" />
+    <target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'." depends="real-clean, dist, -bundle-docs" />
 
 
     <!-- Build and install the driver jar into the local maven repository. -->
@@ -455,7 +488,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <arg line="install:install-file 
                 -Dfile=${mavenUploadDir}/${fullProdName}.jar
                 -Dsources=${mavenUploadDir}/${fullProdName}-sources.jar
-                -DpomFile=${buildDir}/${fullProdName}/pom.xml
+                -DpomFile=${buildDriverDir}/pom.xml
                 -DcreateChecksum=true" />
         </exec>
     </target>
@@ -463,13 +496,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Build a distribution 'image' that doesn't include docs. -->
     <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
-        <delete file="${buildDir}/${fullProdName}-bin.jar" />
-
-        <mkdir dir="${buildDir}/META-INF" />
+        <delete file="${buildDriverDir}/${fullProdName}-bin.jar" />
 
         <!-- JDBC4+ support of service provider mechanism. -->
-        <mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
-        <echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
+        <mkdir dir="${buildDriverDir}/META-INF/services/" />
+        <echo file="${buildDriverDir}/META-INF/services/java.sql.Driver"
               message="com.mysql.cj.jdbc.Driver" />
 
         <property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}" />
@@ -495,7 +526,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <property name="configs-exports" value="com.mysql.cj.configurations;version=&quot;${osgid-version}&quot;" />
         <property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;" />
 
-        <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
+        <manifest file="${buildDriverDir}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
             <attribute name="Specification-Title" value="JDBC" />
             <attribute name="Specification-Version" value="4.1" />
@@ -517,12 +548,12 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
         </manifest>
 
-        <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
+        <jar jarfile="${buildDriverDir}/${fullProdName}-bin.jar"
              basedir="${compiler.output}"
              includes="**/*.class,**/*.properties*,META-INF/**"
              excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
-             manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
+             manifest="${buildDriverDir}/META-INF/MANIFEST.MF" />
     </target>
 
 
@@ -556,7 +587,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </patternset>
 
         <copy todir="${packageDest}">
-            <fileset dir="${buildDir}/${fullProdName}" includes="docs/**, *.jar" excludes="docs/sources">
+            <fileset dir="${buildDriverDir}" includes="docs/**, *.jar" excludes="docs/sources">
                 <patternset refid="non.test.sources" />
             </fileset>
 
@@ -620,7 +651,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Create a Maven bundle for upload to their repository (common files to all packaging modes). -->
-    <target name="-create-maven-archive-common">
+    <target name="-create-maven-archive-common" unless="com.mysql.jdbc.commercialBuild">
         <tempfile destdir="${buildDir}" prefix="maven-bundle-" property="mavenUploadDir" />
 
         <mkdir dir="${mavenUploadDir}" />
@@ -630,11 +661,11 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
              includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
              excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
-             manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
+             manifest="${buildDriverDir}/META-INF/MANIFEST.MF" />
         <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="${buildDir}/${fullProdName}/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="false" />
+        <copy file="${buildDriverDir}/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="false" />
         <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
@@ -645,7 +676,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Create a Maven bundle for upload to their repository (include sources). -->
-    <target name="-create-maven-archive-sources" depends="-create-maven-archive-common" unless="com.mysql.jdbc.noSources">
+    <target name="-create-maven-archive-sources" depends="-create-maven-archive-sources-check, -create-maven-archive-common" unless="com.mysql.jdbc.noMavenSources" >
         <jar jarfile="${mavenUploadDir}/${fullProdName}-sources.jar"
              basedir="${compiler.output}"
              includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
@@ -654,12 +685,20 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
 
+    <target name="-create-maven-archive-sources-check">
+        <condition property="com.mysql.jdbc.noMavenSources">
+            <or>
+                <isset property="com.mysql.jdbc.noSources" />
+                <isset property="com.mysql.jdbc.commercialBuild" />
+            </or>
+        </condition>
+    </target>
 
     <!-- Prepare docs to include in a distribution. -->
     <target name="-bundle-docs" depends="init" if="com.mysql.jdbc.docs.sourcesPresent">
-        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
-        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/pdf/connector-j.pdf" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
-        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/txt/connector-j.txt" tofile="${buildDir}/${fullProdName}/docs/README.txt" failonerror="false" />
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html" todir="${buildDriverDir}/docs" failonerror="false" />
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/pdf/connector-j.pdf" todir="${buildDriverDir}/docs" failonerror="false" />
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/txt/connector-j.txt" tofile="${buildDriverDir}/docs/README.txt" failonerror="false" />
     </target>
 
 
@@ -671,7 +710,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Compile the driver, JUnit test suite and 'helpers' for third-party software. -->
     <target name="compile"
             description="Compiles driver, JUnit test suite and integration 'helpers' for third-party software."
-            depends="init, compile-driver, compile-testsuite, compile-integration" />
+            depends="init, compile-driver, compile-integration" />
 
 
     <!-- Compile the driver including JDBC implementation only. -->
@@ -679,7 +718,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <echo>Compiling MySQL Connector/J JDBC implementation with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
-               srcdir="${buildDir}/${fullProdName}"
+               srcdir="${buildDriverDir}"
                destdir="${compiler.output}"
                deprecation="off"
                debug="${debug.enable}"
@@ -707,21 +746,20 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Compile the driver and JUnit test suite. -->
-    <target name="compile-testsuite" description="Compiles driver and JUnit test suite." depends="init, compile-driver">
+    <target name="compile-testsuite" description="Compiles driver and JUnit test suite." depends="init, -init-copy-test, dist">
         <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
-               srcdir="${buildDir}/${fullProdName}"
-               destdir="${compiler.output}"
+               srcdir="${buildTestDir}/${fullProdName}"
+               destdir="${compile.test.output}"
                deprecation="off"
                debug="${debug.enable}"
                fork="yes"
                executable="${com.mysql.jdbc.jdk.javac}"
                compiler="modern"
                includeantruntime="false">
-            <include name="testsuite/**" />
-            <exclude name="testsuite/requiresNonRedists/**" />
-            <classpath refid="project.build.classpath" />
+            <!--include name="testsuite/**" /-->
+            <classpath refid="test.build.classpath" />
         </javac>
     </target>
 
@@ -737,7 +775,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <echo>Compiling MySQL Connector/J-c3p0 integration with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
-               srcdir="${buildDir}/${fullProdName}"
+               srcdir="${buildDriverDir}"
                destdir="${compiler.output}"
                deprecation="off"
                debug="${debug.enable}"
@@ -756,7 +794,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <echo>Compiling MySQL Connector/J-jboss integration with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
-               srcdir="${buildDir}/${fullProdName}"
+               srcdir="${buildDriverDir}"
                destdir="${compiler.output}"
                deprecation="off"
                debug="${debug.enable}"
@@ -775,7 +813,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <echo>Compiling MySQL Connector/J-log4j integration with '${com.mysql.jdbc.jdk}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
-               srcdir="${buildDir}/${fullProdName}"
+               srcdir="${buildDriverDir}"
                destdir="${compiler.output}"
                deprecation="off"
                debug="${debug.enable}"
@@ -797,6 +835,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Delete the build and distribution directories and archives. -->
     <target name="real-clean" description="Deletes the build and distribution directories.">
         <delete dir="${buildDir}" />
+        <delete dir="${buildTestDir}" failonerror="false" />
         <delete dir="${distDir}" failonerror="false" />
     </target>
 
@@ -806,13 +845,15 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Deletes the build directory unless 'com.mysql.jdbc.noCleanBetweenCompiles=yes'."
             unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
         <delete dir="${buildDir}" />
+        <delete dir="${buildTestDir}" failonerror="false" />
     </target>
 
 
     <!-- Delete compiled classes from build directory. -->
     <target name="-clean-output" unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
-        <delete>
+        <delete failonerror="false">
             <fileset dir="${buildDir}" includes="**/*.class" />
+            <fileset dir="${buildTestDir}" includes="**/*.class" />
         </delete>
     </target>
 
@@ -833,8 +874,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Generates properties table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="properties-xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator" output="${properties-xml}" classpath="${buildDir}/${fullProdName}" />
-        <copy file="${properties-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/connPropsToDocbook.xml" />
+        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator" output="${properties-xml}" classpath="${buildDriverDir}" />
+        <copy file="${properties-xml}" tofile="${buildDriverDir}/docs/sources/connPropsToDocbook.xml" />
         <delete file="${properties-xml}" />
     </target>
 
@@ -844,8 +885,8 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             description="Generates error mapping table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="errorsMapping-xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator" output="${errorsMapping-xml}" classpath="${buildDir}/${fullProdName}" />
-        <copy file="${errorsMapping-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/errorMapToDocbook.xml" />
+        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator" output="${errorsMapping-xml}" classpath="${buildDriverDir}" />
+        <copy file="${errorsMapping-xml}" tofile="${buildDriverDir}/docs/sources/errorMapToDocbook.xml" />
         <delete file="${errorsMapping-xml}" />
     </target>
 
@@ -858,7 +899,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- Run the full test suite, single test set or named tests against one JVM and one server config. -->
     <target name="test"
             description="Runs the full test suite, single test set (variable 'test') or named tests (variables 'test' and 'methods') against one JVM and one server config."
-            depends="-testsuite-jvm-check, compile">
+            depends="-testsuite-jvm-check, compile-testsuite">
         <property name="junit.unitregress.results" value="${junit.results}/unitregress" />
 
         <mkdir dir="${junit.unitregress.results}/report" />
@@ -898,10 +939,12 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
                 </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
+                <fileset dir="${buildDriverDir}/lib">
                     <include name="**/*.jar" />
                 </fileset>
-                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement location="${buildDriverDir}" />
+                <pathelement location="${buildTestDir}/${fullProdName}" />
+                <pathelement path="${test.build.classpath}" />
                 <pathelement path="${java.class.path}" />
             </classpath>
 
@@ -912,7 +955,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <test if="test" unless="methods" name="${test}" todir="${junit.unitregress.results}" />
 
             <batchtest unless="test" todir="${junit.unitregress.results}">
-                <fileset dir="${buildDir}/${fullProdName}">
+                <fileset dir="${buildTestDir}/${fullProdName}">
                     <include name="**/*Test.java" />
                     <exclude name="**/fabric/*.java" />
                     <exclude name="**/perf/*.java" />
@@ -939,7 +982,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Test Fabric setup. -->
     <target name="test-fabric-setup" description="Tests Fabric setup." depends="-extra-libs-check">
-        <java fork="on" classname="testsuite.fabric.SetupFabricTestsuite" dir="${buildDir}/${fullProdName}">
+        <java fork="on" classname="testsuite.fabric.SetupFabricTestsuite" dir="${buildDriverDir}">
             <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
             <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
             <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
@@ -969,10 +1012,10 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                 <fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
                     <include name="**/*.jar" />
                 </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
+                <fileset dir="${buildDriverDir}/lib">
                     <include name="**/*.jar" />
                 </fileset>
-                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement location="${buildDriverDir}" />
                 <pathelement path="${java.class.path}" />
             </classpath>
 
@@ -981,7 +1024,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
             <test if="test" name="${test}" />
 
             <batchtest unless="test">
-                <fileset dir="${buildDir}/${fullProdName}">
+                <fileset dir="${buildDriverDir}">
                     <include name="**/fabric/**/Test*.java" />
                     <exclude name="**/fabric/**/TestHashSharding.java" />
                     <exclude name="**/fabric/**/TestHABasics.java" />
@@ -997,7 +1040,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Launch a client component from the Fabric demo. -->
     <target name="demo-fabric-client1" description="Launches a client component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.Client1_Fabric" dir="${buildDir}/${fullProdName}">
+        <java fork="on" classname="demo.fabric.Client1_Fabric" dir="${buildDriverDir}">
             <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
             <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
             <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
@@ -1017,7 +1060,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Launch an employees component from the Fabric demo. -->
     <target name="demo-fabric-employees-jdbc" description="Launches a employees component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.EmployeesJdbc" dir="${buildDir}/${fullProdName}">
+        <java fork="on" classname="demo.fabric.EmployeesJdbc" dir="${buildDriverDir}">
             <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
             <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
             <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
@@ -1037,7 +1080,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Launch a Hibernate component from the Fabric demo. -->
     <target name="demo-fabric-hibernate" description="Launches a Hibernate component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.HibernateFabric" dir="${buildDir}/${fullProdName}">
+        <java fork="on" classname="demo.fabric.HibernateFabric" dir="${buildDriverDir}">
             <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
             <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
             <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
@@ -1059,7 +1102,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
                 <fileset dir="src/lib">
                     <include name="**/*.jar" />
                 </fileset>
-                <dirset dir="${buildDir}/${fullProdName}" />
+                <dirset dir="${buildDriverDir}" />
             </classpath>
         </java>
     </target>
