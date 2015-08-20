@@ -489,7 +489,8 @@ public class MysqlxProtocol implements Protocol {
                                 rowsAffected = msg.getValue().getVUnsignedInt();
                                 break;
                             case PRODUCED_MESSAGE:
-                                System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
+                                // TODO do something with notices. expose them to client
+                                //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
                                 break;
                             case CURRENT_SCHEMA:
                             case ACCOUNT_EXPIRED:
