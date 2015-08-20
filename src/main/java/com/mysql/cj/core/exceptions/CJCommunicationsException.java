@@ -54,7 +54,11 @@ public class CJCommunicationsException extends CJException {
 
     @Override
     public String getMessage() {
-        return this.exceptionMessage;
+        if (this.exceptionMessage != null) {
+            return this.exceptionMessage;
+        } else {
+            return super.getMessage();
+        }
     }
 
     public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
