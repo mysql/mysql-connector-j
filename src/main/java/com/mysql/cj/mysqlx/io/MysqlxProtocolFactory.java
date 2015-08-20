@@ -81,28 +81,20 @@ public class MysqlxProtocolFactory {
             MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
                 @Override
                 public void write(byte[] b) {
-                    Future<Integer> f = sockChan.write(ByteBuffer.wrap(b));
-                    int len = b.length;
-                    try {
-                        int written = f.get();
-                        if (written != len) {
-                            throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        throw new CJCommunicationsException(ex);
-                    }
+                    write(b, 0, b.length);
                 }
 
                 @Override
                 public void write(byte[] b, int offset, int len) {
-                    Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
-                    try {
-                        int written = f.get();
-                        if (written != len) {
-                            throw new CJCommunicationsException("Didn't write entire buffer! (" + written + "/" + len + ")");
+                    while (len > 0) {
+                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
+                        try {
+                            int written = f.get();
+                            len -= written;
+                            offset += written;
+                        } catch (InterruptedException | ExecutionException ex) {
+                            throw new CJCommunicationsException(ex);
                         }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        throw new CJCommunicationsException(ex);
                     }
                 }
 
