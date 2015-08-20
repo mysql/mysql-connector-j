@@ -83,7 +83,6 @@ public class CommonChecks {
         // addClosedCheck(clazz.getDeclaredMethod("isAutoCommitNonDefaultOnServer", new CtClass[] {}));
         // addClosedCheck(clazz.getDeclaredMethod("isServerLocal", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
-        // addClosedCheck(clazz.getDeclaredMethod("pingInternal", new CtClass[] { ctBool, ctInt }));
         // addClosedCheck(clazz.getDeclaredMethod("prepareStatement", new CtClass[] { ctString, ctInt, ctInt }));
         // addClosedCheck(clazz.getDeclaredMethod("rollback", new CtClass[] {}));
         // addClosedCheck(clazz.getDeclaredMethod("rollback", new CtClass[] { ctSavepoint }));

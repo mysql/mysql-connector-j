@@ -43,7 +43,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -64,8 +63,6 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
@@ -109,7 +106,6 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * A Connection represents a session with a specific database. Within the context of a Connection, SQL statements are executed and results are returned.
@@ -565,7 +561,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private ReadableProperty<Boolean> ignoreNonTxTables;
     private ReadableProperty<Boolean> pedantic;
     private ReadableProperty<Integer> prepStmtCacheSqlLimit;
-    protected ModifiableProperty<Integer> socketTimeout;
     private ReadableProperty<Boolean> useLocalSessionState;
     private ReadableProperty<Boolean> useServerPrepStmts;
     private ReadableProperty<Boolean> processEscapeCodesForPrepStmts;
@@ -635,7 +630,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.ignoreNonTxTables = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
             this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic);
             this.prepStmtCacheSqlLimit = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
-            this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
             this.useLocalSessionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
             this.useServerPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
             this.processEscapeCodesForPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
@@ -706,7 +700,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.statementInterceptors = unSafedStatementInterceptors;
 
         if (this.session != null) {
-            this.session.getProtocol().setStatementInterceptors(this.statementInterceptors);
+            this.session.setStatementInterceptors(this.statementInterceptors);
         }
     }
 
@@ -905,13 +899,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         }
 
-        this.session.getProtocol().getServerSession().indexToMysqlCharset = Collections.unmodifiableMap(indexToCharset);
-        if (customCharset != null) {
-            this.session.getProtocol().getServerSession().indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
-        }
-        if (customMblen != null) {
-            this.session.getProtocol().getServerSession().mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
-        }
+        this.session.setCharsetMaps(indexToCharset, customCharset, customMblen);
+
     }
 
     private boolean canHandleAsServerPreparedStatement(String sql) throws SQLException {
@@ -1735,7 +1724,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     oldReadOnly = isReadOnly(false);
                     oldCatalog = getCatalog();
 
-                    this.session.getProtocol().setStatementInterceptors(this.statementInterceptors);
+                    this.session.setStatementInterceptors(this.statementInterceptors);
                 }
 
                 // Server properties might be different from previous connection, so initialize again...
@@ -1834,7 +1823,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             boolean oldReadOnly = isReadOnly(false);
             String oldCatalog = getCatalog();
 
-            this.session.getProtocol().setStatementInterceptors(this.statementInterceptors);
+            this.session.setStatementInterceptors(this.statementInterceptors);
 
             // Server properties might be different from previous connection, so initialize again...
             initializePropsFromServer();
@@ -2074,12 +2063,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 if (packet == null) {
                     String encoding = this.characterEncoding.getValue();
 
-                    return this.session.getProtocol().sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency,
-                            streamResults, catalog, cachedMetadata);
+                    return this.session.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency, streamResults,
+                            catalog, cachedMetadata);
                 }
 
-                return this.session.getProtocol().sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency,
-                        streamResults, catalog, cachedMetadata);
+                return this.session.sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
+                        cachedMetadata);
             } catch (CJException sqlE) {
                 // don't clobber SQL exceptions
 
@@ -2525,7 +2514,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         checkTransactionIsolationLevel();
 
-        this.session.getProtocol().checkForCharsetMismatch();
+        this.session.checkForCharsetMismatch();
 
         if (this.session.getServerVariables().containsKey("sql_mode")) {
             int sqlMode = 0;
@@ -2573,7 +2562,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        this.session.getProtocol().resetMaxBuf();
+        this.session.resetMaxBuf();
 
         //
         // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
@@ -3095,6 +3084,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         pingInternal(true, 0);
     }
 
+    @Override
     public void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException {
         if (checkForClosedConnection) {
             checkClosed();
@@ -3104,14 +3094,14 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         int pingMaxOperations = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
 
         if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
-                || (pingMaxOperations > 0 && pingMaxOperations <= this.session.getProtocol().getCommandCount())) {
+                || (pingMaxOperations > 0 && pingMaxOperations <= this.session.getCommandCount())) {
 
-            close();
+            close(); // TODO: do it via Listeners
 
             throw SQLError.createSQLException(Messages.getString("Connection.exceededConnectionLifetime"), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE,
                     getExceptionInterceptor());
         }
-        this.session.getProtocol().sendCommand(MysqlaConstants.COM_PING, null, null, false, null, timeoutMillis);
+        this.session.sendCommand(MysqlaConstants.COM_PING, null, null, false, null, timeoutMillis);
     }
 
     /**
@@ -4227,7 +4217,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public void shutdownServer() throws SQLException {
         try {
-            this.session.getProtocol().sendCommand(MysqlaConstants.COM_SHUTDOWN, null, null, false, null, 0);
+            this.session.shutdownServer();
         } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4429,19 +4419,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public boolean isServerLocal() throws SQLException {
-        synchronized (getConnectionMutex()) {
-            SocketFactory factory = getSession().getProtocol().getSocketConnection().getSocketFactory();
-
-            if (factory instanceof SocketMetadata) {
-                try {
-                    return ((SocketMetadata) factory).isLocallyConnected(this);
-                } catch (CJException ex) {
-                    SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
-                    throw sqlEx;
-                }
-            }
-            this.session.getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
-            return false;
+        try {
+            return this.session.isServerLocal(this);
+        } catch (CJException ex) {
+            SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
+            throw sqlEx;
         }
     }
 
@@ -4553,22 +4535,14 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             checkClosed();
-            final MysqlaProtocol mysqlProt = this.session.getProtocol();
-
-            executor.execute(new Runnable() {
-
-                public void run() {
-                    ConnectionImpl.this.socketTimeout.setValue(milliseconds); // for re-connects
-                    mysqlProt.setSocketTimeout(milliseconds);
-                }
-            });
+            this.session.setSocketTimeout(executor, milliseconds);
         }
     }
 
     public int getNetworkTimeout() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
-            return this.socketTimeout.getValue();
+            return this.session.getSocketTimeout();
         }
     }
 

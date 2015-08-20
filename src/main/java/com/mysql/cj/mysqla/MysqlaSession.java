@@ -24,15 +24,26 @@
 package com.mysql.cj.mysqla;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.api.io.SocketMetadata;
+import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ConnectionString;
@@ -43,11 +54,16 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.jdbc.MysqlIO;
+import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 
 public class MysqlaSession extends AbstractSession implements Session {
@@ -68,12 +84,16 @@ public class MysqlaSession extends AbstractSession implements Session {
     private String hostToConnectTo = "localhost";
     private int portToConnectTo = 3306;
 
+    protected ModifiableProperty<Integer> socketTimeout;
+
     public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo,
             String url, PropertySet propSet) {
         this.propertySet = propSet;
 
         this.hostToConnectTo = hostToConnectTo;
         this.portToConnectTo = portToConnectTo;
+
+        this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
 
         this.hostInfo = connectionString.getHostInfo(this.propertySet, this.hostToConnectTo, this.portToConnectTo, info);
 
@@ -129,6 +149,7 @@ public class MysqlaSession extends AbstractSession implements Session {
         setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
     }
 
+    // TODO: this method should be removed after implementation of MYSQLCONNJ-478 "Bind Extension interface to Session instead of Connection"
     public MysqlaProtocol getProtocol() {
         return this.protocol;
     }
@@ -235,7 +256,7 @@ public class MysqlaSession extends AbstractSession implements Session {
 
         buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
         buf.writeInt(0);
-        this.protocol.sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
+        sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     public void disableMultiQueries() {
@@ -243,7 +264,7 @@ public class MysqlaSession extends AbstractSession implements Session {
 
         buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
         buf.writeInt(1);
-        this.protocol.sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
+        sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     @Override
@@ -344,6 +365,180 @@ public class MysqlaSession extends AbstractSession implements Session {
 
     public HostInfo getHostInfo() {
         return this.hostInfo;
+    }
+
+    public void setCharsetMaps(Map<Integer, String> indexToCharset, Map<Integer, String> customCharset, Map<String, Integer> customMblen) {
+        this.protocol.getServerSession().indexToMysqlCharset = Collections.unmodifiableMap(indexToCharset);
+        if (customCharset != null) {
+            this.protocol.getServerSession().indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
+        }
+        if (customMblen != null) {
+            this.protocol.getServerSession().mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
+        }
+    }
+
+    public void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
+        this.protocol.setStatementInterceptors(statementInterceptors);
+    }
+
+    public boolean isServerLocal(JdbcConnection conn) {
+        synchronized (conn.getConnectionMutex()) {
+            SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
+
+            if (factory instanceof SocketMetadata) {
+                return ((SocketMetadata) factory).isLocallyConnected(conn);
+            }
+            this.log.logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
+            return false;
+        }
+    }
+
+    /**
+     * Used by MiniAdmin to shutdown a MySQL server
+     * 
+     */
+    public void shutdownServer() throws SQLException {
+        sendCommand(MysqlaConstants.COM_SHUTDOWN, null, null, false, null, 0);
+    }
+
+    public void setSocketTimeout(Executor executor, final int milliseconds) {
+        executor.execute(new Runnable() {
+
+            public void run() {
+                MysqlaSession.this.socketTimeout.setValue(milliseconds); // for re-connects
+                MysqlaSession.this.protocol.setSocketTimeout(milliseconds);
+            }
+        });
+    }
+
+    public int getSocketTimeout() {
+        return this.socketTimeout.getValue();
+    }
+
+    /**
+     * Send a query stored in a packet directly to the server.
+     * 
+     * @param callingStatement
+     * @param resultSetConcurrency
+     * @param characterEncoding
+     * @param queryPacket
+     * @param maxRows
+     * @param conn
+     * @param resultSetType
+     * @param resultSetConcurrency
+     * @param streamResults
+     * @param catalog
+     * @param unpackFieldInfo
+     *            should we read MYSQL_FIELD info (if available)?
+     * 
+     */
+    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, Buffer queryPacket,
+            int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
+
+        return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, resultSetType, resultSetConcurrency,
+                streamResults, catalog, cachedMetadata);
+    }
+
+    /**
+     * Determines if the database charset is the same as the platform charset
+     */
+    public void checkForCharsetMismatch() {
+        this.protocol.checkForCharsetMismatch();
+    }
+
+    /**
+     * Sets the buffer size to max-buf
+     */
+    public void resetMaxBuf() {
+        this.protocol.resetMaxBuf();
+    }
+
+    /**
+     * Returns the packet used for sending data (used by PreparedStatement)
+     * Guarded by external synchronization on a mutex.
+     * 
+     * @return A packet to send data with
+     */
+    public Buffer getSharedSendPacket() {
+        return this.protocol.getSharedSendPacket();
+    }
+
+    public void dumpPacketRingBuffer() {
+        this.protocol.dumpPacketRingBuffer();
+    }
+
+    public ResultSetInternalMethods invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
+        return this.protocol.invokeStatementInterceptorsPre(sql, interceptedStatement, forceExecute);
+    }
+
+    public ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+            boolean forceExecute, Exception statementException) {
+        return this.protocol.invokeStatementInterceptorsPost(sql, interceptedStatement, originalResultSet, forceExecute, statementException);
+    }
+
+    public boolean shouldIntercept() {
+        return this.protocol.getStatementInterceptors() != null;
+    }
+
+    public long getCurrentTimeNanosOrMillis() {
+        return this.protocol.getCurrentTimeNanosOrMillis();
+    }
+
+    public final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis) {
+        return this.protocol.sendCommand(command, extraData, queryPacket, skipCheck, extraDataCharEncoding, timeoutMillis);
+    }
+
+    public long getSlowQueryThreshold() {
+        return this.protocol.getSlowQueryThreshold();
+    }
+
+    public String getQueryTimingUnits() {
+        return this.protocol.getQueryTimingUnits();
+    }
+
+    // TODO: should return the proper type after developing interface
+    public MysqlIO getResultsHandler() {
+        return this.protocol.getResultsHandler();
+    }
+
+    /**
+     * Runs an 'EXPLAIN' on the given query and dumps the results to the log
+     * 
+     * @param querySQL
+     * @param truncatedQuery
+     * 
+     */
+    public void explainSlowQuery(byte[] querySQL, String truncatedQuery) {
+        this.protocol.explainSlowQuery(querySQL, truncatedQuery);
+    }
+
+    public boolean hadWarnings() {
+        return this.protocol.hadWarnings();
+    }
+
+    public void clearInputStream() {
+        this.protocol.clearInputStream();
+    }
+
+    public final Buffer readPacket() {
+        return this.protocol.readPacket();
+    }
+
+    public NetworkResources getNetworkResources() {
+        return this.protocol.getSocketConnection().getNetworkResources();
+    }
+
+    public MysqlaServerSession getServerSession() {
+        return this.protocol.getServerSession();
+    }
+
+    @Override
+    public boolean isSSLEstablished() {
+        return this.protocol.getSocketConnection().isSSLEstablished();
+    }
+
+    public int getCommandCount() {
+        return this.protocol.getCommandCount();
     }
 
 }

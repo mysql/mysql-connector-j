@@ -32,6 +32,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
@@ -49,7 +50,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, conn.getSession().getProtocol(), props);
+        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
     }
 
     @Override

@@ -30,6 +30,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.io.Buffer;
@@ -43,12 +44,12 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, conn.getSession().getProtocol(), props);
+        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        this.protocol = protocol;
+    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+        this.protocol = prot;
     }
 
     public void destroy() {

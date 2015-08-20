@@ -1369,10 +1369,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
     }
 
-    public boolean shouldIntercept() {
-        return this.statementInterceptors != null;
-    }
-
     public ResultSetInternalMethods invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
         ResultSetInternalMethods previousResultSet = null;
 
@@ -1685,6 +1681,10 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
     public void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
         this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
+    }
+
+    public List<StatementInterceptorV2> getStatementInterceptors() {
+        return this.statementInterceptors;
     }
 
     public void setSocketTimeout(int milliseconds) {

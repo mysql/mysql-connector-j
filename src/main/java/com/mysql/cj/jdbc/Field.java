@@ -26,7 +26,6 @@ package com.mysql.cj.jdbc;
 import java.sql.Types;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -47,10 +46,6 @@ public class Field {
     private int colDecimals;
 
     private short colFlag;
-
-    private String collationName = null;
-
-    private JdbcConnection connection = null;
 
     private PropertySet propertySet;
 

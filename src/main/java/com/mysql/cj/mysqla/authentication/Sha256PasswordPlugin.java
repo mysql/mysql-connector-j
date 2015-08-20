@@ -37,6 +37,7 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
@@ -55,7 +56,7 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
-    private Protocol prot;
+    private Protocol protocol;
     private String password = null;
     private String seed = null;
     private boolean publicKeyRequested = false;
@@ -63,17 +64,17 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     private ReadableProperty<String> serverRSAPublicKeyFile = null;
 
     public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, conn.getSession().getProtocol(), props);
+        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        this.prot = protocol;
-        this.serverRSAPublicKeyFile = this.prot.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
+    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+        this.protocol = prot;
+        this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
 
         String pkURL = this.serverRSAPublicKeyFile.getValue();
         if (pkURL != null) {
-            this.publicKeyString = readRSAKey(pkURL, this.prot.getPropertySet(), this.prot.getExceptionInterceptor());
+            this.publicKeyString = readRSAKey(pkURL, this.protocol.getPropertySet(), this.protocol.getExceptionInterceptor());
         }
     }
 
@@ -109,9 +110,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
-                if (this.prot.getSocketConnection().isSSLEstablished()) {
+                if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.prot.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
                     bresp.setPosition(bresp.getBufLength());
                     int oldBufLength = bresp.getBufLength();
                     bresp.writeByte((byte) 0);
@@ -122,13 +123,13 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
                     this.seed = fromServer.readString();
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.prot.getPasswordCharacterEncoding()));
+                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
                     toServer.add(bresp);
 
                 } else {
-                    if (!this.prot.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                    if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
                         throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
-                                this.prot.getExceptionInterceptor());
+                                this.protocol.getExceptionInterceptor());
 
                     }
 
@@ -138,7 +139,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                         // so we check payload length to detect that.
 
                         // read key response
-                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(), this.prot.getPasswordCharacterEncoding()));
+                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(),
+                                this.protocol.getPasswordCharacterEncoding()));
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
@@ -150,7 +152,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     }
                 }
             } catch (CJException e) {
-                throw ExceptionFactory.createException(e.getMessage(), e, this.prot.getExceptionInterceptor());
+                throw ExceptionFactory.createException(e.getMessage(), e, this.protocol.getExceptionInterceptor());
             }
         }
         return true;
