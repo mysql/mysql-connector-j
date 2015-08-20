@@ -43,6 +43,7 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
@@ -428,5 +429,16 @@ public class MysqlxSession implements Session {
     public void setProfilerEventHandler(ProfilerEventHandler h) {
         // TODO Auto-generated method stub
 
+    }
+
+    public ServerSession getServerSession() {
+        // TODO;
+        return null;
+    }
+
+    @Override
+    public boolean isSSLEstablished() {
+        // TODO;
+        return false;
     }
 }
