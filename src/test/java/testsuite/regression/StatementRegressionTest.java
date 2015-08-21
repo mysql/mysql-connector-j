@@ -8872,4 +8872,115 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
     }
+
+    /**
+     * Tests fix for BUG#77681 - rewrite replace sql like insert when rewriteBatchedStatements=true (contribution)
+     * 
+     * When using 'rewriteBatchedStatements=true' we rewrite several batched statements into one single query by extending its VALUES clause. Although INSERT
+     * REPLACE have the same syntax, this wasn't happening for REPLACE statements.
+     * 
+     * This tests the number of queries actually sent to server when rewriteBatchedStatements is used and not by using a StatementInterceptor. The test is
+     * repeated for server side prepared statements. Without the fix, this test fails while checking the number of expected REPLACE queries.
+     */
+    public void testBug77681() throws Exception {
+        createTable("testBug77681", "(id INT, txt VARCHAR(50), PRIMARY KEY (id))");
+
+        Properties props = new Properties();
+        props.setProperty("statementInterceptors", TestBug77681StatementInterceptor.class.getName());
+
+        for (int tst = 0; tst < 4; tst++) {
+            props.setProperty("useServerPrepStmts", Boolean.toString((tst & 0x1) != 0));
+            props.setProperty("rewriteBatchedStatements", Boolean.toString((tst & 0x2) != 0));
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug77681 VALUES (?, ?)");
+            testPstmt.setInt(1, 1);
+            testPstmt.setString(2, "one");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 2);
+            testPstmt.setString(2, "two");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 3);
+            testPstmt.setString(2, "three");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 4);
+            testPstmt.setString(2, "four");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 5);
+            testPstmt.setString(2, "five");
+            testPstmt.addBatch();
+            testPstmt.executeBatch();
+            testPstmt.close();
+
+            testPstmt = testConn.prepareStatement("REPLACE INTO testBug77681 VALUES (?, ?)");
+            testPstmt.setInt(1, 2);
+            testPstmt.setString(2, "TWO");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 4);
+            testPstmt.setString(2, "FOUR");
+            testPstmt.addBatch();
+            testPstmt.setInt(1, 6);
+            testPstmt.setString(2, "SIX");
+            testPstmt.addBatch();
+            testPstmt.executeBatch();
+            testPstmt.close();
+
+            Statement testStmt = testConn.createStatement();
+            testStmt.clearBatch();
+            testStmt.addBatch("INSERT INTO testBug77681 VALUES (7, 'seven')");
+            testStmt.addBatch("INSERT INTO testBug77681 VALUES (8, 'eight')");
+            testStmt.addBatch("INSERT INTO testBug77681 VALUES (9, 'nine')");
+            testStmt.addBatch("INSERT INTO testBug77681 VALUES (10, 'ten')");
+            testStmt.addBatch("INSERT INTO testBug77681 VALUES (11, 'eleven')");
+            testStmt.executeBatch();
+
+            testStmt.clearBatch();
+            testStmt.addBatch("REPLACE INTO testBug77681 VALUES (8, 'EIGHT')");
+            testStmt.addBatch("REPLACE INTO testBug77681 VALUES (10, 'TEN')");
+            testStmt.addBatch("REPLACE INTO testBug77681 VALUES (12, 'TWELVE')");
+            testStmt.addBatch("REPLACE INTO testBug77681 VALUES (14, 'FOURTEEN')");
+            testStmt.addBatch("REPLACE INTO testBug77681 VALUES (16, 'SIXTEEN')");
+            testStmt.executeBatch();
+
+            this.stmt.executeUpdate("DELETE FROM testBug77681");
+        }
+    }
+
+    public static class TestBug77681StatementInterceptor extends BaseStatementInterceptor {
+        private static final char[] expectedNonRWBS = new char[] { 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'R', 'R' };
+        private static final char[] expectedRWBS = new char[] { 'I', 'R', 'I', 'R' };
+
+        private char[] expected;
+        private int execCounter = 0;
+
+        @Override
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            // TODO Auto-generated method stub
+            super.init(conn, props, log);
+            System.out.println("\nuseServerPrepStmts: " + props.getProperty("useServerPrepStmts") + " | rewriteBatchedStatements: "
+                    + props.getProperty("rewriteBatchedStatements"));
+            System.out.println("--------------------------------------------------------------------------------");
+            this.expected = Boolean.parseBoolean(props.getProperty("rewriteBatchedStatements")) ? expectedRWBS : expectedNonRWBS;
+        }
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
+            String query = sql;
+            if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                query = interceptedStatement.toString();
+                query = query.substring(query.indexOf(':') + 2);
+            }
+            if (query.indexOf("testBug77681") != -1) {
+                System.out.println(this.execCounter + " --> " + query);
+                if (this.execCounter > this.expected.length) {
+                    fail("Failed to rewrite statements");
+                }
+                assertEquals("Wrong statement at execution number " + this.execCounter, this.expected[this.execCounter++], query.charAt(0));
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
+        }
+
+    }
+
 }
