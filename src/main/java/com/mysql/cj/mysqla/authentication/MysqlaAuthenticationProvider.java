@@ -201,13 +201,17 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      */
     private List<String> disabledAuthenticationPlugins = null;
     /**
-     * Name of class for default authentication plugin
+     * Name of class for default authentication plugin in client
      */
-    private String defaultAuthenticationPlugin = null;
+    private String clientDefaultAuthenticationPlugin = null;
     /**
-     * Protocol name of default authentication plugin
+     * Protocol name of default authentication plugin in client
      */
-    private String defaultAuthenticationPluginProtocolName = null;
+    private String clientDefaultAuthenticationPluginName = null;
+    /**
+     * Protocol name of default authentication plugin in server
+     */
+    private String serverDefaultAuthenticationPluginName = null;
 
     /**
      * Fill the authentication plugins map.
@@ -226,10 +230,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     private void loadAuthenticationPlugins() {
 
         // default plugin
-        this.defaultAuthenticationPlugin = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).getValue();
-        if (this.defaultAuthenticationPlugin == null || "".equals(this.defaultAuthenticationPlugin.trim())) {
+        this.clientDefaultAuthenticationPlugin = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).getValue();
+        if (this.clientDefaultAuthenticationPlugin == null || "".equals(this.clientDefaultAuthenticationPlugin.trim())) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.defaultAuthenticationPlugin }),
+                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -284,7 +288,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         // check if default plugin is listed
         if (!defaultIsFound) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.defaultAuthenticationPlugin }),
+                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -309,14 +313,14 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         if (disabledByClassName || disabledByMechanism) {
             // if disabled then check is it default
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
+            if (this.clientDefaultAuthenticationPlugin.equals(pluginClassName)) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.BadDisabledAuthenticationPlugin",
                         new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }), getExceptionInterceptor());
             }
         } else {
             this.authenticationPlugins.put(pluginProtocolName, plugin);
-            if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
-                this.defaultAuthenticationPluginProtocolName = pluginProtocolName;
+            if (this.clientDefaultAuthenticationPlugin.equals(pluginClassName)) {
+                this.clientDefaultAuthenticationPluginName = pluginProtocolName;
                 isDefault = true;
             }
         }
@@ -397,6 +401,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             loadAuthenticationPlugins();
         }
 
+        boolean skipPassword = false;
         int passwordLength = 16;
         int userLength = (user != null) ? user.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
@@ -409,7 +414,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         AuthenticationPlugin plugin = null;
         PacketBuffer fromServer = null;
         ArrayList<PacketBuffer> toServer = new ArrayList<PacketBuffer>();
-        Boolean done = null;
+        boolean done = false;
         Buffer last_sent = null;
 
         boolean old_raw_challenge = false;
@@ -418,7 +423,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         while (0 < counter--) {
 
-            if (done == null) {
+            if (!done) {
 
                 if (challenge != null) {
                     // read Auth Challenge Packet
@@ -457,16 +462,33 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     }
 
                     plugin = getAuthenticationPlugin(pluginName);
-                    // if plugin is not found for pluginName get default instead 
                     if (plugin == null) {
-                        plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+                        /*
+                         * Use default if there is no plugin for pluginName.
+                         */
+                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+                    } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !this.protocol.getSocketConnection().isSSLEstablished()
+                            && this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getValue() == null
+                            && !this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                        /*
+                         * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
+                         * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
+                         * successfully. If default is 'sha256_password' then the authentication will fail as expected. In both cases user's password won't be
+                         * sent to avoid subjecting it to lesser security levels.
+                         */
+                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+                        skipPassword = !this.clientDefaultAuthenticationPluginName.equals(pluginName);
                     }
+
+                    this.serverDefaultAuthenticationPluginName = plugin.getProtocolPluginName();
 
                     checkConfidentiality(plugin);
                     fromServer = new Buffer(StringUtils.getBytes(this.seed));
                 } else {
                     // no challenge so this is a changeUser call
-                    plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName
+                            : this.serverDefaultAuthenticationPluginName);
+
                     checkConfidentiality(plugin);
 
                     // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
@@ -492,6 +514,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     break;
 
                 } else if (challenge.isAuthMethodSwitchRequestPacket()) {
+                    skipPassword = false;
+
                     // read Auth Method Switch Request Packet
                     String pluginName;
                     pluginName = challenge.readString("ASCII");
@@ -518,7 +542,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             }
 
             // call plugin
-            plugin.setAuthenticationParameters(user, password);
+            plugin.setAuthenticationParameters(user, skipPassword ? null : password);
             done = plugin.nextAuthenticationStep(fromServer, toServer);
 
             // send response

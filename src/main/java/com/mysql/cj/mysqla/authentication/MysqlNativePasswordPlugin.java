@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.authentication;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Properties;
 
@@ -34,10 +32,7 @@ import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.mysqla.io.Buffer;
 
 /**
@@ -46,7 +41,6 @@ import com.mysql.cj.mysqla.io.Buffer;
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
     private Protocol protocol;
-    private Properties properties;
     private String password = null;
 
     public void init(MysqlConnection conn, Properties props, Log log) {
@@ -56,7 +50,6 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     @Override
     public void init(MysqlConnection conn, Protocol prot, Properties props) {
         this.protocol = prot;
-        this.properties = props;
     }
 
     public void destroy() {
@@ -86,9 +79,6 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         Buffer bresp = null;
 
         String pwd = this.password;
-        if (pwd == null) {
-            pwd = this.properties.getProperty(PropertyDefinitions.PNAME_password);
-        }
 
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new Buffer(new byte[0]);
