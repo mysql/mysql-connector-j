@@ -63,6 +63,7 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -1856,6 +1857,10 @@ public class ServerPreparedStatement extends PreparedStatement {
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_DATETIME);
+
+            if (!this.sendFractionalSeconds.getValue()) {
+                x = TimeUtil.truncateFractionalSeconds(x);
+            }
 
             binding.value = x;
             binding.tz = tz;

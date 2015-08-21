@@ -26,6 +26,7 @@ package com.mysql.cj.jdbc.util;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -169,5 +170,11 @@ public class TimeUtil {
                 timeZoneMappings.put(tz, tz);
             }
         }
+    }
+
+    public static Timestamp truncateFractionalSeconds(Timestamp timestamp) {
+        Timestamp truncatedTimestamp = new Timestamp(timestamp.getTime());
+        truncatedTimestamp.setNanos(0);
+        return truncatedTimestamp;
     }
 }

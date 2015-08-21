@@ -325,6 +325,7 @@ public class StatementImpl implements Statement {
     protected ReadableProperty<Boolean> rewriteBatchedStatements;
     protected ReadableProperty<Integer> maxAllowedPacket;
     protected boolean dontCheckOnDuplicateKeyUpdateInSQL;
+    protected ReadableProperty<Boolean> sendFractionalSeconds;
 
     /**
      * Constructor for a Statement.
@@ -365,6 +366,7 @@ public class StatementImpl implements Statement {
         this.maxAllowedPacket = c.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         this.dontCheckOnDuplicateKeyUpdateInSQL = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)
                 .getValue();
+        this.sendFractionalSeconds = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
 
         this.maxFieldSize = this.maxAllowedPacket.getValue();
 

@@ -18,6 +18,10 @@ nn-nn-15 - Version 6.0.0
 
   - Merged version 5.1.37.
 
+  - Fix for Bug#77449 (21304726) Add 'truncateFractionalSeconds=true|false' property (contribution).
+    The property 'sendFractionalSeconds' was added instead of the proposed 'truncateFractionalSeconds'.
+    Thanks to KwonNam for his contribution.
+
   - Fix for Bug#50348 (11758179), mysql connector/j 5.1.10 render the wrong value for dateTime column in GMT DB.
 
   - Fix for Bug#75670 (20433047), Connection fails with "Public Key Retrieval is not allowed" for native auth.

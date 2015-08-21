@@ -4135,6 +4135,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
+            if (!this.sendFractionalSeconds.getValue()) {
+                x = TimeUtil.truncateFractionalSeconds(x);
+            }
+
             this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
 
             if (this.tsdf == null) {

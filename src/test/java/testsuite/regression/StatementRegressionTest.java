@@ -83,6 +83,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -8743,4 +8744,132 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(expectedTime, timeAsString);
     }
 
+    /**
+     * Tests fix for Bug#77449 - Add 'truncateFractionalSeconds=true|false' property (contribution).
+     * 
+     * The property actually added was 'sendFractionalSeconds' and works as the opposite of the proposed one.
+     */
+    public void testBug77449() throws Exception {
+        Timestamp originalTs = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2014-12-31 23:59:59.999").getTime());
+        Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
+        Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);
+
+        assertEquals("2014-12-31 23:59:59.999", originalTs.toString());
+        assertEquals("2014-12-31 23:59:59.0", TimeUtil.truncateFractionalSeconds(originalTs).toString());
+
+        createTable("testBug77449", "(id INT PRIMARY KEY, ts_short TIMESTAMP, ts_long TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6))");
+        createProcedure("testBug77449", "(ts_short TIMESTAMP, ts_long TIMESTAMP(6)) BEGIN SELECT ts_short, ts_long; END");
+
+        for (int tst = 0; tst < 8; tst++) {
+            boolean useLegacyDatetimeCode = (tst & 0x1) != 0;
+            boolean useServerSidePreparedStatements = (tst & 0x2) != 0;
+            boolean sendFractionalSeconds = (tst & 0x4) != 0;
+
+            String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-",
+                    useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
+
+            Properties props = new Properties();
+            props.setProperty("statementInterceptors", testBug77449StatementInterceptor.class.getName());
+            props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode));
+            props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements));
+            props.setProperty("sendFractionalSeconds", Boolean.toString(sendFractionalSeconds));
+
+            Connection testConn = getConnectionWithProps(props);
+
+            // Send timestamps as Strings, using Statement -> no truncation occurs.
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeUpdate("INSERT INTO testBug77449 VALUES (1, '2014-12-31 23:59:59.999', '2014-12-31 23:59:59.999')/* no_ts_trunk */");
+            testStmt.close();
+
+            // Send timestamps using PreparedStatement -> truncation occurs according to 'sendFractionalSeconds' value.
+            PreparedStatement testPStmt = testConn.prepareStatement("INSERT INTO testBug77449 VALUES (2, ?, ?)");
+            testPStmt.setTimestamp(1, originalTs);
+            testPStmt.setTimestamp(2, originalTs);
+            assertEquals(testCase, 1, testPStmt.executeUpdate());
+            testPStmt.close();
+
+            // Send timestamps using UpdatableResultSet -> truncation occurs according to 'sendFractionalSeconds' value.
+            testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+            testStmt.executeUpdate("INSERT INTO testBug77449 VALUES (3, NOW(), NOW())/* no_ts_trunk */"); // insert dummy row
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 3");
+            assertTrue(this.rs.next());
+            this.rs.updateTimestamp("ts_short", originalTs);
+            this.rs.updateTimestamp("ts_long", originalTs);
+            this.rs.updateRow();
+            this.rs.moveToInsertRow();
+            this.rs.updateInt("id", 4);
+            this.rs.updateTimestamp("ts_short", originalTs);
+            this.rs.updateTimestamp("ts_long", originalTs);
+            this.rs.insertRow();
+
+            // Assert values from previous inserts/updates.
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449");
+            assertTrue(this.rs.next()); // 1st row: from Statement.
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals(testCase, roundedTs, this.rs.getTimestamp(2));
+            assertEquals(testCase, originalTs, this.rs.getTimestamp(3));
+            for (int i = 2; i <= 4; i++) {
+                // 2nd row: from PreparedStatement; 3rd row: from UpdatableResultSet.updateRow(); 4th row: from UpdatableResultSet.insertRow()
+                assertTrue(this.rs.next());
+                assertEquals(i, this.rs.getInt(1));
+                assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(2));
+                assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(3));
+            }
+
+            this.stmt.execute("DELETE FROM testBug77449");
+
+            // Compare Connector/J with client trunction -> truncation occurs according to 'sendFractionalSeconds' value.
+            testPStmt = testConn.prepareStatement("SELECT ? = ?");
+            testPStmt.setTimestamp(1, originalTs);
+            testPStmt.setTimestamp(2, truncatedTs);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(this.rs.next());
+            if (sendFractionalSeconds) {
+                assertFalse(testCase, this.rs.getBoolean(1));
+            } else {
+                assertTrue(testCase, this.rs.getBoolean(1));
+            }
+            testPStmt.close();
+
+            // Send timestamps using CallableStatement -> truncation occurs according to 'sendFractionalSeconds' value.
+            CallableStatement cstmt = testConn.prepareCall("{call testBug77449(?, ?)}");
+            cstmt.setTimestamp("ts_short", originalTs);
+            cstmt.setTimestamp("ts_long", originalTs);
+            cstmt.execute();
+            this.rs = cstmt.getResultSet();
+            assertTrue(this.rs.next());
+            assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(1));
+            assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(2));
+
+            testConn.close();
+        }
+    }
+
+    public static class testBug77449StatementInterceptor extends BaseStatementInterceptor {
+        private boolean sendFracSecs = false;
+
+        @Override
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_sendFractionalSeconds));
+            super.init(conn, props, log);
+        }
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
+            String query = sql;
+            if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                query = interceptedStatement.toString();
+                query = query.substring(query.indexOf(':') + 2);
+            }
+
+            if ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk")) {
+                if (this.sendFracSecs ^ query.contains(".999")) {
+                    fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
+                }
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
+        }
+
+    }
 }

@@ -277,6 +277,7 @@ public class PropertyDefinitions {
     public static final String PNAME_useInformationSchema = "useInformationSchema";
     public static final String PNAME_useLocalSessionState = "useLocalSessionState";
     public static final String PNAME_useLocalTransactionState = "useLocalTransactionState";
+    public static final String PNAME_sendFractionalSeconds = "sendFractionalSeconds";
     public static final String PNAME_useNanosForElapsedTime = "useNanosForElapsedTime";
     public static final String PNAME_useOldAliasMetadataBehavior = "useOldAliasMetadataBehavior";
     public static final String PNAME_useOldUTF8Behavior = "useOldUTF8Behavior";
@@ -793,6 +794,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useLocalTransactionState, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useLocalTransactionState"), "5.1.7", CATEGORY_PERFORMANCE, 6),
 
+                new BooleanPropertyDefinition(PNAME_sendFractionalSeconds, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sendFractionalSeconds"), "5.1.37", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+
                 new BooleanPropertyDefinition(PNAME_useNanosForElapsedTime, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useNanosForElapsedTime"), "5.0.7", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
 
@@ -1049,6 +1053,7 @@ public class PropertyDefinitions {
                 put(PNAME_useInformationSchema, "useInformationSchema");
                 put(PNAME_useLocalSessionState, "useLocalSessionState");
                 put(PNAME_useLocalTransactionState, "useLocalTransactionState");
+                put(PNAME_sendFractionalSeconds, "sendFractionalSeconds");
                 put(PNAME_useNanosForElapsedTime, "useNanosForElapsedTime");
                 put(PNAME_useOldAliasMetadataBehavior, "useOldAliasMetadataBehavior");
                 put(PNAME_useOldUTF8Behavior, "useOldUTF8Behavior");
