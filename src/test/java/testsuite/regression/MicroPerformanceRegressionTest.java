@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,10 +36,11 @@ import testsuite.BaseTestCase;
  * Microperformance benchmarks to track increase/decrease in performance of core methods in the driver over time.
  */
 public class MicroPerformanceRegressionTest extends BaseTestCase {
+    private static double[] scaleFactorSamples = new double[5];
 
-    private double scaleFactor = 1.0;
+    private static double scaleFactor = 0.0;
 
-    private final static int ORIGINAL_LOOP_TIME_MS = 2300;
+    private final static double ORIGINAL_LOOP_TIME_MS = 2300.0;
 
     private final static double LEEWAY = 10.0; // account for VMs
 
@@ -65,6 +66,14 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         BASELINE_TIMES.put("PreparedStatement.setString()", new Double(0.0081));
         BASELINE_TIMES.put("PreparedStatement.setObject() on a string", new Double(0.00793));
         BASELINE_TIMES.put("PreparedStatement.setDouble()", new Double(0.0246));
+
+        System.out.println("Calculating global performance scaling factor...");
+        for (int i = 0; i < scaleFactorSamples.length; i++) {
+            scaleFactorSamples[i] = calculateScaleFactor();
+            scaleFactor += scaleFactorSamples[i];
+        }
+        scaleFactor /= scaleFactorSamples.length;
+        System.out.println("Global performance scaling factor is: " + scaleFactor);
     }
 
     public MicroPerformanceRegressionTest(String name) {
@@ -312,20 +321,47 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
     }
 
     @Override
-    public void setUp() throws Exception {
+    public synchronized void setUp() throws Exception {
         super.setUp();
 
-        System.out.println("Calculating performance scaling factor...");
-        // Run this simple test to get some sort of performance scaling factor,
-        // compared to
-        // the development environment. This should help reduce false-positives
+        System.out.println("Adjusting global performance scaling factor...");
+        System.out.println("Gobal performance scaling factor adjusted from: " + scaleFactor + " to: " + adjustScaleFactor());
+    }
+
+    private static final double adjustScaleFactor() {
+        double newScaleFactor = calculateScaleFactor();
+        double maxDeviation = Math.abs(newScaleFactor - scaleFactor);
+
+        // discard the farthest value from previous mean (scaleFactor);
+        for (int i = 0; i < scaleFactorSamples.length; i++) {
+            double deviation = Math.abs(scaleFactorSamples[i] - scaleFactor);
+            if (deviation > maxDeviation) {
+                Double swapValue = scaleFactorSamples[i];
+                scaleFactorSamples[i] = newScaleFactor;
+                newScaleFactor = swapValue;
+                maxDeviation = deviation;
+            }
+        }
+
+        // calculate new mean (scaleFactor)
+        newScaleFactor = 0.0;
+        for (double d : scaleFactorSamples) {
+            newScaleFactor += d;
+        }
+        scaleFactor = newScaleFactor / scaleFactorSamples.length;
+
+        return scaleFactor;
+    }
+
+    private static final double calculateScaleFactor() {
+        // Run this simple test to get some sort of performance scaling factor, compared to the development environment. This should help reduce false-positives
         // on this test.
         int numLoops = 10000;
 
-        long start = currentTimeMillis();
+        long start = BaseTestCase.currentTimeMillis();
 
         for (int j = 0; j < 2000; j++) {
-            // FIXME: StringBuffer below is used for measuring and can't be changed to StringBuilder. We need a better approximation alg here. 
+            // StringBuffer below is used for measuring and can't be changed to StringBuilder.
             StringBuffer buf = new StringBuffer(numLoops);
 
             for (int i = 0; i < numLoops; i++) {
@@ -333,16 +369,11 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             }
         }
 
-        long elapsedTime = currentTimeMillis() - start;
-
-        System.out.println("Elapsed time for factor: " + elapsedTime);
-
-        this.scaleFactor = (double) elapsedTime / (double) ORIGINAL_LOOP_TIME_MS;
-
-        System.out.println("Performance scaling factor is: " + this.scaleFactor);
+        long elapsedTime = BaseTestCase.currentTimeMillis() - start;
+        return elapsedTime / ORIGINAL_LOOP_TIME_MS;
     }
 
-    private void checkTime(String testType, double avgExecTimeMs) throws Exception {
+    private synchronized void checkTime(String testType, double avgExecTimeMs) throws Exception {
 
         double adjustForVendor = 1.0D;
 
@@ -356,7 +387,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             throw new Exception("No baseline time recorded for test '" + testType + "'");
         }
 
-        double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * this.scaleFactor * adjustForVendor;
+        double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * scaleFactor * adjustForVendor;
 
         System.out.println(testType + ": avg time = " + avgExecTimeMs + ", acceptable time = " + acceptableTime);
 

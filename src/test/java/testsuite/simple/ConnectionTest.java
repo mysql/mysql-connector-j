@@ -1509,7 +1509,7 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
         if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
         }
         getConnectionWithProps(props);
     }

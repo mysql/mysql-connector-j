@@ -59,7 +59,7 @@ import com.mysql.cj.jdbc.ha.ReplicationConnection;
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
-    protected final static String SSL_CIPHERS_FOR_576 = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
+    protected final static String CUSTOM_SSL_CIPHERS = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
             + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
 
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
@@ -592,6 +592,24 @@ public abstract class BaseTestCase extends TestCase {
         return Util.isEnterpriseEdition(((JdbcConnection) this.conn).getServerVersion().toString());
     }
 
+    /**
+     * Checks whether all requirements to connect using SSL are met for the default connection
+     */
+    protected boolean requiresSSLCipherSuitesCustomization() throws SQLException {
+        return requiresSSLCipherSuitesCustomization(this.conn);
+    }
+
+    /**
+     * Checks whether all requirements to connect using SSL are met for the given connection
+     * - MySQL 5.5.45+
+     * - MySQL 5.6.26+ (community edition)
+     * - MySQL 5.7.6+ (community edition)
+     */
+    protected boolean requiresSSLCipherSuitesCustomization(Connection c) throws SQLException {
+        // TODO: is not needed 'cause we always run under Java 8
+        return false;
+    }
+
     protected boolean isClassAvailable(String classname) {
         try {
             Class.forName(classname);
@@ -776,7 +794,7 @@ public abstract class BaseTestCase extends TestCase {
      * Retrieve the current system time in milliseconds, using the nanosecond
      * time if possible.
      */
-    protected long currentTimeMillis() {
+    protected static final long currentTimeMillis() {
         try {
             Method mNanoTime = System.class.getDeclaredMethod("nanoTime", (Class[]) null);
             return ((Long) mNanoTime.invoke(null, (Object[]) null)).longValue() / 1000000;

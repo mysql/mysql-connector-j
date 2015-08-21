@@ -114,7 +114,6 @@ import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
@@ -1637,8 +1636,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
             props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
-            if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-                props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            if (requiresSSLCipherSuitesCustomization()) {
+                props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
             }
 
             sslConn = getConnectionWithProps(props);
@@ -1677,10 +1676,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 hostSpec = host + ":" + port;
             }
 
-            final boolean sslRequirementsFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
                     + "&trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
-                    + "&trustCertificateKeyStorePassword=password" + (sslRequirementsFor576 ? "&enabledSSLCipherSuites=" + SSL_CIPHERS_FOR_576 : "");
+                    + "&trustCertificateKeyStorePassword=password"
+                    + (requiresSSLCipherSuitesCustomization() ? "&enabledSSLCipherSuites=" + CUSTOM_SSL_CIPHERS : "");
 
             _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get(PropertyDefinitions.PNAME_user), (String) this
                     .getPropertiesFromTestsuiteUrl().get(PropertyDefinitions.PNAME_password));
@@ -3785,8 +3784,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", "password");
                 props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-                if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-                    props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+                if (requiresSSLCipherSuitesCustomization()) {
+                    props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
                 }
                 testConn = getConnectionWithProps(props);
 
@@ -3923,11 +3922,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
             propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
             propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            if (requiresSSLCipherSuitesCustomization()) {
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
             }
 
             assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
@@ -3957,7 +3956,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * test against server with RSA support
          */
         final String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl != null) {
+        if (sha256defaultDbUrl != null && sha256defaultDbUrl.length() > 0) {
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
@@ -5599,7 +5598,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testLongAuthResponsePayload() throws Exception {
 
         String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl != null) {
+        if (sha256defaultDbUrl != null && sha256defaultDbUrl.length() > 0) {
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
@@ -6180,7 +6179,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug18869381() throws Exception {
 
         String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl != null) {
+        if (sha256defaultDbUrl != null && sha256defaultDbUrl.length() > 0) {
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
@@ -6942,7 +6941,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20685022() throws Exception {
-        final boolean sslCipherSuitesReqFor576 = Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition();
         final Properties props = new Properties();
         final Callable<Void> callableInstance = new Callable<Void>() {
             public Void call() throws Exception {
@@ -6959,10 +6957,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
         }
         getConnectionWithProps(props);
 
@@ -6977,10 +6975,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
         }
 
         getConnectionWithProps(props);
@@ -6999,10 +6997,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
-        if (sslCipherSuitesReqFor576) {
+        if (requiresSSLCipherSuitesCustomization()) {
             assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
 
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
         }
 
         getConnectionWithProps(props);
@@ -7367,9 +7365,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
                         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-                        if (Util.getJVMVersion() < 8 && testBaseConn.getSession().versionMeetsMinimum(5, 7, 6)
-                                && Util.isCommunityEdition(testBaseConn.getServerVersion().toString())) {
-                            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, SSL_CIPHERS_FOR_576);
+                        if (requiresSSLCipherSuitesCustomization(testBaseConn)) {
+                            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
                         }
                         testCaseMsg = "SSL";
                         break;
@@ -7463,7 +7460,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug75670() throws Exception {
         final String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
-        if (sha256defaultDbUrl == null) {
+        if (sha256defaultDbUrl == null || sha256defaultDbUrl.length() == 0) {
             return;
         }
 
