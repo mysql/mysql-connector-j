@@ -4,7 +4,7 @@
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
   There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
-  this software, see the FLOSS License Exception
+  this software, see the FOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 
   This program is free software; you can redistribute it and/or modify it under the terms
@@ -46,7 +46,6 @@ import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricConnection;
 import com.mysql.fabric.Server;
 import com.mysql.fabric.ServerGroup;
-import com.mysql.fabric.ServerRole;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.CachedResultSetMetaData;
@@ -190,7 +189,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
 
         setServerGroupName(this.fabricServerGroup);
 
-        log = LogFactory.getLogger(getLogger(), "FabricMySQLConnectionProxy", null);
+        this.log = LogFactory.getLogger(getLogger(), "FabricMySQLConnectionProxy", null);
     }
 
     private boolean intercepting = false; // prevent recursion
@@ -206,7 +205,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * @param port
      * @throws FabricCommunicationException
      */
-    synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String port) throws FabricCommunicationException {
+    synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String port)
+            throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
         if (!(sqlEx.getSQLState().startsWith("08") || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
             return null;
@@ -486,8 +486,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                     }
                     replConnGroup.promoteSlaveToMaster(newMaster.getHostPortString());
                 } catch (SQLException ex) {
-                    throw SQLError.createSQLException("Unable to promote new master '" + newMaster.toString() +
-                            "'", ex.getSQLState(), ex, getExceptionInterceptor(), this);
+                    throw SQLError.createSQLException("Unable to promote new master '" + newMaster.toString() + "'", ex.getSQLState(), ex,
+                            getExceptionInterceptor(), this);
                 }
             }
 
