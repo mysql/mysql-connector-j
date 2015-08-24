@@ -28,10 +28,13 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
@@ -80,15 +83,49 @@ public class SessionImpl extends AbstractSession implements Session {
         return new SchemaImpl(this, this.defaultSchemaName);
     }
 
+    @Override
     public void startTransaction() {
         this.session.update("START TRANSACTION");
     }
 
+    @Override
     public void commit() {
         this.session.update("COMMIT");
     }
 
+    @Override
     public void rollback() {
         this.session.update("ROLLBACK");
+    }
+
+    @Override
+    public String getUri() {
+        PropertySet pset = this.session.getPropertySet();
+
+        StringBuilder sb = new StringBuilder(ConnectionStringType.X_SESSION.urlPrefix);
+        sb.append(this.session.getHost());
+        sb.append(":");
+        sb.append(this.session.getPort());
+        sb.append("/");
+        sb.append(this.defaultSchemaName);
+        sb.append("?");
+
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ReadableProperty<?> propToGet = pset.getReadableProperty(propName);
+
+            String propValue = propToGet.getStringValue();
+
+            if (propValue != null && !propValue.equals(propToGet.getPropertyDefinition().getDefaultValue().toString())) {
+                sb.append(",");
+                sb.append(propName);
+                sb.append("=");
+                sb.append(propValue);
+            }
+        }
+
+        // TODO modify for multi-host connections
+
+        return sb.toString();
+
     }
 }

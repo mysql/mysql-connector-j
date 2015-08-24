@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -32,7 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import static java.util.stream.Collectors.toMap;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -166,11 +167,11 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public PropertySet getPropertySet() {
-        throw new NullPointerException("TODO");
+        return this.propertySet;
     }
 
     public void setPropertySet(PropertySet propertySet) {
-        throw new NullPointerException("TODO");
+        this.propertySet = propertySet;
     }
 
     public ServerCapabilities readServerCapabilities() {
@@ -221,6 +222,7 @@ public class MysqlxProtocol implements Protocol {
      * Get the capabilities from the server.
      * <p>
      * <b>NOTE:</b> This must be called before authentication.
+     * 
      * @return capabilities mapped by name
      */
     private Map<String, Any> getCapabilities() {
@@ -475,34 +477,34 @@ public class MysqlxProtocol implements Protocol {
                     // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
                     //     // TODO: ignored for now
                     //     throw new RuntimeException("Got a session variable changed: " + notice);
-                    } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                        // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
-                        Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
-                        SessionStateChanged msg = parser.parseFrom(notice.getPayload());
-                        switch (msg.getParam()) {
-                            case GENERATED_INSERT_ID:
-                                // TODO: handle > 2^63-1?
-                                lastInsertId = msg.getValue().getVUnsignedInt();
-                                break;
-                            case ROWS_AFFECTED:
-                                // TODO: handle > 2^63-1?
-                                rowsAffected = msg.getValue().getVUnsignedInt();
-                                break;
-                            case PRODUCED_MESSAGE:
-                                // TODO do something with notices. expose them to client
-                                //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
-                                break;
-                            case CURRENT_SCHEMA:
-                            case ACCOUNT_EXPIRED:
-                            case ROWS_FOUND:
-                            case ROWS_MATCHED:
-                            case TRX_COMMITTED:
-                            case TRX_ROLLEDBACK:
-                                // TODO: propagate state
-                            default:
-                                // TODO: log warning
-                                throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
-                        }
+                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                    // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
+                    Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
+                    SessionStateChanged msg = parser.parseFrom(notice.getPayload());
+                    switch (msg.getParam()) {
+                        case GENERATED_INSERT_ID:
+                            // TODO: handle > 2^63-1?
+                            lastInsertId = msg.getValue().getVUnsignedInt();
+                            break;
+                        case ROWS_AFFECTED:
+                            // TODO: handle > 2^63-1?
+                            rowsAffected = msg.getValue().getVUnsignedInt();
+                            break;
+                        case PRODUCED_MESSAGE:
+                            // TODO do something with notices. expose them to client
+                            //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
+                            break;
+                        case CURRENT_SCHEMA:
+                        case ACCOUNT_EXPIRED:
+                        case ROWS_FOUND:
+                        case ROWS_MATCHED:
+                        case TRX_COMMITTED:
+                        case TRX_ROLLEDBACK:
+                            // TODO: propagate state
+                        default:
+                            // TODO: log warning
+                            throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
+                    }
                 } else {
                     // TODO: error?
                     throw new RuntimeException("Got an unknown notice: " + notice);
@@ -659,9 +661,8 @@ public class MysqlxProtocol implements Protocol {
         if (this.reader.getNextMessageClass() == Row.class) {
             Row r = this.reader.read(Row.class);
             return new MysqlxRow(metadata, r);
-        } else {
-            return null;
         }
+        return null;
     }
 
     public MysqlxRowInputStream getRowInputStream(ArrayList<Field> metadata) {
@@ -672,11 +673,16 @@ public class MysqlxProtocol implements Protocol {
      * Apply the given filter params to the builder object (represented by the method args). Abstract the process of setting the filter params on the operation
      * message builder.
      *
-     * @param filterParams the filter params to apply
-     * @param setOrder the "builder.addAllOrder()" method reference
-     * @param setLimit the "builder.setLimit()" method reference
-     * @param setCriteria the "builder.setCriteria()" method reference
-     * @param setArgs the "builder.addAllArgs()" method reference
+     * @param filterParams
+     *            the filter params to apply
+     * @param setOrder
+     *            the "builder.addAllOrder()" method reference
+     * @param setLimit
+     *            the "builder.setLimit()" method reference
+     * @param setCriteria
+     *            the "builder.setCriteria()" method reference
+     * @param setArgs
+     *            the "builder.addAllArgs()" method reference
      */
     private void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
             Consumer<List<Scalar>> setArgs) {
@@ -754,9 +760,7 @@ public class MysqlxProtocol implements Protocol {
 
     public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        json.stream()
-                .map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build())
-                .forEach(builder::addRow);
+        json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build()).forEach(builder::addRow);
         this.writer.write(builder.build());
     }
 

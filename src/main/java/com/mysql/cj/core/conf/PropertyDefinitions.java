@@ -66,7 +66,7 @@ public class PropertyDefinitions {
     public static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
 
     /**
-     * Key used to retreive the database value from the properties instance
+     * Key used to retrieve the database value from the properties instance
      * passed to the driver.
      */
     public static final String DBNAME_PROPERTY_KEY = "DBNAME";
@@ -75,7 +75,7 @@ public class PropertyDefinitions {
     public final static int HOST_NAME_INDEX = 0;
 
     /**
-     * Key used to retreive the hostname value from the properties instance
+     * Key used to retrieve the hostname value from the properties instance
      * passed to the driver.
      */
     public static final String HOST_PROPERTY_KEY = "HOST";
@@ -90,7 +90,7 @@ public class PropertyDefinitions {
     public static final String PATH_PROPERTY_KEY = "PATH";
 
     /**
-     * Key used to retreive the port number value from the properties instance
+     * Key used to retrieve the port number value from the properties instance
      * passed to the driver.
      */
     public static final String PORT_PROPERTY_KEY = "PORT";
