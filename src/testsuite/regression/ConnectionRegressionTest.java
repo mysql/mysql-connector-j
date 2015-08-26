@@ -6967,7 +6967,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug19354014() throws Exception {
         if (versionMeetsMinimum(5, 5, 7)) {
             Connection con = null;
-            this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%' identified WITH mysql_native_password");
+            this.stmt.executeUpdate("create user 'bug19354014user'@'%' identified WITH mysql_native_password");
+            this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%'");
             this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug19354014user'@'%' IDENTIFIED BY 'pwd'"
                     : "set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
             this.stmt.executeUpdate("flush privileges");
