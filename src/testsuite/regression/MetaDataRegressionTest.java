@@ -2725,7 +2725,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 assertTrue("No database selected", false);
             }
 
-            this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
+            createUser("'bug61203user'@'%'", "identified by 'foo'");
             this.stmt.executeUpdate("delete from mysql.db where user='bug61203user'");
             this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
                     + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
@@ -2756,7 +2756,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         } finally {
             dropFunction("testbug61203fn");
             dropProcedure("testbug61203pr");
-            this.stmt.executeUpdate("drop user 'bug61203user'@'%'");
 
             if (cStmt != null) {
                 cStmt.close();

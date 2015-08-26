@@ -45,6 +45,7 @@ import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
@@ -134,7 +135,14 @@ public abstract class BaseTestCase extends TestCase {
 
     protected void createSchemaObject(String objectType, String objectName, String columnsAndOtherStuff) throws SQLException {
         this.createdObjects.add(new String[] { objectType, objectName });
-        dropSchemaObject(objectType, objectName);
+        try {
+            dropSchemaObject(objectType, objectName);
+        } catch (SQLException ex) {
+            // ignore DROP USER failures
+            if (!ex.getMessage().startsWith("Operation DROP USER failed")) {
+                throw ex;
+            }
+        }
 
         StringBuilder createSql = new StringBuilder(objectName.length() + objectType.length() + columnsAndOtherStuff.length() + 10);
         createSql.append("CREATE  ");
@@ -201,8 +209,20 @@ public abstract class BaseTestCase extends TestCase {
         dropSchemaObject("DATABASE", databaseName);
     }
 
+    protected void createUser(String userName, String otherStuff) throws SQLException {
+        createSchemaObject("USER", userName, otherStuff);
+    }
+
+    protected void dropUser(Statement st, String user) throws SQLException {
+        st.execute((((ConnectionImpl) st.getConnection()).versionMeetsMinimum(5, 7, 8) ? "DROP USER IF EXISTS" : "DROP USER ") + user);
+    }
+
     protected void dropSchemaObject(String objectType, String objectName) throws SQLException {
-        this.stmt.executeUpdate("DROP " + objectType + " IF EXISTS " + objectName);
+        if (!objectType.equalsIgnoreCase("USER") || versionMeetsMinimum(5, 7, 8)) {
+            this.stmt.executeUpdate("DROP " + objectType + " IF EXISTS " + objectName);
+        } else {
+            this.stmt.executeUpdate("DROP " + objectType + " " + objectName);
+        }
     }
 
     protected Connection getAdminConnection() throws SQLException {

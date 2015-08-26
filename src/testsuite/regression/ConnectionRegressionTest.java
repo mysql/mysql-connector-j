@@ -2091,6 +2091,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("characterEncoding", "utf-8");
         props.setProperty("passwordCharacterEncoding", "utf-8");
 
+        // TODO enable for usual connection?
         Connection adminConn = getAdminConnectionWithProps(props);
 
         if (adminConn != null) {
@@ -2099,7 +2100,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String user = "bug37570";
             Statement adminStmt = adminConn.createStatement();
 
-            adminStmt.executeUpdate("grant usage on *.* to '" + user + "'@'127.0.0.1' identified by 'foo'");
+            adminStmt.executeUpdate("create user '" + user + "'@'127.0.0.1' identified by 'foo'");
+            adminStmt.executeUpdate("grant usage on *.* to '" + user + "'@'127.0.0.1'");
             adminStmt.executeUpdate("update mysql.user set password=PASSWORD('" + unicodePassword + "') where user = '" + user + "'");
             adminStmt.executeUpdate("flush privileges");
 
@@ -3497,8 +3499,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
                 // create proxy users
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'%' identified WITH test_plugin_server AS 'plug_dest'");
-                this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'%' IDENTIFIED BY 'foo'");
+                createUser("'wl5851user'@'%'", "identified WITH test_plugin_server AS 'plug_dest'");
+                createUser("'plug_dest'@'%'", "IDENTIFIED BY 'foo'");
                 this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'%' TO 'wl5851user'@'%'");
                 this.stmt.executeUpdate("delete from mysql.db where user='plug_dest'");
                 this.stmt
@@ -3537,8 +3539,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user'@'%'");
-                this.stmt.executeUpdate("drop user 'plug_dest'@'%'");
                 if (install_plugin_in_runtime) {
                     this.stmt.executeUpdate("UNINSTALL PLUGIN test_plugin_server");
                 }
@@ -3574,7 +3574,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     assertTrue("No database selected", false);
                 }
 
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
+                createUser("'wl5851user2'@'%'", "identified WITH two_questions AS 'two_questions_password'");
                 this.stmt.executeUpdate("delete from mysql.db where user='wl5851user2'");
                 this.stmt
                         .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
@@ -3611,7 +3611,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user2'@'%'");
                 if (install_plugin_in_runtime) {
                     this.stmt.executeUpdate("UNINSTALL PLUGIN two_questions");
                 }
@@ -3647,7 +3646,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     assertTrue("No database selected", false);
                 }
 
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
+                createUser("'wl5851user3'@'%'", "identified WITH three_attempts AS 'three_attempts_password'");
                 this.stmt.executeUpdate("delete from mysql.db where user='wl5851user3'");
                 this.stmt
                         .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
@@ -3684,7 +3683,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5851user3'@'%'");
                 if (install_plugin_in_runtime) {
                     this.stmt.executeUpdate("UNINSTALL PLUGIN three_attempts");
                 }
@@ -3828,15 +3826,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("SET @current_secure_auth = @@global.secure_auth");
             this.stmt.executeUpdate("SET GLOBAL secure_auth= off");
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user1'@'%' IDENTIFIED WITH mysql_old_password");
+            createUser("'bug64983user1'@'%'", "IDENTIFIED WITH mysql_old_password");
             this.stmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
             this.stmt.executeUpdate("grant all on *.* to 'bug64983user1'@'%'");
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user2'@'%' IDENTIFIED WITH mysql_old_password");
+            createUser("'bug64983user2'@'%'", "IDENTIFIED WITH mysql_old_password");
             this.stmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
             this.stmt.executeUpdate("grant all on *.* to 'bug64983user2'@'%'");
 
-            this.stmt.executeUpdate("CREATE USER 'bug64983user3'@'%' IDENTIFIED WITH mysql_old_password");
+            createUser("'bug64983user3'@'%'", "IDENTIFIED WITH mysql_old_password");
             this.stmt.executeUpdate("grant all on *.* to 'bug64983user3'@'%'");
 
             this.stmt.executeUpdate("flush privileges");
@@ -3913,9 +3911,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             try {
                 this.stmt.executeUpdate("SET GLOBAL secure_auth = @current_secure_auth");
-                this.stmt.executeUpdate("drop user 'bug64983user1'@'%'");
-                this.stmt.executeUpdate("drop user 'bug64983user2'@'%'");
-                this.stmt.executeUpdate("drop user 'bug64983user3'@'%'");
 
                 if (testConn != null) {
                     testConn.close();
@@ -3957,7 +3952,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
                 // create proxy users
-                this.stmt.executeUpdate("grant usage on *.* to 'wl5735user'@'%' identified WITH cleartext_plugin_server AS ''");
+                createUser("'wl5735user'@'%'", "identified WITH cleartext_plugin_server AS ''");
                 this.stmt.executeUpdate("delete from mysql.db where user='wl5735user'");
                 this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
                         + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
@@ -4022,7 +4017,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5735user'@'%'");
                 if (install_plugin_in_runtime) {
                     this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
                 }
@@ -4064,8 +4058,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-                this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
-                this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
+                createUser("'wl5602user'@'%'", "identified WITH sha256_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
+                createUser("'wl5602nopassword'@'%'", "identified WITH sha256_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
                 this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.stmt.executeUpdate("SET SESSION old_passwords= 2");
                 this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
@@ -4160,8 +4156,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
             } finally {
-                this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
-                this.stmt.executeUpdate("drop user 'wl5602nopassword'@'%'");
                 this.stmt.executeUpdate("flush privileges");
                 this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
             }
@@ -4190,8 +4184,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 try {
                     // create user with long password and sha256_password auth
                     s1.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-                    s1.executeUpdate("grant all on *.* to 'wl5602user'@'%' identified WITH sha256_password");
-                    s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%' identified WITH sha256_password");
+                    s1.executeUpdate("create user 'wl5602user'@'%' identified WITH sha256_password");
+                    s1.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
+                    s1.executeUpdate("create user 'wl5602nopassword'@'%' identified WITH sha256_password");
+                    s1.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
                     s1.executeUpdate("SET GLOBAL old_passwords= 2");
                     s1.executeUpdate("SET SESSION old_passwords= 2");
                     s1.executeUpdate(((MySQLConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
@@ -4483,8 +4479,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 } finally {
                     if (c1 != null) {
                         if (s1 != null) {
-                            s1.executeUpdate("drop user 'wl5602user'@'%'");
-                            s1.executeUpdate("drop user 'wl5602nopassword'@'%'");
+                            dropUser(s1, "'wl5602user'@'%'");
+                            dropUser(s1, "'wl5602nopassword'@'%'");
                             s1.executeUpdate("flush privileges");
                             s1.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
                             s1.close();
@@ -4861,8 +4857,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
 
-                this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
+                createUser("'must_change1'@'%'", "IDENTIFIED BY 'aha'");
+                this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%'");
+                createUser("'must_change2'@'%'", "IDENTIFIED BY 'aha'");
                 this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
+
+                // TODO workaround for Bug#77732, should be fixed in 5.7.9
+                if (versionMeetsMinimum(5, 7, 6)) {
+                    this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change1'@'%' IDENTIFIED BY 'aha'");
+                    this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change2'@'%' IDENTIFIED BY 'aha'");
+                }
+
                 this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
                         : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
 
@@ -4980,8 +4985,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (testConn != null) {
                     testConn.close();
                 }
-                this.stmt.executeUpdate("drop user 'must_change1'@'%'");
-                this.stmt.executeUpdate("drop user 'must_change2'@'%'");
             }
 
         }
@@ -5643,7 +5646,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             c1 = getConnectionWithProps(props);
             st1 = c1.createStatement();
             st1.execute("create database if not exists `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`");
-            st1.execute("grant all on `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`.* to '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%' identified by 'msandbox'");
+            st1.execute("create user '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%' identified by 'msandbox'");
+            st1.execute("grant all on `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`.* to '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'");
 
             props = new Properties();
             props.setProperty("user", "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
@@ -5664,7 +5668,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 c2.close();
             }
             if (st1 != null) {
-                st1.executeUpdate("drop user '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'");
+                dropUser(st1, "'\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'");
                 st1.executeUpdate("drop database if exists `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`");
                 st1.close();
             }
@@ -5846,7 +5850,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             try {
                 // create user with long password and sha256_password auth
                 s1.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-                s1.executeUpdate("grant all on *.* to 'wl6134user'@'%' identified WITH sha256_password");
+                s1.executeUpdate("create user 'wl6134user'@'%' identified WITH sha256_password");
+                s1.executeUpdate("grant all on *.* to 'wl6134user'@'%'");
                 s1.executeUpdate("SET GLOBAL old_passwords= 2");
                 s1.executeUpdate("SET SESSION old_passwords= 2");
                 s1.executeUpdate(((MySQLConnection) c1).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
@@ -5897,7 +5902,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             } finally {
                 if (c1 != null) {
                     if (s1 != null) {
-                        s1.executeUpdate("drop user 'wl6134user'@'%'");
+                        dropUser(s1, "'wl6134user'@'%'");
                         s1.executeUpdate("flush privileges");
                         s1.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
                         s1.close();
@@ -6432,9 +6437,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 st.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-                st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%' identified WITH sha256_password");
-                st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%' identified WITH sha256_password");
-                st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%' identified WITH mysql_native_password");
+                st.executeUpdate("create user 'bug18869381user1'@'%' identified WITH sha256_password");
+                st.executeUpdate("grant all on *.* to 'bug18869381user1'@'%'");
+                st.executeUpdate("create user 'bug18869381user2'@'%' identified WITH sha256_password");
+                st.executeUpdate("grant all on *.* to 'bug18869381user2'@'%'");
+                st.executeUpdate("create user 'bug18869381user3'@'%' identified WITH mysql_native_password");
+                st.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
                 st.executeUpdate(((MySQLConnection) con).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
                         : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 st.executeUpdate("SET GLOBAL old_passwords= 2");
@@ -6475,9 +6483,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 testBug18869381WithProperties(sha256defaultDbUrl, props);
 
             } finally {
-                st.executeUpdate("drop user 'bug18869381user1'@'%'");
-                st.executeUpdate("drop user 'bug18869381user2'@'%'");
-                st.executeUpdate("drop user 'bug18869381user3'@'%'");
+                dropUser(st, "'bug18869381user1'@'%'");
+                dropUser(st, "'bug18869381user2'@'%'");
+                dropUser(st, "'bug18869381user3'@'%'");
                 st.executeUpdate("flush privileges");
                 st.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
                 con.close();
@@ -6967,7 +6975,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug19354014() throws Exception {
         if (versionMeetsMinimum(5, 5, 7)) {
             Connection con = null;
-            this.stmt.executeUpdate("create user 'bug19354014user'@'%' identified WITH mysql_native_password");
+            createUser("'bug19354014user'@'%'", "identified WITH mysql_native_password");
             this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%'");
             this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug19354014user'@'%' IDENTIFIED BY 'pwd'"
                     : "set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
@@ -6980,7 +6988,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 con = getConnectionWithProps(props);
                 ((MySQLConnection) con).changeUser("bug19354014user", "pwd");
             } finally {
-                this.stmt.executeUpdate("drop user 'bug19354014user'@'%'");
                 this.stmt.executeUpdate("flush privileges");
 
                 if (con != null) {
@@ -7664,7 +7671,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                     + "'. See also system output for more details.");
                         } finally {
                             try {
-                                testStmt.execute("DROP USER 'testBug20825727'@'%'");
+                                dropUser(testStmt, "'testBug20825727'@'%'");
                             } catch (Exception e) {
                             }
                         }
@@ -7738,7 +7745,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
             } else {
                 // for cleartext_plugin_server plugin
-                testStmt.execute("DROP USER '" + user + "'@'%'");
+                dropUser(testStmt, "'" + user + "'@'%'");
                 testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " AS '" + password + "'");
                 testStmt.execute("GRANT ALL ON *.* TO '" + user + "'@'%'");
             }
@@ -8026,15 +8033,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (testBaseConn != null) {
                     Statement testStmt = testBaseConn.createStatement();
                     try {
-                        testStmt.execute("DROP USER 'bug75670user'@'%'");
+                        dropUser(testStmt, "'bug75670user'@'%'");
                     } catch (SQLException e) {
                     }
                     try {
-                        testStmt.execute("DROP USER 'bug75670user_mnp'@'%'");
+                        dropUser(testStmt, "'bug75670user_mnp'@'%'");
                     } catch (SQLException e) {
                     }
                     try {
-                        testStmt.execute("DROP USER 'bug75670user_sha'@'%'");
+                        dropUser(testStmt, "'bug75670user_sha'@'%'");
                     } catch (SQLException e) {
                     }
                     testStmt.close();
