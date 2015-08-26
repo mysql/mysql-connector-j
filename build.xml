@@ -154,6 +154,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- The folloing propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
     <propertyset id="junit.system.properties">
         <propertyref prefix="com.mysql.jdbc.test." />
+        <propertyref prefix="com.mysqlx.testsuite." />
         <!-- Exclude 'testsuite' properties ending with '.url', '.url.N', '.jvm' or '.jvm.N'. -->
         <propertyref regex="^com\.mysql\.jdbc\.testsuite\..*(?&lt;!(?:url|jvm)(?:\.\d)?)$" />
     </propertyset>
