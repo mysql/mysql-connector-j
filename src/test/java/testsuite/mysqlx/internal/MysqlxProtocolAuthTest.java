@@ -94,4 +94,25 @@ public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
             assertEquals("ERROR 1045 (HY000) Invalid user or password", ex.getMessage());
         }
     }
+
+    /**
+     * Bug#21680263 - NullPointerException When Try to connect without DB Name.
+     */
+    @Test
+    public void testEmptyDatabaseMYSQL41() {
+        protocol.sendSaslMysql41AuthStart();
+        byte[] salt = protocol.readAuthenticateContinue();
+        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, null);
+        protocol.readAuthenticateOk();
+    }
+
+    /**
+     * Bug#21680263 - NullPointerException When Try to connect without DB Name.
+     */
+    @Test
+    @Ignore("PLAIN only supported over SSL")
+    public void testEmptyDatabasePLAIN() {
+        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), null);
+        protocol.readAuthenticateOk();
+    }
 }

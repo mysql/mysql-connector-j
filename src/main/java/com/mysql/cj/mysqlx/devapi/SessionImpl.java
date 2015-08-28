@@ -38,6 +38,7 @@ import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
@@ -80,6 +81,9 @@ public class SessionImpl extends AbstractSession implements Session {
 
     @Override
     public Schema getDefaultSchema() {
+        if (this.defaultSchemaName == null) {
+            throw new WrongArgumentException("Default schema not provided");
+        }
         return new SchemaImpl(this, this.defaultSchemaName);
     }
 

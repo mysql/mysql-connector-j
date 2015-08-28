@@ -240,7 +240,7 @@ public class MysqlxProtocol implements Protocol {
         String encoding = "UTF8";
         byte[] userBytes = StringUtils.getBytes(user, encoding);
         byte[] passwordBytes = StringUtils.getBytes(password, encoding);
-        byte[] databaseBytes = StringUtils.getBytes(database, encoding);
+        byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
 
         byte[] hashedPassword = Security.scramble411(passwordBytes, salt);
         // need convert to hex (for now) as server doesn't want to deal with possibility of embedded NULL
