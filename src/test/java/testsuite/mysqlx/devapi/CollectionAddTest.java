@@ -89,7 +89,7 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        FetchedDocs docs = this.collection.find("@.z >= 44.22").execute();
+        FetchedDocs docs = this.collection.find("z >= 44.22").execute();
         JsonDoc d = docs.next();
         JsonString val = (JsonString) d.get("y");
         assertEquals("this is y", val.getString());

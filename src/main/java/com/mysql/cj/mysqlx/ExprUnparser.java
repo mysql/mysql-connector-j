@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem;
@@ -117,17 +116,21 @@ public class ExprUnparser {
      * Column identifier (or JSON path) to string.
      */
     static String columnIdentifierToString(ColumnIdentifier e) {
-        String s = quoteIdentifier(e.getName());
-        if (e.hasTableName()) {
-            s = quoteIdentifier(e.getTableName()) + "." + s;
+        if (e.hasName()) {
+            String s = quoteIdentifier(e.getName());
+            if (e.hasTableName()) {
+                s = quoteIdentifier(e.getTableName()) + "." + s;
+            }
+            if (e.hasSchemaName()) {
+                s = quoteIdentifier(e.getSchemaName()) + "." + s;
+            }
+            if (e.getDocumentPathCount() > 0) {
+                s = s + "->$" + documentPathToString(e.getDocumentPathList());
+            }
+            return s;
+        } else {
+            return "$" + documentPathToString(e.getDocumentPathList());
         }
-        if (e.hasSchemaName()) {
-            s = quoteIdentifier(e.getSchemaName()) + "." + s;
-        }
-        if (e.getDocumentPathCount() > 0) {
-            s = s + "@" + documentPathToString(e.getDocumentPathList());
-        }
-        return s;
     }
 
     /**
@@ -225,7 +228,7 @@ public class ExprUnparser {
      */
     public static String quoteIdentifier(String ident) {
         // TODO: make sure this is correct
-        if (ident.contains("`") || ident.contains("\"") || ident.contains("'") || ident.contains("@") || ident.contains(".")) {
+        if (ident.contains("`") || ident.contains("\"") || ident.contains("'") || ident.contains("$") || ident.contains(".")) {
             return "`" + ident.replaceAll("`", "``") + "`";
         }
         return ident;
@@ -255,8 +258,6 @@ public class ExprUnparser {
                 return functionCallToString(e.getFunctionCall());
             case OPERATOR:
                 return operatorToString(e.getOperator());
-            case VARIABLE:
-                return "@" + quoteIdentifier(e.getVariable());
             case PLACEHOLDER:
                 return ":" + e.getPosition();
             case OBJECT:

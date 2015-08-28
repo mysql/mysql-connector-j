@@ -286,19 +286,18 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
         assertFalse(this.protocol.hasResults());
         StatementExecuteOk response = this.protocol.readStatementExecuteOk();
-        // TODO: re-enable these when rowsaffected/etc are implement
-        //assertEquals(new Long(0), response.getRowsAffected());
+        assertEquals(0, response.getRowsAffected());
 
         this.protocol.sendSqlStatement("create table mysqlx_sqlDmlTest (w int primary key auto_increment, x int) auto_increment = 7");
         assertFalse(this.protocol.hasResults());
         response = this.protocol.readStatementExecuteOk();
-        //assertEquals(new Long(0), response.getRowsAffected());
+        assertEquals(0, response.getRowsAffected());
 
         this.protocol.sendSqlStatement("insert into mysqlx_sqlDmlTest (x) values (44),(29)");
         assertFalse(this.protocol.hasResults());
         response = this.protocol.readStatementExecuteOk();
-        //assertEquals(new Long(2), response.getRowsAffected());
-        //assertEquals(new Long(7), response.getLastInsertId());
+        assertEquals(2, response.getRowsAffected());
+        assertEquals(new Long(7), response.getLastInsertId());
 
         this.protocol.sendSqlStatement("drop table mysqlx_sqlDmlTest");
         assertFalse(this.protocol.hasResults());
@@ -313,7 +312,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, json);
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new DocFindParams("@.testVal = 2-1");
+        FindParams findParams = new DocFindParams("$.testVal = 2-1");
         this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
@@ -359,8 +358,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.readStatementExecuteOk();
 
         List<UpdateSpec> updates = new ArrayList<>();
-        updates.add(new UpdateSpec(UpdateType.ITEM_SET, "@.a").setValue("lemon"));
-        updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, "@.insertedBy"));
+        updates.add(new UpdateSpec(UpdateType.ITEM_SET, "$.a").setValue("lemon"));
+        updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, "$.insertedBy"));
         this.protocol.sendDocUpdates(getTestDatabase(), collName, new FilterParams(false), updates);
         this.protocol.readStatementExecuteOk();
 

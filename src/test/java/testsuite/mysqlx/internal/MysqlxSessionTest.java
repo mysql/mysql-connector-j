@@ -101,7 +101,7 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         this.session.addDocs(getTestDatabase(), collName, stringDocs);
 
         FindParams findParams = new DocFindParams();
-        findParams.setOrder("@._id");
+        findParams.setOrder("$._id");
         DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, findParams);
         DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, findParams);
         DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, findParams);

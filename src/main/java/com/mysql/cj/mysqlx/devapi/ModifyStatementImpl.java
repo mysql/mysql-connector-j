@@ -87,6 +87,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
         throw new NullPointerException("TODO: not supported in xplugin");
     }
 
+    @Override
     protected boolean getAllowRelationalColumns() {
         return false;
     }

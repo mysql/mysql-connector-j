@@ -24,16 +24,9 @@
 package testsuite.mysqlx.devapi;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.x.json.JsonArray;
-import com.mysql.cj.x.json.JsonDoc;
-import com.mysql.cj.x.json.JsonNumber;
-import com.mysql.cj.x.json.JsonString;
 
 /**
  * @todo
@@ -69,7 +62,7 @@ public class CollectionRemoveTest extends CollectionTest {
         this.collection.add("{\"x\":22}").execute();
 
         assertEquals(3, this.collection.count());
-        this.collection.remove("@.x = 22").execute();
+        this.collection.remove("$.x = 22").execute();
         assertEquals(2, this.collection.count());
     }
 }

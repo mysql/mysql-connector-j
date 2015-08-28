@@ -1,6 +1,5 @@
 package com.mysql.cj.mysqlx;
 
-import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -18,8 +17,8 @@ public class UpdateSpec {
 
     public UpdateSpec(UpdateType updateType, String source) {
         this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
-        // accomodate parser's documentField() handling by removing "@"
-        if (source.length() > 0 && source.charAt(0) == '@') {
+        // accomodate parser's documentField() handling by removing "$"
+        if (source.length() > 0 && source.charAt(0) == '$') {
             source = source.substring(1);
         }
         this.source = new ExprParser(source, false).documentField().getIdentifier();

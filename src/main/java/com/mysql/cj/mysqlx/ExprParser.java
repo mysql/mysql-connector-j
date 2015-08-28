@@ -105,10 +105,11 @@ public class ExprParser {
      */
     public static enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
-        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, AT, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
+        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, DOLLAR, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
         BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
         MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON
+        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON,
+        COLDOCPATH
     }
 
     /**
@@ -255,7 +256,12 @@ public class ExprParser {
                         this.tokens.add(new Token(TokenType.PLUS, c));
                         break;
                     case '-':
-                        this.tokens.add(new Token(TokenType.MINUS, c));
+                        if (nextCharEquals(i, '>') && nextCharEquals(i+1, '$')) {
+                            i += 2;
+                            this.tokens.add(new Token(TokenType.COLDOCPATH, "->$"));
+                        } else {
+                            this.tokens.add(new Token(TokenType.MINUS, c));
+                        }
                         break;
                     case '*':
                         if (nextCharEquals(i, '*')) {
@@ -268,8 +274,8 @@ public class ExprParser {
                     case '/':
                         this.tokens.add(new Token(TokenType.SLASH, c));
                         break;
-                    case '@':
-                        this.tokens.add(new Token(TokenType.AT, c));
+                    case '$':
+                        this.tokens.add(new Token(TokenType.DOLLAR, c));
                         break;
                     case '%':
                         this.tokens.add(new Token(TokenType.MOD, c));
@@ -625,8 +631,8 @@ public class ExprParser {
                     break;
             }
         }
-        if (currentTokenTypeEquals(TokenType.AT)) {
-            consumeToken(TokenType.AT);
+        if (currentTokenTypeEquals(TokenType.COLDOCPATH)) {
+            consumeToken(TokenType.COLDOCPATH);
             id.addAllDocumentPath(documentPath());
             if (id.getDocumentPathCount() == 0) {
                 throw new WrongArgumentException("Invalid document path at " + this.tokenPos);
@@ -762,7 +768,7 @@ public class ExprParser {
             case TRUE:
             case FALSE:
                 return ExprUtil.buildLiteralScalar(t.type == TokenType.TRUE);
-            case AT:
+            case DOLLAR:
                 return documentField();
             case IDENT:
                 this.tokenPos--; // stay on the identifier

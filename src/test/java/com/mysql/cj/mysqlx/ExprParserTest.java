@@ -79,24 +79,24 @@ public class ExprParserTest {
         checkBadParse("x + interval 1 + 1");
         checkBadParse("x * interval 1 hour");
         checkBadParse("1.1.1");
-        checkBadParse("a@**");
+        checkBadParse("a->$**");
         checkBadParse("a.b.c.d > 1");
-        checkBadParse("a@[1.1]");
-        checkBadParse("a@[-1]");
-        checkBadParse("a@1");
-        checkBadParse("a@.1");
-        checkBadParse("a@a");
-        checkBadParse("a@.+");
-        checkBadParse("a@(x)");
+        checkBadParse("a->$[1.1]");
+        checkBadParse("a->$[-1]");
+        checkBadParse("a->$1");
+        checkBadParse("a->$.1");
+        checkBadParse("a->$a");
+        checkBadParse("a->$.+");
+        checkBadParse("a->$(x)");
         checkBadParse("\"xyz");
         checkBadParse("x between 1");
         checkBadParse("x.1 > 1");
-        checkBadParse("x@ > 1");
+        checkBadParse("x->$ > 1");
         checkBadParse(":>1");
         checkBadParse(":1.1");
         checkBadParse("cast(x as varchar)");
         checkBadParse("not");
-        checkBadParse("@.a[-1]");
+        checkBadParse("->$.a[-1]");
         // TODO: test bad JSON identifiers (quoting?)
     }
 
@@ -159,7 +159,7 @@ public class ExprParserTest {
                 "((((a is TRUE) && (b is NULL)) && ((C + 1) > 40)) && ((thetime == now()) || hungry()))");
         checkParseRoundTrip("a + b + -c > 2", "(((a + b) + -c) > 2)");
         checkParseRoundTrip("now () + b + c > 2", "(((now() + b) + c) > 2)");
-        checkParseRoundTrip("now () + @.b + c > 2", "(((now() + @.b) + c) > 2)");
+        checkParseRoundTrip("now () + $.b + c > 2", "(((now() + $.b) + c) > 2)");
         checkParseRoundTrip("now () - interval +2 day > some_other_time() or something_else IS NOT NULL",
                 "((date_sub(now(), 2, \"DAY\") > some_other_time()) || is_not(something_else, NULL))");
         checkParseRoundTrip("\"two quotes to one\"\"\"", null);
@@ -174,19 +174,19 @@ public class ExprParserTest {
         checkParseRoundTrip("a between 1 and 2", "(a between 1 AND 2)");
         checkParseRoundTrip("a not between 1 and 2", "(a not between 1 AND 2)");
         checkParseRoundTrip("a in (1,2,a.b(3),4,5,x)", "a in(1, 2, a.b(3), 4, 5, x)");
-        checkParseRoundTrip("a not in (1,2,3,4,5,@.x)", "a not in(1, 2, 3, 4, 5, @.x)");
+        checkParseRoundTrip("a not in (1,2,3,4,5,$.x)", "a not in(1, 2, 3, 4, 5, $.x)");
         checkParseRoundTrip("a like b escape c", "a like b ESCAPE c");
         checkParseRoundTrip("a not like b escape c", "a not like b ESCAPE c");
         checkParseRoundTrip("(1 + 3) in (3, 4, 5)", "(1 + 3) in(3, 4, 5)");
         checkParseRoundTrip("`a crazy \"function\"``'name'`(1 + 3) in (3, 4, 5)", "`a crazy \"function\"``'name'`((1 + 3)) in(3, 4, 5)");
-        checkParseRoundTrip("a@.b", "a@.b");
-        checkParseRoundTrip("a@.\"bcd\"", "a@.bcd");
-        checkParseRoundTrip("a@.*", "a@.*");
-        checkParseRoundTrip("a@[0].*", "a@[0].*");
-        checkParseRoundTrip("a@[*].*", "a@[*].*");
-        checkParseRoundTrip("a@**[0].*", "a@**[0].*");
-        checkParseRoundTrip("@._id", "@._id");
-        checkParseRoundTrip("@._id == :0", "(@._id == :0)");
+        checkParseRoundTrip("a->$.b", "a->$.b");
+        checkParseRoundTrip("a->$.\"bcd\"", "a->$.bcd");
+        checkParseRoundTrip("a->$.*", "a->$.*");
+        checkParseRoundTrip("a->$[0].*", "a->$[0].*");
+        checkParseRoundTrip("a->$[*].*", "a->$[*].*");
+        checkParseRoundTrip("a->$**[0].*", "a->$**[0].*");
+        checkParseRoundTrip("$._id", "$._id");
+        checkParseRoundTrip("$._id == :0", "($._id == :0)");
         checkParseRoundTrip("'Monty!' REGEXP '.*'", "(\"Monty!\" regexp \".*\")");
         checkParseRoundTrip("a regexp b regexp c", "((a regexp b) regexp c)");
         checkParseRoundTrip("a + b + c", "((a + b) + c)");
@@ -212,7 +212,7 @@ public class ExprParserTest {
      */
     @Test
     public void testExprTree() {
-        Expr expr = new ExprParser("a like 'xyz' and @.count > 10 + 1").parse();
+        Expr expr = new ExprParser("a like 'xyz' and $.count > 10 + 1").parse();
         assertEquals(Expr.Type.OPERATOR, expr.getType());
         assertEquals("&&", expr.getOperator().getName());
         assertEquals(2, expr.getOperator().getParamCount());
@@ -274,7 +274,7 @@ public class ExprParserTest {
 
     @Test
     public void testOrderByParserComplexExpressions() {
-        List<Order> orderSpec = new ExprParser("field not in ('a',func('b', 2.0),'c') desc, 1-a@**[0].*, now () + @.b + c > 2 asc").parseOrderSpec();
+        List<Order> orderSpec = new ExprParser("field not in ('a',func('b', 2.0),'c') desc, 1-a->$**[0].*, now () + $.b + c > 2 asc").parseOrderSpec();
         assertEquals(3, orderSpec.size());
         Order o1 = orderSpec.get(0);
         assertTrue(o1.hasDirection());
@@ -282,11 +282,11 @@ public class ExprParserTest {
         assertEquals("field not in(\"a\", func(\"b\", 2.0), \"c\")", ExprUnparser.exprToString(o1.getExpr()));
         Order o2 = orderSpec.get(1);
         assertFalse(o2.hasDirection());
-        assertEquals("(1 - a@**[0].*)", ExprUnparser.exprToString(o2.getExpr()));
+        assertEquals("(1 - a->$**[0].*)", ExprUnparser.exprToString(o2.getExpr()));
         Order o3 = orderSpec.get(2);
         assertTrue(o3.hasDirection());
         assertEquals(Order.Direction.ASC, o3.getDirection());
-        assertEquals("(((now() + @.b) + c) > 2)", ExprUnparser.exprToString(o3.getExpr()));
+        assertEquals("(((now() + $.b) + c) > 2)", ExprUnparser.exprToString(o3.getExpr()));
     }
 
     @Test
@@ -381,17 +381,17 @@ public class ExprParserTest {
     public void testTrivialDocumentProjection() {
         List<Projection> proj;
 
-        proj = new ExprParser("@.a as a").parseDocumentProjection();
+        proj = new ExprParser("$.a as a").parseDocumentProjection();
         assertEquals(1, proj.size());
         assertTrue(proj.get(0).hasAlias());
         assertEquals("a", proj.get(0).getAlias());
 
-        proj = new ExprParser("@.a as a, @.b as b, @.c as c").parseDocumentProjection();
+        proj = new ExprParser("$.a as a, $.b as b, $.c as c").parseDocumentProjection();
     }
 
     @Test
     public void testExprAsPathDocumentProjection() {
-        List<Projection> projList = new ExprParser("@.a as b, (1 + 1) * 100 as x, 2 as j42").parseDocumentProjection();
+        List<Projection> projList = new ExprParser("$.a as b, (1 + 1) * 100 as x, 2 as j42").parseDocumentProjection();
 
         assertEquals(3, projList.size());
 
@@ -418,7 +418,7 @@ public class ExprParserTest {
     @Test
     public void testJsonConstructorAsDocumentProjection() {
         // same as we use in find().field("{...}")
-        String projString = "{'a':'value for a', 'b':1+1, 'c'::bindvar, 'd':@.member[22], 'e':{'nested':'doc'}}";
+        String projString = "{'a':'value for a', 'b':1+1, 'c'::bindvar, 'd':$.member[22], 'e':{'nested':'doc'}}";
         Projection proj = Projection.newBuilder().setSource(new ExprParser(projString, false).parse()).build();
         assertEquals(Expr.Type.OBJECT, proj.getSource().getType());
 
@@ -428,7 +428,7 @@ public class ExprParserTest {
                     new String[] {"a", "\"value for a\""},
                     new String[] {"b", "(1 + 1)"},
                     new String[] {"c", ":0"},
-                    new String[] {"d", "@.member[22]"},
+                    new String[] {"d", "$.member[22]"},
                     new String[] {"e", "{'nested':\"doc\"}"}})
                 .forEach(pair -> {
                             ObjectField f = fields.next();
@@ -466,7 +466,7 @@ public class ExprParserTest {
         assertEquals("b", col.getTableName());
         assertEquals("c", col.getName());
 
-        col = new ExprParser("d.e@.the_path[2]").parseTableUpdateField();
+        col = new ExprParser("d.e->$.the_path[2]").parseTableUpdateField();
         assertEquals("d", col.getTableName());
         assertEquals("e", col.getName());
         assertEquals(2, col.getDocumentPathCount());
@@ -505,20 +505,20 @@ public class ExprParserTest {
     public void testRandom() {
         // tests generated by the random expression generator
         checkParseRoundTrip("x - INTERVAL { } DAY_HOUR * { } + { }", "((date_sub(x, {}, \"DAY_HOUR\") * {}) + {})");
-        checkParseRoundTrip("NULL - INTERVAL @ ** [ 89 ] << { '' : { } - @ . V << { '' : { } + { } REGEXP ? << { } - { } < { } | { } << { '' : : 8 + : 26 ^ { } } + { } >> { } } || { } } & { } SECOND", "date_sub(NULL, ((@**[89] << {'':((({} - @.V) << {'':(({} + {}) regexp ((:0 << ({} - {})) < ({} | (({} << ({'':((:1 + :2) ^ {})} + {})) >> {}))))}) || {})}) & {}), \"SECOND\")");
+        checkParseRoundTrip("NULL - INTERVAL $ ** [ 89 ] << { '' : { } - $ . V << { '' : { } + { } REGEXP ? << { } - { } < { } | { } << { '' : : 8 + : 26 ^ { } } + { } >> { } } || { } } & { } SECOND", "date_sub(NULL, (($**[89] << {'':((({} - $.V) << {'':(({} + {}) regexp ((:0 << ({} - {})) < ({} | (({} << ({'':((:1 + :2) ^ {})} + {})) >> {}))))}) || {})}) & {}), \"SECOND\")");
         // TODO: check the validity of this:
-        // checkParseRoundTrip("_XJl . F ( `ho` @ [*] [*] - ~ ! { '' : { } LIKE { } && : rkc & 1 & y @ ** . d [*] [*] || { } ^ { } REGEXP { } } || { } - { } ^ { } < { } IN ( ) >= { } IN ( ) )", "");
+        // checkParseRoundTrip("_XJl . F ( `ho` $ [*] [*] - ~ ! { '' : { } LIKE { } && : rkc & 1 & y ->$ ** . d [*] [*] || { } ^ { } REGEXP { } } || { } - { } ^ { } < { } IN ( ) >= { } IN ( ) )", "");
     }
 
     @Test
     public void unqualifiedDocPaths() {
         Expr expr = new ExprParser("1 + b[0]", false).parse();
-        assertEquals("(1 + @.b[0])", ExprUnparser.exprToString(expr));
+        assertEquals("(1 + $.b[0])", ExprUnparser.exprToString(expr));
         expr = new ExprParser("a.*", false).parse();
-        assertEquals("@.a.*", ExprUnparser.exprToString(expr));
+        assertEquals("$.a.*", ExprUnparser.exprToString(expr));
         expr = new ExprParser("bL . vT .*", false).parse();
-        assertEquals("@.bL.vT.*", ExprUnparser.exprToString(expr));
+        assertEquals("$.bL.vT.*", ExprUnparser.exprToString(expr));
         expr = new ExprParser("dd ** .X", false).parse();
-        assertEquals("@.dd**.X", ExprUnparser.exprToString(expr));
+        assertEquals("$.dd**.X", ExprUnparser.exprToString(expr));
     }
 }

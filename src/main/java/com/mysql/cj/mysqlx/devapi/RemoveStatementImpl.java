@@ -55,6 +55,6 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
 
     @Override
     protected boolean getAllowRelationalColumns() {
-        return true;
+        return false;
     }
 }
