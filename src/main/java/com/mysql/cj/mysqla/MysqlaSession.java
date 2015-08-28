@@ -51,7 +51,6 @@ import com.mysql.cj.core.ConnectionString.HostInfo;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
