@@ -238,14 +238,16 @@ public class MysqlxProtocol implements Protocol {
     public void sendSaslMysql41AuthContinue(String user, String password, byte[] salt, String database) {
         // TODO: encoding for all this?
         String encoding = "UTF8";
-        byte[] userBytes = StringUtils.getBytes(user, encoding);
-        byte[] passwordBytes = StringUtils.getBytes(password, encoding);
+        byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
+        byte[] passwordBytes = password == null ? new byte[] {} : StringUtils.getBytes(password, encoding);
         byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
 
-        byte[] hashedPassword = Security.scramble411(passwordBytes, salt);
-        // need convert to hex (for now) as server doesn't want to deal with possibility of embedded NULL
-        // need to prefix with unused byte (*) because the server code is treating it like the hash from `mysql.user'
-        hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
+        byte[] hashedPassword = passwordBytes;
+        if (password != null) {
+            hashedPassword = Security.scramble411(passwordBytes, salt);
+            // protocol dictates *-prefixed hex string as hashed password
+            hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
+        }
 
         // this is what would happen in the SASL provider but we don't need the overhead of all the plumbing.
         byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
