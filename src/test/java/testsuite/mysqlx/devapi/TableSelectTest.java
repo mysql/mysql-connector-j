@@ -24,6 +24,8 @@
 package testsuite.mysqlx.devapi;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -58,12 +60,10 @@ public class TableSelectTest extends TableTest {
         sqlUpdate("create table basicQuery (_id varchar(32), name varchar(20), birthday date, age int)");
         sqlUpdate("insert into basicQuery values ('some long UUID', 'Sakila', '2000-05-27', 14)");
         Table table = this.schema.getTable("basicQuery");
-        // TODO: use bind once xplugin support is present
-        // Map<String, Object> params = new HashMap<>();
-        // params.put("name", "Fran%");
-        // params.put("age", 20);
-        //FetchedRows rows = table.select("_id, name, birthday").where("name like :name AND age < :age").bind(params).execute();
-        FetchedRows rows = table.select("birthday, `_id`, name").execute();
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", "Saki%");
+        params.put("age", 20);
+        FetchedRows rows = table.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
 
         // verify metadata
         List<String> columnNames = rows.getColumnNames();

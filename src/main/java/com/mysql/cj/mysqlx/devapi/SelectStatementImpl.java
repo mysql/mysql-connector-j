@@ -42,6 +42,16 @@ public class SelectStatementImpl implements SelectStatement {
         return this.table.getSession().getMysqlxSession().selectRows(this.table.getSchema().getName(), this.table.getName(), this.findParams);
     }
 
+    public SelectStatement clearBindings() {
+        this.findParams.clearArgs();
+        return this;
+    }
+
+    public SelectStatement bind(String argName, Object value) {
+        this.findParams.addArg(argName, value);
+        return this;
+    }
+
     public SelectStatement where(String searchCondition) {
         this.findParams.setCriteria(searchCondition);
         return this;

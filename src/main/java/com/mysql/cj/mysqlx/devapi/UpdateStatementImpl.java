@@ -60,6 +60,7 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
         return this;
     }
 
+    @Override
     protected boolean getAllowRelationalColumns() {
         return true;
     }

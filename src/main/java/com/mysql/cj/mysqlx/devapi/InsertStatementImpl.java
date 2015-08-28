@@ -48,7 +48,6 @@ public class InsertStatementImpl implements InsertStatement {
     public Result execute() {
         StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
                 .insertRows(this.table.getSchema().getName(), this.table.getName(), this.insertParams);
-        // TODO: new insert id
         return new UpdateResult(ok, null);
     }
 
