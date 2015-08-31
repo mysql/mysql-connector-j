@@ -69,6 +69,8 @@ public class MysqlxSession implements Session {
 
     private MysqlxProtocol protocol;
     private ResultStreamer currentResult;
+    private String host;
+    private int port;
 
     public MysqlxSession(Properties properties) {
 
@@ -76,10 +78,18 @@ public class MysqlxSession implements Session {
         pset.initializeProperties(properties);
 
         // create protocol instance
-        String host = ConnectionString.normalizeHost(properties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
-        int port = ConnectionString.parsePortNumber(properties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "33060"));
+        this.host = ConnectionString.normalizeHost(properties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+        this.port = ConnectionString.parsePortNumber(properties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "33060"));
 
-        this.protocol = MysqlxProtocolFactory.getInstance(host, port, pset);
+        this.protocol = MysqlxProtocolFactory.getInstance(this.host, this.port, pset);
+    }
+
+    public String getHost() {
+        return this.host;
+    }
+
+    public int getPort() {
+        return this.port;
     }
 
     public PropertySet getPropertySet() {
