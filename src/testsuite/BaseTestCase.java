@@ -70,11 +70,18 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected static String dbUrl = "jdbc:mysql:///test";
 
+    /**
+     * JDBC URL, initialized from com.mysql.jdbc.testsuite.url.sha256default system property
+     */
+    protected static String sha256Url = null;
+
     /** Instance counter */
     private static int instanceCount = 1;
 
     /** Connection to server, initialized in setUp() Cleaned up in tearDown(). */
     protected Connection conn = null;
+
+    protected Connection sha256Conn = null;
 
     /** list of schema objects to be dropped in tearDown */
     private List<String[]> createdObjects;
@@ -96,11 +103,15 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected ResultSet rs = null;
 
+    protected ResultSet sha256Rs = null;
+
     /**
      * Statement to be used in tests, initialized in setUp(). Cleaned up in
      * tearDown().
      */
     protected Statement stmt = null;
+
+    protected Statement sha256Stmt = null;
 
     private boolean isOnCSFS = true;
 
@@ -126,6 +137,12 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
+        String defaultSha256Url = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+
+        if ((defaultSha256Url != null) && (defaultSha256Url.trim().length() != 0)) {
+            sha256Url = defaultSha256Url;
+        }
+
         String newDriver = System.getProperty("com.mysql.jdbc.testsuite.driver");
 
         if ((newDriver != null) && (newDriver.trim().length() != 0)) {
@@ -134,94 +151,159 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void createSchemaObject(String objectType, String objectName, String columnsAndOtherStuff) throws SQLException {
-        this.createdObjects.add(new String[] { objectType, objectName });
-        try {
-            dropSchemaObject(objectType, objectName);
-        } catch (SQLException ex) {
-            // ignore DROP USER failures
-            if (!ex.getMessage().startsWith("Operation DROP USER failed")) {
-                throw ex;
+        createSchemaObject(this.stmt, objectType, objectName, columnsAndOtherStuff);
+    }
+
+    protected void createSchemaObject(Statement st, String objectType, String objectName, String columnsAndOtherStuff) throws SQLException {
+        if (st != null) {
+            this.createdObjects.add(new String[] { objectType, objectName });
+            try {
+                dropSchemaObject(st, objectType, objectName);
+            } catch (SQLException ex) {
+                // ignore DROP USER failures
+                if (!ex.getMessage().startsWith("Operation DROP USER failed")) {
+                    throw ex;
+                }
+            }
+
+            StringBuilder createSql = new StringBuilder(objectName.length() + objectType.length() + columnsAndOtherStuff.length() + 10);
+            createSql.append("CREATE  ");
+            createSql.append(objectType);
+            createSql.append(" ");
+            createSql.append(objectName);
+            createSql.append(" ");
+            createSql.append(columnsAndOtherStuff);
+
+            try {
+                st.executeUpdate(createSql.toString());
+            } catch (SQLException sqlEx) {
+                if ("42S01".equals(sqlEx.getSQLState())) {
+                    System.err.println("WARN: Stale mysqld table cache preventing table creation - flushing tables and trying again");
+                    st.executeUpdate("FLUSH TABLES"); // some bug in 5.1 on the mac causes tables to not disappear from the cache
+                    st.executeUpdate(createSql.toString());
+                } else {
+                    throw sqlEx;
+                }
             }
         }
+    }
 
-        StringBuilder createSql = new StringBuilder(objectName.length() + objectType.length() + columnsAndOtherStuff.length() + 10);
-        createSql.append("CREATE  ");
-        createSql.append(objectType);
-        createSql.append(" ");
-        createSql.append(objectName);
-        createSql.append(" ");
-        createSql.append(columnsAndOtherStuff);
-
-        try {
-            this.stmt.executeUpdate(createSql.toString());
-        } catch (SQLException sqlEx) {
-            if ("42S01".equals(sqlEx.getSQLState())) {
-                System.err.println("WARN: Stale mysqld table cache preventing table creation - flushing tables and trying again");
-                this.stmt.executeUpdate("FLUSH TABLES"); // some bug in 5.1 on the mac causes tables to not disappear from the cache
-                this.stmt.executeUpdate(createSql.toString());
-            } else {
-                throw sqlEx;
-            }
-        }
+    protected void createFunction(Statement st, String functionName, String functionDefn) throws SQLException {
+        createSchemaObject(st, "FUNCTION", functionName, functionDefn);
     }
 
     protected void createFunction(String functionName, String functionDefn) throws SQLException {
-        createSchemaObject("FUNCTION", functionName, functionDefn);
+        createFunction(this.stmt, functionName, functionDefn);
+    }
+
+    protected void dropFunction(Statement st, String functionName) throws SQLException {
+        dropSchemaObject(st, "FUNCTION", functionName);
     }
 
     protected void dropFunction(String functionName) throws SQLException {
-        dropSchemaObject("FUNCTION", functionName);
+        dropFunction(this.stmt, functionName);
+    }
+
+    protected void createProcedure(Statement st, String procedureName, String procedureDefn) throws SQLException {
+        createSchemaObject(st, "PROCEDURE", procedureName, procedureDefn);
     }
 
     protected void createProcedure(String procedureName, String procedureDefn) throws SQLException {
-        createSchemaObject("PROCEDURE", procedureName, procedureDefn);
+        createProcedure(this.stmt, procedureName, procedureDefn);
+    }
+
+    protected void dropProcedure(Statement st, String procedureName) throws SQLException {
+        dropSchemaObject(st, "PROCEDURE", procedureName);
     }
 
     protected void dropProcedure(String procedureName) throws SQLException {
-        dropSchemaObject("PROCEDURE", procedureName);
+        dropProcedure(this.stmt, procedureName);
+    }
+
+    protected void createTable(Statement st, String tableName, String columnsAndOtherStuff) throws SQLException {
+        createSchemaObject(st, "TABLE", tableName, columnsAndOtherStuff);
     }
 
     protected void createTable(String tableName, String columnsAndOtherStuff) throws SQLException {
-        createSchemaObject("TABLE", tableName, columnsAndOtherStuff);
+        createTable(this.stmt, tableName, columnsAndOtherStuff);
+    }
+
+    protected void createTable(Statement st, String tableName, String columnsAndOtherStuff, String engine) throws SQLException {
+        createSchemaObject(st, "TABLE", tableName, columnsAndOtherStuff + " " + getTableTypeDecl() + " = " + engine);
     }
 
     protected void createTable(String tableName, String columnsAndOtherStuff, String engine) throws SQLException {
-        createSchemaObject("TABLE", tableName, columnsAndOtherStuff + " " + getTableTypeDecl() + " = " + engine);
+        createTable(this.stmt, tableName, columnsAndOtherStuff, engine);
+    }
+
+    protected void dropTable(Statement st, String tableName) throws SQLException {
+        dropSchemaObject(st, "TABLE", tableName);
     }
 
     protected void dropTable(String tableName) throws SQLException {
-        dropSchemaObject("TABLE", tableName);
+        dropTable(this.stmt, tableName);
+    }
+
+    protected void createView(Statement st, String viewName, String columnsAndOtherStuff) throws SQLException {
+        createSchemaObject(st, "VIEW", viewName, columnsAndOtherStuff);
     }
 
     protected void createView(String viewName, String columnsAndOtherStuff) throws SQLException {
-        createSchemaObject("VIEW", viewName, columnsAndOtherStuff);
+        createView(this.stmt, viewName, columnsAndOtherStuff);
+    }
+
+    protected void dropView(Statement st, String viewName) throws SQLException {
+        dropSchemaObject(st, "VIEW", viewName);
     }
 
     protected void dropView(String viewName) throws SQLException {
-        dropSchemaObject("VIEW", viewName);
+        dropView(this.stmt, viewName);
+    }
+
+    protected void createDatabase(Statement st, String databaseName) throws SQLException {
+        createSchemaObject(st, "DATABASE", databaseName, "");
     }
 
     protected void createDatabase(String databaseName) throws SQLException {
-        createSchemaObject("DATABASE", databaseName, "");
+        createDatabase(this.stmt, databaseName);
+    }
+
+    protected void dropDatabase(Statement st, String databaseName) throws SQLException {
+        dropSchemaObject(st, "DATABASE", databaseName);
     }
 
     protected void dropDatabase(String databaseName) throws SQLException {
-        dropSchemaObject("DATABASE", databaseName);
+        dropDatabase(this.stmt, databaseName);
+    }
+
+    protected void createUser(Statement st, String userName, String otherStuff) throws SQLException {
+        createSchemaObject(st, "USER", userName, otherStuff);
     }
 
     protected void createUser(String userName, String otherStuff) throws SQLException {
-        createSchemaObject("USER", userName, otherStuff);
+        createUser(this.stmt, userName, otherStuff);
     }
 
     protected void dropUser(Statement st, String user) throws SQLException {
-        st.execute((((ConnectionImpl) st.getConnection()).versionMeetsMinimum(5, 7, 8) ? "DROP USER IF EXISTS" : "DROP USER ") + user);
+        dropSchemaObject(st, "USER", user);
+    }
+
+    protected void dropUser(String user) throws SQLException {
+        dropUser(this.stmt, user);
     }
 
     protected void dropSchemaObject(String objectType, String objectName) throws SQLException {
-        if (!objectType.equalsIgnoreCase("USER") || versionMeetsMinimum(5, 7, 8)) {
-            this.stmt.executeUpdate("DROP " + objectType + " IF EXISTS " + objectName);
-        } else {
-            this.stmt.executeUpdate("DROP " + objectType + " " + objectName);
+        dropSchemaObject(this.stmt, objectType, objectName);
+    }
+
+    protected void dropSchemaObject(Statement st, String objectType, String objectName) throws SQLException {
+        if (st != null) {
+            if (!objectType.equalsIgnoreCase("USER") || ((ConnectionImpl) st.getConnection()).versionMeetsMinimum(5, 7, 8)) {
+                st.executeUpdate("DROP " + objectType + " IF EXISTS " + objectName);
+            } else {
+                st.executeUpdate("DROP " + objectType + " " + objectName);
+            }
+            st.executeUpdate("flush privileges");
         }
     }
 
@@ -489,6 +571,7 @@ public abstract class BaseTestCase extends TestCase {
         if (this.dbClass.equals("gwe.sql.gweMysqlDriver")) {
             try {
                 this.conn = DriverManager.getConnection(dbUrl, "", "");
+                this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, "", "");
             } catch (Exception ex) {
                 ex.printStackTrace();
                 fail();
@@ -496,6 +579,9 @@ public abstract class BaseTestCase extends TestCase {
         } else {
             try {
                 this.conn = DriverManager.getConnection(dbUrl);
+                Properties props = new Properties();
+                props.setProperty("allowPublicKeyRetrieval", "true");
+                this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 fail();
@@ -511,18 +597,37 @@ public abstract class BaseTestCase extends TestCase {
                 this.rs = this.stmt.executeQuery("SELECT VERSION()");
                 this.rs.next();
                 logDebug("Connected to " + this.rs.getString(1));
-                this.rs.close();
-                this.rs = null;
             } else {
                 logDebug("Connected to " + this.conn.getMetaData().getDatabaseProductName() + " / " + this.conn.getMetaData().getDatabaseProductVersion());
             }
         } finally {
             if (this.rs != null) {
                 this.rs.close();
+                this.rs = null;
             }
         }
 
         this.isOnCSFS = !this.conn.getMetaData().storesLowerCaseIdentifiers();
+
+        if (this.sha256Conn != null) {
+            this.sha256Stmt = this.sha256Conn.createStatement();
+
+            try {
+                if (sha256Url.indexOf("mysql") != -1) {
+                    this.sha256Rs = this.sha256Stmt.executeQuery("SELECT VERSION()");
+                    this.sha256Rs.next();
+                    logDebug("Connected to " + this.sha256Rs.getString(1));
+                } else {
+                    logDebug("Connected to " + this.sha256Conn.getMetaData().getDatabaseProductName() + " / "
+                            + this.sha256Conn.getMetaData().getDatabaseProductVersion());
+                }
+            } finally {
+                if (this.sha256Rs != null) {
+                    this.sha256Rs.close();
+                    this.sha256Rs = null;
+                }
+            }
+        }
     }
 
     /**
@@ -537,12 +642,20 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
+        if (this.sha256Rs != null) {
+            try {
+                this.sha256Rs.close();
+            } catch (SQLException SQLE) {
+            }
+        }
+
         if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
             for (int i = 0; i < this.createdObjects.size(); i++) {
                 try {
                     String[] objectInfo = this.createdObjects.get(i);
 
-                    dropSchemaObject(objectInfo[0], objectInfo[1]);
+                    dropSchemaObject(this.stmt, objectInfo[0], objectInfo[1]);
+                    dropSchemaObject(this.sha256Stmt, objectInfo[0], objectInfo[1]);
                 } catch (SQLException SQLE) {
                 }
             }
@@ -551,6 +664,13 @@ public abstract class BaseTestCase extends TestCase {
         if (this.stmt != null) {
             try {
                 this.stmt.close();
+            } catch (SQLException SQLE) {
+            }
+        }
+
+        if (this.sha256Stmt != null) {
+            try {
+                this.sha256Stmt.close();
             } catch (SQLException SQLE) {
             }
         }
@@ -565,6 +685,13 @@ public abstract class BaseTestCase extends TestCase {
         if (this.conn != null) {
             try {
                 this.conn.close();
+            } catch (SQLException SQLE) {
+            }
+        }
+
+        if (this.sha256Conn != null) {
+            try {
+                this.sha256Conn.close();
             } catch (SQLException SQLE) {
             }
         }
