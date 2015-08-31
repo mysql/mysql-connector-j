@@ -651,10 +651,14 @@ public abstract class BaseTestCase extends TestCase {
 
         if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
             for (int i = 0; i < this.createdObjects.size(); i++) {
-                try {
-                    String[] objectInfo = this.createdObjects.get(i);
+                String[] objectInfo = this.createdObjects.get(i);
 
+                try {
                     dropSchemaObject(this.stmt, objectInfo[0], objectInfo[1]);
+                } catch (SQLException SQLE) {
+                }
+
+                try {
                     dropSchemaObject(this.sha256Stmt, objectInfo[0], objectInfo[1]);
                 } catch (SQLException SQLE) {
                 }
