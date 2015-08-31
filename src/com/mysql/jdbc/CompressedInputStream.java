@@ -139,11 +139,7 @@ class CompressedInputStream extends InputStream {
 
             readFully(compressedBuffer, 0, compressedPacketLength);
 
-            try {
-                this.inflater.reset();
-            } catch (NullPointerException npe) {
-                this.inflater = new Inflater();
-            }
+            this.inflater.reset();
 
             this.inflater.setInput(compressedBuffer);
 
