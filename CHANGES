@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Fix for Bug#78106 (21648826), Potential memory leak with inflater.
+
   - Fix for Bug#78225 (21697684), DEFAULT NO_AUTO_CREATE_USER SQL_MODE BEHAVIOR BROKE SOME TESTS
 
   - Fix for Bug#77665 (21415165), JDBC fails to connect with MySQL 5.0.
