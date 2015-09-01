@@ -27,7 +27,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.core.io.*;
+import com.mysql.cj.core.io.DoubleValueFactory;
+import com.mysql.cj.core.io.IntegerValueFactory;
+import com.mysql.cj.core.io.JsonDocValueFactory;
+import com.mysql.cj.core.io.StringValueFactory;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.x.json.JsonDoc;
 
 public class RowImpl implements com.mysql.cj.api.x.Row {
@@ -39,8 +43,21 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
         this.lazyFieldNameToIndex = lazyFieldNameToIndex;
     }
 
+    /**
+     * Map a field name to it's index in the row.
+     *
+     * @throws DataReadException if the field name is not in the row
+     */
+    private int fieldNameToIndex(String fieldName) {
+        Integer idx = this.lazyFieldNameToIndex.get().get(fieldName);
+        if (idx == null) {
+            throw new DataReadException("Invalid column");
+        }
+        return idx;
+    }
+
     public double getDouble(String fieldName) {
-        return getDouble(this.lazyFieldNameToIndex.get().get(fieldName));
+        return getDouble(fieldNameToIndex(fieldName));
     }
 
     public double getDouble(int pos) {
@@ -48,7 +65,7 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
     }
 
     public int getInt(String fieldName) {
-        return getInt(this.lazyFieldNameToIndex.get().get(fieldName));
+        return getInt(fieldNameToIndex(fieldName));
     }
 
     public int getInt(int pos) {
@@ -56,7 +73,7 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
     }
 
     public JsonDoc getJsonDoc(String fieldName) {
-        return getJsonDoc(this.lazyFieldNameToIndex.get().get(fieldName));
+        return getJsonDoc(fieldNameToIndex(fieldName));
     }
 
     public JsonDoc getJsonDoc(int pos) {
@@ -64,7 +81,7 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
     }
 
     public String getString(String fieldName) {
-        return getString(this.lazyFieldNameToIndex.get().get(fieldName));
+        return getString(fieldNameToIndex(fieldName));
     }
 
     public String getString(int pos) {

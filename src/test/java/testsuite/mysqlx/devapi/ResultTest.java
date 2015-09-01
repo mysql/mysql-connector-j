@@ -23,10 +23,10 @@
 
 package testsuite.mysqlx.devapi;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +36,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.Warning;
+import com.mysql.cj.core.exceptions.DataReadException;
 
 public class ResultTest extends BaseDevApiTest {
     @Before
@@ -90,6 +90,28 @@ public class ResultTest extends BaseDevApiTest {
             assertEquals(String.valueOf(i++), rows.next().getString("x"));
             FetchedRows rows2 = table.select("x").orderBy("x").execute();
             assertEquals("1", rows2.next().getString("x"));
+        }
+    }
+
+    @Test
+    public void exceptionForNonExistingColumns() {
+        sqlUpdate("drop table if exists testx");
+        sqlUpdate("create table testx (x int)");
+        sqlUpdate("insert into testx values (1), (2), (3)");
+        Table table = this.schema.getTable("testx");
+        FetchedRows rows = table.select("x").orderBy("x").execute();
+        Row r = rows.next();
+        r.getString("x");
+        try {
+            r.getString("non_existing");
+        } catch (DataReadException ex) {
+            assertTrue(ex.getMessage().contains("Invalid column"));
+        }
+        r.getString(0);
+        try {
+            r.getString(1);
+        } catch (DataReadException ex) {
+            assertTrue(ex.getMessage().contains("Invalid column"));
         }
     }
 

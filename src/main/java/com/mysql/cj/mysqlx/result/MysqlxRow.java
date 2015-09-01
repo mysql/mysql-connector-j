@@ -52,6 +52,9 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
     }
 
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
+        if (columnIndex >= this.metadata.size()) {
+            throw new DataReadException("Invalid column");
+        }
         Field f = this.metadata.get(columnIndex);
         ByteString byteString = this.rowMessage.getField(columnIndex);
         // for debugging
