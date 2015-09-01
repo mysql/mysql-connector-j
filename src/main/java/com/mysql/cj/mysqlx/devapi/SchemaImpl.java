@@ -26,9 +26,9 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -37,15 +37,15 @@ import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.mysqlx.MysqlxError;
 
 public class SchemaImpl implements Schema {
-    private Session session;
+    private BaseSession session;
     private String name;
 
-    /* package private */SchemaImpl(Session session, String name) {
+    /* package private */SchemaImpl(BaseSession session, String name) {
         this.session = session;
         this.name = name;
     }
 
-    public Session getSession() {
+    public BaseSession getSession() {
         return this.session;
     }
 

@@ -23,114 +23,12 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.result.Row;
-import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Session;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionStringType;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.mysqlx.MysqlxError;
 
 public class SessionImpl extends AbstractSession implements Session {
-
     public SessionImpl(Properties properties) {
         super(properties);
-    }
-
-    public List<Schema> getSchemas() {
-        Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
-        Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
-        return this.session.query("select schema_name from information_schema.schemata", rowToSchema, Collectors.toList());
-    }
-
-    public Schema getSchema(String schemaName) {
-        return new SchemaImpl(this, schemaName);
-    }
-
-    public Schema getDefaultSchema() {
-        if (this.defaultSchemaName == null) {
-            throw new WrongArgumentException("Default schema not provided");
-        }
-        return new SchemaImpl(this, this.defaultSchemaName);
-    }
-
-    public Schema createSchema(String schemaName) {
-        StringBuilder stmtString = new StringBuilder("CREATE DATABASE ");
-        stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
-        this.session.update(stmtString.toString());
-        return getSchema(schemaName);
-    }
-
-    public Schema createSchema(String schemaName, boolean reuseExistingObject) {
-        try {
-            return createSchema(schemaName);
-        } catch (MysqlxError ex) {
-            if (ex.getErrorCode() == MysqlErrorNumbers.ER_DB_CREATE_EXISTS) {
-                return getSchema(schemaName);
-            }
-            throw ex;
-        }
-    }
-
-    public void dropSchema(String schemaName) {
-        StringBuilder stmtString = new StringBuilder("DROP DATABASE ");
-        stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
-        this.session.update(stmtString.toString());
-    }
-
-    public void startTransaction() {
-        this.session.update("START TRANSACTION");
-    }
-
-    @Override
-    public void commit() {
-        this.session.update("COMMIT");
-    }
-
-    @Override
-    public void rollback() {
-        this.session.update("ROLLBACK");
-    }
-
-    @Override
-    public String getUri() {
-        PropertySet pset = this.session.getPropertySet();
-
-        StringBuilder sb = new StringBuilder(ConnectionStringType.X_SESSION.urlPrefix);
-        sb.append(this.session.getHost());
-        sb.append(":");
-        sb.append(this.session.getPort());
-        sb.append("/");
-        sb.append(this.defaultSchemaName);
-        sb.append("?");
-
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToGet = pset.getReadableProperty(propName);
-
-            String propValue = propToGet.getStringValue();
-
-            if (propValue != null && !propValue.equals(propToGet.getPropertyDefinition().getDefaultValue().toString())) {
-                sb.append(",");
-                sb.append(propName);
-                sb.append("=");
-                sb.append(propValue);
-            }
-        }
-
-        // TODO modify for multi-host connections
-
-        return sb.toString();
-
     }
 }

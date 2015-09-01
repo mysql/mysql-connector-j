@@ -34,8 +34,6 @@ import java.util.Properties;
  * {@link Session} crudSession = xFactory.getSession("<b>mysql:x:</b>//host[:port]/db?user=user1&password=pwd1");
  * 
  * {@link NodeSession} nodeSession = xFactory.getNodeSession("<b>mysql:x:</b>//host[:port]/db?user=user1&password=pwd1");
- * 
- * {@link AdminSession} adminSession = xFactory.getAdminSession("<b>mysql:x:</b>//host[:port]/db?user=user1&password=pwd1");
  * </pre>
  *
  */
@@ -61,20 +59,4 @@ public interface XSessionFactory {
     NodeSession getNodeSession(String url);
 
     NodeSession getNodeSession(Properties properties);
-
-    /**
-     * Creates {@link AdminSession} by given URL.
-     * 
-     * @param url
-     * @return {@link AdminSession}
-     */
-    AdminSession getAdminSession(String url);
-
-    /**
-     * Creates {@link AdminSession} according to given properties.
-     * 
-     * @param properties
-     * @return {@link AdminSession}
-     */
-    AdminSession getAdminSession(Properties properties);
 }

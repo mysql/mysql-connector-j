@@ -29,7 +29,7 @@ import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.SqlResult;
 
-public abstract class NodeSessionImpl extends AbstractSession implements NodeSession {
+public class NodeSessionImpl extends AbstractSession implements NodeSession {
 
     public NodeSessionImpl(Properties properties) {
         super(properties);
@@ -47,16 +47,6 @@ public abstract class NodeSessionImpl extends AbstractSession implements NodeSes
 
     @Override
     public String quoteName(String name) {
-        throw new NullPointerException("TODO:");
-    }
-
-    // TODO: it's not clear what to do here with getDefaultSchema() and other inherited methods:
-    // it looks like they are allowed but other DevAPI classes expect to have com.mysql.cj.api.x.Session implementation for their operations,
-    // while NodeSession implements only it's parent, com.mysql.cj.api.x.BaseSession
-
-    @Override
-    public Schema getDefaultSchema() {
-        //return new SchemaImpl(this, this.defaultSchemaName);
         throw new NullPointerException("TODO:");
     }
 

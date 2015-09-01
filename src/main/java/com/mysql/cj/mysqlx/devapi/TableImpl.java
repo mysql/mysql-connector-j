@@ -25,11 +25,11 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Map;
 
+import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.DeleteStatement;
 import com.mysql.cj.api.x.InsertStatement;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.SelectStatement;
-import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.UpdateStatement;
 import com.mysql.cj.mysqlx.ExprUnparser;
@@ -44,7 +44,7 @@ public class TableImpl implements Table {
         this.name = name;
     }
 
-    public Session getSession() {
+    public BaseSession getSession() {
         return this.schema.getSession();
     }
 

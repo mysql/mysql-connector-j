@@ -28,6 +28,7 @@ import java.io.StringReader;
 import java.util.Map;
 
 import com.mysql.cj.api.x.AddStatement;
+import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.CreateCollectionIndexStatement;
 import com.mysql.cj.api.x.DropCollectionIndexStatement;
@@ -35,7 +36,6 @@ import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.RemoveStatement;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.JsonDoc;
@@ -50,7 +50,7 @@ public class CollectionImpl implements Collection {
         this.name = name;
     }
 
-    public Session getSession() {
+    public BaseSession getSession() {
         return this.schema.getSession();
     }
 

@@ -26,7 +26,6 @@ package testsuite.x;
 import java.util.HashMap;
 import java.util.Properties;
 
-import com.mysql.cj.api.x.AdminSession;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
@@ -106,29 +105,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
     }
 
     /**
-     * AdminSession [12] [13] - not supported in first version
-     * AdminSession.Connect.Single [6] - not supported in first version
-     * AdminSession.Connect.DataSource [7] - not supported in first version
-     * AdminSession.Connect.Mysqls [8] [9] - not supported in first version
-     * 
-     * @throws Exception
-     */
-    public void testAdminSessionCreation() throws Exception {
-        if (!this.isSetForMySQLxTests) {
-            return;
-        }
-        AdminSession sess;
-
-        String url = ""; // TODO test different URLs
-        sess = getAdminSession(url);
-        sess.close();
-
-        Properties props = new Properties(); // TODO test different properties
-        sess = getAdminSession(props);
-        sess.close();
-    }
-
-    /**
      * SQL.executeSql() incl. bind/quoteName()
      * 
      * @throws Exception
@@ -185,28 +161,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         //sess.dropSchema("name"); // TODO set name
         //sess.getSchemas();
         //sess.getUri();
-    }
-
-    /**
-     * 
-     * @throws Exception
-     */
-    public void testAdminSessionMethods() throws Exception {
-        if (!this.isSetForMySQLxTests) {
-            return;
-        }
-        AdminSession sess = getAdminSession(""); // TODO set URL
-
-        sess.getDefaultSchema();
-        sess.getSchema(""); // TODO set name
-
-        sess.close();
-
-        // out of requirements
-        sess.createSchema("name"); // TODO set name
-        sess.dropSchema("name"); // TODO set name
-        sess.getSchemas();
-        sess.getUri();
     }
 
     /**

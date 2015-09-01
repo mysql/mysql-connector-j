@@ -29,7 +29,7 @@ public interface DatabaseObject {
         EXISTS, NOT_EXISTS, UNKNOWN
     };
 
-    Session getSession();
+    BaseSession getSession();
 
     Schema getSchema();
 

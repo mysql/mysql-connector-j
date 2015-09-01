@@ -25,7 +25,6 @@ package com.mysql.cj.x;
 
 import java.util.Properties;
 
-import com.mysql.cj.api.x.AdminSession;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.XSessionFactory;
@@ -60,24 +59,12 @@ public class MysqlxSessionFactory implements XSessionFactory {
 
     @Override
     public NodeSession getNodeSession(String url) {
-        throw new RuntimeException();
-        // return new NodeSessionImpl(parseUrl(url));
+        return new NodeSessionImpl(parseUrl(url));
     }
 
     @Override
     public NodeSession getNodeSession(Properties properties) {
-        throw new RuntimeException();
-        // return new NodeSessionImpl(properties);
-    }
-
-    @Override
-    public AdminSession getAdminSession(String url) {
-        throw new NullPointerException("TODO");
-    }
-
-    @Override
-    public AdminSession getAdminSession(Properties properties) {
-        throw new NullPointerException("TODO");
+        return new NodeSessionImpl(properties);
     }
 
 }
