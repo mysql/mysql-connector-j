@@ -36,50 +36,28 @@ import com.mysql.cj.api.x.Session;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.mysqlx.MysqlxSession;
+import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.mysqlx.MysqlxError;
 
 public class SessionImpl extends AbstractSession implements Session {
 
-    public SessionImpl(String url) {
-        ConnectionString conStr = new ConnectionString(url, null);
-        Properties properties = conStr.getProperties();
-
-        if (properties == null) {
-            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
-        }
-
-        this.session = new MysqlxSession(properties);
-        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
-                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
-        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-    }
-
-    // TODO extract to init method and reuse in both constructors?
     public SessionImpl(Properties properties) {
-        this.session = new MysqlxSession(properties);
-        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
-                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
-        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        super(properties);
     }
 
-    @Override
     public List<Schema> getSchemas() {
-        // TODO: test
         Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
         Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
         return this.session.query("select schema_name from information_schema.schemata", rowToSchema, Collectors.toList());
     }
 
-    @Override
-    public Schema getSchema(String name) {
-        return new SchemaImpl(this, name);
+    public Schema getSchema(String schemaName) {
+        return new SchemaImpl(this, schemaName);
     }
 
-    @Override
     public Schema getDefaultSchema() {
         if (this.defaultSchemaName == null) {
             throw new WrongArgumentException("Default schema not provided");
@@ -87,7 +65,30 @@ public class SessionImpl extends AbstractSession implements Session {
         return new SchemaImpl(this, this.defaultSchemaName);
     }
 
-    @Override
+    public Schema createSchema(String schemaName) {
+        StringBuilder stmtString = new StringBuilder("CREATE DATABASE ");
+        stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
+        this.session.update(stmtString.toString());
+        return getSchema(schemaName);
+    }
+
+    public Schema createSchema(String schemaName, boolean reuseExistingObject) {
+        try {
+            return createSchema(schemaName);
+        } catch (MysqlxError ex) {
+            if (ex.getErrorCode() == MysqlErrorNumbers.ER_DB_CREATE_EXISTS) {
+                return getSchema(schemaName);
+            }
+            throw ex;
+        }
+    }
+
+    public void dropSchema(String schemaName) {
+        StringBuilder stmtString = new StringBuilder("DROP DATABASE ");
+        stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
+        this.session.update(stmtString.toString());
+    }
+
     public void startTransaction() {
         this.session.update("START TRANSACTION");
     }

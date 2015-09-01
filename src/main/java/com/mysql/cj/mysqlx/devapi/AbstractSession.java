@@ -23,10 +23,10 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.List;
+import java.util.Properties;
 
 import com.mysql.cj.api.x.BaseSession;
-import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
 /**
@@ -37,61 +37,23 @@ public abstract class AbstractSession implements BaseSession {
     protected MysqlxSession session;
     protected String defaultSchemaName;
 
-    @Override
-    public List<Schema> getSchemas() {
-        throw new NullPointerException("TODO:");
+    public AbstractSession(Properties properties) {
+        this.session = new MysqlxSession(properties);
+        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
+                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
+        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
-    @Override
-    public Schema getSchema(String name) {
-        throw new NullPointerException("TODO:");
-    }
-
-    @Override
-    public Schema getDefaultSchema() {
-        throw new NullPointerException("TODO:");
-    }
-
-    @Override
-    public Schema createSchema(String name) {
-        throw new NullPointerException("TODO:");
-    }
-
-    @Override
-    public Schema createSchema(String name, boolean reuseExistingObject) {
-        throw new NullPointerException("TODO:");
-    }
-
-    @Override
-    public Schema dropSchema(String name) {
-        throw new NullPointerException("TODO:");
-    }
-
-    @Override
     public String getUri() {
         throw new NullPointerException("TODO:");
     }
 
-    @Override
     public void close() {
         this.session.close();
     }
 
-    @Override
     public MysqlxSession getMysqlxSession() {
         return this.session;
-    }
-
-    public void startTransaction() {
-        throw new NullPointerException("TODO:");
-    }
-
-    public void commit() {
-        throw new NullPointerException("TODO:");
-    }
-
-    public void rollback() {
-        throw new NullPointerException("TODO:");
     }
 
 }

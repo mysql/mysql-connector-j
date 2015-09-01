@@ -34,15 +34,15 @@ public interface BaseSession {
 
     List<Schema> getSchemas();
 
-    Schema getSchema(String name);
+    Schema getSchema(String schemaName);
 
     Schema getDefaultSchema();
 
-    Schema createSchema(String name); // TODO there is no requirement
+    Schema createSchema(String schemaName);
 
-    Schema createSchema(String name, boolean reuseExistingObject);
+    Schema createSchema(String schemaName, boolean reuseExistingObject);
 
-    Schema dropSchema(String name); // TODO there is no requirement
+    void dropSchema(String schemaName);
 
     String getUri(); // TODO there is no requirement
 

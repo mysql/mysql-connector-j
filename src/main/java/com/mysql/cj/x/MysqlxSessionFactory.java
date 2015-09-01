@@ -29,14 +29,28 @@ import com.mysql.cj.api.x.AdminSession;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.XSessionFactory;
+import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 public class MysqlxSessionFactory implements XSessionFactory {
 
+    private Properties parseUrl(String url) {
+        ConnectionString conStr = new ConnectionString(url, null);
+        Properties properties = conStr.getProperties();
+
+        if (properties == null) {
+            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
+        }
+
+        return properties;
+    }
+
     @Override
     public Session getSession(String url) {
-        return new SessionImpl(url);
+        return new SessionImpl(parseUrl(url));
     }
 
     @Override
@@ -46,12 +60,14 @@ public class MysqlxSessionFactory implements XSessionFactory {
 
     @Override
     public NodeSession getNodeSession(String url) {
-        return new NodeSessionImpl(url);
+        throw new RuntimeException();
+        // return new NodeSessionImpl(parseUrl(url));
     }
 
     @Override
     public NodeSession getNodeSession(Properties properties) {
-        return new NodeSessionImpl(properties);
+        throw new RuntimeException();
+        // return new NodeSessionImpl(properties);
     }
 
     @Override

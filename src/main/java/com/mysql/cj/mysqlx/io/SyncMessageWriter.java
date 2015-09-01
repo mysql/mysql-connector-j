@@ -30,6 +30,7 @@ import java.nio.ByteOrder;
 
 import com.google.protobuf.MessageLite;
 
+import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;

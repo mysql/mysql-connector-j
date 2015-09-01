@@ -28,34 +28,11 @@ import java.util.Properties;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.SqlResult;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
-import com.mysql.cj.mysqlx.MysqlxSession;
 
-public class NodeSessionImpl extends AbstractSession implements NodeSession {
+public abstract class NodeSessionImpl extends AbstractSession implements NodeSession {
 
-    public NodeSessionImpl(String url) {
-        ConnectionString conStr = new ConnectionString(url, null);
-        Properties properties = conStr.getProperties();
-
-        if (properties == null) {
-            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
-        }
-
-        this.session = new MysqlxSession(properties);
-        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
-                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
-        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-    }
-
-    // TODO extract to init method and reuse in both constructors?
     public NodeSessionImpl(Properties properties) {
-        this.session = new MysqlxSession(properties);
-        this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
-                properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
-        this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        super(properties);
     }
 
     @Override
