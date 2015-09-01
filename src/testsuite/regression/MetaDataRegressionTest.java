@@ -2926,14 +2926,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
         assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
@@ -3012,7 +3012,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         // ALTER 2 test
-        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         cnt = 0;
@@ -3022,7 +3022,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("2 column must be found", cnt, 2);
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         cnt = 0;
