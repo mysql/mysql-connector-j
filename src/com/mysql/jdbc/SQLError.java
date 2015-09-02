@@ -106,7 +106,6 @@ public class SQLError {
     public static final String SQL_STATE_READ_ONLY_SQL_TRANSACTION = "25006";
     public static final String SQL_STATE_SRE_PROHIBITED_SQL_STATEMENT_ATTEMPTED = "2F003";
     public static final String SQL_STATE_SRE_FUNCTION_EXECUTED_NO_RETURN_STATEMENT = "2F005";
-    public static final String SQL_STATE_DEADLOCK = "41000"; // non-standard ?
     public static final String SQL_STATE_ER_QUERY_INTERRUPTED = "70100"; // non-standard ?
     public static final String SQL_STATE_BASE_TABLE_OR_VIEW_ALREADY_EXISTS = "S0001";
     public static final String SQL_STATE_BASE_TABLE_NOT_FOUND = "S0002";
@@ -189,7 +188,7 @@ public class SQLError {
         sqlStateMessages.put(SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, Messages.getString("SQLError.50"));
         sqlStateMessages.put(SQL_STATE_DATETIME_FIELD_OVERFLOW, Messages.getString("SQLError.51"));
         sqlStateMessages.put(SQL_STATE_DIVISION_BY_ZERO, Messages.getString("SQLError.52"));
-        sqlStateMessages.put(SQL_STATE_DEADLOCK, Messages.getString("SQLError.53"));
+        sqlStateMessages.put(SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, Messages.getString("SQLError.53"));
         sqlStateMessages.put(SQL_STATE_INVALID_AUTH_SPEC, Messages.getString("SQLError.54"));
         sqlStateMessages.put(SQL_STATE_SYNTAX_ERROR, Messages.getString("SQLError.55"));
         sqlStateMessages.put(SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND, Messages.getString("SQLError.56"));
@@ -415,8 +414,8 @@ public class SQLError {
         mysqlToSqlState.put(MysqlErrorNumbers.ER_ILLEGAL_REFERENCE, SQL_STATE_ER_BAD_FIELD_ERROR);
         mysqlToSqlState.put(MysqlErrorNumbers.ER_OUTOFMEMORY, SQL_STATE_MEMORY_ALLOCATION_FAILURE);
         mysqlToSqlState.put(MysqlErrorNumbers.ER_OUT_OF_SORTMEMORY, SQL_STATE_MEMORY_ALLOCATION_FAILURE);
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_DEADLOCK);	// overrides HY000, why?
-        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_DEADLOCK);	// legacy, should be SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE
+        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE);
+        mysqlToSqlState.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE);
 
         mysqlToSql99State = new HashMap<Integer, String>();
 
@@ -646,8 +645,8 @@ public class SQLError {
         mysqlToSql99State.put(MysqlErrorNumbers.ER_XAER_RMFAIL, SQL_STATE_XAER_RMFAIL);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_XAER_DUPID, SQL_STATE_XAER_DUPID);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_XAER_OUTSIDE, SQL_STATE_XAER_OUTSIDE);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_DEADLOCK);	// overriding HY000, why?
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_DEADLOCK);	// legacy, should be SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_LOCK_DEADLOCK, SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE);
     }
 
     /**

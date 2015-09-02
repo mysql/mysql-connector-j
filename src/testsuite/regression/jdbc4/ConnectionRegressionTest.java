@@ -26,11 +26,15 @@ package testsuite.regression.jdbc4;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLNonTransientException;
+import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.MysqlErrorNumbers;
+import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
 
 import javax.sql.PooledConnection;
@@ -230,5 +234,50 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // If PooledConnection is already closed by some reason a NullPointerException was thrown on the next line
         // because the closed connection has nulled out the list that it synchronises on when the closed event is fired.
         this.pstmt.close();
+    }
+
+    /**
+     * Tests fix for Bug#16634180 - LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug16634180() throws Exception {
+
+        createTable("testBug16634180", "(pk integer primary key, val integer)");
+        this.stmt.executeUpdate("insert into testBug16634180 values(0,0)");
+
+        Connection c1 = null;
+        Connection c2 = null;
+
+        try {
+            c1 = getConnectionWithProps(new Properties());
+            c1.setAutoCommit(false);
+            Statement s1 = c1.createStatement();
+            s1.executeUpdate("update foo set val=val+1 where pk=0");
+
+            c2 = getConnectionWithProps(new Properties());
+            c2.setAutoCommit(false);
+            Statement s2 = c2.createStatement();
+            try {
+                s2.executeUpdate("update foo set val=val+1 where pk=0");
+            } catch (SQLTransientException tex) {
+                assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, tex.getErrorCode());
+                assertEquals(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, tex.getSQLState());
+                assertEquals("Lock wait timeout exceeded; try restarting transaction", tex.getMessage());
+            } catch (SQLNonTransientException ntex) {
+                fail("Got non-transient(" + ntex.getErrorCode() + ", " + ntex.getSQLState() + "): " + ntex.getMessage() + "\nException: "
+                        + ntex.getClass().getName());
+            } catch (SQLException ex) {
+                fail("Got something else(" + ex.getErrorCode() + ", " + ex.getSQLState() + "): " + ex.getMessage() + "\nException: " + ex.getClass().getName());
+            }
+        } finally {
+            if (c1 != null) {
+                c1.close();
+            }
+            if (c2 != null) {
+                c2.close();
+            }
+        }
     }
 }

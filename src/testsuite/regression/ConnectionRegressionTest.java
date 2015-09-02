@@ -116,6 +116,8 @@ import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
+import com.mysql.jdbc.exceptions.MySQLNonTransientException;
+import com.mysql.jdbc.exceptions.MySQLTransientException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
@@ -7984,6 +7986,51 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             } finally {
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#16634180 - LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug16634180() throws Exception {
+
+        createTable("testBug16634180", "(pk integer primary key, val integer)");
+        this.stmt.executeUpdate("insert into testBug16634180 values(0,0)");
+
+        Connection c1 = null;
+        Connection c2 = null;
+
+        try {
+            c1 = getConnectionWithProps(new Properties());
+            c1.setAutoCommit(false);
+            Statement s1 = c1.createStatement();
+            s1.executeUpdate("update foo set val=val+1 where pk=0");
+
+            c2 = getConnectionWithProps(new Properties());
+            c2.setAutoCommit(false);
+            Statement s2 = c2.createStatement();
+            try {
+                s2.executeUpdate("update foo set val=val+1 where pk=0");
+            } catch (MySQLTransientException tex) {
+                assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, tex.getErrorCode());
+                assertEquals(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, tex.getSQLState());
+                assertEquals("Lock wait timeout exceeded; try restarting transaction", tex.getMessage());
+            } catch (MySQLNonTransientException ntex) {
+                fail("Got non-transient(" + ntex.getErrorCode() + ", " + ntex.getSQLState() + "): " + ntex.getMessage() + "\nException: "
+                        + ntex.getClass().getName());
+            } catch (SQLException ex) {
+                fail("Got something else(" + ex.getErrorCode() + ", " + ex.getSQLState() + "): " + ex.getMessage() + "\nException: " + ex.getClass().getName());
+            }
+        } finally {
+            if (c1 != null) {
+                c1.close();
+            }
+            if (c2 != null) {
+                c2.close();
             }
         }
     }

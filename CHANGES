@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Fix for Bug#16634180, LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
+
   - Fix for Bug#75849 (20536592), NPE in abortInternal() method on line 1358 of ConnectionImpl.
 
   - Fix for Bug#78106 (21648826), Potential memory leak with inflater.
