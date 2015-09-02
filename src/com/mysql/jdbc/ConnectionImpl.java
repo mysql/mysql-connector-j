@@ -1356,12 +1356,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     public void abortInternal() throws SQLException {
         if (this.io != null) {
+            // checking this.io != null isn't enough if connection is used concurrently (the usual situation
+            // with application servers which have additional thread management), this.io can become null
+            // at any moment after this check, causing a race condition and NPEs on next calls;
+            // but we may ignore them because at this stage null this.io means that we successfully closed all resources by other thread.
             try {
                 this.io.forceClose();
+                this.io.releaseResources();
             } catch (Throwable t) {
                 // can't do anything about it, and we're forcibly aborting
             }
-            this.io.releaseResources();
             this.io = null;
         }
 
