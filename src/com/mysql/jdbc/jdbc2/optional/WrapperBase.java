@@ -37,6 +37,8 @@ import com.mysql.jdbc.SQLError;
  * Base class for all wrapped instances created by LogicalHandle
  */
 abstract class WrapperBase {
+    private static final String METHOD_EQUALS = "equals";
+
     protected MysqlPooledConnection pooledConnection;
 
     /**
@@ -73,6 +75,12 @@ abstract class WrapperBase {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			final String methodName = method.getName();
+			if (METHOD_EQUALS.equals(methodName)) {
+				// Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
+				return args[0].equals(this);
+			}
+
             Object result = null;
 
             try {

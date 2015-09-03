@@ -85,7 +85,13 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            Object result = null;
+			final String methodName = method.getName();
+			if (METHOD_EQUALS.equals(methodName)) {
+				// Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
+				return args[0].equals(this);
+			}
+
+			Object result = null;
 
             try {
                 result = method.invoke(this.invokeOn, args);

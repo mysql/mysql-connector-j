@@ -37,6 +37,7 @@ import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StatementInterceptor;
 
 public class ResultSetScannerInterceptor implements StatementInterceptor {
+    private static final String METHOD_EQUALS = "equals";
 
     protected Pattern regexP;
 
@@ -68,10 +69,13 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
                 new InvocationHandler() {
 
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+						final String methodName = method.getName();
+						if (METHOD_EQUALS.equals(methodName)) {
+							// Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
+							return args[0].equals(this);
+						}
 
                         Object invocationResult = method.invoke(finalResultSet, args);
-
-                        String methodName = method.getName();
 
                         if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
                                 || "getObjectStoredProc".equals(methodName)) {
