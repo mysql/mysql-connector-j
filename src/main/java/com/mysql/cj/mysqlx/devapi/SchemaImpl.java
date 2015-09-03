@@ -106,7 +106,7 @@ public class SchemaImpl implements Schema {
     }
 
     public void drop() {
-        throw new NullPointerException("TODO:");
+        this.session.dropSchema(this.name);
     }
 
     public Collection createCollection(String collectionName) {

@@ -79,6 +79,16 @@ public class SessionTest extends BaseDevApiTest {
     }
 
     @Test
+    public void createDropSchema2() {
+        String testSchemaName = getRandomTestSchemaName();
+        Schema newSchema = this.session.createSchema(testSchemaName);
+        assertTrue(this.session.getSchemas().contains(newSchema));
+        // use Schema.drop() instead
+        newSchema.drop();
+        assertFalse(this.session.getSchemas().contains(newSchema));
+    }
+
+    @Test
     public void createAndReuseExistingSchema() {
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
