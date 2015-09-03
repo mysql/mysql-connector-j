@@ -875,6 +875,10 @@ public final class MysqlxNotice {
        * <code>WARNING = 2;</code>
        */
       WARNING(1, 2),
+      /**
+       * <code>ERROR = 3;</code>
+       */
+      ERROR(2, 3),
       ;
 
       /**
@@ -885,6 +889,10 @@ public final class MysqlxNotice {
        * <code>WARNING = 2;</code>
        */
       public static final int WARNING_VALUE = 2;
+      /**
+       * <code>ERROR = 3;</code>
+       */
+      public static final int ERROR_VALUE = 3;
 
 
       public final int getNumber() { return value; }
@@ -893,6 +901,7 @@ public final class MysqlxNotice {
         switch (value) {
           case 1: return NOTE;
           case 2: return WARNING;
+          case 3: return ERROR;
           default: return null;
         }
       }
@@ -2383,12 +2392,16 @@ public final class MysqlxNotice {
       TRX_ROLLEDBACK(7, 9),
       /**
        * <code>PRODUCED_MESSAGE = 10;</code>
+       */
+      PRODUCED_MESSAGE(8, 10),
+      /**
+       * <code>CLIENT_ID_ASSIGNED = 11;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      PRODUCED_MESSAGE(8, 10),
+      CLIENT_ID_ASSIGNED(9, 11),
       ;
 
       /**
@@ -2425,12 +2438,16 @@ public final class MysqlxNotice {
       public static final int TRX_ROLLEDBACK_VALUE = 9;
       /**
        * <code>PRODUCED_MESSAGE = 10;</code>
+       */
+      public static final int PRODUCED_MESSAGE_VALUE = 10;
+      /**
+       * <code>CLIENT_ID_ASSIGNED = 11;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      public static final int PRODUCED_MESSAGE_VALUE = 10;
+      public static final int CLIENT_ID_ASSIGNED_VALUE = 11;
 
 
       public final int getNumber() { return value; }
@@ -2446,6 +2463,7 @@ public final class MysqlxNotice {
           case 7: return TRX_COMMITTED;
           case 9: return TRX_ROLLEDBACK;
           case 10: return PRODUCED_MESSAGE;
+          case 11: return CLIENT_ID_ASSIGNED;
           default: return null;
         }
       }
@@ -3016,21 +3034,22 @@ public final class MysqlxNotice {
       "sqlx_datatypes.proto\"y\n\005Frame\022\014\n\004type\030\001 " +
       "\002(\r\0221\n\005scope\030\002 \001(\0162\032.Mysqlx.Notice.Frame" +
       ".Scope:\006GLOBAL\022\017\n\007payload\030\003 \001(\014\"\036\n\005Scope" +
-      "\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"z\n\007Warning\0224\n\005le" +
-      "vel\030\001 \001(\0162\034.Mysqlx.Notice.Warning.Level:" +
-      "\007WARNING\022\014\n\004code\030\002 \002(\r\022\013\n\003msg\030\003 \002(\t\"\036\n\005L" +
-      "evel\022\010\n\004NOTE\020\001\022\013\n\007WARNING\020\002\"P\n\026SessionVa" +
-      "riableChanged\022\r\n\005param\030\001 \002(\t\022\'\n\005value\030\002 " +
-      "\001(\0132\030.Mysqlx.Datatypes.Scalar\"\275\002\n\023Sessio",
-      "nStateChanged\022;\n\005param\030\001 \002(\0162,.Mysqlx.No" +
-      "tice.SessionStateChanged.Parameter\022\'\n\005va" +
-      "lue\030\002 \001(\0132\030.Mysqlx.Datatypes.Scalar\"\277\001\n\t" +
-      "Parameter\022\022\n\016CURRENT_SCHEMA\020\001\022\023\n\017ACCOUNT" +
-      "_EXPIRED\020\002\022\027\n\023GENERATED_INSERT_ID\020\003\022\021\n\rR" +
-      "OWS_AFFECTED\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n\014ROWS_M" +
-      "ATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022\022\n\016TRX_ROLLE" +
-      "DBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020\nB\036\n\034com.mys" +
-      "ql.cj.mysqlx.protobuf"
+      "\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"\205\001\n\007Warning\0224\n\005l" +
+      "evel\030\001 \001(\0162\034.Mysqlx.Notice.Warning.Level" +
+      ":\007WARNING\022\014\n\004code\030\002 \002(\r\022\013\n\003msg\030\003 \002(\t\")\n\005" +
+      "Level\022\010\n\004NOTE\020\001\022\013\n\007WARNING\020\002\022\t\n\005ERROR\020\003\"" +
+      "P\n\026SessionVariableChanged\022\r\n\005param\030\001 \002(\t" +
+      "\022\'\n\005value\030\002 \001(\0132\030.Mysqlx.Datatypes.Scala",
+      "r\"\325\002\n\023SessionStateChanged\022;\n\005param\030\001 \002(\016" +
+      "2,.Mysqlx.Notice.SessionStateChanged.Par" +
+      "ameter\022\'\n\005value\030\002 \001(\0132\030.Mysqlx.Datatypes" +
+      ".Scalar\"\327\001\n\tParameter\022\022\n\016CURRENT_SCHEMA\020" +
+      "\001\022\023\n\017ACCOUNT_EXPIRED\020\002\022\027\n\023GENERATED_INSE" +
+      "RT_ID\020\003\022\021\n\rROWS_AFFECTED\020\004\022\016\n\nROWS_FOUND" +
+      "\020\005\022\020\n\014ROWS_MATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022" +
+      "\022\n\016TRX_ROLLEDBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020" +
+      "\n\022\026\n\022CLIENT_ID_ASSIGNED\020\013B\036\n\034com.mysql.c" +
+      "j.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

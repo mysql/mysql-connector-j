@@ -45,6 +45,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.api.MysqlConnection;
@@ -146,6 +147,11 @@ public class MysqlxProtocol implements Protocol {
     private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
+    // TODO: need protocol type constants here (these values copied from comments in mysqlx_notice.proto)
+    private final int MysqlxNoticeFrameType_WARNING = 1;
+    private final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
+    private final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
+
     private MessageReader reader;
     private MessageWriter writer;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
@@ -153,6 +159,8 @@ public class MysqlxProtocol implements Protocol {
     /** @TODO what is this */
     private PropertySet propertySet;
     private Map<String, Any> capabilities;
+    /** Server-assigned client-id. */
+    private long clientId = -1;
 
     public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network, PropertySet propSet) {
         this.reader = reader;
@@ -369,7 +377,32 @@ public class MysqlxProtocol implements Protocol {
         this.reader.read(Ok.class);
     }
 
+    private <T extends GeneratedMessage> T parseNotice(ByteString payload, Class<T> noticeClass) {
+        try {
+            Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
+            return parser.parseFrom(payload);
+        } catch (InvalidProtocolBufferException ex) {
+            throw new CJCommunicationsException(ex);
+        }
+    }
+
     public void readAuthenticateOk() {
+        if (this.reader.getNextMessageClass() == Frame.class) {
+            Frame notice = this.reader.read(Frame.class);
+            if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                SessionStateChanged msg = parseNotice(notice.getPayload(), SessionStateChanged.class);
+                switch (msg.getParam()) {
+                    case CLIENT_ID_ASSIGNED:
+                        this.clientId = msg.getValue().getVUnsignedInt();
+                        break;
+                    case ACCOUNT_EXPIRED: // TODO
+                    default:
+                        throw new WrongArgumentException("Unknown SessionStateChanged notice received during authentication: " + msg);
+                }
+            } else {
+                throw new WrongArgumentException("Unknown notice received during authentication: " + notice);
+            }
+        }
         this.reader.read(AuthenticateOk.class);
     }
 
@@ -466,53 +499,42 @@ public class MysqlxProtocol implements Protocol {
         // TODO: don't use DevApi interfaces here!
         List<com.mysql.cj.api.x.Warning> warnings = new ArrayList<>();
         while (this.reader.getNextMessageClass() == Frame.class) {
-            try {
-                Frame notice = this.reader.read(Frame.class);
-                // TODO: asked Jan for type constants here (these values copied from comments in mysqlx_notice.proto
-                final int MysqlxNoticeFrameType_WARNING = 1;
-                final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
-                final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
-                if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
-                    // TODO: again, shouldn't use DevApi WarningImpl class here
-                    Parser<Warning> parser = (Parser<Warning>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Warning.class);
-                    warnings.add(new WarningImpl(parser.parseFrom(notice.getPayload())));
-                    // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
-                    //     // TODO: ignored for now
-                    //     throw new RuntimeException("Got a session variable changed: " + notice);
-                } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                    // TODO: create a MessageParser or ServerMessageParser if this needs to be done elsewhere
-                    Parser<SessionStateChanged> parser = (Parser<SessionStateChanged>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(SessionStateChanged.class);
-                    SessionStateChanged msg = parser.parseFrom(notice.getPayload());
-                    switch (msg.getParam()) {
-                        case GENERATED_INSERT_ID:
-                            // TODO: handle > 2^63-1?
-                            lastInsertId = msg.getValue().getVUnsignedInt();
-                            break;
-                        case ROWS_AFFECTED:
-                            // TODO: handle > 2^63-1?
-                            rowsAffected = msg.getValue().getVUnsignedInt();
-                            break;
-                        case PRODUCED_MESSAGE:
-                            // TODO do something with notices. expose them to client
-                            //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
-                            break;
-                        case CURRENT_SCHEMA:
-                        case ACCOUNT_EXPIRED:
-                        case ROWS_FOUND:
-                        case ROWS_MATCHED:
-                        case TRX_COMMITTED:
-                        case TRX_ROLLEDBACK:
-                            // TODO: propagate state
-                        default:
-                            // TODO: log warning
-                            throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
-                    }
-                } else {
-                    // TODO: error?
-                    throw new RuntimeException("Got an unknown notice: " + notice);
+            Frame notice = this.reader.read(Frame.class);
+            if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
+                // TODO: shouldn't use DevApi WarningImpl class here
+                warnings.add(new WarningImpl(parseNotice(notice.getPayload(), Warning.class)));
+                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
+                //     // TODO: ignored for now
+                //     throw new RuntimeException("Got a session variable changed: " + notice);
+            } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
+                SessionStateChanged msg = parseNotice(notice.getPayload(), SessionStateChanged.class);
+                switch (msg.getParam()) {
+                    case GENERATED_INSERT_ID:
+                        // TODO: handle > 2^63-1?
+                        lastInsertId = msg.getValue().getVUnsignedInt();
+                        break;
+                    case ROWS_AFFECTED:
+                        // TODO: handle > 2^63-1?
+                        rowsAffected = msg.getValue().getVUnsignedInt();
+                        break;
+                    case PRODUCED_MESSAGE:
+                        // TODO do something with notices. expose them to client
+                        //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
+                        break;
+                    case CURRENT_SCHEMA:
+                    case ACCOUNT_EXPIRED:
+                    case ROWS_FOUND:
+                    case ROWS_MATCHED:
+                    case TRX_COMMITTED:
+                    case TRX_ROLLEDBACK:
+                        // TODO: propagate state
+                    default:
+                        // TODO: log warning
+                        throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
                 }
-            } catch (InvalidProtocolBufferException ex) {
-                throw new CJCommunicationsException(ex);
+            } else {
+                // TODO: error?
+                throw new RuntimeException("Got an unknown notice: " + notice);
             }
         }
 
@@ -824,6 +846,13 @@ public class MysqlxProtocol implements Protocol {
 
     public boolean isResultPending() {
         return this.reader.getNextMessageClass() == ColumnMetaData.class;
+    }
+
+    /**
+     * Get the server-assigned client ID. Not initialized until the <code>AuthenticateOk</code> is read.
+     */
+    public long getClientId() {
+        return this.clientId;
     }
 
     @Override

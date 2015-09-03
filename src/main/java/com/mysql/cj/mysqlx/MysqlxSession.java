@@ -159,7 +159,7 @@ public class MysqlxSession implements Session {
     }
 
     public long getThreadId() {
-        throw new NullPointerException("TODO: ");
+        return this.protocol.getClientId();
     }
 
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {

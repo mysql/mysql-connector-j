@@ -5687,6 +5687,7 @@ public final class MysqlxExpr {
    *     * ``not_regexp``
    *     * ``like``
    *     * ``not_like``
+   *     * ``cast``
    *   Using special representation, with more than 2 params
    *     * ``in`` (param[0] IN (param[1], param[2], ...))
    *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
@@ -5715,6 +5716,16 @@ public final class MysqlxExpr {
    *     * ``DAY_SECOND``
    *     * ``DAY_MINUTE``
    *     * ``DAY_HOUR``
+   *   Types for cast
+   *     * ``BINARY[(N)]``
+   *     * ``CHAR[(N)]``
+   *     * ``DATE``
+   *     * ``DATETIME``
+   *     * ``DECIMAL[(M[,D])]``
+   *     * ``JSON``
+   *     * ``SIGNED [INTEGER]``
+   *     * ``TIME``
+   *     * ``UNSIGNED [INTEGER]``
    * .. productionlist::
    *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
    * </pre>
@@ -6069,6 +6080,7 @@ public final class MysqlxExpr {
      *     * ``not_regexp``
      *     * ``like``
      *     * ``not_like``
+     *     * ``cast``
      *   Using special representation, with more than 2 params
      *     * ``in`` (param[0] IN (param[1], param[2], ...))
      *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
@@ -6097,6 +6109,16 @@ public final class MysqlxExpr {
      *     * ``DAY_SECOND``
      *     * ``DAY_MINUTE``
      *     * ``DAY_HOUR``
+     *   Types for cast
+     *     * ``BINARY[(N)]``
+     *     * ``CHAR[(N)]``
+     *     * ``DATE``
+     *     * ``DATETIME``
+     *     * ``DECIMAL[(M[,D])]``
+     *     * ``JSON``
+     *     * ``SIGNED [INTEGER]``
+     *     * ``TIME``
+     *     * ``UNSIGNED [INTEGER]``
      * .. productionlist::
      *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
      * </pre>
@@ -6630,7 +6652,7 @@ public final class MysqlxExpr {
    * Protobuf type {@code Mysqlx.Expr.Object}
    *
    * <pre>
-   * an object
+   * an object (with expression values)
    * </pre>
    */
   public static final class Object extends
@@ -7576,7 +7598,7 @@ public final class MysqlxExpr {
      * Protobuf type {@code Mysqlx.Expr.Object}
      *
      * <pre>
-     * an object
+     * an object (with expression values)
      * </pre>
      */
     public static final class Builder extends
@@ -8015,7 +8037,7 @@ public final class MysqlxExpr {
    * Protobuf type {@code Mysqlx.Expr.Array}
    *
    * <pre>
-   * a Array
+   * a Array of expressions
    * </pre>
    */
   public static final class Array extends
@@ -8272,7 +8294,7 @@ public final class MysqlxExpr {
      * Protobuf type {@code Mysqlx.Expr.Array}
      *
      * <pre>
-     * a Array
+     * a Array of expressions
      * </pre>
      */
     public static final class Builder extends

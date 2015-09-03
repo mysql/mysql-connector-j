@@ -1145,7 +1145,8 @@ public final class MysqlxCrud {
    * a projection
    * :param source: the expression identifying an element from the source data
    *                which can include a column identifier or any expression
-   * :param alias: optional alias
+   * :param alias: optional alias. Required for DOCUMENTs (clients may use 
+   *              the source string as default)
    * </pre>
    */
   public static final class Projection extends
@@ -1452,7 +1453,8 @@ public final class MysqlxCrud {
      * a projection
      * :param source: the expression identifying an element from the source data
      *                which can include a column identifier or any expression
-     * :param alias: optional alias
+     * :param alias: optional alias. Required for DOCUMENTs (clients may use 
+     *              the source string as default)
      * </pre>
      */
     public static final class Builder extends
@@ -7487,8 +7489,8 @@ public final class MysqlxCrud {
    * Insert documents/rows into a collection/table
    * :param collection: collection to insert into
    * :param data_model: datamodel that the operations refer to
-   * :param projection: name of the columns to insert data into
-   * :param row: set of rows to insert into the collection/table
+   * :param projection: name of the columns to insert data into (empty if data_model is DOCUMENT)
+   * :param row: set of rows to insert into the collection/table (a single expression with a JSON document literal or an OBJECT expression)
    * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
@@ -8582,8 +8584,8 @@ public final class MysqlxCrud {
      * Insert documents/rows into a collection/table
      * :param collection: collection to insert into
      * :param data_model: datamodel that the operations refer to
-     * :param projection: name of the columns to insert data into
-     * :param row: set of rows to insert into the collection/table
+     * :param projection: name of the columns to insert data into (empty if data_model is DOCUMENT)
+     * :param row: set of rows to insert into the collection/table (a single expression with a JSON document literal or an OBJECT expression)
      * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
