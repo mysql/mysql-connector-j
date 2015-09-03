@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
@@ -60,8 +59,8 @@ public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
         try {
             protocol.sendCreateCollection(getTestDatabase(), "wont_be_Created");
             protocol.readStatementExecuteOk();
-            fail("Should fail after first message is send");
-        } catch (CJCommunicationsException ex) {
+            fail("Should fail after first message is sent");
+        } catch (MysqlxError err) {
             // expected
             //ex.printStackTrace();
         }
