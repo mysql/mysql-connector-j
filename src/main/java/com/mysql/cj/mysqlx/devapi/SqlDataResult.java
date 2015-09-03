@@ -23,18 +23,36 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.function.Supplier;
 
-import com.mysql.cj.api.x.NodeSession;
+import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.SqlResult;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.jdbc.Field;
 
-public class NodeSessionImpl extends AbstractSession implements NodeSession {
-
-    public NodeSessionImpl(Properties properties) {
-        super(properties);
+/**
+ * SQL result with data. Implemented as a thin layer over {@link RowsImpl}.
+ */
+public class SqlDataResult extends RowsImpl implements SqlResult {
+    public SqlDataResult(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
+        super(metadata, rows, completer);
     }
 
-    public SqlStatementImpl sql(String sql) {
-        return new SqlStatementImpl(this, sql);
+    public boolean nextDataSet() {
+        return false; // TODO: MYSQLCONNJ-568
     }
 
+    public long getAffectedItemsCount() {
+        return getStatementExecuteOk().getRowsAffected();
+    }
+
+    public Long getLastInsertId() {
+        return getStatementExecuteOk().getLastInsertId();
+    }
+
+    public String getLastDocumentId() {
+        throw new FeatureNotAvailableException("Document IDs are not assigned for SQL statements");
+    }
 }

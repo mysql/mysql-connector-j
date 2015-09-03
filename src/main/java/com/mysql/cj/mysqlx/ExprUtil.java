@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx;
 import com.google.protobuf.ByteString;
 
 import com.mysql.cj.api.x.Expression;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
@@ -133,7 +134,11 @@ public class ExprUtil {
     }
 
     public static Scalar argObjectToScalar(Object value) {
-        return argObjectToExpr(value, false).getLiteral();
+        Expr e = argObjectToExpr(value, false);
+        if (!e.hasLiteral()) {
+            throw new WrongArgumentException("No literal interpretation of argument: " + value);
+        }
+        return e.getLiteral();
     }
 
     public static Expr argObjectToExpr(Object value, boolean allowRelationalColumns) {

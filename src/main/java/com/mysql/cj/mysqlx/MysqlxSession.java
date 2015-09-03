@@ -47,6 +47,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
@@ -58,6 +59,8 @@ import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
+import com.mysql.cj.mysqlx.devapi.SqlDataResult;
+import com.mysql.cj.mysqlx.devapi.SqlUpdateResult;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
@@ -335,6 +338,20 @@ public class MysqlxSession implements Session {
         RES_T result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false).map(eachRow).collect(collector);
         this.protocol.readStatementExecuteOk();
         return result;
+    }
+
+    public SqlResult executeSql(String sql, Object args) {
+        newCommand();
+        this.protocol.sendSqlStatement(sql, args);
+        if (this.protocol.isResultPending()) {
+            // TODO: put characterSetMetadata somewhere useful
+            ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+            SqlDataResult res = new SqlDataResult(metadata, this.protocol.getRowInputStream(metadata), this.protocol::readStatementExecuteOk);
+            this.currentResult = res;
+            return res;
+        } else {
+            return new SqlUpdateResult(this.protocol.readStatementExecuteOk());
+        }
     }
 
     public StatementExecuteOk update(String sql) {

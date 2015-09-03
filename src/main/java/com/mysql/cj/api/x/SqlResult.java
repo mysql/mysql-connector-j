@@ -24,13 +24,5 @@
 package com.mysql.cj.api.x;
 
 public interface SqlResult extends Result, FetchedRows {
-
-    /*
-     * Results.Multi Resultset [38]
-     */
-
-    boolean hasMultipleDataSets();
-
-    SqlResult nextDataSet();
-
+    boolean nextDataSet();
 }

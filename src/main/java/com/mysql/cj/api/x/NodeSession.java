@@ -64,13 +64,6 @@ package com.mysql.cj.api.x;
  */
 public interface NodeSession extends BaseSession {
 
-    /**
-     * In addition to the simplified DevAPI syntax of the Session the NodeSession object has a executeSql() function that takes any SQL statement as a string.
-     */
-    SqlResult executeSql(String sql);
-
-    SqlResult executeSql(String sql, String... bindValues); // TODO do we really need to follow this syntax?
-
-    String quoteName(String name);
+    SqlStatement sql(String sql);
 
 }

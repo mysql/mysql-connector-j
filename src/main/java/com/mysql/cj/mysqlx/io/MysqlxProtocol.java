@@ -520,11 +520,18 @@ public class MysqlxProtocol implements Protocol {
         return new StatementExecuteOk(rowsAffected, lastInsertId, warnings);
     }
 
+    public void sendSqlStatement(String statement) {
+        sendSqlStatement(statement, null);
+    }
+
     /**
      * @todo option for brief metadata (types only)
      */
-    public void sendSqlStatement(String statement) {
+    public void sendSqlStatement(String statement, Object args) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
+        if (args != null) {
+            builder.addAllArgs((List<Any>) args);
+        }
         // TODO: encoding (character_set_client)
         builder.setStmt(ByteString.copyFromUtf8(statement));
         this.writer.write(builder.build());
@@ -813,6 +820,10 @@ public class MysqlxProtocol implements Protocol {
         }
         this.managedResource.close();
         this.managedResource = null;
+    }
+
+    public boolean isResultPending() {
+        return this.reader.getNextMessageClass() == ColumnMetaData.class;
     }
 
     @Override

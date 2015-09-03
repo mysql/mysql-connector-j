@@ -105,7 +105,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
     }
 
     /**
-     * SQL.executeSql() incl. bind/quoteName()
+     * SQL incl. bind
      * 
      * @throws Exception
      */
@@ -121,11 +121,9 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         sess.getSchema(schema); // no-op, error or allowed?
 
         String sql = ""; // TODO set query
-        sess.executeSql(sql);
+        //sess.executeSql(sql);
 
-        sess.executeSql(sql, "v1", "v2"); // TODO test binding
-
-        sess.quoteName("name"); // TODO test quotation
+        //sess.executeSql(sql, "v1", "v2"); // TODO test binding
 
         sess.close();
 

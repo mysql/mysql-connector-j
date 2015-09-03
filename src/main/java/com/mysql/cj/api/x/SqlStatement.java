@@ -21,20 +21,7 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package com.mysql.cj.api.x;
 
-import java.util.Properties;
-
-import com.mysql.cj.api.x.NodeSession;
-
-public class NodeSessionImpl extends AbstractSession implements NodeSession {
-
-    public NodeSessionImpl(Properties properties) {
-        super(properties);
-    }
-
-    public SqlStatementImpl sql(String sql) {
-        return new SqlStatementImpl(this, sql);
-    }
-
+public interface SqlStatement extends Statement<SqlStatement, SqlResult> {
 }

@@ -25,10 +25,11 @@ package testsuite.mysqlx.devapi;
 
 import testsuite.mysqlx.internal.BaseInternalMysqlxTest;
 
+import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.mysqlx.devapi.SessionImpl;
+import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
 
 /**
  * Utilities for Dev API tests.
@@ -36,13 +37,13 @@ import com.mysql.cj.mysqlx.devapi.SessionImpl;
 public class BaseDevApiTest extends BaseInternalMysqlxTest {
 
     /**
-     * Session for use in tests. This is a {@link SessionImpl} instance allowing access to the internal public APIs of the class.
+     * Session for use in tests.
      */
-    SessionImpl session;
+    NodeSession session;
     Schema schema;
 
     public void setupTestSession() {
-        this.session = new SessionImpl(this.testProperties);
+        this.session = new NodeSessionImpl(this.testProperties);
         this.schema = this.session.getDefaultSchema();
     }
 
