@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/JDBC4*.java|**/jdbc4/**" kind="src" path="src"/>
+	<classpathentry excluding="**/JDBC4*.java|**/jdbc4*/**" kind="src" path="src"/>
 	<classpathentry kind="var" path="JSSE_JAR">
 		<attributes>
 			<attribute name="javadoc_location" value="http://java.sun.com/j2se/1.5.0/docs/api/"/>

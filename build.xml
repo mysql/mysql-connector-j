@@ -26,11 +26,14 @@
 Compiling Connector/J
 =====================
 
-Connector/J 5.1 supports both JDBC3 and JDBC4+ with a single code base. This requires JDBC3 classes to be compiled with Java 5 and JDBC4+ to be compiled with
-Java 6.
-The variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk6' are used to find the respective compilers when building the driver. Side by side
+Connector/J 5.1 supports both JDBC 3 and JDBC 4+ with a single code base. This requires JDBC 3 classes to be compiled with Java 5 and JDBC 4+ to be compiled
+with Java 8.
+The variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk8' are used to find the respective compilers when building the driver. Side by side
 with these, the variable 'com.mysql.jdbc.extra.libs' must point to the location of third-party libraries that we don't distribute and are required for
-compiling. Further details can be found in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
+compiling.
+Compiling all JDBC 4+ code with Java 8 alone produces some warnings since JDBC 4.0 and JDBC 4.1 classes don't require a compliler higher than Java 6. To get
+more precise results and avoid warnings use the property 'com.mysql.jdbc.jre6.rtjar' to point to the Java 6 'rt.jar' library (usually in 'jre/lib/rt.jar').
+Further details can be found in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
 
 Targets: "dist", "full-dist", "package", "full-package", "full-package-no-sources", "compile", "install"
 
@@ -39,8 +42,8 @@ Testing Connector/J
 ===================
 
 Connector/J 5.1 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.jdbc.testsuite.url' and by
-calling the target "test". If nothing more is set, these tests run with the JVMs referred in the variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk6' for
-JDBC3 and JDBC4+ related tests respectively. Alternatively, all tests can be run with a single JVM, provided that it is pointed out in the variable
+calling the target "test". If nothing more is set, these tests run with the JVMs referred in the variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk8' for
+JDBC 3 and JDBC 4+ related tests respectively. Alternatively, all tests can be run with a single JVM, provided that it is pointed out in the variable
 'com.mysql.jdbc.testsuite.jvm'.
 Running the full test suite with different JVMs and different MySQL servers at once is also possible. The variables 'com.mysql.jdbc.testsuite.jvm' and
 'com.mysql.jdbc.testsuite.url' can be suffixed with an index ".1" to ".9" to indicate the multiple alternatives which results in the matrix of all possible
@@ -80,12 +83,18 @@ com.mysql.jdbc.extra.libs=&lt;full_path_to_connector-j-jardeps&gt;
 # - Also used for testing if 'com.mysql.jdbc.testsuite.jvm' is not provided.
 # - Mandatory.
 com.mysql.jdbc.jdk5=&lt;full_path_to_jdk1.5&gt;
-com.mysql.jdbc.jdk6=&lt;full_path_to_jdk1.6&gt;
+com.mysql.jdbc.jdk8=&lt;full_path_to_jdk1.8&gt;
+
+# Java 6 runtime libraries for compiling JDBC 4.0 and JDBC 4.1 classes:
+# - Must point to the library 'jre/lib/rt.jar'.
+# - Optional. If not provided, Java 8 runtime is used in its place.
+com.mysql.jdbc.jre6.rtjar=&lt;full_path_to_jre1.6/lib/rt.jar&gt;
 
 # Single JVM/MySQL tests:
 # - Must point to JDK or JRE home directories.
-# - If not provided, JDBC3 tests are run with 'com.mysql.jdbc.jdk5'.
-# - If not provided or pointing to a Java5 JVM, JDBC4+ tests are run with 'com.mysql.jdbc.jdk6'.
+# - If not provided, JDBC 3 tests are run with 'com.mysql.jdbc.jdk5'.
+# - If not provided or pointing to a Java5 JVM, JDBC 4+(&lt;4.2) tests are run with 'com.mysql.jdbc.jdk8'.
+# - If not provided or pointing to a JVM lower than 8, JDBC 4.2 tests are run with 'com.mysql.jdbc.jdk8'.
 # - Optional.
 com.mysql.jdbc.testsuite.jvm=&lt;full_path_to_a_jdk_or_jre&gt;
 # - URL to the test database.
@@ -95,7 +104,8 @@ com.mysql.jdbc.testsuite.url=jdbc:mysql://&lt;host&gt;:&lt;port&gt;/&lt;testDB&g
 
 # Multiple JVM/MySQL tests:
 # - Must point to JDK or JRE home directories.
-# - If pointing to a Java5 JVM, JDBC4+ tests are run with 'com.mysql.jdbc.jdk6' instead.
+# - If pointing to a Java5 JVM, JDBC 4+(&lt;4.2) tests are run with 'com.mysql.jdbc.jdk8' instead.
+# - If pointing to a JVM lower than 8, JDBC 4.2 tests are run with 'com.mysql.jdbc.jdk8'.
 # - Mandatory (at least one, at most eight) for 'test-multijdk' target.
 com.mysql.jdbc.testsuite.jvm.1=&lt;full_path_to_a_jdk_or_jre&gt;
 com.mysql.jdbc.testsuite.jvm.2=&lt;full_path_to_a_jdk_or_jre&gt;
@@ -154,9 +164,9 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </or>
     </condition>
 
-    <!-- The following properties are needed for finding JDK5 and JDK6 needed for compile and can be passed on the command line to ant via -D switches. -->
+    <!-- The following properties are needed for finding JDK5 and JDK8 needed for compile and can be passed on the command line to ant via -D switches. -->
     <property name="com.mysql.jdbc.jdk5" value="/usr/lib/jvm/jdk1.5" />
-    <property name="com.mysql.jdbc.jdk6" value="/usr/lib/jvm/jdk1.6" />
+    <property name="com.mysql.jdbc.jdk8" value="/usr/lib/jvm/jdk1.8" />
 
     <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to src/lib so user could either
        put these jars there or pass different location via ant -D switch. -->
@@ -219,10 +229,10 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
 
     <!-- Check for required JDKs for compilation. -->
-    <target name="-compiler-check" depends="-jdk5-check, -jdk6-check" />
+    <target name="-compiler-check" depends="-jdk5-check, -jdk8-check, -jre6-rtjar-check" />
 
 
-    <!-- Check for required JDK5 for compilation of JDBC3 implementation. -->
+    <!-- Check for required JDK5 for compilation of JDBC 3 implementation. -->
     <target name="-jdk5-check">
         <property name="com.mysql.jdbc.jdk5.java" value="${com.mysql.jdbc.jdk5}/bin/java" />
         <property name="com.mysql.jdbc.jdk5.javac" value="${com.mysql.jdbc.jdk5}/bin/javac" />
@@ -237,7 +247,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         </exec>
 
         <fail message="Java 5 is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk5'. Default: '/usr/lib/jvm/jdk1.5').
-Java 6 (for JDBC4+ implementation) is also required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk6'. Default: '/usr/lib/jvm/jdk1.6'.">
+Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk8'. Default: '/usr/lib/jvm/jdk1.8'.">
             <condition>
                 <not>
                     <and>
@@ -250,28 +260,43 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
     </target>
 
 
-    <!-- Check for required JDK6 for compilation of JDBC4+ implementation. -->
-    <target name="-jdk6-check">
-        <property name="com.mysql.jdbc.jdk6.java" value="${com.mysql.jdbc.jdk6}/bin/java" />
-        <property name="com.mysql.jdbc.jdk6.javac" value="${com.mysql.jdbc.jdk6}/bin/javac" />
+    <!-- Check for required JDK8 for compilation of JDBC 4+ implementation. -->
+    <target name="-jdk8-check">
+        <property name="com.mysql.jdbc.jdk8.java" value="${com.mysql.jdbc.jdk8}/bin/java" />
+        <property name="com.mysql.jdbc.jdk8.javac" value="${com.mysql.jdbc.jdk8}/bin/javac" />
 
-        <local name="com.mysql.jdbc.jdk6.version" />
-        <exec executable="${com.mysql.jdbc.jdk6.java}"
-              outputproperty="com.mysql.jdbc.jdk6.version"
+        <local name="com.mysql.jdbc.jdk8.version" />
+        <exec executable="${com.mysql.jdbc.jdk8.java}"
+              outputproperty="com.mysql.jdbc.jdk8.version"
               failonerror="false"
               failifexecutionfails="false"
-              resultproperty="jdk6checkexitstatus">
+              resultproperty="jdk8checkexitstatus">
             <arg value="-version" />
         </exec>
 
-        <fail message="Java 6 (for JDBC4+ implementation) is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk6'. Default: '/usr/lib/jvm/jdk1.6'.">
+        <fail message="Java 8 (for JDBC 4+ implementation) is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk8'. Default: '/usr/lib/jvm/jdk1.8'.">
             <condition>
                 <not>
                     <and>
-                        <equals arg1="${jdk6checkexitstatus}" arg2="0" />
-                        <contains string="${com.mysql.jdbc.jdk6.version}" substring="java version &quot;1.6" casesensitive="true" />
+                        <equals arg1="${jdk8checkexitstatus}" arg2="0" />
+                        <contains string="${com.mysql.jdbc.jdk8.version}" substring="java version &quot;1.8" casesensitive="true" />
                     </and>
                 </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check for Java 6 runtime libraries for compilation of JDBC 4.0 and JDBC 4.1 implementations. Ignored if property is undefined. -->
+    <target name="-jre6-rtjar-check">
+        <fail message="Invalid or missing Java 6 runtime library pointed by 'com.mysql.jdbc.jre6.rtjar'. ">
+            <condition>
+                <and>
+                    <isset property="com.mysql.jdbc.jre6.rtjar" />
+                    <not>
+                        <available file="${com.mysql.jdbc.jre6.rtjar}" />
+                    </not>
+                </and>
             </condition>
         </fail>
     </target>
@@ -316,7 +341,7 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
 
 
     <!-- Check provided JVM for running tests. -->
-    <target name="-testsuite-jvm-check" depends="-jdk6-check">
+    <target name="-testsuite-jvm-check" depends="-jdk8-check">
         <condition property="com.mysql.jdbc3.testsuite.jvm.java"
                    value="${com.mysql.jdbc.testsuite.jvm.internal}/bin/java"
                    else="${com.mysql.jdbc.testsuite.jvm}/bin/java">
@@ -340,8 +365,18 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
             </condition>
         </fail>
 
-        <condition property="com.mysql.jdbc4.testsuite.jvm.java" value="${com.mysql.jdbc.jdk6.java}" else="${com.mysql.jdbc3.testsuite.jvm.java}">
+        <!-- Run JDBC 4+(<4.2) tests with ${com.mysql.jdbc.jdk8.java} if chosen JVM for tests is JVM5 -->
+        <condition property="com.mysql.jdbc4.testsuite.jvm.java" value="${com.mysql.jdbc.jdk8.java}" else="${com.mysql.jdbc3.testsuite.jvm.java}">
             <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.5" casesensitive="true" />
+        </condition>
+
+        <!-- Run JDBC 4.2 tests with ${com.mysql.jdbc.jdk8.java} if chosen JVM for tests is JVM5 or JVM6 or JVM7 -->
+        <condition property="com.mysql.jdbc42.testsuite.jvm.java" value="${com.mysql.jdbc.jdk8.java}" else="${com.mysql.jdbc3.testsuite.jvm.java}">
+            <or>
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.5" casesensitive="true" />
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.6" casesensitive="true" />
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.7" casesensitive="true" />
+            </or>
         </condition>
     </target>
 
@@ -561,7 +596,7 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
 
         <mkdir dir="${buildDir}/META-INF" />
 
-        <!-- JDBC4+ support of service provider mechanism. -->
+        <!-- JDBC 4+ support of service provider mechanism. -->
         <mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
         <echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
               message="com.mysql.jdbc.Driver${line.separator}com.mysql.fabric.jdbc.FabricMySQLDriver" />
@@ -596,7 +631,7 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
         <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
             <attribute name="Specification-Title" value="JDBC" />
-            <attribute name="Specification-Version" value="4.0" />
+            <attribute name="Specification-Version" value="4.2" />
             <attribute name="Specification-Vendor" value="Oracle Corporation" />
             <attribute name="Implementation-Title" value="${prodDisplayName}" />
             <attribute name="Implementation-Version" value="${full.version}" />
@@ -766,21 +801,21 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
     <!-- ********************* -->
 
 
-    <!-- Compile the driver including JDBC3 and JDBC4+ implementations, JUnit test suite and 'helpers' for third-party software. -->
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations, JUnit test suite and 'helpers' for third-party software. -->
     <target name="compile"
-            description="Compiles driver including JDBC3 and JDBC4+ implementations, JUnit test suite and integration 'helpers' for third-party software."
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations, JUnit test suite and integration 'helpers' for third-party software."
             depends="init, compile-driver, compile-testsuite, compile-integration" />
 
 
-    <!-- Compile the driver including JDBC3 and JDBC4+ implementations only. -->
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations only. -->
     <target name="compile-driver"
-            description="Compiles driver including JDBC3 and JDBC4+ implementations only."
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations only."
             depends="-compile-driver-jdbc3, -compile-driver-jdbc4" />
 
 
-    <!-- Compile JDBC3 implementation. -->
+    <!-- Compile JDBC 3 implementation. -->
     <target name="-compile-driver-jdbc3" depends="init, -clean-output">
-        <echo>Compiling MySQL Connector/J JDBC3 implementation with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+        <echo>Compiling MySQL Connector/J JDBC 3 implementation with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
                srcdir="${buildDir}/${fullProdName}"
@@ -790,7 +825,9 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                fork="yes"
                executable="${com.mysql.jdbc.jdk5.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
             <include name="**/*.java" />
             <exclude name="testsuite/**" />
             <exclude name="com/mysql/jdbc/integration/**" />
@@ -804,9 +841,9 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
     </target>
 
 
-    <!-- Compile JDBC4+ implementation. -->
+    <!-- Compile JDBC 4+ implementation. -->
     <target name="-compile-driver-jdbc4" depends="-compile-driver-jdbc3">
-        <echo>Compiling MySQL Connector/J JDBC4+ implementation with '${com.mysql.jdbc.jdk6}' to '${compiler.output}'</echo>
+        <echo>Compiling MySQL Connector/J JDBC 4+ implementation with '${com.mysql.jdbc.jdk8}' to '${compiler.output}'</echo>
 
         <javac sourcepath=""
                srcdir="${buildDir}/${fullProdName}"
@@ -814,21 +851,40 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                deprecation="off"
                debug="${debug.enable}"
                fork="yes"
-               executable="${com.mysql.jdbc.jdk6.javac}"
+               executable="${com.mysql.jdbc.jdk8.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               bootclasspath="${com.mysql.jdbc.jre6.rtjar}"
+               source="1.6"
+               target="1.6">
             <include name="**/FabricMultiTenantConnectionProvider.java" />
             <include name="**/HibernateFabric.java" />
             <include name="**/JDBC4*.java" />
+            <exclude name="**/JDBC42*.java" />
             <include name="com/mysql/jdbc/exceptions/jdbc4/*" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.8"
+               target="1.8">
+            <include name="**/JDBC42*.java" />
             <classpath refid="project.build.classpath" />
         </javac>
     </target>
 
 
-    <!-- Compile the driver including JDBC3 and JDBC4+ implementations and JUnit test suite. -->
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations and JUnit test suite. -->
     <target name="compile-testsuite"
-            description="Compiles driver including JDBC3 and JDBC4+ implementations and JUnit test suite."
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations and JUnit test suite."
             depends="init, compile-driver">
         <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
 
@@ -840,10 +896,12 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                fork="yes"
                executable="${com.mysql.jdbc.jdk5.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
             <include name="testsuite/**" />
             <exclude name="testsuite/requiresNonRedists/**" />
-            <exclude name="testsuite/**/jdbc4/**" />
+            <exclude name="testsuite/**/jdbc4*/**" />
             <classpath refid="project.build.classpath" />
         </javac>
 
@@ -853,18 +911,35 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                deprecation="off"
                debug="${debug.enable}"
                fork="yes"
-               executable="${com.mysql.jdbc.jdk6.javac}"
+               executable="${com.mysql.jdbc.jdk8.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.6"
+               target="1.6">
             <include name="testsuite/**/jdbc4/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.8"
+               target="1.8">
+            <include name="testsuite/**/jdbc42/**" />
             <classpath refid="project.build.classpath" />
         </javac>
     </target>
 
 
-    <!-- Compile the driver including JDBC3 and JDBC4+ implementations and integration 'helpers' for third-party software. -->
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations and integration 'helpers' for third-party software. -->
     <target name="compile-integration"
-            description="Compiles driver including JDBC3 and JDBC4+ implementations and integration 'helpers' for third-party software."
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations and integration 'helpers' for third-party software."
             depends="compile-driver, -compile-integration-c3p0, -compile-integration-jboss, -compile-integration-log4j" />
 
 
@@ -880,7 +955,9 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                fork="yes"
                executable="${com.mysql.jdbc.jdk5.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
             <include name="com/mysql/jdbc/integration/c3p0/**" />
             <classpath refid="project.build.classpath" />
         </javac>
@@ -899,7 +976,9 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                fork="yes"
                executable="${com.mysql.jdbc.jdk5.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
             <include name="com/mysql/jdbc/integration/jboss/**" />
             <classpath refid="project.build.classpath" />
         </javac>
@@ -918,7 +997,9 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                fork="yes"
                executable="${com.mysql.jdbc.jdk5.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
             <include name="com/mysql/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
         </javac>
@@ -1047,7 +1128,7 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
 
         <local name="test.message.jdbc3orcommon" />
         <condition property="test.message.jdbc3orcommon"
-                   value="Running JDBC3 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'">
+                   value="Running JDBC 3 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'">
             <not>
                 <isset property="test" />
             </not>
@@ -1092,14 +1173,14 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
                     <include name="**/*Test.java" />
                     <exclude name="**/fabric/*.java" />
                     <exclude name="**/perf/*.java" />
-                    <exclude name="**/jdbc4/*Test.java" />
+                    <exclude name="**/jdbc4*/*Test.java" />
                 </fileset>
             </batchtest>
         </junit>
 
         <local name="test.message.jdbc4" />
         <condition property="test.message.jdbc4"
-                   value="Running JDBC4+ unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc4.testsuite.jvm.java}'"
+                   value="Running JDBC 4+(&lt;4.2) unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc4.testsuite.jvm.java}'"
                    else="">
             <not>
                 <isset property="test" />
@@ -1134,6 +1215,47 @@ Java 6 (for JDBC4+ implementation) is also required. Set the full path to this J
             <batchtest unless="test" todir="${junit.unitregress.results}">
                 <fileset dir="${buildDir}/${fullProdName}">
                     <include name="**/jdbc4/*Test.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <local name="test.message.jdbc42" />
+        <condition property="test.message.jdbc4"
+                   value="Running JDBC 4.2 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc42.testsuite.jvm.java}'"
+                   else="">
+            <not>
+                <isset property="test" />
+            </not>
+        </condition>
+        <echo>${test.message.jdbc4}</echo>
+
+        <junit printsummary="yes"
+               fork="on"
+               forkmode="once"
+               jvm="${com.mysql.jdbc42.testsuite.jvm.java}"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed">
+            <jvmarg value="-Xmx1024m" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <batchtest unless="test" todir="${junit.unitregress.results}">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/jdbc42/*Test.java" />
                 </fileset>
             </batchtest>
         </junit>
