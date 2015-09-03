@@ -1378,7 +1378,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         if (i == 1) {
             // This is INT field but still processed in
             // ResultsetMetaData.getColumnDisplaySize
-            assertEquals(17, rsmd.getColumnDisplaySize(1));
+            assertEquals(20, rsmd.getColumnDisplaySize(1));
         }
 
         if (versionMeetsMinimum(4, 1)) {
@@ -2258,10 +2258,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 Types.CHAR, // 9. COLUMN_NAME String => column name; null when TYPE is tableIndexStatistic
                 Types.CHAR, // 10. ASC_OR_DESC String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not
                             // supported; null when TYPE is tableIndexStatistic
-                Types.INTEGER, // 11. CARDINALITY int => When TYPE is tableIndexStatistic, then this is the number of rows in the table; otherwise, it is the
-                               // number of unique values in the index.
-                Types.INTEGER, // 12. PAGES int => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the
-                               // number of pages used for the current index.
+                Util.isJdbc42() ? Types.BIGINT : Types.INTEGER, // 11. CARDINALITY int/long => When TYPE is tableIndexStatistic, then this is the number of rows
+                                                                // in the table; otherwise, it is the number of unique values in the index.
+                Util.isJdbc42() ? Types.BIGINT : Types.INTEGER, // 12. PAGES int/long => When TYPE is tableIndexStatisic then this is the number of pages used
+                                                                // for the table, otherwise it is the number of pages used for the current index.
                 Types.CHAR // 13. FILTER_CONDITION String => Filter condition, if any. (may be null)
         };
 

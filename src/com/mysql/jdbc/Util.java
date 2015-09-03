@@ -63,7 +63,9 @@ public class Util {
 
     private static Util enclosingInstance = new Util();
 
-    private static boolean isJdbc4 = false;
+    private static boolean isJdbc4;
+
+    private static boolean isJdbc42;
 
     private static int jvmVersion = -1;
 
@@ -79,8 +81,15 @@ public class Util {
         try {
             Class.forName("java.sql.NClob");
             isJdbc4 = true;
-        } catch (Throwable t) {
+        } catch (ClassNotFoundException e) {
             isJdbc4 = false;
+        }
+
+        try {
+            Class.forName("java.sql.JDBCType");
+            isJdbc42 = true;
+        } catch (Throwable t) {
+            isJdbc42 = false;
         }
 
         String jvmVersionString = System.getProperty("java.version");
@@ -96,7 +105,7 @@ public class Util {
             jvmVersion = Integer.parseInt(jvmVersionString.substring(startPos, endPos));
         } else {
             // use best approximate value
-            jvmVersion = isJdbc4 ? 6 : 5;
+            jvmVersion = isJdbc42 ? 8 : isJdbc4 ? 6 : 5;
         }
 
         //
@@ -116,6 +125,10 @@ public class Util {
 
     public static boolean isJdbc4() {
         return isJdbc4;
+    }
+
+    public static boolean isJdbc42() {
+        return isJdbc42;
     }
 
     public static int getJVMVersion() {
@@ -667,5 +680,30 @@ public class Util {
      */
     public static long secondsSinceMillis(long timeInMillis) {
         return (System.currentTimeMillis() - timeInMillis) / 1000;
+    }
+
+    /**
+     * Converts long to int, truncating to maximum/minimum value if needed.
+     * 
+     * @param longValue
+     * @return
+     */
+    public static int truncateAndConvertToInt(long longValue) {
+        return longValue > Integer.MAX_VALUE ? Integer.MAX_VALUE : longValue < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longValue;
+    }
+
+    /**
+     * Converts long[] to int[], truncating to maximum/minimum value if needed.
+     * 
+     * @param longArray
+     * @return
+     */
+    public static int[] truncateAndConvertToInt(long[] longArray) {
+        int[] intArray = new int[longArray.length];
+
+        for (int i = 0; i < longArray.length; i++) {
+            intArray[i] = longArray[i] > Integer.MAX_VALUE ? Integer.MAX_VALUE : longArray[i] < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longArray[i];
+        }
+        return intArray;
     }
 }

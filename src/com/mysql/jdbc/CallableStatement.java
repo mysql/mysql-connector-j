@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -917,26 +917,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     @Override
     public int executeUpdate() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            int returnVal = -1;
-
-            checkStreamability();
-
-            if (this.callingStoredFunction) {
-                execute();
-
-                return -1;
-            }
-
-            setInOutParamsOnServer();
-            setOutParams();
-
-            returnVal = super.executeUpdate();
-
-            retrieveOutParams();
-
-            return returnVal;
-        }
+        return Util.truncateAndConvertToInt(executeLargeUpdate());
     }
 
     private String extractProcedureName() throws SQLException {
@@ -2275,12 +2256,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     @Override
     public int[] executeBatch() throws SQLException {
-        if (this.hasOutputParams) {
-            throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
-        }
+        return Util.truncateAndConvertToInt(executeLargeBatch());
 
-        return super.executeBatch();
     }
 
     @Override
@@ -2449,5 +2426,42 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 return false;
             }
         }
+    }
+
+    /**
+     * JDBC 4.2
+     */
+    @Override
+    public long executeLargeUpdate() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            long returnVal = -1;
+
+            checkStreamability();
+
+            if (this.callingStoredFunction) {
+                execute();
+
+                return -1;
+            }
+
+            setInOutParamsOnServer();
+            setOutParams();
+
+            returnVal = super.executeLargeUpdate();
+
+            retrieveOutParams();
+
+            return returnVal;
+        }
+    }
+
+    @Override
+    public long[] executeLargeBatch() throws SQLException {
+        if (this.hasOutputParams) {
+            throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
+        }
+
+        return super.executeLargeBatch();
     }
 }

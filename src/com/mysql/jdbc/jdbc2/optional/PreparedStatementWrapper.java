@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -685,10 +685,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-        // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -711,10 +708,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-        // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     /*
@@ -733,9 +727,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     @Override
@@ -753,6 +745,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
         return buf.toString();
     }
+
     //
     //	public void setAsciiStream(int parameterIndex, InputStream x)
     //			throws SQLException {
@@ -1091,4 +1084,22 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     //	public Object unwrap(Class arg0) throws SQLException {
     //		throw SQLError.notImplemented();
     //	}
+
+    /**
+     * JDBC 4.2
+     * Same as PreparedStatement.executeUpdate() but returns long instead of int.
+     */
+    public long executeLargeUpdate() throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                return ((com.mysql.jdbc.PreparedStatement) this.wrappedStmt).executeLargeUpdate();
+            }
+
+            throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+
+        return -1; // we actually never get here, but the compiler can't figure that out
+    }
 }

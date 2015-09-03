@@ -3277,10 +3277,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * <li><B>COLUMN_NAME</B> String => column name; null when TYPE is tableIndexStatistic</li>
      * <li><B>ASC_OR_DESC</B> String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not supported; null when TYPE
      * is tableIndexStatistic</li>
-     * <li><B>CARDINALITY</B> int => When TYPE is tableIndexStatisic then this is the number of rows in the table; otherwise it is the number of unique values
-     * in the index.</li>
-     * <li><B>PAGES</B> int => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the number of pages used for
-     * the current index.</li>
+     * <li><B>CARDINALITY</B> int/long => When TYPE is tableIndexStatisic then this is the number of rows in the table; otherwise it is the number of unique
+     * values in the index.</li>
+     * <li><B>PAGES</B> int/long => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the number of pages
+     * used for the current index.</li>
      * <li><B>FILTER_CONDITION</B> String => Filter condition, if any. (may be null)</li>
      * </ol>
      * </p>
@@ -3356,10 +3356,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             row[8] = results.getBytes("Column_name");
                             row[9] = results.getBytes("Collation");
 
-                            // Cardinality can be much larger than Integer's range, so we clamp it to conform to the API
                             long cardinality = results.getLong("Cardinality");
 
-                            if (cardinality > Integer.MAX_VALUE) {
+                            // Prior to JDBC 4.2, cardinality can be much larger than Integer's range, so we clamp it to conform to the API
+                            if (!Util.isJdbc42() && cardinality > Integer.MAX_VALUE) {
                                 cardinality = Integer.MAX_VALUE;
                             }
 
@@ -3419,8 +3419,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
         fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
         fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-        fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 20);
-        fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
+        if (Util.isJdbc42()) {
+            fields[10] = new Field("", "CARDINALITY", Types.BIGINT, 20);
+            fields[11] = new Field("", "PAGES", Types.BIGINT, 20);
+        } else {
+            fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 20);
+            fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
+        }
         fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
         return fields;
     }
