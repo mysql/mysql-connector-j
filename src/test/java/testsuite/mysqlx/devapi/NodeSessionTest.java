@@ -67,8 +67,7 @@ public class NodeSessionTest extends BaseDevApiTest {
         SqlResult res = stmt.execute();
         assertFalse(res.hasData());
         assertEquals(0, res.getAffectedItemsCount());
-        // TODO: should be null if no rows are inserted. xplugin is returning 0 for every query
-        //assertEquals(null, res.getLastInsertId());
+        assertEquals(null, res.getLastInsertId());
         assertEquals(0, res.getWarningsCount());
         assertFalse(res.getWarnings().hasNext());
     }
