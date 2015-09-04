@@ -116,7 +116,6 @@ import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
-import com.mysql.jdbc.exceptions.MySQLNonTransientException;
 import com.mysql.jdbc.exceptions.MySQLTransientException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -8015,15 +8014,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Statement s2 = c2.createStatement();
             try {
                 s2.executeUpdate("update foo set val=val+1 where pk=0");
-            } catch (MySQLTransientException tex) {
-                assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, tex.getErrorCode());
-                assertEquals(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, tex.getSQLState());
-                assertEquals("Lock wait timeout exceeded; try restarting transaction", tex.getMessage());
-            } catch (MySQLNonTransientException ntex) {
-                fail("Got non-transient(" + ntex.getErrorCode() + ", " + ntex.getSQLState() + "): " + ntex.getMessage() + "\nException: "
-                        + ntex.getClass().getName());
-            } catch (SQLException ex) {
-                fail("Got something else(" + ex.getErrorCode() + ", " + ex.getSQLState() + "): " + ex.getMessage() + "\nException: " + ex.getClass().getName());
+                fail("ER_LOCK_WAIT_TIMEOUT should be thrown.");
+            } catch (MySQLTransientException ex) {
+                assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, ex.getErrorCode());
+                assertEquals(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, ex.getSQLState());
+                assertEquals("Lock wait timeout exceeded; try restarting transaction", ex.getMessage());
             }
         } finally {
             if (c1 != null) {
