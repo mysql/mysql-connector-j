@@ -65,6 +65,14 @@ public class JsonDocTest {
     }
 
     @Test
+    public void bracketAsValue() throws Exception {
+        // Bug MYSQLCONNJ-572
+        JsonDoc d = JsonParser.parseDoc(new StringReader("{\"x\":\"}\",\"y\":1}"));
+        assertEquals("}", ((JsonString) d.get("x")).getString());
+        assertEquals(new Integer(1), ((JsonNumber) d.get("y")).getInteger());
+    }
+
+    @Test
     public void testParseString() throws Exception {
 
         // ignore whitespaces

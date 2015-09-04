@@ -363,7 +363,7 @@ public class JsonParser {
                     break;
                 }
 
-            } else if (ch == StructuralToken.RCRBRACKET.CHAR) {
+            } else if (quotes == 0 && ch == StructuralToken.RCRBRACKET.CHAR) {
                 // end of document
                 break;
 
