@@ -717,6 +717,7 @@ public class MysqlxProtocol implements Protocol {
      */
     private void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
             Consumer<List<Scalar>> setArgs) {
+        filterParams.verifyAllArgsBound();
         if (filterParams.getOrder() != null) {
             setOrder.accept((List<Order>) filterParams.getOrder());
         }

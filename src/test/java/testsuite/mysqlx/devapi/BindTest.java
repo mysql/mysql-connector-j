@@ -29,9 +29,12 @@ import java.util.Map;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class BindTest extends CollectionTest {
     @Before
@@ -74,6 +77,26 @@ public class BindTest extends CollectionTest {
         this.collection.remove("x = :thePlaceholder").bind(params).execute();
         assertEquals(2, this.collection.count());
         assertFalse(this.collection.find("x = 3").execute().hasNext());
+    }
+
+    @Test
+    public void bug21798850() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("thePlaceholder1", 1);
+        params.put("thePlaceholder2", 2);
+        params.put("thePlaceholder3", 3);
+        String q = "$.F1 =:thePlaceholder1 or $.F1 =:thePlaceholder2 or $.F1 =:thePlaceholder3";
+        this.collection.find(q).fields("$._id as _id, $.F1 as f1").bind(params).orderBy("$.F1 asc").execute();
+    }
+
+    @Test
+    public void properExceptionUnboundParams() {
+        try {
+            this.collection.find("a = :arg1 or b = :arg2").bind("arg1", 1).execute();
+            fail("Should raise an exception on unbound placeholder arguments");
+        } catch (WrongArgumentException ex) {
+            assertEquals("Placeholder 'arg2' is not bound", ex.getMessage());
+        }
     }
 
     // TODO: more tests with unnamed (x = ?) and different bind value types

@@ -23,9 +23,10 @@
 
 package com.mysql.cj.mysqlx;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprParser;
@@ -43,7 +44,7 @@ public class FilterParams {
     private Long offset;
     private List<Order> order;
     private Expr criteria;
-    private List<Scalar> args;
+    private Scalar[] args;
     private Map<String, Integer> placeholderNameToPosition;
     protected boolean allowRelationalColumns = true;
 
@@ -91,12 +92,15 @@ public class FilterParams {
         this.criteria = parser.parse();
         if (parser.getPositionalPlaceholderCount() > 0) {
             this.placeholderNameToPosition = parser.getPlaceholderNameToPositionMap();
-            this.args = new ArrayList<>(parser.getPositionalPlaceholderCount());
+            this.args = new Scalar[parser.getPositionalPlaceholderCount()];
         }
     }
 
     public Object getArgs() {
-        return this.args;
+        if (this.args == null) {
+            return null;
+        }
+        return Arrays.asList(this.args);
     }
 
     public void addArg(String name, Object value) {
@@ -106,12 +110,33 @@ public class FilterParams {
         if (this.placeholderNameToPosition.get(name) == null) {
             throw new WrongArgumentException("Unknown placeholder :" + name);
         }
-        this.args.add(this.placeholderNameToPosition.get(name), ExprUtil.argObjectToScalar(value));
+        this.args[this.placeholderNameToPosition.get(name)] = ExprUtil.argObjectToScalar(value);
+    }
+
+    /**
+     * Verify that all arguments are bound.
+     *
+     * @throws WrongArgumentException if any placeholder argument is not bound
+     */
+    public void verifyAllArgsBound() {
+        if (args != null) {
+            IntStream.range(0, this.args.length)
+                    // find unbound params
+                    .filter(i -> this.args[i] == null)
+                    // get the parameter name from the map
+                    .mapToObj(i -> this.placeholderNameToPosition.entrySet()
+                            .stream()
+                            .filter(e -> e.getValue() == i)
+                            .map(Map.Entry::getKey)
+                            .findFirst().get())
+                    .forEach(name -> {throw new WrongArgumentException("Placeholder '" + name + "' is not bound");});
+        }
     }
 
     public void clearArgs() {
         if (this.args != null) {
-            this.args.clear();
+            IntStream.range(0, this.args.length)
+                    .forEach(i -> this.args[i] = null);
         }
     }
 }
