@@ -51,12 +51,8 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
         return this;
     }
 
-    public UpdateStatement set(Object... fieldValuePairs) {
-        if (fieldValuePairs.length % 2 == 1) {
-            throw new WrongArgumentException("Odd number of values provided as pairs");
-        }
-        IntStream.range(0, fieldValuePairs.length).filter(i -> i % 2 == 0)
-                .forEach(i -> this.updateParams.addUpdate((String) fieldValuePairs[i], fieldValuePairs[i + 1]));
+    public UpdateStatement set(String field, Object value) {
+        this.updateParams.addUpdate(field, value);
         return this;
     }
 

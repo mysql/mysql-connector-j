@@ -58,7 +58,7 @@ public class TableUpdateTest extends TableTest {
         sqlUpdate("insert into updates values ('2', 'Shakila', '2001-06-26', 13)");
 
         Table table = this.schema.getTable("updates");
-        table.update().set("name", expr("concat(name, '-updated')"), "age", expr("age + 1")).where("name == 'Sakila'").execute();
+        table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
         FetchedRows rows = table.select("name, age").where("_id == 1").execute();
         Row r = rows.next();
         assertEquals("Sakila-updated", r.getString(0));

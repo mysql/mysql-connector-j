@@ -28,7 +28,7 @@ import java.util.Map;
 public interface UpdateStatement extends Statement<UpdateStatement, Result> {
     UpdateStatement set(Map<String, Object> fieldsAndValues);
 
-    UpdateStatement set(Object... fieldValuePairs);
+    UpdateStatement set(String field, Object value);
 
     UpdateStatement where(String searchCondition);
 
