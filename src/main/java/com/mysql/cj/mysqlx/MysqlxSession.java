@@ -108,6 +108,14 @@ public class MysqlxSession implements Session {
         byte[] salt = this.protocol.readAuthenticateContinue();
         this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
         this.protocol.readAuthenticateOk();
+        setupInternalState();
+    }
+
+    /**
+     * Setup internal state of the session.
+     */
+    private void setupInternalState() {
+        this.protocol.setMaxAllowedPacket((int) queryForLong("select @@mysqlx_max_allowed_packet"));
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {

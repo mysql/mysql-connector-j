@@ -860,4 +860,8 @@ public class MysqlxProtocol implements Protocol {
         // TODO Auto-generated method stub
 
     }
+
+    public void setMaxAllowedPacket(int maxAllowedPacket) {
+        this.writer.setMaxAllowedPacket(maxAllowedPacket);
+    }
 }

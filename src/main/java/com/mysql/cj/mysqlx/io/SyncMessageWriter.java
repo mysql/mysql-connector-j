@@ -33,6 +33,7 @@ import com.google.protobuf.MessageLite;
 import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 /**
@@ -46,6 +47,7 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
 
     private BufferedOutputStream outputStream;
     private long lastPacketSentTime = 0;
+    private int maxAllowedPacket = -1;
 
     public SyncMessageWriter(BufferedOutputStream os) {
         this.outputStream = os;
@@ -72,6 +74,9 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
         try {
             int type = getTypeForMessageClass(msg.getClass());
             int size = 1 + msg.getSerializedSize();
+            if (this.maxAllowedPacket > 0 && size > maxAllowedPacket) {
+                throw new CJPacketTooBigException(size, this.maxAllowedPacket);
+            }
             // for debugging
             // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
             byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
@@ -87,5 +92,9 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
 
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
+    }
+
+    public void setMaxAllowedPacket(int maxAllowedPacket) {
+        this.maxAllowedPacket = maxAllowedPacket;
     }
 }

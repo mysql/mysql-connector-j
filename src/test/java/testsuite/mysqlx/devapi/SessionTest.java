@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 
@@ -117,6 +118,25 @@ public class SessionTest extends BaseDevApiTest {
             fail("Attempt to create a schema with the name of an existing schema should fail");
         } catch (MysqlxError err) {
             assertEquals(MysqlErrorNumbers.ER_DB_CREATE_EXISTS, err.getErrorCode());
+        }
+    }
+
+    /**
+     * Test the client-side enforcing of server `mysqlx_max_allowed_packet'. This assumes a server-side value of 1MiB.
+     */
+    @Test
+    public void errorOnPacketTooBig() {
+        try {
+            int size = 1024 * 1024;
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < size; ++i) {
+                b.append('.');
+            }
+            String s = b.append("\"}").toString();
+            this.session.dropSchema(s);
+            fail("Large packet should cause an exception");
+        } catch (CJPacketTooBigException ex) {
+            // expected
         }
     }
 }

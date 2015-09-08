@@ -30,4 +30,5 @@ import com.google.protobuf.MessageLite;
  */
 public interface MessageWriter {
     void write(MessageLite msg);
+    void setMaxAllowedPacket(int maxAllowedPacket);
 }
