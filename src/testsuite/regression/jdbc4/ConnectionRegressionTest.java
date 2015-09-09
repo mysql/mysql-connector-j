@@ -254,13 +254,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             c1 = getConnectionWithProps(new Properties());
             c1.setAutoCommit(false);
             Statement s1 = c1.createStatement();
-            s1.executeUpdate("update foo set val=val+1 where pk=0");
+            s1.executeUpdate("update testBug16634180 set val=val+1 where pk=0");
 
             c2 = getConnectionWithProps(new Properties());
             c2.setAutoCommit(false);
             Statement s2 = c2.createStatement();
             try {
-                s2.executeUpdate("update foo set val=val+1 where pk=0");
+                s2.executeUpdate("update testBug16634180 set val=val+1 where pk=0");
                 fail("ER_LOCK_WAIT_TIMEOUT should be thrown.");
             } catch (SQLTransientException ex) {
                 assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, ex.getErrorCode());
