@@ -113,6 +113,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
+import com.mysql.jdbc.Util;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
@@ -7997,7 +7998,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug16634180() throws Exception {
 
-        createTable("testBug16634180", "(pk integer primary key, val integer)");
+        if (Util.isJdbc4()) {
+            // relevant JDBC4+ test is testsuite.regression.jdbc4.ConnectionRegressionTest.testBug16634180()
+            return;
+        }
+
+        createTable("testBug16634180", "(pk integer primary key, val integer)", "InnoDB");
         this.stmt.executeUpdate("insert into testBug16634180 values(0,0)");
 
         Connection c1 = null;

@@ -244,7 +244,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug16634180() throws Exception {
 
-        createTable("testBug16634180", "(pk integer primary key, val integer)");
+        createTable("testBug16634180", "(pk integer primary key, val integer)", "InnoDB");
         this.stmt.executeUpdate("insert into testBug16634180 values(0,0)");
 
         Connection c1 = null;
