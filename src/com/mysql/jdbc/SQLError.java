@@ -24,7 +24,6 @@
 package com.mysql.jdbc;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.BindException;
 import java.sql.BatchUpdateException;
 import java.sql.DataTruncation;
@@ -145,8 +144,6 @@ public class SQLError {
 
     private static final Constructor<?> JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR;
 
-    private static Method THROWABLE_INIT_CAUSE_METHOD;
-
     static {
         if (Util.isJdbc4()) {
             try {
@@ -161,13 +158,6 @@ public class SQLError {
             }
         } else {
             JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = null;
-        }
-
-        try {
-            THROWABLE_INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[] { Throwable.class });
-        } catch (Throwable t) {
-            // we're not on a VM that has it
-            THROWABLE_INIT_CAUSE_METHOD = null;
         }
 
         sqlStateMessages = new HashMap<String, String>();
@@ -878,16 +868,7 @@ public class SQLError {
 
     public static SQLException createSQLException(String message, ExceptionInterceptor interceptor, Connection conn) {
         SQLException sqlEx = new SQLException(message);
-
-        if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
-
-            if (interceptedEx != null) {
-                return interceptedEx;
-            }
-        }
-
-        return sqlEx;
+        return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
     }
 
     public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor) {
@@ -895,31 +876,11 @@ public class SQLError {
     }
 
     public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, Connection conn) {
-        if (THROWABLE_INIT_CAUSE_METHOD == null) {
-            if (cause != null) {
-                message = message + " due to " + cause.toString();
-            }
-        }
-
         SQLException sqlEx = createSQLException(message, sqlState, interceptor);
 
-        if (cause != null && THROWABLE_INIT_CAUSE_METHOD != null) {
-            try {
-                THROWABLE_INIT_CAUSE_METHOD.invoke(sqlEx, new Object[] { cause });
-            } catch (Throwable t) {
-                // we're not going to muck with that here, since it's an error condition anyway!
-            }
-        }
+        sqlEx.initCause(cause);
 
-        if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
-
-            if (interceptedEx != null) {
-                return interceptedEx;
-            }
-        }
-
-        return sqlEx;
+        return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
     }
 
     public static SQLException createSQLException(String message, String sqlState, int vendorErrorCode, ExceptionInterceptor interceptor) {
@@ -1001,28 +962,12 @@ public class SQLError {
                 sqlEx = new SQLException(message, sqlState, vendorErrorCode);
             }
 
-            if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
-
-                if (interceptedEx != null) {
-                    return interceptedEx;
-                }
-            }
-
-            return sqlEx;
+            return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
         } catch (SQLException sqlEx) {
             SQLException unexpectedEx = new SQLException("Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: "
                     + Util.stackTraceToString(sqlEx), SQL_STATE_GENERAL_ERROR);
 
-            if (interceptor != null) {
-                SQLException interceptedEx = interceptor.interceptException(unexpectedEx, conn);
-
-                if (interceptedEx != null) {
-                    return interceptedEx;
-                }
-            }
-
-            return unexpectedEx;
+            return runThroughExceptionInterceptor(interceptor, unexpectedEx, conn);
         }
     }
 
@@ -1044,23 +989,7 @@ public class SQLError {
             }
         }
 
-        if (THROWABLE_INIT_CAUSE_METHOD != null && underlyingException != null) {
-            try {
-                THROWABLE_INIT_CAUSE_METHOD.invoke(exToReturn, new Object[] { underlyingException });
-            } catch (Throwable t) {
-                // we're not going to muck with that here, since it's an error condition anyway!
-            }
-        }
-
-        if (interceptor != null) {
-            SQLException interceptedEx = interceptor.interceptException(exToReturn, conn);
-
-            if (interceptedEx != null) {
-                return interceptedEx;
-            }
-        }
-
-        return exToReturn;
+        return runThroughExceptionInterceptor(interceptor, exToReturn, conn);
     }
 
     /**
@@ -1182,11 +1111,6 @@ public class SQLError {
             // We haven't figured out a good reason, so copy it.
             exceptionMessageBuf.append(Messages.getString("CommunicationsException.20"));
 
-            if (THROWABLE_INIT_CAUSE_METHOD == null && underlyingException != null) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.21"));
-                exceptionMessageBuf.append(Util.stackTraceToString(underlyingException));
-            }
-
             if (conn != null && conn.getMaintainTimeStats() && !conn.getParanoid()) {
                 exceptionMessageBuf.append("\n\n");
                 if (lastPacketReceivedTimeMs != 0) {
@@ -1202,28 +1126,6 @@ public class SQLError {
         return exceptionMessageBuf.toString();
     }
 
-    /**
-     * Creates a BatchUpdateException taking in consideration the JDBC version in use. For JDBC version prior to 4.2 the updates count array has int elements
-     * while JDBC 4.2 and beyond uses long values.
-     * 
-     * @param ex
-     * @param updateCounts
-     * @param interceptor
-     * @return
-     */
-    public static BatchUpdateException createBatchUpdateException(SQLException ex, long[] updateCounts, ExceptionInterceptor interceptor) throws SQLException {
-        BatchUpdateException batchException;
-
-        if (Util.isJdbc42()) {
-            batchException = (BatchUpdateException) Util.getInstance("java.sql.BatchUpdateException", new Class[] { String.class, String.class, int.class,
-                    long[].class, Throwable.class }, new Object[] { ex.getMessage(), ex.getSQLState(), ex.getErrorCode(), updateCounts, ex }, interceptor);
-        } else { // return pre-JDBC4.2 BatchUpdateException (updateCounts are limited to int[])
-            batchException = new BatchUpdateException(ex.getMessage(), ex.getSQLState(), ex.getErrorCode(), Util.truncateAndConvertToInt(updateCounts));
-            batchException.initCause(ex);
-        }
-        return batchException;
-    }
-
     public static SQLException notImplemented() {
         if (Util.isJdbc4()) {
             try {
@@ -1234,5 +1136,67 @@ public class SQLError {
         }
 
         return new NotImplemented();
+    }
+
+    /**
+     * Run exception through an ExceptionInterceptor chain.
+     * 
+     * @param exInterceptor
+     * @param sqlEx
+     * @param conn
+     * @return
+     */
+    private static SQLException runThroughExceptionInterceptor(ExceptionInterceptor exInterceptor, SQLException sqlEx, Connection conn) {
+        if (exInterceptor != null) {
+            SQLException interceptedEx = exInterceptor.interceptException(sqlEx, conn);
+
+            if (interceptedEx != null) {
+                return interceptedEx;
+            }
+        }
+        return sqlEx;
+    }
+
+    /**
+     * Create a BatchUpdateException taking in consideration the JDBC version in use. For JDBC version prior to 4.2 the updates count array has int elements
+     * while JDBC 4.2 and beyond uses long values.
+     * 
+     * @param underlyingEx
+     * @param updateCounts
+     * @param interceptor
+     */
+    public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor) throws SQLException {
+        SQLException newEx;
+
+        if (Util.isJdbc42()) {
+            newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException", new Class[] { String.class, String.class, int.class, long[].class,
+                    Throwable.class }, new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts,
+                    underlyingEx }, interceptor);
+        } else { // return pre-JDBC4.2 BatchUpdateException (updateCounts are limited to int[])
+            newEx = new BatchUpdateException(underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(),
+                    Util.truncateAndConvertToInt(updateCounts));
+            newEx.initCause(underlyingEx);
+        }
+        return runThroughExceptionInterceptor(interceptor, newEx, null);
+    }
+
+    /**
+     * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
+     * 
+     * @param message
+     * @param sqlState
+     * @param interceptor
+     */
+    public static SQLException createSQLFeatureNotSupportedException(String message, String sqlState, ExceptionInterceptor interceptor) throws SQLException {
+        SQLException newEx;
+
+        if (Util.isJdbc4()) {
+            newEx = (SQLException) Util.getInstance("java.sql.SQLFeatureNotSupportedException", new Class[] { String.class, String.class }, new Object[] {
+                    message, sqlState }, interceptor);
+        } else {
+            newEx = new NotImplemented();
+        }
+
+        return runThroughExceptionInterceptor(interceptor, newEx, null);
     }
 }

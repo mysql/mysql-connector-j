@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -347,8 +347,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
                         + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             }
-            assertEquals(Util.isJdbc4() ? Class.forName("com.mysql.jdbc.JDBC4PreparedStatement") : com.mysql.jdbc.PreparedStatement.class,
-                    this.pstmt.getClass());
+            assertEquals(Util.isJdbc4() ? Class.forName(Util.isJdbc42() ? "com.mysql.jdbc.JDBC42PreparedStatement" : "com.mysql.jdbc.JDBC4PreparedStatement")
+                    : com.mysql.jdbc.PreparedStatement.class, this.pstmt.getClass());
             this.pstmt.executeUpdate();
 
             Connection testConn = null;
@@ -361,8 +361,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
                             + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 
                 }
-                assertEquals(Util.isJdbc4() ? Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement") : com.mysql.jdbc.ServerPreparedStatement.class,
-                        this.pstmt.getClass());
+                assertEquals(
+                        Util.isJdbc4() ? Class.forName(Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ServerPreparedStatement"
+                                : "com.mysql.jdbc.JDBC4ServerPreparedStatement") : com.mysql.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
                 this.pstmt.executeUpdate();
             } finally {
                 if (testConn != null) {

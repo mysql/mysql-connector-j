@@ -1461,7 +1461,9 @@ public class ConnectionTest extends BaseTestCase {
 
             String classname = "com.mysql.jdbc.ServerPreparedStatement";
 
-            if (Util.isJdbc4()) {
+            if (Util.isJdbc42()) {
+                classname = "com.mysql.jdbc.JDBC42ServerPreparedStatement";
+            } else if (Util.isJdbc4()) {
                 classname = "com.mysql.jdbc.JDBC4ServerPreparedStatement";
             }
 

@@ -54,7 +54,9 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR = Class.forName("com.mysql.jdbc.jdbc2.optional.JDBC4PreparedStatementWrapper").getConstructor(
+                String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.jdbc2.optional.JDBC42PreparedStatementWrapper"
+                        : "com.mysql.jdbc.jdbc2.optional.JDBC4PreparedStatementWrapper";
+                JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { ConnectionWrapper.class, MysqlPooledConnection.class, PreparedStatement.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
@@ -1086,7 +1088,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     //	}
 
     /**
-     * JDBC 4.2
      * Same as PreparedStatement.executeUpdate() but returns long instead of int.
      */
     public long executeLargeUpdate() throws SQLException {

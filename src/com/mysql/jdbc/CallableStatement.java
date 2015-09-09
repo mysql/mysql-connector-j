@@ -58,9 +58,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName("com.mysql.jdbc.JDBC4CallableStatement").getConstructor(
-                        new Class[] { MySQLConnection.class, CallableStatementParamInfo.class });
-                JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName("com.mysql.jdbc.JDBC4CallableStatement").getConstructor(
+                String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42CallableStatement" : "com.mysql.jdbc.JDBC4CallableStatement";
+                JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { MySQLConnection.class, CallableStatementParamInfo.class });
+                JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { MySQLConnection.class, String.class, String.class, Boolean.TYPE });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);

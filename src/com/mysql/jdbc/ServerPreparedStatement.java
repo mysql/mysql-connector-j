@@ -61,7 +61,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_SPS_CTOR = Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement").getConstructor(
+                String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ServerPreparedStatement" : "com.mysql.jdbc.JDBC4ServerPreparedStatement";
+                JDBC_4_SPS_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { MySQLConnection.class, String.class, String.class, Integer.TYPE, Integer.TYPE });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);

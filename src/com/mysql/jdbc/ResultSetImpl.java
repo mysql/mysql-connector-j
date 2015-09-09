@@ -99,17 +99,20 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
 public class ResultSetImpl implements ResultSetInternalMethods {
 
     private static final Constructor<?> JDBC_4_RS_4_ARG_CTOR;
-    private static final Constructor<?> JDBC_4_RS_6_ARG_CTOR;;
-    private static final Constructor<?> JDBC_4_UPD_RS_6_ARG_CTOR;
+    private static final Constructor<?> JDBC_4_RS_5_ARG_CTOR;;
+    private static final Constructor<?> JDBC_4_UPD_RS_5_ARG_CTOR;
 
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_RS_4_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4ResultSet").getConstructor(
+                String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ResultSet" : "com.mysql.jdbc.JDBC4ResultSet";
+                JDBC_4_RS_4_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { Long.TYPE, Long.TYPE, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
-                JDBC_4_RS_6_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4ResultSet").getConstructor(
+                JDBC_4_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
-                JDBC_4_UPD_RS_6_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4UpdatableResultSet").getConstructor(
+
+                jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42UpdatableResultSet" : "com.mysql.jdbc.JDBC4UpdatableResultSet";
+                JDBC_4_UPD_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
@@ -120,8 +123,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
         } else {
             JDBC_4_RS_4_ARG_CTOR = null;
-            JDBC_4_RS_6_ARG_CTOR = null;
-            JDBC_4_UPD_RS_6_ARG_CTOR = null;
+            JDBC_4_RS_5_ARG_CTOR = null;
+            JDBC_4_UPD_RS_5_ARG_CTOR = null;
         }
     }
 
@@ -336,11 +339,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         }
 
         if (!isUpdatable) {
-            return (ResultSetImpl) Util.handleNewInstance(JDBC_4_RS_6_ARG_CTOR, new Object[] { catalog, fields, tuples, conn, creatorStmt },
+            return (ResultSetImpl) Util.handleNewInstance(JDBC_4_RS_5_ARG_CTOR, new Object[] { catalog, fields, tuples, conn, creatorStmt },
                     conn.getExceptionInterceptor());
         }
 
-        return (ResultSetImpl) Util.handleNewInstance(JDBC_4_UPD_RS_6_ARG_CTOR, new Object[] { catalog, fields, tuples, conn, creatorStmt },
+        return (ResultSetImpl) Util.handleNewInstance(JDBC_4_UPD_RS_5_ARG_CTOR, new Object[] { catalog, fields, tuples, conn, creatorStmt },
                 conn.getExceptionInterceptor());
     }
 
@@ -4635,19 +4638,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             return (T) getRef(columnIndex);
         } else if (type.equals(URL.class)) {
             return (T) getURL(columnIndex);
-            //		} else if (type.equals(Struct.class)) {
-            //				
-            //			} 
-            //		} else if (type.equals(RowId.class)) {
-            //			
-            //		} else if (type.equals(NClob.class)) {
-            //			
-            //		} else if (type.equals(SQLXML.class)) {
-
         } else {
             if (this.connection.getAutoDeserialize()) {
                 try {
-                    return (T) getObject(columnIndex);
+                    return type.cast(getObject(columnIndex));
                 } catch (ClassCastException cce) {
                     SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());

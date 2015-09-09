@@ -83,11 +83,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_PSTMT_2_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4PreparedStatement").getConstructor(
-                        new Class[] { MySQLConnection.class, String.class });
-                JDBC_4_PSTMT_3_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4PreparedStatement").getConstructor(
-                        new Class[] { MySQLConnection.class, String.class, String.class });
-                JDBC_4_PSTMT_4_ARG_CTOR = Class.forName("com.mysql.jdbc.JDBC4PreparedStatement").getConstructor(
+                String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42PreparedStatement" : "com.mysql.jdbc.JDBC4PreparedStatement";
+                JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(new Class[] { MySQLConnection.class, String.class });
+                JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(new Class[] { MySQLConnection.class, String.class, String.class });
+                JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
                         new Class[] { MySQLConnection.class, String.class, String.class, ParseInfo.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
@@ -3605,25 +3604,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 setNull(parameterIndex, java.sql.Types.OTHER);
             } else {
                 try {
+                    /*
+                     * From Table-B5 in the JDBC Spec
+                     */
                     switch (targetSqlType) {
                         case Types.BOOLEAN:
-                            /*
-                             * From Table-B5 in the JDBC-3.0 Spec
-                             * 
-                             * T S I B R F D D N B B C V L
-                             * I M N I E L O E U I O H A O
-                             * N A T G A O U C M T O A R N
-                             * Y L E I L A B I E L R C G
-                             * I L G N T L M R E H V
-                             * N I E T E A I A A A
-                             * T N R L C N R R
-                             * T C
-                             * H
-                             * A
-                             * R
-                             * -----------------------------------
-                             * Boolean x x x x x x x x x x x x x x
-                             */
 
                             if (parameterObj instanceof Boolean) {
                                 setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
@@ -4521,6 +4506,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private final byte[] streamToBytes(InputStream in, boolean escape, int streamLength, boolean useLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            in.mark(Integer.MAX_VALUE); // we may need to read this same stream several times, so we need to reset it at the end.
             try {
                 if (this.streamConvertBuf == null) {
                     this.streamConvertBuf = new byte[4096];
@@ -4579,6 +4565,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 return bytesOut.toByteArray();
             } finally {
+                try {
+                    in.reset();
+                } catch (IOException e) {
+                }
                 if (this.connection.getAutoClosePStmtStreams()) {
                     try {
                         in.close();

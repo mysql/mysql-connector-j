@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2216,18 +2216,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     @Override
     public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
-
-            this.updater.setObject(columnIndex, x);
-        } else {
-            this.inserter.setObject(columnIndex, x);
-
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
-        }
+        updateObjectInternal(columnIndex, x, null, 0);
     }
 
     /**
@@ -2250,15 +2239,37 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     @Override
     public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
+        updateObjectInternal(columnIndex, x, null, scale);
+    }
+
+    /**
+     * Internal setObject implementation. Although targetType is not part of default ResultSet methods signatures, it is used for type conversions from
+     * JDBC42UpdatableResultSet new JDBC 4.2 updateObject() methods.
+     * 
+     * @param columnIndex
+     * @param x
+     * @param targetType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    protected synchronized void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
                 this.doingUpdates = true;
                 syncUpdate();
             }
 
-            this.updater.setObject(columnIndex, x);
+            if (targetType == null) {
+                this.updater.setObject(columnIndex, x);
+            } else {
+                this.updater.setObject(columnIndex, x, targetType);
+            }
         } else {
-            this.inserter.setObject(columnIndex, x);
+            if (targetType == null) {
+                this.inserter.setObject(columnIndex, x);
+            } else {
+                this.inserter.setObject(columnIndex, x, targetType);
+            }
 
             this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
