@@ -31,7 +31,7 @@ import java.util.Properties;
  * <pre>
  * XSessionFactory xFactory = new XSessionFactory();
  * 
- * {@link Session} crudSession = xFactory.getSession("<b>mysql:x:</b>//host[:port]/db?user=user1&amp;password=pwd1");
+ * {@link XSession} crudSession = xFactory.getSession("<b>mysql:x:</b>//host[:port]/db?user=user1&amp;password=pwd1");
  * 
  * {@link NodeSession} nodeSession = xFactory.getNodeSession("<b>mysql:x:</b>//host[:port]/db?user=user1&amp;password=pwd1");
  * </pre>
@@ -40,22 +40,22 @@ import java.util.Properties;
 public interface XSessionFactory {
 
     /**
-     * Creates {@link Session} by given URL.
+     * Creates {@link XSession} by given URL.
      * 
      * @param url
-     * @return {@link Session}
+     * @return {@link XSession}
      */
-    Session getSession(String url);
+    XSession getSession(String url);
 
     /**
-     * Creates {@link Session} according to given properties.
+     * Creates {@link XSession} according to given properties.
      * 
      * @param properties
-     * @return {@link Session}
+     * @return {@link XSession}
      */
-    Session getSession(Properties properties);
+    XSession getSession(Properties properties);
 
-    // The mysqlx.getNodeSession() function can take a URL that specifies the connection information for a specific node or it can take a configuration provided by an Session.
+    // The mysqlx.getNodeSession() function can take a URL that specifies the connection information for a specific node or it can take a configuration provided by an XSession.
     NodeSession getNodeSession(String url);
 
     NodeSession getNodeSession(Properties properties);

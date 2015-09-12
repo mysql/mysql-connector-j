@@ -25,9 +25,9 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Properties;
 
-import com.mysql.cj.api.x.Session;
+import com.mysql.cj.api.x.XSession;
 
-public class SessionImpl extends AbstractSession implements Session {
+public class SessionImpl extends AbstractSession implements XSession {
     public SessionImpl(Properties properties) {
         super(properties);
     }

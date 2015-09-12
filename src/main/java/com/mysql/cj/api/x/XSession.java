@@ -24,13 +24,13 @@
 package com.mysql.cj.api.x;
 
 /**
- * MySQLx introduces a new, high-level database session concept that is called Session. When working with MySQLx it is important to understand this new
- * Session concept which is different from working with traditional low-level MySQL connections.
+ * MySQLx introduces a new, high-level database session concept that is called XSession. When working with MySQLx it is important to understand this new
+ * XSession concept which is different from working with traditional low-level MySQL connections.
  * 
- * Sessions encapsulate one or more actual MySQL connections. Use of this higher abstraction level decouples the physical MySQL setup from the application code.
- * An application using the Session class can be run against a single MySQL server or large number of MySQL servers forming a sharding cluster with no code
+ * XSessions encapsulate one or more actual MySQL connections. Use of this higher abstraction level decouples the physical MySQL setup from the application code.
+ * An application using the XSession class can be run against a single MySQL server or large number of MySQL servers forming a sharding cluster with no code
  * changes. When a low-level MySQL connection to a single MySQL instance is needed this is still supported by using a low-level {@link NodeSession}.
  */
-public interface Session extends BaseSession {
+public interface XSession extends BaseSession {
 
 }

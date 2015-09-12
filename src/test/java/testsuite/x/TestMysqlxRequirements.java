@@ -29,9 +29,9 @@ import java.util.Properties;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.View;
+import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
@@ -80,7 +80,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (System.getProperty("com.mysqlx.testsuite.url") == null) { // if (!this.isSetForMySQLxTests) {
             return;
         }
-        Session sess;
+        XSession sess;
 
         String url = this.baseUrl;
         sess = getSession(url);
@@ -144,7 +144,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
             return;
         }
 
-        Session sess = getSession(this.baseUrl);
+        XSession sess = getSession(this.baseUrl);
         assertNotNull(sess);
         assertTrue(sess instanceof SessionImpl);
 

@@ -28,7 +28,7 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 import com.mysql.cj.api.x.NodeSession;
-import com.mysql.cj.api.x.Session;
+import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.api.x.XSessionFactory;
 import com.mysql.cj.x.MysqlxSessionFactory;
 
@@ -58,16 +58,16 @@ public abstract class BaseMysqlxTestCase extends TestCase {
         return sess;
     }
 
-    protected Session getSession(String url) {
+    protected XSession getSession(String url) {
 
-        Session sess = this.f.getSession(url);
+        XSession sess = this.f.getSession(url);
 
         return sess;
     }
 
-    protected Session getSession(Properties props) {
+    protected XSession getSession(Properties props) {
 
-        Session sess = this.f.getSession(props);
+        XSession sess = this.f.getSession(props);
 
         return sess;
     }

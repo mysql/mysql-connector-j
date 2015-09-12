@@ -24,23 +24,12 @@
 package testsuite.mysqlx.devapi;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
-import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
-import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 public class TransactionTest extends BaseDevApiTest {
     protected Collection collection;

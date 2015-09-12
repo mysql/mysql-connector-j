@@ -37,7 +37,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.api.x.Session;
+import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
@@ -61,7 +61,7 @@ public class SchemaTest extends BaseDevApiTest {
         assertTrue(this.schema.equals(otherDefaultSchema));
         assertFalse(this.schema.equals(this.session));
 
-        Session otherSession = new SessionImpl(this.testProperties);
+        XSession otherSession = new SessionImpl(this.testProperties);
         Schema diffSessionSchema = otherSession.getDefaultSchema();
         assertEquals(this.schema.getName(), diffSessionSchema.getName());
         assertFalse(this.schema.equals(diffSessionSchema));
