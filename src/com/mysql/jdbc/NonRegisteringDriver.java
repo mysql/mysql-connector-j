@@ -252,11 +252,14 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @return true if this driver accepts the given URL
      * 
      * @exception SQLException
-     *                if a database-access error occurs
+     *                if a database access error occurs or the url is null
      * 
      * @see java.sql.Driver#acceptsURL
      */
     public boolean acceptsURL(String url) throws SQLException {
+        if (url == null) {
+            throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.1"), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, null);
+        }
         return (parseURL(url, null) != null);
     }
 
@@ -265,27 +268,24 @@ public class NonRegisteringDriver implements java.sql.Driver {
     //
 
     /**
-     * Try to make a database connection to the given URL. The driver should
-     * return "null" if it realizes it is the wrong kind of driver to connect to
-     * the given URL. This will be common, as when the JDBC driverManager is
-     * asked to connect to a given URL, it passes the URL to each loaded driver
-     * in turn.
+     * Try to make a database connection to the given URL. The driver should return "null" if it realizes it is the wrong kind of driver to connect to the given
+     * URL. This will be common, as when the JDBC driverManager is asked to connect to a given URL, it passes the URL to each loaded driver in turn.
      * 
      * <p>
-     * The driver should raise an SQLException if it is the right driver to connect to the given URL, but has trouble connecting to the database.
+     * The driver should raise an SQLException if the URL is null or if it is the right driver to connect to the given URL, but has trouble connecting to the
+     * database.
      * </p>
      * 
      * <p>
-     * The java.util.Properties argument can be used to pass arbitrary string tag/value pairs as connection arguments.
+     * The java.util.Properties argument can be used to pass arbitrary string tag/value pairs as connection arguments. These properties take precedence over any
+     * properties sent in the URL.
      * </p>
      * 
      * <p>
-     * My protocol takes the form:
+     * MySQL protocol takes the form:
      * 
      * <PRE>
-     * 
      * jdbc:mysql://host:port/database
-     * 
      * </PRE>
      * 
      * </p>
@@ -295,20 +295,22 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @param info
      *            a list of arbitrary tag/value pairs as connection arguments
      * 
-     * @return a connection to the URL or null if it isnt us
+     * @return a connection to the URL or null if it isn't us
      * 
      * @exception SQLException
-     *                if a database access error occurs
+     *                if a database access error occurs or the url is null
      * 
      * @see java.sql.Driver#connect
      */
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
-        if (url != null) {
-            if (StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX)) {
-                return connectLoadBalanced(url, info);
-            } else if (StringUtils.startsWithIgnoreCase(url, REPLICATION_URL_PREFIX)) {
-                return connectReplicationConnection(url, info);
-            }
+        if (url == null) {
+            throw SQLError.createSQLException(Messages.getString("NonRegisteringDriver.1"), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, null);
+        }
+
+        if (StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX)) {
+            return connectLoadBalanced(url, info);
+        } else if (StringUtils.startsWithIgnoreCase(url, REPLICATION_URL_PREFIX)) {
+            return connectReplicationConnection(url, info);
         }
 
         Properties props = null;
@@ -648,13 +650,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 if ((value != null && value.length() > 0) && (parameter != null && parameter.length() > 0)) {
                     try {
-                        urlProps.put(parameter, URLDecoder.decode(value, "UTF-8"));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value, "UTF-8"));
                     } catch (UnsupportedEncodingException badEncoding) {
                         // punt
-                        urlProps.put(parameter, URLDecoder.decode(value));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value));
                     } catch (NoSuchMethodError nsme) {
                         // punt again
-                        urlProps.put(parameter, URLDecoder.decode(value));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value));
                     }
                 }
             }
