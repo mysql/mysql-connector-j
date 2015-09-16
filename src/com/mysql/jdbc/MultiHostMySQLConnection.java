@@ -2419,4 +2419,12 @@ public class MultiHostMySQLConnection implements MySQLConnection {
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         getActiveMySQLConnection().setEnabledSSLCipherSuites(cipherSuites);
     }
+
+    public boolean getEnableEscapeProcessing() {
+        return getActiveMySQLConnection().getEnableEscapeProcessing();
+    }
+
+    public void setEnableEscapeProcessing(boolean flag) {
+        getActiveMySQLConnection().setEnableEscapeProcessing(flag);
+    }
 }

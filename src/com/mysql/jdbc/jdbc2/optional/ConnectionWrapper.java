@@ -2844,4 +2844,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         this.mc.setEnabledSSLCipherSuites(cipherSuites);
     }
+
+    public boolean getEnableEscapeProcessing() {
+        return this.mc.getEnableEscapeProcessing();
+    }
+
+    public void setEnableEscapeProcessing(boolean flag) {
+        this.mc.setEnableEscapeProcessing(flag);
+    }
 }

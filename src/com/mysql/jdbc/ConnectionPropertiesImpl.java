@@ -1302,6 +1302,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
             Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
 
+    private BooleanConnectionProperty enableEscapeProcessing = new BooleanConnectionProperty("enableEscapeProcessing", true,
+            Messages.getString("ConnectionProperties.enableEscapeProcessing"), "5.1.37", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
@@ -4863,5 +4866,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         this.enabledSSLCipherSuites.setValue(cipherSuites);
+    }
+
+    public boolean getEnableEscapeProcessing() {
+        return this.enableEscapeProcessing.getValueAsBoolean();
+    }
+
+    public void setEnableEscapeProcessing(boolean flag) {
+        this.enableEscapeProcessing.setValue(flag);
     }
 }

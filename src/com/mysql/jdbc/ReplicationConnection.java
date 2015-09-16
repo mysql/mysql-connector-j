@@ -3022,4 +3022,12 @@ public class ReplicationConnection implements Connection, PingTarget {
     public void setEnabledSSLCipherSuites(String cipherSuites) {
         getCurrentConnection().setEnabledSSLCipherSuites(cipherSuites);
     }
+
+    public boolean getEnableEscapeProcessing() {
+        return getCurrentConnection().getEnableEscapeProcessing();
+    }
+
+    public void setEnableEscapeProcessing(boolean flag) {
+        getCurrentConnection().setEnableEscapeProcessing(flag);
+    }
 }

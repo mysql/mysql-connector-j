@@ -323,51 +323,41 @@ public class StatementImpl implements Statement {
         this.continueBatchOnError = this.connection.getContinueBatchOnError();
         this.useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
         this.sendFractionalSeconds = this.connection.getSendFractionalSeconds();
+        this.doEscapeProcessing = this.connection.getEnableEscapeProcessing();
 
         if (!this.connection.getDontTrackOpenResources()) {
             this.connection.registerStatement(this);
         }
 
-        //
-        // Adjust, if we know it
-        //
+        this.maxFieldSize = this.connection.getMaxAllowedPacket();
 
-        if (this.connection != null) {
-            this.maxFieldSize = this.connection.getMaxAllowedPacket();
-
-            int defaultFetchSize = this.connection.getDefaultFetchSize();
-
-            if (defaultFetchSize != 0) {
-                setFetchSize(defaultFetchSize);
-            }
-
-            if (this.connection.getUseUnicode()) {
-                this.charEncoding = this.connection.getEncoding();
-
-                this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-            }
-
-            boolean profiling = this.connection.getProfileSql() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
-
-            if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
-                this.statementId = statementCounter++;
-            }
-
-            if (profiling) {
-                this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-                this.profileSQL = this.connection.getProfileSql();
-                this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-            }
-
-            int maxRowsConn = this.connection.getMaxRows();
-
-            if (maxRowsConn != -1) {
-                setMaxRows(maxRowsConn);
-            }
-
-            this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
+        int defaultFetchSize = this.connection.getDefaultFetchSize();
+        if (defaultFetchSize != 0) {
+            setFetchSize(defaultFetchSize);
         }
+
+        if (this.connection.getUseUnicode()) {
+            this.charEncoding = this.connection.getEncoding();
+            this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+        }
+
+        boolean profiling = this.connection.getProfileSql() || this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
+        if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
+            this.statementId = statementCounter++;
+        }
+        if (profiling) {
+            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
+            this.profileSQL = this.connection.getProfileSql();
+            this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
+            this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+        }
+
+        int maxRowsConn = this.connection.getMaxRows();
+        if (maxRowsConn != -1) {
+            setMaxRows(maxRowsConn);
+        }
+
+        this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
 
         this.version5013OrNewer = this.connection.versionMeetsMinimum(5, 0, 13);
     }
@@ -671,7 +661,7 @@ public class StatementImpl implements Statement {
             //
             // Need to be able to get resultset irrespective if we issued DML or not to make this work.
             //
-            ResultSetInternalMethods rs = ((com.mysql.jdbc.StatementImpl) pStmt).getResultSetInternal();
+            ResultSetInternalMethods rs = ((StatementImpl) pStmt).getResultSetInternal();
 
             rs.setStatementUsedForFetchingRows((com.mysql.jdbc.PreparedStatement) pStmt);
 

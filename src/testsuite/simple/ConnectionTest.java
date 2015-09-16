@@ -46,6 +46,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -53,11 +54,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
@@ -1851,6 +1854,97 @@ public class ConnectionTest extends BaseTestCase {
             } finally {
                 TimeZone.setDefault(defaultTZ);
             }
+        }
+    }
+
+    /**
+     * Test the new connection property 'enableEscapeProcessing', as well as the old connection property 'processEscapeCodesForPrepStmts' and interrelation
+     * between both.
+     * 
+     * This test uses a StatementInterceptor to capture the query sent to the server and assert whether escape processing has been done in the client side or if
+     * the query is sent untouched and escape processing will be done at server side, according to provided connection properties and type of Statement objects
+     * in use.
+     */
+    public void testEnableEscapeProcessing() throws Exception {
+        // make sure the connection string doesn't contain 'enableEscapeProcessing'
+        String testUrl = BaseTestCase.dbUrl;
+        int b = testUrl.indexOf("enableEscapeProcessing");
+        if (b != -1) {
+            int e = testUrl.indexOf('&', b);
+            if (e == -1) {
+                e = testUrl.length();
+                b--;
+            } else {
+                e++;
+            }
+            testUrl = testUrl.substring(0, b) + testUrl.substring(e, testUrl.length());
+        }
+        String query = "SELECT /* testEnableEscapeProcessing: (%d) */ {fn sin(pi()/2)}, {ts '2015-08-16 11:22:33'}, {fn ucase('this is mysql')}";
+        Timestamp testTimestamp = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2015-08-16 11:22:33").getTime());
+
+        for (int tst = 0; tst < 8; tst++) {
+            boolean enableEscapeProcessing = (tst & 0x1) != 0;
+            boolean processEscapeCodesForPrepStmts = (tst & 0x2) != 0;
+            boolean useServerPrepStmts = (tst & 0x4) != 0;
+
+            Properties props = new Properties();
+            props.setProperty("statementInterceptors", TestEnableEscapeProcessingStatementInterceptor.class.getName());
+            props.setProperty("enableEscapeProcessing", Boolean.toString(enableEscapeProcessing));
+            props.setProperty("processEscapeCodesForPrepStmts", Boolean.toString(processEscapeCodesForPrepStmts));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
+
+            Connection testConn = getConnectionWithProps(testUrl, props);
+            this.stmt = testConn.createStatement();
+            this.rs = this.stmt.executeQuery(String.format(query, tst));
+
+            String testCase = String.format("Case: %d [ %s | %s | %s ]/Statement", tst, enableEscapeProcessing ? "enEscProc" : "-",
+                    processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1d, this.rs.getDouble(1));
+            assertEquals(testCase, testTimestamp, this.rs.getTimestamp(2));
+            assertEquals(testCase, "THIS IS MYSQL", this.rs.getString(3));
+            assertFalse(testCase, this.rs.next());
+
+            this.pstmt = testConn.prepareStatement(String.format(query, tst));
+            this.rs = this.pstmt.executeQuery();
+
+            testCase = String.format("Case: %d [ %s | %s | %s ]/PreparedStatement", tst, enableEscapeProcessing ? "enEscProc" : "-",
+                    processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1d, this.rs.getDouble(1));
+            assertEquals(testCase, testTimestamp, this.rs.getTimestamp(2));
+            assertEquals(testCase, "THIS IS MYSQL", this.rs.getString(3));
+            assertFalse(testCase, this.rs.next());
+
+            testConn.close();
+        }
+    }
+
+    public static class TestEnableEscapeProcessingStatementInterceptor extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            if (sql == null && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+                sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).asSql();
+            }
+
+            int p;
+            if (sql != null && (p = sql.indexOf("testEnableEscapeProcessing:")) != -1) {
+                int tst = Integer.parseInt(sql.substring(sql.indexOf('(', p) + 1, sql.indexOf(')', p)));
+                boolean enableEscapeProcessing = (tst & 0x1) != 0;
+                boolean processEscapeCodesForPrepStmts = (tst & 0x2) != 0;
+                boolean useServerPrepStmts = (tst & 0x4) != 0;
+                boolean isPreparedStatement = interceptedStatement instanceof PreparedStatement;
+
+                String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
+                        processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-", isPreparedStatement ? "PreparedStatement"
+                                : "Statement");
+
+                boolean escapeProcessingDone = sql.indexOf('{') == -1;
+                assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone || !isPreparedStatement
+                        && enableEscapeProcessing == escapeProcessingDone);
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
         }
     }
 }
