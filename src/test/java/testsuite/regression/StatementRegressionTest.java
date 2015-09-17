@@ -6445,35 +6445,31 @@ public class StatementRegressionTest extends BaseTestCase {
         testBug71396MultiSettingsCheck("maxRows=2", 2, 2, 2);
 
         // Case 8: New session bue to user change
-        try {
-            this.stmt.execute("CREATE USER 'testBug71396User'@'%' IDENTIFIED BY 'testBug71396User'");
-            this.stmt.execute("GRANT SELECT ON *.* TO 'testBug71396User'@'%'");
+        createUser("'testBug71396User'@'%'", "IDENTIFIED BY 'testBug71396User'");
+        this.stmt.execute("GRANT SELECT ON *.* TO 'testBug71396User'@'%'");
 
-            testConn = getConnectionWithProps("");
-            testStmt = testBug71396StatementInit(testConn, 5);
+        testConn = getConnectionWithProps("");
+        testStmt = testBug71396StatementInit(testConn, 5);
 
-            ((JdbcConnection) testConn).changeUser("testBug71396User", "testBug71396User");
+        ((JdbcConnection) testConn).changeUser("testBug71396User", "testBug71396User");
 
-            Statement testStmtTmp = testConn.createStatement();
-            testRS = testStmtTmp.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
-            assertTrue(testRS.next());
-            assertEquals("testBug71396User@%", testRS.getString(1));
-            assertTrue(String.format("expected:higher than<%d> but was:<%s>", Integer.MAX_VALUE, testRS.getBigDecimal(2)),
-                    testRS.getBigDecimal(2).compareTo(new BigDecimal(Integer.MAX_VALUE)) == 1);
-            testRS.close();
-            testStmtTmp.close();
+        Statement testStmtTmp = testConn.createStatement();
+        testRS = testStmtTmp.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
+        assertTrue(testRS.next());
+        assertEquals("testBug71396User@%", testRS.getString(1));
+        assertTrue(String.format("expected:higher than<%d> but was:<%s>", Integer.MAX_VALUE, testRS.getBigDecimal(2)),
+                testRS.getBigDecimal(2).compareTo(new BigDecimal(Integer.MAX_VALUE)) == 1);
+        testRS.close();
+        testStmtTmp.close();
 
-            testRS = testStmt.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
-            assertTrue(testRS.next());
-            assertEquals("testBug71396User@%", testRS.getString(1));
-            assertEquals(new BigDecimal(5), testRS.getBigDecimal(2));
-            testRS.close();
+        testRS = testStmt.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
+        assertTrue(testRS.next());
+        assertEquals("testBug71396User@%", testRS.getString(1));
+        assertEquals(new BigDecimal(5), testRS.getBigDecimal(2));
+        testRS.close();
 
-            testStmt.close();
-            testConn.close();
-        } finally {
-            this.stmt.execute("DROP USER 'testBug71396User'");
-        }
+        testStmt.close();
+        testConn.close();
 
         // Case 9: New session due to reconnection
         testConn = getConnectionWithProps("");
@@ -6481,7 +6477,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         ((JdbcConnection) testConn).createNewIO(true); // true or false argument is irrelevant for this test case
 
-        Statement testStmtTmp = testConn.createStatement();
+        testStmtTmp = testConn.createStatement();
         testRS = testStmtTmp.executeQuery("SELECT @@SESSION.SQL_SELECT_LIMIT");
         assertTrue(testRS.next());
         assertTrue(String.format("expected:higher than<%d> but was:<%s>", Integer.MAX_VALUE, testRS.getBigDecimal(1)),

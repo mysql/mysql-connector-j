@@ -2671,7 +2671,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 assertTrue("No database selected", false);
             }
 
-            this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
+            createUser("'bug61203user'@'%'", "identified by 'foo'");
             this.stmt.executeUpdate("delete from mysql.db where user='bug61203user'");
             this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, "
                     + "Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,"
@@ -2702,7 +2702,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         } finally {
             dropFunction("testbug61203fn");
             dropProcedure("testbug61203pr");
-            this.stmt.executeUpdate("drop user 'bug61203user'@'%'");
 
             if (cStmt != null) {
                 cStmt.close();
@@ -2867,14 +2866,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
         assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
@@ -2953,7 +2952,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         // ALTER 2 test
-        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         cnt = 0;
@@ -2963,7 +2962,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("2 column must be found", cnt, 2);
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
-        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         cnt = 0;
@@ -4151,7 +4150,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             createDatabase(testDb2);
 
             // 1. Check if getProcedures() and getProcedureColumns() aren't returning more results than expected (as per reported bug).
-            createFunction(testDb1 + ".testBug19803348_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb1 + ".testBug19803348_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb1 + ".testBug19803348_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getFunctions(null, null, "testBug19803348_%");
@@ -4188,9 +4187,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
             dropProcedure(testDb1 + ".testBug19803348_p");
 
             // 2. Check if the results from getProcedures() and getProcedureColumns() are in the right order (secondary bug).
-            createFunction(testDb1 + ".testBug19803348_B_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb1 + ".testBug19803348_B_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb1 + ".testBug19803348_B_p", "(d int) BEGIN SELECT d; END");
-            createFunction(testDb2 + ".testBug19803348_A_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb2 + ".testBug19803348_A_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb2 + ".testBug19803348_A_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getFunctions(null, null, "testBug19803348_%");
@@ -4255,9 +4254,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20727196() throws Exception {
-        createFunction("testBug20727196_f1", "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
-        createFunction("testBug20727196_f2", "(p CHAR(1)) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='y', 'Yes', if(p='n', 'No', '?')); END");
-        createFunction("testBug20727196_f3", "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
+        createFunction("testBug20727196_f1",
+                "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) DETERMINISTIC BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
+        createFunction("testBug20727196_f2", "(p CHAR(1)) RETURNS ENUM ('Yes', 'No') DETERMINISTIC BEGIN RETURN IF(p='y', 'Yes', if(p='n', 'No', '?')); END");
+        createFunction("testBug20727196_f3",
+                "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') DETERMINISTIC BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
         createProcedure("testBug20727196_p1", "(p ENUM ('Yes', 'No')) BEGIN SELECT IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
 
         for (String connProps : new String[] { "nullCatalogMeansCurrent=true,getProceduresReturnsFunctions=false,useInformationSchema=false",

@@ -51,6 +51,7 @@ import com.mysql.cj.core.ConnectionString.HostInfo;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
@@ -213,12 +214,16 @@ public class MysqlaSession extends AbstractSession implements Session {
     @Override
     public void abortInternal() {
         if (this.protocol != null) {
+            // checking this.protocol != null isn't enough if connection is used concurrently (the usual situation
+            // with application servers which have additional thread management), this.protocol can become null
+            // at any moment after this check, causing a race condition and NPEs on next calls;
+            // but we may ignore them because at this stage null this.protocol means that we successfully closed all resources by other thread.
             try {
                 this.protocol.getSocketConnection().forceClose();
+                this.protocol.releaseResources();
             } catch (Throwable t) {
                 // can't do anything about it, and we're forcibly aborting
             }
-            this.protocol.releaseResources();
             this.protocol = null;
         }
         //this.isClosed = true;

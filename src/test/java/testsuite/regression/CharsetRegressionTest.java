@@ -92,7 +92,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         // bug is related to authentication plugins, available only in 5.5.7+ 
         if (versionMeetsMinimum(5, 5, 7)) {
             try {
-                this.stmt.execute("CREATE USER 'Bug72630User'@'%' IDENTIFIED WITH mysql_native_password AS 'pwd'");
+                createUser("'Bug72630User'@'%'", "IDENTIFIED WITH mysql_native_password AS 'pwd'");
                 this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
 
                 final Properties props = new Properties();
@@ -122,8 +122,6 @@ public class CharsetRegressionTest extends BaseTestCase {
                 });
             } catch (SQLException e) {
                 e.printStackTrace();
-            } finally {
-                this.stmt.execute("DROP USER 'Bug72630User'@'%'");
             }
         }
     }

@@ -134,11 +134,7 @@ public class CompressedInputStream extends InputStream {
 
             readFully(compressedBuffer, 0, compressedPacketLength);
 
-            try {
-                this.inflater.reset();
-            } catch (NullPointerException npe) {
-                this.inflater = new Inflater();
-            }
+            this.inflater.reset();
 
             this.inflater.setInput(compressedBuffer);
 
@@ -148,7 +144,6 @@ public class CompressedInputStream extends InputStream {
                 throw new IOException("Error while uncompressing packet from server.");
             }
 
-            this.inflater.end();
         } else {
             if (doTrace) {
                 this.log.logTrace("Packet didn't meet compression threshold, not uncompressing...");

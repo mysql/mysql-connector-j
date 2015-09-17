@@ -18,6 +18,14 @@ nn-nn-15 - Version 6.0.0
 
   - Merged version 5.1.37.
 
+  - Fix for Bug#16634180, LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
+
+  - Fix for Bug#75849 (20536592), NPE in abortInternal() method on line 1358 of ConnectionImpl.
+
+  - Fix for Bug#78106 (21648826), Potential memory leak with inflater.
+
+  - Fix for Bug#78225 (21697684), DEFAULT NO_AUTO_CREATE_USER SQL_MODE BEHAVIOR BROKE SOME TESTS
+
   - Fix for Bug#77665 (21415165), JDBC fails to connect with MySQL 5.0.
 
   - Fix for Bug#77681 (21429909), rewrite replace sql like insert when rewriteBatchedStatements=true (contribution).
