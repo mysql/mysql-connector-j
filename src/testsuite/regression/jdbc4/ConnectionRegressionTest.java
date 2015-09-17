@@ -132,6 +132,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20685022() throws Exception {
+        if (!isCommunityEdition()) {
+            return;
+        }
+
         final Properties props = new Properties();
         final Callable<Void> callableInstance = new Callable<Void>() {
             public Void call() throws Exception {
@@ -210,7 +214,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         con = pds.getPooledConnection();
         assertTrue(con instanceof JDBC4MysqlPooledConnection);
         testBug62452WithConnection(con);
-        
+
         MysqlXADataSource xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
 
@@ -228,7 +232,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     private void testBug62452WithConnection(PooledConnection con) throws Exception {
         this.pstmt = con.getConnection().prepareStatement("SELECT 1");
-        this.rs = this.pstmt.executeQuery();           
+        this.rs = this.pstmt.executeQuery();
         con.close();
 
         // If PooledConnection is already closed by some reason a NullPointerException was thrown on the next line
