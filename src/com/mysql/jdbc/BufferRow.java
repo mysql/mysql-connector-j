@@ -261,6 +261,7 @@ public class BufferRow extends ResultSetRow {
                 case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
                 case MysqlDefs.FIELD_TYPE_GEOMETRY:
                 case MysqlDefs.FIELD_TYPE_BIT:
+                case MysqlDefs.FIELD_TYPE_JSON:
                     this.rowFromServer.fastSkipLenByteArray();
 
                     break;
@@ -356,6 +357,7 @@ public class BufferRow extends ResultSetRow {
             case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
             case MysqlDefs.FIELD_TYPE_GEOMETRY:
             case MysqlDefs.FIELD_TYPE_BIT:
+            case MysqlDefs.FIELD_TYPE_JSON:
                 return this.rowFromServer.readLenByteArray(0);
 
             default:

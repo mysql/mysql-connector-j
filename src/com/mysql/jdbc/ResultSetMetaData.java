@@ -363,13 +363,16 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return "ENUM";
 
             case MysqlDefs.FIELD_TYPE_YEAR:
-                return "YEAR"; // $NON_NLS-1$
+                return "YEAR";
 
             case MysqlDefs.FIELD_TYPE_SET:
                 return "SET";
 
             case MysqlDefs.FIELD_TYPE_GEOMETRY:
                 return "GEOMETRY";
+
+            case MysqlDefs.FIELD_TYPE_JSON:
+                return "JSON";
 
             default:
                 return "UNKNOWN";

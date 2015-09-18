@@ -4444,10 +4444,8 @@ public class MysqlIO {
             case MysqlDefs.FIELD_TYPE_DECIMAL:
             case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
             case MysqlDefs.FIELD_TYPE_GEOMETRY:
-                unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
-
-                break;
             case MysqlDefs.FIELD_TYPE_BIT:
+            case MysqlDefs.FIELD_TYPE_JSON:
                 unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
 
                 break;
