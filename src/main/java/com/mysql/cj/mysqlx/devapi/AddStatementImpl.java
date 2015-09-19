@@ -83,7 +83,7 @@ public class AddStatementImpl implements AddStatement {
             return newId;
         }).collect(Collectors.toList());
 
-        List<String> jsonStrings = this.newDocs.stream().map(Object::toString).collect(Collectors.toList());
+        List<String> jsonStrings = this.newDocs.stream().map(JsonDoc::toPackedString).collect(Collectors.toList());
 
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
                 .addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);

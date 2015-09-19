@@ -52,6 +52,23 @@ public class JsonArray extends ArrayList<JsonValue> implements JsonValue {
         return sb.toString();
     }
 
+    public String toPackedString() {
+        StringBuilder sb = new StringBuilder("[");
+        boolean isFirst = true;
+        for (JsonValue val : this) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                sb.append(",");
+            }
+
+            sb.append(val.toString());
+        }
+
+        sb.append("]");
+        return sb.toString();
+    }
+
     public JsonArray addValue(JsonValue val) {
         add(val);
         return this;

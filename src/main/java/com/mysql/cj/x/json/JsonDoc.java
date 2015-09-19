@@ -95,7 +95,7 @@ public class JsonDoc extends TreeMap<String, JsonValue> implements JsonValue {
     private static final long serialVersionUID = 6557406141541247905L;
 
     /**
-     * @return JSON string
+     * @return human readable "pretty" JSON string
      */
     @Override
     public String toString() {
@@ -111,6 +111,26 @@ public class JsonDoc extends TreeMap<String, JsonValue> implements JsonValue {
         }
         if (size() > 0) {
             sb.append("\n");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    public String toPackedString() {
+        StringBuilder sb = new StringBuilder("{");
+        boolean isFirst = true;
+        for (String key : keySet()) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append("\"").append(key).append("\":");
+            if (JsonArray.class.equals(get(key).getClass())) {
+                sb.append(((JsonArray) get(key)).toPackedString());
+            } else {
+                sb.append(get(key).toString());
+            }
         }
         sb.append("}");
         return sb.toString();
