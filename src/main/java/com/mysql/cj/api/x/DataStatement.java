@@ -23,20 +23,14 @@
 
 package com.mysql.cj.api.x;
 
-import com.mysql.cj.x.json.JsonDoc;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 
-public interface FindStatement extends DataStatement<FindStatement, FetchedDocs, JsonDoc> {
-    FindStatement fields(String projection);
-
-    FindStatement fields(Expression docProjection);
-
-    FindStatement groupBy(String groupBy);
-
-    FindStatement having(String having);
-
-    FindStatement orderBy(String sortFields);
-
-    FindStatement skip(long limitOffset);
-
-    FindStatement limit(long numberOfRows);
+/**
+ * A statement that results in a data set of elements as it's result. This interface adds a row-wise callback for async execution.
+ */
+public interface DataStatement<STMT_T, RES_T, RES_ELEMENT_T> extends Statement<STMT_T, RES_T> {
+    default <R> CompletableFuture<R> executeAsync(R identity, BiFunction<? super R, RES_ELEMENT_T, ? extends R> accumulator) {
+        throw new NullPointerException();
+    }
 }

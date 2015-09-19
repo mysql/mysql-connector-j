@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api.x;
 
-public interface SelectStatement extends Statement<SelectStatement, FetchedRows> {
+public interface SelectStatement extends DataStatement<SelectStatement, FetchedRows, Row> {
     SelectStatement where(String searchCondition);
 
     SelectStatement groupBy(String groupBy);
@@ -35,6 +35,4 @@ public interface SelectStatement extends Statement<SelectStatement, FetchedRows>
     SelectStatement limit(long numberOfRows);
 
     SelectStatement offset(long limitOffset);
-
-    //SelectStatement fetch(Object callback); // not supported in v1
 }

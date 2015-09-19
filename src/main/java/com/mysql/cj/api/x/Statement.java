@@ -27,14 +27,14 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 public interface Statement<STMT_T, RES_T> {
     RES_T execute();
 
-    default Future<RES_T> executeAsync() {
-        throw new NullPointerException("TODO: ASYNC NOT SUPPORTED IN THIS VERSION");
+    default CompletableFuture<RES_T> executeAsync() {
+        throw new NullPointerException();
     }
 
     default STMT_T clearBindings() {
