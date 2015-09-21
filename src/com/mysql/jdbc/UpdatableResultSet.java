@@ -1387,7 +1387,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     @Override
     public synchronized boolean rowDeleted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -1405,7 +1405,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     @Override
     public synchronized boolean rowInserted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -1423,7 +1423,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     @Override
     public synchronized boolean rowUpdated() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

@@ -4714,7 +4714,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     this.needsPing = this.getReconnectAtTxEnd();
                 }
             } else {
-                throw SQLError.notImplemented();
+                throw SQLError.createSQLFeatureNotSupportedException();
             }
         }
     }
@@ -5053,7 +5053,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     closeStatement(stmt);
                 }
             } else {
-                throw SQLError.notImplemented();
+                throw SQLError.createSQLFeatureNotSupportedException();
             }
         }
     }

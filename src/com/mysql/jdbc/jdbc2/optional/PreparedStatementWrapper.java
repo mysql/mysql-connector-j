@@ -1080,11 +1080,11 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     //	}
     //
     //	public boolean isWrapperFor(Class arg0) throws SQLException {
-    //		throw SQLError.notImplemented();
+    //		throw SQLError.createSQLFeatureNotSupportedException();
     //	}
     //
     //	public Object unwrap(Class arg0) throws SQLException {
-    //		throw SQLError.notImplemented();
+    //		throw SQLError.createSQLFeatureNotSupportedException();
     //	}
 
     /**

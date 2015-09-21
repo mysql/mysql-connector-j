@@ -944,7 +944,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public void createNewIO(boolean isForReconnect) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void dumpTestcaseQuery(String query) {
@@ -961,7 +961,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public void shutdownServer() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void clearHasTriedMaster() {

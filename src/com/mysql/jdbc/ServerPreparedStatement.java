@@ -898,7 +898,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             if (bindValue.isNull) {
                 return null;
             } else if (bindValue.isLongData) {
-                throw SQLError.notImplemented();
+                throw SQLError.createSQLFeatureNotSupportedException();
             } else {
                 if (this.outByteBuffer == null) {
                     this.outByteBuffer = new Buffer(this.connection.getNetBufferLength());
@@ -1618,7 +1618,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setArray(int i, Array x) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -1983,7 +1983,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     @Override
     public void setRef(int i, Ref x) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -2190,7 +2190,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         checkClosed();
 
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

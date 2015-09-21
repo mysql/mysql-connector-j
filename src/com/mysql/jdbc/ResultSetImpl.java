@@ -1133,7 +1133,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     public java.sql.Array getArray(int i) throws SQLException {
         checkColumnBounds(i);
 
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -2817,7 +2817,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @throws NotImplemented
      */
     protected java.sql.Array getNativeArray(int i) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -4070,7 +4070,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @throws NotImplemented
      */
     protected java.sql.Ref getNativeRef(int i) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -4862,7 +4862,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      */
     public java.sql.Ref getRef(int i) throws SQLException {
         checkColumnBounds(i);
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -6849,7 +6849,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see DatabaseMetaData#deletesAreDetected
      */
     public boolean rowDeleted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -6866,7 +6866,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see DatabaseMetaData#insertsAreDetected
      */
     public boolean rowInserted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -6883,7 +6883,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean rowUpdated() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -7105,14 +7105,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see ResultSetInternalMethods#updateArray(int, Array)
      */
     public void updateArray(int arg0, Array arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
      * @see ResultSetInternalMethods#updateArray(String, Array)
      */
     public void updateArray(String arg0, Array arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -7410,7 +7410,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see ResultSetInternalMethods#updateClob(int, Clob)
      */
     public void updateClob(int arg0, java.sql.Clob arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -7724,14 +7724,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @see ResultSetInternalMethods#updateRef(int, Ref)
      */
     public void updateRef(int arg0, Ref arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
      * @see ResultSetInternalMethods#updateRef(String, Ref)
      */
     public void updateRef(String arg0, Ref arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -49,11 +49,11 @@ public class JDBC4Connection extends ConnectionImpl {
     }
 
     public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public Properties getClientInfo() throws SQLException {

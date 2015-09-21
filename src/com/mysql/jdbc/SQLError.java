@@ -1126,18 +1126,6 @@ public class SQLError {
         return exceptionMessageBuf.toString();
     }
 
-    public static SQLException notImplemented() {
-        if (Util.isJdbc4()) {
-            try {
-                return (SQLException) Class.forName("java.sql.SQLFeatureNotSupportedException").newInstance();
-            } catch (Throwable t) {
-                // proceed
-            }
-        }
-
-        return new NotImplemented();
-    }
-
     /**
      * Run exception through an ExceptionInterceptor chain.
      * 
@@ -1178,6 +1166,21 @@ public class SQLError {
             newEx.initCause(underlyingEx);
         }
         return runThroughExceptionInterceptor(interceptor, newEx, null);
+    }
+
+    /**
+     * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
+     */
+    public static SQLException createSQLFeatureNotSupportedException() throws SQLException {
+        SQLException newEx;
+
+        if (Util.isJdbc4()) {
+            newEx = (SQLException) Util.getInstance("java.sql.SQLFeatureNotSupportedException", null, null, null);
+        } else {
+            newEx = new NotImplemented();
+        }
+
+        return newEx;
     }
 
     /**
