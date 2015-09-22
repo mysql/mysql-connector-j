@@ -109,7 +109,7 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testChainedAdd() {
-        String json = "{'_id': '1'}".replaceAll("'", "\"");
+        String json = "{'_id': 1}".replaceAll("'", "\"");
         this.collection.add(json).add(json.replaceAll("1", "2")).execute();
 
         assertEquals(true, this.collection.find("_id = 1").execute().hasNext());

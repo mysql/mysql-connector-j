@@ -61,7 +61,7 @@ public class CollectionFindTest extends CollectionTest {
         FetchedDocs docs = this.collection.find().fields("$._id as _id, $.g as g, 1 + 1 as q").execute();
         JsonDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
-        assertEquals("1", ((JsonString) doc.get("g")).getString());
+        assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
     }
 
@@ -104,7 +104,7 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testNumericExpressions() {
-        this.collection.add("{\"x\":\"1\", \"y\":\"2\"}").execute();
+        this.collection.add("{\"x\":1, \"y\":2}").execute();
 
         FetchedDocs docs;
 
@@ -134,7 +134,7 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testBitwiseExpressions() {
-        this.collection.add("{\"x1\":\"31\", \"x2\":\"13\", \"x3\":\"8\", \"x4\":\"18446744073709551614\"}").execute();
+        this.collection.add("{\"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute();
 
         FetchedDocs docs;
 
@@ -148,7 +148,8 @@ public class CollectionFindTest extends CollectionTest {
         docs.next();
         docs = this.collection.find("$.x3 = 16 >> 1").execute();
         docs.next();
-        docs = this.collection.find("$.x4 = ~1").execute();
+        // lack of JSON_UNQUOTE() workaround
+        docs = this.collection.find("cast($.x4 as unsigned) = ~1").execute();
         docs.next();
     }
 

@@ -821,7 +821,7 @@ public class ExprParser {
         while ((currentTokenTypeEquals(TokenType.PLUS) || currentTokenTypeEquals(TokenType.MINUS)) && nextTokenTypeEquals(TokenType.INTERVAL)) {
             Token op = this.tokens.get(this.tokenPos);
             this.tokenPos++;
-            Operator.Builder builder = Operator.newBuilder().addParam(lhs);
+            Operator.Builder builder = Operator.newBuilder().addParam(unquoteWorkaround(lhs));
 
             // INTERVAL expression
             consumeToken(TokenType.INTERVAL);
@@ -832,7 +832,7 @@ public class ExprParser {
                 builder.setName("date_sub");
             }
 
-            builder.addParam(bitExpr()); // amount
+            builder.addParam(unquoteWorkaround(bitExpr())); // amount
 
             // ensure next token is an interval unit
             if (currentTokenTypeEquals(TokenType.MICROSECOND) || currentTokenTypeEquals(TokenType.SECOND) || currentTokenTypeEquals(TokenType.MINUTE)
@@ -877,6 +877,18 @@ public class ExprParser {
         return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT, TokenType.EQ, TokenType.NE }, this::bitExpr);
     }
 
+    /**
+     * Workaround for improper comparisons in the server. (lack of JSON_UNQUOTE())
+     */
+    private Expr unquoteWorkaround(Expr e) {
+        if (e.getType() == Expr.Type.IDENT && e.getIdentifier().getDocumentPathList().size() > 0) {
+            Identifier id = Identifier.newBuilder().setName("JSON_UNQUOTE").build();
+            FunctionCall.Builder b = FunctionCall.newBuilder().setName(id).addParam(e);
+            return Expr.newBuilder().setType(Expr.Type.FUNC_CALL).setFunctionCall(b.build()).build();
+        }
+        return e;
+    }
+
     Expr ilriExpr() {
         Expr lhs = compExpr();
         List<TokenType> expected = Arrays.asList(new TokenType[] {TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT});
@@ -888,7 +900,7 @@ public class ExprParser {
             }
             if (this.tokenPos < this.tokens.size()) {
                 List<Expr> params = new ArrayList<>();
-                params.add(lhs);
+                params.add(unquoteWorkaround(lhs));
                 String opName = this.tokens.get(this.tokenPos).value.toLowerCase();
                 switch (this.tokens.get(this.tokenPos).type) {
                     case IS: // for IS, NOT comes AFTER
@@ -905,11 +917,11 @@ public class ExprParser {
                         break;
                     case LIKE:
                         consumeToken(TokenType.LIKE);
-                        params.add(compExpr());
+                        params.add(unquoteWorkaround(compExpr()));
                         if (currentTokenTypeEquals(TokenType.ESCAPE)) {
                             consumeToken(TokenType.ESCAPE);
                             // add as a third (optional) param
-                            params.add(compExpr());
+                            params.add(unquoteWorkaround(compExpr()));
                         }
                         break;
                     case BETWEEN:
