@@ -914,6 +914,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                executable="${com.mysql.jdbc.jdk8.javac}"
                compiler="modern"
                includeantruntime="false"
+               bootclasspath="${com.mysql.jdbc.jre6.rtjar}"
                source="1.6"
                target="1.6">
             <include name="testsuite/**/jdbc4/**" />
