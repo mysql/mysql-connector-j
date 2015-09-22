@@ -309,7 +309,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     public void testBasicCrudInsertFind() {
         String collName = createTempTestCollection();
 
-        String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
+        String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
         this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
         this.protocol.readStatementExecuteOk();
 

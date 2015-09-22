@@ -127,7 +127,7 @@ public class SessionTest extends BaseDevApiTest {
     @Test
     public void errorOnPacketTooBig() {
         try {
-            int size = 1024 * 1024;
+            int size = 2 * 1024 * 1024;
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < size; ++i) {
                 b.append('.');
