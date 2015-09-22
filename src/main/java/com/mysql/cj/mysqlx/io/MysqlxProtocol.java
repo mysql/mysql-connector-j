@@ -80,6 +80,7 @@ import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
+import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
@@ -120,22 +121,6 @@ import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
  * Low-level interface to communications with a MySQL-X server.
  */
 public class MysqlxProtocol implements Protocol {
-    // "xplugin" namespace for StmtExecute messages
-    private static final String XPLUGIN_NAMESPACE = "xplugin";
-
-    private static enum XpluginStatementCommand {
-        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"), XPLUGIN_STMT_DROP_COLLECTION(
-                "drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"), XPLUGIN_STMT_LIST_OBJECTS(
-                "list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"), XPLUGIN_STMT_LIST_NOTICES(
-                "list_notices");
-
-        public String commandName;
-
-        private XpluginStatementCommand(String commandName) {
-            this.commandName = commandName;
-        }
-    }
-
     /**
      * Content-type used in type mapping.
      * c.f. plugin/x/ngs/include/ngs/protocol.h
@@ -163,6 +148,7 @@ public class MysqlxProtocol implements Protocol {
     private Map<String, Any> capabilities;
     /** Server-assigned client-id. */
     private long clientId = -1;
+    private MessageBuilder msgBuilder = new MessageBuilder();
 
     public MysqlxProtocol(MessageReader reader, MessageWriter writer, Closeable network, PropertySet propSet) {
         this.reader = reader;
@@ -417,35 +403,18 @@ public class MysqlxProtocol implements Protocol {
         return data;
     }
 
-    /**
-     * Convenience method to send a {@link StmtExecute} message with namespace "xplugin".
-     *
-     * @param command
-     *            the xplugin command to send
-     * @param args
-     *            the arguments to the command
-     */
-    private void sendXpluginCommand(XpluginStatementCommand command, Any... args) {
-        StmtExecute.Builder builder = StmtExecute.newBuilder();
-
-        builder.setNamespace(XPLUGIN_NAMESPACE);
-        // TODO: encoding (character_set_client)
-        builder.setStmt(ByteString.copyFromUtf8(command.commandName));
-        Arrays.stream(args).forEach(a -> builder.addArgs(a));
-
-        this.writer.write(builder.build());
-    }
-
     // TODO: the following methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName),
+                        ExprUtil.buildAny(collectionName)));
     }
 
     /**
      * @todo this works for tables too
      */
     public void sendDropCollection(String schemaName, String collectionName) {
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName), ExprUtil.buildAny(collectionName));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName),
+                        ExprUtil.buildAny(collectionName)));
     }
 
     /**
@@ -460,7 +429,7 @@ public class MysqlxProtocol implements Protocol {
      * </pre>
      */
     public void sendListObjects(String schemaName) {
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS, ExprUtil.buildAny(schemaName));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS, ExprUtil.buildAny(schemaName)));
     }
 
     /**
@@ -473,17 +442,17 @@ public class MysqlxProtocol implements Protocol {
      * </pre>
      */
     public void sendListNotices() {
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES);
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES));
     }
 
     public void sendEnableNotices(String... notices) {
         Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES, args);
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES, args));
     }
 
     public void sendDisableNotices(String... notices) {
         Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args);
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args));
     }
 
     /**
@@ -552,13 +521,7 @@ public class MysqlxProtocol implements Protocol {
      * @todo option for brief metadata (types only)
      */
     public void sendSqlStatement(String statement, Object args) {
-        StmtExecute.Builder builder = StmtExecute.newBuilder();
-        if (args != null) {
-            builder.addAllArgs((List<Any>) args);
-        }
-        // TODO: encoding (character_set_client)
-        builder.setStmt(ByteString.copyFromUtf8(statement));
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildSqlStatement(statement, (List<Any>) args));
     }
 
     public boolean hasResults() {
@@ -741,94 +704,20 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
-    /**
-     * Apply the given filter params to the builder object (represented by the method args). Abstract the process of setting the filter params on the operation
-     * message builder.
-     *
-     * @param filterParams
-     *            the filter params to apply
-     * @param setOrder
-     *            the "builder.addAllOrder()" method reference
-     * @param setLimit
-     *            the "builder.setLimit()" method reference
-     * @param setCriteria
-     *            the "builder.setCriteria()" method reference
-     * @param setArgs
-     *            the "builder.addAllArgs()" method reference
-     */
-    private void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
-            Consumer<List<Scalar>> setArgs) {
-        filterParams.verifyAllArgsBound();
-        if (filterParams.getOrder() != null) {
-            setOrder.accept((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            setLimit.accept(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            setCriteria.accept((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            setArgs.accept((List<Scalar>) filterParams.getArgs());
-        }
-    }
-
     public void sendFind(String schemaName, String collectionName, FindParams findParams, boolean isRelational) {
-        Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.setDataModel(isRelational ? DataModel.TABLE : DataModel.DOCUMENT);
-        if (findParams.getFields() != null) {
-            builder.addAllProjection((List<Projection>) findParams.getFields());
-        }
-        if (findParams.getGrouping() != null) {
-            builder.addAllGrouping((List<Expr>) findParams.getGrouping());
-        }
-        if (findParams.getGroupingCriteria() != null) {
-            builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
-        }
-        applyFilterParams(findParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildFind(schemaName, collectionName, findParams, isRelational));
     }
 
     public void sendDocUpdates(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
-        Update.Builder builder = Update.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        updates.forEach(u -> {
-            UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
-            opBuilder.setOperation((UpdateType) u.getUpdateType());
-            opBuilder.setSource((ColumnIdentifier) u.getSource());
-            if (u.getValue() != null) {
-                opBuilder.setValue((Expr) u.getValue());
-            }
-            builder.addOperation(opBuilder.build());
-        });
-        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildDocUpdate(schemaName, collectionName, filterParams, updates));
     }
 
-    // TODO: low-level tests of this method
     public void sendRowUpdates(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
-        Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
-        ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
-                .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
-                .forEach(builder::addOperation);
-        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildRowUpdate(schemaName, tableName, filterParams, updateParams));
     }
 
     public void sendDocDelete(String schemaName, String collectionName, FilterParams filterParams) {
-        Delete.Builder builder = Delete.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
-        this.writer.write(builder.build());
-    }
-
-    // TODO: unused
-    public void sendDocInsert(String schemaName, String collectionName, String json) {
-        Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.addRow(TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(json, false)).build());
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildDelete(schemaName, collectionName, filterParams));
     }
 
     public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
@@ -855,27 +744,11 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void sendCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
-        // TODO: check for 0-field params?
-        Any[] args = new Any[4 + (3 * params.getDocPaths().size())];
-        args[0] = ExprUtil.buildAny(schemaName);
-        args[1] = ExprUtil.buildAny(collectionName);
-        args[2] = ExprUtil.buildAny(params.getIndexName());
-        args[3] = ExprUtil.buildAny(params.isUnique());
-        int argPos = 4;
-        for (int i = 0; i < params.getDocPaths().size(); ++i) {
-            args[argPos++] = ExprUtil.buildAny(params.getDocPaths().get(i));
-            args[argPos++] = ExprUtil.buildAny(params.getTypes().get(i));
-            args[argPos++] = ExprUtil.buildAny(params.getNotNulls().get(i));
-        }
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION_INDEX, args);
+        this.writer.write(this.msgBuilder.buildCreateCollectionIndex(schemaName, collectionName, params));
     }
 
     public void sendDropCollectionIndex(String schemaName, String collectionName, String indexName) {
-        Any[] args = new Any[3];
-        args[0] = ExprUtil.buildAny(schemaName);
-        args[1] = ExprUtil.buildAny(collectionName);
-        args[2] = ExprUtil.buildAny(indexName);
-        sendXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION_INDEX, args);
+        this.writer.write(this.msgBuilder.buildDropCollectionIndex(schemaName, collectionName, indexName));
     }
 
     public void close() throws IOException {
