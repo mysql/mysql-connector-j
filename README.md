@@ -1,10 +1,10 @@
 # MySQL Connector/J
 
-MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](http://www.oracle.com/technetwork/java/javase/jdbc/index.html).
+MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](http://www.oracle.com/technetwork/java/javase/jdbc/).
 
-MySQL Connector/J 5.1 is a JDBC Type 4 driver that is compatible with the [JDBC 3.0](http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/), [JDBC 4.0](http://docs.oracle.com/javase/6/docs/technotes/guides/jdbc/) and [JDBC 4.1](http://docs.oracle.com/javase/7/docs/technotes/guides/jdbc/) specifications. The Type 4 designation means that the driver is a pure Java implementation of the MySQL protocol and does not rely on the MySQL client libraries.
+MySQL Connector/J 5.1 is a JDBC Type 4 driver that is compatible with the [JDBC 3.0](http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/), [JDBC 4.0](http://docs.oracle.com/javase/6/docs/technotes/guides/jdbc/), [JDBC 4.1](http://docs.oracle.com/javase/7/docs/technotes/guides/jdbc/) and [JDBC 4.2](http://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) specifications. The Type 4 designation means that the driver is a pure Java implementation of the MySQL protocol and does not rely on the MySQL client libraries.
 
-For detailed information please visit the official [MySQL Connector/J documentation](http://dev.mysql.com/doc/connector-j/en/index.html).
+For detailed information please visit the official [MySQL Connector/J documentation](http://dev.mysql.com/doc/connector-j/en/).
 
 ## Licensing
 
