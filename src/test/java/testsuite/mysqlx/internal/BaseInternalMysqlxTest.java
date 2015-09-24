@@ -29,6 +29,7 @@ import com.mysql.cj.api.x.XSessionFactory;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
@@ -104,5 +105,25 @@ public class BaseInternalMysqlxTest {
         MysqlxSession session = new MysqlxSession(this.testProperties);
         session.changeUser(getTestUser(), getTestPassword(), getTestDatabase());
         return session;
+    }
+
+    /**
+     * Create a temporary collection for testing.
+     *
+     * @return the temporary collection name
+     */
+    public String createTempTestCollection(MysqlxProtocol protocol) {
+        String collName = "protocol_test_collection";
+
+        try {
+            protocol.sendDropCollection(getTestDatabase(), collName);
+            protocol.readStatementExecuteOk();
+        } catch (MysqlxError err) {
+            // ignore
+        }
+        protocol.sendCreateCollection(getTestDatabase(), collName);
+        protocol.readStatementExecuteOk();
+
+        return collName;
     }
 }

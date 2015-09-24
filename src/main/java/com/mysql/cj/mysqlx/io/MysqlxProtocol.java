@@ -79,6 +79,7 @@ import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.devapi.WarningImpl;
+import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
 import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
@@ -689,6 +690,12 @@ public class MysqlxProtocol implements Protocol {
 
     public MysqlxRowInputStream getRowInputStream(ArrayList<Field> metadata) {
         return new MysqlxRowInputStream(metadata, this);
+    }
+
+    public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks) {
+        this.writer.write(this.msgBuilder.buildFind(findParams));
+        MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
+        ((AsyncMessageReader) this.reader).pushMessageListener(l);
     }
 
     public void sendFind(FindParams findParams) {

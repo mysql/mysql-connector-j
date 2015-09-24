@@ -77,26 +77,6 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
     }
 
     /**
-     * Create a temporary collection for testing.
-     *
-     * @return the temporary collection name
-     */
-    private String createTempTestCollection() {
-        String collName = "protocol_test_collection";
-
-        try {
-            this.protocol.sendDropCollection(getTestDatabase(), collName);
-            this.protocol.readStatementExecuteOk();
-        } catch (MysqlxError err) {
-            // ignore
-        }
-        this.protocol.sendCreateCollection(getTestDatabase(), collName);
-        this.protocol.readStatementExecuteOk();
-
-        return collName;
-    }
-
-    /**
      * Test the create/drop collection admin commands.
      */
     @Test
@@ -307,7 +287,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
     @Test
     public void testBasicCrudInsertFind() {
-        String collName = createTempTestCollection();
+        String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
         this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
@@ -325,7 +305,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
     @Test
     public void testMultiInsert() {
-        String collName = createTempTestCollection();
+        String collName = createTempTestCollection(this.protocol);
 
         List<String> stringDocs = new ArrayList<>();
         stringDocs.add("{'a': 'A', 'a1': 'A1', '_id': 'a'}");
@@ -352,7 +332,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
     @Test
     public void testDocUpdate() {
-        String collName = createTempTestCollection();
+        String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
         this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
