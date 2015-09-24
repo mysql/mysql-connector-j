@@ -75,6 +75,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.StatementIsClosedException;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -1165,21 +1166,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    /**
-     * JDBC 2.0 Submit a batch of commands to the database for execution. This
-     * method is optional.
-     * 
-     * @return an array of update counts containing one element for each command
-     *         in the batch. The array is ordered according to the order in
-     *         which commands were inserted into the batch
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the driver does not
-     *                support batch statements
-     * @throws java.sql.BatchUpdateException
-     */
     @Override
-    public int[] executeBatch() throws SQLException {
+    protected long[] executeBatchInternal() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.connection.isReadOnly()) {
@@ -1188,7 +1176,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             }
 
             if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
-                return new int[0];
+                return new long[0];
             }
 
             // we timeout the entire batch, not individual statements
@@ -1240,7 +1228,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      */
 
-    protected int[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
+    protected long[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             // This is kind of an abuse, but it gets the job done
             if (this.batchedValuesClause == null) {
@@ -1273,7 +1261,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 int numberToExecuteAsMultiValue = 0;
                 int batchCounter = 0;
                 int updateCountCounter = 0;
-                int[] updateCounts = new int[numBatchedArgs];
+                long[] updateCounts = new long[numBatchedArgs];
                 SQLException sqlEx = null;
 
                 try {
@@ -1379,7 +1367,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (sqlEx != null) {
-                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
+                        throw SQLError.createBatchUpdateException(sqlEx, updateCounts, getExceptionInterceptor());
                     }
 
                     return updateCounts;
@@ -1429,7 +1417,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * 
      * @throws SQLException
      */
-    protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
+    protected long[] executeBatchedInserts(int batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String valuesClause = getValuesClause();
 
@@ -1451,16 +1439,16 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 numValuesPerBatch = numBatchedArgs;
             }
 
-            java.sql.PreparedStatement batchedStatement = null;
+            PreparedStatement batchedStatement = null;
 
             int batchedParamIndex = 1;
-            int updateCountRunningTotal = 0;
+            long updateCountRunningTotal = 0;
             int numberToExecuteAsMultiValue = 0;
             int batchCounter = 0;
             CancelTask timeoutTask = null;
             SQLException sqlEx = null;
 
-            int[] updateCounts = new int[numBatchedArgs];
+            long[] updateCounts = new long[numBatchedArgs];
 
             try {
                 try {
@@ -1469,7 +1457,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                     if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
                             && batchTimeout != 0) {
-                        timeoutTask = new CancelTask((StatementImpl) batchedStatement);
+                        timeoutTask = new CancelTask(batchedStatement);
                         locallyScopedConn.getCancelTimer().schedule(timeoutTask, batchTimeout);
                     }
 
@@ -1484,7 +1472,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     for (int i = 0; i < numberArgsToExecute; i++) {
                         if (i != 0 && i % numValuesPerBatch == 0) {
                             try {
-                                updateCountRunningTotal += batchedStatement.executeUpdate();
+                                updateCountRunningTotal += batchedStatement.executeLargeUpdate();
                             } catch (SQLException ex) {
                                 sqlEx = handleExceptionForBatch(batchCounter - 1, numValuesPerBatch, updateCounts, ex);
                             }
@@ -1499,7 +1487,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     try {
-                        updateCountRunningTotal += batchedStatement.executeUpdate();
+                        updateCountRunningTotal += batchedStatement.executeLargeUpdate();
                     } catch (SQLException ex) {
                         sqlEx = handleExceptionForBatch(batchCounter - 1, numValuesPerBatch, updateCounts, ex);
                     }
@@ -1519,7 +1507,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         batchedStatement = prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 
                         if (timeoutTask != null) {
-                            timeoutTask.toCancel = (StatementImpl) batchedStatement;
+                            timeoutTask.toCancel = batchedStatement;
                         }
 
                         batchedParamIndex = 1;
@@ -1529,7 +1517,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         }
 
                         try {
-                            updateCountRunningTotal += batchedStatement.executeUpdate();
+                            updateCountRunningTotal += batchedStatement.executeLargeUpdate();
                         } catch (SQLException ex) {
                             sqlEx = handleExceptionForBatch(batchCounter - 1, numValuesPerBatch, updateCounts, ex);
                         }
@@ -1538,11 +1526,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (sqlEx != null) {
-                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
+                        throw SQLError.createBatchUpdateException(sqlEx, updateCounts, getExceptionInterceptor());
                     }
 
                     if (numBatchedArgs > 1) {
-                        int updCount = updateCountRunningTotal > 0 ? java.sql.Statement.SUCCESS_NO_INFO : 0;
+                        long updCount = updateCountRunningTotal > 0 ? java.sql.Statement.SUCCESS_NO_INFO : 0;
                         for (int j = 0; j < numBatchedArgs; j++) {
                             updateCounts[j] = updCount;
                         }
@@ -1661,7 +1649,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if an error occurs
      */
-    protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
+    protected long[] executeBatchSerially(int batchTimeout) throws SQLException {
 
         synchronized (checkClosed().getConnectionMutex()) {
             JdbcConnection locallyScopedConn = this.connection;
@@ -1670,11 +1658,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 checkClosed();
             }
 
-            int[] updateCounts = null;
+            long[] updateCounts = null;
 
             if (this.batchedArgs != null) {
                 int nbrCommands = this.batchedArgs.size();
-                updateCounts = new int[nbrCommands];
+                updateCounts = new long[nbrCommands];
 
                 for (int i = 0; i < nbrCommands; i++) {
                     updateCounts[i] = -3;
@@ -1698,52 +1686,37 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     for (this.batchCommandIndex = 0; this.batchCommandIndex < nbrCommands; this.batchCommandIndex++) {
                         Object arg = this.batchedArgs.get(this.batchCommandIndex);
 
-                        if (arg instanceof String) {
-                            updateCounts[this.batchCommandIndex] = executeUpdate((String) arg);
-                        } else {
-                            BatchParams paramArg = (BatchParams) arg;
+                        try {
+                            if (arg instanceof String) {
+                                updateCounts[this.batchCommandIndex] = executeUpdateInternal((String) arg, true, this.retrieveGeneratedKeys);
 
-                            try {
-                                updateCounts[this.batchCommandIndex] = executeUpdate(paramArg.parameterStrings, paramArg.parameterStreams, paramArg.isStream,
-                                        paramArg.streamLengths, paramArg.isNull, true);
+                                // limit one generated key per OnDuplicateKey statement
+                                getBatchedGeneratedKeys(this.results.getFirstCharOfQuery() == 'I' && containsOnDuplicateKeyInString((String) arg) ? 1 : 0);
+                            } else {
+                                BatchParams paramArg = (BatchParams) arg;
+                                updateCounts[this.batchCommandIndex] = executeUpdateInternal(paramArg.parameterStrings, paramArg.parameterStreams,
+                                        paramArg.isStream, paramArg.streamLengths, paramArg.isNull, true);
 
-                                if (this.retrieveGeneratedKeys) {
-                                    java.sql.ResultSet rs = null;
+                                // limit one generated key per OnDuplicateKey statement
+                                getBatchedGeneratedKeys(containsOnDuplicateKeyUpdateInSQL() ? 1 : 0);
+                            }
+                        } catch (SQLException ex) {
+                            updateCounts[this.batchCommandIndex] = EXECUTE_FAILED;
 
-                                    try {
-                                        if (containsOnDuplicateKeyUpdateInSQL()) {
-                                            rs = getGeneratedKeysInternal(1);
-                                        } else {
-                                            rs = getGeneratedKeysInternal();
-                                        }
+                            if (this.continueBatchOnError && !(ex instanceof MySQLTimeoutException) && !(ex instanceof MySQLStatementCancelledException)
+                                    && !hasDeadlockOrTimeoutRolledBackTx(ex)) {
+                                sqlEx = ex;
+                            } else {
+                                long[] newUpdateCounts = new long[this.batchCommandIndex];
+                                System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
 
-                                        while (rs.next()) {
-                                            this.batchedGeneratedKeys.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
-                                        }
-                                    } finally {
-                                        if (rs != null) {
-                                            rs.close();
-                                        }
-                                    }
-                                }
-                            } catch (SQLException ex) {
-                                updateCounts[this.batchCommandIndex] = EXECUTE_FAILED;
-
-                                if (this.continueBatchOnError && !(ex instanceof MySQLTimeoutException) && !(ex instanceof MySQLStatementCancelledException)
-                                        && !hasDeadlockOrTimeoutRolledBackTx(ex)) {
-                                    sqlEx = ex;
-                                } else {
-                                    int[] newUpdateCounts = new int[this.batchCommandIndex];
-                                    System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
-
-                                    throw new java.sql.BatchUpdateException(ex.getMessage(), ex.getSQLState(), ex.getErrorCode(), newUpdateCounts, ex);
-                                }
+                                throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
                             }
                         }
                     }
 
                     if (sqlEx != null) {
-                        throw new java.sql.BatchUpdateException(sqlEx.getMessage(), sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts, sqlEx);
+                        throw SQLError.createBatchUpdateException(sqlEx, updateCounts, getExceptionInterceptor());
                     }
                 } catch (NullPointerException npe) {
                     try {
@@ -1751,11 +1724,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     } catch (StatementIsClosedException connectionClosedEx) {
                         updateCounts[this.batchCommandIndex] = EXECUTE_FAILED;
 
-                        int[] newUpdateCounts = new int[this.batchCommandIndex];
+                        long[] newUpdateCounts = new long[this.batchCommandIndex];
 
                         System.arraycopy(updateCounts, 0, newUpdateCounts, 0, this.batchCommandIndex);
 
-                        throw new java.sql.BatchUpdateException(connectionClosedEx.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 0, newUpdateCounts);
+                        throw SQLError.createBatchUpdateException(SQLExceptionsMapping.translateException(connectionClosedEx), newUpdateCounts,
+                                getExceptionInterceptor());
                     }
 
                     throw npe; // we don't know why this happened, punt
@@ -1771,7 +1745,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
             }
 
-            return (updateCounts != null) ? updateCounts : new int[0];
+            return (updateCounts != null) ? updateCounts : new long[0];
         }
 
     }
@@ -1967,7 +1941,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *                if a database access error occurs
      */
     public int executeUpdate() throws SQLException {
-        return executeUpdate(true, false);
+        return Util.truncateAndConvertToInt(executeLargeUpdate());
     }
 
     /*
@@ -1975,14 +1949,14 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * batched updates, which will end up clobbering the warnings and generated
      * keys we need to gather for the batch.
      */
-    protected int executeUpdate(boolean clearBatchedGeneratedKeysAndWarnings, boolean isBatch) throws SQLException {
+    protected long executeUpdateInternal(boolean clearBatchedGeneratedKeysAndWarnings, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (clearBatchedGeneratedKeysAndWarnings) {
                 clearWarnings();
                 this.batchedGeneratedKeys = null;
             }
 
-            return executeUpdate(this.parameterValues, this.parameterStreams, this.isStream, this.streamLengths, this.isNull, isBatch);
+            return executeUpdateInternal(this.parameterValues, this.parameterStreams, this.isStream, this.streamLengths, this.isNull, isBatch);
         }
     }
 
@@ -2005,14 +1979,14 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if a database error occurs
      */
-    protected int executeUpdate(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream, int[] batchedStreamLengths,
-            boolean[] batchedIsNull, boolean isReallyBatch) throws SQLException {
+    protected long executeUpdateInternal(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
+            int[] batchedStreamLengths, boolean[] batchedIsNull, boolean isReallyBatch) throws SQLException {
 
         synchronized (checkClosed().getConnectionMutex()) {
 
             JdbcConnection locallyScopedConn = this.connection;
 
-            if (locallyScopedConn.isReadOnly()) {
+            if (locallyScopedConn.isReadOnly(false)) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") + Messages.getString("PreparedStatement.35"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -2067,17 +2041,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
             }
 
-            int truncatedUpdateCount = 0;
-
-            if (this.updateCount > Integer.MAX_VALUE) {
-                truncatedUpdateCount = Integer.MAX_VALUE;
-            } else {
-                truncatedUpdateCount = (int) this.updateCount;
-            }
-
             this.lastInsertId = rs.getUpdateID();
 
-            return truncatedUpdateCount;
+            return this.updateCount;
         }
     }
 
@@ -4866,5 +4832,13 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
+    }
+
+    /**
+     * JDBC 4.2
+     * Same as PreparedStatement.executeUpdate() but returns long instead of int.
+     */
+    public long executeLargeUpdate() throws SQLException {
+        return executeUpdateInternal(true, false);
     }
 }

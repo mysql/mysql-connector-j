@@ -2918,12 +2918,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             row[8] = results.getBytes("Column_name");
                             row[9] = results.getBytes("Collation");
 
-                            // Cardinality can be much larger than Integer's range, so we clamp it to conform to the API
                             long cardinality = results.getLong("Cardinality");
-
-                            if (cardinality > Integer.MAX_VALUE) {
-                                cardinality = Integer.MAX_VALUE;
-                            }
 
                             row[10] = s2b(String.valueOf(cardinality));
                             row[11] = s2b("0");
@@ -2981,8 +2976,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
         fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
         fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-        fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 20);
-        fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
+        fields[10] = new Field("", "CARDINALITY", Types.BIGINT, 20);
+        fields[11] = new Field("", "PAGES", Types.BIGINT, 20);
         fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
         return fields;
     }

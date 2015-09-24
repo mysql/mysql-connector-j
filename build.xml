@@ -499,7 +499,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
         <delete file="${buildDriverDir}/${fullProdName}-bin.jar" />
 
-        <!-- JDBC4+ support of service provider mechanism. -->
+        <!-- JDBC 4+ support of service provider mechanism. -->
         <mkdir dir="${buildDriverDir}/META-INF/services/" />
         <echo file="${buildDriverDir}/META-INF/services/java.sql.Driver"
               message="com.mysql.cj.jdbc.Driver" />
@@ -530,7 +530,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <manifest file="${buildDriverDir}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
             <attribute name="Specification-Title" value="JDBC" />
-            <attribute name="Specification-Version" value="4.1" />
+            <attribute name="Specification-Version" value="4.2" />
             <attribute name="Specification-Vendor" value="Oracle Corporation" />
             <attribute name="Implementation-Title" value="${prodDisplayName}" />
             <attribute name="Implementation-Version" value="${full.version}" />

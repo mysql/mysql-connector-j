@@ -498,10 +498,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return false; // we actually never get here, but the compiler can't
-        // figure
-
-        // that out
+        return false; // we actually never get here, but the compiler can't figure that out
     }
 
     public ResultSet executeQuery() throws SQLException {
@@ -519,10 +516,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't
-        // figure
-
-        // that out
+        return null; // we actually never get here, but the compiler can't figure that out
     }
 
     public int executeUpdate() throws SQLException {
@@ -536,9 +530,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
 
-        return -1; // we actually never get here, but the compiler can't figure
-
-        // that out
+        return -1; // we actually never get here, but the compiler can't figure that out
     }
 
     @Override
@@ -878,4 +870,21 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    /**
+     * JDBC 4.2
+     * Same as PreparedStatement.executeUpdate() but returns long instead of int.
+     */
+    public long executeLargeUpdate() throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                return ((com.mysql.cj.jdbc.PreparedStatement) this.wrappedStmt).executeLargeUpdate();
+            }
+
+            throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+
+        return -1; // we actually never get here, but the compiler can't figure that out
+    }
 }

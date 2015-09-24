@@ -54,6 +54,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -795,26 +796,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     @Override
     public int executeUpdate() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            int returnVal = -1;
-
-            checkStreamability();
-
-            if (this.callingStoredFunction) {
-                execute();
-
-                return -1;
-            }
-
-            setInOutParamsOnServer();
-            setOutParams();
-
-            returnVal = super.executeUpdate();
-
-            retrieveOutParams();
-
-            return returnVal;
-        }
+        return Util.truncateAndConvertToInt(executeLargeUpdate());
     }
 
     private String extractProcedureName() throws SQLException {
@@ -2142,11 +2124,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     @Override
     public int[] executeBatch() throws SQLException {
-        if (this.hasOutputParams) {
-            throw SQLError.createSQLException(Messages.getString("CallableStatement.25"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-        }
+        return Util.truncateAndConvertToInt(executeLargeBatch());
 
-        return super.executeBatch();
     }
 
     @Override
@@ -2467,5 +2446,39 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
 
         return StringUtils.getBytes(s, this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue());
+    }
+
+    @Override
+    public long executeLargeUpdate() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            long returnVal = -1;
+
+            checkStreamability();
+
+            if (this.callingStoredFunction) {
+                execute();
+
+                return -1;
+            }
+
+            setInOutParamsOnServer();
+            setOutParams();
+
+            returnVal = super.executeLargeUpdate();
+
+            retrieveOutParams();
+
+            return returnVal;
+        }
+    }
+
+    @Override
+    public long[] executeLargeBatch() throws SQLException {
+        if (this.hasOutputParams) {
+            throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
+        }
+
+        return super.executeLargeBatch();
     }
 }

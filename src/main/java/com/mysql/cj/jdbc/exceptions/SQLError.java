@@ -23,6 +23,7 @@
 
 package com.mysql.cj.jdbc.exceptions;
 
+import java.sql.BatchUpdateException;
 import java.sql.DataTruncation;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
@@ -803,5 +804,21 @@ public class SQLError {
 
     public static NotUpdatable notUpdatable() {
         return new NotUpdatable();
+    }
+
+    /**
+     * Creates a BatchUpdateException taking in consideration the JDBC version in use. For JDBC version prior to 4.2 the updates count array has int elements
+     * while JDBC 4.2 and beyond uses long values.
+     * 
+     * @param ex
+     * @param updateCounts
+     * @param interceptor
+     * @return
+     */
+    public static BatchUpdateException createBatchUpdateException(SQLException ex, long[] updateCounts, ExceptionInterceptor interceptor) throws SQLException {
+        BatchUpdateException batchException = (BatchUpdateException) Util.getInstance("java.sql.BatchUpdateException", new Class[] { String.class,
+                String.class, int.class, long[].class, Throwable.class },
+                new Object[] { ex.getMessage(), ex.getSQLState(), ex.getErrorCode(), updateCounts, ex }, interceptor);
+        return batchException;
     }
 }

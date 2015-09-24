@@ -53,7 +53,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
  * Various utility methods for the driver.
  */
 public class Util {
-    private static int jvmVersion = -1;
+    private static int jvmVersion = 8; // use default base version supported
 
     private static boolean isColdFusion = false;
 
@@ -68,9 +68,6 @@ public class Util {
         startPos++;
         if (endPos > startPos) {
             jvmVersion = Integer.parseInt(Constants.JVM_VERSION.substring(startPos, endPos));
-        } else {
-            // use default base version supported
-            jvmVersion = 7;
         }
 
         //
@@ -376,5 +373,30 @@ public class Util {
      */
     public static long secondsSinceMillis(long timeInMillis) {
         return (System.currentTimeMillis() - timeInMillis) / 1000;
+    }
+
+    /**
+     * Converts long to int, truncating to maximum/minimum value if needed.
+     * 
+     * @param longValue
+     * @return
+     */
+    public static int truncateAndConvertToInt(long longValue) {
+        return longValue > Integer.MAX_VALUE ? Integer.MAX_VALUE : longValue < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longValue;
+    }
+
+    /**
+     * Converts long[] to int[], truncating to maximum/minimum value if needed.
+     * 
+     * @param longArray
+     * @return
+     */
+    public static int[] truncateAndConvertToInt(long[] longArray) {
+        int[] intArray = new int[longArray.length];
+
+        for (int i = 0; i < longArray.length; i++) {
+            intArray[i] = longArray[i] > Integer.MAX_VALUE ? Integer.MAX_VALUE : longArray[i] < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longArray[i];
+        }
+        return intArray;
     }
 }
