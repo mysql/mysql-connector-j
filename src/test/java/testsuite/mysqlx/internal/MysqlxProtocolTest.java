@@ -385,7 +385,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         insertParams.addRow(Arrays.asList("10.3", 50, "another string value"));
         this.protocol.sendRowInsert(getTestDatabase(), "tableInsert", insertParams);
         StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
-        // TODO: assert "affected rows" count of *2* rows
+        assertEquals(2, ok.getRowsAffected());
 
         FindParams findParams = new TableFindParams();
         findParams.setOrder("x DESC");
