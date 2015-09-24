@@ -8765,7 +8765,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", testBug77449StatementInterceptor.class.getName());
+            props.setProperty("statementInterceptors", TestBug77449StatementInterceptor.class.getName());
             props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode));
             props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements));
             props.setProperty("sendFractionalSeconds", Boolean.toString(sendFractionalSeconds));
@@ -8799,13 +8799,15 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs.insertRow();
 
             // Assert values from previous inserts/updates.
-            this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449");
-            assertTrue(this.rs.next()); // 1st row: from Statement.
+            // 1st row: from Statement sent as String, no subject to TZ conversions.
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 1");
+            assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
             assertEquals(testCase, roundedTs, this.rs.getTimestamp(2));
             assertEquals(testCase, originalTs, this.rs.getTimestamp(3));
+            // 2nd row: from PreparedStatement; 3rd row: from UpdatableResultSet.updateRow(); 4th row: from UpdatableResultSet.insertRow()
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id >= 2");
             for (int i = 2; i <= 4; i++) {
-                // 2nd row: from PreparedStatement; 3rd row: from UpdatableResultSet.updateRow(); 4th row: from UpdatableResultSet.insertRow()
                 assertTrue(this.rs.next());
                 assertEquals(i, this.rs.getInt(1));
                 assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(2));
@@ -8841,7 +8843,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class testBug77449StatementInterceptor extends BaseStatementInterceptor {
+    public static class TestBug77449StatementInterceptor extends BaseStatementInterceptor {
         private boolean sendFracSecs = false;
 
         @Override

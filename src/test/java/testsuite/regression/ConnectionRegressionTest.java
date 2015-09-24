@@ -6924,6 +6924,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20685022() throws Exception {
+        if (!isCommunityEdition()) {
+            return;
+        }
+
         final Properties props = new Properties();
         final Callable<Void> callableInstance = new Callable<Void>() {
             public Void call() throws Exception {
