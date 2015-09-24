@@ -35,6 +35,8 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.Table;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonString;
 
@@ -83,5 +85,16 @@ public class AsyncQueryTest extends CollectionTest {
             JsonString val = (JsonString) d.get("lastName");
             assertEquals("Wright", val.getString());
         }
+    }
+
+    @Test
+    public void basicRowWiseAsync() throws Exception {
+        sqlUpdate("drop table if exists rowwise");
+        sqlUpdate("create table rowwise (age int)");
+        sqlUpdate("insert into rowwise values (1), (1), (1)");
+
+        Table table = this.schema.getTable("rowwise");
+        CompletableFuture<Integer> sumF = table.select("age").executeAsync(1, (Integer r, Row row) -> r + row.getInt("age"));
+        assertEquals(new Integer(4), sumF.get());
     }
 }

@@ -24,47 +24,47 @@
 package com.mysql.cj.mysqlx;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-import com.mysql.cj.api.result.Row;
-import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.DataStatement.Reducer;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.core.result.BufferedRowList;
 import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.mysqlx.MysqlxSession.ResultCtor;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
+import com.mysql.cj.mysqlx.result.RowToElement;
 
 /**
- * Create an entire (buffered) result from the data fed to this result listener.
- *
- * @param <RES_T> The type of result that will be created (and posted to the future)
+ * Reduce over the rows.
  */
-public class ResultCreatingResultListener<RES_T> implements ResultListener {
-    private ArrayList<Field> metadata;
-    private List<Row> rows = new ArrayList<>();
-    private ResultCtor<? extends RES_T> resultCtor;
-    private CompletableFuture<RES_T> future;
+public class RowWiseReducingResultListener<RES_ELEMENT_T, R> implements ResultListener {
+    private Reducer<RES_ELEMENT_T, R> reducer;
+    private CompletableFuture<R> future;
+    private R accumulator;
+    private MetadataToRowToElement<RES_ELEMENT_T> metadataToRowToElement;
+    private RowToElement<RES_ELEMENT_T> rowToElement;
 
-    public ResultCreatingResultListener(ResultCtor<? extends RES_T> resultCtor, CompletableFuture<RES_T> future) {
-        this.resultCtor = resultCtor;
+    public static interface MetadataToRowToElement<T> extends Function<ArrayList<Field>, RowToElement<T>> {}
+
+    public RowWiseReducingResultListener(R accumulator, Reducer<RES_ELEMENT_T, R> reducer, CompletableFuture<R> future,
+            MetadataToRowToElement<RES_ELEMENT_T> metadataToRowToElement) {
+        this.accumulator = accumulator;
+        this.reducer = reducer;
         this.future = future;
+        this.metadataToRowToElement = metadataToRowToElement;
     }
 
     public void onMetadata(ArrayList<Field> metadata) {
-        this.metadata = metadata;
+        this.rowToElement = this.metadataToRowToElement.apply(metadata);
     }
 
     public void onRow(MysqlxRow r) {
-        this.rows.add(r);
+        this.accumulator = this.reducer.apply(this.accumulator, this.rowToElement.apply(r));
     }
 
     public void onComplete(StatementExecuteOk ok) {
-        RowList rowList = new BufferedRowList(this.rows);
-        RES_T result = resultCtor.apply(this.metadata).apply(rowList, () -> ok);
-        this.future.complete(result);
+        this.future.complete(accumulator);
     }
 
     public void onError(MysqlxError error) {

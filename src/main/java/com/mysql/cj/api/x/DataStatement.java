@@ -30,7 +30,15 @@ import java.util.function.BiFunction;
  * A statement that results in a data set of elements as it's result. This interface adds a row-wise callback for async execution.
  */
 public interface DataStatement<STMT_T, RES_T, RES_ELEMENT_T> extends Statement<STMT_T, RES_T> {
-    default <R> CompletableFuture<R> executeAsync(R identity, BiFunction<? super R, RES_ELEMENT_T, ? extends R> accumulator) {
+    /**
+     * A function that takes the accumulator and a data element and returns the new value of the accumulator.
+     *
+     * @param <RES_ELEMENT_T> The type of each result element
+     * @param <R> The accumulator type.
+     */
+    public static interface Reducer<RES_ELEMENT_T, R> extends BiFunction<R, RES_ELEMENT_T, R> {}
+
+    default <R> CompletableFuture<R> executeAsync(R identity, Reducer<RES_ELEMENT_T, R> accumulator) {
         throw new NullPointerException();
     }
 }

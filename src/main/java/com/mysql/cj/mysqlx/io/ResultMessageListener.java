@@ -73,14 +73,6 @@ public class ResultMessageListener implements MessageListener {
         return false; /* done reading? */
     }
 
-    private boolean handleFetchDone() {
-        if (!this.metadataSent) {
-            callbacks.onMetadata(this.metadata);
-            this.metadataSent = true;
-        }
-        return false; /* done reading? */
-    }
-
     private boolean handleRow(Row r) {
         MysqlxRow row = new MysqlxRow(this.metadata, r);
         callbacks.onRow(row);
@@ -103,12 +95,21 @@ public class ResultMessageListener implements MessageListener {
     }
 
     public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
+        // accumulate metadata and deliver to listener on first non-metadata message
+        if (ColumnMetaData.class.equals(msgClass)) {
+            return handleColumn(ColumnMetaData.class.cast(msg));
+        } else {
+            if (!this.metadataSent) {
+                callbacks.onMetadata(this.metadata);
+                this.metadataSent = true;
+            }
+        }
+
         if (StmtExecuteOk.class.equals(msgClass)) {
             return handleStmtExecuteOk();
-        } else if (ColumnMetaData.class.equals(msgClass)) {
-            return handleColumn(ColumnMetaData.class.cast(msg));
         } else if (FetchDone.class.equals(msgClass)) {
-            return handleFetchDone();
+            // ignored. wait for StmtExecuteOk
+            return false; /* done reading? */
         } else if (Row.class.equals(msgClass)) {
             return handleRow(Row.class.cast(msg));
         } else if (Error.class.equals(msgClass)) {

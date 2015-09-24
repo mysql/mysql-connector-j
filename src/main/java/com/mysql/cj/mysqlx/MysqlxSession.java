@@ -48,6 +48,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.DataStatement.Reducer;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.SqlResult;
@@ -56,11 +57,13 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.io.JsonDocValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
+import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
 import com.mysql.cj.mysqlx.devapi.SqlUpdateResult;
@@ -68,6 +71,7 @@ import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
+import com.mysql.cj.x.json.JsonDoc;
 
 /**
  * @todo
@@ -402,6 +406,21 @@ public class MysqlxSession implements Session {
 
     public CompletableFuture<FetchedRows> asyncSelectRows(FindParams findParams) {
         return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
+    }
+
+    public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<JsonDoc, R> reducer) {
+        CompletableFuture<R> f = new CompletableFuture<R>();
+        ResultListener l = new RowWiseReducingResultListener<JsonDoc, R>(id, reducer, f,
+                (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new JsonDocValueFactory()));
+        this.protocol.asyncFind(findParams, "latin1", l);
+        return f;
+    }
+
+    public <R> CompletableFuture<R> asyncSelectRowsReduce(FindParams findParams, R id, Reducer<com.mysql.cj.api.x.Row, R> reducer) {
+        CompletableFuture<R> f = new CompletableFuture<R>();
+        ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, DevapiRowFactory::new);
+        this.protocol.asyncFind(findParams, "latin1", l);
+        return f;
     }
 
     @Override

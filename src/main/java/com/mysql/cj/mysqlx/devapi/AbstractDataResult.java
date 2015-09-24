@@ -26,32 +26,30 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
-import java.util.function.Function;
 
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.BufferedRowList;
+import com.mysql.cj.mysqlx.result.RowToElement;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
  * @todo
  */
 public abstract class AbstractDataResult<T> implements ResultStreamer {
+
     protected int position = -1;
     protected int count = -1;
     protected RowList rows;
     protected Supplier<StatementExecuteOk> completer;
     protected StatementExecuteOk ok;
-    protected Function<Row, T> rowToData;
+    protected RowToElement<T> rowToData;
 
-    public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer) {
+    public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer, RowToElement<T> rowToData) {
         this.rows = rows;
         this.completer = completer;
-    }
-
-    protected void setRowToData(Function<Row, T> rowToData) {
         this.rowToData = rowToData;
     }
 

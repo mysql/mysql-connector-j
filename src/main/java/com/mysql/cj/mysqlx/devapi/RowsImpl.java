@@ -24,12 +24,9 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Columns;
@@ -41,22 +38,10 @@ import com.mysql.cj.core.result.Field;
 
 public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRows {
     private ArrayList<Field> metadata;
-    private Map<String, Integer> fieldNameToIndex;
 
     public RowsImpl(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer);
-        // this reference to this::getFieldNameToIndexMap allows lazy access in the RowImpl but dictates that AbstractDataResult.setRowToData() be a separate
-        // method as we can't send a method references in the call to super()
-        setRowToData(r -> new RowImpl(r, this::getFieldNameToIndexMap));
+        super(rows, completer, new DevapiRowFactory(metadata));
         this.metadata = metadata;
-    }
-
-    private Map<String, Integer> getFieldNameToIndexMap() {
-        if (this.fieldNameToIndex == null) {
-            this.fieldNameToIndex = new HashMap<>();
-            IntStream.range(0, this.metadata.size()).forEach(i -> this.fieldNameToIndex.put(this.metadata.get(i).getColumnLabel(), i));
-        }
-        return this.fieldNameToIndex;
     }
 
     public Rows all() {

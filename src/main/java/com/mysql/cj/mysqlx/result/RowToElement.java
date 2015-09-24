@@ -21,28 +21,14 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package com.mysql.cj.mysqlx.result;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.core.io.JsonDocValueFactory;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.api.result.Row;
 
 /**
- * @todo
+ * Function which transforms an internal Row object to the element type of this result set.
  */
-public class DbDocsImpl extends AbstractDataResult<JsonDoc> implements DbDocs, FetchedDocs {
-    public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, r -> r.getValue(0, new JsonDocValueFactory()));
-        this.rows = rows;
-        this.completer = completer;
-    }
-
-    public DbDocs all() {
-        return this;
-    }
+public interface RowToElement<EL_T> extends Function<Row, EL_T> {
 }

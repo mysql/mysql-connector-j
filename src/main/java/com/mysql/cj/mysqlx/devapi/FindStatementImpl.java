@@ -29,6 +29,7 @@ import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.mysqlx.DocFindParams;
+import com.mysql.cj.x.json.JsonDoc;
 
 public class FindStatementImpl implements FindStatement {
     private CollectionImpl collection;
@@ -48,6 +49,10 @@ public class FindStatementImpl implements FindStatement {
 
     public CompletableFuture<FetchedDocs> executeAsync() {
         return this.collection.getSession().getMysqlxSession().asyncFindDocs(this.findParams);
+    }
+
+    public <R> CompletableFuture<R> executeAsync(R id, Reducer<JsonDoc, R> reducer) {
+        return this.collection.getSession().getMysqlxSession().asyncFindDocsReduce(this.findParams, id, reducer);
     }
 
     public FindStatement clearBindings() {

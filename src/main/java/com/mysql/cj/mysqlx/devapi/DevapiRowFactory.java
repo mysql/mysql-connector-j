@@ -4,7 +4,7 @@
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
   There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
-  this software, see the FOSS License Exception
+  this software, see the FLOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 
   This program is free software; you can redistribute it and/or modify it under the terms
@@ -23,26 +23,34 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.core.io.JsonDocValueFactory;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqlx.result.RowToElement;
 
 /**
- * @todo
+ * Create {@link com.mysql.cj.api.x.Row} objects from internal row representation.
  */
-public class DbDocsImpl extends AbstractDataResult<JsonDoc> implements DbDocs, FetchedDocs {
-    public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, r -> r.getValue(0, new JsonDocValueFactory()));
-        this.rows = rows;
-        this.completer = completer;
+public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.x.Row> {
+    private Map<String, Integer> fieldNameToIndex;
+    private ArrayList<Field> metadata;
+
+    public DevapiRowFactory(ArrayList<Field> metadata) {
+        this.metadata = metadata;
     }
 
-    public DbDocs all() {
-        return this;
+    private Map<String, Integer> getFieldNameToIndexMap() {
+        if (this.fieldNameToIndex == null) {
+            this.fieldNameToIndex = new HashMap<>();
+            IntStream.range(0, this.metadata.size()).forEach(i -> this.fieldNameToIndex.put(this.metadata.get(i).getColumnLabel(), i));
+        }
+        return this.fieldNameToIndex;
+    }
+
+    public com.mysql.cj.api.x.Row apply(com.mysql.cj.api.result.Row internalRow) {
+        return new RowImpl(internalRow, this::getFieldNameToIndexMap);
     }
 }
