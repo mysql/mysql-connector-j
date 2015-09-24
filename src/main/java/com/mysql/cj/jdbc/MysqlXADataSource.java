@@ -36,6 +36,12 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
     static final long serialVersionUID = 7911390333152247455L;
 
     /**
+     * Default no-arg constructor is required by specification.
+     */
+    public MysqlXADataSource() {
+    }
+
+    /**
      * @see javax.sql.XADataSource#getXAConnection()
      */
     public XAConnection getXAConnection() throws SQLException {

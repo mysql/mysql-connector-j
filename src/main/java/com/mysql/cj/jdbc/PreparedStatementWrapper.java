@@ -40,6 +40,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -886,5 +887,46 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
 
         return -1; // we actually never get here, but the compiler can't figure that out
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param x
+     * @param targetSqlType
+     * @throws SQLException
+     */
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((PreparedStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param x
+     * @param targetSqlType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((PreparedStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
     }
 }

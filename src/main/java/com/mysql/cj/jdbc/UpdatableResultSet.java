@@ -28,10 +28,9 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.NClob;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -42,7 +41,6 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -1470,31 +1468,42 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
-
-            this.updater.setObject(columnIndex, x);
-        } else {
-            this.inserter.setObject(columnIndex, x);
-
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
-        }
+        updateObjectInternal(columnIndex, x, null, 0);
     }
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
+        updateObjectInternal(columnIndex, x, null, scale);
+    }
+
+    /**
+     * Internal setObject implementation. Although targetType is not part of default ResultSet methods signatures, it is used for type conversions from
+     * JDBC42UpdatableResultSet new JDBC 4.2 updateObject() methods.
+     * 
+     * @param columnIndex
+     * @param x
+     * @param targetType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    protected synchronized void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
                 this.doingUpdates = true;
                 syncUpdate();
             }
 
-            this.updater.setObject(columnIndex, x);
+            if (targetType == null) {
+                this.updater.setObject(columnIndex, x);
+            } else {
+                this.updater.setObject(columnIndex, x, targetType);
+            }
         } else {
-            this.inserter.setObject(columnIndex, x);
+            if (targetType == null) {
+                this.inserter.setObject(columnIndex, x);
+            } else {
+                this.inserter.setObject(columnIndex, x, targetType);
+            }
 
             this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
@@ -1508,6 +1517,26 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public synchronized void updateObject(String columnName, Object x, int scale) throws SQLException {
         updateObject(findColumn(columnName), x);
+    }
+
+    @Override
+    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+        updateObjectInternal(columnIndex, x, targetSqlType.getVendorTypeNumber(), 0);
+    }
+
+    @Override
+    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        updateObjectInternal(columnIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+    }
+
+    @Override
+    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+        updateObjectInternal(findColumn(columnLabel), x, targetSqlType.getVendorTypeNumber(), 0);
+    }
+
+    @Override
+    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        updateObjectInternal(findColumn(columnLabel), x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
     }
 
     @Override

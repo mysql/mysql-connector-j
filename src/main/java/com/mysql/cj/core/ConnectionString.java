@@ -313,13 +313,13 @@ public class ConnectionString {
 
                 if ((value != null && value.length() > 0) && (parameter != null && parameter.length() > 0)) {
                     try {
-                        urlProps.put(parameter, URLDecoder.decode(value, "UTF-8"));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value, "UTF-8"));
                     } catch (UnsupportedEncodingException badEncoding) {
                         // punt
-                        urlProps.put(parameter, URLDecoder.decode(value));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value));
                     } catch (NoSuchMethodError nsme) {
                         // punt again
-                        urlProps.put(parameter, URLDecoder.decode(value));
+                        urlProps.setProperty(parameter, URLDecoder.decode(value));
                     }
                 }
             }
@@ -335,7 +335,7 @@ public class ConnectionString {
             hostStuff = url.substring(0, slashIndex);
 
             if ((slashIndex + 1) < url.length()) {
-                urlProps.put(PropertyDefinitions.DBNAME_PROPERTY_KEY, url.substring((slashIndex + 1), url.length()));
+                urlProps.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, url.substring((slashIndex + 1), url.length()));
             }
         } else {
             hostStuff = url;

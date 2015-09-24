@@ -37,6 +37,7 @@ import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -1547,6 +1548,208 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param sqlType
+     * @throws SQLException
+     */
+    public void registerOutParameter(int parameterIndex, SQLType sqlType) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param sqlType
+     * @param scale
+     * @throws SQLException
+     */
+    public void registerOutParameter(int parameterIndex, SQLType sqlType, int scale) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType, scale);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param sqlType
+     * @param typeName
+     * @throws SQLException
+     */
+    public void registerOutParameter(int parameterIndex, SQLType sqlType, String typeName) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType, typeName);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterName
+     * @param sqlType
+     * @throws SQLException
+     */
+    public void registerOutParameter(String parameterName, SQLType sqlType) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterName
+     * @param sqlType
+     * @param scale
+     * @throws SQLException
+     */
+    public void registerOutParameter(String parameterName, SQLType sqlType, int scale) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType, scale);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterName
+     * @param sqlType
+     * @param typeName
+     * @throws SQLException
+     */
+    public void registerOutParameter(String parameterName, SQLType sqlType, String typeName) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType, typeName);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param x
+     * @param targetSqlType
+     * @throws SQLException
+     */
+    @Override
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterIndex
+     * @param x
+     * @param targetSqlType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    @Override
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterName
+     * @param x
+     * @param targetSqlType
+     * @throws SQLException
+     */
+    public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).setObject(parameterName, x, targetSqlType);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
+        }
+    }
+
+    /**
+     * Support for java.sql.JDBCType/java.sql.SQLType.
+     * 
+     * @param parameterName
+     * @param x
+     * @param targetSqlType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        try {
+            if (this.wrappedStmt != null) {
+                ((CallableStatement) this.wrappedStmt).setObject(parameterName, x, targetSqlType, scaleOrLength);
+            } else {
+                throw SQLError.createSQLException("No operations allowed after statement closed", SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            }
+        } catch (SQLException sqlEx) {
+            checkAndFireConnectionError(sqlEx);
         }
     }
 

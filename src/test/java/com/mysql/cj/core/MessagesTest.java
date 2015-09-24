@@ -32,7 +32,7 @@ public class MessagesTest {
     @Test
     public void testLocalizedErrorMessages() throws Exception {
         Exception ex = new Exception();
-        assertEquals("Cannot load connection class because of underlying exception: " + ex.toString() + ".",
+        assertEquals("Cannot load connection class because of underlying exception: " + ex.toString(),
                 Messages.getString("NonRegisteringDriver.17", new Object[] { ex.toString() }));
         assertEquals("Unable to create properties transform instance 'Test' due to underlying exception: " + ex.toString(),
                 Messages.getString("NonRegisteringDriver.38", new Object[] { "Test", ex.toString() }));

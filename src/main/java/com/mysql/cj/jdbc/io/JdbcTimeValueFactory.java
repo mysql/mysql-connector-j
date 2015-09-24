@@ -57,12 +57,13 @@ public class JdbcTimeValueFactory extends DefaultValueFactory<Time> {
     @Override
     public Time createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] {"" + hours + ":" + minutes + ":" + seconds}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
         }
 
         synchronized (this.cal) {
             // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
             this.cal.set(1970, 0, 1, hours, minutes, seconds);
+            this.cal.set(Calendar.MILLISECOND, 0);
             long ms = (nanos / 1000000) + this.cal.getTimeInMillis();
             return new Time(ms);
         }
@@ -72,7 +73,7 @@ public class JdbcTimeValueFactory extends DefaultValueFactory<Time> {
     public Time createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (this.warningListener != null) {
             // TODO: need column context
-            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] {"java.sql.Time"}));
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Time" }));
         }
 
         // truncate date information

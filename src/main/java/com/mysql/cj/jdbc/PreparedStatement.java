@@ -42,18 +42,23 @@ import java.sql.Array;
 import java.sql.Clob;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
+import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -3422,40 +3427,67 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             } else {
                 if (parameterObj instanceof Byte) {
                     setInt(parameterIndex, ((Byte) parameterObj).intValue());
+
                 } else if (parameterObj instanceof String) {
                     setString(parameterIndex, (String) parameterObj);
+
                 } else if (parameterObj instanceof BigDecimal) {
                     setBigDecimal(parameterIndex, (BigDecimal) parameterObj);
+
                 } else if (parameterObj instanceof Short) {
                     setShort(parameterIndex, ((Short) parameterObj).shortValue());
+
                 } else if (parameterObj instanceof Integer) {
                     setInt(parameterIndex, ((Integer) parameterObj).intValue());
+
                 } else if (parameterObj instanceof Long) {
                     setLong(parameterIndex, ((Long) parameterObj).longValue());
+
                 } else if (parameterObj instanceof Float) {
                     setFloat(parameterIndex, ((Float) parameterObj).floatValue());
+
                 } else if (parameterObj instanceof Double) {
                     setDouble(parameterIndex, ((Double) parameterObj).doubleValue());
+
                 } else if (parameterObj instanceof byte[]) {
                     setBytes(parameterIndex, (byte[]) parameterObj);
+
                 } else if (parameterObj instanceof java.sql.Date) {
                     setDate(parameterIndex, (java.sql.Date) parameterObj);
+
                 } else if (parameterObj instanceof Time) {
                     setTime(parameterIndex, (Time) parameterObj);
+
                 } else if (parameterObj instanceof Timestamp) {
                     setTimestamp(parameterIndex, (Timestamp) parameterObj);
+
                 } else if (parameterObj instanceof Boolean) {
                     setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
+
                 } else if (parameterObj instanceof InputStream) {
                     setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
+
                 } else if (parameterObj instanceof java.sql.Blob) {
                     setBlob(parameterIndex, (java.sql.Blob) parameterObj);
+
                 } else if (parameterObj instanceof java.sql.Clob) {
                     setClob(parameterIndex, (java.sql.Clob) parameterObj);
+
                 } else if (this.treatUtilDateAsTimestamp.getValue() && parameterObj instanceof java.util.Date) {
                     setTimestamp(parameterIndex, new Timestamp(((java.util.Date) parameterObj).getTime()));
+
                 } else if (parameterObj instanceof BigInteger) {
                     setString(parameterIndex, parameterObj.toString());
+
+                } else if (parameterObj instanceof LocalDate) {
+                    setDate(parameterIndex, Date.valueOf((LocalDate) parameterObj));
+
+                } else if (parameterObj instanceof LocalDateTime) {
+                    setTimestamp(parameterIndex, Timestamp.valueOf((LocalDateTime) parameterObj));
+
+                } else if (parameterObj instanceof LocalTime) {
+                    setTime(parameterIndex, Time.valueOf((LocalTime) parameterObj));
+
                 } else {
                     setSerializableObject(parameterIndex, parameterObj);
                 }
@@ -3475,6 +3507,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             setObject(parameterIndex, parameterObj, targetSqlType, 0);
         } else {
             setObject(parameterIndex, parameterObj, targetSqlType, ((BigDecimal) parameterObj).scale());
+        }
+    }
+
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber());
         }
     }
 
@@ -3510,26 +3548,22 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             if (parameterObj == null) {
                 setNull(parameterIndex, java.sql.Types.OTHER);
             } else {
+
+                //JDBC42Helper.convertJavaTimeToJavaSql(x)
+                if (parameterObj instanceof LocalDate) {
+                    parameterObj = Date.valueOf((LocalDate) parameterObj);
+                } else if (parameterObj instanceof LocalDateTime) {
+                    parameterObj = Timestamp.valueOf((LocalDateTime) parameterObj);
+                } else if (parameterObj instanceof LocalTime) {
+                    parameterObj = Time.valueOf((LocalTime) parameterObj);
+                }
+
                 try {
+                    /*
+                     * From Table-B5 in the JDBC Spec
+                     */
                     switch (targetSqlType) {
                         case Types.BOOLEAN:
-                            /*
-                             * From Table-B5 in the JDBC-3.0 Spec
-                             * 
-                             * T S I B R F D D N B B C V L
-                             * I M N I E L O E U I O H A O
-                             * N A T G A O U C M T O A R N
-                             * Y L E I L A B I E L R C G
-                             * I L G N T L M R E H V
-                             * N I E T E A I A A A
-                             * T N R L C N R R
-                             * T C
-                             * H
-                             * A
-                             * R
-                             * -----------------------------------
-                             * Boolean x x x x x x x x x x x x x x
-                             */
 
                             if (parameterObj instanceof Boolean) {
                                 setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
@@ -3658,6 +3692,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                             break;
 
+                        case Types.REF_CURSOR:
+                        case Types.TIME_WITH_TIMEZONE:
+                        case Types.TIMESTAMP_WITH_TIMEZONE:
+                            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(targetSqlType),
+                                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+
                         default:
                             throw SQLError.createSQLException(Messages.getString("PreparedStatement.16"), SQLError.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
@@ -3671,6 +3711,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                             ex, getExceptionInterceptor());
                 }
             }
+        }
+    }
+
+    public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
         }
     }
 
@@ -4249,6 +4295,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
     private final byte[] streamToBytes(InputStream in, boolean escape, int streamLength, boolean useLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            in.mark(Integer.MAX_VALUE); // we may need to read this same stream several times, so we need to reset it at the end.
             try {
                 if (this.streamConvertBuf == null) {
                     this.streamConvertBuf = new byte[4096];
@@ -4304,6 +4351,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                 return bytesOut.toByteArray();
             } finally {
+                try {
+                    in.reset();
+                } catch (IOException e) {
+                }
                 if (this.autoClosePStmtStreams.getValue()) {
                     try {
                         in.close();

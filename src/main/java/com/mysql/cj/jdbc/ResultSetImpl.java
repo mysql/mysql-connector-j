@@ -38,16 +38,22 @@ import java.sql.Array;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLType;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,7 +94,6 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
@@ -1433,61 +1438,104 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         if (type.equals(String.class)) {
             return (T) getString(columnIndex);
+
         } else if (type.equals(BigDecimal.class)) {
             return (T) getBigDecimal(columnIndex);
+
         } else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
             return (T) Boolean.valueOf(getBoolean(columnIndex));
+
         } else if (type.equals(Integer.class) || type.equals(Integer.TYPE)) {
             return (T) Integer.valueOf(getInt(columnIndex));
+
         } else if (type.equals(Long.class) || type.equals(Long.TYPE)) {
             return (T) Long.valueOf(getLong(columnIndex));
+
         } else if (type.equals(Float.class) || type.equals(Float.TYPE)) {
             return (T) Float.valueOf(getFloat(columnIndex));
+
         } else if (type.equals(Double.class) || type.equals(Double.TYPE)) {
             return (T) Double.valueOf(getDouble(columnIndex));
+
         } else if (type.equals(byte[].class)) {
             return (T) getBytes(columnIndex);
+
         } else if (type.equals(Date.class)) {
             return (T) getDate(columnIndex);
+
         } else if (type.equals(Time.class)) {
             return (T) getTime(columnIndex);
+
         } else if (type.equals(Timestamp.class)) {
             return (T) getTimestamp(columnIndex);
+
         } else if (type.equals(Clob.class)) {
             return (T) getClob(columnIndex);
+
         } else if (type.equals(Blob.class)) {
             return (T) getBlob(columnIndex);
+
         } else if (type.equals(Array.class)) {
             return (T) getArray(columnIndex);
+
         } else if (type.equals(Ref.class)) {
             return (T) getRef(columnIndex);
+
         } else if (type.equals(URL.class)) {
             return (T) getURL(columnIndex);
+
         } else if (type.equals(Struct.class)) {
             throw new SQLFeatureNotSupportedException();
+
         } else if (type.equals(RowId.class)) {
             return (T) getRowId(columnIndex);
+
         } else if (type.equals(NClob.class)) {
             return (T) getNClob(columnIndex);
+
         } else if (type.equals(SQLXML.class)) {
             return (T) getSQLXML(columnIndex);
 
-        } else {
-            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
-                try {
-                    return (T) getObject(columnIndex);
-                } catch (ClassCastException cce) {
-                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    sqlEx.initCause(cce);
+        } else if (type.equals(LocalDate.class)) {
+            return (T) getDate(columnIndex).toLocalDate();
 
-                    throw sqlEx;
-                }
+        } else if (type.equals(LocalDateTime.class)) {
+            return (T) getTimestamp(columnIndex).toLocalDateTime();
+
+        } else if (type.equals(LocalTime.class)) {
+            return (T) getTime(columnIndex).toLocalTime();
+
+        } else if (type.equals(OffsetDateTime.class)) {
+            try {
+                return (T) OffsetDateTime.parse(getString(columnIndex));
+            } catch (DateTimeParseException e) {
+                // Let it continue and try by object deserialization.
             }
 
-            throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
+        } else if (type.equals(OffsetTime.class)) {
+            try {
+                return (T) OffsetTime.parse(getString(columnIndex));
+            } catch (DateTimeParseException e) {
+                // Let it continue and try by object deserialization.
+            }
+
         }
+
+        if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+            try {
+                return (T) getObject(columnIndex);
+            } catch (ClassCastException cce) {
+                SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
+                sqlEx.initCause(cce);
+
+                throw sqlEx;
+            }
+        }
+
+        throw SQLError
+                .createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+
     }
 
     public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
@@ -2661,4 +2709,21 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             this.warningChain.setNextWarning(w);
         }
     }
+
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+        throw SQLError.notUpdatable();
+    }
+
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        throw SQLError.notUpdatable();
+    }
+
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+        throw SQLError.notUpdatable();
+    }
+
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        throw SQLError.notUpdatable();
+    }
+
 }

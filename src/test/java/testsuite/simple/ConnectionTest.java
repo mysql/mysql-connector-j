@@ -67,6 +67,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.jdbc.Driver;
 
 /**
  * Tests java.sql.Connection functionality
@@ -1716,5 +1717,102 @@ public class ConnectionTest extends BaseTestCase {
         testRS.close();
         testStmt.close();
         testConn.close();
+    }
+
+    /**
+     * Test for Driver.acceptsURL() behavior clarification:
+     * - acceptsURL() throws SQLException if URL is null.
+     */
+    public void testDriverAcceptsURLNullArgument() {
+        assertThrows(SQLException.class, "Url is not allowed to be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                Driver mysqlDriver = new Driver();
+                mysqlDriver.acceptsURL(null);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Test for Driver.connect() behavior clarifications:
+     * - connect() throws SQLException if URL is null.
+     */
+    public void testDriverConnectNullArgument() throws Exception {
+        assertThrows(
+                SQLException.class,
+                "Cannot load connection class because of underlying exception: com.mysql.cj.core.exceptions.WrongArgumentException: Url is not allowed to be null.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        Driver mysqlDriver = new Driver();
+                        mysqlDriver.connect(null, null);
+                        return null;
+                    }
+                });
+
+        assertThrows(SQLException.class, "The url cannot be null", new Callable<Void>() {
+            public Void call() throws Exception {
+                DriverManager.getConnection(null);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Test for Driver.connect() behavior clarifications:
+     * - connect() properties precedence is implementation-defined.
+     */
+    public void testDriverConnectPropertiesPrecedence() throws Exception {
+        assertThrows(SQLException.class, "Access denied for user 'dummy'@'localhost' \\(using password: YES\\)", new Callable<Void>() {
+            public Void call() throws Exception {
+                DriverManager.getConnection(BaseTestCase.dbUrl, "dummy", "dummy");
+                return null;
+            }
+        });
+
+        // make sure the connection string doesn't contain 'maxRows'
+        String testUrl = BaseTestCase.dbUrl;
+        int b = testUrl.indexOf("maxRows");
+        if (b != -1) {
+            int e = testUrl.indexOf('&', b);
+            if (e == -1) {
+                e = testUrl.length();
+                b--;
+            } else {
+                e++;
+            }
+            testUrl = testUrl.substring(0, b) + testUrl.substring(e, testUrl.length());
+        }
+
+        Properties props = new Properties();
+        props.setProperty("maxRows", "123");
+
+        // Default property value.
+        JdbcConnection testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
+        assertEquals(-1, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
+        assertEquals(-1, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+
+        // Property in properties only.
+        testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
+        assertEquals(123, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+
+        testUrl += (testUrl.indexOf('?') == -1 ? "?" : "&") + "maxRows=321";
+
+        // Property in URL only.
+        testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
+        assertEquals(321, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
+        assertEquals(321, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+
+        // Property in both.
+        testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
+        assertEquals(123, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+    }
+
+    /**
+     * Test for REF_CURSOR support checking.
+     */
+    public void testSupportsRefCursors() throws Exception {
+        assertFalse(this.conn.getMetaData().supportsRefCursors());
     }
 }

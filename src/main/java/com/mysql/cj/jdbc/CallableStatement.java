@@ -31,12 +31,14 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -1703,26 +1705,50 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(int, int)
-     */
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
+        switch (sqlType) {
+            case Types.REF_CURSOR:
+            case Types.TIME_WITH_TIMEZONE:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
+                throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        }
+
         CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
         paramDescriptor.desiredJdbcType = sqlType;
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(int, int, int)
-     */
+    public void registerOutParameter(int parameterIndex, SQLType sqlType) throws SQLException {
+        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber());
+    }
+
     public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
         registerOutParameter(parameterIndex, sqlType);
+    }
+
+    public void registerOutParameter(int parameterIndex, SQLType sqlType, int scale) throws SQLException {
+        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), scale);
     }
 
     /**
      * @see java.sql.CallableStatement#registerOutParameter(int, int, java.lang.String)
      */
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException {
+        switch (sqlType) {
+            case Types.REF_CURSOR:
+            case Types.TIME_WITH_TIMEZONE:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
+                throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        }
+
         checkIsOutputParam(parameterIndex);
+
+        // TODO why we ignore typeName?
+    }
+
+    public void registerOutParameter(int parameterIndex, SQLType sqlType, String typeName) throws SQLException {
+        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), typeName);
     }
 
     /**
@@ -1734,6 +1760,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
+    public void registerOutParameter(String parameterName, SQLType sqlType) throws SQLException {
+        registerOutParameter(parameterName, sqlType.getVendorTypeNumber());
+    }
+
     /**
      * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, int)
      */
@@ -1741,11 +1771,19 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
     }
 
+    public void registerOutParameter(String parameterName, SQLType sqlType, int scale) throws SQLException {
+        registerOutParameter(parameterName, sqlType.getVendorTypeNumber(), scale);
+    }
+
     /**
      * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, java.lang.String)
      */
     public void registerOutParameter(String parameterName, int sqlType, String typeName) throws SQLException {
         registerOutParameter(getNamedParamIndex(parameterName, true), sqlType, typeName);
+    }
+
+    public void registerOutParameter(String parameterName, SQLType sqlType, String typeName) throws SQLException {
+        registerOutParameter(parameterName, sqlType.getVendorTypeNumber(), typeName);
     }
 
     /**
@@ -2015,10 +2053,23 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         setObject(getNamedParamIndex(parameterName, false), x, targetSqlType);
     }
 
+    public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            setObject(parameterName, x, targetSqlType.getVendorTypeNumber());
+        }
+    }
+
     /**
      * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object, int, int)
      */
     public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
+        setObject(getNamedParamIndex(parameterName, false), x, targetSqlType, scale);
+    }
+
+    public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            setObject(parameterName, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+        }
     }
 
     private void setOutParams() throws SQLException {
