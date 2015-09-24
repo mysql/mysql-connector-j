@@ -100,13 +100,13 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
         this.session.addDocs(getTestDatabase(), collName, stringDocs);
 
-        FindParams findParams = new DocFindParams();
+        FindParams findParams = new DocFindParams(getTestDatabase(), collName);
         findParams.setOrder("$._id");
-        DbDocsImpl docs1 = this.session.findDocs(getTestDatabase(), collName, findParams);
-        DbDocsImpl docs2 = this.session.findDocs(getTestDatabase(), collName, findParams);
-        DbDocsImpl docs3 = this.session.findDocs(getTestDatabase(), collName, findParams);
-        DbDocsImpl docs4 = this.session.findDocs(getTestDatabase(), collName, findParams);
-        DbDocsImpl docs5 = this.session.findDocs(getTestDatabase(), collName, findParams);
+        DbDocsImpl docs1 = this.session.findDocs(findParams);
+        DbDocsImpl docs2 = this.session.findDocs(findParams);
+        DbDocsImpl docs3 = this.session.findDocs(findParams);
+        DbDocsImpl docs4 = this.session.findDocs(findParams);
+        DbDocsImpl docs5 = this.session.findDocs(findParams);
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());

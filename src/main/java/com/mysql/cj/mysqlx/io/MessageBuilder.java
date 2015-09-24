@@ -35,6 +35,7 @@ import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
@@ -126,9 +127,9 @@ public class MessageBuilder {
         return builder.build();
     }
 
-    public Find buildFind(String schemaName, String collectionName, FindParams findParams, boolean isRelational) {
-        Find.Builder builder = Find.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        builder.setDataModel(isRelational ? DataModel.TABLE : DataModel.DOCUMENT);
+    public Find buildFind(FindParams findParams) {
+        Find.Builder builder = Find.newBuilder().setCollection((Collection) findParams.getCollection());
+        builder.setDataModel(findParams.isRelational() ? DataModel.TABLE : DataModel.DOCUMENT);
         if (findParams.getFields() != null) {
             builder.addAllProjection((List<Projection>) findParams.getFields());
         }
@@ -142,8 +143,8 @@ public class MessageBuilder {
         return builder.build();
     }
 
-    public Update buildDocUpdate(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
-        Update.Builder builder = Update.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+    public Update buildDocUpdate(FilterParams filterParams, List<UpdateSpec> updates) {
+        Update.Builder builder = Update.newBuilder().setCollection((Collection) filterParams.getCollection());
         updates.forEach(u -> {
             UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
             opBuilder.setOperation((UpdateType) u.getUpdateType());
@@ -158,8 +159,8 @@ public class MessageBuilder {
     }
 
     // TODO: low-level tests of this method
-    public Update buildRowUpdate(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
-        Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
+    public Update buildRowUpdate(FilterParams filterParams, UpdateParams updateParams) {
+        Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection((Collection) filterParams.getCollection());
         ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
                 .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
                 .forEach(builder::addOperation);
@@ -167,8 +168,8 @@ public class MessageBuilder {
         return builder.build();
     }
 
-    public Delete buildDelete(String schemaName, String collectionName, FilterParams filterParams) {
-        Delete.Builder builder = Delete.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+    public Delete buildDelete(FilterParams filterParams) {
+        Delete.Builder builder = Delete.newBuilder().setCollection((Collection) filterParams.getCollection());
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return builder.build();
     }

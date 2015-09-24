@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprParser;
 import com.mysql.cj.mysqlx.ExprUtil;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -40,21 +41,28 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
  * @todo better documentation
  */
 public class FilterParams {
+    private Collection collection;
     private Long limit;
     private Long offset;
     private List<Order> order;
     private Expr criteria;
     private Scalar[] args;
     private Map<String, Integer> placeholderNameToPosition;
-    protected boolean allowRelationalColumns = true;
+    protected boolean isRelational;
 
-    public FilterParams(boolean allowRelationalColumns) {
-        this.allowRelationalColumns = allowRelationalColumns;
+    public FilterParams(String schemaName, String collectionName, boolean isRelational) {
+        this.collection = ExprUtil.buildCollection(schemaName, collectionName);
+        this.isRelational = isRelational;
     }
 
-    public FilterParams(String criteriaString, boolean allowRelationalColumns) {
+    public FilterParams(String schemaName, String collectionName, String criteriaString, boolean isRelational) {
+        this.collection = ExprUtil.buildCollection(schemaName, collectionName);
+        this.isRelational = isRelational;
         setCriteria(criteriaString);
-        this.allowRelationalColumns = allowRelationalColumns;
+    }
+
+    public Object getCollection() {
+        return this.collection;
     }
 
     public Object getOrder() {
@@ -64,7 +72,7 @@ public class FilterParams {
 
     public void setOrder(String orderExpression) {
         // TODO: does this support placeholders? how do we prevent it?
-        this.order = new ExprParser(orderExpression, this.allowRelationalColumns).parseOrderSpec();
+        this.order = new ExprParser(orderExpression, this.isRelational).parseOrderSpec();
     }
 
     public Long getLimit() {
@@ -88,7 +96,7 @@ public class FilterParams {
     }
 
     public void setCriteria(String criteriaString) {
-        ExprParser parser = new ExprParser(criteriaString, this.allowRelationalColumns);
+        ExprParser parser = new ExprParser(criteriaString, this.isRelational);
         this.criteria = parser.parse();
         if (parser.getPositionalPlaceholderCount() > 0) {
             this.placeholderNameToPosition = parser.getPlaceholderNameToPositionMap();
@@ -138,5 +146,9 @@ public class FilterParams {
             IntStream.range(0, this.args.length)
                     .forEach(i -> this.args[i] = null);
         }
+    }
+
+    public boolean isRelational() {
+        return this.isRelational;
     }
 }

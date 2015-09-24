@@ -24,11 +24,9 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Map;
-import java.util.stream.IntStream;
 
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.UpdateStatement;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateParams;
 
@@ -37,12 +35,12 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
     private UpdateParams updateParams = new UpdateParams();
 
     /* package private */UpdateStatementImpl(TableImpl table) {
+        super(table.getSchema().getName(), table.getName(), true);
         this.table = table;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
-                .updateRows(this.table.getSchema().getName(), this.table.getName(), this.filterParams, this.updateParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession().updateRows(this.filterParams, this.updateParams);
         return new UpdateResult(ok, null);
     }
 
@@ -54,10 +52,5 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
     public UpdateStatement set(String field, Object value) {
         this.updateParams.addUpdate(field, value);
         return this;
-    }
-
-    @Override
-    protected boolean getAllowRelationalColumns() {
-        return true;
     }
 }

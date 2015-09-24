@@ -31,6 +31,7 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
     private CollectionImpl collection;
 
     public RemoveStatementImpl(CollectionImpl collection, String criteria) {
+        super(collection.getSchema().getName(), collection.getName(), false);
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
@@ -38,8 +39,7 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
-                .deleteDocs(this.collection.getSchema().getName(), this.collection.getName(), this.filterParams);
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().deleteDocs(this.filterParams);
         return new UpdateResult(ok, null);
     }
 
@@ -51,10 +51,5 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
     public RemoveStatement bind(String argName, Object value) {
         this.filterParams.addArg(argName, value);
         return this;
-    }
-
-    @Override
-    protected boolean getAllowRelationalColumns() {
-        return false;
     }
 }

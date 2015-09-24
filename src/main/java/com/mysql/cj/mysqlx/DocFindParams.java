@@ -29,18 +29,19 @@ import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 
 public class DocFindParams extends FindParams {
-    public DocFindParams() {
-        super(false);
+    public DocFindParams(String schemaName, String collectionName) {
+        super(schemaName, collectionName, false);
     }
 
-    public DocFindParams(String criteriaString) {
-        super(criteriaString, false);
+    public DocFindParams(String schemaName, String collectionName, String criteriaString) {
+        super(schemaName, collectionName, criteriaString, false);
     }
 
     public void setFields(Expression docProjection) {
         this.fields = Collections.singletonList(Projection.newBuilder().setSource(new ExprParser(docProjection.getExpressionString(), false).parse()).build());
     }
 
+    @Override
     public void setFields(String projection) {
         this.fields = new ExprParser(projection, false).parseDocumentProjection();
     }

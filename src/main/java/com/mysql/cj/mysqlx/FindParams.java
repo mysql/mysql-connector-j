@@ -33,12 +33,12 @@ public abstract class FindParams extends FilterParams {
     private Expr groupingCriteria;
     protected List<Projection> fields;
 
-    public FindParams(boolean allowRelationalColumns) {
-        super(allowRelationalColumns);
+    public FindParams(String schemaName, String collectionName, boolean isRelational) {
+        super(schemaName, collectionName, isRelational);
     }
 
-    public FindParams(String criteriaString, boolean allowRelationalColumns) {
-        super(criteriaString, allowRelationalColumns);
+    public FindParams(String schemaName, String collectionName, String criteriaString, boolean isRelational) {
+        super(schemaName, collectionName, criteriaString, isRelational);
     }
 
     public abstract void setFields(String projection);
@@ -48,7 +48,7 @@ public abstract class FindParams extends FilterParams {
     }
 
     public void setGrouping(String groupBy) {
-        this.grouping = new ExprParser(groupBy, this.allowRelationalColumns).parseExprList();
+        this.grouping = new ExprParser(groupBy, isRelational()).parseExprList();
     }
 
     public Object getGrouping() {
@@ -56,7 +56,7 @@ public abstract class FindParams extends FilterParams {
     }
 
     public void setGroupingCriteria(String having) {
-        this.groupingCriteria = new ExprParser(having, this.allowRelationalColumns).parse();
+        this.groupingCriteria = new ExprParser(having, isRelational()).parse();
     }
 
     public Object getGroupingCriteria() {

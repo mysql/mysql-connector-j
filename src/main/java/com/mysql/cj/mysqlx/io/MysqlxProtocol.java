@@ -691,20 +691,20 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
-    public void sendFind(String schemaName, String collectionName, FindParams findParams, boolean isRelational) {
-        this.writer.write(this.msgBuilder.buildFind(schemaName, collectionName, findParams, isRelational));
+    public void sendFind(FindParams findParams) {
+        this.writer.write(this.msgBuilder.buildFind(findParams));
     }
 
-    public void sendDocUpdates(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
-        this.writer.write(this.msgBuilder.buildDocUpdate(schemaName, collectionName, filterParams, updates));
+    public void sendDocUpdates(FilterParams filterParams, List<UpdateSpec> updates) {
+        this.writer.write(this.msgBuilder.buildDocUpdate(filterParams, updates));
     }
 
-    public void sendRowUpdates(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
-        this.writer.write(this.msgBuilder.buildRowUpdate(schemaName, tableName, filterParams, updateParams));
+    public void sendRowUpdates(FilterParams filterParams, UpdateParams updateParams) {
+        this.writer.write(this.msgBuilder.buildRowUpdate(filterParams, updateParams));
     }
 
-    public void sendDocDelete(String schemaName, String collectionName, FilterParams filterParams) {
-        this.writer.write(this.msgBuilder.buildDelete(schemaName, collectionName, filterParams));
+    public void sendDocDelete(FilterParams filterParams) {
+        this.writer.write(this.msgBuilder.buildDelete(filterParams));
     }
 
     public void sendDocInsert(String schemaName, String collectionName, List<String> json) {

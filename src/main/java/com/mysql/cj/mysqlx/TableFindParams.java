@@ -24,14 +24,15 @@
 package com.mysql.cj.mysqlx;
 
 public class TableFindParams extends FindParams {
-    public TableFindParams() {
-        super(true);
+    public TableFindParams(String schemaName, String collectionName) {
+        super(schemaName, collectionName, true);
     }
 
-    public TableFindParams(String criteriaString) {
-        super(criteriaString, true);
+    public TableFindParams(String schemaName, String collectionName, String criteriaString) {
+        super(schemaName, collectionName, criteriaString, true);
     }
 
+    @Override
     public void setFields(String projection) {
         this.fields = new ExprParser(projection, true).parseTableSelectProjection();
     }

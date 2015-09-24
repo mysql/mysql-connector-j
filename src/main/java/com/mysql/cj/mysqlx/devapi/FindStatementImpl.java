@@ -29,9 +29,10 @@ import com.mysql.cj.mysqlx.DocFindParams;
 
 public class FindStatementImpl implements FindStatement {
     private CollectionImpl collection;
-    private DocFindParams findParams = new DocFindParams();
+    private DocFindParams findParams;
 
     /* package private */FindStatementImpl(CollectionImpl collection, String criteria) {
+        this.findParams = new DocFindParams(collection.getSchema().getName(), collection.getName());
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.findParams.setCriteria(criteria);
@@ -39,7 +40,7 @@ public class FindStatementImpl implements FindStatement {
     }
 
     public DbDocsImpl execute() {
-        return this.collection.getSession().getMysqlxSession().findDocs(this.collection.getSchema().getName(), this.collection.getName(), this.findParams);
+        return this.collection.getSession().getMysqlxSession().findDocs(this.findParams);
     }
 
     public FindStatement clearBindings() {

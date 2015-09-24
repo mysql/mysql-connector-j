@@ -29,9 +29,10 @@ import com.mysql.cj.mysqlx.TableFindParams;
 
 public class SelectStatementImpl implements SelectStatement {
     private TableImpl table;
-    private FindParams findParams = new TableFindParams();
+    private FindParams findParams;
 
     /* package private */SelectStatementImpl(TableImpl table, String projection) {
+        this.findParams = new TableFindParams(table.getSchema().getName(), table.getName());
         this.table = table;
         if (projection != null && projection.length() > 0) {
             this.findParams.setFields(projection);
@@ -39,7 +40,7 @@ public class SelectStatementImpl implements SelectStatement {
     }
 
     public RowsImpl execute() {
-        return this.table.getSession().getMysqlxSession().selectRows(this.table.getSchema().getName(), this.table.getName(), this.findParams);
+        return this.table.getSession().getMysqlxSession().selectRows(this.findParams);
     }
 
     public SelectStatement clearBindings() {

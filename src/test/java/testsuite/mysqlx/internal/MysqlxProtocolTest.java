@@ -313,8 +313,8 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new DocFindParams("$.testVal = 2-1");
-        this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
+        FindParams findParams = new DocFindParams(getTestDatabase(), collName, "$.testVal = 2-1");
+        this.protocol.sendFind(findParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -335,9 +335,9 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs);
         this.protocol.readStatementExecuteOk();
 
-        FindParams findParams = new DocFindParams();
+        FindParams findParams = new DocFindParams(getTestDatabase(), collName);
         findParams.setOrder("_id");
-        this.protocol.sendFind(getTestDatabase(), collName, findParams, false);
+        this.protocol.sendFind(findParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -361,11 +361,11 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         List<UpdateSpec> updates = new ArrayList<>();
         updates.add(new UpdateSpec(UpdateType.ITEM_SET, "$.a").setValue("lemon"));
         updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, "$.insertedBy"));
-        this.protocol.sendDocUpdates(getTestDatabase(), collName, new FilterParams(false), updates);
+        this.protocol.sendDocUpdates(new FilterParams(getTestDatabase(), collName, false), updates);
         this.protocol.readStatementExecuteOk();
 
         // verify
-        this.protocol.sendFind(getTestDatabase(), collName, new DocFindParams(), false);
+        this.protocol.sendFind(new DocFindParams(getTestDatabase(), collName));
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
@@ -387,10 +387,10 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
         assertEquals(2, ok.getRowsAffected());
 
-        FindParams findParams = new TableFindParams();
+        FindParams findParams = new TableFindParams(getTestDatabase(), "tableInsert");
         findParams.setOrder("x DESC");
         findParams.setFields("z, y, x");
-        this.protocol.sendFind(getTestDatabase(), "tableInsert", findParams, true);
+        this.protocol.sendFind(findParams);
 
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);

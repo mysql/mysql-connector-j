@@ -31,16 +31,12 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl
     private TableImpl table;
 
     /* package private */DeleteStatementImpl(TableImpl table) {
+        super(table.getSchema().getName(), table.getName(), true);
         this.table = table;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
-                .deleteRows(this.table.getSchema().getName(), this.table.getName(), this.filterParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession().deleteRows(this.filterParams);
         return new UpdateResult(ok, null);
-    }
-
-    protected boolean getAllowRelationalColumns() {
-        return true;
     }
 }

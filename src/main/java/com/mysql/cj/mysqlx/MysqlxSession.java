@@ -201,39 +201,35 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
-    public StatementExecuteOk updateDocs(String schemaName, String collectionName, FilterParams filterParams, List<UpdateSpec> updates) {
+    public StatementExecuteOk updateDocs(FilterParams filterParams, List<UpdateSpec> updates) {
         newCommand();
-        this.protocol.sendDocUpdates(schemaName, collectionName, filterParams, updates);
+        this.protocol.sendDocUpdates(filterParams, updates);
         return this.protocol.readStatementExecuteOk();
     }
 
-    public StatementExecuteOk updateRows(String schemaName, String tableName, FilterParams filterParams, UpdateParams updateParams) {
+    public StatementExecuteOk updateRows(FilterParams filterParams, UpdateParams updateParams) {
         newCommand();
-        this.protocol.sendRowUpdates(schemaName, tableName, filterParams, updateParams);
+        this.protocol.sendRowUpdates(filterParams, updateParams);
         return this.protocol.readStatementExecuteOk();
     }
 
-    public StatementExecuteOk deleteDocs(String schemaName, String collectionName, FilterParams filterParams) {
+    public StatementExecuteOk deleteDocs(FilterParams filterParams) {
         newCommand();
-        this.protocol.sendDocDelete(schemaName, collectionName, filterParams);
+        this.protocol.sendDocDelete(filterParams);
         return this.protocol.readStatementExecuteOk();
     }
 
-    public StatementExecuteOk deleteRows(String schemaName, String collectionName, FilterParams filterParams) {
+    public StatementExecuteOk deleteRows(FilterParams filterParams) {
         newCommand();
         // TODO: this works because xplugin doesn't check dataModel on delete. it doesn't need to... protocol change?
-        this.protocol.sendDocDelete(schemaName, collectionName, filterParams);
+        this.protocol.sendDocDelete(filterParams);
         return this.protocol.readStatementExecuteOk();
     }
 
-    private <T extends ResultStreamer> T findInternal(String schemaName, String collectionName, FindParams findParams, boolean isRelational,
+    private <T extends ResultStreamer> T findInternal(FindParams findParams,
             Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
         newCommand();
-        if (findParams == null) {
-            // doesn't matter which if it's empty
-            findParams = new DocFindParams();
-        }
-        this.protocol.sendFind(schemaName, collectionName, findParams, isRelational);
+        this.protocol.sendFind(findParams);
         // TODO: put characterSetMetadata somewhere useful
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         T res = resultCtor.apply(metadata).apply(this.protocol.getRowInputStream(metadata), this.protocol::readStatementExecuteOk);
@@ -241,12 +237,12 @@ public class MysqlxSession implements Session {
         return res;
     }
 
-    public DbDocsImpl findDocs(String schemaName, String collectionName, FindParams findParams) {
-        return findInternal(schemaName, collectionName, findParams, false, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
+    public DbDocsImpl findDocs(FindParams findParams) {
+        return findInternal(findParams, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
     }
 
-    public RowsImpl selectRows(String schemaName, String tableName, FindParams findParams) {
-        return findInternal(schemaName, tableName, findParams, true, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
+    public RowsImpl selectRows(FindParams findParams) {
+        return findInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
     }
 
     public void createCollection(String schemaName, String collectionName) {

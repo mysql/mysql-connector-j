@@ -37,6 +37,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     private List<UpdateSpec> updates = new ArrayList<>();
 
     public ModifyStatementImpl(CollectionImpl collection, String criteria) {
+        super(collection.getSchema().getName(), collection.getName(), false);
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
@@ -44,8 +45,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
-                .updateDocs(this.collection.getSchema().getName(), this.collection.getName(), this.filterParams, this.updates);
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().updateDocs(this.filterParams, this.updates);
         return new UpdateResult(ok, null);
     }
 
@@ -85,10 +85,5 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
 
     public ModifyStatement arrayDelete(String field, int position) {
         throw new NullPointerException("TODO: not supported in xplugin");
-    }
-
-    @Override
-    protected boolean getAllowRelationalColumns() {
-        return false;
     }
 }
