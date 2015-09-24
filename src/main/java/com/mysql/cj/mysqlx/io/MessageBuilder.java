@@ -23,72 +23,21 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import static java.util.stream.Collectors.toMap;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslClient;
-import javax.security.sasl.SaslException;
-
 import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Parser;
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.authentication.AuthenticationProvider;
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.api.io.PacketSentTimeHolder;
-import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.io.ResultsHandler;
-import com.mysql.cj.api.io.ServerCapabilities;
-import com.mysql.cj.api.io.ServerSession;
-import com.mysql.cj.api.io.SocketConnection;
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.authentication.Security;
-import com.mysql.cj.core.exceptions.AssertionFailedException;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.core.util.LazyString;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.Field;
-import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
-import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
-import com.mysql.cj.mysqlx.devapi.WarningImpl;
-import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
-import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
-import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
-import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
@@ -99,21 +48,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
-import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
-import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
-import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
-import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
-import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
-import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
-import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
-import com.mysql.cj.mysqlx.result.MysqlxRow;
-import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
 public class MessageBuilder {
     // "xplugin" namespace for StmtExecute messages
