@@ -750,10 +750,6 @@ public class SQLError {
         return runThroughExceptionInterceptor(interceptor, exToReturn, conn);
     }
 
-    public static SQLFeatureNotSupportedException notImplemented() {
-        return new SQLFeatureNotSupportedException();
-    }
-
     public static NotUpdatable notUpdatable() {
         return new NotUpdatable();
     }
@@ -790,6 +786,13 @@ public class SQLError {
                 long[].class, Throwable.class }, new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(),
                 updateCounts, underlyingEx }, interceptor);
         return runThroughExceptionInterceptor(interceptor, newEx, null);
+    }
+
+    /**
+     * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
+     */
+    public static SQLException createSQLFeatureNotSupportedException() {
+        return new SQLFeatureNotSupportedException();
     }
 
     /**

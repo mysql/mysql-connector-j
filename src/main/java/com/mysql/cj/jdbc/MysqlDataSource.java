@@ -444,11 +444,11 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
 
     //
     //	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    //		throw SQLError.notImplemented();
+    //		throw SQLError.createSQLFeatureNotSupportedException();
     //	}
     //
     //	public <T> T unwrap(Class<T> iface) throws SQLException {
-    //		throw SQLError.notImplemented();
+    //		throw SQLError.createSQLFeatureNotSupportedException();
     //	}
 
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {

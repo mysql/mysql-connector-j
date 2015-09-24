@@ -162,7 +162,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * @see java.sql.Blob#position(byte[], long)
      */
     public synchronized long position(byte[] pattern, long start) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

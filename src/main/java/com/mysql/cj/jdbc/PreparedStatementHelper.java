@@ -44,7 +44,7 @@ public class PreparedStatementHelper {
      * @throws SQLException
      */
     static void setRowId(PreparedStatement pstmt, int parameterIndex, RowId x) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

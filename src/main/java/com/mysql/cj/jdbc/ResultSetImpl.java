@@ -840,7 +840,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public Array getArray(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public Array getArray(String colName) throws SQLException {
@@ -1671,7 +1671,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
     public java.sql.Ref getRef(int i) throws SQLException {
         checkColumnBounds(i);
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public java.sql.Ref getRef(String colName) throws SQLException {
@@ -2141,15 +2141,15 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public boolean rowDeleted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public boolean rowInserted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public boolean rowUpdated() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void setFetchDirection(int direction) throws SQLException {
@@ -2293,11 +2293,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public void updateArray(int arg0, Array arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateArray(String arg0, Array arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
@@ -2365,7 +2365,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public void updateClob(int arg0, java.sql.Clob arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateClob(String columnName, java.sql.Clob clob) throws SQLException {
@@ -2437,11 +2437,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public void updateRef(int arg0, Ref arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateRef(String arg0, Ref arg1) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateRow() throws SQLException {
@@ -2509,11 +2509,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public int getHoldability() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public RowId getRowId(int columnIndex) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public RowId getRowId(String columnLabel) throws SQLException {

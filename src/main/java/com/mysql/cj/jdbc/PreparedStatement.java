@@ -2669,7 +2669,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLFeatureNotSupportedException
      */
     public void setArray(int i, Array x) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -3754,7 +3754,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLFeatureNotSupportedException
      */
     public void setRef(int i, Ref x) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

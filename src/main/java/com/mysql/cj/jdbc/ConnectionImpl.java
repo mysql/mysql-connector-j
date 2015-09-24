@@ -4664,11 +4664,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

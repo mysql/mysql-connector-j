@@ -903,7 +903,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     }
 
     public void createNewIO(boolean isForReconnect) {
-        SQLException ex = SQLError.notImplemented();
+        SQLException ex = SQLError.createSQLFeatureNotSupportedException();
         throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
     }
 
@@ -921,7 +921,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     }
 
     public void shutdownServer() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void clearHasTriedMaster() {

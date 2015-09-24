@@ -145,7 +145,7 @@ public class BlobFromLocator implements java.sql.Blob {
      * @see Blob#setBinaryStream(long)
      */
     public OutputStream setBinaryStream(long indexToWriteAt) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**

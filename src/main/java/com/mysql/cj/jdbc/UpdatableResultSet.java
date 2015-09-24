@@ -1075,17 +1075,17 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean rowDeleted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
     public synchronized boolean rowInserted() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
     public synchronized boolean rowUpdated() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
@@ -1899,7 +1899,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public int getHoldability() throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
@@ -1962,7 +1962,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public RowId getRowId(int columnIndex) throws SQLException {
-        throw SQLError.notImplemented();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
