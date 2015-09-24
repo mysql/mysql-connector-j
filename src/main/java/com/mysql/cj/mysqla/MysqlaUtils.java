@@ -148,6 +148,7 @@ public class MysqlaUtils {
             case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
             case MysqlaConstants.FIELD_TYPE_GEOMETRY:
             case MysqlaConstants.FIELD_TYPE_BIT:
+            case MysqlaConstants.FIELD_TYPE_JSON:
                 return 0;
         }
         return -1; // unknown type

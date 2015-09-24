@@ -310,6 +310,8 @@ public class PropertyDefinitions {
 
     public static final String PNAME_useAsyncProtocol = "mysqlx.useAsyncProtocol";
 
+    public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
+
     // TODO following names are used in code but have no definitions
     public static final String PNAME_user = "user";
     public static final String PNAME_password = "password";
@@ -887,7 +889,10 @@ public class PropertyDefinitions {
                 // TODO improve MySQLx properties descriptions
 
                 new BooleanPropertyDefinition(PNAME_useAsyncProtocol, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_MYSQLX, Integer.MIN_VALUE) };
+                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_MYSQLX, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "5.1.37", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
 
         HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
         for (PropertyDefinition<?> pdef : pdefs) {

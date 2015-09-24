@@ -171,6 +171,7 @@ public abstract class ResultSetRow {
             case MysqlaConstants.FIELD_TYPE_ENUM:
             case MysqlaConstants.FIELD_TYPE_SET:
             case MysqlaConstants.FIELD_TYPE_GEOMETRY:
+            case MysqlaConstants.FIELD_TYPE_JSON:
                 return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
 
             case MysqlaConstants.FIELD_TYPE_BIT:

@@ -368,6 +368,7 @@ public class StatementImpl implements Statement {
         this.dontCheckOnDuplicateKeyUpdateInSQL = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL)
                 .getValue();
         this.sendFractionalSeconds = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
+        this.doEscapeProcessing = c.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableEscapeProcessing).getValue();
 
         this.maxFieldSize = this.maxAllowedPacket.getValue();
 
@@ -705,7 +706,7 @@ public class StatementImpl implements Statement {
             //
             // Need to be able to get resultset irrespective if we issued DML or not to make this work.
             //
-            ResultSetInternalMethods rs = ((com.mysql.cj.jdbc.StatementImpl) pStmt).getResultSetInternal();
+            ResultSetInternalMethods rs = ((StatementImpl) pStmt).getResultSetInternal();
 
             rs.setStatementUsedForFetchingRows((com.mysql.cj.jdbc.PreparedStatement) pStmt);
 

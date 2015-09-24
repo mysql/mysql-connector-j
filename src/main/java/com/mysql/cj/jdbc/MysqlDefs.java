@@ -167,6 +167,7 @@ public final class MysqlDefs {
 
                 break;
 
+            case MysqlaConstants.FIELD_TYPE_JSON:
             case MysqlaConstants.FIELD_TYPE_STRING:
                 jdbcType = Types.CHAR;
 
@@ -218,6 +219,8 @@ public final class MysqlDefs {
             return mysqlToJavaType(MysqlaConstants.FIELD_TYPE_STRING);
         } else if (mysqlType.equalsIgnoreCase("VARCHAR")) {
             return mysqlToJavaType(MysqlaConstants.FIELD_TYPE_VAR_STRING);
+        } else if (mysqlType.equalsIgnoreCase("JSON")) {
+            return mysqlToJavaType(MysqlaConstants.FIELD_TYPE_JSON);
         } else if (mysqlType.equalsIgnoreCase("DATE")) {
             return mysqlToJavaType(MysqlaConstants.FIELD_TYPE_DATE);
         } else if (mysqlType.equalsIgnoreCase("TIME")) {
@@ -342,6 +345,9 @@ public final class MysqlDefs {
             case MysqlaConstants.FIELD_TYPE_GEOMETRY:
                 return "FIELD_TYPE_GEOMETRY";
 
+            case MysqlaConstants.FIELD_TYPE_JSON:
+                return "FIELD_TYPE_JSON";
+
             default:
                 return " Unknown MySQL Type # " + mysqlType;
         }
@@ -382,6 +388,7 @@ public final class MysqlDefs {
         mysqlToJdbcTypesMap.put("ENUM", Integer.valueOf(mysqlToJavaType(MysqlaConstants.FIELD_TYPE_ENUM)));
         mysqlToJdbcTypesMap.put("SET", Integer.valueOf(mysqlToJavaType(MysqlaConstants.FIELD_TYPE_SET)));
         mysqlToJdbcTypesMap.put("GEOMETRY", Integer.valueOf(mysqlToJavaType(MysqlaConstants.FIELD_TYPE_GEOMETRY)));
+        mysqlToJdbcTypesMap.put("JSON", Integer.valueOf(mysqlToJavaType(MysqlaConstants.FIELD_TYPE_JSON)));
     }
 
     public static final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName) {
@@ -417,6 +424,5 @@ public final class MysqlDefs {
         buf.append(" ELSE ");
         buf.append(Types.OTHER);
         buf.append(" END ");
-
     }
 }
