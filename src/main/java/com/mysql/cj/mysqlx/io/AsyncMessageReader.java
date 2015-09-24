@@ -39,14 +39,14 @@ import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.mysqlx.io.MessageConstants;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.io.MessageConstants;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 
 /**
  * Asynchronous message reader for the MySQL-X protobuf-encoded messages.

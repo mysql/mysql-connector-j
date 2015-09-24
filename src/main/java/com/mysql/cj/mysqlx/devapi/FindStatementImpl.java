@@ -23,7 +23,10 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.mysql.cj.api.x.Expression;
+import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.mysqlx.DocFindParams;
 
@@ -41,6 +44,10 @@ public class FindStatementImpl implements FindStatement {
 
     public DbDocsImpl execute() {
         return this.collection.getSession().getMysqlxSession().findDocs(this.findParams);
+    }
+
+    public CompletableFuture<FetchedDocs> executeAsync() {
+        return this.collection.getSession().getMysqlxSession().asyncFindDocs(this.findParams);
     }
 
     public FindStatement clearBindings() {

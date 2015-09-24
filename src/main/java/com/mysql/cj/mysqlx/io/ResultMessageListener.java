@@ -30,7 +30,10 @@ import com.google.protobuf.GeneratedMessage;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
@@ -97,7 +100,6 @@ public class ResultMessageListener implements MessageListener {
 
     private void handleException(Throwable ex) {
         callbacks.onException(ex);
-        return true; /* done reading? */
     }
 
     public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
@@ -113,9 +115,9 @@ public class ResultMessageListener implements MessageListener {
             return handleError(Error.class.cast(msg));
         } else if (Frame.class.equals(msgClass)) {
             // TODO warnings, update counts, etc
-        } else {
-            return handleException(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + msg));
         }
+        handleException(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + msg));
+        return false; /* done reading? */ // note, this doesn't comply with the specified semantics ResultListener
     }
 
     public void closed() {

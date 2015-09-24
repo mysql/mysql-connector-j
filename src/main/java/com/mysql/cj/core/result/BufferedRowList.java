@@ -40,6 +40,10 @@ public class BufferedRowList implements RowList {
     private List<Row> rowList;
     private int position = -1;
 
+    public BufferedRowList(List<Row> rowList) {
+        this.rowList = rowList;
+    }
+
     /**
      * Create a new instance by filling the internal buffer by draining the row stream.
      */

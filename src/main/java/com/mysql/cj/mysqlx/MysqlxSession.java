@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Spliterators;
 import java.util.TimeZone;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -47,6 +48,8 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
+import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
@@ -63,12 +66,20 @@ import com.mysql.cj.mysqlx.devapi.SqlDataResult;
 import com.mysql.cj.mysqlx.devapi.SqlUpdateResult;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
+import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
  * @todo
  */
 public class MysqlxSession implements Session {
+
+    /**
+     * A function to create a result set from the metadata, row list and ok packet (curried representation).
+     *
+     * @param<T> the type of the result that this constructor will create
+     */
+    public static interface ResultCtor<T> extends Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> {}
 
     private MysqlxProtocol protocol;
     private ResultStreamer currentResult;
@@ -226,8 +237,7 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
-    private <T extends ResultStreamer> T findInternal(FindParams findParams,
-            Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
+    private <T extends ResultStreamer> T findInternal(FindParams findParams, ResultCtor<T> resultCtor) {
         newCommand();
         this.protocol.sendFind(findParams);
         // TODO: put characterSetMetadata somewhere useful
@@ -376,6 +386,22 @@ public class MysqlxSession implements Session {
                 throw new CJCommunicationsException(ex);
             }
         }
+    }
+
+    private <RES_T> CompletableFuture<RES_T> asyncFindInternal(FindParams findParams, ResultCtor<? extends RES_T> resultCtor) {
+        CompletableFuture<RES_T> f = new CompletableFuture<>();
+        ResultListener l = new ResultCreatingResultListener<RES_T>(resultCtor, f);
+        // TODO: put characterSetMetadata somewhere useful
+        this.protocol.asyncFind(findParams, "latin1", l);
+        return f;
+    }
+
+    public CompletableFuture<FetchedDocs> asyncFindDocs(FindParams findParams) {
+        return asyncFindInternal(findParams, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
+    }
+
+    public CompletableFuture<FetchedRows> asyncSelectRows(FindParams findParams) {
+        return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
     }
 
     @Override
