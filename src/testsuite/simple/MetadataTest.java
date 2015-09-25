@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -726,6 +726,94 @@ public class MetadataTest extends BaseTestCase {
                     conn1.close();
                 }
             }
+        }
+    }
+
+    /**
+     * WL#411 - Generated columns.
+     * 
+     * Test for new syntax and support in DatabaseMetaData.getColumns().
+     * 
+     * New syntax for CREATE TABLE, introduced in MySQL 5.7.6:
+     * -col_name data_type [GENERATED ALWAYS] AS (expression) [VIRTUAL | STORED] [UNIQUE [KEY]] [COMMENT comment] [[NOT] NULL] [[PRIMARY] KEY]
+     */
+    public void testGeneratedColumns() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        // Test GENERATED columns syntax.
+        createTable("pythagorean_triple", "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
+                + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
+                + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
+                + "PRIMARY KEY)");
+
+        // Test data for generated columns.
+        assertEquals(1, this.stmt.executeUpdate("INSERT INTO pythagorean_triple (side_a, side_b) VALUES (3, 4)"));
+        this.rs = this.stmt.executeQuery("SELECT * FROM pythagorean_triple");
+        assertTrue(this.rs.next());
+        assertEquals(3d, this.rs.getDouble(1));
+        assertEquals(4d, this.rs.getDouble(2));
+        assertEquals(5d, this.rs.getDouble(3));
+        assertEquals(5d, this.rs.getDouble(4));
+        assertEquals(3d, this.rs.getDouble("side_a"));
+        assertEquals(4d, this.rs.getDouble("side_b"));
+        assertEquals(5d, this.rs.getDouble("side_c_sto"));
+        assertEquals(5d, this.rs.getDouble("side_c_vir"));
+        assertFalse(this.rs.next());
+
+        for (String connProps : new String[] { "useInformationSchema=false", "useInformationSchema=true" }) {
+            Connection testConn = null;
+            testConn = getConnectionWithProps(connProps);
+            DatabaseMetaData dbmd = testConn.getMetaData();
+
+            String test = "Case [" + connProps + "]";
+
+            // Test columns metadata.
+            this.rs = dbmd.getColumns(null, null, "pythagorean_triple", "%");
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_a", this.rs.getString("COLUMN_NAME"));
+            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
+            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
+            assertEquals(test, "NO", this.rs.getString("IS_GENERATEDCOLUMN"));
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_b", this.rs.getString("COLUMN_NAME"));
+            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
+            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
+            assertEquals(test, "NO", this.rs.getString("IS_GENERATEDCOLUMN"));
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_c_vir", this.rs.getString("COLUMN_NAME"));
+            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
+            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
+            assertEquals(test, "YES", this.rs.getString("IS_GENERATEDCOLUMN"));
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
+            assertEquals(test, "NO", this.rs.getString("IS_NULLABLE"));
+            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
+            assertEquals(test, "YES", this.rs.getString("IS_GENERATEDCOLUMN"));
+            assertFalse(test, this.rs.next());
+
+            // Test primary keys metadata.
+            this.rs = dbmd.getPrimaryKeys(null, null, "pythagorean_triple");
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
+            assertEquals(test, "PRIMARY", this.rs.getString("PK_NAME"));
+            assertFalse(test, this.rs.next());
+
+            // Test indexes metadata.
+            this.rs = dbmd.getIndexInfo(null, null, "pythagorean_triple", false, true);
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "PRIMARY", this.rs.getString("INDEX_NAME"));
+            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_c_sto", this.rs.getString("INDEX_NAME"));
+            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
+            assertTrue(test, this.rs.next());
+            assertEquals(test, "side_c_vir", this.rs.getString("INDEX_NAME"));
+            assertEquals(test, "side_c_vir", this.rs.getString("COLUMN_NAME"));
+            assertFalse(test, this.rs.next());
+
+            testConn.close();
         }
     }
 }

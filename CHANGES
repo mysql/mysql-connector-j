@@ -2,6 +2,9 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Fix for Bug#76859 (20969312), DBMD getColumns using I_S doesn't have column IS_GENERATEDCOLUMN as per JDBC 4.1.
+    Added support for GENERATED COLUMNS.
+
   - Update Time Zone mappings with IANA Time Zone database tsdata2015f and Unicode CLDR v.28.
 
   - Update DatabaseMetaData SQL keywords.

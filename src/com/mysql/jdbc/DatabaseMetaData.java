@@ -2514,8 +2514,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                                 if (extra != null) {
                                     rowVal[22] = s2b(StringUtils.indexOfIgnoreCase(extra, "auto_increment") != -1 ? "YES" : "NO");
+                                    rowVal[23] = s2b(StringUtils.indexOfIgnoreCase(extra, "generated") != -1 ? "YES" : "NO");
                                 }
-                                rowVal[23] = s2b("");
 
                                 rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
                             }
