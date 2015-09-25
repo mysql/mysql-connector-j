@@ -29,13 +29,12 @@ import java.util.ArrayList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 
-import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
-
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.io.MysqlxDecoder;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 
 /**
  * TODO: write unit tests once server interface stabilizes

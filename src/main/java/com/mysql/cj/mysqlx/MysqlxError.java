@@ -23,9 +23,8 @@
 
 package com.mysql.cj.mysqlx;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
-
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 
 /**
  * An Error returned from MySQL-X.

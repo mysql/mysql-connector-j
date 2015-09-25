@@ -31,13 +31,13 @@ import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 
 /**
  * Synchronous-only implementation of {@link MessageReader}. This implementation wraps an {@link java.io.InputStream}.
