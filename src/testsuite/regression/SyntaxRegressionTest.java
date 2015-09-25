@@ -1033,4 +1033,179 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertTrue(this.rs.next());
         assertEquals(expectedResult, this.rs.getString(1));
     }
+
+    /**
+     * WL#8016 - Parser for optimizer hints.
+     * 
+     * Test syntax for optimizer hints.
+     * 
+     * New optimizer hints feature added in MySQL 5.7.7. Hints are permitted in these contexts:
+     * At the beginning of DML statements
+     * - SELECT /*+ ... *&#47 ...
+     * - INSERT /*+ ... *&#47 ...
+     * - REPLACE /*+ ... *&#47 ...
+     * - UPDATE /*+ ... *&#47 ...
+     * - DELETE /*+ ... *&#47 ...
+     * At the beginning of query blocks:
+     * - (SELECT /*+ ... *&#47 ... )
+     * - (SELECT ... ) UNION (SELECT /*+ ... *&#47 ... )
+     * - (SELECT /*+ ... *&#47 ... ) UNION (SELECT /*+ ... *&#47 ... )
+     * - UPDATE ... WHERE x IN (SELECT /*+ ... *&#47 ...)
+     * - INSERT ... SELECT /*+ ... *&#47 ...
+     * In hintable statements prefaced by EXPLAIN. For example:
+     * - EXPLAIN SELECT /*+ ... *&#47 ...
+     * - EXPLAIN UPDATE ... WHERE x IN (SELECT /*+ ... *&#47 ...)
+     */
+    public void testHints() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 7)) {
+            return;
+        }
+
+        /*
+         * Test hints syntax variations.
+         */
+        // Valid hints.
+        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(0.5)", true, false);
+        testHintsSyntax("SELECT/*+ max_execution_time(100) */SLEEP(0.5)", true, false);
+        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(0.5) /*+ wrong location, just comments */", true, false);
+        testHintsSyntax("SELECT /*+ max_execution_time(100) *//* comment */ SLEEP(0.5)", true, false);
+
+        // Invalid hints.
+        testHintsSyntax("SELECT /*+ max_execution_time *//*+ (100) */ SLEEP(0.5)", false, true);
+        testHintsSyntax("SELECT /*+! max_execution_time (100) */ SLEEP(0.5)", false, true);
+
+        // Valid and invalid hints.
+        testHintsSyntax("SELECT /*+ max_execution_time (100) bad_hint */ SLEEP(0.5)", true, true);
+
+        // No hints.
+        testHintsSyntax("/*+ max_execution_time(100) */SELECT SLEEP(0.5)", false, false);
+        testHintsSyntax("SELECT SLEEP(0.5) /*+ max_execution_time(100) */", false, false);
+        testHintsSyntax("SELECT /* + max_execution_time(100) */ SLEEP(0.5)", false, false);
+        testHintsSyntax("SELECT /* comment *//*+ max_execution_time(100) */ SLEEP(0.5)", false, false);
+        testHintsSyntax("SELECT /*!+1-1, */ 1", false, false);
+
+        /*
+         * Test hints in different query types using Statements.
+         */
+        createTable("testHints", "(id INT PRIMARY KEY, txt CHAR(2))");
+
+        // Hints in single query.
+        assertEquals(1, this.stmt.executeUpdate("INSERT /*+ mrr(testHints) */ INTO testHints VALUES (1, 'a')"));
+        assertNull(this.stmt.getWarnings());
+        assertEquals(2, this.stmt.executeUpdate("REPLACE /*+ mrr(testHints) */ INTO testHints VALUES (1, 'A')"));
+        assertNull(this.stmt.getWarnings());
+        assertEquals(1, this.stmt.executeUpdate("UPDATE /*+ mrr(testHints) */ testHints SET txt = 'Aa'"));
+        assertNull(this.stmt.getWarnings());
+        this.rs = this.stmt.executeQuery("SELECT /*+ max_execution_time(100) */ * FROM testHints");
+        assertNull(this.stmt.getWarnings());
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals("Aa", this.rs.getString(2));
+        assertFalse(this.rs.next());
+        assertEquals(1, this.stmt.executeUpdate("DELETE /*+ mrr(testHints) */ FROM testHints"));
+        assertNull(this.stmt.getWarnings());
+
+        // Hints in sub-query block.
+        assertEquals(1, this.stmt.executeUpdate("INSERT INTO testHints (SELECT /*+ qb_name(dummy) */ 2, 'b')"));
+        assertNull(this.stmt.getWarnings());
+        assertEquals(2, this.stmt.executeUpdate("REPLACE INTO testHints (SELECT /*+ qb_name(dummy) */ 2, 'B')"));
+        assertNull(this.stmt.getWarnings());
+        assertEquals(1, this.stmt.executeUpdate("UPDATE testHints SET txt = 'Bb' WHERE id IN (SELECT /*+ qb_name(dummy) */ 2)"));
+        assertNull(this.stmt.getWarnings());
+        this.rs = this.stmt.executeQuery("SELECT /*+ max_execution_time(100) */ 1, 'Aa' UNION SELECT /*+ qb_name(dummy) */ * FROM testHints");
+        assertNull(this.stmt.getWarnings());
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals("Aa", this.rs.getString(2));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertEquals("Bb", this.rs.getString(2));
+        assertFalse(this.rs.next());
+        assertEquals(1, this.stmt.executeUpdate("DELETE FROM testHints WHERE id IN (SELECT /*+ qb_name(dummy) */ 2)"));
+        assertNull(this.stmt.getWarnings());
+
+        /*
+         * Test hints in different query types using PreparedStatements.
+         */
+        for (String connProps : new String[] { "useServerPrepStmts=false", "useServerPrepStmts=true" }) {
+            Connection testConn = null;
+            testConn = getConnectionWithProps(connProps);
+
+            // Hints in single query.
+            this.pstmt = testConn.prepareStatement("INSERT /*+ mrr(testHints) */ INTO testHints VALUES (?, ?)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "a");
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("REPLACE /*+ mrr(testHints) */ INTO testHints VALUES (?, ?)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "A");
+            assertEquals(2, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("UPDATE /*+ mrr(testHints) */ testHints SET txt = ?");
+            this.pstmt.setString(1, "Aa");
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("SELECT /*+ max_execution_time(100) */ * FROM testHints WHERE id = ?");
+            this.pstmt.setInt(1, 1);
+            this.rs = this.pstmt.executeQuery();
+            assertNull(this.pstmt.getWarnings());
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("Aa", this.rs.getString(2));
+            assertFalse(this.rs.next());
+            this.pstmt = testConn.prepareStatement("DELETE /*+ mrr(testHints) */ FROM testHints WHERE id = ?");
+            this.pstmt.setInt(1, 1);
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+
+            // Hints in sub-query block.
+            this.pstmt = testConn.prepareStatement("INSERT INTO testHints (SELECT /*+ qb_name(dummy) */ ?, ?)");
+            this.pstmt.setInt(1, 2);
+            this.pstmt.setString(2, "b");
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("REPLACE INTO testHints (SELECT /*+ qb_name(dummy) */ ?, ?)");
+            this.pstmt.setInt(1, 2);
+            this.pstmt.setString(2, "B");
+            assertEquals(2, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("UPDATE testHints SET txt = 'Bb' WHERE id IN (SELECT /*+ qb_name(dummy) */ ?)");
+            this.pstmt.setInt(1, 2);
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+            this.pstmt = testConn.prepareStatement("SELECT /*+ max_execution_time(100) */ ?, ? UNION SELECT /*+ qb_name(dummy) */ * FROM testHints");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "Aa");
+            this.rs = this.pstmt.executeQuery();
+            assertNull(this.pstmt.getWarnings());
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("Aa", this.rs.getString(2));
+            assertTrue(this.rs.next());
+            assertEquals(2, this.rs.getInt(1));
+            assertEquals("Bb", this.rs.getString(2));
+            assertFalse(this.rs.next());
+            this.pstmt = testConn.prepareStatement("DELETE FROM testHints WHERE id IN (SELECT /*+ qb_name(dummy) */ ?)");
+            this.pstmt.setInt(1, 2);
+            assertEquals(1, this.pstmt.executeUpdate());
+            assertNull(this.pstmt.getWarnings());
+
+            testConn.close();
+        }
+    }
+
+    private void testHintsSyntax(String query, boolean processesHint, boolean warningExpected) throws Exception {
+        this.stmt.clearWarnings();
+        this.rs = this.stmt.executeQuery(query);
+        if (warningExpected) {
+            assertNotNull(this.stmt.getWarnings());
+            assertTrue(this.stmt.getWarnings().getMessage().startsWith("Optimizer hint syntax error"));
+        } else {
+            assertNull(this.stmt.getWarnings());
+        }
+        assertTrue(this.rs.next());
+        assertEquals(processesHint ? 1 : 0, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+    }
 }
