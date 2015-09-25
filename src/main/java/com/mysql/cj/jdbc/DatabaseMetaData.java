@@ -50,10 +50,12 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
@@ -214,11 +216,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 fullMysqlType = fullMysqlType.toUpperCase(Locale.ENGLISH);
             }
 
-            this.dataType = (short) MysqlDefs.mysqlToJavaType(mysqlType);
+            MysqlType ft = MysqlType.getByName(mysqlType.toUpperCase());
+            this.dataType = (short) ft.getJdbcType();
 
             this.typeName = fullMysqlType;
 
             // Figure Out the Size
+
+            // TODO move next logic to MysqlType
 
             if (StringUtils.startsWithIgnoreCase(typeInfo, "enum")) {
                 String temp = typeInfo.substring(typeInfo.indexOf("("), typeInfo.lastIndexOf(")"));
@@ -773,15 +778,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    private java.sql.ResultSet buildResultSet(com.mysql.cj.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows) throws SQLException {
+    private java.sql.ResultSet buildResultSet(com.mysql.cj.core.result.Field[] fields, java.util.ArrayList<ResultSetRow> rows) throws SQLException {
         return buildResultSet(fields, rows, this.conn);
     }
 
-    static java.sql.ResultSet buildResultSet(com.mysql.cj.jdbc.Field[] fields, java.util.ArrayList<ResultSetRow> rows, JdbcConnection c) throws SQLException {
+    static java.sql.ResultSet buildResultSet(com.mysql.cj.core.result.Field[] fields, java.util.ArrayList<ResultSetRow> rows, JdbcConnection c) throws SQLException {
         int fieldsLength = fields.length;
 
         for (int i = 0; i < fieldsLength; i++) {
-            int jdbcType = fields[i].getSQLType();
+            int jdbcType = fields[i].getJavaType();
 
             switch (jdbcType) {
                 case Types.CHAR:
@@ -1269,9 +1274,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
         Field[] fields = new Field[3];
-        fields[0] = new Field("", "Name", Types.CHAR, Integer.MAX_VALUE);
-        fields[1] = new Field("", "Type", Types.CHAR, 255);
-        fields[2] = new Field("", "Comment", Types.CHAR, Integer.MAX_VALUE);
+        fields[0] = new Field("", "Name", MysqlType.CHAR, Integer.MAX_VALUE);
+        fields[1] = new Field("", "Type", MysqlType.CHAR, 255);
+        fields[2] = new Field("", "Comment", MysqlType.CHAR, Integer.MAX_VALUE);
 
         int numTables = tableList.size();
         stmt = this.conn.getMetadataSafeStatement();
@@ -1318,27 +1323,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getAttributes(String arg0, String arg1, String arg2, String arg3) throws SQLException {
         Field[] fields = new Field[21];
-        fields[0] = new Field("", "TYPE_CAT", Types.CHAR, 32);
-        fields[1] = new Field("", "TYPE_SCHEM", Types.CHAR, 32);
-        fields[2] = new Field("", "TYPE_NAME", Types.CHAR, 32);
-        fields[3] = new Field("", "ATTR_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "DATA_TYPE", Types.SMALLINT, 32);
-        fields[5] = new Field("", "ATTR_TYPE_NAME", Types.CHAR, 32);
-        fields[6] = new Field("", "ATTR_SIZE", Types.INTEGER, 32);
-        fields[7] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 32);
-        fields[8] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 32);
-        fields[9] = new Field("", "NULLABLE ", Types.INTEGER, 32);
-        fields[10] = new Field("", "REMARKS", Types.CHAR, 32);
-        fields[11] = new Field("", "ATTR_DEF", Types.CHAR, 32);
-        fields[12] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 32);
-        fields[13] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 32);
-        fields[14] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 32);
-        fields[15] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 32);
-        fields[16] = new Field("", "IS_NULLABLE", Types.CHAR, 32);
-        fields[17] = new Field("", "SCOPE_CATALOG", Types.CHAR, 32);
-        fields[18] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 32);
-        fields[19] = new Field("", "SCOPE_TABLE", Types.CHAR, 32);
-        fields[20] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 32);
+        fields[0] = new Field("", "TYPE_CAT", MysqlType.CHAR, 32);
+        fields[1] = new Field("", "TYPE_SCHEM", MysqlType.CHAR, 32);
+        fields[2] = new Field("", "TYPE_NAME", MysqlType.CHAR, 32);
+        fields[3] = new Field("", "ATTR_NAME", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "DATA_TYPE", MysqlType.SMALLINT, 32);
+        fields[5] = new Field("", "ATTR_TYPE_NAME", MysqlType.CHAR, 32);
+        fields[6] = new Field("", "ATTR_SIZE", MysqlType.INT, 32);
+        fields[7] = new Field("", "DECIMAL_DIGITS", MysqlType.INT, 32);
+        fields[8] = new Field("", "NUM_PREC_RADIX", MysqlType.INT, 32);
+        fields[9] = new Field("", "NULLABLE ", MysqlType.INT, 32);
+        fields[10] = new Field("", "REMARKS", MysqlType.CHAR, 32);
+        fields[11] = new Field("", "ATTR_DEF", MysqlType.CHAR, 32);
+        fields[12] = new Field("", "SQL_DATA_TYPE", MysqlType.INT, 32);
+        fields[13] = new Field("", "SQL_DATETIME_SUB", MysqlType.INT, 32);
+        fields[14] = new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 32);
+        fields[15] = new Field("", "ORDINAL_POSITION", MysqlType.INT, 32);
+        fields[16] = new Field("", "IS_NULLABLE", MysqlType.CHAR, 32);
+        fields[17] = new Field("", "SCOPE_CATALOG", MysqlType.CHAR, 32);
+        fields[18] = new Field("", "SCOPE_SCHEMA", MysqlType.CHAR, 32);
+        fields[19] = new Field("", "SCOPE_TABLE", MysqlType.CHAR, 32);
+        fields[20] = new Field("", "SOURCE_DATA_TYPE", MysqlType.SMALLINT, 32);
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }
@@ -1349,14 +1354,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         Field[] fields = new Field[8];
-        fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
-        fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        fields[2] = new Field("", "DATA_TYPE", Types.INTEGER, 32);
-        fields[3] = new Field("", "TYPE_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "COLUMN_SIZE", Types.INTEGER, 10);
-        fields[5] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
-        fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 10);
-        fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
+        fields[0] = new Field("", "SCOPE", MysqlType.SMALLINT, 5);
+        fields[1] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
+        fields[2] = new Field("", "DATA_TYPE", MysqlType.INT, 32);
+        fields[3] = new Field("", "TYPE_NAME", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "COLUMN_SIZE", MysqlType.INT, 10);
+        fields[5] = new Field("", "BUFFER_LENGTH", MysqlType.INT, 10);
+        fields[6] = new Field("", "DECIMAL_DIGITS", MysqlType.SMALLINT, 10);
+        fields[7] = new Field("", "PSEUDO_COLUMN", MysqlType.SMALLINT, 5);
 
         final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -1415,7 +1420,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         type = type.substring(0, type.indexOf("("));
                                     }
 
-                                    rowVal[2] = s2b(String.valueOf(MysqlDefs.mysqlToJavaType(type)));
+                                    MysqlType ft = MysqlType.getByName(type.toUpperCase());
+                                    rowVal[2] = s2b(String.valueOf(ft.getJdbcType()));
                                     rowVal[3] = s2b(type);
                                     rowVal[4] = Integer.toString(size + decimals).getBytes();
                                     rowVal[5] = Integer.toString(size + decimals).getBytes();
@@ -1959,7 +1965,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             Collections.sort(resultsAsList);
 
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR, results.getMetaData().getColumnDisplaySize(1));
+            fields[0] = new Field("", "TABLE_CAT", MysqlType.VARCHAR, results.getMetaData().getColumnDisplaySize(1));
 
             ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>(catalogsCount);
             for (String cat : resultsAsList) {
@@ -2017,14 +2023,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
         Field[] fields = new Field[8];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 64);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 1);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 64);
-        fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 64);
-        fields[4] = new Field("", "GRANTOR", Types.CHAR, 77);
-        fields[5] = new Field("", "GRANTEE", Types.CHAR, 77);
-        fields[6] = new Field("", "PRIVILEGE", Types.CHAR, 64);
-        fields[7] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 64);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 1);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 64);
+        fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 64);
+        fields[4] = new Field("", "GRANTOR", MysqlType.CHAR, 77);
+        fields[5] = new Field("", "GRANTEE", MysqlType.CHAR, 77);
+        fields[6] = new Field("", "PRIVILEGE", MysqlType.CHAR, 64);
+        fields[7] = new Field("", "IS_GRANTABLE", MysqlType.CHAR, 3);
 
         String grantQuery = "SELECT c.host, c.db, t.grantor, c.user, c.table_name, c.column_name, c.column_priv "
                 + "FROM mysql.columns_priv c, mysql.tables_priv t WHERE c.host = t.host AND c.db = t.db AND "
@@ -2354,30 +2360,30 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected Field[] createColumnsFields() {
         Field[] fields = new Field[24];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
-        fields[5] = new Field("", "TYPE_NAME", Types.CHAR, 16);
-        fields[6] = new Field("", "COLUMN_SIZE", Types.INTEGER, Integer.toString(Integer.MAX_VALUE).length());
-        fields[7] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
-        fields[8] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10);
-        fields[9] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
-        fields[10] = new Field("", "NULLABLE", Types.INTEGER, 10);
-        fields[11] = new Field("", "REMARKS", Types.CHAR, 0);
-        fields[12] = new Field("", "COLUMN_DEF", Types.CHAR, 0);
-        fields[13] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10);
-        fields[14] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10);
-        fields[15] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, Integer.toString(Integer.MAX_VALUE).length());
-        fields[16] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 10);
-        fields[17] = new Field("", "IS_NULLABLE", Types.CHAR, 3);
-        fields[18] = new Field("", "SCOPE_CATALOG", Types.CHAR, 255);
-        fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
-        fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
-        fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
-        fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
-        fields[23] = new Field("", "IS_GENERATEDCOLUMN", Types.CHAR, 3);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "DATA_TYPE", MysqlType.INT, 5);
+        fields[5] = new Field("", "TYPE_NAME", MysqlType.CHAR, 16);
+        fields[6] = new Field("", "COLUMN_SIZE", MysqlType.INT, Integer.toString(Integer.MAX_VALUE).length());
+        fields[7] = new Field("", "BUFFER_LENGTH", MysqlType.INT, 10);
+        fields[8] = new Field("", "DECIMAL_DIGITS", MysqlType.INT, 10);
+        fields[9] = new Field("", "NUM_PREC_RADIX", MysqlType.INT, 10);
+        fields[10] = new Field("", "NULLABLE", MysqlType.INT, 10);
+        fields[11] = new Field("", "REMARKS", MysqlType.CHAR, 0);
+        fields[12] = new Field("", "COLUMN_DEF", MysqlType.CHAR, 0);
+        fields[13] = new Field("", "SQL_DATA_TYPE", MysqlType.INT, 10);
+        fields[14] = new Field("", "SQL_DATETIME_SUB", MysqlType.INT, 10);
+        fields[15] = new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, Integer.toString(Integer.MAX_VALUE).length());
+        fields[16] = new Field("", "ORDINAL_POSITION", MysqlType.INT, 10);
+        fields[17] = new Field("", "IS_NULLABLE", MysqlType.CHAR, 3);
+        fields[18] = new Field("", "SCOPE_CATALOG", MysqlType.CHAR, 255);
+        fields[19] = new Field("", "SCOPE_SCHEMA", MysqlType.CHAR, 255);
+        fields[20] = new Field("", "SCOPE_TABLE", MysqlType.CHAR, 255);
+        fields[21] = new Field("", "SOURCE_DATA_TYPE", MysqlType.SMALLINT, 10);
+        fields[22] = new Field("", "IS_AUTOINCREMENT", MysqlType.CHAR, 3);
+        fields[23] = new Field("", "IS_GENERATEDCOLUMN", MysqlType.CHAR, 3);
         return fields;
     }
 
@@ -2521,20 +2527,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected Field[] createFkMetadataFields() {
         Field[] fields = new Field[14];
-        fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-        fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-        fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-        fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-        fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-        fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-        fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-        fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-        fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
-        fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-        fields[13] = new Field("", "DEFERRABILITY", Types.SMALLINT, 2);
+        fields[0] = new Field("", "PKTABLE_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "PKTABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[2] = new Field("", "PKTABLE_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "PKCOLUMN_NAME", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "FKTABLE_CAT", MysqlType.CHAR, 255);
+        fields[5] = new Field("", "FKTABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[6] = new Field("", "FKTABLE_NAME", MysqlType.CHAR, 255);
+        fields[7] = new Field("", "FKCOLUMN_NAME", MysqlType.CHAR, 32);
+        fields[8] = new Field("", "KEY_SEQ", MysqlType.SMALLINT, 2);
+        fields[9] = new Field("", "UPDATE_RULE", MysqlType.SMALLINT, 2);
+        fields[10] = new Field("", "DELETE_RULE", MysqlType.SMALLINT, 2);
+        fields[11] = new Field("", "FK_NAME", MysqlType.CHAR, 0);
+        fields[12] = new Field("", "PK_NAME", MysqlType.CHAR, 0);
+        fields[13] = new Field("", "DEFERRABILITY", MysqlType.SMALLINT, 2);
         return fields;
     }
 
@@ -2971,19 +2977,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected Field[] createIndexInfoFields() {
         Field[] fields = new Field[13];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "NON_UNIQUE", Types.BOOLEAN, 4);
-        fields[4] = new Field("", "INDEX_QUALIFIER", Types.CHAR, 1);
-        fields[5] = new Field("", "INDEX_NAME", Types.CHAR, 32);
-        fields[6] = new Field("", "TYPE", Types.SMALLINT, 32);
-        fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
-        fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-        fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 20);
-        fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
-        fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "NON_UNIQUE", MysqlType.BOOLEAN, 4);
+        fields[4] = new Field("", "INDEX_QUALIFIER", MysqlType.CHAR, 1);
+        fields[5] = new Field("", "INDEX_NAME", MysqlType.CHAR, 32);
+        fields[6] = new Field("", "TYPE", MysqlType.SMALLINT, 32);
+        fields[7] = new Field("", "ORDINAL_POSITION", MysqlType.SMALLINT, 5);
+        fields[8] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
+        fields[9] = new Field("", "ASC_OR_DESC", MysqlType.CHAR, 1);
+        fields[10] = new Field("", "CARDINALITY", MysqlType.INT, 20);
+        fields[11] = new Field("", "PAGES", MysqlType.INT, 10);
+        fields[12] = new Field("", "FILTER_CONDITION", MysqlType.CHAR, 32);
         return fields;
     }
 
@@ -3208,12 +3214,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
         Field[] fields = new Field[6];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "KEY_SEQ", Types.SMALLINT, 5);
-        fields[5] = new Field("", "PK_NAME", Types.CHAR, 32);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "KEY_SEQ", MysqlType.SMALLINT, 5);
+        fields[5] = new Field("", "PK_NAME", MysqlType.CHAR, 32);
 
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -3300,26 +3306,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected Field[] createProcedureColumnsFields() {
         Field[] fields = new Field[20];
 
-        fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 512);
-        fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 512);
-        fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 512);
-        fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 512);
-        fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 64);
-        fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 6);
-        fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 64);
-        fields[7] = new Field("", "PRECISION", Types.INTEGER, 12);
-        fields[8] = new Field("", "LENGTH", Types.INTEGER, 12);
-        fields[9] = new Field("", "SCALE", Types.SMALLINT, 12);
-        fields[10] = new Field("", "RADIX", Types.SMALLINT, 6);
-        fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 6);
-        fields[12] = new Field("", "REMARKS", Types.CHAR, 512);
-        fields[13] = new Field("", "COLUMN_DEF", Types.CHAR, 512);
-        fields[14] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 12);
-        fields[15] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 12);
-        fields[16] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 12);
-        fields[17] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 12);
-        fields[18] = new Field("", "IS_NULLABLE", Types.CHAR, 512);
-        fields[19] = new Field("", "SPECIFIC_NAME", Types.CHAR, 512);
+        fields[0] = new Field("", "PROCEDURE_CAT", MysqlType.CHAR, 512);
+        fields[1] = new Field("", "PROCEDURE_SCHEM", MysqlType.CHAR, 512);
+        fields[2] = new Field("", "PROCEDURE_NAME", MysqlType.CHAR, 512);
+        fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 512);
+        fields[4] = new Field("", "COLUMN_TYPE", MysqlType.CHAR, 64);
+        fields[5] = new Field("", "DATA_TYPE", MysqlType.SMALLINT, 6);
+        fields[6] = new Field("", "TYPE_NAME", MysqlType.CHAR, 64);
+        fields[7] = new Field("", "PRECISION", MysqlType.INT, 12);
+        fields[8] = new Field("", "LENGTH", MysqlType.INT, 12);
+        fields[9] = new Field("", "SCALE", MysqlType.SMALLINT, 12);
+        fields[10] = new Field("", "RADIX", MysqlType.SMALLINT, 6);
+        fields[11] = new Field("", "NULLABLE", MysqlType.SMALLINT, 6);
+        fields[12] = new Field("", "REMARKS", MysqlType.CHAR, 512);
+        fields[13] = new Field("", "COLUMN_DEF", MysqlType.CHAR, 512);
+        fields[14] = new Field("", "SQL_DATA_TYPE", MysqlType.INT, 12);
+        fields[15] = new Field("", "SQL_DATETIME_SUB", MysqlType.INT, 12);
+        fields[16] = new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 12);
+        fields[17] = new Field("", "ORDINAL_POSITION", MysqlType.INT, 12);
+        fields[18] = new Field("", "IS_NULLABLE", MysqlType.CHAR, 512);
+        fields[19] = new Field("", "SPECIFIC_NAME", MysqlType.CHAR, 512);
         return fields;
     }
 
@@ -3435,15 +3441,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected Field[] createFieldMetadataForGetProcedures() {
         Field[] fields = new Field[9];
-        fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 255);
-        fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "reserved1", Types.CHAR, 0);
-        fields[4] = new Field("", "reserved2", Types.CHAR, 0);
-        fields[5] = new Field("", "reserved3", Types.CHAR, 0);
-        fields[6] = new Field("", "REMARKS", Types.CHAR, 255);
-        fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 6);
-        fields[8] = new Field("", "SPECIFIC_NAME", Types.CHAR, 255);
+        fields[0] = new Field("", "PROCEDURE_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "PROCEDURE_SCHEM", MysqlType.CHAR, 255);
+        fields[2] = new Field("", "PROCEDURE_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "reserved1", MysqlType.CHAR, 0);
+        fields[4] = new Field("", "reserved2", MysqlType.CHAR, 0);
+        fields[5] = new Field("", "reserved3", MysqlType.CHAR, 0);
+        fields[6] = new Field("", "REMARKS", MysqlType.CHAR, 255);
+        fields[7] = new Field("", "PROCEDURE_TYPE", MysqlType.SMALLINT, 6);
+        fields[8] = new Field("", "SPECIFIC_NAME", MysqlType.CHAR, 255);
 
         return fields;
     }
@@ -3653,8 +3659,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getSchemas() throws SQLException {
         Field[] fields = new Field[2];
-        fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
-        fields[1] = new Field("", "TABLE_CATALOG", java.sql.Types.CHAR, 0);
+        fields[0] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0);
+        fields[1] = new Field("", "TABLE_CATALOG", MysqlType.CHAR, 0);
 
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
         java.sql.ResultSet results = buildResultSet(fields, tuples);
@@ -3740,22 +3746,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getSuperTables(String arg0, String arg1, String arg2) throws SQLException {
         Field[] fields = new Field[4];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 32);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 32);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 32);
-        fields[3] = new Field("", "SUPERTABLE_NAME", Types.CHAR, 32);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 32);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 32);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 32);
+        fields[3] = new Field("", "SUPERTABLE_NAME", MysqlType.CHAR, 32);
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }
 
     public java.sql.ResultSet getSuperTypes(String arg0, String arg1, String arg2) throws SQLException {
         Field[] fields = new Field[6];
-        fields[0] = new Field("", "TYPE_CAT", Types.CHAR, 32);
-        fields[1] = new Field("", "TYPE_SCHEM", Types.CHAR, 32);
-        fields[2] = new Field("", "TYPE_NAME", Types.CHAR, 32);
-        fields[3] = new Field("", "SUPERTYPE_CAT", Types.CHAR, 32);
-        fields[4] = new Field("", "SUPERTYPE_SCHEM", Types.CHAR, 32);
-        fields[5] = new Field("", "SUPERTYPE_NAME", Types.CHAR, 32);
+        fields[0] = new Field("", "TYPE_CAT", MysqlType.CHAR, 32);
+        fields[1] = new Field("", "TYPE_SCHEM", MysqlType.CHAR, 32);
+        fields[2] = new Field("", "TYPE_NAME", MysqlType.CHAR, 32);
+        fields[3] = new Field("", "SUPERTYPE_CAT", MysqlType.CHAR, 32);
+        fields[4] = new Field("", "SUPERTYPE_SCHEM", MysqlType.CHAR, 32);
+        fields[5] = new Field("", "SUPERTYPE_NAME", MysqlType.CHAR, 32);
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }
@@ -3787,13 +3793,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         Field[] fields = new Field[7];
-        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 64);
-        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 1);
-        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 64);
-        fields[3] = new Field("", "GRANTOR", Types.CHAR, 77);
-        fields[4] = new Field("", "GRANTEE", Types.CHAR, 77);
-        fields[5] = new Field("", "PRIVILEGE", Types.CHAR, 64);
-        fields[6] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.CHAR, 64);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.CHAR, 1);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 64);
+        fields[3] = new Field("", "GRANTOR", MysqlType.CHAR, 77);
+        fields[4] = new Field("", "GRANTEE", MysqlType.CHAR, 77);
+        fields[5] = new Field("", "PRIVILEGE", MysqlType.CHAR, 64);
+        fields[6] = new Field("", "IS_GRANTABLE", MysqlType.CHAR, 3);
 
         String grantQuery = "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv WHERE db LIKE ? AND table_name LIKE ?";
 
@@ -4114,22 +4120,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected Field[] createTablesFields() {
         Field[] fields = new Field[10];
-        fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR, 255);
-        fields[1] = new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0);
-        fields[2] = new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 255);
-        fields[3] = new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5);
-        fields[4] = new Field("", "REMARKS", java.sql.Types.VARCHAR, 0);
-        fields[5] = new Field("", "TYPE_CAT", java.sql.Types.VARCHAR, 0);
-        fields[6] = new Field("", "TYPE_SCHEM", java.sql.Types.VARCHAR, 0);
-        fields[7] = new Field("", "TYPE_NAME", java.sql.Types.VARCHAR, 0);
-        fields[8] = new Field("", "SELF_REFERENCING_COL_NAME", java.sql.Types.VARCHAR, 0);
-        fields[9] = new Field("", "REF_GENERATION", java.sql.Types.VARCHAR, 0);
+        fields[0] = new Field("", "TABLE_CAT", MysqlType.VARCHAR, 255);
+        fields[1] = new Field("", "TABLE_SCHEM", MysqlType.VARCHAR, 0);
+        fields[2] = new Field("", "TABLE_NAME", MysqlType.VARCHAR, 255);
+        fields[3] = new Field("", "TABLE_TYPE", MysqlType.VARCHAR, 5);
+        fields[4] = new Field("", "REMARKS", MysqlType.VARCHAR, 0);
+        fields[5] = new Field("", "TYPE_CAT", MysqlType.VARCHAR, 0);
+        fields[6] = new Field("", "TYPE_SCHEM", MysqlType.VARCHAR, 0);
+        fields[7] = new Field("", "TYPE_NAME", MysqlType.VARCHAR, 0);
+        fields[8] = new Field("", "SELF_REFERENCING_COL_NAME", MysqlType.VARCHAR, 0);
+        fields[9] = new Field("", "REF_GENERATION", MysqlType.VARCHAR, 0);
         return fields;
     }
 
     public java.sql.ResultSet getTableTypes() throws SQLException {
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
-        Field[] fields = new Field[] { new Field("", "TABLE_TYPE", Types.VARCHAR, 256) };
+        Field[] fields = new Field[] { new Field("", "TABLE_TYPE", MysqlType.VARCHAR, 256) };
 
         tuples.add(new ByteArrayRow(new byte[][] { TableType.LOCAL_TEMPORARY.asBytes() }, getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_TABLE.asBytes() }, getExceptionInterceptor()));
@@ -4154,24 +4160,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Field[] fields = new Field[18];
-        fields[0] = new Field("", "TYPE_NAME", Types.CHAR, 32);
-        fields[1] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
-        fields[2] = new Field("", "PRECISION", Types.INTEGER, 10);
-        fields[3] = new Field("", "LITERAL_PREFIX", Types.CHAR, 4);
-        fields[4] = new Field("", "LITERAL_SUFFIX", Types.CHAR, 4);
-        fields[5] = new Field("", "CREATE_PARAMS", Types.CHAR, 32);
-        fields[6] = new Field("", "NULLABLE", Types.SMALLINT, 5);
-        fields[7] = new Field("", "CASE_SENSITIVE", Types.BOOLEAN, 3);
-        fields[8] = new Field("", "SEARCHABLE", Types.SMALLINT, 3);
-        fields[9] = new Field("", "UNSIGNED_ATTRIBUTE", Types.BOOLEAN, 3);
-        fields[10] = new Field("", "FIXED_PREC_SCALE", Types.BOOLEAN, 3);
-        fields[11] = new Field("", "AUTO_INCREMENT", Types.BOOLEAN, 3);
-        fields[12] = new Field("", "LOCAL_TYPE_NAME", Types.CHAR, 32);
-        fields[13] = new Field("", "MINIMUM_SCALE", Types.SMALLINT, 5);
-        fields[14] = new Field("", "MAXIMUM_SCALE", Types.SMALLINT, 5);
-        fields[15] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10);
-        fields[16] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10);
-        fields[17] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
+        fields[0] = new Field("", "TYPE_NAME", MysqlType.CHAR, 32);
+        fields[1] = new Field("", "DATA_TYPE", MysqlType.INT, 5);
+        fields[2] = new Field("", "PRECISION", MysqlType.INT, 10);
+        fields[3] = new Field("", "LITERAL_PREFIX", MysqlType.CHAR, 4);
+        fields[4] = new Field("", "LITERAL_SUFFIX", MysqlType.CHAR, 4);
+        fields[5] = new Field("", "CREATE_PARAMS", MysqlType.CHAR, 32);
+        fields[6] = new Field("", "NULLABLE", MysqlType.SMALLINT, 5);
+        fields[7] = new Field("", "CASE_SENSITIVE", MysqlType.BOOLEAN, 3);
+        fields[8] = new Field("", "SEARCHABLE", MysqlType.SMALLINT, 3);
+        fields[9] = new Field("", "UNSIGNED_ATTRIBUTE", MysqlType.BOOLEAN, 3);
+        fields[10] = new Field("", "FIXED_PREC_SCALE", MysqlType.BOOLEAN, 3);
+        fields[11] = new Field("", "AUTO_INCREMENT", MysqlType.BOOLEAN, 3);
+        fields[12] = new Field("", "LOCAL_TYPE_NAME", MysqlType.CHAR, 32);
+        fields[13] = new Field("", "MINIMUM_SCALE", MysqlType.SMALLINT, 5);
+        fields[14] = new Field("", "MAXIMUM_SCALE", MysqlType.SMALLINT, 5);
+        fields[15] = new Field("", "SQL_DATA_TYPE", MysqlType.INT, 10);
+        fields[16] = new Field("", "SQL_DATETIME_SUB", MysqlType.INT, 10);
+        fields[17] = new Field("", "NUM_PREC_RADIX", MysqlType.INT, 10);
 
         byte[][] rowVal = null;
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
@@ -5375,13 +5381,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
         Field[] fields = new Field[7];
-        fields[0] = new Field("", "TYPE_CAT", Types.VARCHAR, 32);
-        fields[1] = new Field("", "TYPE_SCHEM", Types.VARCHAR, 32);
-        fields[2] = new Field("", "TYPE_NAME", Types.VARCHAR, 32);
-        fields[3] = new Field("", "CLASS_NAME", Types.VARCHAR, 32);
-        fields[4] = new Field("", "DATA_TYPE", Types.INTEGER, 10);
-        fields[5] = new Field("", "REMARKS", Types.VARCHAR, 32);
-        fields[6] = new Field("", "BASE_TYPE", Types.SMALLINT, 10);
+        fields[0] = new Field("", "TYPE_CAT", MysqlType.VARCHAR, 32);
+        fields[1] = new Field("", "TYPE_SCHEM", MysqlType.VARCHAR, 32);
+        fields[2] = new Field("", "TYPE_NAME", MysqlType.VARCHAR, 32);
+        fields[3] = new Field("", "CLASS_NAME", MysqlType.VARCHAR, 32);
+        fields[4] = new Field("", "DATA_TYPE", MysqlType.INT, 10);
+        fields[5] = new Field("", "REMARKS", MysqlType.VARCHAR, 32);
+        fields[6] = new Field("", "BASE_TYPE", MysqlType.SMALLINT, 10);
 
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
@@ -5449,14 +5455,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         Field[] fields = new Field[8];
-        fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
-        fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        fields[2] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
-        fields[3] = new Field("", "TYPE_NAME", Types.CHAR, 16);
-        fields[4] = new Field("", "COLUMN_SIZE", Types.INTEGER, 16);
-        fields[5] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 16);
-        fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16);
-        fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
+        fields[0] = new Field("", "SCOPE", MysqlType.SMALLINT, 5);
+        fields[1] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
+        fields[2] = new Field("", "DATA_TYPE", MysqlType.INT, 5);
+        fields[3] = new Field("", "TYPE_NAME", MysqlType.CHAR, 16);
+        fields[4] = new Field("", "COLUMN_SIZE", MysqlType.INT, 16);
+        fields[5] = new Field("", "BUFFER_LENGTH", MysqlType.INT, 16);
+        fields[6] = new Field("", "DECIMAL_DIGITS", MysqlType.SMALLINT, 16);
+        fields[7] = new Field("", "PSEUDO_COLUMN", MysqlType.SMALLINT, 5);
 
         final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
@@ -6734,10 +6740,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         // We don't have any built-ins, we actually support whatever the client wants to provide, however we don't have a way to express this with the interface
         // given
         Field[] fields = new Field[4];
-        fields[0] = new Field("", "NAME", Types.VARCHAR, 255);
-        fields[1] = new Field("", "MAX_LEN", Types.INTEGER, 10);
-        fields[2] = new Field("", "DEFAULT_VALUE", Types.VARCHAR, 255);
-        fields[3] = new Field("", "DESCRIPTION", Types.VARCHAR, 255);
+        fields[0] = new Field("", "NAME", MysqlType.VARCHAR, 255);
+        fields[1] = new Field("", "MAX_LEN", MysqlType.INT, 10);
+        fields[2] = new Field("", "DEFAULT_VALUE", MysqlType.VARCHAR, 255);
+        fields[3] = new Field("", "DESCRIPTION", MysqlType.VARCHAR, 255);
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>(), this.conn);
     }
@@ -6749,25 +6755,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     protected Field[] createFunctionColumnsFields() {
-        Field[] fields = { new Field("", "FUNCTION_CAT", Types.VARCHAR, 512), new Field("", "FUNCTION_SCHEM", Types.VARCHAR, 512),
-                new Field("", "FUNCTION_NAME", Types.VARCHAR, 512), new Field("", "COLUMN_NAME", Types.VARCHAR, 512),
-                new Field("", "COLUMN_TYPE", Types.VARCHAR, 64), new Field("", "DATA_TYPE", Types.SMALLINT, 6), new Field("", "TYPE_NAME", Types.VARCHAR, 64),
-                new Field("", "PRECISION", Types.INTEGER, 12), new Field("", "LENGTH", Types.INTEGER, 12), new Field("", "SCALE", Types.SMALLINT, 12),
-                new Field("", "RADIX", Types.SMALLINT, 6), new Field("", "NULLABLE", Types.SMALLINT, 6), new Field("", "REMARKS", Types.VARCHAR, 512),
-                new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 32), new Field("", "ORDINAL_POSITION", Types.INTEGER, 32),
-                new Field("", "IS_NULLABLE", Types.VARCHAR, 12), new Field("", "SPECIFIC_NAME", Types.VARCHAR, 64) };
+        Field[] fields = { new Field("", "FUNCTION_CAT", MysqlType.VARCHAR, 512), new Field("", "FUNCTION_SCHEM", MysqlType.VARCHAR, 512),
+                new Field("", "FUNCTION_NAME", MysqlType.VARCHAR, 512), new Field("", "COLUMN_NAME", MysqlType.VARCHAR, 512),
+                new Field("", "COLUMN_TYPE", MysqlType.VARCHAR, 64), new Field("", "DATA_TYPE", MysqlType.SMALLINT, 6),
+                new Field("", "TYPE_NAME", MysqlType.VARCHAR, 64), new Field("", "PRECISION", MysqlType.INT, 12), new Field("", "LENGTH", MysqlType.INT, 12),
+                new Field("", "SCALE", MysqlType.SMALLINT, 12), new Field("", "RADIX", MysqlType.SMALLINT, 6),
+                new Field("", "NULLABLE", MysqlType.SMALLINT, 6), new Field("", "REMARKS", MysqlType.VARCHAR, 512),
+                new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 32), new Field("", "ORDINAL_POSITION", MysqlType.INT, 32),
+                new Field("", "IS_NULLABLE", MysqlType.VARCHAR, 12), new Field("", "SPECIFIC_NAME", MysqlType.VARCHAR, 64) };
         return fields;
     }
 
     public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
         Field[] fields = new Field[6];
 
-        fields[0] = new Field("", "FUNCTION_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "FUNCTION_SCHEM", Types.CHAR, 255);
-        fields[2] = new Field("", "FUNCTION_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "REMARKS", Types.CHAR, 255);
-        fields[4] = new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6);
-        fields[5] = new Field("", "SPECIFIC_NAME", Types.CHAR, 255);
+        fields[0] = new Field("", "FUNCTION_CAT", MysqlType.CHAR, 255);
+        fields[1] = new Field("", "FUNCTION_SCHEM", MysqlType.CHAR, 255);
+        fields[2] = new Field("", "FUNCTION_NAME", MysqlType.CHAR, 255);
+        fields[3] = new Field("", "REMARKS", MysqlType.CHAR, 255);
+        fields[4] = new Field("", "FUNCTION_TYPE", MysqlType.SMALLINT, 6);
+        fields[5] = new Field("", "SPECIFIC_NAME", MysqlType.CHAR, 255);
 
         return getProceduresAndOrFunctions(fields, catalog, schemaPattern, functionNamePattern, false, true);
     }
@@ -6782,7 +6789,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-        Field[] fields = { new Field("", "TABLE_SCHEM", Types.VARCHAR, 255), new Field("", "TABLE_CATALOG", Types.VARCHAR, 255) };
+        Field[] fields = { new Field("", "TABLE_SCHEM", MysqlType.VARCHAR, 255), new Field("", "TABLE_CATALOG", MysqlType.VARCHAR, 255) };
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }
@@ -6811,12 +6818,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public java.sql.ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
-        Field[] fields = { new Field("", "TABLE_CAT", Types.VARCHAR, 512), new Field("", "TABLE_SCHEM", Types.VARCHAR, 512),
-                new Field("", "TABLE_NAME", Types.VARCHAR, 512), new Field("", "COLUMN_NAME", Types.VARCHAR, 512),
-                new Field("", "DATA_TYPE", Types.INTEGER, 12), new Field("", "COLUMN_SIZE", Types.INTEGER, 12),
-                new Field("", "DECIMAL_DIGITS", Types.INTEGER, 12), new Field("", "NUM_PREC_RADIX", Types.INTEGER, 12),
-                new Field("", "COLUMN_USAGE", Types.VARCHAR, 512), new Field("", "REMARKS", Types.VARCHAR, 512),
-                new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 12), new Field("", "IS_NULLABLE", Types.VARCHAR, 512) };
+        Field[] fields = { new Field("", "TABLE_CAT", MysqlType.VARCHAR, 512), new Field("", "TABLE_SCHEM", MysqlType.VARCHAR, 512),
+                new Field("", "TABLE_NAME", MysqlType.VARCHAR, 512), new Field("", "COLUMN_NAME", MysqlType.VARCHAR, 512),
+                new Field("", "DATA_TYPE", MysqlType.INT, 12), new Field("", "COLUMN_SIZE", MysqlType.INT, 12),
+                new Field("", "DECIMAL_DIGITS", MysqlType.INT, 12), new Field("", "NUM_PREC_RADIX", MysqlType.INT, 12),
+                new Field("", "COLUMN_USAGE", MysqlType.VARCHAR, 512), new Field("", "REMARKS", MysqlType.VARCHAR, 512),
+                new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 12), new Field("", "IS_NULLABLE", MysqlType.VARCHAR, 512) };
 
         return buildResultSet(fields, new ArrayList<ResultSetRow>());
     }

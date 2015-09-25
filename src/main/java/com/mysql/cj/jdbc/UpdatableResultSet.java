@@ -28,10 +28,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.NClob;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -42,7 +40,6 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -50,6 +47,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -388,11 +386,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getSQLType());
+            this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getJavaType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int index = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getSQLType());
+                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getJavaType());
 
             }
         }
@@ -836,10 +834,9 @@ public class UpdatableResultSet extends ResultSetImpl {
                 if (this.defaultColumnValue[i] != null) {
                     Field f = this.fields[i];
 
-                    switch (f.getMysqlType()) {
+                    switch (f.getMysqlTypeId()) {
                         case MysqlaConstants.FIELD_TYPE_DATE:
                         case MysqlaConstants.FIELD_TYPE_DATETIME:
-                        case MysqlaConstants.FIELD_TYPE_NEWDATE:
                         case MysqlaConstants.FIELD_TYPE_TIME:
                         case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
 
@@ -1141,11 +1138,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getSQLType());
+            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getJavaType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int idx = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getSQLType());
+                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getJavaType());
             }
         }
     }

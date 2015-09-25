@@ -57,7 +57,7 @@ public class JdbcTimeValueFactory extends DefaultValueFactory<Time> {
     @Override
     public Time createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] {"" + hours + ":" + minutes + ":" + seconds}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
         }
 
         synchronized (this.cal) {
@@ -72,7 +72,7 @@ public class JdbcTimeValueFactory extends DefaultValueFactory<Time> {
     public Time createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (this.warningListener != null) {
             // TODO: need column context
-            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] {"java.sql.Time"}));
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Time" }));
         }
 
         // truncate date information

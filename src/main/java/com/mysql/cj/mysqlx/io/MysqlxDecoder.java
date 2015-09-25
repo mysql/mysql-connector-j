@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.protobuf.CodedInputStream;
-
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -46,9 +45,12 @@ public class MysqlxDecoder {
         /**
          * @todo document
          *
-         * @param inputStream the <code>CodedInputStream</code> over the bytes representing this value
-         * @param vf the sink for the decoded value
-         * @throws IOException propagated from {@link CodedInputStream}
+         * @param inputStream
+         *            the <code>CodedInputStream</code> over the bytes representing this value
+         * @param vf
+         *            the sink for the decoded value
+         * @throws IOException
+         *             propagated from {@link CodedInputStream}
          * @return the value factory's output
          */
         <T> T apply(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException;
@@ -71,10 +73,11 @@ public class MysqlxDecoder {
         // TODO: do we need to really do anything special with JSON? just return correct stuff with getObject() I guess
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_JSON, instance::decodeString);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_LONGLONG, instance::decodeSignedLong);
-        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, instance::decodeDecimal);
+        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, instance::decodeDecimal);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_SET, instance::decodeSet);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_TIME, instance::decodeTime);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VARCHAR, instance::decodeString);
+        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VAR_STRING, instance::decodeString);
 
         MYSQL_TYPE_TO_DECODER_FUNCTION = Collections.unmodifiableMap(mysqlTypeToDecoderFunction);
     }

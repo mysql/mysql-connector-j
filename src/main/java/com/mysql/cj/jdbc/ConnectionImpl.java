@@ -91,6 +91,7 @@ import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;

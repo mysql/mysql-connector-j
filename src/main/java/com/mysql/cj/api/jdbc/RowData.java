@@ -25,7 +25,7 @@ package com.mysql.cj.api.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ResultSetImpl;
 import com.mysql.cj.jdbc.ResultSetRow;
 

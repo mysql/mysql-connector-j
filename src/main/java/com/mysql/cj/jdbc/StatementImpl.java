@@ -30,7 +30,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -52,6 +51,7 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJException;
@@ -60,6 +60,7 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.StatementIsClosedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
@@ -1548,7 +1549,7 @@ public class StatementImpl implements Statement {
 
     protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
+            Field[] fields = { new Field(null, "1", MysqlType.BIGINT, 1) };
             ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
             byte[] colVal = new byte[] { (byte) '1' };
 
@@ -1845,8 +1846,7 @@ public class StatementImpl implements Statement {
             }
 
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
-            fields[0].setUnsigned();
+            fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 17);
 
             this.generatedKeysResults = com.mysql.cj.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
                     this.connection, this);
@@ -1868,16 +1868,11 @@ public class StatementImpl implements Statement {
     protected ResultSetInternalMethods getGeneratedKeysInternal(int numKeys) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17);
-            fields[0].setUnsigned();
+            fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 17);
 
             ArrayList<ResultSetRow> rowSet = new ArrayList<ResultSetRow>();
 
             long beginAt = getLastInsertID();
-
-            if (beginAt < 0) { // looking at an UNSIGNED BIGINT that has overflowed
-                fields[0].setUnsigned();
-            }
 
             if (this.results != null) {
                 String serverInfo = this.results.getServerInfo();
@@ -2528,9 +2523,9 @@ public class StatementImpl implements Statement {
      */
     public void setMaxRows(int max) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if ((max > MysqlDefs.MAX_ROWS) || (max < 0)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.15") + max + " > " + MysqlDefs.MAX_ROWS + ".",
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            if ((max > MAX_ROWS) || (max < 0)) {
+                throw SQLError.createSQLException(Messages.getString("Statement.15") + max + " > " + MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             if (max == 0) {

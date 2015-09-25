@@ -23,6 +23,10 @@
 
 package testsuite.mysqlx.internal;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,9 +37,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,14 +46,14 @@ import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
-import com.mysql.cj.mysqlx.TableFindParams;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.TableFindParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
@@ -129,7 +130,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         Field f = metadata.get(0);
         // not an exhaustive metadata test
         assertEquals("y", f.getColumnLabel());
-        assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlType());
+        assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, f.getMysqlTypeId());
         Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
         Row r = rowInputStream.next();
         String value = r.getValue(0, new StringValueFactory());
@@ -146,9 +147,9 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         assertEquals("a_string", metadata.get(0).getColumnLabel());
         assertEquals("a_long", metadata.get(1).getColumnLabel());
         assertEquals("a_decimal", metadata.get(2).getColumnLabel());
-        assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlType());
-        assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(1).getMysqlType());
-        assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(2).getMysqlType());
+        assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlTypeId());
+        assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(1).getMysqlTypeId());
+        assertEquals(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, metadata.get(2).getMysqlTypeId());
         Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
 
         // first row
@@ -195,77 +196,77 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
 
         Map<String, BiConsumer<ArrayList<Field>, Row>> tests = new HashMap<>();
         tests.put("'some string' as a_string", (metadata, row) -> {
-                    assertEquals("a_string", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlType());
-                    assertEquals("some string", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("a_string", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_VARCHAR, metadata.get(0).getMysqlTypeId());
+            assertEquals("some string", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("date('2015-03-22') as a_date", (metadata, row) -> {
-                    assertEquals("a_date", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_DATETIME, metadata.get(0).getMysqlType());
-                    assertEquals("2015-03-22", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("a_date", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_DATETIME, metadata.get(0).getMysqlTypeId());
+            assertEquals("2015-03-22", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("curtime() as curtime, cast(curtime() as char(8)) as curtime_string", (metadata, row) -> {
-                    assertEquals("curtime", metadata.get(0).getColumnLabel());
-                    assertEquals("curtime_string", metadata.get(1).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_TIME, metadata.get(0).getMysqlType());
-                    String curtimeString = row.getValue(1, new StringValueFactory());
-                    assertEquals(curtimeString, row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("curtime", metadata.get(0).getColumnLabel());
+            assertEquals("curtime_string", metadata.get(1).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_TIME, metadata.get(0).getMysqlTypeId());
+            String curtimeString = row.getValue(1, new StringValueFactory());
+            assertEquals(curtimeString, row.getValue(0, new StringValueFactory()));
+        });
         tests.put("timestamp('2015-05-01 12:01:32') as a_datetime", (metadata, row) -> {
-                    assertEquals("a_datetime", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_DATETIME, metadata.get(0).getMysqlType());
-                    assertEquals("2015-05-01 12:01:32", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("a_datetime", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_DATETIME, metadata.get(0).getMysqlTypeId());
+            assertEquals("2015-05-01 12:01:32", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("cos(1) as a_double", (metadata, row) -> {
-                    assertEquals("a_double", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_DOUBLE, metadata.get(0).getMysqlType());
-                    assertEquals("0.5403023058681398", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("a_double", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_DOUBLE, metadata.get(0).getMysqlTypeId());
+            assertEquals("0.5403023058681398", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("2142 as an_int", (metadata, row) -> {
-                    assertEquals("an_int", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlType());
-                    assertEquals("2142", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("an_int", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlTypeId());
+            assertEquals("2142", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("21.424 as decimal1, -1.0 as decimal2, -0.1 as decimal3, 1000.0 as decimal4", (metadata, row) -> {
-                    assertEquals("decimal1", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(0).getMysqlType());
-                    assertEquals("21.424", row.getValue(0, new StringValueFactory()));
+            assertEquals("decimal1", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, metadata.get(0).getMysqlTypeId());
+            assertEquals("21.424", row.getValue(0, new StringValueFactory()));
 
-                    assertEquals("decimal2", metadata.get(1).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(1).getMysqlType());
-                    assertEquals("-1.0", row.getValue(1, new StringValueFactory()));
+            assertEquals("decimal2", metadata.get(1).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, metadata.get(1).getMysqlTypeId());
+            assertEquals("-1.0", row.getValue(1, new StringValueFactory()));
 
-                    assertEquals("decimal3", metadata.get(2).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(2).getMysqlType());
-                    assertEquals("-0.1", row.getValue(2, new StringValueFactory()));
+            assertEquals("decimal3", metadata.get(2).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, metadata.get(2).getMysqlTypeId());
+            assertEquals("-0.1", row.getValue(2, new StringValueFactory()));
 
-                    assertEquals("decimal4", metadata.get(3).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_NEW_DECIMAL, metadata.get(3).getMysqlType());
-                    assertEquals("1000.0", row.getValue(3, new StringValueFactory()));
-                });
+            assertEquals("decimal4", metadata.get(3).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_NEWDECIMAL, metadata.get(3).getMysqlTypeId());
+            assertEquals("1000.0", row.getValue(3, new StringValueFactory()));
+        });
         tests.put("9223372036854775807 as a_large_integer", (metadata, row) -> {
-                    // max signed 64bit integer
-                    assertEquals("a_large_integer", metadata.get(0).getColumnLabel());
-                    assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlType());
-                    assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory()));
-                });
+            // max signed 64bit integer
+                assertEquals("a_large_integer", metadata.get(0).getColumnLabel());
+                assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlTypeId());
+                assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory()));
+            });
         tests.put("a_float, a_set, an_enum from xprotocol_types_test", (metadata, row) -> {
-                    assertEquals("a_float", metadata.get(0).getColumnLabel());
-                    assertEquals("xprotocol_types_test", metadata.get(0).getTableName());
-                    assertEquals("2.4200000762939453", row.getValue(0, new StringValueFactory()));
+            assertEquals("a_float", metadata.get(0).getColumnLabel());
+            assertEquals("xprotocol_types_test", metadata.get(0).getTableName());
+            assertEquals("2.4200000762939453", row.getValue(0, new StringValueFactory()));
 
-                    assertEquals("a_set", metadata.get(1).getColumnLabel());
-                    assertEquals("xprotocol_types_test", metadata.get(1).getTableName());
-                    assertEquals("def,xyz", row.getValue(1, new StringValueFactory()));
+            assertEquals("a_set", metadata.get(1).getColumnLabel());
+            assertEquals("xprotocol_types_test", metadata.get(1).getTableName());
+            assertEquals("def,xyz", row.getValue(1, new StringValueFactory()));
 
-                    assertEquals("an_enum", metadata.get(2).getColumnLabel());
-                    assertEquals("xprotocol_types_test", metadata.get(2).getTableName());
-                    assertEquals("enum value a", row.getValue(2, new StringValueFactory()));
-                });
+            assertEquals("an_enum", metadata.get(2).getColumnLabel());
+            assertEquals("xprotocol_types_test", metadata.get(2).getTableName());
+            assertEquals("enum value a", row.getValue(2, new StringValueFactory()));
+        });
         tests.put("an_unsigned_int from xprotocol_types_test", (metadata, row) -> {
-                    assertEquals("an_unsigned_int", metadata.get(0).getColumnLabel());
-                    assertEquals("9223372036854775808", row.getValue(0, new StringValueFactory()));
-                });
+            assertEquals("an_unsigned_int", metadata.get(0).getColumnLabel());
+            assertEquals("9223372036854775808", row.getValue(0, new StringValueFactory()));
+        });
 
         // runner for above tests
         for (Map.Entry<String, BiConsumer<ArrayList<Field>, Row>> t : tests.entrySet()) {
@@ -379,7 +380,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         this.protocol.sendSqlStatement("create table tableInsert (x int, y varchar(20), z decimal(10, 2))");
         this.protocol.readStatementExecuteOk();
         InsertParams insertParams = new InsertParams();
-        insertParams.setProjection(new String[] {"z", "x", "y"});
+        insertParams.setProjection(new String[] { "z", "x", "y" });
         insertParams.addRow(Arrays.asList("10.2", 40, "some string value"));
         insertParams.addRow(Arrays.asList("10.3", 50, "another string value"));
         this.protocol.sendRowInsert(getTestDatabase(), "tableInsert", insertParams);
@@ -453,19 +454,19 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         // this will read the metadata and result and print all data
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         metadata.forEach(f -> {
-                    System.err.println("***************** field ****************");
-                    System.err.println("Field: " + f.getColumnLabel());
-                    System.err.println("Type: " + f.getMysqlType());
-                    System.err.println("Encoding: " + f.getEncoding());
-                });
- 
+            System.err.println("***************** field ****************");
+            System.err.println("Field: " + f.getColumnLabel());
+            System.err.println("Type: " + f.getMysqlTypeId());
+            System.err.println("Encoding: " + f.getEncoding());
+        });
+
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         ris.forEachRemaining(r -> {
-                    System.err.println("***************** row ****************");
-                    for (int i = 0; i < metadata.size(); ++i) {
-                        System.err.println(metadata.get(i).getColumnLabel() + ": " + r.getValue(i, new StringValueFactory()));
-                    }
-                });
+            System.err.println("***************** row ****************");
+            for (int i = 0; i < metadata.size(); ++i) {
+                System.err.println(metadata.get(i).getColumnLabel() + ": " + r.getValue(i, new StringValueFactory()));
+            }
+        });
 
         this.protocol.readStatementExecuteOk();
     }

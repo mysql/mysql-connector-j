@@ -25,8 +25,8 @@ package com.mysql.cj.api.jdbc;
 
 import java.sql.SQLException;
 
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
-import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.jdbc.PreparedStatement;
 
 /**

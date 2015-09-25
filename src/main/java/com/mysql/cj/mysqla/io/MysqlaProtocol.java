@@ -47,10 +47,13 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
@@ -68,10 +71,11 @@ import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
+import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
-import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.jdbc.MysqlIO;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.ResultSetImpl;
@@ -1792,4 +1796,179 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         return this.serverSession.getServerVersion().meetsMinimum(new ServerVersion(major, minor, subminor));
     }
+
+    public static MysqlType findMysqlType(PropertySet propertySet, int mysqlTypeId, short colFlag, long length, LazyString tableName,
+            LazyString originalTableName, int collationIndex, String encoding) {
+
+        boolean isUnsigned = ((colFlag & MysqlType.FIELD_FLAG_UNSIGNED) > 0);
+        boolean isFromFunction = originalTableName.length() == 0;
+        boolean isBinary = ((colFlag & MysqlType.FIELD_FLAG_BINARY) > 0);
+        /**
+         * Is this field owned by a server-created temporary table?
+         */
+        boolean isImplicitTemporaryTable = tableName.length() > 0 && tableName.toString().startsWith("#sql_");
+
+        boolean isOpaqueBinary = (isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && (mysqlTypeId == MysqlaConstants.FIELD_TYPE_STRING
+                || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VAR_STRING || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VARCHAR)) ?
+        // queries resolved by temp tables also have this 'signature', check for that
+        !isImplicitTemporaryTable
+                : "binary".equalsIgnoreCase(encoding);
+
+        switch (mysqlTypeId) {
+            case MysqlaConstants.FIELD_TYPE_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
+                return isUnsigned ? MysqlType.DECIMAL_UNSIGNED : MysqlType.DECIMAL;
+
+            case MysqlaConstants.FIELD_TYPE_TINY:
+                // Adjust for pseudo-boolean
+                if (length == 1) {
+                    if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
+                        return MysqlType.BOOLEAN;
+                    } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue()) {
+                        return MysqlType.BIT;
+                    }
+                }
+                return isUnsigned ? MysqlType.TINYINT_UNSIGNED : MysqlType.TINYINT;
+
+            case MysqlaConstants.FIELD_TYPE_SHORT:
+                return isUnsigned ? MysqlType.SMALLINT_UNSIGNED : MysqlType.SMALLINT;
+
+            case MysqlaConstants.FIELD_TYPE_LONG:
+                return isUnsigned ? MysqlType.INT_UNSIGNED : MysqlType.INT;
+
+            case MysqlaConstants.FIELD_TYPE_FLOAT:
+                return isUnsigned ? MysqlType.FLOAT_UNSIGNED : MysqlType.FLOAT;
+
+            case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                return isUnsigned ? MysqlType.DOUBLE_UNSIGNED : MysqlType.DOUBLE;
+
+            case MysqlaConstants.FIELD_TYPE_NULL:
+                return MysqlType.NULL;
+
+            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+                return MysqlType.TIMESTAMP;
+
+            case MysqlaConstants.FIELD_TYPE_LONGLONG:
+                return isUnsigned ? MysqlType.BIGINT_UNSIGNED : MysqlType.BIGINT;
+
+            case MysqlaConstants.FIELD_TYPE_INT24:
+                return isUnsigned ? MysqlType.MEDIUMINT_UNSIGNED : MysqlType.MEDIUMINT;
+
+            case MysqlaConstants.FIELD_TYPE_DATE:
+                return MysqlType.DATE;
+
+            case MysqlaConstants.FIELD_TYPE_TIME:
+                return MysqlType.TIME;
+
+            case MysqlaConstants.FIELD_TYPE_DATETIME:
+                return MysqlType.DATETIME;
+
+            case MysqlaConstants.FIELD_TYPE_YEAR:
+                return MysqlType.YEAR;
+
+            case MysqlaConstants.FIELD_TYPE_VARCHAR:
+            case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+
+                if (isOpaqueBinary
+                        && !(isFromFunction && propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                    return MysqlType.VARBINARY;
+                }
+
+                return MysqlType.VARCHAR;
+
+            case MysqlaConstants.FIELD_TYPE_BIT:
+                //if (length > 1) {
+                // we need to pretend this is a full binary blob
+                //this.colFlag |= MysqlType.FIELD_FLAG_BINARY;
+                //this.colFlag |= MysqlType.FIELD_FLAG_BLOB;
+                //return MysqlType.VARBINARY;
+                //}
+                return MysqlType.BIT;
+
+            case MysqlaConstants.FIELD_TYPE_JSON:
+                return MysqlType.JSON;
+
+            case MysqlaConstants.FIELD_TYPE_ENUM:
+                return MysqlType.ENUM;
+
+            case MysqlaConstants.FIELD_TYPE_SET:
+                return MysqlType.SET;
+
+            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
+                if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
+                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
+                        && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                    // *TEXT masquerading as blob
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                    return MysqlType.TINYTEXT;
+                }
+                return MysqlType.TINYBLOB;
+
+            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
+                if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
+                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
+                        && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                    // *TEXT masquerading as blob
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                    return MysqlType.MEDIUMTEXT;
+                }
+                return MysqlType.MEDIUMBLOB;
+
+            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
+                if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
+                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
+                        && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                    // *TEXT masquerading as blob
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                    return MysqlType.LONGTEXT;
+                }
+                return MysqlType.LONGBLOB;
+
+            case MysqlaConstants.FIELD_TYPE_BLOB:
+                // Sometimes MySQL uses this protocol-level type for all possible BLOB variants,
+                // we can divine what the actual type is by the length reported
+
+                int newMysqlTypeId = mysqlTypeId;
+
+                // fixing initial type according to length
+                if (length <= MysqlType.TINYBLOB.getMaxLength()) {
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
+                    newMysqlTypeId = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
+
+                } else if (length <= MysqlType.BLOB.getMaxLength()) {
+                    if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
+                            || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
+                            && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                        // *TEXT masquerading as blob
+                        //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                        newMysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
+                        return MysqlType.TEXT;
+                    }
+                    return MysqlType.BLOB;
+
+                } else if (length <= MysqlType.MEDIUMBLOB.getMaxLength()) {
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
+                    newMysqlTypeId = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
+                } else {
+                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
+                    newMysqlTypeId = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
+                }
+
+                // call this method again with correct this.mysqlType set
+                return findMysqlType(propertySet, newMysqlTypeId, colFlag, length, tableName, originalTableName, collationIndex, encoding);
+
+            case MysqlaConstants.FIELD_TYPE_STRING:
+                if (isOpaqueBinary && !propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
+                    return MysqlType.BINARY;
+                }
+                return MysqlType.CHAR;
+
+            case MysqlaConstants.FIELD_TYPE_GEOMETRY:
+                return MysqlType.GEOMETRY;
+
+            default:
+                return MysqlType.UNKNOWN;
+        }
+    }
+
 }

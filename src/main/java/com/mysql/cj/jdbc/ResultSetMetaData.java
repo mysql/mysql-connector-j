@@ -30,6 +30,8 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -182,7 +184,16 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public String getColumnClassName(int column) throws SQLException {
         Field f = getField(column);
 
-        return getClassNameForJavaType(f.getSQLType(), f.isUnsigned(), f.getMysqlType(), f.isBinary() || f.isBlob(), f.isOpaqueBinary(), this.treatYearAsDate);
+        switch (f.getMysqlType()) {
+            case YEAR:
+                if (!this.treatYearAsDate) {
+                    return Short.class.getName();
+                }
+
+            default:
+                return f.getMysqlType().getClassName();
+        }
+
     }
 
     /**
@@ -274,7 +285,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * @see java.sql.Types
      */
     public int getColumnType(int column) throws SQLException {
-        return getField(column).getSQLType();
+        return getField(column).getJavaType();
     }
 
     /**
@@ -291,100 +302,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public String getColumnTypeName(int column) throws java.sql.SQLException {
         Field field = getField(column);
 
-        int mysqlType = field.getMysqlType();
-        int jdbcType = field.getSQLType();
-
-        switch (mysqlType) {
-            case MysqlaConstants.FIELD_TYPE_BIT:
-                return "BIT";
-            case MysqlaConstants.FIELD_TYPE_DECIMAL:
-            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
-                return field.isUnsigned() ? "DECIMAL UNSIGNED" : "DECIMAL";
-
-            case MysqlaConstants.FIELD_TYPE_TINY:
-                return field.isUnsigned() ? "TINYINT UNSIGNED" : "TINYINT";
-
-            case MysqlaConstants.FIELD_TYPE_SHORT:
-                return field.isUnsigned() ? "SMALLINT UNSIGNED" : "SMALLINT";
-
-            case MysqlaConstants.FIELD_TYPE_LONG:
-                return field.isUnsigned() ? "INT UNSIGNED" : "INT";
-
-            case MysqlaConstants.FIELD_TYPE_FLOAT:
-                return field.isUnsigned() ? "FLOAT UNSIGNED" : "FLOAT";
-
-            case MysqlaConstants.FIELD_TYPE_DOUBLE:
-                return field.isUnsigned() ? "DOUBLE UNSIGNED" : "DOUBLE";
-
-            case MysqlaConstants.FIELD_TYPE_NULL:
-                return "NULL";
-
-            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
-                return "TIMESTAMP";
-
-            case MysqlaConstants.FIELD_TYPE_LONGLONG:
-                return field.isUnsigned() ? "BIGINT UNSIGNED" : "BIGINT";
-
-            case MysqlaConstants.FIELD_TYPE_INT24:
-                return field.isUnsigned() ? "MEDIUMINT UNSIGNED" : "MEDIUMINT";
-
-            case MysqlaConstants.FIELD_TYPE_DATE:
-                return "DATE";
-
-            case MysqlaConstants.FIELD_TYPE_TIME:
-                return "TIME";
-
-            case MysqlaConstants.FIELD_TYPE_DATETIME:
-                return "DATETIME";
-
-            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
-                return "TINYBLOB";
-
-            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
-                return "MEDIUMBLOB";
-
-            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
-                return "LONGBLOB";
-
-            case MysqlaConstants.FIELD_TYPE_BLOB:
-                if (getField(column).isBinary()) {
-                    return "BLOB";
-                }
-
-                return "TEXT";
-
-            case MysqlaConstants.FIELD_TYPE_VARCHAR:
-                return "VARCHAR";
-
-            case MysqlaConstants.FIELD_TYPE_VAR_STRING:
-                if (jdbcType == Types.VARBINARY) {
-                    return "VARBINARY";
-                }
-
-                return "VARCHAR";
-
-            case MysqlaConstants.FIELD_TYPE_STRING:
-                if (jdbcType == Types.BINARY) {
-                    return "BINARY";
-                }
-
-                return "CHAR";
-
-            case MysqlaConstants.FIELD_TYPE_ENUM:
-                return "ENUM";
-
-            case MysqlaConstants.FIELD_TYPE_YEAR:
-                return "YEAR"; // $NON_NLS-1$
-
-            case MysqlaConstants.FIELD_TYPE_SET:
-                return "SET";
-
-            case MysqlaConstants.FIELD_TYPE_GEOMETRY:
-                return "GEOMETRY";
-
-            default:
-                return "UNKNOWN";
+        StringBuilder sb = new StringBuilder(field.getMysqlType().getName());
+        if (field.isUnsigned() && field.getMysqlType().isAllowed(MysqlType.FIELD_FLAG_UNSIGNED)) {
+            sb.append(" UNSIGNED");
         }
+
+        return sb.toString();
     }
 
     /**
@@ -424,15 +347,15 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         // return f.getLength();
         // }
 
-        if (isDecimalType(f.getSQLType())) {
+        if (isDecimalType(f.getJavaType())) {
             if (f.getDecimals() > 0) {
-                return clampedGetLength(f) - 1 + f.getPrecisionAdjustFactor();
+                return clampedGetLength(f) - 1 + getPrecisionAdjustFactor(f);
             }
 
-            return clampedGetLength(f) + f.getPrecisionAdjustFactor();
+            return clampedGetLength(f) + getPrecisionAdjustFactor(f);
         }
 
-        switch (f.getMysqlType()) {
+        switch (f.getMysqlTypeId()) {
             case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
             case MysqlaConstants.FIELD_TYPE_BLOB:
             case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
@@ -443,6 +366,40 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return clampedGetLength(f) / this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
         }
+    }
+
+    /**
+     * Returns amount of correction that should be applied to the precision
+     * value.
+     *
+     * Different versions of MySQL report different precision values.
+     *
+     * @return the amount to adjust precision value by.
+     */
+    public int getPrecisionAdjustFactor(Field f) {
+        //
+        // Handle odd values for 'M' for floating point/decimal numbers
+        //
+        if (!f.isUnsigned()) {
+            switch (f.getMysqlTypeId()) {
+                case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
+                    return -1;
+
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
+                    return 1;
+
+            }
+        } else {
+            switch (f.getMysqlTypeId()) {
+                case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                case MysqlaConstants.FIELD_TYPE_FLOAT:
+                    return 1;
+
+            }
+        }
+        return 0;
     }
 
     /**
@@ -459,7 +416,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public int getScale(int column) throws SQLException {
         Field f = getField(column);
 
-        if (isDecimalType(f.getSQLType())) {
+        if (isDecimalType(f.getJavaType())) {
             return f.getDecimals();
         }
 
@@ -533,7 +490,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public boolean isCaseSensitive(int column) throws java.sql.SQLException {
         Field field = getField(column);
 
-        int sqlType = field.getSQLType();
+        int sqlType = field.getJavaType();
 
         switch (sqlType) {
             case Types.BIT:
@@ -662,24 +619,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     public boolean isSigned(int column) throws SQLException {
         Field f = getField(column);
-        int sqlType = f.getSQLType();
 
-        switch (sqlType) {
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
-            case Types.BIGINT:
-            case Types.FLOAT:
-            case Types.REAL:
-            case Types.DOUBLE:
-            case Types.NUMERIC:
-            case Types.DECIMAL:
+        switch (f.getMysqlType()) {
+            case DECIMAL:
+            case TINYINT:
+            case SMALLINT:
+            case INT:
+            case BIGINT:
+            case MEDIUMINT:
+            case FLOAT:
+            case DOUBLE:
                 return !f.isUnsigned();
-
-            case Types.DATE:
-            case Types.TIME:
-            case Types.TIMESTAMP:
-                return false;
 
             default:
                 return false;
@@ -718,91 +668,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         }
 
         return toStringBuf.toString();
-    }
-
-    static String getClassNameForJavaType(int javaType, boolean isUnsigned, int mysqlTypeIfKnown, boolean isBinaryOrBlob, boolean isOpaqueBinary,
-            boolean treatYearAsDate) {
-        switch (javaType) {
-            case Types.BIT:
-            case Types.BOOLEAN:
-                return "java.lang.Boolean";
-
-            case Types.TINYINT:
-
-                if (isUnsigned) {
-                    return "java.lang.Integer";
-                }
-
-                return "java.lang.Integer";
-
-            case Types.SMALLINT:
-
-                if (isUnsigned) {
-                    return "java.lang.Integer";
-                }
-
-                return "java.lang.Integer";
-
-            case Types.INTEGER:
-
-                if (!isUnsigned || mysqlTypeIfKnown == MysqlaConstants.FIELD_TYPE_INT24) {
-                    return "java.lang.Integer";
-                }
-
-                return "java.lang.Long";
-
-            case Types.BIGINT:
-
-                if (!isUnsigned) {
-                    return "java.lang.Long";
-                }
-
-                return "java.math.BigInteger";
-
-            case Types.DECIMAL:
-            case Types.NUMERIC:
-                return "java.math.BigDecimal";
-
-            case Types.REAL:
-                return "java.lang.Float";
-
-            case Types.FLOAT:
-            case Types.DOUBLE:
-                return "java.lang.Double";
-
-            case Types.CHAR:
-            case Types.VARCHAR:
-            case Types.LONGVARCHAR:
-                if (!isOpaqueBinary) {
-                    return "java.lang.String";
-                }
-
-                return "[B";
-
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-
-                if (mysqlTypeIfKnown == MysqlaConstants.FIELD_TYPE_GEOMETRY) {
-                    return "[B";
-                } else if (isBinaryOrBlob) {
-                    return "[B";
-                } else {
-                    return "java.lang.String";
-                }
-
-            case Types.DATE:
-                return (treatYearAsDate || mysqlTypeIfKnown != MysqlaConstants.FIELD_TYPE_YEAR) ? "java.sql.Date" : "java.lang.Short";
-
-            case Types.TIME:
-                return "java.sql.Time";
-
-            case Types.TIMESTAMP:
-                return "java.sql.Timestamp";
-
-            default:
-                return "java.lang.Object";
-        }
     }
 
     /**

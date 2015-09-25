@@ -33,7 +33,7 @@ import static com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqlx.io.MysqlxDecoder;
 
@@ -67,18 +67,18 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
             }
 
             // X-protocol uses 64-bit ints for everything
-            if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_LONGLONG) {
+            if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_LONGLONG) {
                 if (f.isUnsigned()) {
                     return MysqlxDecoder.instance.decodeUnsignedLong(CodedInputStream.newInstance(byteString.toByteArray()), vf);
                 }
             }
 
-            MysqlxDecoder.DecoderFunction decoderFunction = MysqlxDecoder.MYSQL_TYPE_TO_DECODER_FUNCTION.get(f.getMysqlType());
+            MysqlxDecoder.DecoderFunction decoderFunction = MysqlxDecoder.MYSQL_TYPE_TO_DECODER_FUNCTION.get(f.getMysqlTypeId());
             if (decoderFunction != null) {
                 this.wasNull = false;
                 return decoderFunction.apply(CodedInputStream.newInstance(byteString.toByteArray()), vf);
             } else {
-                throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlType());
+                throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlTypeId());
             }
         } catch (IOException ex) {
             // if reading the protobuf fields fails (CodedInputStream)
