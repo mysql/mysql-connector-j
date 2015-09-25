@@ -23,11 +23,8 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -77,32 +74,7 @@ public class MysqlxProtocolFactory {
 
             AsyncMessageReader messageReader = new AsyncMessageReader(sockChan);
             messageReader.start();
-            // TODO: need a better writer and one that writes the complete message if it doesn't fit in the buffer
-            MessageWriter messageWriter = new SyncMessageWriter(new BufferedOutputStream(new OutputStream() {
-                @Override
-                public void write(byte[] b) {
-                    write(b, 0, b.length);
-                }
-
-                @Override
-                public void write(byte[] b, int offset, int len) {
-                    while (len > 0) {
-                        Future<Integer> f = sockChan.write(ByteBuffer.wrap(b, offset, len));
-                        try {
-                            int written = f.get();
-                            len -= written;
-                            offset += written;
-                        } catch (InterruptedException | ExecutionException ex) {
-                            throw new CJCommunicationsException(ex);
-                        }
-                    }
-                }
-
-                @Override
-                public void write(int b) {
-                    throw new UnsupportedOperationException("shouldn't be called");
-                }
-            }));
+            AsyncMessageWriter messageWriter = new AsyncMessageWriter(sockChan);
 
             return new MysqlxProtocol(messageReader, messageWriter, sockChan, propertySet);
         } catch (IOException | InterruptedException | ExecutionException ex) {

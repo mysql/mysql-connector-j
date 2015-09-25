@@ -33,7 +33,6 @@ import com.google.protobuf.MessageLite;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 
 /**
@@ -54,17 +53,6 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
     }
 
     /**
-     * Lookup the "ClientMessages" type tag for a protobuf message class.
-     */
-    private static int getTypeForMessageClass(Class<? extends MessageLite> msgClass) {
-        Integer tag = MessageConstants.MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE.get(msgClass);
-        if (tag == null) {
-            throw new WrongArgumentException("No mapping to ClientMessages for message class " + msgClass.getSimpleName());
-        }
-        return tag;
-    }
-
-    /**
      * Send a message.
      *
      * @param msg the message to send
@@ -72,7 +60,7 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
      */
     public void write(MessageLite msg) {
         try {
-            int type = getTypeForMessageClass(msg.getClass());
+            int type = MessageWriter.getTypeForMessageClass(msg.getClass());
             int size = 1 + msg.getSerializedSize();
             if (this.maxAllowedPacket > 0 && size > maxAllowedPacket) {
                 throw new CJPacketTooBigException(size, this.maxAllowedPacket);

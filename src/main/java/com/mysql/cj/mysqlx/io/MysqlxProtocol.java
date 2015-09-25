@@ -693,7 +693,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks) {
-        this.writer.write(this.msgBuilder.buildFind(findParams));
+        ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), null);
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
         ((AsyncMessageReader) this.reader).pushMessageListener(l);
     }

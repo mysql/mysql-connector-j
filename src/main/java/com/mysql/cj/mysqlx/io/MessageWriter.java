@@ -25,10 +25,23 @@ package com.mysql.cj.mysqlx.io;
 
 import com.google.protobuf.MessageLite;
 
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+
 /**
  * Low-level message writer for protobuf messages.
  */
 public interface MessageWriter {
     void write(MessageLite msg);
     void setMaxAllowedPacket(int maxAllowedPacket);
+
+    /**
+     * Lookup the "ClientMessages" type tag for a protobuf message class.
+     */
+    public static int getTypeForMessageClass(Class<? extends MessageLite> msgClass) {
+        Integer tag = MessageConstants.MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE.get(msgClass);
+        if (tag == null) {
+            throw new WrongArgumentException("No mapping to ClientMessages for message class " + msgClass.getSimpleName());
+        }
+        return tag;
+    }
 }
