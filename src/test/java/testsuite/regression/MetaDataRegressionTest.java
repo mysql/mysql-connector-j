@@ -3784,16 +3784,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         ResultSetMetaData rsMetaData = null;
 
         createTable("testBug35115", "(year YEAR)");
-
-        this.stmt = this.conn.createStatement();
         this.stmt.executeUpdate("INSERT INTO testBug35115 VALUES ('2002'), ('2013')");
 
         /*
          * test connection with property 'yearIsDateType=false'
          */
         testConnection = getConnectionWithProps("yearIsDateType=false");
-        this.stmt = testConnection.createStatement();
-        this.rs = this.stmt.executeQuery("SELECT * FROM testBug35115");
+        Statement st = testConnection.createStatement();
+        this.rs = st.executeQuery("SELECT * FROM testBug35115");
         rsMetaData = this.rs.getMetaData();
 
         assertTrue(this.rs.next());
@@ -3808,8 +3806,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
          * test connection with property 'yearIsDateType=true'
          */
         testConnection = getConnectionWithProps("yearIsDateType=true");
-        this.stmt = testConnection.createStatement();
-        this.rs = this.stmt.executeQuery("SELECT * FROM testBug35115");
+        st = testConnection.createStatement();
+        this.rs = st.executeQuery("SELECT * FROM testBug35115");
         rsMetaData = this.rs.getMetaData();
 
         assertTrue(this.rs.next());

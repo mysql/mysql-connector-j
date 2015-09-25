@@ -37,6 +37,10 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
  */
 public interface Statement extends java.sql.Statement {
 
+    public static final int MAX_ROWS = 50000000; // From the MySQL FAQ
+
+    public static final byte OPEN_CURSOR_FLAG = 1;
+
     /**
      * Workaround for containers that 'check' for sane values of
      * Statement.setFetchSize() so that applications can use

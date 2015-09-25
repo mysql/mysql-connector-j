@@ -33,6 +33,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -204,10 +205,10 @@ public class BufferRow extends ResultSetRow {
                 continue;
             }
 
-            int type = this.metadata[i].getMysqlType();
+            int type = this.metadata[i].getMysqlTypeId();
 
             if (type != MysqlaConstants.FIELD_TYPE_NULL) {
-                int length = MysqlaUtils.getBinaryEncodedLength(this.metadata[i].getMysqlType());
+                int length = MysqlaUtils.getBinaryEncodedLength(this.metadata[i].getMysqlTypeId());
                 if (length == 0) {
                     this.rowFromServer.fastSkipLenByteArray();
                 } else if (length == -1) {
@@ -239,7 +240,7 @@ public class BufferRow extends ResultSetRow {
             return null;
         }
 
-        int type = this.metadata[index].getMysqlType();
+        int type = this.metadata[index].getMysqlTypeId();
 
         switch (type) {
             case MysqlaConstants.FIELD_TYPE_NULL:
@@ -351,7 +352,7 @@ public class BufferRow extends ResultSetRow {
         int length;
         if (this.isBinaryEncoded) {
             // field length is type-specific in binary-encoded results
-            int type = this.metadata[columnIndex].getMysqlType();
+            int type = this.metadata[columnIndex].getMysqlTypeId();
             length = MysqlaUtils.getBinaryEncodedLength(type);
             if (length == 0) {
                 length = (int) this.rowFromServer.readFieldLength();

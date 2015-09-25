@@ -56,7 +56,7 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;

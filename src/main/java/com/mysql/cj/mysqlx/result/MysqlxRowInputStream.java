@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**

@@ -30,6 +30,7 @@ import java.sql.Types;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class MysqlParameterMetadata implements ParameterMetaData {

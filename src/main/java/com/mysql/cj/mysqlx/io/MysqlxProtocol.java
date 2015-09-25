@@ -60,15 +60,16 @@ import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.CreateIndexParams;
@@ -145,12 +146,13 @@ public class MysqlxProtocol implements Protocol {
     private static final int MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_DECIMAL_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
     // TODO: need protocol type constants here (these values copied from comments in mysqlx_notice.proto)
-    private final int MysqlxNoticeFrameType_WARNING = 1;
-    private final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
-    private final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
+    private static final int MysqlxNoticeFrameType_WARNING = 1;
+    private static final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
+    private static final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
 
     private MessageReader reader;
     private MessageWriter writer;
@@ -592,7 +594,7 @@ public class MysqlxProtocol implements Protocol {
             case DOUBLE:
                 return MysqlaConstants.FIELD_TYPE_DOUBLE;
             case DECIMAL:
-                return MysqlaConstants.FIELD_TYPE_NEW_DECIMAL;
+                return MysqlaConstants.FIELD_TYPE_NEWDECIMAL;
             case BYTES:
                 switch (contentType) {
                     case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY:
@@ -613,6 +615,45 @@ public class MysqlxProtocol implements Protocol {
                 return MysqlaConstants.FIELD_TYPE_ENUM;
             case BIT:
                 return MysqlaConstants.FIELD_TYPE_BIT;
+                // TODO: longlong
+        }
+        throw new WrongArgumentException("TODO: unknown field type: " + type);
+    }
+
+    public static MysqlType findMysqlType(FieldType type, int contentType, int flags, int collationIndex) {
+        switch (type) {
+            case SINT:
+                return MysqlType.BIGINT;
+            case UINT:
+                return MysqlType.BIGINT_UNSIGNED;
+            case FLOAT:
+                return 0 < (flags & MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED) ? MysqlType.FLOAT_UNSIGNED : MysqlType.FLOAT;
+            case DOUBLE:
+                return 0 < (flags & MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED) ? MysqlType.DOUBLE_UNSIGNED : MysqlType.DOUBLE;
+            case DECIMAL:
+                return 0 < (flags & MYSQLX_COLUMN_FLAGS_DECIMAL_UNSIGNED) ? MysqlType.DECIMAL_UNSIGNED : MysqlType.DECIMAL;
+            case BYTES:
+                switch (contentType) {
+                    case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY:
+                        return MysqlType.GEOMETRY;
+                    case MYSQLX_COLUMN_BYTES_CONTENT_TYPE_JSON:
+                        return MysqlType.JSON;
+                    default:
+                        if (collationIndex == 33) {
+                            return MysqlType.VARBINARY;
+                        }
+                        return MysqlType.VARCHAR;
+                }
+            case TIME:
+                return MysqlType.TIME;
+            case DATETIME:
+                return MysqlType.DATETIME;
+            case SET:
+                return MysqlType.SET;
+            case ENUM:
+                return MysqlType.ENUM;
+            case BIT:
+                return MysqlType.BIT;
                 // TODO: longlong
         }
         throw new WrongArgumentException("TODO: unknown field type: " + type);
@@ -643,34 +684,34 @@ public class MysqlxProtocol implements Protocol {
             LazyString originalTableName = new LazyString(col.getOriginalTable().toString(characterSet));
             LazyString columnName = new LazyString(col.getName().toString(characterSet));
             LazyString originalColumnName = new LazyString(col.getOriginalName().toString(characterSet));
-            int mysqlType = mysqlxTypeToMysqlType(col.getType(), col.getContentType());
+
             long length = col.getLength();
             // TODO: length is returning 0 for all
             // TODO: pass length to mysql type mapping, length = 10 -> DATE, length = 19 -> DATETIME
             // System.err.println("columnName: " + columnName);
             // System.err.println("length (was returning 0 for all types): " + length);
-            short flags = (short) col.getFlags();
             int decimals = col.getFractionalDigits();
             int collationIndex = 0;
             if (col.hasCollation()) {
                 // TODO: support custom character set
                 collationIndex = (int) col.getCollation();
             }
-            Field f = new Field(propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlType, flags, decimals,
-                    collationIndex, CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[collationIndex]);
-            // flags translation
-            if (col.getType().equals(FieldType.UINT)) {
-                // special case. c.f. "streaming_command_delegate.cc"
-                f.setUnsigned();
-            } else if (col.getType().equals(FieldType.UINT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL)) {
-                // TODO: propagate flag to Field
-            } else if (col.getType().equals(FieldType.DOUBLE) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED)) {
-                f.setUnsigned();
-            } else if (col.getType().equals(FieldType.FLOAT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED)) {
-                f.setUnsigned();
+
+            String encoding = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[collationIndex];
+
+            MysqlType mysqlType = findMysqlType(col.getType(), col.getContentType(), col.getFlags(), collationIndex);
+            int mysqlTypeId = mysqlxTypeToMysqlType(col.getType(), col.getContentType());
+
+            // flags translation; unsigned is handled in Field by checking the MysqlType, so here we check others
+            short flags = (short) 0;
+            if (col.getType().equals(FieldType.UINT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL)) {
+                flags |= MysqlType.FIELD_FLAG_ZEROFILL;
             } else if (col.getType().equals(FieldType.BYTES) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD)) {
                 // TODO: propagate flag to Field
             }
+
+            Field f = new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlTypeId, flags, decimals,
+                    collationIndex, encoding, mysqlType);
             return f;
         } catch (UnsupportedEncodingException ex) {
             throw new WrongArgumentException("Unable to decode metadata strings", ex);

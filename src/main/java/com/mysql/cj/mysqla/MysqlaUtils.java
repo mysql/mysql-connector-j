@@ -145,7 +145,7 @@ public class MysqlaUtils {
             case MysqlaConstants.FIELD_TYPE_VARCHAR:
             case MysqlaConstants.FIELD_TYPE_STRING:
             case MysqlaConstants.FIELD_TYPE_DECIMAL:
-            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
             case MysqlaConstants.FIELD_TYPE_GEOMETRY:
             case MysqlaConstants.FIELD_TYPE_BIT:
             case MysqlaConstants.FIELD_TYPE_JSON:

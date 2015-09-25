@@ -32,6 +32,7 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.io.StringConverter;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
@@ -107,12 +108,11 @@ public abstract class ResultSetRow {
         Field f = this.metadata[columnIndex];
 
         // figure out which decoder method to call based on the value type from metadata
-        switch (f.getMysqlType()) {
+        switch (f.getMysqlTypeId()) {
             case MysqlaConstants.FIELD_TYPE_DATETIME:
             case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
                 return this.valueDecoder.decodeTimestamp(bytes, offset, length, vf);
 
-            case MysqlaConstants.FIELD_TYPE_NEWDATE:
             case MysqlaConstants.FIELD_TYPE_DATE:
                 return this.valueDecoder.decodeDate(bytes, offset, length, vf);
 
@@ -157,7 +157,7 @@ public abstract class ResultSetRow {
             case MysqlaConstants.FIELD_TYPE_DOUBLE:
                 return this.valueDecoder.decodeDouble(bytes, offset, length, vf);
 
-            case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+            case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
             case MysqlaConstants.FIELD_TYPE_DECIMAL:
                 return this.valueDecoder.decodeDecimal(bytes, offset, length, vf);
 
@@ -182,7 +182,7 @@ public abstract class ResultSetRow {
         }
 
         // hack for some internal code that creates rows without MySQL types, only JDBC types incl ps bindings as RS, DBMD
-        switch (f.getSQLType()) {
+        switch (f.getJavaType()) {
             case Types.BOOLEAN:
                 return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
             case Types.INTEGER:

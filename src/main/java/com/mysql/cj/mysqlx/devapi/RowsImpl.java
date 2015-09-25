@@ -37,7 +37,7 @@ import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Rows;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 
 public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRows {
     private ArrayList<Field> metadata;

@@ -92,6 +92,7 @@ import com.mysql.cj.core.io.ZeroDateTimeToDefaultValueFactory;
 import com.mysql.cj.core.io.ZeroDateTimeToNullValueFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -831,7 +832,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         Field f = this.fields[columnIndex - 1];
 
         // return YEAR values as Dates if necessary
-        if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
+        if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
             return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
         }
         return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
@@ -1055,7 +1056,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
-        if (this.padCharsWithSpace && stringVal != null && f.getMysqlType() == MysqlaConstants.FIELD_TYPE_STRING) {
+        if (this.padCharsWithSpace && stringVal != null && f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_STRING) {
             int maxBytesPerChar = this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
             int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// maxBytesPerChar; /* safe, this will never be 0 */
             return StringUtils.padString(stringVal, fieldLength);
@@ -1276,41 +1277,71 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         }
 
         Field field = this.fields[columnIndexMinusOne];
+        switch (field.getMysqlType()) {
+            case BIT:
+                // TODO Field sets binary and blob flags if the length of BIT field is > 1; is it needed at all?
+                if (field.isBinary() || field.isBlob()) {
+                    byte[] data = getBytes(columnIndex);
 
-        switch (field.getSQLType()) {
-            case Types.BIT:
-            case Types.BOOLEAN:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_BIT && !field.isSingleBit()) {
-                    return getBytes(columnIndex);
+                    if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+                        Object obj = data;
+
+                        if ((data != null) && (data.length >= 2)) {
+                            if ((data[0] == -84) && (data[1] == -19)) {
+                                // Serialized object?
+                                try {
+                                    ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
+                                    ObjectInputStream objIn = new ObjectInputStream(bytesIn);
+                                    obj = objIn.readObject();
+                                    objIn.close();
+                                    bytesIn.close();
+                                } catch (ClassNotFoundException cnfe) {
+                                    throw SQLError.createSQLException(
+                                            Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                                    + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                } catch (IOException ex) {
+                                    obj = data; // not serialized?
+                                }
+                            } else {
+                                return getString(columnIndex);
+                            }
+                        }
+
+                        return obj;
+                    }
+
+                    return data;
                 }
 
+                return field.isSingleBit() ? Boolean.valueOf(getBoolean(columnIndex)) : getBytes(columnIndex);
+
+            case BOOLEAN:
                 return Boolean.valueOf(getBoolean(columnIndex));
 
-            case Types.TINYINT:
-                if (!field.isUnsigned()) {
-                    return Integer.valueOf(getByte(columnIndex));
-                }
+            case TINYINT:
+                return Integer.valueOf(getByte(columnIndex));
 
+            case TINYINT_UNSIGNED:
                 return Integer.valueOf(getInt(columnIndex));
 
-            case Types.SMALLINT:
-
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
                 return Integer.valueOf(getInt(columnIndex));
 
-            case Types.INTEGER:
+            case INT:
+                return Integer.valueOf(getInt(columnIndex));
 
-                if (!field.isUnsigned() || field.getMysqlType() == MysqlaConstants.FIELD_TYPE_INT24) {
-                    return Integer.valueOf(getInt(columnIndex));
-                }
-
+            case INT_UNSIGNED:
                 return Long.valueOf(getLong(columnIndex));
 
-            case Types.BIGINT:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
+                return Integer.valueOf(getInt(columnIndex));
 
-                if (!field.isUnsigned()) {
-                    return Long.valueOf(getLong(columnIndex));
-                }
+            case BIGINT:
+                return Long.valueOf(getLong(columnIndex));
 
+            case BIGINT_UNSIGNED:
                 String stringVal = getString(columnIndex);
 
                 if (stringVal == null) {
@@ -1325,59 +1356,56 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                             SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
 
-            case Types.DECIMAL:
-            case Types.NUMERIC:
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
                 stringVal = getString(columnIndex);
-
-                BigDecimal val;
 
                 if (stringVal != null) {
                     if (stringVal.length() == 0) {
-                        val = new BigDecimal(0);
-
-                        return val;
+                        return new BigDecimal(0);
                     }
 
                     try {
-                        val = new BigDecimal(stringVal);
+                        return new BigDecimal(stringVal);
                     } catch (NumberFormatException ex) {
                         throw SQLError.createSQLException(
                                 Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
                                 SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
-
-                    return val;
                 }
-
                 return null;
 
-            case Types.REAL:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
                 return new Float(getFloat(columnIndex));
 
-            case Types.FLOAT:
-            case Types.DOUBLE:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
                 return new Double(getDouble(columnIndex));
 
-            case Types.CHAR:
-            case Types.VARCHAR:
-                if (!field.isOpaqueBinary()) {
-                    return getString(columnIndex);
-                }
+            case CHAR:
+            case ENUM:
+            case SET:
+            case VARCHAR:
+            case JSON:
+            case TINYTEXT:
+                return getString(columnIndex);
 
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case TEXT:
+                return getStringForClob(columnIndex);
+
+            case GEOMETRY:
                 return getBytes(columnIndex);
-            case Types.LONGVARCHAR:
-                if (!field.isOpaqueBinary()) {
-                    return getStringForClob(columnIndex);
-                }
 
-                return getBytes(columnIndex);
-
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_GEOMETRY) {
-                    return getBytes(columnIndex);
-                } else if (field.isBinary() || field.isBlob()) {
+            case BINARY:
+            case VARBINARY:
+            case TINYBLOB:
+            case MEDIUMBLOB:
+            case LONGBLOB:
+            case BLOB:
+                if (field.isBinary() || field.isBlob()) {
                     byte[] data = getBytes(columnIndex);
 
                     if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
@@ -1412,17 +1440,17 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                 return getBytes(columnIndex);
 
-            case Types.DATE:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
-                    return Short.valueOf(getShort(columnIndex));
-                }
+            case YEAR:
+                return this.yearIsDateType ? getDate(columnIndex) : Short.valueOf(getShort(columnIndex));
 
+            case DATE:
                 return getDate(columnIndex);
 
-            case Types.TIME:
+            case TIME:
                 return getTime(columnIndex);
 
-            case Types.TIMESTAMP:
+            case TIMESTAMP:
+            case DATETIME:
                 return getTimestamp(columnIndex);
 
             default:
@@ -1580,7 +1608,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
             case Types.INTEGER:
 
-                if (!field.isUnsigned() || field.getMysqlType() == MysqlaConstants.FIELD_TYPE_INT24) {
+                if (!field.isUnsigned() || field.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_INT24) {
                     return Integer.valueOf(getInt(columnIndex));
                 }
 
@@ -1640,7 +1668,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 return getBytes(columnIndex);
 
             case Types.DATE:
-                if (field.getMysqlType() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
+                if (field.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
                     return Short.valueOf(getShort(columnIndex));
                 }
 

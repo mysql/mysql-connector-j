@@ -3877,10 +3877,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
             }
             testConn = getConnectionWithProps(props);
-            this.stmt = testConn.createStatement();
+            Statement st = testConn.createStatement();
 
             createTable("bug32525", "(field1 date, field2 timestamp)");
-            this.stmt.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
+            st.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
 
             this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
             this.rs.next();

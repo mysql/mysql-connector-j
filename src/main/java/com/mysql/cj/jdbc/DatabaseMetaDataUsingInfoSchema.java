@@ -26,11 +26,16 @@ package com.mysql.cj.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -92,10 +97,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(3, columnNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", Types.CHAR, 64),
-                    new Field("", "TABLE_SCHEM", Types.CHAR, 1), new Field("", "TABLE_NAME", Types.CHAR, 64), new Field("", "COLUMN_NAME", Types.CHAR, 64),
-                    new Field("", "GRANTOR", Types.CHAR, 77), new Field("", "GRANTEE", Types.CHAR, 77), new Field("", "PRIVILEGE", Types.CHAR, 64),
-                    new Field("", "IS_GRANTABLE", Types.CHAR, 3) });
+            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", MysqlType.CHAR, 64),
+                    new Field("", "TABLE_SCHEM", MysqlType.CHAR, 1), new Field("", "TABLE_NAME", MysqlType.CHAR, 64),
+                    new Field("", "COLUMN_NAME", MysqlType.CHAR, 64), new Field("", "GRANTOR", MysqlType.CHAR, 77),
+                    new Field("", "GRANTEE", MysqlType.CHAR, 77), new Field("", "PRIVILEGE", MysqlType.CHAR, 64),
+                    new Field("", "IS_GRANTABLE", MysqlType.CHAR, 3) });
 
             return rs;
         } finally {
@@ -122,7 +128,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
-        MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
         sqlBuf.append(" AS DATA_TYPE, ");
 
@@ -528,9 +534,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", Types.CHAR, 255),
-                    new Field("", "TABLE_SCHEM", Types.CHAR, 0), new Field("", "TABLE_NAME", Types.CHAR, 255), new Field("", "COLUMN_NAME", Types.CHAR, 32),
-                    new Field("", "KEY_SEQ", Types.SMALLINT, 5), new Field("", "PK_NAME", Types.CHAR, 32) });
+            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", MysqlType.CHAR, 255),
+                    new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0), new Field("", "TABLE_NAME", MysqlType.CHAR, 255),
+                    new Field("", "COLUMN_NAME", MysqlType.CHAR, 32), new Field("", "KEY_SEQ", MysqlType.SMALLINT, 5),
+                    new Field("", "PK_NAME", MysqlType.CHAR, 32) });
 
             return rs;
         } finally {
@@ -644,7 +651,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn + " ELSE " + procedureColumnUnknown + " END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
-        MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
@@ -837,7 +844,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
 
-        MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
         sqlBuf.append(" AS DATA_TYPE, ");
 
         sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
@@ -863,10 +870,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "SCOPE", Types.SMALLINT, 5),
-                    new Field("", "COLUMN_NAME", Types.CHAR, 32), new Field("", "DATA_TYPE", Types.INTEGER, 5), new Field("", "TYPE_NAME", Types.CHAR, 16),
-                    new Field("", "COLUMN_SIZE", Types.INTEGER, 16), new Field("", "BUFFER_LENGTH", Types.INTEGER, 16),
-                    new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16), new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5) });
+            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "SCOPE", MysqlType.SMALLINT, 5),
+                    new Field("", "COLUMN_NAME", MysqlType.CHAR, 32), new Field("", "DATA_TYPE", MysqlType.INT, 5),
+                    new Field("", "TYPE_NAME", MysqlType.CHAR, 16), new Field("", "COLUMN_SIZE", MysqlType.INT, 16),
+                    new Field("", "BUFFER_LENGTH", MysqlType.INT, 16), new Field("", "DECIMAL_DIGITS", MysqlType.SMALLINT, 16),
+                    new Field("", "PSEUDO_COLUMN", MysqlType.SMALLINT, 5) });
 
             return rs;
         } finally {
@@ -915,7 +923,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
-        MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
@@ -1044,10 +1052,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, functionNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "FUNCTION_CAT", Types.CHAR, 255),
-                    new Field("", "FUNCTION_SCHEM", Types.CHAR, 255), new Field("", "FUNCTION_NAME", Types.CHAR, 255),
-                    new Field("", "REMARKS", Types.CHAR, 255), new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6),
-                    new Field("", "SPECIFIC_NAME", Types.CHAR, 255) });
+            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "FUNCTION_CAT", MysqlType.CHAR, 255),
+                    new Field("", "FUNCTION_SCHEM", MysqlType.CHAR, 255), new Field("", "FUNCTION_NAME", MysqlType.CHAR, 255),
+                    new Field("", "REMARKS", MysqlType.CHAR, 255), new Field("", "FUNCTION_TYPE", MysqlType.SMALLINT, 6),
+                    new Field("", "SPECIFIC_NAME", MysqlType.CHAR, 255) });
 
             return rs;
         } finally {
@@ -1055,5 +1063,43 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 pStmt.close();
             }
         }
+    }
+
+    private static final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName) {
+
+        buf.append("CASE ");
+        Map<String, Integer> typesMap = new HashMap<String, Integer>();
+        for (MysqlType ftype : MysqlType.values()) {
+            typesMap.put(ftype.getName(), ftype.getJdbcType());
+        }
+        typesMap.put("BINARY", Integer.valueOf(Types.BINARY));
+        typesMap.put("VARBINARY", Integer.valueOf(Types.VARBINARY));
+
+        Iterator<String> mysqlTypes = typesMap.keySet().iterator();
+
+        while (mysqlTypes.hasNext()) {
+            String mysqlTypeName = mysqlTypes.next();
+            buf.append(" WHEN ");
+            buf.append(mysqlTypeColumnName);
+            buf.append("='");
+            buf.append(mysqlTypeName);
+            buf.append("' THEN ");
+            buf.append(typesMap.get(mysqlTypeName));
+
+            if (mysqlTypeName.equalsIgnoreCase("DOUBLE") || mysqlTypeName.equalsIgnoreCase("FLOAT") || mysqlTypeName.equalsIgnoreCase("DECIMAL")
+                    || mysqlTypeName.equalsIgnoreCase("NUMERIC")) {
+                buf.append(" WHEN ");
+                buf.append(mysqlTypeColumnName);
+                buf.append("='");
+                buf.append(mysqlTypeName);
+                buf.append(" unsigned' THEN ");
+                buf.append(typesMap.get(mysqlTypeName));
+            }
+        }
+
+        buf.append(" ELSE ");
+        buf.append(Types.OTHER);
+        buf.append(" END ");
+
     }
 }

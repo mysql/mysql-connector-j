@@ -106,11 +106,10 @@ public class MysqlaConstants {
     public static final int FIELD_TYPE_TIME = 11;
     public static final int FIELD_TYPE_DATETIME = 12;
     public static final int FIELD_TYPE_YEAR = 13;
-    public static final int FIELD_TYPE_NEWDATE = 14;
     public static final int FIELD_TYPE_VARCHAR = 15;
     public static final int FIELD_TYPE_BIT = 16;
     public static final int FIELD_TYPE_JSON = 245;
-    public static final int FIELD_TYPE_NEW_DECIMAL = 246;
+    public static final int FIELD_TYPE_NEWDECIMAL = 246;
     public static final int FIELD_TYPE_ENUM = 247;
     public static final int FIELD_TYPE_SET = 248;
     public static final int FIELD_TYPE_TINY_BLOB = 249;

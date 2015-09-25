@@ -53,12 +53,13 @@ import java.util.Map;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
  * Representation of stored procedures for JDBC
@@ -261,18 +262,25 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         public String getParameterClassName(int arg0) throws SQLException {
             String mysqlTypeName = getParameterTypeName(arg0);
 
-            boolean isBinaryOrBlob = StringUtils.indexOfIgnoreCase(mysqlTypeName, "BLOB") != -1 || StringUtils.indexOfIgnoreCase(mysqlTypeName, "BINARY") != -1;
+            MysqlType mysqlType = MysqlType.getByName(mysqlTypeName);
+            switch (mysqlType) {
+                case YEAR:
+                    if (!CallableStatement.this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue()) {
+                        return Short.class.getName();
+                    }
+                    // TODO Adjust for pseudo-boolean ?
+                    //if (length == 1) {
+                    //    if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
+                    //        return MysqlType.BOOLEAN;
+                    //    } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue()) {
+                    //        return MysqlType.BIT;
+                    //    }
+                    //}
 
-            boolean isUnsigned = StringUtils.indexOfIgnoreCase(mysqlTypeName, "UNSIGNED") != -1;
-
-            int mysqlTypeIfKnown = 0;
-
-            if (StringUtils.startsWithIgnoreCase(mysqlTypeName, "MEDIUMINT")) {
-                mysqlTypeIfKnown = MysqlaConstants.FIELD_TYPE_INT24;
+                default:
+                    return mysqlType.getClassName();
             }
 
-            return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), isUnsigned, mysqlTypeIfKnown, isBinaryOrBlob, false,
-                    CallableStatement.this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue());
         }
 
         public int getParameterCount() throws SQLException {
@@ -621,19 +629,19 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = new Field[13];
 
-            fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
-            fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
-            fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
-            fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 0);
-            fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 0);
-            fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 0);
-            fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 0);
-            fields[7] = new Field("", "PRECISION", Types.INTEGER, 0);
-            fields[8] = new Field("", "LENGTH", Types.INTEGER, 0);
-            fields[9] = new Field("", "SCALE", Types.SMALLINT, 0);
-            fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
-            fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
-            fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
+            fields[0] = new Field("", "PROCEDURE_CAT", MysqlType.CHAR, 0);
+            fields[1] = new Field("", "PROCEDURE_SCHEM", MysqlType.CHAR, 0);
+            fields[2] = new Field("", "PROCEDURE_NAME", MysqlType.CHAR, 0);
+            fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 0);
+            fields[4] = new Field("", "COLUMN_TYPE", MysqlType.CHAR, 0);
+            fields[5] = new Field("", "DATA_TYPE", MysqlType.SMALLINT, 0);
+            fields[6] = new Field("", "TYPE_NAME", MysqlType.CHAR, 0);
+            fields[7] = new Field("", "PRECISION", MysqlType.INT, 0);
+            fields[8] = new Field("", "LENGTH", MysqlType.INT, 0);
+            fields[9] = new Field("", "SCALE", MysqlType.SMALLINT, 0);
+            fields[10] = new Field("", "RADIX", MysqlType.SMALLINT, 0);
+            fields[11] = new Field("", "NULLABLE", MysqlType.SMALLINT, 0);
+            fields[12] = new Field("", "REMARKS", MysqlType.CHAR, 0);
 
             String procName = isReallyProcedure ? extractProcedureName() : null;
 

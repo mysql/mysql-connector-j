@@ -47,12 +47,14 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -267,8 +269,11 @@ public class MysqlIO implements ResultsHandler {
 
         String encoding = this.protocol.getServerSession().getEncodingForIndex(collationIndex);
 
-        return new Field(this.propertySet, databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag,
-                colDecimals, collationIndex, encoding);
+        MysqlType mysqlType = MysqlaProtocol.findMysqlType(this.propertySet, colType, colFlag, colLength, tableName, originalTableName, collationIndex,
+                encoding);
+
+        return new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag, colDecimals, collationIndex,
+                encoding, mysqlType);
     }
 
     private static int adjustStartForFieldLength(int nameStart, int nameLength) {
@@ -682,8 +687,8 @@ public class MysqlIO implements ResultsHandler {
         return ((((a) + (l)) - 1) & ~((l) - 1));
     }
 
-    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, com.mysql.cj.jdbc.Field[] fields,
-            RowData rows, int resultSetType, int resultSetConcurrency, boolean isBinaryEncoded) throws SQLException {
+    private ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, Field[] fields, RowData rows, int resultSetType,
+            int resultSetConcurrency, boolean isBinaryEncoded) throws SQLException {
         ResultSetImpl rs = null;
 
         switch (resultSetConcurrency) {
@@ -803,7 +808,7 @@ public class MysqlIO implements ResultsHandler {
         }
 
         for (int i = 0; i < fields.length; i++) {
-            switch (fields[i].getSQLType()) {
+            switch (fields[i].getJavaType()) {
                 case Types.BLOB:
                 case Types.CLOB:
                 case Types.LONGVARBINARY:
@@ -995,7 +1000,7 @@ public class MysqlIO implements ResultsHandler {
      *            byte array.
      */
     private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
-        int type = fields[columnIndex].getMysqlType();
+        int type = fields[columnIndex].getMysqlTypeId();
 
         int len = MysqlaUtils.getBinaryEncodedLength(type);
 

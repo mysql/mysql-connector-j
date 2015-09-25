@@ -35,9 +35,9 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
-import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.jdbc.MysqlSavepoint;
 import com.mysql.cj.jdbc.ServerPreparedStatement.BindValue;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;

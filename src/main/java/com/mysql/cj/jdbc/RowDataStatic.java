@@ -28,6 +28,7 @@ import java.util.List;
 
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.core.result.Field;
 
 /**
  * Represents an in-memory result set

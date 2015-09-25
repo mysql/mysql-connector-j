@@ -31,6 +31,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;

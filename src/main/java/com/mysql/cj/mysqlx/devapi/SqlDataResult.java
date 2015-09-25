@@ -30,7 +30,7 @@ import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 
 /**
  * SQL result with data. Implemented as a thin layer over {@link RowsImpl}.

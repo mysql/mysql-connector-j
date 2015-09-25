@@ -25,6 +25,8 @@ package com.mysql.cj.jdbc;
 
 import java.util.Map;
 
+import com.mysql.cj.core.result.Field;
+
 public class CachedResultSetMetaData {
     /** Map column names (and all of their permutations) to column indices */
     Map<String, Integer> columnNameToIndex = null;

@@ -26,11 +26,12 @@ package com.mysql.cj.core.result;
 import java.util.ArrayList;
 
 import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.util.LazyString;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 public class JavaRow implements Row {
     private ArrayList<Field> metadata = new ArrayList<>();
@@ -50,15 +51,20 @@ public class JavaRow implements Row {
         throw new NullPointerException("TODO: ");
     }
 
-    public void addField(int mysqlType) {
+    public void addField(int mysqlTypeId) {
         PropertySet propertySet = new DefaultPropertySet();
         int length = 0;
         short colFlag = 0;
         int colDecimals = 0;
         int collationIndex = 33;
         String encoding = "utf8";
-        Field f = new Field(propertySet, new LazyString(null), new LazyString(null), new LazyString(null), new LazyString(null), new LazyString(null), 0,
-                mysqlType, colFlag, colDecimals, collationIndex, encoding);
+
+        LazyString tableName = new LazyString(null);
+        LazyString originalTableName = new LazyString(null);
+        MysqlType mysqlType = MysqlaProtocol.findMysqlType(propertySet, mysqlTypeId, colFlag, length, tableName, originalTableName, collationIndex, encoding);
+
+        Field f = new Field(new LazyString(null), tableName, originalTableName, new LazyString(null), new LazyString(null), 0, mysqlTypeId, colFlag,
+                colDecimals, collationIndex, encoding, mysqlType);
         this.metadata.add(f);
     }
 }

@@ -56,6 +56,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
@@ -216,7 +217,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 case MysqlaConstants.FIELD_TYPE_STRING:
                 case MysqlaConstants.FIELD_TYPE_VARCHAR:
                 case MysqlaConstants.FIELD_TYPE_DECIMAL:
-                case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+                case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
                     if (this.value instanceof byte[]) {
                         return ((byte[]) this.value).length;
                     }
@@ -1072,7 +1073,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             // d) The user has set a fetch size
             if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
                     && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
-                packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
+                packet.writeByte(OPEN_CURSOR_FLAG);
                 //                  usingCursor = true;
             } else {
                 packet.writeByte((byte) 0); // placeholder for flags
@@ -1499,7 +1500,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             } else {
 
                 BindValue binding = getBinding(parameterIndex, false);
-                setType(binding, MysqlaConstants.FIELD_TYPE_NEW_DECIMAL);
+                setType(binding, MysqlaConstants.FIELD_TYPE_NEWDECIMAL);
 
                 binding.value = StringUtils.fixDecimalExponent(x.toPlainString());
                 binding.isNull = false;
@@ -1934,7 +1935,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     case MysqlaConstants.FIELD_TYPE_STRING:
                     case MysqlaConstants.FIELD_TYPE_VARCHAR:
                     case MysqlaConstants.FIELD_TYPE_DECIMAL:
-                    case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+                    case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
                         if (value instanceof byte[]) {
                             packet.writeLenBytes((byte[]) value);
                         } else if (!this.isLoadDataQuery) {
@@ -2363,7 +2364,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         case MysqlaConstants.FIELD_TYPE_STRING:
                         case MysqlaConstants.FIELD_TYPE_VARCHAR:
                         case MysqlaConstants.FIELD_TYPE_DECIMAL:
-                        case MysqlaConstants.FIELD_TYPE_NEW_DECIMAL:
+                        case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
                             Object value = paramArg[j].value;
 
                             if (value instanceof byte[]) {
