@@ -23,6 +23,8 @@
 
 package testsuite.mysqlx.devapi;
 
+import java.util.Random;
+
 import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Before;
@@ -37,17 +39,19 @@ import com.mysql.cj.mysqlx.MysqlxError;
 public class CollectionTest extends BaseDevApiTest {
     /** Collection for testing. */
     protected Collection collection;
+    private String collectionName;
 
     @Before
     public void setupCollectionTest() {
         setupTestSession();
-        dropCollection("CollectionTest");
-        this.collection = this.schema.createCollection("CollectionTest");
+        collectionName = "CollectionTest-" + new Random().nextInt(1000);
+        dropCollection(collectionName);
+        this.collection = this.schema.createCollection(collectionName);
     }
 
     @After
     public void teardownCollectionTest() {
-        dropCollection("CollectionTest");
+        dropCollection(collectionName);
         destroyTestSession();
     }
 

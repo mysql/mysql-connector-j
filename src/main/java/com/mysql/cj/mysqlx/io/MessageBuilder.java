@@ -28,17 +28,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
+
 import com.google.protobuf.ByteString;
+
+import com.mysql.cj.core.authentication.Security;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
+import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Find;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
+import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Limit;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
@@ -49,6 +65,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 
 public class MessageBuilder {
@@ -174,6 +192,21 @@ public class MessageBuilder {
         return builder.build();
     }
 
+    public Insert buildDocInsert(String schemaName, String collectionName, List<String> json) {
+        Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build()).forEach(builder::addRow);
+        return builder.build();
+    }
+
+    public Insert buildRowInsert(String schemaName, String tableName, InsertParams insertParams) {
+        Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
+        if (insertParams.getProjection() != null) {
+            builder.addAllProjection((List<Column>) insertParams.getProjection());
+        }
+        builder.addAllRow((List<TypedRow>) insertParams.getRows());
+        return builder.build();
+    }
+
     /**
      * Apply the given filter params to the builder object (represented by the method args). Abstract the process of setting the filter params on the operation
      * message builder.
@@ -207,6 +240,79 @@ public class MessageBuilder {
         }
         if (filterParams.getArgs() != null) {
             setArgs.accept((List<Scalar>) filterParams.getArgs());
+        }
+    }
+
+    public AuthenticateContinue buildMysql41AuthContinue(String user, String password, byte[] salt, String database) {
+        // TODO: encoding for all this?
+        String encoding = "UTF8";
+        byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
+        byte[] passwordBytes = password == null ? new byte[] {} : StringUtils.getBytes(password, encoding);
+        byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
+
+        byte[] hashedPassword = passwordBytes;
+        if (password != null) {
+            hashedPassword = Security.scramble411(passwordBytes, salt);
+            // protocol dictates *-prefixed hex string as hashed password
+            hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
+        }
+
+        // this is what would happen in the SASL provider but we don't need the overhead of all the plumbing.
+        byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
+
+        // reply is length-prefixed when sent so we just separate fields by \0
+        System.arraycopy(databaseBytes, 0, reply, 0, databaseBytes.length);
+        int pos = databaseBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(userBytes, 0, reply, pos, userBytes.length);
+        pos += userBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(hashedPassword, 0, reply, pos, hashedPassword.length);
+
+        AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
+        builder.setAuthData(ByteString.copyFrom(reply));
+        return builder.build();
+    }
+
+    public AuthenticateStart buildPlainAuthStart(String user, String password, String database) {
+        // SASL requests information from the app through callbacks. We provide the username and password by these callbacks. This implementation works for
+        // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks.
+        CallbackHandler callbackHandler = new CallbackHandler() {
+            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
+                for (Callback c : callbacks) {
+                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
+                        // we get a name callback and provide the username
+                        ((NameCallback) c).setName(user);
+                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+                        // we get  password callback and provide the password
+                        ((PasswordCallback) c).setPassword(password.toCharArray());
+                    } else {
+                        // otherwise, thrown an exception
+                        throw new UnsupportedCallbackException(c);
+                    }
+                }
+            }
+        };
+        try {
+            // now we create the client object we use which can handle PLAIN mechanism for "MySQL-X" protocol to "serverName"
+            String[] mechanisms = new String[] { "PLAIN" };
+            String authorizationId = database; // as per protocol spec
+            String protocol = "MySQL-X";
+            Map<String, ?> props = null;
+            // TODO: >> serverName. Is this of any use in our MySQL-X exchange? Should be defined to be blank or something.
+            String serverName = "<unknown>";
+            SaslClient saslClient = Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbackHandler);
+
+            // now just pass the details to the X-protocol auth start message
+            AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
+            authStartBuilder.setMechName("PLAIN");
+            // saslClient will build the SASL response message
+            authStartBuilder.setAuthData(ByteString.copyFrom(saslClient.evaluateChallenge(null)));
+
+            return authStartBuilder.build();
+        } catch (SaslException ex) {
+            // TODO: better exception, should introduce a new exception class for auth?
+            throw new RuntimeException(ex);
         }
     }
 }

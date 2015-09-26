@@ -30,9 +30,11 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.GeneratedMessage;
@@ -57,6 +59,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      *
      * @return whether the listener is done receiving messages.
      */
+    @FunctionalInterface
     public static interface MessageListener extends BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, Boolean> {
         default void closed() {
         }
@@ -83,8 +86,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private MessageListener currentMessageListener;
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<MessageListener>();
-    /** Synchronous wrapper for satisfying synchronous methods of interface. Will generally be used and is initialized eagerly. */
-    private AsyncToSyncMessageReader syncMessageReader = new AsyncToSyncMessageReader(this);
+
+    private Class<? extends GeneratedMessage> pendingMsgClass;
+    private Object pendingMsgMonitor = new Object();
 
     // // TODO: use this if we can initiate the next message read before parsing in the current thread (see note in readMessage())
     // private Semaphore semaphore = new Semaphore(0);
@@ -237,8 +241,19 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             throw new RuntimeException("TODO: implement me");
         }
 
+        // if there's no message listener waiting, expose the message class as pending for the next read
+        if (getMessageListener(false) == null) {
+            synchronized (this.pendingMsgMonitor) {
+                this.pendingMsgClass = messageClass;
+                this.pendingMsgMonitor.notify();
+            }
+        }
+
         // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
         boolean currentListenerDone = getMessageListener(true).apply(messageClass, message);
+        synchronized (this.pendingMsgMonitor) {
+            this.pendingMsgClass = null;
+        }
         if (currentListenerDone) {
             this.currentMessageListener = null;
         }
@@ -287,97 +302,68 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
-        return this.syncMessageReader.getNextMessageClass();
+        synchronized (this.pendingMsgMonitor) {
+            if (this.pendingMsgClass == null) {
+                try {
+                    this.pendingMsgMonitor.wait();
+                } catch (InterruptedException ex) {
+                    // shouldn't happen
+                    ex.printStackTrace();
+                }
+            }
+            return this.pendingMsgClass;
+        }
     }
 
-    public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
-        return this.syncMessageReader.read(expectedClass);
+    public <T extends GeneratedMessage> T read(final Class<T> expectedClass) {
+        SyncReader<T> r = new SyncReader<>(this, expectedClass);
+        return r.read();
     }
 
     /**
-     * A synchronous message reader on top of the async message reader. This implemention is not thread-safe.
+     * Sychronously read a message and propagate any errors to the current thread.
      */
-    private static class AsyncToSyncMessageReader implements MessageListener {
-        private AsyncMessageReader asyncMessageReader;
-        private Class<? extends GeneratedMessage> messageClass;
-        private GeneratedMessage message;
-        private Semaphore semaphore = new Semaphore(0);
-        private boolean closed = false;
-        private Throwable error;
+    private static final class SyncReader<T> implements MessageListener {
+        private CompletableFuture<Function<BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, T>, T>> future = new CompletableFuture<>();
+        private Class<T> expectedClass;
 
-        public AsyncToSyncMessageReader(AsyncMessageReader asyncMessageReader) {
-            this.asyncMessageReader = asyncMessageReader;
+        public SyncReader(AsyncMessageReader rdr, Class<T> expectedClass) {
+            this.expectedClass = expectedClass;
+            rdr.pushMessageListener(this);
         }
 
-        /**
-         * Synchronously read the new message in the stream.
-         */
-        private void next() {
-            this.asyncMessageReader.pushMessageListener(this);
+        public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
+            this.future.complete(c -> c.apply(msgClass, msg));
+            return true; /* done reading? */
+        }
+
+        public void error(Throwable ex) {
+            this.future.completeExceptionally(ex);
+        }
+
+        public T read() {
             try {
-                // wait for the read to complete before returning to the caller (can't rely on object monitor here)
-                this.semaphore.acquire();
-                if (this.closed) {
-                    throw new CJCommunicationsException("async closed");
-                } else if (this.error != null) {
-                    // deliver the error on this thread
-                    throw new CJCommunicationsException(this.error);
+                return this.future.thenApply(f -> f.apply((msgClass, msg) -> {
+                                    if (Error.class.equals(msgClass)) {
+                                        throw new MysqlxError(Error.class.cast(msg));
+                                    }
+                                    // ensure that parsed message class matches incoming tag
+                                    if (!msgClass.equals(expectedClass)) {
+                                        throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
+                                                msgClass.getSimpleName() + "'");
+                                    }
+                                    return this.expectedClass.cast(msg);
+                                })).get();
+            } catch (ExecutionException ex) {
+                if (MysqlxError.class.equals(ex.getCause().getClass())) {
+                    // wrap the other thread's exception and include this thread's context
+                    throw new MysqlxError((MysqlxError) ex.getCause());
+                } else {
+                    throw new CJCommunicationsException(ex);
                 }
             } catch (InterruptedException ex) {
                 throw new CJCommunicationsException(ex);
             }
-
-            // throw an error/exception if we *unexpectedly* received an Error message
-            if (Error.class.equals(this.messageClass)) {
-                MysqlxError err = new MysqlxError((Error) this.message);
-                // clear state for next read
-                this.messageClass = null;
-                this.message = null;
-                throw err;
-            }
-        }
-
-        public Boolean apply(Class<? extends GeneratedMessage> messageClass, GeneratedMessage message) {
-            if (this.message != null) {
-                throw AssertionFailedException.shouldNotHappen("A new message was received before current has been consumed");
-            }
-            this.messageClass = messageClass;
-            this.message = message;
-            this.semaphore.release();
-            return true;
-        }
-
-        public void closed() {
-            this.closed = true;
-            this.semaphore.release();
-        }
-
-        public void error(Throwable ex) {
-            this.semaphore.release();
-        }
-
-        public Class<? extends GeneratedMessage> getNextMessageClass() {
-            if (this.message == null) {
-                next();
-            }
-            return this.messageClass;
-        }
-
-        public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
-            if (this.message == null) {
-                next();
-            }
-
-            // ensure that parsed message class matches incoming tag
-            if (!this.messageClass.equals(expectedClass)) {
-                throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
-                        this.messageClass.getSimpleName() + "'");
-            }
-
-            T result = expectedClass.cast(this.message);
-            this.messageClass = null;
-            this.message = null;
-            return result;
         }
     }
 }

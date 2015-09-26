@@ -23,7 +23,12 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Parser;
+
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
 /**
  * Low-level message reader for MySQL-X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error messages):
@@ -70,5 +75,14 @@ public interface MessageReader {
 
     default void asyncRead() {
         // TODO: 
+    }
+
+    public static <T extends GeneratedMessage> T parseNotice(ByteString payload, Class<T> noticeClass) {
+        try {
+            Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
+            return parser.parseFrom(payload);
+        } catch (InvalidProtocolBufferException ex) {
+            throw new CJCommunicationsException(ex);
+        }
     }
 }

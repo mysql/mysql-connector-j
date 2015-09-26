@@ -33,20 +33,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslClient;
-import javax.security.sasl.SaslException;
+import com.google.protobuf.MessageLite;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Parser;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
@@ -60,7 +51,6 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
-import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
@@ -68,7 +58,6 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
-import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.CreateIndexParams;
@@ -76,32 +65,25 @@ import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
-import com.mysql.cj.mysqlx.devapi.WarningImpl;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
 import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert;
-import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
-import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
-import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
@@ -123,9 +105,9 @@ public class MysqlxProtocol implements Protocol {
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
 
     // TODO: need protocol type constants here (these values copied from comments in mysqlx_notice.proto)
-    private static final int MysqlxNoticeFrameType_WARNING = 1;
-    private static final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
-    private static final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
+    public static final int MysqlxNoticeFrameType_WARNING = 1;
+    public static final int MysqlxNoticeFrameType_SESS_VAR_CHANGED = 2;
+    public static final int MysqlxNoticeFrameType_SESS_STATE_CHANGED = 3;
 
     private MessageReader reader;
     private MessageWriter writer;
@@ -220,80 +202,11 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void sendSaslMysql41AuthContinue(String user, String password, byte[] salt, String database) {
-        // TODO: encoding for all this?
-        String encoding = "UTF8";
-        byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
-        byte[] passwordBytes = password == null ? new byte[] {} : StringUtils.getBytes(password, encoding);
-        byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
-
-        byte[] hashedPassword = passwordBytes;
-        if (password != null) {
-            hashedPassword = Security.scramble411(passwordBytes, salt);
-            // protocol dictates *-prefixed hex string as hashed password
-            hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
-        }
-
-        // this is what would happen in the SASL provider but we don't need the overhead of all the plumbing.
-        byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
-
-        // reply is length-prefixed when sent so we just separate fields by \0
-        System.arraycopy(databaseBytes, 0, reply, 0, databaseBytes.length);
-        int pos = databaseBytes.length;
-        reply[pos++] = 0;
-        System.arraycopy(userBytes, 0, reply, pos, userBytes.length);
-        pos += userBytes.length;
-        reply[pos++] = 0;
-        System.arraycopy(hashedPassword, 0, reply, pos, hashedPassword.length);
-
-        AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
-        builder.setAuthData(ByteString.copyFrom(reply));
-
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildMysql41AuthContinue(user, password, salt, database));
     }
 
-    /**
-     * @todo very MySQL-X specific method.
-     */
     public void sendSaslAuthStart(String user, String password, String database) {
-        // SASL requests information from the app through callbacks. We provide the username and password by these callbacks. This implementation works for
-        // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks.
-        CallbackHandler callbackHandler = new CallbackHandler() {
-            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
-                for (Callback c : callbacks) {
-                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
-                        // we get a name callback and provide the username
-                        ((NameCallback) c).setName(user);
-                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
-                        // we get  password callback and provide the password
-                        ((PasswordCallback) c).setPassword(password.toCharArray());
-                    } else {
-                        // otherwise, thrown an exception
-                        throw new UnsupportedCallbackException(c);
-                    }
-                }
-            }
-        };
-        try {
-            // now we create the client object we use which can handle PLAIN mechanism for "MySQL-X" protocol to "serverName"
-            String[] mechanisms = new String[] { "PLAIN" };
-            String authorizationId = database; // as per protocol spec
-            String protocol = "MySQL-X";
-            Map<String, ?> props = null;
-            // TODO: >> serverName. Is this of any use in our MySQL-X exchange? Should be defined to be blank or something.
-            String serverName = "<unknown>";
-            SaslClient saslClient = Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbackHandler);
-
-            // now just pass the details to the X-protocol auth start message
-            AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
-            authStartBuilder.setMechName("PLAIN");
-            // saslClient will build the SASL response message
-            authStartBuilder.setAuthData(ByteString.copyFrom(saslClient.evaluateChallenge(null)));
-
-            this.writer.write(authStartBuilder.build());
-        } catch (SaslException ex) {
-            // TODO: better exception, should introduce a new exception class for auth?
-            throw new RuntimeException(ex);
-        }
+        this.writer.write(this.msgBuilder.buildPlainAuthStart(user, password, database));
     }
 
     public void negotiateSSLConnection(int packLength) {
@@ -353,20 +266,11 @@ public class MysqlxProtocol implements Protocol {
         this.reader.read(Ok.class);
     }
 
-    private <T extends GeneratedMessage> T parseNotice(ByteString payload, Class<T> noticeClass) {
-        try {
-            Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
-            return parser.parseFrom(payload);
-        } catch (InvalidProtocolBufferException ex) {
-            throw new CJCommunicationsException(ex);
-        }
-    }
-
     public void readAuthenticateOk() {
         if (this.reader.getNextMessageClass() == Frame.class) {
             Frame notice = this.reader.read(Frame.class);
             if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                SessionStateChanged msg = parseNotice(notice.getPayload(), SessionStateChanged.class);
+                SessionStateChanged msg = MessageReader.parseNotice(notice.getPayload(), SessionStateChanged.class);
                 switch (msg.getParam()) {
                     case CLIENT_ID_ASSIGNED:
                         this.clientId = msg.getValue().getVUnsignedInt();
@@ -447,58 +351,18 @@ public class MysqlxProtocol implements Protocol {
      * @todo see how this feels after continued use
      */
     public StatementExecuteOk readStatementExecuteOk() {
-        if (this.reader.getNextMessageClass() == FetchDone.class) {
-            // consume this
-            // TODO: work out a formal model for how post-row data is handled
-            this.reader.read(FetchDone.class);
-        }
-
-        long rowsAffected = 0;
-        Long lastInsertId = null;
-        // TODO: don't use DevApi interfaces here!
-        List<com.mysql.cj.api.x.Warning> warnings = new ArrayList<>();
-        while (this.reader.getNextMessageClass() == Frame.class) {
-            Frame notice = this.reader.read(Frame.class);
-            if (notice.getType() == MysqlxNoticeFrameType_WARNING) {
-                // TODO: shouldn't use DevApi WarningImpl class here
-                warnings.add(new WarningImpl(parseNotice(notice.getPayload(), Warning.class)));
-                // } else if (notice.getType() == MysqlxNoticeFrameType_SESS_VAR_CHANGED) {
-                //     // TODO: ignored for now
-                //     throw new RuntimeException("Got a session variable changed: " + notice);
-            } else if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
-                SessionStateChanged msg = parseNotice(notice.getPayload(), SessionStateChanged.class);
-                switch (msg.getParam()) {
-                    case GENERATED_INSERT_ID:
-                        // TODO: handle > 2^63-1?
-                        lastInsertId = msg.getValue().getVUnsignedInt();
-                        break;
-                    case ROWS_AFFECTED:
-                        // TODO: handle > 2^63-1?
-                        rowsAffected = msg.getValue().getVUnsignedInt();
-                        break;
-                    case PRODUCED_MESSAGE:
-                        // TODO do something with notices. expose them to client
-                        //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
-                        break;
-                    case CURRENT_SCHEMA:
-                    case ACCOUNT_EXPIRED:
-                    case ROWS_FOUND:
-                    case ROWS_MATCHED:
-                    case TRX_COMMITTED:
-                    case TRX_ROLLEDBACK:
-                        // TODO: propagate state
-                    default:
-                        // TODO: log warning
-                        throw new NullPointerException("unhandled SessionStateChanged notice! " + msg);
-                }
+        try {
+            return asyncReadStatementExecuteOk().get();
+        } catch (ExecutionException ex) {
+            if (MysqlxError.class.equals(ex.getCause().getClass())) {
+                // wrap the other thread's exception and include this thread's context
+                throw new MysqlxError((MysqlxError) ex.getCause());
             } else {
-                // TODO: error?
-                throw new RuntimeException("Got an unknown notice: " + notice);
+                throw new CJCommunicationsException(ex);
             }
+        } catch (InterruptedException ex) {
+            throw new CJCommunicationsException(ex);
         }
-
-        this.reader.read(StmtExecuteOk.class);
-        return new StatementExecuteOk(rowsAffected, lastInsertId, warnings);
     }
 
     public void sendSqlStatement(String statement) {
@@ -698,6 +562,21 @@ public class MysqlxProtocol implements Protocol {
         ((AsyncMessageReader) this.reader).pushMessageListener(l);
     }
 
+    private CompletableFuture<StatementExecuteOk> asyncReadStatementExecuteOk() {
+        StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener();
+        ((AsyncMessageReader) this.reader).pushMessageListener(l);
+        return l.getFuture();
+    }
+
+    private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
+        ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, null);
+        return asyncReadStatementExecuteOk();
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+        return asyncUpdate(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings));
+    }
+
     public void sendFind(FindParams findParams) {
         this.writer.write(this.msgBuilder.buildFind(findParams));
     }
@@ -714,19 +593,12 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildDelete(filterParams));
     }
 
-    public void sendDocInsert(String schemaName, String collectionName, List<String> json) {
-        Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build()).forEach(builder::addRow);
-        this.writer.write(builder.build());
+    public void sendDocInsert(String schemaName, String collectionName, List<String> jsonStrings) {
+        this.writer.write(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings));
     }
 
     public void sendRowInsert(String schemaName, String tableName, InsertParams insertParams) {
-        Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
-        if (insertParams.getProjection() != null) {
-            builder.addAllProjection((List<Column>) insertParams.getProjection());
-        }
-        builder.addAllRow((List<TypedRow>) insertParams.getRows());
-        this.writer.write(builder.build());
+        this.writer.write(this.msgBuilder.buildRowInsert(schemaName, tableName, insertParams));
     }
 
     public void sendSessionClose() {

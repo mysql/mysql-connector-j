@@ -395,6 +395,7 @@ public class MysqlxSession implements Session {
     private <RES_T> CompletableFuture<RES_T> asyncFindInternal(FindParams findParams, ResultCtor<? extends RES_T> resultCtor) {
         CompletableFuture<RES_T> f = new CompletableFuture<>();
         ResultListener l = new ResultCreatingResultListener<RES_T>(resultCtor, f);
+        newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l);
         return f;
@@ -412,6 +413,8 @@ public class MysqlxSession implements Session {
         CompletableFuture<R> f = new CompletableFuture<R>();
         ResultListener l = new RowWiseReducingResultListener<JsonDoc, R>(id, reducer, f,
                 (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new JsonDocValueFactory()));
+        newCommand();
+        // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l);
         return f;
     }
@@ -419,8 +422,15 @@ public class MysqlxSession implements Session {
     public <R> CompletableFuture<R> asyncSelectRowsReduce(FindParams findParams, R id, Reducer<com.mysql.cj.api.x.Row, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
         ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, DevapiRowFactory::new);
+        newCommand();
+        // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l);
         return f;
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+        newCommand();
+        return this.protocol.asyncAddDocs(schemaName, collectionName, jsonStrings);
     }
 
     @Override

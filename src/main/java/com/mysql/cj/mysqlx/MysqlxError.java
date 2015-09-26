@@ -42,6 +42,11 @@ public class MysqlxError extends CJException {
         this.msg = msg;
     }
 
+    public MysqlxError(MysqlxError fromOtherThread) {
+        super(getFullErrorDescription(fromOtherThread.msg), fromOtherThread);
+        this.msg = fromOtherThread.msg;
+    }
+
     /**
      * Format the error message's contents into a complete error description for the exception.
      */
@@ -59,6 +64,7 @@ public class MysqlxError extends CJException {
         return this.msg.getCode();
     }
 
+    @Override
     public String getSQLState() {
         return this.msg.getSqlState();
     }
