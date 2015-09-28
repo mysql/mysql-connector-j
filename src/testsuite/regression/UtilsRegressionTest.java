@@ -65,8 +65,8 @@ public class UtilsRegressionTest extends BaseTestCase {
     public void testTimeZones() throws Exception {
         /*
          * Time Zones can be identified by many different ways according to Unicode CLDR database. The following map contain the correspondence between
-         * alternative Time Zone designations to Standard Time Zones ID (IANA/Olson database). This data was generated from IANA Time Zone database v. 2014g
-         * (http://www.iana.org/time-zones) and Unicode CLDR v.25 (http://cldr.unicode.org/)
+         * alternative Time Zone designations to Standard Time Zones ID (IANA/Olson database). This data was generated from IANA Time Zone database v. 2015f
+         * (http://www.iana.org/time-zones) and Unicode CLDR v.28 (http://cldr.unicode.org/)
          * 
          * Both the file com/mysql/jdbc/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
          */
@@ -102,6 +102,8 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Bahia Standard Time", "America/Bahia");
         tzMap.put("Bangladesh Daylight Time", "Asia/Dhaka");
         tzMap.put("Bangladesh Standard Time", "Asia/Dhaka");
+        tzMap.put("Belarus Daylight Time", "Europe/Minsk");
+        tzMap.put("Belarus Standard Time", "Europe/Minsk");
         tzMap.put("Canada Central Daylight Time", "America/Regina");
         tzMap.put("Canada Central Standard Time", "America/Regina");
         tzMap.put("Cape Verde Daylight Time", "Atlantic/Cape_Verde");
@@ -137,7 +139,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("E. South America Daylight Time", "America/Sao_Paulo");
         tzMap.put("E. South America Standard Time", "America/Sao_Paulo");
         tzMap.put("Eastern Daylight Time", "America/New_York");
+        tzMap.put("Eastern Daylight Time (Mexico)", "America/Cancun");
         tzMap.put("Eastern Standard Time", "America/New_York");
+        tzMap.put("Eastern Standard Time (Mexico)", "America/Cancun");
         tzMap.put("Egypt Daylight Time", "Africa/Cairo");
         tzMap.put("Egypt Standard Time", "Africa/Cairo");
         tzMap.put("Ekaterinburg Daylight Time", "Asia/Yekaterinburg");
@@ -172,6 +176,8 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Korea Standard Time", "Asia/Seoul");
         tzMap.put("Libya Daylight Time", "Africa/Tripoli");
         tzMap.put("Libya Standard Time", "Africa/Tripoli");
+        tzMap.put("Line Islands Daylight Time", "Pacific/Kiritimati");
+        tzMap.put("Line Islands Standard Time", "Pacific/Kiritimati");
         tzMap.put("Magadan Daylight Time", "Asia/Magadan");
         tzMap.put("Magadan Standard Time", "Asia/Magadan");
         tzMap.put("Mauritius Daylight Time", "Indian/Mauritius");
@@ -214,6 +220,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Paraguay Standard Time", "America/Asuncion");
         tzMap.put("Romance Daylight Time", "Europe/Paris");
         tzMap.put("Romance Standard Time", "Europe/Paris");
+        tzMap.put("Russia Time Zone 10", "Asia/Srednekolymsk");
+        tzMap.put("Russia Time Zone 11", "Asia/Kamchatka");
+        tzMap.put("Russia Time Zone 3", "Europe/Samara");
         tzMap.put("Russian Daylight Time", "Europe/Moscow");
         tzMap.put("Russian Standard Time", "Europe/Moscow");
         tzMap.put("SA Eastern Daylight Time", "America/Cayenne");
@@ -272,21 +281,36 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Yakutsk Standard Time", "Asia/Yakutsk");
 
         // Linked Time Zones alias:
-        tzMap.put("Africa/Asmera", "Africa/Asmara");
+        tzMap.put("Africa/Addis_Ababa", "Africa/Nairobi");
+        tzMap.put("Africa/Asmara", "Africa/Nairobi");
+        tzMap.put("Africa/Asmera", "Africa/Nairobi");
         tzMap.put("Africa/Bamako", "Africa/Abidjan");
         tzMap.put("Africa/Bangui", "Africa/Lagos");
         tzMap.put("Africa/Banjul", "Africa/Abidjan");
+        tzMap.put("Africa/Blantyre", "Africa/Maputo");
         tzMap.put("Africa/Brazzaville", "Africa/Lagos");
+        tzMap.put("Africa/Bujumbura", "Africa/Maputo");
         tzMap.put("Africa/Conakry", "Africa/Abidjan");
         tzMap.put("Africa/Dakar", "Africa/Abidjan");
+        tzMap.put("Africa/Dar_es_Salaam", "Africa/Nairobi");
+        tzMap.put("Africa/Djibouti", "Africa/Nairobi");
         tzMap.put("Africa/Douala", "Africa/Lagos");
         tzMap.put("Africa/Freetown", "Africa/Abidjan");
+        tzMap.put("Africa/Gaborone", "Africa/Maputo");
+        tzMap.put("Africa/Harare", "Africa/Maputo");
         tzMap.put("Africa/Juba", "Africa/Khartoum");
+        tzMap.put("Africa/Kampala", "Africa/Nairobi");
+        tzMap.put("Africa/Kigali", "Africa/Maputo");
         tzMap.put("Africa/Kinshasa", "Africa/Lagos");
         tzMap.put("Africa/Libreville", "Africa/Lagos");
         tzMap.put("Africa/Lome", "Africa/Abidjan");
         tzMap.put("Africa/Luanda", "Africa/Lagos");
+        tzMap.put("Africa/Lubumbashi", "Africa/Maputo");
+        tzMap.put("Africa/Lusaka", "Africa/Maputo");
         tzMap.put("Africa/Malabo", "Africa/Lagos");
+        tzMap.put("Africa/Maseru", "Africa/Johannesburg");
+        tzMap.put("Africa/Mbabane", "Africa/Johannesburg");
+        tzMap.put("Africa/Mogadishu", "Africa/Nairobi");
         tzMap.put("Africa/Niamey", "Africa/Lagos");
         tzMap.put("Africa/Nouakchott", "Africa/Abidjan");
         tzMap.put("Africa/Ouagadougou", "Africa/Abidjan");
@@ -294,6 +318,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Africa/Sao_Tome", "Africa/Abidjan");
         tzMap.put("Africa/Timbuktu", "Africa/Abidjan");
         tzMap.put("America/Anguilla", "America/Port_of_Spain");
+        tzMap.put("America/Antigua", "America/Port_of_Spain");
         tzMap.put("America/Argentina/ComodRivadavia", "America/Argentina/Catamarca");
         tzMap.put("America/Aruba", "America/Curacao");
         tzMap.put("America/Atka", "America/Adak");
@@ -314,6 +339,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("America/Lower_Princes", "America/Curacao");
         tzMap.put("America/Marigot", "America/Port_of_Spain");
         tzMap.put("America/Mendoza", "America/Argentina/Mendoza");
+        tzMap.put("America/Montreal", "America/Toronto");
         tzMap.put("America/Montserrat", "America/Port_of_Spain");
         tzMap.put("America/Porto_Acre", "America/Rio_Branco");
         tzMap.put("America/Rosario", "America/Argentina/Cordoba");
@@ -328,7 +354,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Antarctica/McMurdo", "Pacific/Auckland");
         tzMap.put("Antarctica/South_Pole", "Pacific/Auckland");
         tzMap.put("Arctic/Longyearbyen", "Europe/Oslo");
+        tzMap.put("Asia/Aden", "Asia/Riyadh");
         tzMap.put("Asia/Ashkhabad", "Asia/Ashgabat");
+        tzMap.put("Asia/Bahrain", "Asia/Qatar");
         tzMap.put("Asia/Calcutta", "Asia/Kolkata");
         tzMap.put("Asia/Chongqing", "Asia/Shanghai");
         tzMap.put("Asia/Chungking", "Asia/Shanghai");
@@ -337,12 +365,16 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Asia/Istanbul", "Europe/Istanbul");
         tzMap.put("Asia/Kashgar", "Asia/Urumqi");
         tzMap.put("Asia/Katmandu", "Asia/Kathmandu");
+        tzMap.put("Asia/Kuwait", "Asia/Riyadh");
         tzMap.put("Asia/Macao", "Asia/Macau");
+        tzMap.put("Asia/Muscat", "Asia/Dubai");
+        tzMap.put("Asia/Phnom_Penh", "Asia/Bangkok");
         tzMap.put("Asia/Saigon", "Asia/Ho_Chi_Minh");
         tzMap.put("Asia/Tel_Aviv", "Asia/Jerusalem");
         tzMap.put("Asia/Thimbu", "Asia/Thimphu");
         tzMap.put("Asia/Ujung_Pandang", "Asia/Makassar");
         tzMap.put("Asia/Ulan_Bator", "Asia/Ulaanbaatar");
+        tzMap.put("Asia/Vientiane", "Asia/Bangkok");
         tzMap.put("Atlantic/Faeroe", "Atlantic/Faroe");
         tzMap.put("Atlantic/Jan_Mayen", "Europe/Oslo");
         tzMap.put("Atlantic/St_Helena", "Africa/Abidjan");
@@ -400,6 +432,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Greenwich", "Etc/GMT");
         tzMap.put("Hongkong", "Asia/Hong_Kong");
         tzMap.put("Iceland", "Atlantic/Reykjavik");
+        tzMap.put("Indian/Antananarivo", "Africa/Nairobi");
+        tzMap.put("Indian/Comoro", "Africa/Nairobi");
+        tzMap.put("Indian/Mayotte", "Africa/Nairobi");
         tzMap.put("Iran", "Asia/Tehran");
         tzMap.put("Israel", "Asia/Jerusalem");
         tzMap.put("Jamaica", "America/Jamaica");
@@ -414,7 +449,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Navajo", "America/Denver");
         tzMap.put("PRC", "Asia/Shanghai");
         tzMap.put("Pacific/Johnston", "Pacific/Honolulu");
+        tzMap.put("Pacific/Midway", "Pacific/Pago_Pago");
         tzMap.put("Pacific/Ponape", "Pacific/Pohnpei");
+        tzMap.put("Pacific/Saipan", "Pacific/Guam");
         tzMap.put("Pacific/Samoa", "Pacific/Pago_Pago");
         tzMap.put("Pacific/Truk", "Pacific/Chuuk");
         tzMap.put("Pacific/Yap", "Pacific/Chuuk");
@@ -455,25 +492,25 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("BNT", "Asia/Brunei");
         tzMap.put("BOT", "America/La_Paz");
         tzMap.put("BRST", "America/Sao_Paulo");
-        tzMap.put("BST", "Europe/London");
         tzMap.put("BTT", "Asia/Thimphu");
+        tzMap.put("CAT", "Africa/Maputo");
         tzMap.put("CCT", "Indian/Cocos");
         tzMap.put("CHADT", "Pacific/Chatham");
         tzMap.put("CHAST", "Pacific/Chatham");
+        tzMap.put("CHOST", "Asia/Choibalsan");
         tzMap.put("CHOT", "Asia/Choibalsan");
         tzMap.put("CHUT", "Pacific/Chuuk");
         tzMap.put("CKT", "Pacific/Rarotonga");
         tzMap.put("COT", "America/Bogota");
         tzMap.put("CVT", "Atlantic/Cape_Verde");
         tzMap.put("CXT", "Indian/Christmas");
+        tzMap.put("ChST", "Pacific/Guam");
         tzMap.put("DAVT", "Antarctica/Davis");
         tzMap.put("DDUT", "Antarctica/DumontDUrville");
-        tzMap.put("EASST", "Pacific/Easter");
         tzMap.put("EAST", "Pacific/Easter");
         tzMap.put("ECT", "America/Guayaquil");
         tzMap.put("EGST", "America/Scoresbysund");
         tzMap.put("EGT", "America/Scoresbysund");
-        tzMap.put("FET", "Europe/Minsk");
         tzMap.put("FJST", "Pacific/Fiji");
         tzMap.put("FJT", "Pacific/Fiji");
         tzMap.put("FKST", "Atlantic/Stanley");
@@ -484,9 +521,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("GFT", "America/Cayenne");
         tzMap.put("GILT", "Pacific/Tarawa");
         tzMap.put("GYT", "America/Guyana");
-        tzMap.put("HADT", "America/Adak");
-        tzMap.put("HAST", "America/Adak");
+        tzMap.put("HDT", "America/Adak");
         tzMap.put("HKT", "Asia/Hong_Kong");
+        tzMap.put("HOVST", "Asia/Hovd");
         tzMap.put("HOVT", "Asia/Hovd");
         tzMap.put("IDT", "Asia/Jerusalem");
         tzMap.put("IOT", "Indian/Chagos");
@@ -535,11 +572,13 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("ROTT", "Antarctica/Rothera");
         tzMap.put("SAKT", "Asia/Sakhalin");
         tzMap.put("SAMT", "Europe/Samara");
+        tzMap.put("SAST", "Africa/Johannesburg");
         tzMap.put("SBT", "Pacific/Guadalcanal");
         tzMap.put("SCT", "Indian/Mahe");
         tzMap.put("SGT", "Asia/Singapore");
         tzMap.put("SRET", "Asia/Srednekolymsk");
         tzMap.put("SRT", "America/Paramaribo");
+        tzMap.put("SST", "Pacific/Pago_Pago");
         tzMap.put("SYOT", "Antarctica/Syowa");
         tzMap.put("TAHT", "Pacific/Tahiti");
         tzMap.put("TFT", "Indian/Kerguelen");
@@ -549,8 +588,8 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("TMT", "Asia/Ashgabat");
         tzMap.put("TOT", "Pacific/Tongatapu");
         tzMap.put("TVT", "Pacific/Funafuti");
+        tzMap.put("ULAST", "Asia/Ulaanbaatar");
         tzMap.put("ULAT", "Asia/Ulaanbaatar");
-        tzMap.put("UYST", "America/Montevideo");
         tzMap.put("UYT", "America/Montevideo");
         tzMap.put("VET", "America/Caracas");
         tzMap.put("VOST", "Antarctica/Vostok");

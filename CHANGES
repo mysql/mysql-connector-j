@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Update Time Zone mappings with IANA Time Zone database tsdata2015f and Unicode CLDR v.28.
+
   - Update DatabaseMetaData SQL keywords.
 
   - Added tests for Optimizer hints syntax introduced in MySQL 5.7.7.
