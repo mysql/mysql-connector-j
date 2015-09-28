@@ -33,9 +33,7 @@ import java.util.stream.IntStream;
 public interface Statement<STMT_T, RES_T> {
     RES_T execute();
 
-    default CompletableFuture<RES_T> executeAsync() {
-        throw new NullPointerException();
-    }
+    CompletableFuture<RES_T> executeAsync();
 
     default STMT_T clearBindings() {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");

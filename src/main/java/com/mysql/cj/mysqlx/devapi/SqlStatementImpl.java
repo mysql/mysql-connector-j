@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.SqlStatement;
@@ -46,6 +47,10 @@ public class SqlStatementImpl implements SqlStatement {
 
     public SqlResult execute() {
         return this.session.getMysqlxSession().executeSql(this.sql, /* as Object */ this.args);
+    }
+
+    public CompletableFuture<SqlResult> executeAsync() {
+        throw new RuntimeException();
     }
 
     // TODO executeAsync()

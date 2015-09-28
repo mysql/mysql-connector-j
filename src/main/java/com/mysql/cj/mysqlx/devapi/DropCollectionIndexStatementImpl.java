@@ -23,10 +23,11 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.mysql.cj.api.x.DropCollectionIndexStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.mysqlx.CreateIndexParams;
 
 public class DropCollectionIndexStatementImpl implements DropCollectionIndexStatement {
     private CollectionImpl collection;
@@ -41,5 +42,11 @@ public class DropCollectionIndexStatementImpl implements DropCollectionIndexStat
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().dropCollectionIndex(this.collection.getSchema().getName(),
                 this.collection.getName(), this.indexName);
         return new UpdateResult(ok, null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
+                .asyncDropCollectionIndex(this.collection.getSchema().getName(), this.collection.getName(), this.indexName);
+        return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }

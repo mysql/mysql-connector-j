@@ -458,6 +458,16 @@ public class MysqlxSession implements Session {
         return this.protocol.asyncDeleteDocs(filterParams);
     }
 
+    public CompletableFuture<StatementExecuteOk> asyncCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
+        newCommand();
+        return this.protocol.asyncCreateCollectionIndex(schemaName, collectionName, params);
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncDropCollectionIndex(String schemaName, String collectionName, String indexName) {
+        newCommand();
+        return this.protocol.asyncDropCollectionIndex(schemaName, collectionName, indexName);
+    }
+
     @Override
     public int getServerVariable(String variableName, int fallbackValue) {
         // TODO Auto-generated method stub

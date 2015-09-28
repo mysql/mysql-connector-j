@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.mysql.cj.api.x.CreateCollectionIndexStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -46,5 +48,11 @@ public class CreateCollectionIndexStatementImpl implements CreateCollectionIndex
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().createCollectionIndex(this.collection.getSchema().getName(),
                 this.collection.getName(), this.createIndexParams);
         return new UpdateResult(ok, null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
+                .asyncCreateCollectionIndex(this.collection.getSchema().getName(), this.collection.getName(), this.createIndexParams);
+        return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }

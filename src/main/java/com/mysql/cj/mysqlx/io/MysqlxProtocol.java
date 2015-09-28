@@ -593,6 +593,14 @@ public class MysqlxProtocol implements Protocol {
         return asyncUpdate(this.msgBuilder.buildDelete(filterParams));
     }
 
+    public CompletableFuture<StatementExecuteOk> asyncCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
+        return asyncUpdate(this.msgBuilder.buildCreateCollectionIndex(schemaName, collectionName, params));
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncDropCollectionIndex(String schemaName, String collectionName, String indexName) {
+        return asyncUpdate(this.msgBuilder.buildDropCollectionIndex(schemaName, collectionName, indexName));
+    }
+
     public void sendFind(FindParams findParams) {
         this.writer.write(this.msgBuilder.buildFind(findParams));
     }
