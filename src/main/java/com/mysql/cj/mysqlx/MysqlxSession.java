@@ -433,6 +433,31 @@ public class MysqlxSession implements Session {
         return this.protocol.asyncAddDocs(schemaName, collectionName, jsonStrings);
     }
 
+    public CompletableFuture<StatementExecuteOk> asyncInsertRows(String schemaName, String tableName, InsertParams insertParams) {
+        newCommand();
+        return this.protocol.asyncInsertRows(schemaName, tableName, insertParams);
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncUpdateDocs(FilterParams filterParams, List<UpdateSpec> updates) {
+        newCommand();
+        return this.protocol.asyncUpdateDocs(filterParams, updates);
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncUpdateRows(FilterParams filterParams, UpdateParams updateParams) {
+        newCommand();
+        return this.protocol.asyncUpdateRows(filterParams, updateParams);
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncDeleteDocs(FilterParams filterParams) {
+        newCommand();
+        return this.protocol.asyncDeleteDocs(filterParams);
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncDeleteRows(FilterParams filterParams) {
+        newCommand();
+        return this.protocol.asyncDeleteDocs(filterParams);
+    }
+
     @Override
     public int getServerVariable(String variableName, int fallbackValue) {
         // TODO Auto-generated method stub

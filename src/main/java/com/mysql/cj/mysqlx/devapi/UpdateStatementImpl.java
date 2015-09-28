@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.UpdateStatement;
@@ -42,6 +43,11 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl
     public Result execute() {
         StatementExecuteOk ok = this.table.getSession().getMysqlxSession().updateRows(this.filterParams, this.updateParams);
         return new UpdateResult(ok, null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession().asyncUpdateRows(this.filterParams, this.updateParams);
+        return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 
     public UpdateStatement set(Map<String, Object> fieldsAndValues) {

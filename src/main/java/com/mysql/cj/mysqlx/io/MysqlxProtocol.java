@@ -577,6 +577,22 @@ public class MysqlxProtocol implements Protocol {
         return asyncUpdate(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings));
     }
 
+    public CompletableFuture<StatementExecuteOk> asyncInsertRows(String schemaName, String tableName, InsertParams insertParams) {
+        return asyncUpdate(this.msgBuilder.buildRowInsert(schemaName, tableName, insertParams));
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncUpdateDocs(FilterParams filterParams, List<UpdateSpec> updates) {
+        return asyncUpdate(this.msgBuilder.buildDocUpdate(filterParams, updates));
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncUpdateRows(FilterParams filterParams, UpdateParams updateParams) {
+        return asyncUpdate(this.msgBuilder.buildRowUpdate(filterParams, updateParams));
+    }
+
+    public CompletableFuture<StatementExecuteOk> asyncDeleteDocs(FilterParams filterParams) {
+        return asyncUpdate(this.msgBuilder.buildDelete(filterParams));
+    }
+
     public void sendFind(FindParams findParams) {
         this.writer.write(this.msgBuilder.buildFind(findParams));
     }

@@ -23,6 +23,8 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.mysql.cj.api.x.DeleteStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -38,5 +40,10 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl
     public Result execute() {
         StatementExecuteOk ok = this.table.getSession().getMysqlxSession().deleteRows(this.filterParams);
         return new UpdateResult(ok, null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession().asyncDeleteRows(this.filterParams);
+        return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }

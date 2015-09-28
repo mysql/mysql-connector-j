@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.AddStatement;
@@ -76,18 +77,31 @@ public class AddStatementImpl implements AddStatement {
         return this;
     }
 
-    public Result execute() {
-        List<String> newIds = this.newDocs.stream().filter(d -> d.get("_id") == null).map(d -> {
+    private List<String> assignIds() {
+        return this.newDocs.stream().filter(d -> d.get("_id") == null).map(d -> {
             String newId = UUID.randomUUID().toString().replaceAll("-", "");
             d.put("_id", new JsonString().setValue(newId));
             return newId;
         }).collect(Collectors.toList());
+    }
 
-        List<String> jsonStrings = this.newDocs.stream().map(JsonDoc::toPackedString).collect(Collectors.toList());
+    private List<String> serializeDocs() {
+        return this.newDocs.stream().map(JsonDoc::toPackedString).collect(Collectors.toList());
+    }
 
+    public Result execute() {
+        List<String> newIds = assignIds();
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
-                .addDocs(this.collection.getSchema().getName(), this.collection.getName(), jsonStrings);
-        String newId = newIds.size() > 0 ? newIds.get(0) : null;
-        return new UpdateResult(ok, newId);
+                .addDocs(this.collection.getSchema().getName(), this.collection.getName(), serializeDocs());
+        // TODO allow more than one new assigned doc id
+        return new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        final List<String> newIds = assignIds();
+        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
+                .asyncAddDocs(this.collection.getSchema().getName(), this.collection.getName(), serializeDocs());
+        // TODO allow more than one new assigned doc id
+        return okF.thenApply(ok -> new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null));
     }
 }

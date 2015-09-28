@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -42,6 +43,7 @@ import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
 
 public class AsyncQueryTest extends CollectionTest {
@@ -126,5 +128,39 @@ public class AsyncQueryTest extends CollectionTest {
             assertEquals(MysqlxError.class, cause.getClass());
             assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((MysqlxError) cause).getErrorCode());
         }
+    }
+
+    @Test
+    public void insertDocs() throws Exception {
+        String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
+        CompletableFuture<FetchedDocs> docF = resF.thenCompose((Result res) -> {
+                    assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+                    return this.collection.find("firstName like '%Fra%'").executeAsync();
+                });
+
+
+        JsonDoc d = docF.thenApply((FetchedDocs docs) -> docs.next()).get(5, TimeUnit.SECONDS);
+        JsonString val = (JsonString) d.get("lastName");
+        assertEquals("Wright", val.getString());
+    }
+
+    @Test
+    public void manyModifications() throws Exception {
+        // we guarantee serial execution
+        String json = "{'n':1}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+
+        CompletableFuture<Result> futures[] = new CompletableFuture[50];
+
+        for (int i = 0; i < 50; ++i) {
+            futures[i] = this.collection.modify().change("$.n", i).executeAsync();
+        }
+
+        // wait for them all to finish
+        CompletableFuture.allOf(futures).get();
+
+        JsonDoc jd = this.collection.find().execute().next();
+        assertEquals(new Integer(49), ((JsonNumber) jd.get("n")).getInteger());
     }
 }

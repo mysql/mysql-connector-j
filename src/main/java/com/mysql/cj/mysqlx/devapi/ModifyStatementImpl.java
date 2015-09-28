@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.Result;
@@ -47,6 +48,11 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     public Result execute() {
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().updateDocs(this.filterParams, this.updates);
         return new UpdateResult(ok, null);
+    }
+
+    public CompletableFuture<Result> executeAsync() {
+        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncUpdateDocs(this.filterParams, this.updates);
+        return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 
     public ModifyStatement bind(String argName, Object value) {
