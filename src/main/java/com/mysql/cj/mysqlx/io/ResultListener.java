@@ -25,10 +25,10 @@ package com.mysql.cj.mysqlx.io;
 
 import java.util.ArrayList;
 
-import com.mysql.cj.jdbc.Field;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.core.result.Field;
 
 public interface ResultListener {
     /**

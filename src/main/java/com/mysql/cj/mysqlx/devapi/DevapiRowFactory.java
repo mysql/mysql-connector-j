@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.result.RowToElement;
 
 /**

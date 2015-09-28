@@ -38,7 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.jdbc.Field;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
