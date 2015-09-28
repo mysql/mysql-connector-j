@@ -86,8 +86,8 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
      * a mutex for this.pendingWrites.
      */
     private void initiateWrite() {
-        ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]); 
-        this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this); 
+        ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]);
+        this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this);
     }
 
     /**
