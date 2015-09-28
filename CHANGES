@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-15 - Version 5.1.37
 
+  - Update DatabaseMetaData SQL keywords.
+
   - Added tests for Optimizer hints syntax introduced in MySQL 5.7.7.
 
   - Added support for JSON data type.
