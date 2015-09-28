@@ -29,10 +29,8 @@ import java.util.Arrays;
 import java.util.function.*;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -125,6 +123,7 @@ public class MysqlxProtocolAsyncTest extends BaseInternalMysqlxTest {
             });
 
         synchronized (this) {
+            // timeout in case we get stuck
             this.wait(5000);
         }
 

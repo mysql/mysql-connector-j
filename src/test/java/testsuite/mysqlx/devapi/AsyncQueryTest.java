@@ -26,9 +26,11 @@ package testsuite.mysqlx.devapi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +39,8 @@ import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Table;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonString;
 
@@ -96,5 +100,31 @@ public class AsyncQueryTest extends CollectionTest {
         Table table = this.schema.getTable("rowwise");
         CompletableFuture<Integer> sumF = table.select("age").executeAsync(1, (Integer r, Row row) -> r + row.getInt("age"));
         assertEquals(new Integer(4), sumF.get());
+    }
+
+    @Test
+    public void syntaxErrorRowWise() throws Exception {
+        CompletableFuture<Integer> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync(1, (acc, doc) -> 1);
+        try {
+            res.get();
+            fail("Should fail due to non existing function");
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            assertEquals(MysqlxError.class, cause.getClass());
+            assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((MysqlxError) cause).getErrorCode());
+        }
+    }
+
+    @Test
+    public void syntaxErrorEntireResult() throws Exception {
+        CompletableFuture<FetchedDocs> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync();
+        try {
+            res.get();
+            fail("Should fail due to non existing function");
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            assertEquals(MysqlxError.class, cause.getClass());
+            assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((MysqlxError) cause).getErrorCode());
+        }
     }
 }
