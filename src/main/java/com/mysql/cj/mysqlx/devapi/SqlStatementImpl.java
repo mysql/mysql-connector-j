@@ -50,10 +50,8 @@ public class SqlStatementImpl implements SqlStatement {
     }
 
     public CompletableFuture<SqlResult> executeAsync() {
-        throw new RuntimeException();
+        return this.session.getMysqlxSession().asyncExecuteSql(this.sql, this.args);
     }
-
-    // TODO executeAsync()
 
     public SqlStatement clearBindings() {
         this.args.clear();

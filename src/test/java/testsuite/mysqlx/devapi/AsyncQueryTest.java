@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -39,6 +40,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
@@ -162,5 +164,33 @@ public class AsyncQueryTest extends CollectionTest {
 
         JsonDoc jd = this.collection.find().execute().next();
         assertEquals(new Integer(49), ((JsonNumber) jd.get("n")).getInteger());
+    }
+
+    @Test
+    public void sqlUpdate() throws Exception {
+        CompletableFuture<SqlResult> resF = this.session.sql("set @cjTestVar = 1").executeAsync();
+        resF.thenAccept(res -> {
+                    assertFalse(res.hasData());
+                    assertEquals(0, res.getAffectedItemsCount());
+                    assertEquals(null, res.getLastInsertId());
+                    assertEquals(0, res.getWarningsCount());
+                    assertFalse(res.getWarnings().hasNext());
+                }).get();
+    }
+
+    @Test
+    public void sqlQuery() throws Exception {
+        CompletableFuture<SqlResult> resF = this.session.sql("select 1,2,3 from dual").executeAsync();
+        resF.thenAccept(res -> {
+                    assertTrue(res.hasData());
+                    Row r = res.next();
+                    assertEquals("1", r.getString(0));
+                    assertEquals("2", r.getString(1));
+                    assertEquals("3", r.getString(2));
+                    assertEquals("1", r.getString("1"));
+                    assertEquals("2", r.getString("2"));
+                    assertEquals("3", r.getString("3"));
+                    assertFalse(res.hasNext());
+                }).get();
     }
 }

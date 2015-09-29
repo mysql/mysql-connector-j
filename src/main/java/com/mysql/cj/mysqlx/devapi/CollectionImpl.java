@@ -126,10 +126,6 @@ public class CollectionImpl implements Collection {
         return new DropCollectionIndexStatementImpl(this, indexName);
     }
 
-    // public Collection as(String alias) {
-    //     throw new NullPointerException("TODO: this should be moved to Dev API v2. it doesn't have any meaning in v1");
-    // }
-
     public long count() {
         return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }

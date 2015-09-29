@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.google.protobuf.GeneratedMessage;
+
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
@@ -57,6 +58,8 @@ public class ResultMessageListener implements MessageListener {
      */
     private boolean metadataSent = false;
 
+    private StatementExecuteOkBuilder okBuilder = new StatementExecuteOkBuilder();
+
     /**
      * The type for the function to transform the {@link ColumnMetaData} to a {@link Field}.
      */
@@ -80,7 +83,7 @@ public class ResultMessageListener implements MessageListener {
     }
 
     private boolean handleStmtExecuteOk() {
-        callbacks.onComplete(new StatementExecuteOk(0, null, new ArrayList<>()));
+        callbacks.onComplete(okBuilder.build());
         return true; /* done reading? */
     }
 
@@ -115,7 +118,8 @@ public class ResultMessageListener implements MessageListener {
         } else if (Error.class.equals(msgClass)) {
             return handleError(Error.class.cast(msg));
         } else if (Frame.class.equals(msgClass)) {
-            // TODO warnings, update counts, etc
+            this.okBuilder.addNotice(Frame.class.cast(msg));
+            return false; /* done reading? */
         }
         handleException(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + msg));
         return false; /* done reading? */ // note, this doesn't comply with the specified semantics ResultListener

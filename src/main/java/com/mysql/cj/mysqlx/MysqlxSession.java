@@ -372,6 +372,12 @@ public class MysqlxSession implements Session {
         }
     }
 
+    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args) {
+        newCommand();
+        // TODO: put characterSetMetadata somewhere useful
+        return this.protocol.asyncExecuteSql(sql, args, "latin1");
+    }
+
     public StatementExecuteOk update(String sql) {
         newCommand();
         this.protocol.sendSqlStatement(sql);

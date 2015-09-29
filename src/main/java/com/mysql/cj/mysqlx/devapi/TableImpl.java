@@ -87,10 +87,6 @@ public class TableImpl implements Table {
         return new DeleteStatementImpl(this);
     }
 
-    // public Table as(String alias) {
-    //     throw new NullPointerException("TODO: ");
-    // }
-
     public long count() {
         return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }

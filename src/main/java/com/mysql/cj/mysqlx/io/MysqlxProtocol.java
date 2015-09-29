@@ -48,6 +48,7 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
@@ -66,6 +67,7 @@ import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
+import com.mysql.cj.mysqlx.io.AsyncMessageWriter.SentListener;
 import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
@@ -547,6 +549,18 @@ public class MysqlxProtocol implements Protocol {
 
     public MysqlxRowInputStream getRowInputStream(ArrayList<Field> metadata) {
         return new MysqlxRowInputStream(metadata, this);
+    }
+
+    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, final String metadataCharacterSet) {
+        final CompletableFuture<SqlResult> f = new CompletableFuture<>();
+        SentListener resultHandler = new ErrorToFutureSentListener(f) {
+                public void completed() {
+                    MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(MysqlxProtocol.this.propertySet, col, metadataCharacterSet));
+                    ((AsyncMessageReader) MysqlxProtocol.this.reader).pushMessageListener(l);
+                }
+            };
+        ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
+        return f;
     }
 
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks) {

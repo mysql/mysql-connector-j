@@ -38,7 +38,5 @@ public interface DataStatement<STMT_T, RES_T, RES_ELEMENT_T> extends Statement<S
      */
     public static interface Reducer<RES_ELEMENT_T, R> extends BiFunction<R, RES_ELEMENT_T, R> {}
 
-    default <R> CompletableFuture<R> executeAsync(R identity, Reducer<RES_ELEMENT_T, R> accumulator) {
-        throw new NullPointerException();
-    }
+    <R> CompletableFuture<R> executeAsync(R identity, Reducer<RES_ELEMENT_T, R> accumulator);
 }
