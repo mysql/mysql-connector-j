@@ -237,13 +237,17 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             }
         }
 
-        // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
-        boolean currentListenerDone = getMessageListener(true).apply(messageClass, message);
+        getMessageListener(true);
+        // this addresses a delicate race. we must be sure that the message delivery and clearing of pending message are atomic under the pending message
+        // lock. otherwise the pending message may still be seen after the message has been delivered but before the pending message is cleared
         synchronized (this.pendingMsgMonitor) {
+            // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
+            boolean currentListenerDone = this.currentMessageListener.apply(messageClass, message);
+            if (currentListenerDone) {
+                this.currentMessageListener = null;
+            }
+            // clear this after the message is delivered
             this.pendingMsgClass = null;
-        }
-        if (currentListenerDone) {
-            this.currentMessageListener = null;
         }
     }
 
@@ -318,6 +322,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
+        CompletableFuture<Class<? extends GeneratedMessage>> clazzF;
         synchronized (this.pendingMsgMonitor) {
             if (this.pendingMsgClass == null) {
                 try {
@@ -327,16 +332,17 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                     ex.printStackTrace();
                 }
             }
-            try {
-                Class<? extends GeneratedMessage> clazz = this.pendingMsgClass.get();
-                if (Error.class.equals(clazz)) {
-                    // this will cause an exception to be thrown
-                    read(clazz);
-                }
-                return clazz;
-            } catch (InterruptedException | ExecutionException ex) {
-                throw new CJCommunicationsException(ex);
+            clazzF = this.pendingMsgClass;
+        }
+        try {
+            Class<? extends GeneratedMessage> clazz = this.pendingMsgClass.get();
+            if (Error.class.equals(clazz)) {
+                // this will cause an exception to be thrown
+                read(clazz);
             }
+            return clazz;
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new CJCommunicationsException(ex);
         }
     }
 

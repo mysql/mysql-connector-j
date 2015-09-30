@@ -34,7 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import com.google.protobuf.MessageLite;
 
@@ -52,7 +51,6 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -65,7 +63,6 @@ import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
-import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
@@ -79,11 +76,13 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
@@ -267,7 +266,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void readAuthenticateOk() {
-        if (this.reader.getNextMessageClass() == Frame.class) {
+        while (this.reader.getNextMessageClass() == Frame.class) {
             Frame notice = this.reader.read(Frame.class);
             if (notice.getType() == MysqlxNoticeFrameType_SESS_STATE_CHANGED) {
                 SessionStateChanged msg = MessageReader.parseNotice(notice.getPayload(), SessionStateChanged.class);
@@ -347,22 +346,16 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args));
     }
 
-    /**
-     * @todo see how this feels after continued use
-     */
     public StatementExecuteOk readStatementExecuteOk() {
-        try {
-            return asyncReadStatementExecuteOk().get();
-        } catch (ExecutionException ex) {
-            if (MysqlxError.class.equals(ex.getCause().getClass())) {
-                // wrap the other thread's exception and include this thread's context
-                throw new MysqlxError((MysqlxError) ex.getCause());
-            } else {
-                throw new CJCommunicationsException(ex);
-            }
-        } catch (InterruptedException ex) {
-            throw new CJCommunicationsException(ex);
+        StatementExecuteOkBuilder builder = new StatementExecuteOkBuilder();
+        if (this.reader.getNextMessageClass() == FetchDone.class) {
+            this.reader.read(FetchDone.class);
         }
+        while (this.reader.getNextMessageClass() == Frame.class) {
+            builder.addNotice(this.reader.read(Frame.class));
+        }
+        this.reader.read(StmtExecuteOk.class);
+        return builder.build();
     }
 
     public void sendSqlStatement(String statement) {
