@@ -90,9 +90,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private Class<? extends GeneratedMessage> pendingMsgClass;
     private Object pendingMsgMonitor = new Object();
 
-    // // TODO: use this if we can initiate the next message read before parsing in the current thread (see note in readMessage())
-    // private Semaphore semaphore = new Semaphore(0);
-
     /** Possible state of reading messages. */
     private static enum ReadingState {
         /** Waiting to read the header. */
@@ -180,12 +177,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         this.messageBuf = ByteBuffer.allocate(this.messageSize);
         synchronized (this) {
             this.channel.read(this.messageBuf, null, this);
-            // try {
-            //     this.semaphore.acquire();
-            // } catch (InterruptedException ex) {
-            //     ex.printStackTrace();
-            //     // TODO: how to handle interrupts?
-            // }
         }
     }
 
@@ -211,15 +202,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
         }
+
+        // dispatch the message to the listener before starting next read to ensure in-order delivery
         dispatchMessage(messageClass, parseMessage(messageClass, buf));
-
-        // we start the next message read BEFORE blocking up this thread with message parsing and delivery.
-
-        // we should be able to do that ^ but the Invoker class may call us re-entrantly (c.f. mayInvokeDirect()) before we dispatch the method which causes
-        // issues here. this happens when there are multiple messages in the same packet and the socket channel has immediate data
-        // synchronized (this) {
-        //     semaphore.release();
-        // }
         readHeader();
     }
 
