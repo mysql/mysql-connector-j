@@ -27,12 +27,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
@@ -87,10 +89,16 @@ public class CollectionFindTest extends CollectionTest {
     /**
      * MYSQLCONNJ-618
      */
-    @Test(expected = CJCommunicationsException.class)
+    @Test
     public void outOfRange() {
-        this.collection.add("{}").execute();
-        FetchedDocs docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
+        try {
+            this.collection.add("{}").execute();
+            FetchedDocs docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
+            docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
+            fail("Statement should raise an error");
+        } catch (MysqlxError err) {
+            assertEquals(MysqlErrorNumbers.ER_DATA_OUT_OF_RANGE, err.getErrorCode());
+        }
     }
 
     @Test

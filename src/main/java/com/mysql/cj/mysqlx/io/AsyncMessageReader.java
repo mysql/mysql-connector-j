@@ -328,7 +328,12 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 }
             }
             try {
-                return this.pendingMsgClass.get();
+                Class<? extends GeneratedMessage> clazz = this.pendingMsgClass.get();
+                if (Error.class.equals(clazz)) {
+                    // this will cause an exception to be thrown
+                    read(clazz);
+                }
+                return clazz;
             } catch (InterruptedException | ExecutionException ex) {
                 throw new CJCommunicationsException(ex);
             }
