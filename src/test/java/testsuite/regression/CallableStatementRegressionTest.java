@@ -522,9 +522,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug17898() throws Exception {
-        this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug17898");
-        this.stmt.executeUpdate("CREATE PROCEDURE testBug17898(param1 VARCHAR(50), OUT param2 INT)\nBEGIN\nDECLARE rtn INT;\n"
-                + "SELECT 1 INTO rtn;\nSET param2=rtn;\nEND");
+        createProcedure("testBug17898", "(param1 VARCHAR(50), OUT param2 INT)\nBEGIN\nDECLARE rtn INT;\n" + "SELECT 1 INTO rtn;\nSET param2=rtn;\nEND");
 
         CallableStatement cstmt = this.conn.prepareCall("{CALL testBug17898('foo', ?)}");
         cstmt.registerOutParameter(1, Types.INTEGER);
@@ -604,13 +602,12 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug22297() throws Exception {
-        this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
 
         createTable("tblTestBug2297_1", "(id varchar(20) NOT NULL default '',Income double(19,2) default NULL)");
 
         createTable("tblTestBug2297_2", "(id varchar(20) NOT NULL default '',CreatedOn datetime default NULL)");
 
-        this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT) BEGIN\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
+        createProcedure("testBug22297", "(pcaseid INT) BEGIN\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
                 + " PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;"
                 + "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\"; PREPARE stmt FROM @sql;"
                 + " EXECUTE stmt; DEALLOCATE PREPARE stmt;\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
@@ -637,31 +634,21 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testHugeNumberOfParameters() throws Exception {
-        this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testHugeNumberOfParameters");
+        StringBuilder procDef = new StringBuilder("(OUT param_0 VARCHAR(32)");
+        StringBuilder placeholders = new StringBuilder("?");
 
-        StringBuilder procDef = new StringBuilder("CREATE PROCEDURE testHugeNumberOfParameters(");
-
-        for (int i = 0; i < 274; i++) {
-            if (i != 0) {
-                procDef.append(",");
-            }
-
-            procDef.append(" OUT param_" + i + " VARCHAR(32)");
+        for (int i = 1; i < 274; i++) {
+            procDef.append(", OUT param_" + i + " VARCHAR(32)");
+            placeholders.append(",?");
         }
-
         procDef.append(")\nBEGIN\nSELECT 1;\nEND");
-        this.stmt.executeUpdate(procDef.toString());
+
+        createProcedure("testHugeNumberOfParameters", procDef.toString());
 
         CallableStatement cStmt = null;
 
         try {
-            cStmt = this.conn.prepareCall("{call testHugeNumberOfParameters(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+            cStmt = this.conn.prepareCall("{call testHugeNumberOfParameters(" + placeholders.toString() + ")}");
             cStmt.registerOutParameter(274, Types.VARCHAR);
 
             cStmt.execute();
@@ -785,11 +772,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug26143() throws Exception {
-        this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug26143");
+        try {
 
-        this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'\nBEGIN\nSELECT I * 10;\nEND");
+            this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug26143");
 
-        this.conn.prepareCall("{call testBug26143(?)").close();
+            this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'\nBEGIN\nSELECT I * 10;\nEND");
+
+            this.conn.prepareCall("{call testBug26143(?)").close();
+
+        } finally {
+            dropProcedure("testBug26143");
+        }
     }
 
     /**

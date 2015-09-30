@@ -18,6 +18,19 @@ nn-nn-15 - Version 6.0.0
 
   - Merged version 5.1.37.
 
+  - Fix for Bug#76859 (20969312), DBMD getColumns using I_S doesn't have column IS_GENERATEDCOLUMN as per JDBC 4.1.
+    Added support for GENERATED COLUMNS.
+
+  - Update Time Zone mappings with IANA Time Zone database tsdata2015f and Unicode CLDR v.28.
+
+  - Update DatabaseMetaData SQL keywords.
+
+  - Added tests for Optimizer hints syntax introduced in MySQL 5.7.7.
+
+  - Added support for JSON data type.
+
+  - Added support for JDBC 4.2 new features.
+
   - Fix for Bug#16634180, LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
 
   - Fix for Bug#75849 (20536592), NPE in abortInternal() method on line 1358 of ConnectionImpl.

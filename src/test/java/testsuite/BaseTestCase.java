@@ -641,19 +641,24 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
+            Statement st = this.conn.createStatement();
+            Statement sha256st = this.sha256Conn.createStatement();
+
             for (int i = 0; i < this.createdObjects.size(); i++) {
                 String[] objectInfo = this.createdObjects.get(i);
 
                 try {
-                    dropSchemaObject(this.stmt, objectInfo[0], objectInfo[1]);
+                    dropSchemaObject(st, objectInfo[0], objectInfo[1]);
                 } catch (SQLException SQLE) {
                 }
 
                 try {
-                    dropSchemaObject(this.sha256Stmt, objectInfo[0], objectInfo[1]);
+                    dropSchemaObject(sha256st, objectInfo[0], objectInfo[1]);
                 } catch (SQLException SQLE) {
                 }
             }
+            st.close();
+            sha256st.close();
         }
 
         if (this.stmt != null) {
