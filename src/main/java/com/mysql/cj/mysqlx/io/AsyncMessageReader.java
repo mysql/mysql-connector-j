@@ -87,7 +87,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<MessageListener>();
 
-    private Class<? extends GeneratedMessage> pendingMsgClass;
+    private CompletableFuture<Class<? extends GeneratedMessage>> pendingMsgClass;
     private Object pendingMsgMonitor = new Object();
 
     /** Possible state of reading messages. */
@@ -166,6 +166,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         // process the completed header and initiate message reading
         this.headerBuf.clear();
         this.messageSize = this.headerBuf.getInt() - 1;
+        if (this.messageSize > 200*1024*1024) {
+            throw new CJCommunicationsException("Receving message larger than 200 megs not supported temporary due to xplugin bug");
+        }
         this.messageType = this.headerBuf.get();
         // for debugging
         // System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
@@ -229,7 +232,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         // if there's no message listener waiting, expose the message class as pending for the next read
         if (getMessageListener(false) == null) {
             synchronized (this.pendingMsgMonitor) {
-                this.pendingMsgClass = messageClass;
+                this.pendingMsgClass = CompletableFuture.completedFuture(messageClass);
                 this.pendingMsgMonitor.notify();
             }
         }
@@ -267,10 +270,38 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             return;
         }
 
-        if (this.state == ReadingState.READING_HEADER) {
-            readHeader();
-        } else {
-            readMessage();
+        try {
+            if (this.state == ReadingState.READING_HEADER) {
+                readHeader();
+            } else {
+                readMessage();
+            }
+        } catch (Throwable t) {
+            // error reading => illegal state, close connection
+            try {
+                this.channel.close();
+            } catch (Exception ex) {
+            }
+            // notify all listeners of error
+            if (this.currentMessageListener != null) {
+                try {
+                    this.currentMessageListener.error(t);
+                } catch (Exception ex) {
+                }
+            }
+            this.messageListenerQueue.forEach(l -> {
+                        try {
+                            l.error(t);
+                        } catch (Exception ex) {
+                        }
+                    });
+            // if case we have a getNextMessageClass() request pending
+            synchronized (this.pendingMsgMonitor) {
+                this.pendingMsgClass = new CompletableFuture<>();
+                this.pendingMsgClass.completeExceptionally(t);
+                this.pendingMsgMonitor.notify();
+            }
+            this.messageListenerQueue.clear();
         }
     }
 
@@ -296,7 +327,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                     ex.printStackTrace();
                 }
             }
-            return this.pendingMsgClass;
+            try {
+                return this.pendingMsgClass.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                throw new CJCommunicationsException(ex);
+            }
         }
     }
 

@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.x.json.JsonDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
@@ -50,7 +51,13 @@ public class CollectionFindTest extends CollectionTest {
     @After
     @Override
     public void teardownCollectionTest() {
-        super.teardownCollectionTest();
+        try {
+            super.teardownCollectionTest();
+        } catch (Exception ex) {
+            // expected-to-fail tests may destroy the connection, don't penalize them here
+            System.err.println("Exception during teardown:");
+            ex.printStackTrace();
+        }
     }
 
     @Test
@@ -75,6 +82,15 @@ public class CollectionFindTest extends CollectionTest {
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
+    }
+
+    /**
+     * MYSQLCONNJ-618
+     */
+    @Test(expected = CJCommunicationsException.class)
+    public void outOfRange() {
+        this.collection.add("{}").execute();
+        FetchedDocs docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
     }
 
     @Test

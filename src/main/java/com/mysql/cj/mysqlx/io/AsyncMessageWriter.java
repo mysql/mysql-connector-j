@@ -86,8 +86,12 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
      * a mutex for this.pendingWrites.
      */
     private void initiateWrite() {
-        ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]);
-        this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this);
+        try {
+            ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]);
+            this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this);
+        } catch (Throwable t) {
+            failed(t, null);
+        }
     }
 
     /**
@@ -185,10 +189,20 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
                 .forEach(SentListener::completed);
     }
 
-    public void failed(Throwable exc, Void v) {
-        // TODO what is the state of the channel on a failed write?
-        // TODO should we notify all pending writes as failed?
-        exc.printStackTrace();
+    public void failed(Throwable t, Void v) {
+        // error writing, can't continue
+        try {
+            this.channel.close();
+        } catch (Exception ex) {
+        }
+        this.bufToListener.values().forEach((SentListener l) -> {
+                    try {
+                        l.error(t);
+                    } catch (Exception ex) {
+                    }
+                });
+        this.bufToListener.clear();
+        this.pendingWrites.clear();
     }
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {
