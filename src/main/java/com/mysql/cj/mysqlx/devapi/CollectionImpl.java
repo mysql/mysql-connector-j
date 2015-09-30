@@ -38,7 +38,7 @@ import com.mysql.cj.api.x.RemoveStatement;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.mysqlx.ExprUnparser;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonParser;
 
 public class CollectionImpl implements Collection {
@@ -75,18 +75,18 @@ public class CollectionImpl implements Collection {
 
     public AddStatement add(String jsonString) {
         try {
-            JsonDoc doc = JsonParser.parseDoc(new StringReader(jsonString));
+            DbDoc doc = JsonParser.parseDoc(new StringReader(jsonString));
             return add(doc);
         } catch (IOException ex) {
             throw AssertionFailedException.shouldNotHappen(ex);
         }
     }
 
-    public AddStatement add(JsonDoc doc) {
+    public AddStatement add(DbDoc doc) {
         return new AddStatementImpl(this, doc);
     }
 
-    public AddStatement add(JsonDoc[] docs) {
+    public AddStatement add(DbDoc[] docs) {
         return new AddStatementImpl(this, docs);
     }
 
@@ -130,8 +130,8 @@ public class CollectionImpl implements Collection {
         return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
     }
 
-    public JsonDoc newDoc() {
-        return new JsonDoc();
+    public DbDoc newDoc() {
+        return new DbDoc();
     }
 
     @Override

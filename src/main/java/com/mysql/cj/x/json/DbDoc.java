@@ -63,34 +63,34 @@ import com.mysql.cj.api.x.JsonValue;
  * }
  * </pre>
  * 
- * To create {@link JsonDoc} from existing string representation you need to use {@link JsonParser#parseDoc(java.io.StringReader)} method:
+ * To create {@link DbDoc} from existing string representation you need to use {@link JsonParser#parseDoc(java.io.StringReader)} method:
  * 
  * <pre>
- * JsonDoc doc = JsonParser.parseDoc(new StringReader(&quot;{\&quot;key1\&quot; : \&quot;value1\&quot;}&quot;));
+ * DbDoc doc = JsonParser.parseDoc(new StringReader(&quot;{\&quot;key1\&quot; : \&quot;value1\&quot;}&quot;));
  * </pre>
  * 
- * You can construct JSON document by {@link JsonDoc}, {@link JsonString}, {@link JsonNumber}, {@link JsonArray} and {@link JsonLiteral} methods and get JSON
- * string representation by using {@link JsonDoc#toString()} method. For example, to get the document shown above:
+ * You can construct JSON document by {@link DbDoc}, {@link JsonString}, {@link JsonNumber}, {@link JsonArray} and {@link JsonLiteral} methods and get JSON
+ * string representation by using {@link DbDoc#toString()} method. For example, to get the document shown above:
  * 
  * <pre>
- * JsonDoc doc = new JsonDoc()
+ * DbDoc doc = new DbDoc()
  *         .add(&quot;field1&quot;, new JsonString().setValue(&quot;value 1&quot;))
  *         .add(&quot;field2&quot;, new JsonNumber().setValue(&quot;12345.44E22&quot;))
  *         .add(&quot;field3&quot;, JsonLiteral.TRUE)
  *         .add(&quot;field4&quot;, JsonLiteral.FALSE)
  *         .add(&quot;field5&quot;, JsonLiteral.NULL)
  *         .add(&quot;field6&quot;,
- *                 new JsonDoc().add(&quot;inner field 1&quot;, new JsonString().setValue(&quot;inner value 1&quot;)).add(&quot;inner field 2&quot;, new JsonNumber().setValue(&quot;2&quot;))
+ *                 new DbDoc().add(&quot;inner field 1&quot;, new JsonString().setValue(&quot;inner value 1&quot;)).add(&quot;inner field 2&quot;, new JsonNumber().setValue(&quot;2&quot;))
  *                         .add(&quot;inner field 3&quot;, JsonLiteral.TRUE).add(&quot;inner field 4&quot;, JsonLiteral.FALSE).add(&quot;inner field 5&quot;, JsonLiteral.NULL)
- *                         .add(&quot;inner field 6&quot;, new JsonArray()).add(&quot;inner field 7&quot;, new JsonDoc()))
+ *                         .add(&quot;inner field 6&quot;, new JsonArray()).add(&quot;inner field 7&quot;, new DbDoc()))
  *         .add(&quot;field7&quot;,
  *                 new JsonArray().addValue(new JsonString().setValue(&quot;arr1&quot;)).addValue(new JsonNumber().setValue(&quot;3&quot;)).addValue(JsonLiteral.TRUE)
- *                         .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new JsonDoc()));
+ *                         .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDoc()));
  * 
  * doc.toString();
  * </pre>
  */
-public class JsonDoc extends TreeMap<String, JsonValue> implements JsonValue {
+public class DbDoc extends TreeMap<String, JsonValue> implements JsonValue {
 
     private static final long serialVersionUID = 6557406141541247905L;
 
@@ -136,7 +136,7 @@ public class JsonDoc extends TreeMap<String, JsonValue> implements JsonValue {
         return sb.toString();
     }
 
-    public JsonDoc add(String key, JsonValue val) {
+    public DbDoc add(String key, JsonValue val) {
         put(key, val);
         return this;
     }

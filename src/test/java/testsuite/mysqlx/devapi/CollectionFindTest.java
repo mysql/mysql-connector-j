@@ -35,7 +35,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
 import static com.mysql.cj.api.x.Expression.expr;
@@ -68,7 +68,7 @@ public class CollectionFindTest extends CollectionTest {
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
         FetchedDocs docs = this.collection.find().fields("$._id as _id, $.g as g, 1 + 1 as q").execute();
-        JsonDoc doc = docs.next();
+        DbDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
@@ -80,7 +80,7 @@ public class CollectionFindTest extends CollectionTest {
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
         FetchedDocs docs = this.collection.find().fields(expr("{'_id':$._id, 'q':1 + 1, 'g2':-20*$.g}")).execute();
-        JsonDoc doc = docs.next();
+        DbDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
@@ -255,7 +255,7 @@ public class CollectionFindTest extends CollectionTest {
     public void cast() {
         this.collection.add("{\"x\":100}").execute();
 
-        JsonDoc d = this.collection.find().fields("CAST($.x as SIGNED) as x").execute().next();
+        DbDoc d = this.collection.find().fields("CAST($.x as SIGNED) as x").execute().next();
         assertEquals(new Integer(100), ((JsonNumber) d.get("x")).getInteger());
     }
 

@@ -23,12 +23,12 @@
 
 package com.mysql.cj.api.x;
 
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 public interface AddStatement extends Statement<AddStatement, Result> {
     AddStatement add(String jsonString);
 
-    AddStatement add(JsonDoc document);
+    AddStatement add(DbDoc document);
 
-    AddStatement add(JsonDoc documents[]);
+    AddStatement add(DbDoc documents[]);
 }

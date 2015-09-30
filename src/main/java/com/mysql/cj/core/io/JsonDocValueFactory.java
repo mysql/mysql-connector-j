@@ -28,13 +28,13 @@ import java.io.StringReader;
 
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonParser;
 
 /**
- * A {@link ValueFactory} implementation to create {@link JsonDoc}s.
+ * A {@link ValueFactory} implementation to create {@link DbDoc}s.
  */
-public class JsonDocValueFactory extends DefaultValueFactory<JsonDoc> {
+public class JsonDocValueFactory extends DefaultValueFactory<DbDoc> {
     private String encoding;
 
     public JsonDocValueFactory() {
@@ -49,7 +49,7 @@ public class JsonDocValueFactory extends DefaultValueFactory<JsonDoc> {
      * byte array using the platform encoding.
      */
     @Override
-    public JsonDoc createFromBytes(byte[] bytes, int offset, int length) {
+    public DbDoc createFromBytes(byte[] bytes, int offset, int length) {
         try {
             return JsonParser.parseDoc(new StringReader(StringUtils.toString(bytes, offset, length, encoding)));
         } catch (IOException ex) {
@@ -58,11 +58,11 @@ public class JsonDocValueFactory extends DefaultValueFactory<JsonDoc> {
     }
 
     @Override
-    public JsonDoc createFromNull() {
+    public DbDoc createFromNull() {
         return null; // TODO: ? JsonValueLiteral.NULL;
     }
 
     public String getTargetTypeName() {
-        return JsonDoc.class.getName();
+        return DbDoc.class.getName();
     }
 }

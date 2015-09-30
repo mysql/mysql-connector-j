@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api.x;
 
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 public interface Row {
 
@@ -31,8 +31,8 @@ public interface Row {
     double getDouble(int pos);
     int getInt(String fieldName);
     int getInt(int pos);
-    JsonDoc getJsonDoc(String fieldName);
-    JsonDoc getJsonDoc(int pos);
+    DbDoc getJsonDoc(String fieldName);
+    DbDoc getJsonDoc(int pos);
     String getString(String fieldName);
     String getString(int pos);
 

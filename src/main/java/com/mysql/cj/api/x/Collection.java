@@ -25,7 +25,7 @@ package com.mysql.cj.api.x;
 
 import java.util.Map;
 
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 public interface Collection extends DatabaseObject {
 
@@ -40,11 +40,11 @@ public interface Collection extends DatabaseObject {
     AddStatement add(String jsonString);
 
     /**
-     * Add a document in the form of a JsonDoc.
+     * Add a document in the form of a DbDoc.
      */
-    AddStatement add(JsonDoc document);
+    AddStatement add(DbDoc document);
 
-    AddStatement add(JsonDoc documents[]);
+    AddStatement add(DbDoc documents[]);
 
     FindStatement find();
 
@@ -89,7 +89,7 @@ public interface Collection extends DatabaseObject {
      * 
      * @return
      */
-    JsonDoc newDoc();
+    DbDoc newDoc();
 
     /**
      * Collection Index Creation [59]

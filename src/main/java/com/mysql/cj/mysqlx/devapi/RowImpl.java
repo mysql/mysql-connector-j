@@ -32,7 +32,7 @@ import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.core.io.JsonDocValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 public class RowImpl implements com.mysql.cj.api.x.Row {
     private Row row;
@@ -72,11 +72,11 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
         return this.row.getValue(pos, new IntegerValueFactory());
     }
 
-    public JsonDoc getJsonDoc(String fieldName) {
+    public DbDoc getJsonDoc(String fieldName) {
         return getJsonDoc(fieldNameToIndex(fieldName));
     }
 
-    public JsonDoc getJsonDoc(int pos) {
+    public DbDoc getJsonDoc(int pos) {
         return this.row.getValue(pos, new JsonDocValueFactory());
     }
 

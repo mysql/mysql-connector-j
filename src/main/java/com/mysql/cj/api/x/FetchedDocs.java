@@ -25,13 +25,13 @@ package com.mysql.cj.api.x;
 
 import java.util.Iterator;
 
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
-public interface FetchedDocs extends FetchResult, Iterator<JsonDoc> {
+public interface FetchedDocs extends FetchResult, Iterator<DbDoc> {
 
     DbDocs all();
 
-    JsonDoc first();
+    DbDoc first();
 
-    JsonDoc next();
+    DbDoc next();
 }

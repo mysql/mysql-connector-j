@@ -30,12 +30,12 @@ import com.mysql.cj.api.x.DbDocs;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.core.io.JsonDocValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 /**
  * @todo
  */
-public class DbDocsImpl extends AbstractDataResult<JsonDoc> implements DbDocs, FetchedDocs {
+public class DbDocsImpl extends AbstractDataResult<DbDoc> implements DbDocs, FetchedDocs {
     public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
         super(rows, completer, r -> r.getValue(0, new JsonDocValueFactory()));
         this.rows = rows;

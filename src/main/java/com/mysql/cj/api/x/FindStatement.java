@@ -23,9 +23,9 @@
 
 package com.mysql.cj.api.x;
 
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
-public interface FindStatement extends DataStatement<FindStatement, FetchedDocs, JsonDoc> {
+public interface FindStatement extends DataStatement<FindStatement, FetchedDocs, DbDoc> {
     FindStatement fields(String projection);
 
     FindStatement fields(Expression docProjection);

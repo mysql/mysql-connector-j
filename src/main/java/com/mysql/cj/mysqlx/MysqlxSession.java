@@ -71,7 +71,7 @@ import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 /**
  * @todo
@@ -415,9 +415,9 @@ public class MysqlxSession implements Session {
         return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
     }
 
-    public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<JsonDoc, R> reducer) {
+    public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
-        ResultListener l = new RowWiseReducingResultListener<JsonDoc, R>(id, reducer, f,
+        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f,
                 (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new JsonDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful

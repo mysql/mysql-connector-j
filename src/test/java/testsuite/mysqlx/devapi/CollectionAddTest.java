@@ -37,7 +37,7 @@ import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonString;
 
 public class CollectionAddTest extends CollectionTest {
@@ -60,21 +60,21 @@ public class CollectionAddTest extends CollectionTest {
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
         FetchedDocs docs = this.collection.find("firstName like '%Fra%'").execute();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
     }
 
     @Test
     public void testBasicAddDoc() {
-        JsonDoc doc = new JsonDoc().add("firstName", new JsonString().setValue("Georgia"));
+        DbDoc doc = new DbDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
         Result res = this.collection.add(doc).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
         FetchedDocs docs = this.collection.find("lastName like 'O\\'Kee%'").execute();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("O'Keeffe", val.getString());
     }
@@ -90,7 +90,7 @@ public class CollectionAddTest extends CollectionTest {
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
         FetchedDocs docs = this.collection.find("z >= 44.22").execute();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("y");
         assertEquals("this is y", val.getString());
     }
@@ -102,7 +102,7 @@ public class CollectionAddTest extends CollectionTest {
         assertNull(res.getLastDocumentId());
 
         FetchedDocs docs = this.collection.find("_id == 'Id#1'").execute();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("name");
         assertEquals("<unknown>", val.getString());
     }
@@ -128,7 +128,7 @@ public class CollectionAddTest extends CollectionTest {
         this.collection.add(s).execute();
 
         FetchedDocs docs = this.collection.find().execute();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         assertEquals(docSize, ((JsonString) d.get("large_field")).getString().length());
     }
 }

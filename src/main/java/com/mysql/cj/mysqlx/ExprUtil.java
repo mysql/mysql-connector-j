@@ -32,7 +32,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.json.JsonArray;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 
 /**
  * Utilities to deal with Expr (and related) structures.
@@ -162,7 +162,7 @@ public class ExprUtil {
             return buildLiteralScalar((String) value);
         } else if (value.getClass() == Expression.class) {
             return new ExprParser(((Expression) value).getExpressionString(), allowRelationalColumns).parse();
-        } else if (value.getClass() == JsonDoc.class) {
+        } else if (value.getClass() == DbDoc.class) {
             // TODO: check how xplugin handles this
         } else if (value.getClass() == JsonArray.class) {
             // TODO: check how xplugin handles this

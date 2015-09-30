@@ -144,12 +144,12 @@ public class JsonParser {
      * @param reader
      *            JSON string reader.
      * @return
-     *         New {@link JsonDoc} object initialized by parsed JSON string.
+     *         New {@link DbDoc} object initialized by parsed JSON string.
      * @throws IOException
      */
-    public static JsonDoc parseDoc(StringReader reader) throws IOException {
+    public static DbDoc parseDoc(StringReader reader) throws IOException {
 
-        JsonDoc doc = new JsonDoc();
+        DbDoc doc = new DbDoc();
 
         int leftBrackets = 0;
         int rightBrackets = 0;

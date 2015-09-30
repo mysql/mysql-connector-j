@@ -34,7 +34,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     ModifyStatement unset(String fields);
 
-    // TODO: should have alternative versions for different document forms? String vs JsonDoc?
+    // TODO: should have alternative versions for different document forms? String vs DbDoc?
     ModifyStatement merge(String document);
 
     ModifyStatement arrayInsert(String field, Object value);

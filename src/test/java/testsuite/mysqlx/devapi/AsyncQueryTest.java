@@ -44,7 +44,7 @@ import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.x.json.JsonDoc;
+import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
 
@@ -69,7 +69,7 @@ public class AsyncQueryTest extends CollectionTest {
 
         CompletableFuture<FetchedDocs> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
         FetchedDocs docs = docsF.get();
-        JsonDoc d = docs.next();
+        DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
     }
@@ -89,7 +89,7 @@ public class AsyncQueryTest extends CollectionTest {
 
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
             FetchedDocs docs = futures.get(i).get();
-            JsonDoc d = docs.next();
+            DbDoc d = docs.next();
             JsonString val = (JsonString) d.get("lastName");
             assertEquals("Wright", val.getString());
         }
@@ -142,7 +142,7 @@ public class AsyncQueryTest extends CollectionTest {
                 });
 
 
-        JsonDoc d = docF.thenApply((FetchedDocs docs) -> docs.next()).get(5, TimeUnit.SECONDS);
+        DbDoc d = docF.thenApply((FetchedDocs docs) -> docs.next()).get(5, TimeUnit.SECONDS);
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
     }
@@ -162,7 +162,7 @@ public class AsyncQueryTest extends CollectionTest {
         // wait for them all to finish
         CompletableFuture.allOf(futures).get();
 
-        JsonDoc jd = this.collection.find().execute().next();
+        DbDoc jd = this.collection.find().execute().next();
         assertEquals(new Integer(49), ((JsonNumber) jd.get("n")).getInteger());
     }
 
