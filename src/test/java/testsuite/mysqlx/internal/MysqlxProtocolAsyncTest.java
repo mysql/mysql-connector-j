@@ -36,6 +36,7 @@ import static org.junit.Assert.assertNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
@@ -48,6 +49,7 @@ import com.mysql.cj.mysqlx.result.MysqlxRow;
 /**
  * Tests for protocol-level <b>async</b> APIs against a running MySQL-X server.
  */
+@Category(testsuite.mysqlx.AsyncTests.class)
 public class MysqlxProtocolAsyncTest extends BaseInternalMysqlxTest {
     private MysqlxProtocol protocol;
 

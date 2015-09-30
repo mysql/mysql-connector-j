@@ -36,6 +36,7 @@ import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
@@ -48,6 +49,7 @@ import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
 
+@Category(testsuite.mysqlx.AsyncTests.class)
 public class AsyncQueryTest extends CollectionTest {
     @Before
     @Override
