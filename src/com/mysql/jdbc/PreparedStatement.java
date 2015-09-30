@@ -1323,9 +1323,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     }
 
                     if (this.retrieveGeneratedKeys) {
-                        batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch), RETURN_GENERATED_KEYS);
+                        batchedStatement = ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch),
+                                RETURN_GENERATED_KEYS)).unwrap(java.sql.PreparedStatement.class);
                     } else {
-                        batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch));
+                        batchedStatement = ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch)))
+                                .unwrap(java.sql.PreparedStatement.class);
                     }
 
                     if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {

@@ -89,7 +89,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
             try {
                 result = method.invoke(this.invokeOn, args);
-                result = proxyIfIsJdbcInterface(result);
+                result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
             } catch (InvocationTargetException e) {
                 dealWithInvocationException(e);
             }
@@ -168,18 +168,20 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     }
 
     /**
-     * If the given object implements a JDBC interface, proxies it so that we can catch SQL errors and fire a connection switch.
+     * If the given return type is or implements a JDBC interface, proxies the given object so that we can catch SQL errors and fire a connection switch.
      * 
+     * @param returnType
+     *            The type the object instance to proxy is supposed to be.
      * @param toProxy
      *            The object instance to proxy.
      * @return
      *         The proxied object or the original one if it does not implement a JDBC interface.
      */
-    Object proxyIfIsJdbcInterface(Object toProxy) {
+    Object proxyIfReturnTypeIsJdbcInterface(Class<?> returnType, Object toProxy) {
         if (toProxy != null) {
-            Class<?> clazz = toProxy.getClass();
-            if (Util.isJdbcInterface(clazz)) {
-                return Proxy.newProxyInstance(clazz.getClassLoader(), Util.getImplementedInterfaces(clazz), getNewJdbcInterfaceProxy(toProxy));
+            if (Util.isJdbcInterface(returnType)) {
+                Class<?> toProxyClass = toProxy.getClass();
+                return Proxy.newProxyInstance(toProxyClass.getClassLoader(), Util.getImplementedInterfaces(toProxyClass), getNewJdbcInterfaceProxy(toProxy));
             }
         }
         return toProxy;

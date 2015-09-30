@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +36,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.mysql.jdbc.CallableStatement;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.PreparedStatement;
+import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.Util;
 
@@ -1464,6 +1467,71 @@ public class StatementRegressionTest extends BaseTestCase {
             } else {
                 throw e;
             }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#21876798 - CONNECTOR/J WITH MYSQL FABRIC AND SPRING PRODUCES PROXY ERROR.
+     * 
+     * Although this is a Fabric related bug we are able reproduce it using a couple of multi-host connections.
+     * 
+     * Duplicated in testsuite.regression.StatementRegressionTest.testBug21876798().
+     */
+    public void testBug21876798() throws Exception {
+        createTable("testBug21876798", "(tst INT, val INT)");
+
+        for (int tst = 0; tst < 4; tst++) {
+            boolean useServerPrepStmts = (tst & 0x1) != 0;
+            boolean rewriteBatchedStatements = (tst & 0x2) != 0;
+
+            Properties props = new Properties();
+            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
+            props.setProperty("rewriteBatchedStatements", Boolean.toString(rewriteBatchedStatements));
+
+            String testCase = String
+                    .format("Case: %d [ %s | %s ]", tst, useServerPrepStmts ? "useSPS" : "-", rewriteBatchedStatements ? "rwBatchedStmts" : "-");
+
+            Connection highLevelConn = getLoadBalancedConnection(props);
+            assertTrue(testCase, highLevelConn.getClass().getName().startsWith("com.sun.proxy"));
+
+            Connection lowLevelConn = getMasterSlaveReplicationConnection(props);
+            // This simulates the behavior from Fabric connections that are causing the problem.
+            ((ReplicationConnection) lowLevelConn).setProxy((MySQLConnection) highLevelConn);
+
+            // Insert data. We need at least 4 rows to force rewriting batch statements.
+            this.pstmt = lowLevelConn.prepareStatement("INSERT INTO testBug21876798 VALUES (?, ?)");
+            for (int i = 1; i <= 4; i++) {
+                this.pstmt.setInt(1, tst);
+                this.pstmt.setInt(2, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+
+            // Check if data was inserted correctly.
+            this.rs = this.stmt.executeQuery("SELECT val FROM testBug21876798 WHERE tst = " + tst);
+            for (int i = 1; i <= 4; i++) {
+                assertTrue(testCase + "/Row#" + i, this.rs.next());
+                assertEquals(testCase + "/Row#" + i, i, this.rs.getInt(1));
+            }
+            assertFalse(testCase, this.rs.next());
+
+            // Update data. We need at least 4 rows to force rewriting batch statements.
+            this.pstmt = lowLevelConn.prepareStatement("UPDATE testBug21876798 SET val = ? WHERE tst = ? AND val = ?");
+            for (int i = 1; i <= 4; i++) {
+                this.pstmt.setInt(1, -i);
+                this.pstmt.setInt(2, tst);
+                this.pstmt.setInt(3, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+
+            // Check if data was updated correctly.
+            this.rs = this.stmt.executeQuery("SELECT val FROM testBug21876798 WHERE tst = " + tst);
+            for (int i = 1; i <= 4; i++) {
+                assertTrue(testCase + "/Row#" + i, this.rs.next());
+                assertEquals(testCase + "/Row#" + i, -i, this.rs.getInt(1));
+            }
+            assertFalse(testCase, this.rs.next());
         }
     }
 }

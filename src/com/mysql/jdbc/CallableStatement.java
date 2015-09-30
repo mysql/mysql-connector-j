@@ -125,7 +125,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
-    protected class CallableStatementParamInfo {
+    protected class CallableStatementParamInfo implements ParameterMetaData {
         String catalogInUse;
 
         boolean isFunctionCall;
@@ -353,40 +353,9 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         int numberOfParameters() {
             return this.numParameters;
         }
-    }
-
-    /**
-     * Can't implement this directly, as then you can't use callable statements
-     * on JDK-1.3.1, which unfortunately isn't EOL'd yet, and still present
-     * quite a bit out there in the wild (Websphere, FreeBSD, anyone?)
-     */
-
-    protected class CallableStatementParamInfoJDBC3 extends CallableStatementParamInfo implements ParameterMetaData {
-
-        CallableStatementParamInfoJDBC3(java.sql.ResultSet paramTypesRs) throws SQLException {
-            super(paramTypesRs);
-        }
-
-        public CallableStatementParamInfoJDBC3(CallableStatementParamInfo paramInfo) {
-            super(paramInfo);
-        }
 
         /**
-         * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
-         * for an object that does. Returns false otherwise. If this implements the interface then return true,
-         * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
-         * object. If this does not implement the interface and is not a wrapper, return false.
-         * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
-         * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
-         * returns true then calling <code>unwrap</code> with the same argument should succeed.
-         * 
-         * @param interfaces
-         *            a Class defining an interface.
-         * @return true if this implements the interface or directly or indirectly wraps an object that does.
-         * @throws java.sql.SQLException
-         *             if an error occurs while determining whether this is a wrapper
-         *             for an object with the given interface.
-         * @since 1.6
+         * @see java.sql.Wrapper#isWrapperFor(Class)
          */
         public boolean isWrapperFor(Class<?> iface) throws SQLException {
             checkClosed();
@@ -396,25 +365,12 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
 
         /**
-         * Returns an object that implements the given interface to allow access to non-standard methods,
-         * or standard methods not exposed by the proxy.
-         * The result may be either the object found to implement the interface or a proxy for that object.
-         * If the receiver implements the interface then that is the object. If the receiver is a wrapper
-         * and the wrapped object implements the interface then that is the object. Otherwise the object is
-         * the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
-         * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-         * 
-         * @param iface
-         *            A Class defining an interface that the result must implement.
-         * @return an object that implements the interface. May be a proxy for the actual implementing object.
-         * @throws java.sql.SQLException
-         *             If no object found that implements the interface
-         * @since 1.6
+         * @see java.sql.Wrapper#unwrap(Class)
          */
-        public Object unwrap(Class<?> iface) throws java.sql.SQLException {
+        public <T> T unwrap(Class<T> iface) throws java.sql.SQLException {
             try {
                 // This works for classes that aren't actually wrapping anything
-                return Util.cast(iface, this);
+                return iface.cast(this);
             } catch (ClassCastException cce) {
                 throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -845,11 +801,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (!this.connection.isRunningOnJDK13()) {
-                this.paramInfo = new CallableStatementParamInfoJDBC3(paramTypesRs);
-            } else {
-                this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
-            }
+            this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
         }
     }
 
@@ -1562,10 +1514,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.placeholderToParameterIndexMap == null) {
-                return (CallableStatementParamInfoJDBC3) this.paramInfo;
+                return this.paramInfo;
             }
 
-            return new CallableStatementParamInfoJDBC3(this.paramInfo);
+            return new CallableStatementParamInfo(this.paramInfo);
         }
     }
 
