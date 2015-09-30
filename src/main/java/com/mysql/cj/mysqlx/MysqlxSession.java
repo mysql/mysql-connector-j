@@ -403,7 +403,7 @@ public class MysqlxSession implements Session {
         ResultListener l = new ResultCreatingResultListener<RES_T>(resultCtor, f);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
-        this.protocol.asyncFind(findParams, "latin1", l);
+        this.protocol.asyncFind(findParams, "latin1", l, f);
         return f;
     }
 
@@ -421,7 +421,7 @@ public class MysqlxSession implements Session {
                 (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new JsonDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
-        this.protocol.asyncFind(findParams, "latin1", l);
+        this.protocol.asyncFind(findParams, "latin1", l, f);
         return f;
     }
 
@@ -430,7 +430,7 @@ public class MysqlxSession implements Session {
         ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, DevapiRowFactory::new);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
-        this.protocol.asyncFind(findParams, "latin1", l);
+        this.protocol.asyncFind(findParams, "latin1", l, f);
         return f;
     }
 

@@ -26,7 +26,9 @@ package testsuite.mysqlx.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.function.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -120,7 +122,7 @@ public class MysqlxProtocolAsyncTest extends BaseInternalMysqlxTest {
                         MysqlxProtocolAsyncTest.this.notify();
                     }
                 }
-            });
+            }, new CompletableFuture<Void>());
 
         synchronized (this) {
             // timeout in case we get stuck

@@ -552,32 +552,31 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, final String metadataCharacterSet) {
-        final CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        SentListener resultHandler = new ErrorToFutureSentListener(f) {
-                public void completed() {
-                    MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(MysqlxProtocol.this.propertySet, col, metadataCharacterSet));
-                    ((AsyncMessageReader) MysqlxProtocol.this.reader).pushMessageListener(l);
-                }
-            };
+        CompletableFuture<SqlResult> f = new CompletableFuture<>();
+        MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet));
+        SentListener resultHandler = new ErrorToFutureSentListener(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;
     }
 
-    public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks) {
-        ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), null);
+    /**
+     *
+     * @param findParams
+     * @param metadataCharacterSet
+     * @param callbacks
+     * @param errorFuture the future to complete exceptionally if the request fails
+     */
+    public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
-        ((AsyncMessageReader) this.reader).pushMessageListener(l);
-    }
-
-    private CompletableFuture<StatementExecuteOk> asyncReadStatementExecuteOk() {
-        StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener();
-        ((AsyncMessageReader) this.reader).pushMessageListener(l);
-        return l.getFuture();
+        SentListener resultHandler = new ErrorToFutureSentListener(errorFuture, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), resultHandler);
     }
 
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
-        ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, null);
-        return asyncReadStatementExecuteOk();
+        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener();
+        SentListener resultHandler = new ErrorToFutureSentListener(l.getFuture(), () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
+        return l.getFuture();
     }
 
     public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {

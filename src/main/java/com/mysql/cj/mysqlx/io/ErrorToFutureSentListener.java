@@ -23,37 +23,24 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.MessageLite;
-
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.mysqlx.io.AsyncMessageWriter.SentListener;
-import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 
 /**
  * Base class that propagates any error to the given future allowing only implementation of the success callback.
  */
-public abstract class ErrorToFutureSentListener implements SentListener {
+public class ErrorToFutureSentListener implements SentListener {
     private CompletableFuture<?> future;
+    private SentListener successCallback;
 
-    public ErrorToFutureSentListener(CompletableFuture<?> future) {
+    public ErrorToFutureSentListener(CompletableFuture<?> future, SentListener successCallback) {
         this.future = future;
+        this.successCallback = successCallback;
+    }
+
+    public void completed() {
+        this.successCallback.completed();
     }
 
     public void error(Throwable ex) {
