@@ -33,8 +33,6 @@ public interface Schema extends DatabaseObject {
 
     List<Table> getTables();
 
-    List<View> getViews();
-
     /* DbObject instance functions */
 
     Collection getCollection(String name);
@@ -47,8 +45,6 @@ public interface Schema extends DatabaseObject {
 
     Table getTable(String tableName, boolean requireExists);
 
-    View getView(String name);
-
     void drop();
 
     /* Create functions */
@@ -56,12 +52,5 @@ public interface Schema extends DatabaseObject {
     Collection createCollection(String name);
 
     Collection createCollection(String name, boolean reuseExistingObject);
-
-    View createView(String name);
-
-    /**
-     * Table.createTable [26] - not supported in v1
-     */
-    // Table createTable(String name);
 
 }

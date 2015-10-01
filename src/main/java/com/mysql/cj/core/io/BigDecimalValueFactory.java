@@ -57,18 +57,22 @@ public class BigDecimalValueFactory extends DefaultValueFactory<BigDecimal> {
         return d;
     }
 
+    @Override
     public BigDecimal createFromBigInteger(BigInteger i) {
         return adjustResult(new BigDecimal(i));
     }
 
+    @Override
     public BigDecimal createFromLong(long l) {
         return adjustResult(BigDecimal.valueOf(l));
     }
 
+    @Override
     public BigDecimal createFromBigDecimal(BigDecimal d) {
         return adjustResult(d);
     }
 
+    @Override
     public BigDecimal createFromDouble(double d) {
         return adjustResult(BigDecimal.valueOf(d));
     }

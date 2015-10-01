@@ -72,10 +72,6 @@ public class SchemaImpl implements Schema {
         return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "TABLE").stream().map(this::getTable).collect(Collectors.toList());
     }
 
-    public List<View> getViews() {
-        throw new NullPointerException("TODO:");
-    }
-
     public Collection getCollection(String collectionName) {
         return new CollectionImpl(this, collectionName);
     }
@@ -83,7 +79,6 @@ public class SchemaImpl implements Schema {
     public Collection getCollection(String collectionName, boolean requireExists) {
         CollectionImpl coll = new CollectionImpl(this, collectionName);
         if (requireExists && coll.existsInDatabase() != DbObjectStatus.EXISTS) {
-            // TODO: We should have a better exception design for the API
             throw new WrongArgumentException(coll.toString() + " doesn't exist");
         }
         return coll;
@@ -98,11 +93,11 @@ public class SchemaImpl implements Schema {
     }
 
     public Table getTable(String tableName, boolean requireExists) {
-        throw new NullPointerException("TODO:");
-    }
-
-    public View getView(String viewName) {
-        throw new NullPointerException("TODO:");
+        TableImpl table = new TableImpl(this, tableName);
+        if (requireExists && table.existsInDatabase() != DbObjectStatus.EXISTS) {
+            throw new WrongArgumentException(table.toString() + " doesn't exist");
+        }
+        return table;
     }
 
     public void drop() {
@@ -123,10 +118,6 @@ public class SchemaImpl implements Schema {
             }
             throw ex;
         }
-    }
-
-    public View createView(String viewName) {
-        throw new NullPointerException("TODO:");
     }
 
     @Override

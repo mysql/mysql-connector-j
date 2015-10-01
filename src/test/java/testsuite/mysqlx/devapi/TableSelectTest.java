@@ -23,6 +23,7 @@
 
 package testsuite.mysqlx.devapi;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -115,6 +116,10 @@ public class TableSelectTest extends TableTest {
         Row row = rows.next();
         assertEquals(15, row.getInt(0));
         assertEquals(2, row.getInt(1));
+        assertEquals(2, row.getByte(1));
+        assertEquals(2, row.getLong(1));
+        assertEquals(new BigDecimal("2"), row.getBigDecimal(1));
+        assertEquals(true, row.getBoolean(1));
         row = rows.next();
         assertEquals(14, row.getInt(0));
         assertEquals(2, row.getInt(1));

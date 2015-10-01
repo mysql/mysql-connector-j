@@ -164,11 +164,9 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
     /**
      * Schema browsing Schema.getCollections() [44]
      * Schema browsing Schema.getTables() [45]
-     * Schema browsing Schema.getViews() [46]
      * Schema access Schema.getCollection() [47]
      * Schema access Schema.getCollectionAsTable() [50]
      * Schema access Schema.getTable() [48]
-     * Schema access Schema.getView() [49]
      * Schema - who am I? [51]
      * Schema - am I real? [52]
      * Schema - DDL create [55]
@@ -189,9 +187,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         // Schema browsing Schema.getTables() [45]
         schema.getTables();
 
-        // Schema browsing Schema.getViews() [46]
-        schema.getViews();
-
         // Schema access Schema.getCollection() [47]
         schema.getCollection(""); // TODO set name
 
@@ -201,9 +196,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         // Schema access Schema.getTable() [48]
         schema.getTable(""); // TODO set name
 
-        // Schema access Schema.getView() [49]
-        schema.getView(""); // TODO set name
-
         // Schema - who am I? [51]
         schema.getName();
 
@@ -212,8 +204,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
 
         // Schema - DDL create [55]
         schema.createCollection(""); // TODO set name
-        schema.createView(""); // TODO set name
-        // TODO add createTable(String name) method ?
 
         // Schema.drop [53]
         schema.drop();
@@ -359,7 +349,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        View view = getSession("").getDefaultSchema().getView("name"); // TODO set URL and collection name
+        View view = null;//getSession("").getDefaultSchema().getView("name"); // TODO set URL and collection name
 
         // View.select [54]
         view.select("searchFields"); // TODO set correct parameter, expand statements

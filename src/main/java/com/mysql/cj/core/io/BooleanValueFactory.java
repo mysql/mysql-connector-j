@@ -30,26 +30,31 @@ import java.math.BigInteger;
  * A value factory for creating {@link java.lang.Boolean} values.
  */
 public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
+    @Override
     public Boolean createFromLong(long l) {
         // Goes back to ODBC driver compatibility, and VB/Automation Languages/COM, where in Windows "-1" can mean true as well.
         return (l == -1 || l > 0);
     }
 
+    @Override
     public Boolean createFromBigInteger(BigInteger i) {
         return i.compareTo(BigInteger.valueOf(0)) > 0;
     }
 
+    @Override
     // getBoolean() from DOUBLE, DECIMAL are required by JDBC spec....
     public Boolean createFromDouble(double d) {
         // this means that 0.1 will be TRUE
         return d > 0;
     }
 
+    @Override
     public Boolean createFromBigDecimal(BigDecimal d) {
         // this means that 0.1 will be TRUE
         return d.compareTo(BigDecimal.valueOf(0)) > 0;
     }
 
+    @Override
     public Boolean createFromNull() {
         return false;
     }

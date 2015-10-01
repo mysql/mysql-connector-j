@@ -57,7 +57,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.io.JsonDocValueFactory;
+import com.mysql.cj.core.io.DbDocValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
@@ -418,7 +418,7 @@ public class MysqlxSession implements Session {
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
         ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f,
-                (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new JsonDocValueFactory()));
+                (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new DbDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);

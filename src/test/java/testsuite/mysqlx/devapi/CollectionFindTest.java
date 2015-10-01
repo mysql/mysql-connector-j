@@ -33,6 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.x.json.DbDoc;
@@ -99,6 +101,15 @@ public class CollectionFindTest extends CollectionTest {
         } catch (MysqlxError err) {
             assertEquals(MysqlErrorNumbers.ER_DATA_OUT_OF_RANGE, err.getErrorCode());
         }
+    }
+
+    @Test
+    public void basicCollectionAsTable() {
+        this.collection.add("{\"xyz\":1}").execute();
+        Table coll = this.schema.getCollectionAsTable(this.collection.getName());
+        Row r = coll.select("doc").execute().next();
+        DbDoc doc = r.getDbDoc("doc");
+        assertEquals(new Integer(1), ((JsonNumber) doc.get("xyz")).getInteger());
     }
 
     @Test

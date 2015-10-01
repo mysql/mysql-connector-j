@@ -23,13 +23,18 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.io.BigDecimalValueFactory;
+import com.mysql.cj.core.io.BooleanValueFactory;
+import com.mysql.cj.core.io.ByteValueFactory;
+import com.mysql.cj.core.io.DbDocValueFactory;
 import com.mysql.cj.core.io.DoubleValueFactory;
 import com.mysql.cj.core.io.IntegerValueFactory;
-import com.mysql.cj.core.io.JsonDocValueFactory;
+import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.x.json.DbDoc;
@@ -56,6 +61,38 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
         return idx;
     }
 
+    public BigDecimal getBigDecimal(String fieldName) {
+        return getBigDecimal(fieldNameToIndex(fieldName));
+    }
+
+    public BigDecimal getBigDecimal(int pos) {
+        return this.row.getValue(pos, new BigDecimalValueFactory());
+    }
+
+    public boolean getBoolean(String fieldName) {
+        return getBoolean(fieldNameToIndex(fieldName));
+    }
+
+    public boolean getBoolean(int pos) {
+        return this.row.getValue(pos, new BooleanValueFactory());
+    }
+
+    public byte getByte(String fieldName) {
+        return getByte(fieldNameToIndex(fieldName));
+    }
+
+    public byte getByte(int pos) {
+        return this.row.getValue(pos, new ByteValueFactory());
+    }
+
+    public DbDoc getDbDoc(String fieldName) {
+        return getDbDoc(fieldNameToIndex(fieldName));
+    }
+
+    public DbDoc getDbDoc(int pos) {
+        return this.row.getValue(pos, new DbDocValueFactory());
+    }
+
     public double getDouble(String fieldName) {
         return getDouble(fieldNameToIndex(fieldName));
     }
@@ -72,12 +109,12 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
         return this.row.getValue(pos, new IntegerValueFactory());
     }
 
-    public DbDoc getJsonDoc(String fieldName) {
-        return getJsonDoc(fieldNameToIndex(fieldName));
+    public long getLong(String fieldName) {
+        return getLong(fieldNameToIndex(fieldName));
     }
 
-    public DbDoc getJsonDoc(int pos) {
-        return this.row.getValue(pos, new JsonDocValueFactory());
+    public long getLong(int pos) {
+        return this.row.getValue(pos, new LongValueFactory());
     }
 
     public String getString(String fieldName) {

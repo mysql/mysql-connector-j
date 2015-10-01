@@ -23,17 +23,25 @@
 
 package com.mysql.cj.api.x;
 
+import java.math.BigDecimal;
+
 import com.mysql.cj.x.json.DbDoc;
 
 public interface Row {
-
+    BigDecimal getBigDecimal(String fieldName);
+    BigDecimal getBigDecimal(int pos);
+    boolean getBoolean(String fieldName);
+    boolean getBoolean(int pos);
+    byte getByte(String fieldName);
+    byte getByte(int pos);
+    DbDoc getDbDoc(String fieldName);
+    DbDoc getDbDoc(int pos);
     double getDouble(String fieldName);
     double getDouble(int pos);
     int getInt(String fieldName);
     int getInt(int pos);
-    DbDoc getJsonDoc(String fieldName);
-    DbDoc getJsonDoc(int pos);
+    long getLong(String fieldName);
+    long getLong(int pos);
     String getString(String fieldName);
     String getString(int pos);
-
 }

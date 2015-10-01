@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.DbDocs;
 import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.core.io.JsonDocValueFactory;
+import com.mysql.cj.core.io.DbDocValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.DbDoc;
 
@@ -37,7 +37,7 @@ import com.mysql.cj.x.json.DbDoc;
  */
 public class DbDocsImpl extends AbstractDataResult<DbDoc> implements DbDocs, FetchedDocs {
     public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, r -> r.getValue(0, new JsonDocValueFactory()));
+        super(rows, completer, r -> r.getValue(0, new DbDocValueFactory()));
         this.rows = rows;
         this.completer = completer;
     }

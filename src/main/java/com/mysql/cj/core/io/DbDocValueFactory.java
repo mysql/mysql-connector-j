@@ -34,13 +34,13 @@ import com.mysql.cj.x.json.JsonParser;
 /**
  * A {@link ValueFactory} implementation to create {@link DbDoc}s.
  */
-public class JsonDocValueFactory extends DefaultValueFactory<DbDoc> {
+public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
     private String encoding;
 
-    public JsonDocValueFactory() {
+    public DbDocValueFactory() {
     }
 
-    public JsonDocValueFactory(String encoding) {
+    public DbDocValueFactory(String encoding) {
         this.encoding = encoding;
     }
 
