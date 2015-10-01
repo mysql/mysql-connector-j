@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+dd-mm-yy - Version 5.1.38
+
 10-15-15 - Version 5.1.37
 
   - Fix for Bug#21876798, CONNECTOR/J WITH MYSQL FABRIC AND SPRING PRODUCES PROXY ERROR.
