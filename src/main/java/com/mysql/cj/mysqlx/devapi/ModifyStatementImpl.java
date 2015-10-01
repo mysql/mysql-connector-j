@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.Result;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
@@ -37,7 +38,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     private CollectionImpl collection;
     private List<UpdateSpec> updates = new ArrayList<>();
 
-    public ModifyStatementImpl(CollectionImpl collection, String criteria) {
+    /* package private */ModifyStatementImpl(CollectionImpl collection, String criteria) {
         super(collection.getSchema().getName(), collection.getName(), false);
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
@@ -76,7 +77,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public ModifyStatement merge(String document) {
-        throw new NullPointerException("TODO: not supported in xplugin");
+        throw new FeatureNotAvailableException("TODO: not supported in xplugin");
     }
 
     public ModifyStatement arrayInsert(String field, Object value) {
@@ -90,6 +91,6 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     }
 
     public ModifyStatement arrayDelete(String field, int position) {
-        throw new NullPointerException("TODO: not supported in xplugin");
+        throw new FeatureNotAvailableException("TODO: not supported in xplugin");
     }
 }

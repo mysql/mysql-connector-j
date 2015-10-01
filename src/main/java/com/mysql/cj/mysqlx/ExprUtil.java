@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx;
 import com.google.protobuf.ByteString;
 
 import com.mysql.cj.api.x.Expression;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
@@ -167,6 +168,6 @@ public class ExprUtil {
         } else if (value.getClass() == JsonArray.class) {
             // TODO: check how xplugin handles this
         }
-        throw new NullPointerException("TODO: other types? BigDecimal, Date, Timestamp, Time");
+        throw new FeatureNotAvailableException("TODO: other types: BigDecimal, Date, Timestamp, Time");
     }
 }

@@ -37,6 +37,7 @@ import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.RemoveStatement;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.mysqlx.ExprUnparser;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonParser;
@@ -70,7 +71,7 @@ public class CollectionImpl implements Collection {
     }
 
     public AddStatement add(Map<String, ?> doc) {
-        throw new NullPointerException("TODO: ");
+        throw new FeatureNotAvailableException("TODO: ");
     }
 
     public AddStatement add(String jsonString) {

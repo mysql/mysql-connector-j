@@ -30,7 +30,6 @@ import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.View;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.ExprUnparser;

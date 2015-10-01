@@ -33,6 +33,7 @@ import com.mysql.cj.api.x.Columns;
 import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Rows;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 
@@ -53,7 +54,7 @@ public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRo
     }
 
     public Columns getColumns() {
-        throw new NullPointerException("TODO");
+        throw new FeatureNotAvailableException();
     }
 
     public List<String> getColumnNames() {
