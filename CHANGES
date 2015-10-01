@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-15 - Version 6.0.0
+10-19-15 - Version 6.0.1
 
   - Removed useJvmCharsetConverters connection property. JVM charset converters are now used in all cases.
 
