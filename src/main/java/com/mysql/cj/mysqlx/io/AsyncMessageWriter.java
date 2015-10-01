@@ -118,15 +118,7 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
     public void write(MessageLite msg) {
         CompletableFuture<Void> f = new CompletableFuture<>();
         // write a message asynchronously that will notify the future when complete
-        writeAsync(msg, new SentListener() {
-                public void completed() {
-                    f.complete(null);
-                }
-
-                public void error(Throwable ex) {
-                    f.completeExceptionally(ex);
-                }
-            });
+        writeAsync(msg, new ErrorToFutureSentListener(f, () -> f.complete(null)));
         // wait on the future to return
         try {
             f.get();
@@ -182,7 +174,20 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
                     .map(System::identityHashCode)
                     .map(this.bufToListener::remove)
                     .filter(Objects::nonNull)
-                    .forEach(SentListener::completed);
+                    .forEach(l -> {
+                                // prevent exceptions in listener from blocking other notifications
+                                try {
+                                    l.completed();
+                                } catch (Throwable ex) {
+                                    // presumably unexpected, notify so futures don't block
+                                    try {
+                                        l.error(ex);
+                                    } catch (Throwable ex2) {
+                                        // nothing we can do here
+                                        ex2.printStackTrace();
+                                    }
+                                }
+                            });
             if (this.pendingWrites.size() > 0) {
                 initiateWrite();
             }
