@@ -256,9 +256,9 @@ public class ExprParser {
                         this.tokens.add(new Token(TokenType.PLUS, c));
                         break;
                     case '-':
-                        if (nextCharEquals(i, '>') && nextCharEquals(i+1, '$')) {
-                            i += 2;
-                            this.tokens.add(new Token(TokenType.COLDOCPATH, "->$"));
+                        if (nextCharEquals(i, '>')) {
+                            i++;
+                            this.tokens.add(new Token(TokenType.COLDOCPATH, "->"));
                         } else {
                             this.tokens.add(new Token(TokenType.MINUS, c));
                         }
@@ -633,7 +633,16 @@ public class ExprParser {
         }
         if (currentTokenTypeEquals(TokenType.COLDOCPATH)) {
             consumeToken(TokenType.COLDOCPATH);
-            id.addAllDocumentPath(documentPath());
+            if (currentTokenTypeEquals(TokenType.DOLLAR)) {
+                consumeToken(TokenType.DOLLAR);
+                id.addAllDocumentPath(documentPath());
+            } else if (currentTokenTypeEquals(TokenType.LSTRING)) {
+                String path = consumeToken(TokenType.LSTRING);
+                if (path.charAt(0) != '$') {
+                    throw new WrongArgumentException("Invalid document path at " + this.tokenPos);
+                }
+                id.addAllDocumentPath(new ExprParser(path.substring(1, path.length())).documentPath());
+            }
             if (id.getDocumentPathCount() == 0) {
                 throw new WrongArgumentException("Invalid document path at " + this.tokenPos);
             }

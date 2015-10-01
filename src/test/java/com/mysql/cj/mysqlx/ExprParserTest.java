@@ -97,6 +97,7 @@ public class ExprParserTest {
         checkBadParse("cast(x as varchar)");
         checkBadParse("not");
         checkBadParse("->$.a[-1]");
+        checkBadParse("x->'not a docpath'");
         // TODO: test bad JSON identifiers (quoting?)
     }
 
@@ -180,6 +181,7 @@ public class ExprParserTest {
         checkParseRoundTrip("(1 + 3) in (3, 4, 5)", "(1 + 3) in(3, 4, 5)");
         checkParseRoundTrip("`a crazy \"function\"``'name'`(1 + 3) in (3, 4, 5)", "`a crazy \"function\"``'name'`((1 + 3)) in(3, 4, 5)");
         checkParseRoundTrip("a->$.b", "a->$.b");
+        checkParseRoundTrip("a->'$.b'", "a->$.b");
         checkParseRoundTrip("a->$.\"bcd\"", "a->$.bcd");
         checkParseRoundTrip("a->$.*", "a->$.*");
         checkParseRoundTrip("a->$[0].*", "a->$[0].*");
