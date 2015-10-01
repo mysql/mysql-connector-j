@@ -203,6 +203,7 @@ public class ExprParserTest {
         checkParseRoundTrip("a + cast(b as unsigned)", "(a + cast(b AS UNSIGNED))");
         checkParseRoundTrip("a + cast(b as unsigned integer)", "(a + cast(b AS UNSIGNED))");
         checkParseRoundTrip("a is true or a is false", "((a is TRUE) || (a is FALSE))");
+        checkParseRoundTrip("colId + .1e-3", "(colId + 1.0E-4)");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
     }
