@@ -177,16 +177,16 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
             while (this.pendingWrites.peek() != null && !this.pendingWrites.peek().hasRemaining()) {
                 completedWrites.add(this.pendingWrites.remove());
             }
+            // notify listener(s) before initiating write to satisfy ordering guarantees
+            completedWrites.stream()
+                    .map(System::identityHashCode)
+                    .map(this.bufToListener::remove)
+                    .filter(Objects::nonNull)
+                    .forEach(SentListener::completed);
             if (this.pendingWrites.size() > 0) {
                 initiateWrite();
             }
         }
-        // notify (possibly long-running) listener(s) after initiating write and releasing lock
-        completedWrites.stream()
-                .map(System::identityHashCode)
-                .map(this.bufToListener::remove)
-                .filter(Objects::nonNull)
-                .forEach(SentListener::completed);
     }
 
     public void failed(Throwable t, Void v) {

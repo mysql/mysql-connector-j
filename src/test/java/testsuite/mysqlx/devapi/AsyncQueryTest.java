@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.FetchedDocs;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Row;
@@ -194,5 +195,45 @@ public class AsyncQueryTest extends CollectionTest {
                     assertEquals("3", r.getString("3"));
                     assertFalse(res.hasNext());
                 }).get();
+    }
+
+    /**
+     * This test addresses the "correlation" of messages to their proper async listeners.
+     */
+    @Test
+    public void manyFutures() throws Exception {
+        int MANY = 1000;
+        Collection coll = this.collection;
+        List<CompletableFuture<FetchedDocs>> futures =  new ArrayList<>();
+        for (int i = 0; i < MANY; ++i) {
+            if(i%3==0) {
+                futures.add(coll.find("F1  like '%Field%-5'").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync());
+            } else if(i%3==1) {
+                futures.add(coll.find("NON_EXISTING_FUNCTION()").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync()); // Expecting Error
+            } else {
+                futures.add(coll.find("F3 = ?").bind(106).executeAsync());
+            }
+        }
+        FetchedDocs docs;
+        for (int i = 0; i < MANY; ++i) {
+            if(i%3==0) {
+                //Expect Success and check F1  is like  %Field%-5
+                docs = futures.get(i).get();
+                assertFalse(docs.hasNext());
+            } else if(i%3==1) {
+                try {
+                    //Expecting Error FUNCTION test.NON_EXISTING_FUNCTION does not exist
+                    docs = futures.get(i).get();
+                    fail("Expected error");
+                } catch (ExecutionException ex) {
+                    MysqlxError err = (MysqlxError) ex.getCause();
+                    assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, err.getErrorCode());
+                }
+            } else {
+                //Expect Success and check F3 is 106
+                docs = futures.get(i).get();
+                assertFalse(docs.hasNext());
+            }
+        }
     }
 }
