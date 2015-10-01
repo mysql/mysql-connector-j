@@ -355,6 +355,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
         <copy todir="${buildDriverDir}" filtering="true">
             <fileset dir="src/build/java" />
             <fileset dir="src/build/misc" />
+            <fileset dir="src/generated/java" />
             <fileset dir="src/main/java" />
             <fileset dir="src/main/resources" />
             <fileset dir="src/demo/java" />

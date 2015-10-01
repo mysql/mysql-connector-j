@@ -3,6 +3,11 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/build/java"/>
 	<classpathentry kind="src" path="src/demo/java"/>
+	<classpathentry kind="src" path="src/generated/java">
+		<attributes>
+			<attribute name="ignore_optional_problems" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="lib" path="lib/jboss-common-jdbc-wrapper.jar"/>
