@@ -125,4 +125,30 @@ public class TableSelectTest extends TableTest {
         assertEquals(2, row.getInt(1));
         assertFalse(rows.hasNext());
     }
+
+    @Test
+    public void allColumns() {
+        sqlUpdate("drop table if exists allColumns");
+        sqlUpdate("create table allColumns (x int, y int, z int)");
+        sqlUpdate("insert into allColumns values (1,2,3)");
+        Table table = this.schema.getTable("allColumns");
+        // * must come first, as with SQL
+        SelectStatement stmt = table.select("*, 42 as a_number, '43' as a_string");
+        Row row = stmt.execute().next();
+        assertEquals(42, row.getInt("a_number"));
+        assertEquals(1, row.getInt("x"));
+        assertEquals(2, row.getInt("y"));
+        assertEquals(3, row.getInt("z"));
+        assertEquals("43", row.getString("a_string"));
+    }
+
+    @Test
+    public void countAllColumns() {
+        sqlUpdate("drop table if exists countAllColumns");
+        sqlUpdate("create table countAllColumns(x int, y int)");
+        sqlUpdate("insert into countAllColumns values (1,1), (2,2), (3,3), (4,4)");
+        Table table = this.schema.getTable("countAllColumns");
+        Row row = table.select("count(*) + 10").execute().next();
+        assertEquals(14, row.getInt(0));
+    }
 }

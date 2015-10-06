@@ -198,6 +198,8 @@ public class ExprUnparser {
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
         } else if (params.size() == 1) {
             return String.format("%s%s", name, params.get(0));
+        } else if (params.size() == 0) {
+            return name;
         } else {
             return name + paramListToString(params);
         }

@@ -208,6 +208,9 @@ public class ExprParserTest {
         checkParseRoundTrip("colId + .1e-3", "(colId + 1.0E-4)");
         // TODO: this isn't serialized correctly by the unparser
         //checkParseRoundTrip("a@.b[0][0].c**.d.\"a weird\\\"key name\"", "");
+        // star function
+        checkParseRoundTrip("*", "*");
+        checkParseRoundTrip("count(*) + 1", "(count(*) + 1)");
     }
 
     /**
@@ -485,6 +488,17 @@ public class ExprParserTest {
         List<Projection> proj = new ExprParser("a, b as c").parseTableSelectProjection();
         assertEquals(2, proj.size());
         assertEquals("a", ExprUnparser.exprToString(proj.get(0).getSource()));
+        assertFalse(proj.get(0).hasAlias());
+        assertEquals("b", ExprUnparser.exprToString(proj.get(1).getSource()));
+        assertTrue(proj.get(1).hasAlias());
+        assertEquals("c", proj.get(1).getAlias());
+    }
+
+    @Test
+    public void testStarTableSelectProjection() {
+        List<Projection> proj = new ExprParser("*, b as c").parseTableSelectProjection();
+        assertEquals(2, proj.size());
+        assertEquals("*", ExprUnparser.exprToString(proj.get(0).getSource()));
         assertFalse(proj.get(0).hasAlias());
         assertEquals("b", ExprUnparser.exprToString(proj.get(1).getSource()));
         assertTrue(proj.get(1).hasAlias());

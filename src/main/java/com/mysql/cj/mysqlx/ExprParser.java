@@ -497,6 +497,11 @@ public class ExprParser {
         return Expr.newBuilder().setType(Expr.Type.FUNC_CALL).setFunctionCall(b.build()).build();
     }
 
+    Expr starOperator() {
+        Operator op = Operator.newBuilder().setName("*").build();
+        return Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(op).build();
+    }
+
     /**
      * Parse an identifier for a function call: [schema.]name
      */
@@ -779,6 +784,9 @@ public class ExprParser {
                 return ExprUtil.buildLiteralScalar(t.type == TokenType.TRUE);
             case DOLLAR:
                 return documentField();
+            case STAR:
+                // special "0-ary" consideration of "*" as an operator (for COUNT(*), etc)
+                return starOperator();
             case IDENT:
                 this.tokenPos--; // stay on the identifier
                 // check for function call which may be: func(...) or schema.func(...)
