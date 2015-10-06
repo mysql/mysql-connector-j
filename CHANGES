@@ -13,7 +13,8 @@
 
   - Added tests for Optimizer hints syntax introduced in MySQL 5.7.7.
 
-  - Added support for JSON data type.
+  - Fix for Bug#Bug #21860833, JSON DATA TYPE DOESN'T WORK WITH SSPS.
+    Added support for JSON data type.
 
   - Added support for JDBC 4.2 new features.
 
