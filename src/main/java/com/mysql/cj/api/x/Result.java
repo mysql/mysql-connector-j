@@ -28,22 +28,14 @@ import java.util.Iterator;
 /**
  * Base interface for results of CRUD or SQL operations
  */
-public interface Result { // TODO extends ResultSet ?
-
-    // Result.Basics [38]
+public interface Result {
     long getAffectedItemsCount();
 
     Long getLastInsertId();
 
-    String getLastDocumentId(); // TODO according to spec should return GUID
+    String getLastDocumentId();
 
     int getWarningsCount();
 
     Iterator<Warning> getWarnings();
-
-    /*
-     * Result client side buffering
-     */
-    // TODO are some interface changes needed for buffering?
-
 }

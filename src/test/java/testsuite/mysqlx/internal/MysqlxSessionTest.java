@@ -38,7 +38,7 @@ import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.MysqlxSession;
-import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
+import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 
 /**
  * Tests for (internal) session-level APIs against a running MySQL-X server.
@@ -102,11 +102,11 @@ public class MysqlxSessionTest extends BaseInternalMysqlxTest {
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName);
         findParams.setOrder("$._id");
-        DbDocsImpl docs1 = this.session.findDocs(findParams);
-        DbDocsImpl docs2 = this.session.findDocs(findParams);
-        DbDocsImpl docs3 = this.session.findDocs(findParams);
-        DbDocsImpl docs4 = this.session.findDocs(findParams);
-        DbDocsImpl docs5 = this.session.findDocs(findParams);
+        DocResultImpl docs1 = this.session.findDocs(findParams);
+        DocResultImpl docs2 = this.session.findDocs(findParams);
+        DocResultImpl docs3 = this.session.findDocs(findParams);
+        DocResultImpl docs4 = this.session.findDocs(findParams);
+        DocResultImpl docs5 = this.session.findDocs(findParams);
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());

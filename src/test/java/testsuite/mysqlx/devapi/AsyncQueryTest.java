@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.mysql.cj.api.x.Collection;
-import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
@@ -70,8 +70,8 @@ public class AsyncQueryTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        CompletableFuture<FetchedDocs> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
-        FetchedDocs docs = docsF.get();
+        CompletableFuture<DocResult> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
+        DocResult docs = docsF.get();
         DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
@@ -85,13 +85,13 @@ public class AsyncQueryTest extends CollectionTest {
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
 
-        List<CompletableFuture<FetchedDocs>> futures = new ArrayList<>();
+        List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
             futures.add(this.collection.find("firstName like '%Fra%'").executeAsync());
         }
 
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
-            FetchedDocs docs = futures.get(i).get();
+            DocResult docs = futures.get(i).get();
             DbDoc d = docs.next();
             JsonString val = (JsonString) d.get("lastName");
             assertEquals("Wright", val.getString());
@@ -124,7 +124,7 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void syntaxErrorEntireResult() throws Exception {
-        CompletableFuture<FetchedDocs> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync();
+        CompletableFuture<DocResult> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync();
         try {
             res.get();
             fail("Should fail due to non existing function");
@@ -139,13 +139,13 @@ public class AsyncQueryTest extends CollectionTest {
     public void insertDocs() throws Exception {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
-        CompletableFuture<FetchedDocs> docF = resF.thenCompose((Result res) -> {
+        CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
                     assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
                     return this.collection.find("firstName like '%Fra%'").executeAsync();
                 });
 
 
-        DbDoc d = docF.thenApply((FetchedDocs docs) -> docs.next()).get(5, TimeUnit.SECONDS);
+        DbDoc d = docF.thenApply((DocResult docs) -> docs.next()).get(5, TimeUnit.SECONDS);
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("Wright", val.getString());
     }
@@ -204,7 +204,7 @@ public class AsyncQueryTest extends CollectionTest {
     public void manyFutures() throws Exception {
         int MANY = 1000;
         Collection coll = this.collection;
-        List<CompletableFuture<FetchedDocs>> futures =  new ArrayList<>();
+        List<CompletableFuture<DocResult>> futures =  new ArrayList<>();
         for (int i = 0; i < MANY; ++i) {
             if(i%3==0) {
                 futures.add(coll.find("F1  like '%Field%-5'").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync());
@@ -214,7 +214,7 @@ public class AsyncQueryTest extends CollectionTest {
                 futures.add(coll.find("F3 = ?").bind(106).executeAsync());
             }
         }
-        FetchedDocs docs;
+        DocResult docs;
         for (int i = 0; i < MANY; ++i) {
             if(i%3==0) {
                 //Expect Success and check F1  is like  %Field%-5

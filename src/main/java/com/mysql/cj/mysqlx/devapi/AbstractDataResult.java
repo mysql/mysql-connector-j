@@ -23,22 +23,26 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Warning;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.BufferedRowList;
-import com.mysql.cj.mysqlx.result.RowToElement;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
+import com.mysql.cj.mysqlx.result.RowToElement;
 
 /**
- * @todo
+ * Base class for data set results.
  */
-public abstract class AbstractDataResult<T> implements ResultStreamer {
+public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<T> {
 
     protected int position = -1;
     protected int count = -1;
@@ -46,6 +50,8 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
     protected Supplier<StatementExecuteOk> completer;
     protected StatementExecuteOk ok;
     protected RowToElement<T> rowToData;
+    /** List of all elements. <code>null</code> until requested via {@link fetchAll()}. */
+    protected List<T> all;
 
     public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer, RowToElement<T> rowToData) {
         this.rows = rows;
@@ -53,17 +59,30 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
         this.rowToData = rowToData;
     }
 
-    public T first() {
-        throw new UnsupportedOperationException("TODO: not yet implemented");
-    }
-
     public T next() {
-        Row r = rows.next();
+        if (this.all != null) {
+            throw new WrongArgumentException("Cannot iterate after fetchAll()");
+        }
+
+        Row r = this.rows.next();
         if (r == null) {
             throw new NoSuchElementException();
         }
         this.position++;
-        return rowToData.apply(r);
+        return this.rowToData.apply(r);
+    }
+
+    public List<T> fetchAll() {
+        if (this.position > -1) {
+            throw new WrongArgumentException("Cannot fetchAll() after starting iteration");
+        }
+
+        if (this.all == null) {
+            this.all = new ArrayList<>((int) count());
+            this.rows.forEachRemaining(r -> this.all.add(this.rowToData.apply(r)));
+            this.all = Collections.unmodifiableList(this.all);
+        }
+        return this.all;
     }
 
     public long count() {
@@ -83,6 +102,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer {
     /**
      * Finish the result streaming. This happens if a new command is started or the warnings/etc are requested. This is safe to call multiple times and only has
      * an effect the first time.
+     * 
      * @todo better doc
      */
     public void finishStreaming() {

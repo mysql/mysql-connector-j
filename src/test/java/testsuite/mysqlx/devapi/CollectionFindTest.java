@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.x.FetchedDocs;
+import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -69,7 +69,7 @@ public class CollectionFindTest extends CollectionTest {
         // TODO: the "1" is coming back from the server as a string. checking with xplugin team if this is ok
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
-        FetchedDocs docs = this.collection.find().fields("$._id as _id, $.g as g, 1 + 1 as q").execute();
+        DocResult docs = this.collection.find().fields("$._id as _id, $.g as g, 1 + 1 as q").execute();
         DbDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
@@ -81,7 +81,7 @@ public class CollectionFindTest extends CollectionTest {
         // use a document as a projection
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
-        FetchedDocs docs = this.collection.find().fields(expr("{'_id':$._id, 'q':1 + 1, 'g2':-20*$.g}")).execute();
+        DocResult docs = this.collection.find().fields(expr("{'_id':$._id, 'q':1 + 1, 'g2':-20*$.g}")).execute();
         DbDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());
@@ -95,7 +95,7 @@ public class CollectionFindTest extends CollectionTest {
     public void outOfRange() {
         try {
             this.collection.add("{}").execute();
-            FetchedDocs docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
+            DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
             docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
             fail("Statement should raise an error");
         } catch (MysqlxError err) {
@@ -120,7 +120,7 @@ public class CollectionFindTest extends CollectionTest {
         this.collection.add("{}").execute();
 
         // limit 1, order by ID, save the first ID
-        FetchedDocs docs = this.collection.find().orderBy("$._id").limit(1).execute();
+        DocResult docs = this.collection.find().orderBy("$._id").limit(1).execute();
         assertTrue(docs.hasNext());
         String firstId = ((JsonString) docs.next().get("_id")).getString();
         assertTrue(firstId.matches("[a-f0-9]{32}"));
@@ -141,7 +141,7 @@ public class CollectionFindTest extends CollectionTest {
     public void testNumericExpressions() {
         this.collection.add("{\"x\":1, \"y\":2}").execute();
 
-        FetchedDocs docs;
+        DocResult docs;
 
         docs = this.collection.find("$.x + $.y = 3").execute();
         docs.next();
@@ -171,7 +171,7 @@ public class CollectionFindTest extends CollectionTest {
     public void testBitwiseExpressions() {
         this.collection.add("{\"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute();
 
-        FetchedDocs docs;
+        DocResult docs;
 
         docs = this.collection.find("$.x1 = 29 | 15").execute();
         docs.next();
@@ -192,7 +192,7 @@ public class CollectionFindTest extends CollectionTest {
     public void testIntervalExpressions() {
         this.collection.add("{\"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute();
 
-        FetchedDocs docs;
+        DocResult docs;
 
         docs = this.collection.find("$.aDatetime + interval 1000000 microsecond = '2000-01-01 12:00:02'").execute();
         docs.next();
@@ -241,7 +241,7 @@ public class CollectionFindTest extends CollectionTest {
     public void testIlriExpressions() {
         this.collection.add("{\"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute();
 
-        FetchedDocs docs;
+        DocResult docs;
 
         // TODO: this is a known problem on the server with JSON value types (with IS NULL too)
         // docs = this.collection.find("$.c IS TRUE AND $.c IS NOT FALSE").execute();

@@ -40,7 +40,7 @@ public class SqlDataResult extends RowsImpl implements SqlResult {
         super(metadata, rows, completer);
     }
 
-    public boolean nextDataSet() {
+    public boolean nextResult() {
         return false; // TODO: MYSQLCONNJ-568
     }
 

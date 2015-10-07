@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api.x;
 
-public interface SelectStatement extends DataStatement<SelectStatement, FetchedRows, Row> {
+public interface SelectStatement extends DataStatement<SelectStatement, RowResult, Row> {
     SelectStatement where(String searchCondition);
 
     SelectStatement groupBy(String groupBy);

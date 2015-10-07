@@ -49,8 +49,8 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.DataStatement.Reducer;
-import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.DocResult;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
@@ -62,7 +62,7 @@ import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.mysqlx.devapi.DbDocsImpl;
+import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
 import com.mysql.cj.mysqlx.devapi.RowsImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
@@ -251,8 +251,8 @@ public class MysqlxSession implements Session {
         return res;
     }
 
-    public DbDocsImpl findDocs(FindParams findParams) {
-        return findInternal(findParams, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
+    public DocResultImpl findDocs(FindParams findParams) {
+        return findInternal(findParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
     }
 
     public RowsImpl selectRows(FindParams findParams) {
@@ -407,11 +407,11 @@ public class MysqlxSession implements Session {
         return f;
     }
 
-    public CompletableFuture<FetchedDocs> asyncFindDocs(FindParams findParams) {
-        return asyncFindInternal(findParams, metadata -> (rows, task) -> new DbDocsImpl(rows, task));
+    public CompletableFuture<DocResult> asyncFindDocs(FindParams findParams) {
+        return asyncFindInternal(findParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
     }
 
-    public CompletableFuture<FetchedRows> asyncSelectRows(FindParams findParams) {
+    public CompletableFuture<RowResult> asyncSelectRows(FindParams findParams) {
         return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
     }
 

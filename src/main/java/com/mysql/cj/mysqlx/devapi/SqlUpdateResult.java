@@ -27,7 +27,6 @@ import java.util.List;
 
 import com.mysql.cj.api.x.Columns;
 import com.mysql.cj.api.x.Row;
-import com.mysql.cj.api.x.Rows;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
@@ -44,8 +43,8 @@ public class SqlUpdateResult extends UpdateResult implements SqlResult {
         return false;
     }
 
-    public boolean nextDataSet() {
-        return false; // TODO: MYSQLCONNJ-568
+    public boolean nextResult() {
+        return false;// TODO: MYSQLCONNJ-568
     }
 
     @Override
@@ -53,11 +52,7 @@ public class SqlUpdateResult extends UpdateResult implements SqlResult {
         throw new FeatureNotAvailableException("Document IDs are not assigned for SQL statements");
     }
 
-    public Rows all() {
-        throw new FeatureNotAvailableException("No data");
-    }
-
-    public Row first() {
+    public List<Row> fetchAll() {
         throw new FeatureNotAvailableException("No data");
     }
 
@@ -78,6 +73,10 @@ public class SqlUpdateResult extends UpdateResult implements SqlResult {
     }
 
     public List<String> getColumnNames() {
+        throw new FeatureNotAvailableException("No data");
+    }
+
+    public long count() {
         throw new FeatureNotAvailableException("No data");
     }
 }

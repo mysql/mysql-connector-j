@@ -30,14 +30,14 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Columns;
-import com.mysql.cj.api.x.FetchedRows;
 import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Rows;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 
-public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRows {
+public class RowsImpl extends AbstractDataResult<Row>implements Rows, RowResult {
     private ArrayList<Field> metadata;
 
     public RowsImpl(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
@@ -45,12 +45,12 @@ public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRo
         this.metadata = metadata;
     }
 
-    public Rows all() {
-        return this;
+    public List<Row> fetchAll() {
+        throw new FeatureNotAvailableException("TODO");
     }
 
     public int getColumnCount() {
-        return metadata.size();
+        return this.metadata.size();
     }
 
     public Columns getColumns() {
@@ -58,6 +58,6 @@ public class RowsImpl extends AbstractDataResult<Row> implements Rows, FetchedRo
     }
 
     public List<String> getColumnNames() {
-        return metadata.stream().map(Field::getColumnLabel).collect(Collectors.toList());
+        return this.metadata.stream().map(Field::getColumnLabel).collect(Collectors.toList());
     }
 }

@@ -52,7 +52,7 @@ public class DevApiSample {
 
 
         // note: "$" prefix for document paths is optional. "$.title.somethingElse[0]" is the same as "title.somethingElse[0]" in document expressions
-        FetchedDocs docs = coll.find("$.title = 'Effi Briest' and $.currentlyReadingPage > 10").execute();
+        DocResult docs = coll.find("$.title = 'Effi Briest' and $.currentlyReadingPage > 10").execute();
         DbDoc book = docs.next();
         System.err.println("Currently reading " + ((JsonString) book.get("title")).getString() + " on page " + ((JsonNumber) book.get("currentlyReadingPage")).getInteger());
 

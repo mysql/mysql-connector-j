@@ -29,7 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.x.DbDocs;
+import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.x.json.JsonArray;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonNumber;
@@ -57,8 +57,8 @@ public class CollectionModifyTest extends CollectionTest {
 
         this.collection.modify().set("x", "Value for x").execute();
 
-        DbDocs d = this.collection.find("x = 'Value for x'").execute().all();
-        DbDoc jd = d.next();
+        DocResult res = this.collection.find("x = 'Value for x'").execute();
+        DbDoc jd = res.next();
         assertEquals("Value for x", ((JsonString) jd.get("x")).getString());
     }
 
@@ -68,8 +68,8 @@ public class CollectionModifyTest extends CollectionTest {
 
         this.collection.modify().unset("$.x").unset("$.y").execute();
 
-        DbDocs d = this.collection.find().execute().all();
-        DbDoc jd = d.next();
+        DocResult res = this.collection.find().execute();
+        DbDoc jd = res.next();
         assertNull(jd.get("x"));
         assertNull(jd.get("y"));
     }
@@ -79,8 +79,8 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add("{\"x\":100}").execute();
         this.collection.modify().change("$.x", "99").execute();
 
-        DbDocs d = this.collection.find().execute().all();
-        DbDoc jd = d.next();
+        DocResult res = this.collection.find().execute();
+        DbDoc jd = res.next();
         assertEquals("99", ((JsonString) jd.get("x")).getString());
     }
 
@@ -89,8 +89,8 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add("{\"x\":[8,16,32]}").execute();
         this.collection.modify().arrayAppend("$.x", "64").execute();
 
-        DbDocs d = this.collection.find().execute().all();
-        DbDoc jd = d.next();
+        DocResult res = this.collection.find().execute();
+        DbDoc jd = res.next();
         JsonArray xArray = (JsonArray) jd.get("x");
         assertEquals(new Integer(8), ((JsonNumber) xArray.get(0)).getInteger());
         assertEquals(new Integer(16), ((JsonNumber) xArray.get(1)).getInteger());
@@ -107,8 +107,8 @@ public class CollectionModifyTest extends CollectionTest {
         // same as append
         this.collection.modify().arrayInsert("$.x[3]", 44).execute();
 
-        DbDocs d = this.collection.find().execute().all();
-        DbDoc jd = d.next();
+        DocResult res = this.collection.find().execute();
+        DbDoc jd = res.next();
         JsonArray xArray = (JsonArray) jd.get("x");
         assertEquals(new Integer(1), ((JsonNumber) xArray.get(0)).getInteger());
         assertEquals(new Integer(43), ((JsonNumber) xArray.get(1)).getInteger());

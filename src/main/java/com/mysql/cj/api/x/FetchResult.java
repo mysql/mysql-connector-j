@@ -24,12 +24,31 @@
 package com.mysql.cj.api.x;
 
 import java.util.Iterator;
+import java.util.List;
 
-public interface FetchResult {
+public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
 
     default boolean hasData() {
         return true;
     }
+
+    default T fetchOne() {
+        if (hasNext()) {
+            return next();
+        }
+        return null;
+    }
+
+    default Iterator<T> iterator() {
+        return fetchAll().iterator();
+    }
+
+    /**
+     * How many items are in this result? This method forces internal buffering of the entire result.
+     */
+    long count();
+
+    List<T> fetchAll();
 
     int getWarningsCount();
 

@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.DataReadException;
@@ -55,7 +55,7 @@ public class ResultTest extends BaseDevApiTest {
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");
         Table table = this.schema.getTable("testx");
-        FetchedRows rows = table.select("x/0 as bad_x").execute();
+        RowResult rows = table.select("x/0 as bad_x").execute();
         // TODO: 1/0 was generating an error before which now is not
         assertEquals(0, rows.getWarningsCount());
         // get warnings IMMEDIATELY
@@ -84,11 +84,11 @@ public class ResultTest extends BaseDevApiTest {
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");
         Table table = this.schema.getTable("testx");
-        FetchedRows rows = table.select("x").orderBy("x").execute();
+        RowResult rows = table.select("x").orderBy("x").execute();
         int i = 1;
         while (rows.hasNext()) {
             assertEquals(String.valueOf(i++), rows.next().getString("x"));
-            FetchedRows rows2 = table.select("x").orderBy("x").execute();
+            RowResult rows2 = table.select("x").orderBy("x").execute();
             assertEquals("1", rows2.next().getString("x"));
         }
     }
@@ -99,7 +99,7 @@ public class ResultTest extends BaseDevApiTest {
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");
         Table table = this.schema.getTable("testx");
-        FetchedRows rows = table.select("x").orderBy("x").execute();
+        RowResult rows = table.select("x").orderBy("x").execute();
         Row r = rows.next();
         r.getString("x");
         try {

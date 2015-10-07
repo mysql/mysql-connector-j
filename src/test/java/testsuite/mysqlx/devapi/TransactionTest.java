@@ -53,10 +53,10 @@ public class TransactionTest extends BaseDevApiTest {
 
         this.session.startTransaction();
         this.collection.add("{}").add("{}").execute();
-        assertEquals(4, this.collection.find().execute().all().count());
+        assertEquals(4, this.collection.find().execute().count());
         this.session.rollback();
 
-        assertEquals(2, this.collection.find().execute().all().count());
+        assertEquals(2, this.collection.find().execute().count());
     }
 
     @Test
@@ -65,9 +65,9 @@ public class TransactionTest extends BaseDevApiTest {
 
         this.session.startTransaction();
         this.collection.add("{}").add("{}").execute();
-        assertEquals(4, this.collection.find().execute().all().count());
+        assertEquals(4, this.collection.find().execute().count());
         this.session.commit();
 
-        assertEquals(4, this.collection.find().execute().all().count());
+        assertEquals(4, this.collection.find().execute().count());
     }
 }

@@ -21,28 +21,14 @@
 
  */
 
-package com.mysql.cj.mysqlx.devapi;
+package com.mysql.cj.api.x;
 
-import java.util.function.Supplier;
+import java.util.List;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.x.DbDocs;
-import com.mysql.cj.api.x.FetchedDocs;
-import com.mysql.cj.core.io.DbDocValueFactory;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.x.json.DbDoc;
+public interface RowResult extends FetchResult<Row> {
+    int getColumnCount();
 
-/**
- * @todo
- */
-public class DbDocsImpl extends AbstractDataResult<DbDoc> implements DbDocs, FetchedDocs {
-    public DbDocsImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, r -> r.getValue(0, new DbDocValueFactory()));
-        this.rows = rows;
-        this.completer = completer;
-    }
+    Columns getColumns();
 
-    public DbDocs all() {
-        return this;
-    }
+    List<String> getColumnNames();
 }

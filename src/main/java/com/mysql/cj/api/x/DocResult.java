@@ -23,20 +23,7 @@
 
 package com.mysql.cj.api.x;
 
-import java.util.Iterator;
-import java.util.List;
+import com.mysql.cj.x.json.DbDoc;
 
-public interface FetchedRows extends FetchResult, Iterator<Row> {
-
-    Rows all();
-
-    Row first();
-
-    Row next();
-
-    int getColumnCount();
-
-    Columns getColumns();
-
-    List<String> getColumnNames();
+public interface DocResult extends FetchResult<DbDoc> {
 }

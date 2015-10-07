@@ -25,7 +25,7 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.mysqlx.FindParams;
@@ -47,7 +47,7 @@ public class SelectStatementImpl implements SelectStatement {
         return this.table.getSession().getMysqlxSession().selectRows(this.findParams);
     }
 
-    public CompletableFuture<FetchedRows> executeAsync() {
+    public CompletableFuture<RowResult> executeAsync() {
         return this.table.getSession().getMysqlxSession().asyncSelectRows(this.findParams);
     }
 

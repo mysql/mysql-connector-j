@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.Row;
 
@@ -68,7 +68,7 @@ public class TableInsertTest extends TableTest {
         // insert a row in k/v pair form
         table.insert(row).execute();
 
-        FetchedRows rows = table.select("_id, name, birthday, age").orderBy("_id").execute();
+        RowResult rows = table.select("_id, name, birthday, age").orderBy("_id").execute();
         Row r = rows.next();
         assertEquals("1", r.getString("_id"));
         assertEquals("unknown", r.getString("name"));

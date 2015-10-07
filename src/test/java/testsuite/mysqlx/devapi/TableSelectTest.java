@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.x.FetchedRows;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.Row;
@@ -64,7 +64,7 @@ public class TableSelectTest extends TableTest {
         Map<String, Object> params = new HashMap<>();
         params.put("name", "Saki%");
         params.put("age", 20);
-        FetchedRows rows = table.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
+        RowResult rows = table.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
 
         // verify metadata
         List<String> columnNames = rows.getColumnNames();
@@ -112,7 +112,7 @@ public class TableSelectTest extends TableTest {
         stmt.groupBy("age_group");
         stmt.having("cnt > 1");
         stmt.orderBy("age_group desc");
-        FetchedRows rows = stmt.limit(2).offset(1).execute();
+        RowResult rows = stmt.limit(2).offset(1).execute();
         Row row = rows.next();
         assertEquals(15, row.getInt(0));
         assertEquals(2, row.getInt(1));
