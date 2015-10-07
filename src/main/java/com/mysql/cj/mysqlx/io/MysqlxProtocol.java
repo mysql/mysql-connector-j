@@ -587,10 +587,11 @@ public class MysqlxProtocol implements Protocol {
     }
 
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
-        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener();
-        SentListener resultHandler = new ErrorToFutureSentListener(l.getFuture(), () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
+        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
+        SentListener resultHandler = new ErrorToFutureSentListener(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
-        return l.getFuture();
+        return f;
     }
 
     public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {

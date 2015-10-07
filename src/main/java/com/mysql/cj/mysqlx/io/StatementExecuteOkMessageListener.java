@@ -44,8 +44,8 @@ public class StatementExecuteOkMessageListener implements MessageListener {
     private StatementExecuteOkBuilder builder = new StatementExecuteOkBuilder();
     private CompletableFuture<StatementExecuteOk> future = new CompletableFuture<>();
 
-    public CompletableFuture<StatementExecuteOk> getFuture() {
-        return this.future;
+    public StatementExecuteOkMessageListener(CompletableFuture<StatementExecuteOk> future) {
+        this.future = future;
     }
 
     public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {

@@ -197,6 +197,17 @@ public class AsyncQueryTest extends CollectionTest {
                 }).get();
     }
 
+    @Test
+    public void sqlError() throws Exception {
+        try {
+            CompletableFuture<SqlResult> resF = this.session.sql("select x from dont_create_this_table").executeAsync();
+            resF.get();
+            fail("Should throw an exception");
+        } catch (Exception ex) {
+            // expected
+        }
+    }
+
     /**
      * This test addresses the "correlation" of messages to their proper async listeners.
      */

@@ -29,7 +29,6 @@ import java.util.function.Function;
 import com.google.protobuf.GeneratedMessage;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
@@ -78,23 +77,23 @@ public class ResultMessageListener implements MessageListener {
 
     private boolean handleRow(Row r) {
         MysqlxRow row = new MysqlxRow(this.metadata, r);
-        callbacks.onRow(row);
+        this.callbacks.onRow(row);
         return false; /* done reading? */
     }
 
     private boolean handleStmtExecuteOk() {
-        callbacks.onComplete(okBuilder.build());
+        this.callbacks.onComplete(okBuilder.build());
         return true; /* done reading? */
     }
 
     private boolean handleError(Error error) {
         MysqlxError e = new MysqlxError(error);
-        callbacks.onError(e);
+        this.callbacks.onError(e);
         return true; /* done reading? */
     }
 
     private void handleException(Throwable ex) {
-        callbacks.onException(ex);
+        this.callbacks.onException(ex);
     }
 
     public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
@@ -103,7 +102,7 @@ public class ResultMessageListener implements MessageListener {
             return handleColumn(ColumnMetaData.class.cast(msg));
         } else {
             if (!this.metadataSent) {
-                callbacks.onMetadata(this.metadata);
+                this.callbacks.onMetadata(this.metadata);
                 this.metadataSent = true;
             }
         }

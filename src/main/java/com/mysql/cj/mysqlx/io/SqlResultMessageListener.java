@@ -29,6 +29,7 @@ import com.google.protobuf.GeneratedMessage;
 
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.MysqlxSession.ResultCtor;
 import com.mysql.cj.mysqlx.ResultCreatingResultListener;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
@@ -47,12 +48,12 @@ public class SqlResultMessageListener implements MessageListener {
 
     private ResultType resultType;
 
-    private CompletableFuture<SqlResult> resultF = new CompletableFuture<>();
+    private CompletableFuture<SqlResult> resultF;
 
     /**
      * Delegate if we get an update result.
      */
-    private StatementExecuteOkMessageListener okListener = new StatementExecuteOkMessageListener();
+    private StatementExecuteOkMessageListener okListener;
 
     /**
      * Delegate if we get a data result.
@@ -61,9 +62,21 @@ public class SqlResultMessageListener implements MessageListener {
     private ResultCreatingResultListener<SqlResult> resultCreator;
 
     public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ColToFieldTransformer colToField) {
+        // compose with non-data future
         this.resultF = resultF;
         this.resultCreator = new ResultCreatingResultListener<>(RESULT_CTOR, resultF);
         this.resultListener = new ResultMessageListener(colToField, this.resultCreator);
+        // Propagate the ok packet (or exception) to the result promise
+        CompletableFuture<StatementExecuteOk> okF = new CompletableFuture<>();
+        // hope this doesn't get GC'd
+        okF.whenComplete((ok, ex) -> {
+                    if (ex != null) {
+                        this.resultF.completeExceptionally(ex);
+                    } else {
+                        this.resultF.complete(new SqlUpdateResult(ok));
+                    }
+                });
+        this.okListener = new StatementExecuteOkMessageListener(okF);
     }
 
     public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
@@ -72,7 +85,6 @@ public class SqlResultMessageListener implements MessageListener {
                 this.resultType = ResultType.DATA;
             } else if (!Error.class.equals(msgClass)) {
                 this.resultType = ResultType.UPDATE;
-                this.okListener.getFuture().thenApply(SqlUpdateResult::new).thenAccept(this.resultF::complete);
             }
         }
 
