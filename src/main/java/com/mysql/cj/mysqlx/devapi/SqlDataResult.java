@@ -33,9 +33,9 @@ import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 
 /**
- * SQL result with data. Implemented as a thin layer over {@link RowsImpl}.
+ * SQL result with data. Implemented as a thin layer over {@link RowResultImpl}.
  */
-public class SqlDataResult extends RowsImpl implements SqlResult {
+public class SqlDataResult extends RowResultImpl implements SqlResult {
     public SqlDataResult(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
         super(metadata, rows, completer);
     }

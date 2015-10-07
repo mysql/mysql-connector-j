@@ -43,7 +43,7 @@ public class SelectStatementImpl implements SelectStatement {
         }
     }
 
-    public RowsImpl execute() {
+    public RowResultImpl execute() {
         return this.table.getSession().getMysqlxSession().selectRows(this.findParams);
     }
 

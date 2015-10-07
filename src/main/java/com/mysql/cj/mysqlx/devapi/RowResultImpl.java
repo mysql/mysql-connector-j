@@ -32,21 +32,16 @@ import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Columns;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
-import com.mysql.cj.api.x.Rows;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 
-public class RowsImpl extends AbstractDataResult<Row>implements Rows, RowResult {
+public class RowResultImpl extends AbstractDataResult<Row>implements RowResult {
     private ArrayList<Field> metadata;
 
-    public RowsImpl(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
+    public RowResultImpl(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
         super(rows, completer, new DevapiRowFactory(metadata));
         this.metadata = metadata;
-    }
-
-    public List<Row> fetchAll() {
-        throw new FeatureNotAvailableException("TODO");
     }
 
     public int getColumnCount() {

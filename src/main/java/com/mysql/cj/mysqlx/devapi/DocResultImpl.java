@@ -26,13 +26,12 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.x.DbDocs;
 import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.core.io.DbDocValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.x.json.DbDoc;
 
-public class DocResultImpl extends AbstractDataResult<DbDoc> implements DbDocs, DocResult {
+public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResult {
     public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
         super(rows, completer, r -> r.getValue(0, new DbDocValueFactory()));
         this.rows = rows;

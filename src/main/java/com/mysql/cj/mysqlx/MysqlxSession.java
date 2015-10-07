@@ -64,7 +64,7 @@ import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
-import com.mysql.cj.mysqlx.devapi.RowsImpl;
+import com.mysql.cj.mysqlx.devapi.RowResultImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
 import com.mysql.cj.mysqlx.devapi.SqlUpdateResult;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
@@ -255,8 +255,8 @@ public class MysqlxSession implements Session {
         return findInternal(findParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
     }
 
-    public RowsImpl selectRows(FindParams findParams) {
-        return findInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
+    public RowResultImpl selectRows(FindParams findParams) {
+        return findInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, rows, task));
     }
 
     public void createCollection(String schemaName, String collectionName) {
@@ -412,7 +412,7 @@ public class MysqlxSession implements Session {
     }
 
     public CompletableFuture<RowResult> asyncSelectRows(FindParams findParams) {
-        return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowsImpl(metadata, rows, task));
+        return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, rows, task));
     }
 
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
