@@ -66,11 +66,13 @@ import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
 import com.mysql.cj.mysqlx.devapi.RowResultImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
+import com.mysql.cj.mysqlx.devapi.SqlResultImpl;
 import com.mysql.cj.mysqlx.devapi.SqlUpdateResult;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
+import com.mysql.cj.mysqlx.io.StatementExecuteOkBuilder;
 import com.mysql.cj.x.json.DbDoc;
 
 /**
@@ -361,15 +363,34 @@ public class MysqlxSession implements Session {
     public SqlResult executeSql(String sql, Object args) {
         newCommand();
         this.protocol.sendSqlStatement(sql, args);
-        if (this.protocol.isResultPending()) {
-            // TODO: put characterSetMetadata somewhere useful
-            ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-            SqlDataResult res = new SqlDataResult(metadata, this.protocol.getRowInputStream(metadata), this.protocol::readStatementExecuteOk);
-            this.currentResult = res;
-            return res;
-        } else {
-            return new SqlUpdateResult(this.protocol.readStatementExecuteOk());
-        }
+        boolean readLastResult[] = new boolean[1];
+        Supplier<StatementExecuteOk> okReader = () -> {
+            if (readLastResult[0]) {
+                throw new CJCommunicationsException("Invalid state attempting to read ok packet");
+            }
+            if (this.protocol.hasMoreResults()) {
+                // empty/fabricated OK packet
+                return new StatementExecuteOkBuilder().build();
+            } else {
+                readLastResult[0] = true;
+                return this.protocol.readStatementExecuteOk();
+            }
+        };
+        Supplier<SqlResult> resultStream = () -> {
+            if (readLastResult[0]) {
+                return null;
+            } else if (this.protocol.isSqlResultPending()) {
+                // TODO: put characterSetMetadata somewhere useful
+                ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+                return new SqlDataResult(metadata, this.protocol.getRowInputStream(metadata), okReader);
+            } else {
+                readLastResult[0] = true;
+                return new SqlUpdateResult(this.protocol.readStatementExecuteOk());
+            }
+        };
+        SqlResultImpl res = new SqlResultImpl(resultStream);
+        this.currentResult = res;
+        return res;
     }
 
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args) {

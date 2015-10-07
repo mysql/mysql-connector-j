@@ -81,4 +81,32 @@ public class NodeSessionTest extends BaseDevApiTest {
         assertEquals("42", r.getString("b"));
         assertEquals("3", r.getString("c"));
     }
+
+    @Test
+    public void basicMultipleResults() {
+        sqlUpdate("drop procedure if exists basicMultipleResults");
+        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+        SqlResult res = stmt.execute();
+        assertTrue(res.hasData());
+        Row r = res.next();
+        assertFalse(res.hasNext());
+        assertTrue(res.nextResult());
+        assertTrue(res.hasData());
+        assertFalse(res.nextResult());
+        assertFalse(res.nextResult());
+        assertFalse(res.nextResult());
+    }
+
+    @Test
+    public void smartBufferMultipleResults() {
+        sqlUpdate("drop procedure if exists basicMultipleResults");
+        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+        SqlResult res = stmt.execute();
+        // execute another statement, should work fine
+        this.session.sql("call basicMultipleResults()");
+        this.session.sql("call basicMultipleResults()");
+        this.session.sql("call basicMultipleResults()");
+    }
 }

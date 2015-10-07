@@ -41,7 +41,7 @@ public class SqlDataResult extends RowResultImpl implements SqlResult {
     }
 
     public boolean nextResult() {
-        return false; // TODO: MYSQLCONNJ-568
+        throw new FeatureNotAvailableException("Not a multi-result");
     }
 
     public long getAffectedItemsCount() {

@@ -79,6 +79,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone;
+import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDoneMoreResultsets;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
@@ -346,6 +347,19 @@ public class MysqlxProtocol implements Protocol {
     public void sendDisableNotices(String... notices) {
         Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args));
+    }
+
+    public boolean hasMoreResults() {
+        if (this.reader.getNextMessageClass() == FetchDoneMoreResultsets.class) {
+            this.reader.read(FetchDoneMoreResultsets.class);
+            if (this.reader.getNextMessageClass() == FetchDone.class) {
+                // possibly bug in xplugin sending FetchDone immediately following FetchDoneMoreResultsets
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
     }
 
     public StatementExecuteOk readStatementExecuteOk() {
@@ -655,8 +669,14 @@ public class MysqlxProtocol implements Protocol {
         this.managedResource = null;
     }
 
-    public boolean isResultPending() {
-        return this.reader.getNextMessageClass() == ColumnMetaData.class;
+    public boolean isSqlResultPending() {
+        Class<?> nextMessageClass = this.reader.getNextMessageClass();
+        if (nextMessageClass == ColumnMetaData.class) {
+            return true;
+        } else if (nextMessageClass == FetchDoneMoreResultsets.class) {
+            this.reader.read(FetchDoneMoreResultsets.class);
+        }
+        return false;
     }
 
     /**

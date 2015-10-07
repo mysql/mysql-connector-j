@@ -44,7 +44,7 @@ public class SqlUpdateResult extends UpdateResult implements SqlResult {
     }
 
     public boolean nextResult() {
-        return false;// TODO: MYSQLCONNJ-568
+        throw new FeatureNotAvailableException("Not a multi-result");
     }
 
     @Override
