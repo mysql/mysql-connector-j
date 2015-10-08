@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Table;
 
 /**
@@ -55,7 +56,8 @@ public class TableDeleteTest extends TableTest {
 
         Table table = this.schema.getTable("testDelete");
         assertEquals(2, table.count());
-        table.delete().where("age == 13").execute();
+        Result res = table.delete().where("age == 13").execute();
+        assertEquals(null, res.getLastInsertId());
         assertEquals(1, table.count());
     }
 

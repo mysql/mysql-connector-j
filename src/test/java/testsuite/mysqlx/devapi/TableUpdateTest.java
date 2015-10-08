@@ -30,9 +30,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.mysql.cj.api.x.Expression.expr;
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.Row;
 
 /**
  * @todo
@@ -58,7 +59,8 @@ public class TableUpdateTest extends TableTest {
         sqlUpdate("insert into updates values ('2', 'Shakila', '2001-06-26', 13)");
 
         Table table = this.schema.getTable("updates");
-        table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
+        Result res = table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
+        assertEquals(null, res.getLastInsertId());
         RowResult rows = table.select("name, age").where("_id == 1").execute();
         Row r = rows.next();
         assertEquals("Sakila-updated", r.getString(0));
