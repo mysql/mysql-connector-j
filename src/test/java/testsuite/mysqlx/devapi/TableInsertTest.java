@@ -32,9 +32,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.Result;
+import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.Row;
 
 /**
  * @todo
@@ -50,6 +51,18 @@ public class TableInsertTest extends TableTest {
     @Override
     public void teardownTableTest() {
         super.teardownTableTest();
+    }
+
+    @Test
+    public void lastInsertId() {
+        String tableName = "lastInsertId";
+        sqlUpdate("drop table if exists lastInsertId");
+        sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
+        Table table = this.schema.getTable(tableName);
+        Result res = table.insert("name").values("a").values("b").values("c").execute();
+        assertEquals(3, res.getAffectedItemsCount());
+        // the *first* ID
+        assertEquals(new Long(1), res.getLastInsertId());
     }
 
     @Test
