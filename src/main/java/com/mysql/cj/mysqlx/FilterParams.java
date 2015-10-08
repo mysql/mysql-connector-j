@@ -116,7 +116,7 @@ public class FilterParams {
             throw new WrongArgumentException("No placeholders");
         }
         if (this.placeholderNameToPosition.get(name) == null) {
-            throw new WrongArgumentException("Unknown placeholder :" + name);
+            throw new WrongArgumentException("Unknown placeholder: " + name);
         }
         this.args[this.placeholderNameToPosition.get(name)] = ExprUtil.argObjectToScalar(value);
     }

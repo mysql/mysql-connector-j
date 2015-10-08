@@ -99,6 +99,17 @@ public class BindTest extends CollectionTest {
         }
     }
 
+    @Test
+    public void bindArgsOrder() {
+        this.collection.add("{'x':1,'y':2}".replaceAll("'", "\"")).execute();
+        // same order as query
+        assertEquals(1, this.collection.find("x = :x and y = :y")
+                .bind("x", 1).bind("y", 2).execute().count());
+        // opposite order as query
+        assertEquals(1, this.collection.find("x = :x and y = :y")
+                .bind("y", 2).bind("x", 1).execute().count());
+    }
+
     // TODO: more tests with unnamed (x = ?) and different bind value types
     // TODO: more tests find & modify
 }
