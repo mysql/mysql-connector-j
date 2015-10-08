@@ -31,12 +31,13 @@ import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.TableFindParams;
 
-public class SelectStatementImpl implements SelectStatement {
+public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
     private TableImpl table;
     private FindParams findParams;
 
     /* package private */SelectStatementImpl(TableImpl table, String projection) {
-        this.findParams = new TableFindParams(table.getSchema().getName(), table.getName());
+        super(new TableFindParams(table.getSchema().getName(), table.getName()));
+        this.findParams = (TableFindParams) this.filterParams;
         this.table = table;
         if (projection != null && projection.length() > 0) {
             this.findParams.setFields(projection);
@@ -55,21 +56,6 @@ public class SelectStatementImpl implements SelectStatement {
         return this.table.getSession().getMysqlxSession().asyncSelectRowsReduce(this.findParams, id, reducer);
     }
 
-    public SelectStatement clearBindings() {
-        this.findParams.clearArgs();
-        return this;
-    }
-
-    public SelectStatement bind(String argName, Object value) {
-        this.findParams.addArg(argName, value);
-        return this;
-    }
-
-    public SelectStatement where(String searchCondition) {
-        this.findParams.setCriteria(searchCondition);
-        return this;
-    }
-
     public SelectStatement groupBy(String groupBy) {
         this.findParams.setGrouping(groupBy);
         return this;
@@ -77,21 +63,6 @@ public class SelectStatementImpl implements SelectStatement {
 
     public SelectStatement having(String having) {
         this.findParams.setGroupingCriteria(having);
-        return this;
-    }
-
-    public SelectStatement orderBy(String sortFields) {
-        this.findParams.setOrder(sortFields);
-        return this;
-    }
-
-    public SelectStatement limit(long numberOfRows) {
-        this.findParams.setLimit(numberOfRows);
-        return this;
-    }
-
-    public SelectStatement offset(long limitOffset) {
-        this.findParams.setOffset(limitOffset);
         return this;
     }
 }

@@ -61,7 +61,7 @@ public class TableUpdateTest extends TableTest {
         Table table = this.schema.getTable("updates");
         Result res = table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
         assertEquals(null, res.getLastInsertId());
-        RowResult rows = table.select("name, age").where("_id == 1").execute();
+        RowResult rows = table.select("name, age").where("_id == :theId").bind("theId", 1).execute();
         Row r = rows.next();
         assertEquals("Sakila-updated", r.getString(0));
         assertEquals(15, r.getInt(1));

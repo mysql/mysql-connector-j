@@ -34,7 +34,7 @@ import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 
-public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl> implements ModifyStatement {
+public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
     private CollectionImpl collection;
     private List<UpdateSpec> updates = new ArrayList<>();
 
@@ -54,11 +54,6 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatementImpl
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncUpdateDocs(this.filterParams, this.updates);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
-    }
-
-    public ModifyStatement bind(String argName, Object value) {
-        this.filterParams.addArg(argName, value);
-        return this;
     }
 
     public ModifyStatement set(String docPath, Object value) {

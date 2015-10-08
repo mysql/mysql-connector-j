@@ -23,36 +23,49 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import com.mysql.cj.api.x.Statement;
 import com.mysql.cj.mysqlx.FilterParams;
 
 /**
  * @todo
  */
-public abstract class FilterableStatement<T> {
+public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<STMT_T, RES_T> {
     protected FilterParams filterParams;
+
+    public FilterableStatement(FilterParams filterParams) {
+        this.filterParams = filterParams;
+    }
 
     public FilterableStatement(String schemaName, String collectionName, boolean isRelational) {
         this.filterParams = new FilterParams(schemaName, collectionName, isRelational);
     }
 
-    public T where(String searchCondition) {
+    public STMT_T where(String searchCondition) {
         this.filterParams.setCriteria(searchCondition);
-        return (T) this;
+        return (STMT_T) this;
     }
 
-    public T sort(String sortFields) {
+    public STMT_T sort(String sortFields) {
+        return orderBy(sortFields);
+    }
+
+    public STMT_T orderBy(String sortFields) {
         this.filterParams.setOrder(sortFields);
-        return (T) this;
+        return (STMT_T) this;
     }
 
-    public T orderBy(String sortFields) {
-        this.filterParams.setOrder(sortFields);
-        return (T) this;
-    }
-
-    public T limit(long numberOfRows) {
+    public STMT_T limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
-        return (T) this;
+        return (STMT_T) this;
+    }
+
+    public STMT_T skip(long limitOffset) {
+        return offset(limitOffset);
+    }
+
+    public STMT_T offset(long limitOffset) {
+        this.filterParams.setOffset(limitOffset);
+        return (STMT_T) this;
     }
 
     /**
@@ -60,5 +73,15 @@ public abstract class FilterableStatement<T> {
      */
     public boolean isRelational() {
         return this.filterParams.isRelational();
+    }
+
+    public STMT_T clearBindings() {
+        this.filterParams.clearArgs();
+        return (STMT_T) this;
+    }
+
+    public STMT_T bind(String argName, Object value) {
+        this.filterParams.addArg(argName, value);
+        return (STMT_T) this;
     }
 }

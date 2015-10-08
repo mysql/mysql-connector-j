@@ -26,7 +26,7 @@ package com.mysql.cj.api.x;
 import java.util.Arrays;
 import java.util.List;
 
-public interface InsertStatement extends Statement<UpdateStatement, Result> {
+public interface InsertStatement extends Statement<InsertStatement, Result> {
     InsertStatement values(List<Object> values);
 
     default InsertStatement values(Object... values) {

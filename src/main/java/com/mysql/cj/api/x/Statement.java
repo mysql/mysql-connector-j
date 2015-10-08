@@ -24,7 +24,6 @@
 package com.mysql.cj.api.x;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -57,21 +56,5 @@ public interface Statement<STMT_T, RES_T> {
 
     default STMT_T bind(Object... values) {
         return bind(Arrays.asList(values));
-    }
-
-    // default Statement bind(DbDoc document) {
-    //     throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    // }
-
-    // // TODO do we really need to follow this syntax?
-    // default Statement bind(String key, String value, String... others) {
-    //     throw new UnsupportedOperationException("This statement doesn't support bound parameters");
-    // }
-
-    /**
-     * INSERT.Streaming [37]
-     */
-    default <T> Statement bind(Iterator<T> iterator) {
-        throw new UnsupportedOperationException("This statement doesn't support bound parameters");
     }
 }

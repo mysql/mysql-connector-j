@@ -29,7 +29,7 @@ import com.mysql.cj.api.x.DeleteStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
-public class DeleteStatementImpl extends FilterableStatement<DeleteStatementImpl> implements DeleteStatement {
+public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Result> implements DeleteStatement {
     private TableImpl table;
 
     /* package private */DeleteStatementImpl(TableImpl table) {

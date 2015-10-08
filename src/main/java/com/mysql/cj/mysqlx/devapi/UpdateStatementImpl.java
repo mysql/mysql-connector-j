@@ -31,7 +31,7 @@ import com.mysql.cj.api.x.UpdateStatement;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.mysqlx.UpdateParams;
 
-public class UpdateStatementImpl extends FilterableStatement<UpdateStatementImpl> implements UpdateStatement {
+public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Result> implements UpdateStatement {
     private TableImpl table;
     private UpdateParams updateParams = new UpdateParams();
 

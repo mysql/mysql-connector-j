@@ -59,6 +59,9 @@ public class TableDeleteTest extends TableTest {
         Result res = table.delete().where("age == 13").execute();
         assertEquals(null, res.getLastInsertId());
         assertEquals(1, table.count());
+
+        table.delete().where("age = :age").bind("age", 14).execute();
+        assertEquals(0, table.count());
     }
 
     // TODO: there could be more tests, incl limit?

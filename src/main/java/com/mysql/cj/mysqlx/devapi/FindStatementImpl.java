@@ -31,12 +31,13 @@ import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.x.json.DbDoc;
 
-public class FindStatementImpl implements FindStatement {
+public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
     private CollectionImpl collection;
     private DocFindParams findParams;
 
     /* package private */FindStatementImpl(CollectionImpl collection, String criteria) {
-        this.findParams = new DocFindParams(collection.getSchema().getName(), collection.getName());
+        super(new DocFindParams(collection.getSchema().getName(), collection.getName()));
+        this.findParams = (DocFindParams) this.filterParams;
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {
             this.findParams.setCriteria(criteria);
@@ -53,16 +54,6 @@ public class FindStatementImpl implements FindStatement {
 
     public <R> CompletableFuture<R> executeAsync(R id, Reducer<DbDoc, R> reducer) {
         return this.collection.getSession().getMysqlxSession().asyncFindDocsReduce(this.findParams, id, reducer);
-    }
-
-    public FindStatement clearBindings() {
-        this.findParams.clearArgs();
-        return this;
-    }
-
-    public FindStatement bind(String argName, Object value) {
-        this.findParams.addArg(argName, value);
-        return this;
     }
 
     public FindStatement fields(String projection) {
@@ -82,21 +73,6 @@ public class FindStatementImpl implements FindStatement {
 
     public FindStatement having(String having) {
         this.findParams.setGroupingCriteria(having);
-        return this;
-    }
-
-    public FindStatement orderBy(String sortFields) {
-        this.findParams.setOrder(sortFields);
-        return this;
-    }
-
-    public FindStatement skip(long limitOffset) {
-        this.findParams.setOffset(limitOffset);
-        return this;
-    }
-
-    public FindStatement limit(long numberOfRows) {
-        this.findParams.setLimit(numberOfRows);
         return this;
     }
 }

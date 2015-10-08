@@ -29,7 +29,7 @@ import com.mysql.cj.api.x.RemoveStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.io.StatementExecuteOk;
 
-public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl> implements RemoveStatement {
+public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Result> implements RemoveStatement {
     private CollectionImpl collection;
 
     public RemoveStatementImpl(CollectionImpl collection, String criteria) {
@@ -48,15 +48,5 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatementImpl
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncDeleteDocs(this.filterParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
-    }
-
-    public RemoveStatement clearBindings() {
-        this.filterParams.clearArgs();
-        return this;
-    }
-
-    public RemoveStatement bind(String argName, Object value) {
-        this.filterParams.addArg(argName, value);
-        return this;
     }
 }
