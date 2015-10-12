@@ -327,19 +327,11 @@ public class ReplicationConnection implements Connection, PingTarget {
     }
 
     public synchronized void promoteSlaveToMaster(String host) throws SQLException {
-        if (!this.isHostSlave(host)) {
-            //			turned this off as one might walk up the replication tree and set master
-            //			to the current's master's master.
-            //			throw SQLError.createSQLException("Cannot promote host " + host + " to master, as it must first be configured as a slave.", null);
-
-        }
-
         this.masterHosts.add(host);
         this.removeSlave(host);
         if (this.masterConnection != null) {
             this.masterConnection.addHost(host);
         }
-
     }
 
     public synchronized void removeMasterHost(String host) throws SQLException {

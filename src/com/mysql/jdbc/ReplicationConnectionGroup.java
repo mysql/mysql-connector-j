@@ -89,16 +89,29 @@ public class ReplicationConnectionGroup {
         return this.slaveHostList;
     }
 
+    /**
+     * Adds a host to the slaves hosts list.
+     * 
+     * We can safely assume that if this host was added to the slaves list, then it must be added to each one of the replication connections from this group as
+     * well.
+     * Unnecessary calls to {@link ReplicationConnection#addSlaveHost(String)} could result in undesirable locking issues, assuming that this method is
+     * synchronized by nature.
+     * 
+     * This is a no-op if the group already has this host in a slave role.
+     * 
+     * @param host
+     * @throws SQLException
+     */
     public void addSlaveHost(String host) throws SQLException {
-        // only do this if addition was successful:
+        // only add if it's not already a slave host
         if (this.slaveHostList.add(host)) {
             this.slavesAdded++;
-        }
-        // add the slave to all connections:
-        for (ReplicationConnection c : this.replicationConnections.values()) {
-            c.addSlaveHost(host);
-        }
 
+            // add the slave to all connections:
+            for (ReplicationConnection c : this.replicationConnections.values()) {
+                c.addSlaveHost(host);
+            }
+        }
     }
 
     public void handleCloseConnection(ReplicationConnection conn) {
@@ -106,37 +119,85 @@ public class ReplicationConnectionGroup {
         this.activeConnections--;
     }
 
+    /**
+     * Removes a host from the slaves hosts list.
+     * 
+     * We can safely assume that if this host was removed from the slaves list, then it must be removed from each one of the replication connections from this
+     * group as well.
+     * Unnecessary calls to {@link ReplicationConnection#removeSlave(String, boolean)} could result in undesirable locking issues, assuming that this method is
+     * synchronized by nature.
+     * 
+     * This is a no-op if the group doesn't have this host in a slave role.
+     * 
+     * @param host
+     * @param closeGently
+     * @throws SQLException
+     */
     public void removeSlaveHost(String host, boolean closeGently) throws SQLException {
         if (this.slaveHostList.remove(host)) {
             this.slavesRemoved++;
-        }
-        for (ReplicationConnection c : this.replicationConnections.values()) {
-            c.removeSlave(host, closeGently);
+
+            // remove the slave from all connections:
+            for (ReplicationConnection c : this.replicationConnections.values()) {
+                c.removeSlave(host, closeGently);
+            }
         }
     }
 
+    /**
+     * Promotes a slave host to master.
+     * 
+     * We can safely assume that if this host was removed from the slaves list or added to the masters list, then the same host promotion must happen in each
+     * one of the replication connections from this group as well.
+     * Unnecessary calls to {@link ReplicationConnection#promoteSlaveToMaster(String)} could result in undesirable locking issues, assuming that this method is
+     * synchronized by nature.
+     * 
+     * This is a no-op if the group already has this host in a master role and not in slave role.
+     * 
+     * @param host
+     * @throws SQLException
+     */
     public void promoteSlaveToMaster(String host) throws SQLException {
-        this.slaveHostList.remove(host);
-        this.masterHostList.add(host);
-        for (ReplicationConnection c : this.replicationConnections.values()) {
-            c.promoteSlaveToMaster(host);
-        }
+        // remove host from slaves AND add host to masters, note that both operands need to be evaluated.
+        if (this.slaveHostList.remove(host) | this.masterHostList.add(host)) {
+            this.slavesPromoted++;
 
-        this.slavesPromoted++;
+            for (ReplicationConnection c : this.replicationConnections.values()) {
+                c.promoteSlaveToMaster(host);
+            }
+        }
     }
 
+    /**
+     * Removes a host from the masters hosts list.
+     * 
+     * @see #removeMasterHost(String, boolean)
+     */
     public void removeMasterHost(String host) throws SQLException {
         this.removeMasterHost(host, true);
     }
 
+    /**
+     * Removes a host from the masters hosts list.
+     * 
+     * We can safely assume that if this host was removed from the masters list, then it must be removed from each one of the replication connections from this
+     * group as well.
+     * Unnecessary calls to {@link ReplicationConnection#removeMasterHost(String, boolean)} could result in undesirable locking issues, assuming that this
+     * method is synchronized by nature.
+     * 
+     * This is a no-op if the group doesn't have this host in a master role.
+     * 
+     * @param host
+     * @param closeGently
+     * @throws SQLException
+     */
     public void removeMasterHost(String host, boolean closeGently) throws SQLException {
         if (this.masterHostList.remove(host)) {
-
+            // remove the master from all connections:
+            for (ReplicationConnection c : this.replicationConnections.values()) {
+                c.removeMasterHost(host, closeGently);
+            }
         }
-        for (ReplicationConnection c : this.replicationConnections.values()) {
-            c.removeMasterHost(host, closeGently);
-        }
-
     }
 
     public int getConnectionCountWithHostAsSlave(String host) {
@@ -181,7 +242,9 @@ public class ReplicationConnectionGroup {
         return this.activeConnections;
     }
 
+    @Override
     public String toString() {
-        return "ReplicationConnectionGroup[groupName=" + groupName + ",masterHostList=" + masterHostList + ",slaveHostList=" + slaveHostList + "]";
+        return "ReplicationConnectionGroup[groupName=" + this.groupName + ",masterHostList=" + this.masterHostList + ",slaveHostList=" + this.slaveHostList
+                + "]";
     }
 }
