@@ -206,7 +206,7 @@ class CompressedInputStream extends InputStream {
      *             if an I/O error occors.
      */
     private void getNextPacketIfRequired(int numBytes) throws IOException {
-        if ((this.buffer == null) || ((this.pos + numBytes) > this.buffer.length)) {
+        while ((this.buffer == null) || ((this.pos + numBytes) > this.buffer.length)) {
             getNextPacketFromServer();
         }
     }
