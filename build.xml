@@ -565,7 +565,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <property name="com.mysql.cj.build.meta-inf.integration-imports" value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;resolution:=optional,org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
 
         <property name="com.mysql.cj.build.meta-inf.driver-exports" value="com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.jee-exports" value="com.mysql.jdbc.jdbc2.optional;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.jee-exports" value="com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc,com.mysql.cj.api.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
         <property name="com.mysql.cj.build.meta-inf.logging-exports" value="com.mysql.cj.jdbc.log;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.profiling-exports" value="com.mysql.cj.jdbc.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.util-exports" value="com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log&quot;" />
