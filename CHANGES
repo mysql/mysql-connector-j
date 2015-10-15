@@ -18,6 +18,7 @@ dd-mm-yy - Version 5.1.38
   - Added support for JSON data type.
 
   - Added support for JDBC 4.2 new features.
+    New property 'enableEscapeProcessing' sets the default escape processing behavior for Statement objects.
 
   - Fix for Bug#16634180, LOCK WAIT TIMEOUT EXCEEDED CAUSES SQLEXCEPTION, SHOULD CAUSE SQLTRANSIENTEXCEPTION
 
