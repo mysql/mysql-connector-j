@@ -28,7 +28,7 @@ import java.util.List;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
 /**
- * Contains methods common to both {@link NodeSession} and {@link Session}
+ * Contains methods common to both {@link NodeSession} and {@link XSession}
  */
 public interface BaseSession {
 
