@@ -369,6 +369,19 @@ public abstract class BaseTestCase extends TestCase {
         return DriverManager.getConnection(url, props);
     }
 
+    protected Connection getNewConnection() throws SQLException {
+        return DriverManager.getConnection(dbUrl);
+    }
+
+    protected Connection getNewSha256Connection() throws SQLException {
+        if (sha256Url != null) {
+            Properties props = new Properties();
+            props.setProperty("allowPublicKeyRetrieval", "true");
+            return DriverManager.getConnection(sha256Url, props);
+        }
+        return null;
+    }
+
     /**
      * Returns the per-instance counter (for messages when multi-threading
      * stress tests)
@@ -650,8 +663,14 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
-            Statement st = this.conn.createStatement();
-            Statement sha256st = this.sha256Conn.createStatement();
+            Statement st = this.conn == null || this.conn.isClosed() ? getNewConnection().createStatement() : this.conn.createStatement();
+            Statement sha256st;
+            if (this.sha256Conn == null || this.sha256Conn.isClosed()) {
+                Connection c = getNewSha256Connection();
+                sha256st = c == null ? null : c.createStatement();
+            } else {
+                sha256st = this.sha256Conn.createStatement();
+            }
 
             for (int i = 0; i < this.createdObjects.size(); i++) {
                 String[] objectInfo = this.createdObjects.get(i);
@@ -667,7 +686,9 @@ public abstract class BaseTestCase extends TestCase {
                 }
             }
             st.close();
-            sha256st.close();
+            if (sha256st != null) {
+                sha256st.close();
+            }
         }
 
         if (this.stmt != null) {
