@@ -23,5 +23,8 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement that drops an index on a collection.
+ */
 public interface DropCollectionIndexStatement extends Statement<DropCollectionIndexStatement, Result> {
 }

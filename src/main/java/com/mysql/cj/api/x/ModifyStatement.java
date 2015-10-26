@@ -23,23 +23,54 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement representing a set of document modifications.
+ */
 public interface ModifyStatement extends Statement<ModifyStatement, Result> {
+    /**
+     * Add/replace the order specification for this statement.
+     */
     ModifyStatement sort(String sortFields);
 
+    /**
+     * Add/replace the document limit for this statement.
+     */
     ModifyStatement limit(long numberOfRows);
 
+    /**
+     * Add an update to the statement setting the field as the document path to the given value for all documents matching the search criteria.
+     */
     ModifyStatement set(String docPath, Object value);
 
+    /**
+     * Add an update to the statement setting the field, if it exists at the document path, to the given value.
+     */
     ModifyStatement change(String docPath, Object value);
 
+    /**
+     * Nullify the given field.
+     */
     ModifyStatement unset(String fields);
 
-    // TODO: should have alternative versions for different document forms? String vs DbDoc?
+    /**
+     * Unsupported.
+     * @todo determine status of this feature
+     */
     ModifyStatement merge(String document);
 
+    /**
+     * Insert a value into the specified array.
+     */
     ModifyStatement arrayInsert(String field, Object value);
 
+    /**
+     * Append a value to the specified array.
+     */
     ModifyStatement arrayAppend(String field, Object value);
 
+    /**
+     * Unsupported.
+     * @todo determine status of this feature
+     */
     ModifyStatement arrayDelete(String field, int position);
 }

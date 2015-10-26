@@ -25,32 +25,65 @@ package com.mysql.cj.api.x;
 
 import java.util.List;
 
+/**
+ * A client-side representation of a database schema. Provides access to the schema contents.
+ */
 public interface Schema extends DatabaseObject {
 
     /* Browse functions */
 
+    /**
+     * Retrieve the set of collections existing in this schema.
+     */
     List<Collection> getCollections();
 
+    /**
+     * Retrieve the set of tables existing in this schema.
+     */
     List<Table> getTables();
 
-    /* DbObject instance functions */
+    /* Other functions */
 
+    /**
+     * Retrieve a reference to the named collection.
+     */
     Collection getCollection(String name);
 
+    /**
+     * Retrieve a reference to the named collection hinting that an exception should be thrown if the collection is not known to the server.
+     */
     Collection getCollection(String name, boolean requireExists);
 
+    /**
+     * Retrieve a reference to the named collection using the table API.
+     */
     Table getCollectionAsTable(String name);
 
+    /**
+     * Retrieve a reference to the named table.
+     */
     Table getTable(String name);
 
+    /**
+     * Retrieve a reference to the named table hinting that an exception should be thrown if the collection is not known to the server.
+     */
     Table getTable(String tableName, boolean requireExists);
 
+    /**
+     * Drop the this schema on the server.
+     */
     void drop();
 
     /* Create functions */
 
+    /**
+     * Create a new collection.
+     */
     Collection createCollection(String name);
 
+    /**
+     * Create a new collection if it does not already exist on the server.
+     */
     Collection createCollection(String name, boolean reuseExistingObject);
 
 }

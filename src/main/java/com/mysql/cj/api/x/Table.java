@@ -25,57 +25,42 @@ package com.mysql.cj.api.x;
 
 import java.util.Map;
 
+/**
+ * A client-side representation of a database table. Provides access to the table through standard INSERT/SELECT/UPDATE/DELETE statements.
+ */
 public interface Table extends DatabaseObject {
-
+    /**
+     * Create an insert statement using the list of all columns in the table.
+     */
     InsertStatement insert();
 
+    /**
+     * Create an insert statement using the given list columns.
+     */
     InsertStatement insert(String... projection);
 
+    /**
+     * Create an insert statement using the given key/value pairs.
+     */
     InsertStatement insert(Map<String, Object> fieldsAndValues);
 
-    // TODO: what is this?
-    // InsertStatement insert(Object fieldsAndValues) {
-
+    /**
+     * Create a new select statement using the given projection.
+     */
     SelectStatement select(String projection);
 
+    /**
+     * Create a new update statement.
+     */
     UpdateStatement update();
 
+    /**
+     * Create a new delete statement.
+     */
     DeleteStatement delete();
 
     /**
-     * Collection.as [41]
-     * 
-     * @param searchCondition
-     * @return
+     * Query the number of rows in this table.
      */
-    // TODO not clear, spec refers to TableFindFunction, but what it does, return Table by alias? why is it needed? Or assign alias? For what purpose?
-    // Table as(String alias);
-
-    /**
-     * Table.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
     long count();
-
-    /**
-     * Table Index Creation [60] - not supported in v1
-     */
-    // void createIndex();
-    // void dropIndex();
-    // void getIndexes();
-
-    /**
-     * Table.alter [31] - not supported in v1
-     */
-
-    /**
-     * Table.join (tables) [40] - not supported in v1
-     */
-
-    /**
-     * Table.drop [53] - not supported in v1
-     */
-
 }

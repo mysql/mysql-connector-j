@@ -25,5 +25,8 @@ package com.mysql.cj.api.x;
 
 import com.mysql.cj.x.json.DbDoc;
 
+/**
+ * A sequence of documents retrieved from a find query.
+ */
 public interface DocResult extends FetchResult<DbDoc> {
 }

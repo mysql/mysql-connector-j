@@ -25,10 +25,22 @@ package com.mysql.cj.api.x;
 
 import com.mysql.cj.x.json.DbDoc;
 
+/**
+ * A statement adding documents to a collection.
+ */
 public interface AddStatement extends Statement<AddStatement, Result> {
+    /**
+     * Add a document as a JSON string.
+     */
     AddStatement add(String jsonString);
 
+    /**
+     * Add a DbDoc.
+     */
     AddStatement add(DbDoc document);
 
+    /**
+     * Add a sequence of DbDocs.
+     */
     AddStatement add(DbDoc documents[]);
 }

@@ -23,6 +23,12 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement that creates an index on a collection.
+ */
 public interface CreateCollectionIndexStatement extends Statement<CreateCollectionIndexStatement, Result> {
+    /**
+     * Add the field specification to this index creation statement.
+     */
     CreateCollectionIndexStatement field(String docPath, String type, boolean notNull);
 }

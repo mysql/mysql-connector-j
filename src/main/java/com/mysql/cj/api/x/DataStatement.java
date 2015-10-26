@@ -38,5 +38,12 @@ public interface DataStatement<STMT_T, RES_T, RES_ELEMENT_T> extends Statement<S
      */
     public static interface Reducer<RES_ELEMENT_T, R> extends BiFunction<R, RES_ELEMENT_T, R> {}
 
+    /**
+     * Execute this statement asynchronously reducing the set of elements using the given accumulator.
+     *
+     * @param identity the initial element passed to the accumulating function
+     * @param accumulator the function which accepts a pair (element, accumulator value) for every element in the result
+     * @return a future which is completed with the accumulator value after all elements have been processed
+     */
     <R> CompletableFuture<R> executeAsync(R identity, Reducer<RES_ELEMENT_T, R> accumulator);
 }

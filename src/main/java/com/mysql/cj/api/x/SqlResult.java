@@ -23,6 +23,14 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A result from a SQL statement which may have several sets of data following by a DML result.
+ */
 public interface SqlResult extends Result, RowResult {
+    /**
+     * Move to the next result. This method has no effect after returning <code>false</code> for the first time.
+     *
+     * @return was there a next result that we moved to?
+     */
     boolean nextResult();
 }

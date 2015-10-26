@@ -23,5 +23,8 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement representing a raw SQL command.
+ */
 public interface SqlStatement extends Statement<SqlStatement, SqlResult> {
 }

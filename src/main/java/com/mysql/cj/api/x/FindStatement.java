@@ -25,18 +25,42 @@ package com.mysql.cj.api.x;
 
 import com.mysql.cj.x.json.DbDoc;
 
+/**
+ * A statement to <i>find</i> the set of documents according to the given specification.
+ */
 public interface FindStatement extends DataStatement<FindStatement, DocResult, DbDoc> {
+    /**
+     * Add/replace the field projection defining the result.
+     */
     FindStatement fields(String projection);
 
+    /**
+     * Add/replace the field projection defining the result.
+     */
     FindStatement fields(Expression docProjection);
 
+    /**
+     * Add/replace the aggregation fields for this query.
+     */
     FindStatement groupBy(String groupBy);
 
+    /**
+     * Add/replace the aggregate criteria for this query.
+     */
     FindStatement having(String having);
 
+    /**
+     * Add/replace the order specification for this query.
+     */
     FindStatement orderBy(String sortFields);
 
+    /**
+     * Add/replace the document offset for this query.
+     */
     FindStatement skip(long limitOffset);
 
+    /**
+     * Add/replace the document limit for this query.
+     */
     FindStatement limit(long numberOfRows);
 }

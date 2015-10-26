@@ -26,9 +26,18 @@ package com.mysql.cj.api.x;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A statement INSERTing new row(s) into a table.
+ */
 public interface InsertStatement extends Statement<InsertStatement, Result> {
+    /**
+     * Add a row (sequence of values) to this statement.
+     */
     InsertStatement values(List<Object> values);
 
+    /**
+     * Add a row (sequence of values) to this statement.
+     */
     default InsertStatement values(Object... values) {
         return values(Arrays.asList(values));
     }

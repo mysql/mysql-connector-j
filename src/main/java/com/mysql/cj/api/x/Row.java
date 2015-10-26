@@ -27,21 +27,72 @@ import java.math.BigDecimal;
 
 import com.mysql.cj.x.json.DbDoc;
 
+/**
+ * A row element returned from a SELECT query.
+ */
 public interface Row {
+    /**
+     * Retrieve the value for column `fieldName' as a decimal value.
+     */
     BigDecimal getBigDecimal(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a decimal value.
+     */
     BigDecimal getBigDecimal(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a boolean value.
+     */
     boolean getBoolean(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a boolean value.
+     */
     boolean getBoolean(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a byte value.
+     */
     byte getByte(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
+     */
     byte getByte(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a DbDoc value.
+     */
     DbDoc getDbDoc(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a DbDoc value.
+     */
     DbDoc getDbDoc(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a double value.
+     */
     double getDouble(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a double value.
+     */
     double getDouble(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as an integer value.
+     */
     int getInt(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as an integer value.
+     */
     int getInt(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a long value.
+     */
     long getLong(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a long value.
+     */
     long getLong(int pos);
+    /**
+     * Retrieve the value for column `fieldName' as a string value.
+     */
     String getString(String fieldName);
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a string value.
+     */
     String getString(int pos);
 }

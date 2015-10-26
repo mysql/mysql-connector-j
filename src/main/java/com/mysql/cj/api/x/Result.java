@@ -26,16 +26,31 @@ package com.mysql.cj.api.x;
 import java.util.Iterator;
 
 /**
- * Base interface for results of CRUD or SQL operations
+ * Base result.
  */
 public interface Result {
+    /**
+     * Get the count of affected items from manipulation statements.
+     */
     long getAffectedItemsCount();
 
+    /**
+     * Get the last generated ID if one was generated from a row insert statement.
+     */
     Long getLastInsertId();
 
+    /**
+     * Get the last generated document idea from a document add statement.
+     */
     String getLastDocumentId();
 
+    /**
+     * Count of warnings generated during statement execution.
+     */
     int getWarningsCount();
 
+    /**
+     * Warnings generated during statement execution.
+     */
     Iterator<Warning> getWarnings();
 }

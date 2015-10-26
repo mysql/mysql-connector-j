@@ -23,17 +23,35 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A client-side representation of a MySQL X server object, e.g. table, collection, etc.
+ */
 public interface DatabaseObject {
 
+    /**
+     * Existence states of database objects.
+     */
     enum DbObjectStatus {
         EXISTS, NOT_EXISTS, UNKNOWN
     };
 
+    /**
+     * Retrieve the session owning the given schema object.
+     */
     BaseSession getSession();
 
+    /**
+     * Retrieve the schema owning this database object.
+     */
     Schema getSchema();
 
+    /**
+     * Retrieve the name of the database object represented by the Java object.
+     */
     String getName();
 
+    /**
+     * Query the existence of this database object.
+     */
     DbObjectStatus existsInDatabase();
 }

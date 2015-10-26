@@ -23,16 +23,37 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement representing a SELECT query.
+ */
 public interface SelectStatement extends DataStatement<SelectStatement, RowResult, Row> {
+    /**
+     * Add/replace the search condition for this query.
+     */
     SelectStatement where(String searchCondition);
 
+    /**
+     * Add/replace the aggregation fields for this query.
+     */
     SelectStatement groupBy(String groupBy);
 
+    /**
+     * Add/replace the aggregate criteria for this query.
+     */
     SelectStatement having(String having);
 
+    /**
+     * Add/replace the order specification for this query.
+     */
     SelectStatement orderBy(String sortFields);
 
+    /**
+     * Add/replace the row limit for this query.
+     */
     SelectStatement limit(long numberOfRows);
 
+    /**
+     * Add/replace the row offset for this query.
+     */
     SelectStatement offset(long limitOffset);
 }

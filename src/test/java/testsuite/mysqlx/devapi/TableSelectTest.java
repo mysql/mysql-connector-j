@@ -101,12 +101,12 @@ public class TableSelectTest extends TableTest {
         // Result:
         // age_group | cnt
         // 11        | 2   <-- filtered out by where
-        // 12        | 2   <-- filtered out by offset
+        // 12        | 2   <-- filtered out by limit
         // 13        | 1   <-- filtered out by having
         // 14        | 2   * second row in result
         // 15        | 2   * first row in result
         // 16        | 1   <-- filtered out by having
-        // 17        | 2   <-- filtered out by limi
+        // 17        | 2   <-- filtered out by offset
         SelectStatement stmt = table.select("age as age_group, count(name) as cnt");
         stmt.where("age > 11 and 1 < 2 and 40 between 30 and 900");
         stmt.groupBy("age_group");

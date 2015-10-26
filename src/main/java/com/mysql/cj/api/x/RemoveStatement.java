@@ -23,8 +23,17 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement requesting to remove a set of documents.
+ */
 public interface RemoveStatement extends Statement<RemoveStatement, Result> {
+    /**
+     * Add/replace the order specification for the removal.
+     */
     RemoveStatement orderBy(String sortFields);
 
+    /**
+     * Add/replace the document limit for the removal.
+     */
     RemoveStatement limit(long numberOfRows);
 }

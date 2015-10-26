@@ -25,10 +25,22 @@ package com.mysql.cj.api.x;
 
 import java.util.List;
 
+/**
+ * A result exposing a set of rows from a SELECT query.
+ */
 public interface RowResult extends FetchResult<Row> {
+    /**
+     * Count of columns.
+     */
     int getColumnCount();
 
+    /**
+     * Metadata.
+     */
     Columns getColumns();
 
+    /**
+     * Names of columns.
+     */
     List<String> getColumnNames();
 }

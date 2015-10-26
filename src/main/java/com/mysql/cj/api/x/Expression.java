@@ -24,7 +24,7 @@
 package com.mysql.cj.api.x;
 
 /**
- * A wrapper for expression strings. Used as parameters values e.g.: <code>set("b", new Expression("a + 1"))</code>.
+ * A wrapper for expression strings. Used as parameters values e.g.: <code>set("b", Expression.expr("a + 1"))</code>.
  */
 public class Expression {
     private String expressionString;

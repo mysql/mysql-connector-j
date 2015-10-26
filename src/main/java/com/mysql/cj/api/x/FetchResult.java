@@ -26,12 +26,23 @@ package com.mysql.cj.api.x;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A set of elements from a query command.
+ *
+ * @param <T> the type of element returned from the query (doc or row)
+ */
 public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
-
+    /**
+     * Does this result have data? This indicates that the result was produced from a data-returning query. It does not indicate whether there are more than 0
+     * rows in the result.
+     */
     default boolean hasData() {
         return true;
     }
 
+    /**
+     * Fetch the next element.
+     */
     default T fetchOne() {
         if (hasNext()) {
             return next();
@@ -39,6 +50,9 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
         return null;
     }
 
+    /**
+     * Create an iterator over all elements of the result.
+     */
     default Iterator<T> iterator() {
         return fetchAll().iterator();
     }
@@ -48,10 +62,18 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
      */
     long count();
 
+    /**
+     * Create a list of all elements in the result forcing internal buffering.
+     */
     List<T> fetchAll();
 
+    /**
+     * Count of warnings generated during statement execution. This method forces internal buffering of the result.
+     */
     int getWarningsCount();
 
+    /**
+     * Warnings generated during statement execution. This method forces internal buffering of the result.
+     */
     Iterator<Warning> getWarnings();
-
 }

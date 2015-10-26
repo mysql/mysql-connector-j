@@ -63,7 +63,8 @@ package com.mysql.cj.api.x;
  * Users of the CRUD API do not need to escape identifiers. This is true for working with collections and for working with relational tables.
  */
 public interface NodeSession extends BaseSession {
-
+    /**
+     * 	Create a native SQL command. Placeholders are supported using the native "?" syntax.
+     */
     SqlStatement sql(String sql);
-
 }

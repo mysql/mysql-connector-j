@@ -23,11 +23,22 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A statement to delete rows from a table.
+ */
 public interface DeleteStatement extends Statement<DeleteStatement, Result> {
+    /**
+     * Add/replace the filter for the deletion.
+     */
     DeleteStatement where(String searchCondition);
 
+    /**
+     * Add/replace the order by specification for the deletion.
+     */
     DeleteStatement orderBy(String sortFields);
 
+    /**
+     * Add/replace the row limit for the deletion.
+     */
     DeleteStatement limit(long numberOfRows);
 }
-

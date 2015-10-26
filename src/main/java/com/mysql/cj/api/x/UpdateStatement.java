@@ -25,14 +25,32 @@ package com.mysql.cj.api.x;
 
 import java.util.Map;
 
+/**
+ * A statement representing a set of row modifications.
+ */
 public interface UpdateStatement extends Statement<UpdateStatement, Result> {
+    /**
+     * Add the given set of updates to the statement.
+     */
     UpdateStatement set(Map<String, Object> fieldsAndValues);
 
+    /**
+     * Add the given update to the statement setting field to value for all rows matching the search criteria.
+     */
     UpdateStatement set(String field, Object value);
 
+    /**
+     * Add/replace the search criteria for this statement.
+     */
     UpdateStatement where(String searchCondition);
 
+    /**
+     * Add/replace the order specification for this statement.
+     */
     UpdateStatement orderBy(String sortFields);
 
+    /**
+     * Add/replace the row limit for this statement.
+     */
     UpdateStatement limit(long numberOfRows);
 }

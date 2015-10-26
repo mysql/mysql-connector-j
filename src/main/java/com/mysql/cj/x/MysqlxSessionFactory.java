@@ -34,6 +34,10 @@ import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
+/**
+ * Entry point for creating sessions to a MySQL X server.
+ *
+ */
 public class MysqlxSessionFactory implements XSessionFactory {
 
     private Properties parseUrl(String url) {

@@ -28,36 +28,67 @@ import java.util.List;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
 /**
- * Contains methods common to both {@link NodeSession} and {@link XSession}
+ * A client interface to the session on the MySQL X server.
  */
 public interface BaseSession {
 
+    /**
+     * Retrieve the set of Schema objects for which the current user has access.
+     */
     List<Schema> getSchemas();
 
+    /**
+     * Retrieve the Schema corresponding to name.
+     */
     Schema getSchema(String schemaName);
 
+    /**
+     * Retrieve the default schema which may be configured at connect time.
+     */
     Schema getDefaultSchema();
 
+    /**
+     * Create and return a new schema with the name given by name.
+     */
     Schema createSchema(String schemaName);
 
+    /**
+     * Create and return a new schema with the name given by name. If the schema already exists, a reference to it is returned.
+     */
     Schema createSchema(String schemaName, boolean reuseExistingObject);
 
+    /**
+     *Drop the existing schema with the name given by name.
+     */
     void dropSchema(String schemaName);
 
-    String getUri(); // TODO there is no requirement
+    /**
+     * Get the URL used to create this session.
+     */
+    String getUri();
 
+    /**
+     * Close this session.
+     */
     void close();
 
+    /**
+     * Start a new transaction.
+     */
     void startTransaction();
 
+    /**
+     * Commit the transaction.
+     */
     void commit();
 
+    /**
+     * Rollback the transaction.
+     */
     void rollback();
 
     /**
-     * Get {@link com.mysql.cj.api.Session} implementation.
-     * 
-     * @return
+     * For internal use only.
      */
     MysqlxSession getMysqlxSession();
 

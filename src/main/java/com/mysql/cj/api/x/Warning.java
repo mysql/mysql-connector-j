@@ -23,8 +23,20 @@
 
 package com.mysql.cj.api.x;
 
+/**
+ * A warning generated during statement execution.
+ */
 public interface Warning {
+    /**
+     * Warning level.
+     */
     int getLevel();
+    /**
+     * Warning code.
+     */
     int getCode();
+    /**
+     * Warning message.
+     */
     String getMessage();
 }
