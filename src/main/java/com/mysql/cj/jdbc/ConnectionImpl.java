@@ -1357,9 +1357,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             try {
 
                 // Fault injection for testing server character set indices
-
-                if (this.props != null && this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex") != null) {
-                    this.session.setServerDefaultCollationIndex(Integer.parseInt(this.props.getProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex")));
+                if (this.props != null && this.props.getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex) != null) {
+                    this.session.setServerDefaultCollationIndex(Integer.parseInt(this.props
+                            .getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex)));
                 }
 
                 String serverEncodingToSet = CharsetMapping.getJavaEncodingForCollationIndex(this.session.getServerDefaultCollationIndex());

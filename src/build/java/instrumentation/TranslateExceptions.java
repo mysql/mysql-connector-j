@@ -509,48 +509,48 @@ public class TranslateExceptions {
          * TODO:
          * java.sql.DataTruncation
          */
-        // com.mysql.jdbc.exceptions.MysqlDataTruncation extends DataTruncation
+        // com.mysql.cj.jdbc.exceptions.MysqlDataTruncation extends DataTruncation
 
         /*
          * TODO:
          * java.sql.SQLException
          */
         // com.mysql.fabric.xmlrpc.exceptions.MySQLFabricException extends SQLException
-        // com.mysql.jdbc.exceptions.NotUpdatable extends SQLException
-        // com.mysql.jdbc.exceptions.OperationNotSupportedException extends SQLException
-        // com.mysql.jdbc.exceptions.PacketTooBigException extends SQLException
+        // com.mysql.cj.jdbc.exceptions.NotUpdatable extends SQLException
+        // com.mysql.cj.jdbc.exceptions.OperationNotSupportedException extends SQLException
+        // com.mysql.cj.jdbc.exceptions.PacketTooBigException extends SQLException
 
         /*
          * TODO:
          * java.sql.SQLNonTransientException
          */
-        // com.mysql.jdbc.exceptions.MySQLQueryInterruptedException extends SQLNonTransientException
-        // com.mysql.jdbc.exceptions.MySQLStatementCancelledException extends SQLNonTransientException
+        // com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException extends SQLNonTransientException
+        // com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException extends SQLNonTransientException
 
         /*
          * TODO:
          * java.sql.SQLRecoverableException
          */
-        // com.mysql.jdbc.exceptions.CommunicationsException extends SQLRecoverableException implements StreamingNotifiable
-        // ---> com.mysql.jdbc.exceptions.ConnectionFeatureNotAvailableException extends CommunicationsException
+        // com.mysql.cj.jdbc.exceptions.CommunicationsException extends SQLRecoverableException implements StreamingNotifiable
+        // ---> com.mysql.cj.jdbc.exceptions.ConnectionFeatureNotAvailableException extends CommunicationsException
 
         /*
          * TODO:
          * java.sql.SQLTransientException
          * ---> java.sql.SQLTimeoutException
          */
-        // com.mysql.jdbc.exceptions.MySQLTimeoutException extends SQLTimeoutException
+        // com.mysql.cj.jdbc.exceptions.MySQLTimeoutException extends SQLTimeoutException
 
         /*
          * TODO:
          * java.sql.SQLTransientException
          * ---> java.sql.SQLTransactionRollbackException
          */
-        // com.mysql.jdbc.exceptions.MySQLTransactionRollbackException extends SQLTransactionRollbackException implements DeadlockTimeoutRollbackMarker
+        // com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException extends SQLTransactionRollbackException implements DeadlockTimeoutRollbackMarker
 
         /*
          * TODO:
-         * com.mysql.jdbc.MysqlXAException extends javax.transaction.xa.XAException
+         * com.mysql.cj.jdbc.MysqlXAException extends javax.transaction.xa.XAException
          */
 
         /*

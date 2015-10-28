@@ -517,9 +517,8 @@ public class MetadataTest extends BaseTestCase {
      * Tests the implementation of Information Schema for column privileges.
      */
     public void testGetColumnPrivilegesUsingInfoSchema() throws Exception {
-        String dontRunPropertyName = "com.mysql.jdbc.testsuite.cantGrant";
 
-        if (!runTestIfSysPropDefined(dontRunPropertyName)) {
+        if (!runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
             Properties props = new Properties();
 
             props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
@@ -541,7 +540,7 @@ public class MetadataTest extends BaseTestCase {
                 List<String> userHost = StringUtils.split(user, "@", false);
                 if (userHost.size() < 2) {
                     fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. "
-                            + "You can skip this test by setting the system property " + dontRunPropertyName);
+                            + "You can skip this test by setting the system property " + PropertyDefinitions.SYSP_testsuite_cantGrant);
                 }
                 userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
 
@@ -552,7 +551,8 @@ public class MetadataTest extends BaseTestCase {
 
                 } catch (SQLException sqlEx) {
                     fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
-                            + " in the current database. You can skip this test by setting the system property \"" + dontRunPropertyName + "\".");
+                            + " in the current database. You can skip this test by setting the system property \""
+                            + PropertyDefinitions.SYSP_testsuite_cantGrant + "\".");
                 }
 
                 if (!grantFailed) {

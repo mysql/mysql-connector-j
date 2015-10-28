@@ -115,7 +115,7 @@ public class ConnectionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testClusterConnection() throws Exception {
-        String url = System.getProperty("com.mysql.jdbc.testsuite.ClusterUrl");
+        String url = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_cluster);
 
         if ((url != null) && (url.length() > 0)) {
             Object versionNumObj = getSingleValueWithQuery("SHOW VARIABLES LIKE 'version'");

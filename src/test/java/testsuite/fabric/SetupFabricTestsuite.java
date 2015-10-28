@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,13 +27,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
+
 public class SetupFabricTestsuite {
 
     public static void main(String args[]) throws Exception {
-        String hostname = System.getProperty("com.mysql.fabric.testsuite.global.host");
-        String port = System.getProperty("com.mysql.fabric.testsuite.global.port");
-        String username = System.getProperty("com.mysql.fabric.testsuite.username");
-        String password = System.getProperty("com.mysql.fabric.testsuite.password");
+        String hostname = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_global_host);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_global_port);
+        String username = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_username);
+        String password = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_password);
 
         // Create database employees
         Connection c = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/mysql", username, password);

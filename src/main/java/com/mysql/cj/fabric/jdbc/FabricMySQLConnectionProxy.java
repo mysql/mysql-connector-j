@@ -180,7 +180,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         } else {
             exceptionInterceptors += ",";
         }
-        exceptionInterceptors += "com.mysql.fabric.jdbc.ErrorReportingExceptionInterceptor";
+        exceptionInterceptors += ErrorReportingExceptionInterceptor.class.getName();
         props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, exceptionInterceptors);
 
         getPropertySet().initializeProperties(props);

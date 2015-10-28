@@ -32,6 +32,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistryBuilder;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.hibernate.FabricMultiTenantConnectionProvider;
 import com.mysql.cj.jdbc.Driver;
 
@@ -41,13 +42,13 @@ import com.mysql.cj.jdbc.Driver;
 public class HibernateFabric {
     public static void main(String args[]) throws Exception {
 
-        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-        String port = System.getProperty("com.mysql.fabric.testsuite.port");
-        String user = System.getProperty("com.mysql.fabric.testsuite.username");
-        String password = System.getProperty("com.mysql.fabric.testsuite.password");
-        String database = System.getProperty("com.mysql.fabric.testsuite.database");
-        String fabricUsername = System.getProperty("com.mysql.fabric.testsuite.fabricUsername");
-        String fabricPassword = System.getProperty("com.mysql.fabric.testsuite.fabricPassword");
+        String hostname = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_hostname);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_port);
+        String database = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_database);
+        String user = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_username);
+        String password = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_password);
+        String fabricUsername = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_fabricUsername);
+        String fabricPassword = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_fabricPassword);
 
         // Using JDBC Fabric connection to create database and table
         Class.forName(Driver.class.getName());

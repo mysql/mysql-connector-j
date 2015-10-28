@@ -23,6 +23,8 @@
 
 package com.mysql.cj.core;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
+
 /**
  * Represents various constants used in the driver.
  */
@@ -41,13 +43,13 @@ public class Constants {
 
     public final static byte[] SPACE_STAR_SLASH_SPACE_AS_BYTES = new byte[] { (byte) ' ', (byte) '*', (byte) '/', (byte) ' ' };
 
-    public static final String JVM_VENDOR = System.getProperty("java.vendor");
-    public static final String JVM_VERSION = System.getProperty("java.version");
+    public static final String JVM_VENDOR = System.getProperty(PropertyDefinitions.SYSP_java_vendor);
+    public static final String JVM_VERSION = System.getProperty(PropertyDefinitions.SYSP_java_version);
 
-    public static final String OS_NAME = System.getProperty("os.name");
-    public static final String OS_ARCH = System.getProperty("os.arch");
-    public static final String OS_VERSION = System.getProperty("os.version");
-    public static final String PLATFORM_ENCODING = System.getProperty("file.encoding");
+    public static final String OS_NAME = System.getProperty(PropertyDefinitions.SYSP_os_name);
+    public static final String OS_ARCH = System.getProperty(PropertyDefinitions.SYSP_os_arch);
+    public static final String OS_VERSION = System.getProperty(PropertyDefinitions.SYSP_os_version);
+    public static final String PLATFORM_ENCODING = System.getProperty(PropertyDefinitions.SYSP_file_encoding);
 
     public static final String CJ_NAME = "@MYSQL_CJ_DISPLAY_PROD_NAME@";
     public static final String CJ_FULL_NAME = "@MYSQL_CJ_FULL_PROD_NAME@";

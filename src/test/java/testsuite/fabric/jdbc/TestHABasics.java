@@ -30,6 +30,7 @@ import java.sql.Statement;
 import testsuite.fabric.BaseFabricTestCase;
 
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 /**
@@ -38,7 +39,7 @@ import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 public class TestHABasics extends BaseFabricTestCase {
     private FabricMySQLDataSource ds;
     private FabricMysqlConnection conn;
-    private String masterPort = System.getProperty("com.mysql.fabric.testsuite.global.port");
+    private String masterPort = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_global_port);
 
     public TestHABasics() throws Exception {
         super();

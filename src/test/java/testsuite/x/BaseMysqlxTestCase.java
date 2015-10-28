@@ -30,12 +30,13 @@ import junit.framework.TestCase;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.api.x.XSessionFactory;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.x.MysqlxSessionFactory;
 
 public abstract class BaseMysqlxTestCase extends TestCase {
 
-    boolean isSetForMySQLxTests = false; // TODO: System.getProperty("com.mysqlx.testsuite.url") != null;
-    String baseUrl = System.getProperty("com.mysqlx.testsuite.url");
+    boolean isSetForMySQLxTests = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx) != null; //false; // TODO: System.getProperty(PropertyDefinitions.SYSP_mysqlx_testsuite_url) != null;
+    String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
 
     XSessionFactory f = new MysqlxSessionFactory();
 

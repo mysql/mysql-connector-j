@@ -25,16 +25,13 @@ package testsuite.simple;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.admin.MiniAdmin;
 
 /**
  * Testsuite for MiniAdmin functionality.
  */
 public class MiniAdminTest extends BaseTestCase {
-    /**
-     * The system property that must exist to run the shutdown test
-     */
-    private static final String SHUTDOWN_PROP = "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
 
     /**
      * Creates a new test case
@@ -64,7 +61,7 @@ public class MiniAdminTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testShutdown() throws Exception {
-        if (runTestIfSysPropDefined(SHUTDOWN_PROP)) {
+        if (runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_miniAdminTest_runShutdown)) {
             new MiniAdmin(this.conn).shutdown();
         }
     }

@@ -627,7 +627,7 @@ public class StringRegressionTest extends BaseTestCase {
 
                 Properties props = new Properties();
                 props.setProperty(PropertyDefinitions.PNAME_characterEncoding, possibleCharset);
-                props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
+                props.setProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex, "65535");
 
                 Connection forcedCharConn = null;
 

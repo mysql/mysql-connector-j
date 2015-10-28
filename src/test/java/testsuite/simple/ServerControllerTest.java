@@ -26,6 +26,7 @@ package testsuite.simple;
 import testsuite.BaseTestCase;
 
 import com.mysql.cj.core.admin.ServerController;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Demonstrates usage of the ServerController class.
@@ -43,7 +44,7 @@ public class ServerControllerTest extends BaseTestCase {
     public ServerControllerTest(String name) {
         super(name);
 
-        this.baseDir = System.getProperty("com.mysql.jdbc.test.ServerController.basedir");
+        this.baseDir = System.getProperty(PropertyDefinitions.SYSP_testsuite_serverController_basedir);
     }
 
     /**

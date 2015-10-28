@@ -226,18 +226,12 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         throw new SocketException("Unable to create socket");
     }
 
-    public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
-
     public boolean isLocallyConnected(MysqlConnection conn) {
         String processHost = conn.getProcessHost();
+        return isLocallyConnected(conn, processHost);
+    }
 
-        // "inject" for tests
-        if (System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-            processHost = System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-        } else if (conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-            processHost = conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-        }
-
+    protected boolean isLocallyConnected(MysqlConnection conn, String processHost) {
         if (processHost != null) {
             if (processHost.indexOf(":") != -1) {
                 processHost = processHost.split(":")[0];

@@ -44,57 +44,96 @@ import com.mysql.cj.jdbc.util.PerConnectionLRUFactory;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 
 public class PropertyDefinitions {
-    public static final boolean DEFAULT_VALUE_TRUE = true;
-    public static final boolean DEFAULT_VALUE_FALSE = false;
-    public static final String DEFAULT_VALUE_NULL_STRING = null;
 
-    // is modifiable in run-time
-    public static final boolean RUNTIME_MODIFIABLE = true;
-
-    // is not modifiable in run-time (will allow to set not-null value only once)
-    public static final boolean RUNTIME_NOT_MODIFIABLE = false;
-
-    //
-    // Yes, this looks goofy, but we're trying to avoid intern()ing here
-    //
-    private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
-
-    public static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
-
-    public static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
-
-    public static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
-
-    /**
-     * Key used to retrieve the database value from the properties instance
-     * passed to the driver.
+    /*
+     * Built-in system properties
      */
-    public static final String DBNAME_PROPERTY_KEY = "DBNAME";
+    public static final String SYSP_line_separator = "line.separator";
+    public static final String SYSP_java_vendor = "java.vendor";
+    public static final String SYSP_java_version = "java.version";
+    public static final String SYSP_java_vm_vendor = "java.vm.vendor";
+    public static final String SYSP_os_name = "os.name";
+    public static final String SYSP_os_arch = "os.arch";
+    public static final String SYSP_os_version = "os.version";
+    public static final String SYSP_file_encoding = "file.encoding";
 
+    /*
+     * Custom system properties
+     */
+    public static final String SYSP_testsuite_url /*                          */= "com.mysql.cj.testsuite.url";
+    public final static String SYSP_testsuite_url_admin /*                    */= "com.mysql.cj.testsuite.url.admin";
+    public static final String SYSP_testsuite_url_cluster /*                  */= "com.mysql.cj.testsuite.url.cluster";
+    /** Connection string to server compiled with OpenSSL */
+    public static final String SYSP_testsuite_url_openssl /*                  */= "com.mysql.cj.testsuite.url.openssl";
+
+    public static final String SYSP_testsuite_url_mysqlx /*                   */= "com.mysql.cj.testsuite.mysqlx.url";
+
+    public static final String SYSP_testsuite_fabric_hostname /*              */= "com.mysql.cj.testsuite.fabric.hostname";
+    public static final String SYSP_testsuite_fabric_port /*                  */= "com.mysql.cj.testsuite.fabric.port";
+    public static final String SYSP_testsuite_fabric_database /*              */= "com.mysql.cj.testsuite.fabric.database";
+    public static final String SYSP_testsuite_fabric_username /*              */= "com.mysql.cj.testsuite.fabric.username";
+    public static final String SYSP_testsuite_fabric_password /*              */= "com.mysql.cj.testsuite.fabric.password";
+    public static final String SYSP_testsuite_fabric_fabricUsername /*        */= "com.mysql.cj.testsuite.fabric.fabricUsername";
+    public static final String SYSP_testsuite_fabric_fabricPassword /*        */= "com.mysql.cj.testsuite.fabric.fabricPassword";
+    public static final String SYSP_testsuite_fabric_global_host /*           */= "com.mysql.cj.testsuite.fabric.global.host";
+    public static final String SYSP_testsuite_fabric_global_port /*           */= "com.mysql.cj.testsuite.fabric.global.port";
+    public static final String SYSP_testsuite_fabric_shard1_host /*           */= "com.mysql.cj.testsuite.fabric.shard1.host";
+    public static final String SYSP_testsuite_fabric_shard1_port /*           */= "com.mysql.cj.testsuite.fabric.shard1.port";
+    public static final String SYSP_testsuite_fabric_shard2_host /*           */= "com.mysql.cj.testsuite.fabric.shard2.host";
+    public static final String SYSP_testsuite_fabric_shard2_port /*           */= "com.mysql.cj.testsuite.fabric.shard2.port";
+
+    public static final String SYSP_testsuite_cantGrant /*                    */= "com.mysql.cj.testsuite.cantGrant";
+    public static final String SYSP_testsuite_disable_multihost_tests /*      */= "com.mysql.cj.testsuite.disable.multihost.tests"; // TODO should be more specific for different types of multi-host configs
+
+    /** For testsuite.regression.DataSourceRegressionTest */
+    public static final String SYSP_testsuite_ds_host /*                      */= "com.mysql.cj.testsuite.ds.host";
+    /** For testsuite.regression.DataSourceRegressionTest */
+    public static final String SYSP_testsuite_ds_port /*                      */= "com.mysql.cj.testsuite.ds.port";
+    /** For testsuite.regression.DataSourceRegressionTest */
+    public static final String SYSP_testsuite_ds_db /*                        */= "com.mysql.cj.testsuite.ds.db";
+    /** For testsuite.regression.DataSourceRegressionTest */
+    public static final String SYSP_testsuite_ds_user /*                      */= "com.mysql.cj.testsuite.ds.user";
+    /** For testsuite.regression.DataSourceRegressionTest */
+    public static final String SYSP_testsuite_ds_password /*                  */= "com.mysql.cj.testsuite.ds.password";
+
+    /** For testsuite.perf.LoadStorePerfTest */
+    public static final String SYSP_testsuite_loadstoreperf_tabletype /*      */= "com.mysql.cj.testsuite.loadstoreperf.tabletype"; // TODO document allowed types
+    /** For testsuite.perf.LoadStorePerfTest */
+    public static final String SYSP_testsuite_loadstoreperf_useBigResults /*  */= "com.mysql.cj.testsuite.loadstoreperf.useBigResults";
+
+    /** The system property that must exist to run the shutdown test in testsuite.simple.MiniAdminTest */
+    public static final String SYSP_testsuite_miniAdminTest_runShutdown /*    */= "com.mysql.cj.testsuite.miniAdminTest.runShutdown";
+
+    /** Suppress debug output when running testsuite */
+    public static final String SYSP_testsuite_noDebugOutput /*                */= "com.mysql.cj.testsuite.noDebugOutput";
+    /** Don't remove database object created by tests */
+    public static final String SYSP_testsuite_retainArtifacts /*              */= "com.mysql.cj.testsuite.retainArtifacts";
+    public static final String SYSP_testsuite_runLongTests /*                 */= "com.mysql.cj.testsuite.runLongTests";
+    public static final String SYSP_testsuite_serverController_basedir /*     */= "com.mysql.cj.testsuite.serverController.basedir";
+
+    /** For testsuite.regression.ConnectionRegressionTest.testBug12218() */
+    public static final String SYSP_testsuite_slave_properties /*             */= "com.mysql.cj.testsuite.replicationConnection.isSlave";
+
+    /*
+     * Properties added internally after parsing connection string
+     */
+    public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
+    public static final String PATH_PROPERTY_KEY = "PATH";
+    /** Key used to retrieve the hostname value from the properties instance passed to the driver. */
+    public static final String HOST_PROPERTY_KEY = "HOST";
+    /** Key used to retrieve the port number value from the properties instance passed to the driver. */
+    public static final String PORT_PROPERTY_KEY = "PORT";
+    /** Key used to retrieve the database value from the properties instance passed to the driver. */
+    public static final String DBNAME_PROPERTY_KEY = "DBNAME";
+    public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
     /** Index for hostname coming out of parseHostPortPair(). */
     public final static int HOST_NAME_INDEX = 0;
-
-    /**
-     * Key used to retrieve the hostname value from the properties instance
-     * passed to the driver.
-     */
-    public static final String HOST_PROPERTY_KEY = "HOST";
-
-    public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
-
     /** Index for port # coming out of parseHostPortPair(). */
     public final static int PORT_NUMBER_INDEX = 1;
 
-    public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
-
-    public static final String PATH_PROPERTY_KEY = "PATH";
-
-    /**
-     * Key used to retrieve the port number value from the properties instance
-     * passed to the driver.
+    /*
+     * Categories of connection properties
      */
-    public static final String PORT_PROPERTY_KEY = "PORT";
-
     public static final String CATEGORY_AUTH = Messages.getString("ConnectionProperties.categoryAuthentication");
     public static final String CATEGORY_CONNECTION = Messages.getString("ConnectionProperties.categoryConnection");
     public static final String CATEGORY_SESSION = Messages.getString("ConnectionProperties.categorySession");
@@ -120,6 +159,26 @@ public class PropertyDefinitions {
             CATEGORY_HA, CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_FABRIC,
             CATEGORY_MYSQLX };
 
+    /*
+     * Property modifiers
+     */
+    public static final boolean DEFAULT_VALUE_TRUE = true;
+    public static final boolean DEFAULT_VALUE_FALSE = false;
+    public static final String DEFAULT_VALUE_NULL_STRING = null;
+
+    /** is modifiable in run-time */
+    public static final boolean RUNTIME_MODIFIABLE = true;
+
+    /** is not modifiable in run-time (will allow to set not-null value only once) */
+    public static final boolean RUNTIME_NOT_MODIFIABLE = false;
+
+    public static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
+    public static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
+    public static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
+
+    /*
+     * Connection properties names
+     */
     public static final Map<String, PropertyDefinition<?>> PROPERTY_NAME_TO_PROPERTY_DEFINITION;
     public static final Map<String, String> PROPERTY_NAME_TO_ALIAS;
 
@@ -321,6 +380,8 @@ public class PropertyDefinitions {
     public static final String PNAME_clientInfoGetBulkSPName = "clientInfoGetBulkSPName";
     public static final String PNAME_clientInfoCatalog = "clientInfoCatalog";
     public static final String PNAME_autoConfigureForColdFusion = "autoConfigureForColdFusion";
+
+    public static final String PNAME_testsuite_faultInjection_serverCharsetIndex = "com.mysql.cj.testsuite.faultInjection.serverCharsetIndex"; // was "com.mysql.jdbc.faultInjection.serverCharsetIndex"
     // ----------------
 
     /*
@@ -328,6 +389,11 @@ public class PropertyDefinitions {
      * user auth.user
      * password auth.password
      */
+
+    //
+    // Yes, this looks goofy, but we're trying to avoid intern()ing here
+    //
+    private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
     static {
         PropertyDefinition<?>[] pdefs = new PropertyDefinition[] {

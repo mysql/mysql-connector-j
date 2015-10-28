@@ -62,10 +62,6 @@ public abstract class BaseTestCase extends TestCase {
     protected final static String CUSTOM_SSL_CIPHERS = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
             + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
 
-    private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
-
-    private final static String NO_MULTI_HOST_PROPERTY_NAME = "com.mysql.jdbc.testsuite.no-multi-hosts-tests";
-
     /**
      * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
      * or defaults to jdbc:mysql:///test
@@ -135,28 +131,16 @@ public abstract class BaseTestCase extends TestCase {
         super(name);
         this.myInstanceNumber = instanceCount++;
 
-        String newDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url");
+        String newDbUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url);
 
         if ((newDbUrl != null) && (newDbUrl.trim().length() != 0)) {
             dbUrl = newDbUrl;
-        } else {
-            String defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.default");
-
-            if ((defaultDbUrl != null) && (defaultDbUrl.trim().length() != 0)) {
-                dbUrl = defaultDbUrl;
-            }
         }
 
-        String defaultSha256Url = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+        String defaultSha256Url = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_openssl);
 
         if ((defaultSha256Url != null) && (defaultSha256Url.trim().length() != 0)) {
             sha256Url = defaultSha256Url;
-        }
-
-        String newDriver = System.getProperty("com.mysql.jdbc.testsuite.driver");
-
-        if ((newDriver != null) && (newDriver.trim().length() != 0)) {
-            this.dbClass = newDriver;
         }
 
         String dbNameFromUrl = null;
@@ -329,7 +313,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getAdminConnectionWithProps(Properties props) throws SQLException {
-        String adminUrl = System.getProperty(ADMIN_CONNECTION_PROPERTY_NAME);
+        String adminUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_admin);
 
         if (adminUrl != null) {
             return DriverManager.getConnection(adminUrl, props);
@@ -507,7 +491,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected boolean isAdminConnectionConfigured() {
-        return System.getProperty(ADMIN_CONNECTION_PROPERTY_NAME) != null;
+        return System.getProperty(PropertyDefinitions.SYSP_testsuite_url_admin) != null;
     }
 
     protected boolean isServerRunningOnWindows() throws SQLException {
@@ -515,7 +499,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     public void logDebug(String message) {
-        if (System.getProperty("com.mysql.jdbc.testsuite.noDebugOutput") == null) {
+        if (System.getProperty(PropertyDefinitions.SYSP_testsuite_noDebugOutput) == null) {
             System.err.println(message);
         }
     }
@@ -538,7 +522,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected final boolean runLongTests() {
-        return runTestIfSysPropDefined("com.mysql.jdbc.testsuite.runLongTests");
+        return runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_runLongTests);
     }
 
     /**
@@ -557,7 +541,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected boolean runMultiHostTests() {
-        return !runTestIfSysPropDefined(NO_MULTI_HOST_PROPERTY_NAME);
+        return !runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_disable_multihost_tests);
     }
 
     /**
@@ -640,7 +624,7 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
+        if (System.getProperty(PropertyDefinitions.SYSP_testsuite_retainArtifacts) == null) {
             Statement st = this.conn.createStatement();
             Statement sha256st = this.sha256Conn.createStatement();
 
@@ -775,7 +759,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected boolean isRunningOnJRockit() {
-        String vmVendor = System.getProperty("java.vm.vendor");
+        String vmVendor = System.getProperty(PropertyDefinitions.SYSP_java_vm_vendor);
 
         return (vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith("BEA"));
     }

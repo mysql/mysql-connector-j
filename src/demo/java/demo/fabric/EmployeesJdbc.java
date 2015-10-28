@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Demonstrate working with employee data in MySQL Fabric with Connector/J and the JDBC APIs.
@@ -37,11 +38,11 @@ import com.mysql.cj.api.fabric.FabricMysqlConnection;
 public class EmployeesJdbc {
     public static void main(String args[]) throws Exception {
 
-        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-        String port = System.getProperty("com.mysql.fabric.testsuite.port");
-        String database = System.getProperty("com.mysql.fabric.testsuite.database");
-        String user = System.getProperty("com.mysql.fabric.testsuite.username");
-        String password = System.getProperty("com.mysql.fabric.testsuite.password");
+        String hostname = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_hostname);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_port);
+        String database = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_database);
+        String user = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_username);
+        String password = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_password);
 
         String baseUrl = "jdbc:mysql:fabric://" + hostname + ":" + Integer.valueOf(port) + "/";
 

@@ -73,16 +73,6 @@ import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
  */
 public class DataSourceRegressionTest extends BaseTestCase {
 
-    public final static String DS_DATABASE_PROP_NAME = "com.mysql.jdbc.test.ds.db";
-
-    public final static String DS_HOST_PROP_NAME = "com.mysql.jdbc.test.ds.host";
-
-    public final static String DS_PASSWORD_PROP_NAME = "com.mysql.jdbc.test.ds.password";
-
-    public final static String DS_PORT_PROP_NAME = "com.mysql.jdbc.test.ds.port";
-
-    public final static String DS_USER_PROP_NAME = "com.mysql.jdbc.test.ds.user";
-
     private Context ctx;
 
     private File tempDir;
@@ -160,10 +150,10 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug3848() throws Exception {
         String jndiName = "/testBug3848";
 
-        String databaseName = System.getProperty(DS_DATABASE_PROP_NAME);
-        String userName = System.getProperty(DS_USER_PROP_NAME);
-        String password = System.getProperty(DS_PASSWORD_PROP_NAME);
-        String port = System.getProperty(DS_PORT_PROP_NAME);
+        String databaseName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_db);
+        String userName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_user);
+        String password = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_password);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_port);
 
         // Only run this test if at least one of the above are set
         if ((databaseName != null) || (userName != null) || (password != null) || (port != null)) {
@@ -221,11 +211,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug3920() throws Exception {
         String jndiName = "/testBug3920";
 
-        String databaseName = System.getProperty(DS_DATABASE_PROP_NAME);
-        String userName = System.getProperty(DS_USER_PROP_NAME);
-        String password = System.getProperty(DS_PASSWORD_PROP_NAME);
-        String port = System.getProperty(DS_PORT_PROP_NAME);
-        String serverName = System.getProperty(DS_HOST_PROP_NAME);
+        String databaseName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_db);
+        String userName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_user);
+        String password = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_password);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_port);
+        String serverName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_host);
 
         // Only run this test if at least one of the above are set
         if ((databaseName != null) || (serverName != null) || (userName != null) || (password != null) || (port != null)) {

@@ -3843,7 +3843,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             fail("sha256_password required to run this test");
         }
         if (allowsRsa(this.stmt)) {
-            fail("RSA encryption must be disabled on " + System.getProperty("com.mysql.jdbc.testsuite.url") + " to run this test");
+            fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
         }
 
         try {
@@ -4457,10 +4457,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean normalState = ((ConnectionImpl) this.conn).isServerLocal();
 
         if (normalState) {
-            boolean isNotLocal = ((ConnectionImpl) getConnectionWithProps(StandardSocketFactory.IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME
-                    + "=www.oracle.com:3306")).isServerLocal();
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_socketFactory, NonLocalSocketFactory.class.getName());
 
-            assertFalse(isNotLocal == normalState);
+            boolean isLocal = ((ConnectionImpl) getConnectionWithProps(props)).isServerLocal();
+
+            assertFalse(isLocal == normalState);
         }
     }
 
@@ -7164,7 +7166,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.rs = testStmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') FROM INFORMATION_SCHEMA.PLUGINS"
                         + " WHERE PLUGIN_NAME='cleartext_plugin_server'");
                 if (!this.rs.next() || !this.rs.getBoolean(1)) {
-                    String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+                    String ext = System.getProperty(PropertyDefinitions.SYSP_os_name).toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
                     testStmt.execute("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
                     clearTextPluginInstalled = true;
                 }

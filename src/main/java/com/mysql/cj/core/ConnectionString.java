@@ -86,9 +86,8 @@ public class ConnectionString {
                 masterProps.putAll((Properties) parsedProperties.clone());
                 slavesProps.putAll((Properties) parsedProperties.clone());
 
-                // Marker used for further testing later on, also when
-                // debugging
-                slavesProps.setProperty("com.mysql.jdbc.ReplicationConnection.isSlave", "true");
+                // Marker used for further testing later on, also when debugging
+                slavesProps.setProperty(PropertyDefinitions.SYSP_testsuite_slave_properties, "true");
 
                 int numHosts = Integer.parseInt(parsedProperties.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
 

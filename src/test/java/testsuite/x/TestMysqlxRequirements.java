@@ -57,15 +57,18 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        NodeSession sess;
+        // TODO fill in the next pattern
+        if (false) {
+            NodeSession sess;
 
-        String url = ""; // TODO test different URLs
-        sess = getNodeSession(url);
-        sess.close();
+            String url = ""; // TODO test different URLs
+            sess = getNodeSession(url);
+            sess.close();
 
-        Properties props = new Properties(); // TODO test different properties
-        sess = getNodeSession(props);
-        sess.close();
+            Properties props = new Properties(); // TODO test different properties
+            sess = getNodeSession(props);
+            sess.close();
+        }
     }
 
     /**
@@ -77,7 +80,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
      * @throws Exception
      */
     public void testSessionCreation() throws Exception {
-        if (System.getProperty("com.mysqlx.testsuite.url") == null) { // if (!this.isSetForMySQLxTests) {
+        if (!this.isSetForMySQLxTests) {
             return;
         }
         XSession sess;
@@ -113,25 +116,29 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        NodeSession sess = getNodeSession(""); // TODO set URL
 
-        sess.getDefaultSchema(); // according to spec it's available if NodeSession created with DataSource file
+        // TODO fill in the next pattern
+        if (false) {
+            NodeSession sess = getNodeSession(""); // TODO set URL
 
-        String schema = ""; // TODO set name
-        sess.getSchema(schema); // no-op, error or allowed?
+            sess.getDefaultSchema(); // according to spec it's available if NodeSession created with DataSource file
 
-        String sql = ""; // TODO set query
-        //sess.executeSql(sql);
+            String schema = ""; // TODO set name
+            sess.getSchema(schema); // no-op, error or allowed?
 
-        //sess.executeSql(sql, "v1", "v2"); // TODO test binding
+            String sql = ""; // TODO set query
+            //sess.executeSql(sql);
 
-        sess.close();
+            //sess.executeSql(sql, "v1", "v2"); // TODO test binding
 
-        // out of requirements
-        sess.createSchema("name"); // TODO set name
-        sess.dropSchema("name"); // TODO set name
-        sess.getSchemas();
-        sess.getUri();
+            sess.close();
+
+            // out of requirements
+            sess.createSchema("name"); // TODO set name
+            sess.dropSchema("name"); // TODO set name
+            sess.getSchemas();
+            sess.getUri();
+        }
 
     }
 
@@ -140,7 +147,7 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
      * @throws Exception
      */
     public void testSessionMethods() throws Exception {
-        if (System.getProperty("com.mysqlx.testsuite.url") == null) { // if (!this.isSetForMySQLxTests) {
+        if (!this.isSetForMySQLxTests) {
             return;
         }
 
@@ -179,38 +186,41 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
             return;
         }
 
-        Schema schema = getSession("").getDefaultSchema(); // TODO set URL
+        // TODO fill in the next pattern
+        if (false) {
+            Schema schema = getSession("").getDefaultSchema(); // TODO set URL
 
-        // Schema browsing Schema.getCollections() [44]
-        schema.getCollections();
+            // Schema browsing Schema.getCollections() [44]
+            schema.getCollections();
 
-        // Schema browsing Schema.getTables() [45]
-        schema.getTables();
+            // Schema browsing Schema.getTables() [45]
+            schema.getTables();
 
-        // Schema access Schema.getCollection() [47]
-        schema.getCollection(""); // TODO set name
+            // Schema access Schema.getCollection() [47]
+            schema.getCollection(""); // TODO set name
 
-        // Schema access Schema.getCollectionAsTable() [50]
-        schema.getCollectionAsTable(""); // TODO set name
+            // Schema access Schema.getCollectionAsTable() [50]
+            schema.getCollectionAsTable(""); // TODO set name
 
-        // Schema access Schema.getTable() [48]
-        schema.getTable(""); // TODO set name
+            // Schema access Schema.getTable() [48]
+            schema.getTable(""); // TODO set name
 
-        // Schema - who am I? [51]
-        schema.getName();
+            // Schema - who am I? [51]
+            schema.getName();
 
-        // Schema - am I real? [52]
-        schema.existsInDatabase();
+            // Schema - am I real? [52]
+            schema.existsInDatabase();
 
-        // Schema - DDL create [55]
-        schema.createCollection(""); // TODO set name
+            // Schema - DDL create [55]
+            schema.createCollection(""); // TODO set name
 
-        // Schema.drop [53]
-        schema.drop();
+            // Schema.drop [53]
+            schema.drop();
 
-        // inherited
-        schema.getSchema(); // "this" ???
-        schema.getSession(); // ???
+            // inherited
+            schema.getSchema(); // "this" ???
+            schema.getSession(); // ???
+        }
 
     }
 
@@ -235,49 +245,52 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
             return;
         }
 
-        // Collection.createCollection [16]
-        Collection collection = getSession("").getDefaultSchema().createCollection(""); // TODO set URL and collection name
+        // TODO fill in the next pattern
+        if (false) {
+            // Collection.createCollection [16]
+            Collection collection = getSession("").getDefaultSchema().createCollection(""); // TODO set URL and collection name
 
-        // Collection Index Creation [59]
-        // TODO spec in progress
+            // Collection Index Creation [59]
+            // TODO spec in progress
 
-        // Collection.getCollection [16]
-        collection = getSession("").getDefaultSchema().getCollection(""); // TODO set URL and collection name
+            // Collection.getCollection [16]
+            collection = getSession("").getDefaultSchema().getCollection(""); // TODO set URL and collection name
 
-        // Collection.add [17]
-        collection.add(new HashMap<String, String>()); // TODO set correct parameter
-        collection.add("jsonString"); // TODO set correct parameter
+            // Collection.add [17]
+            collection.add(new HashMap<String, String>()); // TODO set correct parameter
+            collection.add("jsonString"); // TODO set correct parameter
 
-        // Collection.find basics [18]
-        collection.find("searchCondition"); // TODO set correct parameter
+            // Collection.find basics [18]
+            collection.find("searchCondition"); // TODO set correct parameter
 
-        // Collection.modify (incl. all array_*) [21]
-        collection.modify("searchCondition"); // TODO set correct parameter
+            // Collection.modify (incl. all array_*) [21]
+            collection.modify("searchCondition"); // TODO set correct parameter
 
-        // Collection.remove [22]
-        collection.remove("searchCondition"); // TODO set correct parameter
+            // Collection.remove [22]
+            collection.remove("searchCondition"); // TODO set correct parameter
 
-        // Collection.as [41]
-        // collection.as("alias"); // TODO set correct parameter
+            // Collection.as [41]
+            // collection.as("alias"); // TODO set correct parameter
 
-        // Collection.count [43]
-        collection.count();
+            // Collection.count [43]
+            collection.count();
 
-        // Collection - who am I? [51]
-        collection.getName();
+            // Collection - who am I? [51]
+            collection.getName();
 
-        // Collection - am I real? [52]
-        collection.existsInDatabase();
+            // Collection - am I real? [52]
+            collection.existsInDatabase();
 
-        // Collection.drop [53]
-        collection.drop();
+            // Collection.drop [53]
+            collection.drop();
 
-        // inherited
-        collection.getSchema();
-        collection.getSession();
+            // inherited
+            collection.getSchema();
+            collection.getSession();
 
-        // poor spec
-        collection.newDoc();
+            // poor spec
+            collection.newDoc();
+        }
 
     }
 
@@ -302,37 +315,41 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        Table table = getSession("").getDefaultSchema().getCollectionAsTable("name"); // TODO set URL and collection name
 
-        // Table.insert [28]
-        Object fieldsAndValues = null;
-        // table.insert(fieldsAndValues); // TODO set correct parameter, expand statements
-        table.insert("fields"); // TODO set correct parameter, expand statements
+        // TODO fill in the next pattern
+        if (false) {
+            Table table = getSession("").getDefaultSchema().getCollectionAsTable("name"); // TODO set URL and collection name
 
-        // Table.select basics [27]
-        table.select("searchFields"); // TODO set correct parameter, expand statements
+            // Table.insert [28]
+            Object fieldsAndValues = null;
+            // table.insert(fieldsAndValues); // TODO set correct parameter, expand statements
+            table.insert("fields"); // TODO set correct parameter, expand statements
 
-        // Table.update [29]
-        table.update(); // TODO expand statements
+            // Table.select basics [27]
+            table.select("searchFields"); // TODO set correct parameter, expand statements
 
-        // Table.delete [30]
-        table.delete(); // TODO expand statements
+            // Table.update [29]
+            table.update(); // TODO expand statements
 
-        // Table.as [42]
-        // table.as("alias"); // TODO set correct parameter
+            // Table.delete [30]
+            table.delete(); // TODO expand statements
 
-        // Table.count [43]
-        table.count();
+            // Table.as [42]
+            // table.as("alias"); // TODO set correct parameter
 
-        // Table - who am I? [51]
-        table.getName();
+            // Table.count [43]
+            table.count();
 
-        // Table - am I real? [52]
-        table.existsInDatabase();
+            // Table - who am I? [51]
+            table.getName();
 
-        // inherited
-        table.getSchema();
-        table.getSession();
+            // Table - am I real? [52]
+            table.existsInDatabase();
+
+            // inherited
+            table.getSchema();
+            table.getSession();
+        }
 
     }
 
@@ -349,23 +366,27 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        View view = null;//getSession("").getDefaultSchema().getView("name"); // TODO set URL and collection name
 
-        // View.select [54]
-        view.select("searchFields"); // TODO set correct parameter, expand statements
+        // TODO fill in the next pattern
+        if (false) {
+            View view = null;//getSession("").getDefaultSchema().getView("name"); // TODO set URL and collection name
 
-        // View.count [43]
-        view.count();
+            // View.select [54]
+            view.select("searchFields"); // TODO set correct parameter, expand statements
 
-        // View - who am I? [51]
-        view.getName();
+            // View.count [43]
+            view.count();
 
-        // View - am I real? [52]
-        view.existsInDatabase();
+            // View - who am I? [51]
+            view.getName();
 
-        // inherited
-        view.getSchema();
-        view.getSession();
+            // View - am I real? [52]
+            view.existsInDatabase();
+
+            // inherited
+            view.getSchema();
+            view.getSession();
+        }
 
     }
 

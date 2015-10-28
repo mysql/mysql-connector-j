@@ -24,12 +24,13 @@
 package com.mysql.cj.core.util;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 
 public class LogUtils {
 
     public static final String CALLER_INFORMATION_NOT_AVAILABLE = "Caller information not available";
 
-    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private static final String LINE_SEPARATOR = System.getProperty(PropertyDefinitions.SYSP_line_separator);
 
     private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
 

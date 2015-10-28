@@ -23,6 +23,7 @@
 
 package demo.fabric;
 
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.proto.xmlrpc.XmlRpcClient;
 
 /**
@@ -30,8 +31,8 @@ import com.mysql.cj.fabric.proto.xmlrpc.XmlRpcClient;
  */
 public class Client1_Fabric {
     public static void main(String args[]) throws Exception {
-        String hostname = System.getProperty("com.mysql.fabric.testsuite.hostname");
-        String port = System.getProperty("com.mysql.fabric.testsuite.port");
+        String hostname = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_hostname);
+        String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_port);
 
         XmlRpcClient fabricClient = new XmlRpcClient("http://" + hostname + ":" + port, null, null);
         System.out.println("Fabrics: " + fabricClient.getFabricNames());
