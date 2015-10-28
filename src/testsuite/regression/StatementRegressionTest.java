@@ -7651,4 +7651,31 @@ public class StatementRegressionTest extends BaseTestCase {
             assertFalse(testCase, this.rs.next());
         }
     }
+
+    /**
+     * Tests fix for Bug#78961 - Can't call MySQL procedure with InOut parameters in Fabric environment.
+     * 
+     * Although this is a Fabric related bug we are able reproduce it using a couple of multi-host connections.
+     */
+    public void testBug78961() throws Exception {
+        createProcedure("testBug78961", "(IN c1 FLOAT, IN c2 FLOAT, OUT h FLOAT, INOUT t FLOAT) BEGIN SET h = SQRT(c1 * c1 + c2 * c2); SET t = t + h; END;");
+
+        Connection highLevelConn = getLoadBalancedConnection(null);
+        assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy"));
+
+        Connection lowLevelConn = getMasterSlaveReplicationConnection(null);
+        // This simulates the behavior from Fabric connections that are causing the problem.
+        ((ReplicationConnection) lowLevelConn).setProxy((MySQLConnection) highLevelConn);
+
+        CallableStatement cstmt = lowLevelConn.prepareCall("{CALL testBug78961 (?, ?, ?, ?)}");
+        cstmt.setFloat(1, 3.0f);
+        cstmt.setFloat(2, 4.0f);
+        cstmt.setFloat(4, 5.0f);
+        cstmt.registerOutParameter(3, Types.FLOAT);
+        cstmt.registerOutParameter(4, Types.FLOAT);
+        cstmt.execute();
+
+        assertEquals(5.0f, cstmt.getFloat(3));
+        assertEquals(10.0f, cstmt.getFloat(4));
+    }
 }
