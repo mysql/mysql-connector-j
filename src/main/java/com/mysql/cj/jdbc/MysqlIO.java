@@ -35,7 +35,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -808,12 +807,16 @@ public class MysqlIO implements ResultsHandler {
         }
 
         for (int i = 0; i < fields.length; i++) {
-            switch (fields[i].getJavaType()) {
-                case Types.BLOB:
-                case Types.CLOB:
-                case Types.LONGVARBINARY:
-                case Types.LONGVARCHAR:
+            switch (fields[i].getMysqlType()) {
+                case BLOB:
+                case MEDIUMBLOB:
+                case LONGBLOB:
+                case TEXT:
+                case MEDIUMTEXT:
+                case LONGTEXT:
                     return true;
+                default:
+                    break;
             }
         }
 

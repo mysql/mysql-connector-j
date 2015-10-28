@@ -25,11 +25,11 @@ package com.mysql.cj.jdbc;
 
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -116,7 +116,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
 
-            return Types.VARCHAR;
+            return MysqlType.VARCHAR.getJdbcType();
         }
 
         checkAvailable();
@@ -128,7 +128,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
 
-            return "VARCHAR";
+            return MysqlType.VARCHAR.getName();
         }
 
         checkAvailable();

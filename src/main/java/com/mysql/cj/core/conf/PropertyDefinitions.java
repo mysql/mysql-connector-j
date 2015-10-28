@@ -158,7 +158,6 @@ public class PropertyDefinitions {
     public static final String PNAME_serverConfigCacheFactory = "serverConfigCacheFactory";
     public static final String PNAME_cacheServerConfiguration = "cacheServerConfiguration";
     public static final String PNAME_callableStmtCacheSize = "callableStmtCacheSize";
-    public static final String PNAME_capitalizeTypeNames = "capitalizeTypeNames";
     public static final String PNAME_characterEncoding = "characterEncoding";
     public static final String PNAME_characterSetResults = "characterSetResults";
     public static final String PNAME_connectionAttributes = "connectionAttributes";
@@ -438,9 +437,6 @@ public class PropertyDefinitions {
 
                 new IntegerPropertyDefinition(PNAME_callableStmtCacheSize, 100, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.callableStmtCacheSize"), "3.1.2", CATEGORY_PERFORMANCE, 5, 0, Integer.MAX_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_capitalizeTypeNames, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.capitalizeTypeNames"), "2.0.7", CATEGORY_METADATA, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PNAME_characterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.characterEncoding"), "1.1g", CATEGORY_SESSION, 5),
@@ -939,7 +935,6 @@ public class PropertyDefinitions {
                 put(PNAME_serverConfigCacheFactory, "serverConfigCacheFactory");
                 put(PNAME_cacheServerConfiguration, "cacheServerConfiguration");
                 put(PNAME_callableStmtCacheSize, "callableStmtCacheSize");
-                put(PNAME_capitalizeTypeNames, "capitalizeTypeNames");
                 put(PNAME_characterEncoding, "characterEncoding");
                 put(PNAME_characterSetResults, "characterSetResults");
                 put(PNAME_connectionAttributes, "connectionAttributes");

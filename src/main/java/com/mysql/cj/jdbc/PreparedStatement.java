@@ -53,7 +53,6 @@ import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -75,8 +74,10 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.StatementIsClosedException;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
@@ -689,7 +690,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * Only used by statement interceptors at the moment to
      * provide introspection of bound values
      */
-    protected int[] parameterTypes = null;
+    protected MysqlType[] parameterTypes = null;
 
     protected ParseInfo parseInfo;
 
@@ -981,7 +982,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 this.parameterStreams[i] = null;
                 this.isStream[i] = false;
                 this.isNull[i] = false;
-                this.parameterTypes[i] = Types.NULL;
+                this.parameterTypes[i] = MysqlType.NULL;
             }
         }
     }
@@ -2568,7 +2569,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             this.isStream = new boolean[this.parameterCount];
             this.streamLengths = new int[this.parameterCount];
             this.isNull = new boolean[this.parameterCount];
-            this.parameterTypes = new int[this.parameterCount];
+            this.parameterTypes = new MysqlType[this.parameterCount];
 
             clearParameters();
 
@@ -2696,7 +2697,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.VARCHAR);
+            setNull(parameterIndex, MysqlType.VARCHAR);
         } else {
             setBinaryStream(parameterIndex, x, length);
         }
@@ -2716,11 +2717,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.DECIMAL);
+            setNull(parameterIndex, MysqlType.DECIMAL);
         } else {
             setInternal(parameterIndex, StringUtils.fixDecimalExponent(x.toPlainString()));
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DECIMAL;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.DECIMAL;
         }
     }
 
@@ -2746,7 +2747,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 int parameterIndexOffset = getParameterIndexOffset();
 
@@ -2763,7 +2764,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 this.isStream[parameterIndex - 1 + parameterIndexOffset] = true;
                 this.streamLengths[parameterIndex - 1 + parameterIndexOffset] = length;
                 this.isNull[parameterIndex - 1 + parameterIndexOffset] = false;
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BLOB;
+                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.BLOB; // TODO use length to find the right BLOB type
             }
         }
     }
@@ -2785,7 +2786,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setBlob(int i, java.sql.Blob x) throws SQLException {
         if (x == null) {
-            setNull(i, Types.BLOB);
+            setNull(i, MysqlType.BLOB);
         } else {
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
 
@@ -2795,7 +2796,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             setInternal(i, bytesOut.toByteArray());
 
-            this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.BLOB;
+            this.parameterTypes[i - 1 + getParameterIndexOffset()] = MysqlType.BLOB;
         }
     }
 
@@ -2830,7 +2831,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setByte(int parameterIndex, byte x) throws SQLException {
         setInternal(parameterIndex, String.valueOf(x));
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TINYINT;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TINYINT;
     }
 
     /**
@@ -2850,14 +2851,14 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         setBytes(parameterIndex, x, true, true);
 
         if (x != null) {
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BINARY;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.BINARY; // TODO VARBINARY ?
         }
     }
 
     protected void setBytes(int parameterIndex, byte[] x, boolean checkForIntroducer, boolean escapeForMBChars) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 String connectionEncoding = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
@@ -3021,7 +3022,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 if (reader == null) {
-                    setNull(parameterIndex, Types.LONGVARCHAR);
+                    setNull(parameterIndex, MysqlType.TEXT);
                 } else {
                     char[] c = null;
                     int len = 0;
@@ -3057,7 +3058,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         }
                     }
 
-                    this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
+                    this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TEXT; // TODO was Types.CLOB
                 }
             } catch (UnsupportedEncodingException uec) {
                 throw SQLError.createSQLException(uec.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, uec, getExceptionInterceptor());
@@ -3081,7 +3082,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setClob(int i, Clob x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (x == null) {
-                setNull(i, Types.CLOB);
+                setNull(i, MysqlType.TEXT);
             } else {
 
                 String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
@@ -3093,7 +3094,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     setBytes(i, StringUtils.getBytes(x.getSubString(1L, (int) x.length()), forcedEncoding));
                 }
 
-                this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.CLOB;
+                this.parameterTypes[i - 1 + getParameterIndexOffset()] = MysqlType.TEXT; // TODO was Types.CLOB
             }
         }
     }
@@ -3138,7 +3139,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
     private void setDateInternal(int parameterIndex, Date x, TimeZone tz) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.DATE);
+            setNull(parameterIndex, MysqlType.DATE);
         } else {
             if (this.ddf == null) {
                 this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
@@ -3173,7 +3174,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             setInternal(parameterIndex, StringUtils.fixDecimalExponent(String.valueOf(x)));
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DOUBLE;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.DOUBLE;
         }
     }
 
@@ -3192,7 +3193,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setFloat(int parameterIndex, float x) throws SQLException {
         setInternal(parameterIndex, StringUtils.fixDecimalExponent(String.valueOf(x)));
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.FLOAT;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.FLOAT; // TODO check; was Types.FLOAT but should be Types.REAL to map to SQL FLOAT
     }
 
     /**
@@ -3210,7 +3211,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setInt(int parameterIndex, int x) throws SQLException {
         setInternal(parameterIndex, String.valueOf(x));
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.INTEGER;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.INT;
     }
 
     protected final void setInternal(int paramIndex, byte[] val) throws SQLException {
@@ -3268,7 +3269,13 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setLong(int parameterIndex, long x) throws SQLException {
         setInternal(parameterIndex, String.valueOf(x));
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BIGINT;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.BIGINT;
+    }
+
+    public void setBigInteger(int parameterIndex, BigInteger x) throws SQLException {
+        setInternal(parameterIndex, x.toString());
+
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.BIGINT_UNSIGNED;
     }
 
     /**
@@ -3291,8 +3298,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             setInternal(parameterIndex, "null");
             this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.NULL;
         }
+    }
+
+    protected void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException {
+        setNull(parameterIndex, mysqlType.getJdbcType());
     }
 
     /**
@@ -3315,17 +3326,17 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setNull(int parameterIndex, int sqlType, String arg) throws SQLException {
         setNull(parameterIndex, sqlType);
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.NULL;
     }
 
-    private void setNumericObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
+    private void setNumericObject(int parameterIndex, Object parameterObj, MysqlType targetMysqlType, int scale) throws SQLException {
         Number parameterAsNum;
 
         if (parameterObj instanceof Boolean) {
             parameterAsNum = ((Boolean) parameterObj).booleanValue() ? Integer.valueOf(1) : Integer.valueOf(0);
         } else if (parameterObj instanceof String) {
-            switch (targetSqlType) {
-                case Types.BIT:
+            switch (targetMysqlType) {
+                case BIT:
                     if ("1".equals(parameterObj) || "0".equals(parameterObj)) {
                         parameterAsNum = Integer.valueOf((String) parameterObj);
                     } else {
@@ -3333,34 +3344,38 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                         parameterAsNum = parameterAsBoolean ? Integer.valueOf(1) : Integer.valueOf(0);
                     }
-
                     break;
 
-                case Types.TINYINT:
-                case Types.SMALLINT:
-                case Types.INTEGER:
+                case TINYINT:
+                case TINYINT_UNSIGNED:
+                case SMALLINT:
+                case SMALLINT_UNSIGNED:
+                case INT:
+                case INT_UNSIGNED:
                     parameterAsNum = Integer.valueOf((String) parameterObj);
-
                     break;
 
-                case Types.BIGINT:
+                case BIGINT:
                     parameterAsNum = Long.valueOf((String) parameterObj);
-
                     break;
 
-                case Types.REAL:
+                case BIGINT_UNSIGNED:
+                    parameterAsNum = new BigInteger((String) parameterObj);
+                    break;
+
+                case FLOAT:
+                case FLOAT_UNSIGNED:
                     parameterAsNum = Float.valueOf((String) parameterObj);
 
                     break;
 
-                case Types.FLOAT:
-                case Types.DOUBLE:
+                case DOUBLE:
+                case DOUBLE_UNSIGNED:
                     parameterAsNum = Double.valueOf((String) parameterObj);
-
                     break;
 
-                case Types.DECIMAL:
-                case Types.NUMERIC:
+                case DECIMAL:
+                case DECIMAL_UNSIGNED:
                 default:
                     parameterAsNum = new java.math.BigDecimal((String) parameterObj);
             }
@@ -3368,34 +3383,34 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             parameterAsNum = (Number) parameterObj;
         }
 
-        switch (targetSqlType) {
-            case Types.BIT:
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
+        switch (targetMysqlType) {
+            case BIT:
+            case TINYINT:
+            case TINYINT_UNSIGNED:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
+            case INT:
+            case INT_UNSIGNED:
                 setInt(parameterIndex, parameterAsNum.intValue());
-
                 break;
 
-            case Types.BIGINT:
+            case BIGINT:
+            case BIGINT_UNSIGNED:
                 setLong(parameterIndex, parameterAsNum.longValue());
-
                 break;
 
-            case Types.REAL:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
                 setFloat(parameterIndex, parameterAsNum.floatValue());
-
                 break;
 
-            case Types.FLOAT:
-            case Types.DOUBLE:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
                 setDouble(parameterIndex, parameterAsNum.doubleValue());
-
                 break;
 
-            case Types.DECIMAL:
-            case Types.NUMERIC:
-
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
                 if (parameterAsNum instanceof java.math.BigDecimal) {
                     BigDecimal scaledBigDecimal = null;
 
@@ -3418,13 +3433,15 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
 
                 break;
+            default:
+                break;
         }
     }
 
     public void setObject(int parameterIndex, Object parameterObj) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (parameterObj == null) {
-                setNull(parameterIndex, java.sql.Types.OTHER);
+                setNull(parameterIndex, MysqlType.UNKNOWN);
             } else {
                 if (parameterObj instanceof Byte) {
                     setInt(parameterIndex, ((Byte) parameterObj).intValue());
@@ -3527,7 +3544,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * 
      * <P>
      * note that this method may be used to pass database-specific abstract data types. This is done by using a Driver-specific Java type and using a
-     * targetSqlType of java.sql.Types.OTHER
+     * targetSqlType of Types.OTHER
      * </p>
      * 
      * @param parameterIndex
@@ -3537,7 +3554,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @param targetSqlType
      *            The SQL type to be send to the database
      * @param scale
-     *            For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC types
+     *            For Types.DECIMAL or Types.NUMERIC types
      *            this is the number of digits after the decimal. For all other
      *            types this value will be ignored.
      * 
@@ -3547,7 +3564,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (parameterObj == null) {
-                setNull(parameterIndex, java.sql.Types.OTHER);
+                setNull(parameterIndex, MysqlType.UNKNOWN);
             } else {
 
                 //JDBC42Helper.convertJavaTimeToJavaSql(x)
@@ -3560,73 +3577,75 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
 
                 try {
+                    MysqlType targetMysqlType = MysqlType.getByJdbcType(targetSqlType);
+
                     /*
                      * From Table-B5 in the JDBC Spec
                      */
-                    switch (targetSqlType) {
-                        case Types.BOOLEAN:
-
+                    switch (targetMysqlType) {
+                        case BOOLEAN:
                             if (parameterObj instanceof Boolean) {
                                 setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
-
                                 break;
+
                             } else if (parameterObj instanceof String) {
                                 setBoolean(parameterIndex, "true".equalsIgnoreCase((String) parameterObj) || !"0".equalsIgnoreCase((String) parameterObj));
-
                                 break;
+
                             } else if (parameterObj instanceof Number) {
                                 int intValue = ((Number) parameterObj).intValue();
-
                                 setBoolean(parameterIndex, intValue != 0);
-
                                 break;
+
                             } else {
                                 throw SQLError.createSQLException(
                                         Messages.getString("PreparedStatement.66", new Object[] { parameterObj.getClass().getName() }),
                                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                             }
 
-                        case Types.BIT:
-                        case Types.TINYINT:
-                        case Types.SMALLINT:
-                        case Types.INTEGER:
-                        case Types.BIGINT:
-                        case Types.REAL:
-                        case Types.FLOAT:
-                        case Types.DOUBLE:
-                        case Types.DECIMAL:
-                        case Types.NUMERIC:
-
-                            setNumericObject(parameterIndex, parameterObj, targetSqlType, scale);
-
+                        case BIT:
+                        case TINYINT:
+                        case TINYINT_UNSIGNED:
+                        case SMALLINT:
+                        case SMALLINT_UNSIGNED:
+                        case INT:
+                        case INT_UNSIGNED:
+                        case BIGINT:
+                        case BIGINT_UNSIGNED:
+                        case FLOAT:
+                        case FLOAT_UNSIGNED:
+                        case DOUBLE:
+                        case DOUBLE_UNSIGNED:
+                        case DECIMAL:
+                        case DECIMAL_UNSIGNED:
+                            setNumericObject(parameterIndex, parameterObj, targetMysqlType, scale);
                             break;
 
-                        case Types.CHAR:
-                        case Types.VARCHAR:
-                        case Types.LONGVARCHAR:
+                        case CHAR:
+                        case ENUM:
+                        case SET:
+                        case VARCHAR:
+                        case TINYTEXT:
+                        case TEXT:
+                        case MEDIUMTEXT:
+                        case LONGTEXT:
+                        case JSON:
                             if (parameterObj instanceof BigDecimal) {
                                 setString(parameterIndex, (StringUtils.fixDecimalExponent(((BigDecimal) parameterObj).toPlainString())));
-                            } else {
-                                setString(parameterIndex, parameterObj.toString());
-                            }
-
-                            break;
-
-                        case Types.CLOB:
-
-                            if (parameterObj instanceof java.sql.Clob) {
+                            } else if (parameterObj instanceof java.sql.Clob) {
                                 setClob(parameterIndex, (java.sql.Clob) parameterObj);
                             } else {
                                 setString(parameterIndex, parameterObj.toString());
                             }
-
                             break;
 
-                        case Types.BINARY:
-                        case Types.VARBINARY:
-                        case Types.LONGVARBINARY:
-                        case Types.BLOB:
-
+                        case BINARY:
+                        case GEOMETRY:
+                        case VARBINARY:
+                        case TINYBLOB:
+                        case BLOB:
+                        case MEDIUMBLOB:
+                        case LONGBLOB:
                             if (parameterObj instanceof byte[]) {
                                 setBytes(parameterIndex, (byte[]) parameterObj);
                             } else if (parameterObj instanceof java.sql.Blob) {
@@ -3637,8 +3656,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                             break;
 
-                        case Types.DATE:
-                        case Types.TIMESTAMP:
+                        case DATE:
+                        case TIMESTAMP:
 
                             java.util.Date parameterAsDate;
 
@@ -3650,8 +3669,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                                 parameterAsDate = (java.util.Date) parameterObj;
                             }
 
-                            switch (targetSqlType) {
-                                case Types.DATE:
+                            switch (targetMysqlType) {
+                                case DATE:
 
                                     if (parameterAsDate instanceof java.sql.Date) {
                                         setDate(parameterIndex, (java.sql.Date) parameterAsDate);
@@ -3661,7 +3680,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                                     break;
 
-                                case Types.TIMESTAMP:
+                                case TIMESTAMP:
 
                                     if (parameterAsDate instanceof java.sql.Timestamp) {
                                         setTimestamp(parameterIndex, (java.sql.Timestamp) parameterAsDate);
@@ -3670,12 +3689,14 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                                     }
 
                                     break;
+
+                                default:
+                                    break;
                             }
 
                             break;
 
-                        case Types.TIME:
-
+                        case TIME:
                             if (parameterObj instanceof String) {
                                 java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern((String) parameterObj, true), Locale.US);
                                 setTime(parameterIndex, new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
@@ -3688,16 +3709,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                             break;
 
-                        case Types.OTHER:
+                        case UNKNOWN:
                             setSerializableObject(parameterIndex, parameterObj);
-
                             break;
-
-                        case Types.REF_CURSOR:
-                        case Types.TIME_WITH_TIMEZONE:
-                        case Types.TIMESTAMP_WITH_TIMEZONE:
-                            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(targetSqlType),
-                                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 
                         default:
                             throw SQLError.createSQLException(Messages.getString("PreparedStatement.16"), SQLError.SQL_STATE_GENERAL_ERROR,
@@ -3705,6 +3719,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
                 } catch (SQLException ex) {
                     throw ex;
+                } catch (FeatureNotAvailableException nae) {
+                    throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(targetSqlType),
+                            SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 } catch (Exception ex) {
                     throw SQLError.createSQLException(
                             Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
@@ -3729,7 +3746,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
         for (int j = 0; j < isNullBatch.length; j++) {
             if (isNullBatch[j]) {
-                batchedStatement.setNull(batchedParamIndex++, Types.NULL);
+                batchedStatement.setNull(batchedParamIndex++, MysqlType.NULL.getJdbcType());
             } else {
                 if (isStreamBatch[j]) {
                     batchedStatement.setBinaryStream(batchedParamIndex++, paramArg.parameterStreams[j], paramArg.streamLengths[j]);
@@ -3780,7 +3797,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             byte[] buf = bytesOut.toByteArray();
             ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
             setBinaryStream(parameterIndex, bytesIn, buf.length);
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BINARY;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.BINARY;
         } catch (Exception ex) {
             throw SQLError.createSQLException(Messages.getString("PreparedStatement.54") + ex.getClass().getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex,
                     getExceptionInterceptor());
@@ -3802,7 +3819,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void setShort(int parameterIndex, short x) throws SQLException {
         setInternal(parameterIndex, String.valueOf(x));
 
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.SMALLINT;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.SMALLINT;
     }
 
     /**
@@ -3822,7 +3839,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         synchronized (checkClosed().getConnectionMutex()) {
             // if the passed string is null, then set this column to null
             if (x == null) {
-                setNull(parameterIndex, Types.CHAR);
+                setNull(parameterIndex, MysqlType.VARCHAR);
             } else {
                 checkClosed();
 
@@ -3968,7 +3985,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                 setInternal(parameterIndex, parameterAsBytes);
 
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.VARCHAR;
+                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.VARCHAR;
             }
         }
     }
@@ -4076,7 +4093,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     private void setTimeInternal(int parameterIndex, Time x, TimeZone tz) throws java.sql.SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.TIME);
+            setNull(parameterIndex, MysqlType.TIME);
         } else {
             checkClosed();
 
@@ -4088,7 +4105,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             setInternal(parameterIndex, this.tdf.format(x));
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TIME;
         }
     }
 
@@ -4146,13 +4163,13 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     private void setTimestampInternal(int parameterIndex, Timestamp x, TimeZone tz) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+            setNull(parameterIndex, MysqlType.TIMESTAMP);
         } else {
             if (!this.sendFractionalSeconds.getValue()) {
                 x = TimeUtil.truncateFractionalSeconds(x);
             }
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TIMESTAMP;
 
             if (this.tsdf == null) {
                 this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
@@ -4196,11 +4213,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     @Deprecated
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.VARCHAR);
+            setNull(parameterIndex, MysqlType.TEXT);
         } else {
             setBinaryStream(parameterIndex, x, length);
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TEXT; // TODO was Types.CLOB
         }
     }
 
@@ -4208,12 +4225,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @see PreparedStatement#setURL(int, URL)
      */
     public void setURL(int parameterIndex, URL arg) throws SQLException {
-        if (arg != null) {
+        if (arg == null) {
+            setNull(parameterIndex, MysqlType.VARCHAR);
+        } else {
             setString(parameterIndex, arg.toString());
 
-            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATALINK;
-        } else {
-            setNull(parameterIndex, Types.CHAR);
+            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.VARCHAR; // TODO was Types.DATALINK
         }
     }
 
@@ -4404,7 +4421,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
         setAsciiStream(parameterIndex, x, (int) length);
-        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
+        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TEXT; // TODO was Types.CLOB, check; use length to find right TEXT type
     }
 
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
@@ -4464,7 +4481,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             // if the passed string is null, then set this column to null
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.CHAR);
+                setNull(parameterIndex, MysqlType.VARCHAR); // was Types.CHAR
             } else {
                 int stringLength = x.length();
                 // Ignore sql_mode=NO_BACKSLASH_ESCAPES in current implementation.
@@ -4547,7 +4564,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                 setInternal(parameterIndex, parameterAsBytes);
 
-                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = -9; /* Types.NVARCHAR */
+                this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.VARCHAR; // TODO was Types.NVARCHAR
             }
         }
     }
@@ -4577,7 +4594,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 if (reader == null) {
-                    setNull(parameterIndex, java.sql.Types.LONGVARCHAR);
+                    setNull(parameterIndex, MysqlType.TEXT);
 
                 } else {
                     char[] c = null;
@@ -4605,7 +4622,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         setNString(parameterIndex, buf.toString());
                     }
 
-                    this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = 2011; /* Types.NCLOB */
+                    this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = MysqlType.TEXT; // TODO was Types.NCLOB; use length to find right TEXT type
                 }
             } catch (java.io.IOException ioEx) {
                 throw SQLError.createSQLException(ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4632,7 +4649,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         if (reader == null) {
-            setNull(parameterIndex, java.sql.Types.LONGVARCHAR);
+            setNull(parameterIndex, MysqlType.TEXT);
         } else {
             setNCharacterStream(parameterIndex, reader, length);
         }
@@ -4665,16 +4682,26 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                 int charsetIndex = 0;
 
-                if (PreparedStatement.this.parameterTypes[i] == Types.BINARY || PreparedStatement.this.parameterTypes[i] == Types.BLOB) {
-                    charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
-                } else {
-                    try {
-                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.session.getPropertySet()
-                                .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                                PreparedStatement.this.session.getServerVersion());
-                    } catch (RuntimeException ex) {
-                        throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
-                    }
+                switch (PreparedStatement.this.parameterTypes[i]) {
+                    case BINARY:
+                    case BLOB:
+                    case GEOMETRY:
+                    case LONGBLOB:
+                    case MEDIUMBLOB:
+                    case TINYBLOB:
+                    case UNKNOWN:
+                    case VARBINARY:
+                        charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
+                        break;
+                    default:
+                        try {
+                            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(PreparedStatement.this.session.getPropertySet()
+                                    .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                                    PreparedStatement.this.session.getServerVersion());
+                        } catch (RuntimeException ex) {
+                            throw SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
+                        }
+                        break;
                 }
 
                 Field parameterMetadata = new Field(null, "parameter_" + (i + 1), charsetIndex, PreparedStatement.this.charEncoding,
@@ -4745,6 +4772,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             return this.bindingsAsRs.getInt(parameterIndex);
         }
 
+        public BigInteger getBigInteger(int parameterIndex) throws SQLException {
+            return this.bindingsAsRs.getBigInteger(parameterIndex);
+        }
+
         public long getLong(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getLong(parameterIndex);
         }
@@ -4767,17 +4798,24 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             // we can't rely on the default mapping for JDBC's ResultSet.getObject() for numerics, they're not one-to-one with PreparedStatement.setObject
 
             switch (PreparedStatement.this.parameterTypes[parameterIndex - 1]) {
-                case Types.TINYINT:
+                case TINYINT:
+                case TINYINT_UNSIGNED:
                     return Byte.valueOf(getByte(parameterIndex));
-                case Types.SMALLINT:
+                case SMALLINT:
+                case SMALLINT_UNSIGNED:
                     return Short.valueOf(getShort(parameterIndex));
-                case Types.INTEGER:
+                case INT:
+                case INT_UNSIGNED:
                     return Integer.valueOf(getInt(parameterIndex));
-                case Types.BIGINT:
+                case BIGINT:
                     return Long.valueOf(getLong(parameterIndex));
-                case Types.FLOAT:
+                case BIGINT_UNSIGNED:
+                    return getBigInteger(parameterIndex);
+                case FLOAT:
+                case FLOAT_UNSIGNED:
                     return Float.valueOf(getFloat(parameterIndex));
-                case Types.DOUBLE:
+                case DOUBLE:
+                case DOUBLE_UNSIGNED:
                     return Double.valueOf(getDouble(parameterIndex));
                 default:
                     return this.bindingsAsRs.getObject(parameterIndex);
@@ -4864,7 +4902,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     }
 
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        PreparedStatementHelper.setRowId(this, parameterIndex, x);
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     /**
@@ -4879,11 +4917,20 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *             if a database error occurs
      */
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        PreparedStatementHelper.setNClob(this, parameterIndex, value);
+        if (value == null) {
+            setNull(parameterIndex, MysqlType.TEXT);
+        } else {
+            setNCharacterStream(parameterIndex, value.getCharacterStream(), value.length());
+        }
     }
 
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
+        if (xmlObject == null) {
+            setNull(parameterIndex, MysqlType.VARCHAR);
+        } else {
+            // FIXME: Won't work for Non-MYSQL SQLXMLs
+            setCharacterStream(parameterIndex, ((MysqlSQLXML) xmlObject).serializeAsCharacterStream());
+        }
     }
 
     /**

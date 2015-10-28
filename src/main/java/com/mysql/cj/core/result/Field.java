@@ -23,8 +23,6 @@
 
 package com.mysql.cj.core.result;
 
-import java.sql.Types;
-
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.ServerVersion;
@@ -53,7 +51,7 @@ public class Field {
 
     private long length; // Internal length of the field;
 
-    private int mysqlTypeId = -1; // the MySQL type
+    private int mysqlTypeId = -1; // the MySQL type ID in legacy protocol
 
     private MysqlType mysqlType = MysqlType.UNKNOWN;
 
@@ -145,7 +143,7 @@ public class Field {
      * @param length
      *            length in characters or bytes (for BINARY data).
      */
-    public Field(String tableName, String columnName, int collationIndex, String encoding, int jdbcType, int length) {
+    public Field(String tableName, String columnName, int collationIndex, String encoding, MysqlType mysqlType, int length) {
 
         this.databaseName = new LazyString(null);
         this.tableName = new LazyString(tableName);
@@ -153,7 +151,7 @@ public class Field {
         this.columnName = new LazyString(columnName);
         this.originalColumnName = new LazyString(null);
         this.length = length;
-        this.mysqlType = MysqlType.getByJdbcType(jdbcType);
+        this.mysqlType = mysqlType;
         this.colFlag = 0;
         this.colDecimals = 0;
 
@@ -377,21 +375,29 @@ public class Field {
         return (this.length <= 1);
     }
 
-    public boolean getvalueNeedsQuoting() {
-        switch (this.mysqlType.getJdbcType()) {
-            case Types.BIGINT:
-            case Types.BIT:
-            case Types.DECIMAL:
-            case Types.DOUBLE:
-            case Types.FLOAT:
-            case Types.INTEGER:
-            case Types.NUMERIC:
-            case Types.REAL:
-            case Types.SMALLINT:
-            case Types.TINYINT:
+    public boolean getValueNeedsQuoting() {
+        switch (this.mysqlType) {
+            case BIGINT:
+            case BIGINT_UNSIGNED:
+            case BIT:
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+            case INT:
+            case INT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
+            case TINYINT:
+            case TINYINT_UNSIGNED:
                 return false;
+            default:
+                return true;
         }
-        return true;
     }
 
     public int getCollationIndex() {

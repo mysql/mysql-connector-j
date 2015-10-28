@@ -1532,6 +1532,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs = storedProc.getResultSet();
             traverseResultSetBug14562();
 
+            storedProc.close();
+
             createProcedure("sp_testBug14562_1", "(OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED)"
                     + "BEGIN SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1; END");
             storedProc = this.conn.prepareCall("{call sp_testBug14562_1(?, ?)}");
@@ -1968,49 +1970,46 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.rs = dbmd.getTypeInfo();
 
-        boolean firstColumn = true;
         int numCols = 1;
         StringBuilder createStatement = new StringBuilder("CREATE TABLE testAllTypes (");
         List<Boolean> wasDatetimeTypeList = new ArrayList<Boolean>();
+
+        StringBuilder insertValues = new StringBuilder();
 
         while (this.rs.next()) {
             String dataType = this.rs.getString("TYPE_NAME").toUpperCase();
 
             boolean wasDateTime = false;
 
-            if (dataType.indexOf("DATE") != -1 || dataType.indexOf("TIME") != -1) {
+            createStatement.append("\n\t");
+            if (numCols > 1) {
+                createStatement.append(",");
+                insertValues.append(",");
+            }
+
+            createStatement.append("field_");
+            createStatement.append(numCols++);
+            createStatement.append(" ");
+
+            createStatement.append(dataType);
+
+            if ("VARCHAR".equalsIgnoreCase(dataType) || "VARBINARY".equalsIgnoreCase(dataType)) {
+                // we can't use max varchar or varbinary precision because it is equal to max row length
+                createStatement.append("(255)");
+                insertValues.append("'0'");
+            } else if ("ENUM".equalsIgnoreCase(dataType) || "SET".equalsIgnoreCase(dataType)) {
+                createStatement.append("('','0')");
+                insertValues.append("'0'");
+            } else if (dataType.indexOf("DATE") != -1 || dataType.indexOf("TIME") != -1) {
+                insertValues.append("NOW()");
                 wasDateTime = true;
+            } else {
+                insertValues.append("0");
             }
 
-            if (!"BOOL".equalsIgnoreCase(dataType) && !"LONG VARCHAR".equalsIgnoreCase(dataType) && !"LONG VARBINARY".equalsIgnoreCase(dataType)
-                    && !"ENUM".equalsIgnoreCase(dataType) && !"SET".equalsIgnoreCase(dataType)) {
-                wasDatetimeTypeList.add(new Boolean(wasDateTime));
-                createStatement.append("\n\t");
-                if (!firstColumn) {
-                    createStatement.append(",");
-                } else {
-                    firstColumn = false;
-                }
+            createStatement.append(" NULL DEFAULT NULL");
 
-                createStatement.append("field_");
-                createStatement.append(numCols++);
-                createStatement.append(" ");
-
-                createStatement.append(dataType);
-
-                if ("VARCHAR".equalsIgnoreCase(dataType)) {
-                    // we can't use max varchar precision because it is equal to max row length
-                    createStatement.append("(255)");
-
-                } else if (dataType.indexOf("CHAR") != -1 || dataType.indexOf("BINARY") != -1 && dataType.indexOf("BLOB") == -1
-                        && dataType.indexOf("TEXT") == -1) {
-                    createStatement.append("(");
-                    createStatement.append(this.rs.getString("PRECISION"));
-                    createStatement.append(")");
-                }
-
-                createStatement.append(" NULL DEFAULT NULL");
-            }
+            wasDatetimeTypeList.add(new Boolean(wasDateTime));
         }
 
         createStatement.append("\n)");
@@ -2032,35 +2031,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.rs = this.conn.prepareStatement("SELECT * FROM testAllTypes").executeQuery();
         testAllFieldsForNull(this.rs);
-
         stmt2.executeUpdate("DELETE FROM testAllTypes");
 
         insertStatement = new StringBuilder("INSERT INTO testAllTypes VALUES (");
-
-        boolean needsNow = wasDatetimeTypeList.get(0).booleanValue();
-
-        if (needsNow) {
-            insertStatement.append("NOW()");
-        } else {
-            insertStatement.append("0");
-        }
-
-        for (int i = 1; i < numCols - 1; i++) {
-            needsNow = wasDatetimeTypeList.get(i).booleanValue();
-            insertStatement.append(",");
-            if (needsNow) {
-                insertStatement.append("NOW()");
-            } else {
-                insertStatement.append("0");
-            }
-        }
-
+        insertStatement.append(insertValues);
         insertStatement.append(")");
-
         stmt2.executeUpdate(insertStatement.toString());
 
         this.rs = stmt2.executeQuery("SELECT * FROM testAllTypes");
-
         testAllFieldsForNotNull(this.rs, wasDatetimeTypeList);
         this.rs.close();
 
@@ -2070,6 +2048,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         stmt2.executeUpdate("DROP TABLE IF EXISTS testAllTypes");
     }
 
+    @SuppressWarnings("deprecation")
     private void testAllFieldsForNull(ResultSet rsToTest) throws Exception {
         ResultSetMetaData rsmd = this.rs.getMetaData();
         int numCols = rsmd.getColumnCount();
@@ -2131,6 +2110,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void testAllFieldsForNotNull(ResultSet rsToTest, List<Boolean> wasDatetimeTypeList) throws Exception {
         ResultSetMetaData rsmd = this.rs.getMetaData();
         int numCols = rsmd.getColumnCount();

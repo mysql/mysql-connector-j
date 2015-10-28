@@ -37,12 +37,10 @@ import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
-import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -51,6 +49,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -337,7 +336,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         setResultSetType(resultSetType);
         setResultSetConcurrency(resultSetConcurrency);
 
-        this.parameterTypes = new int[this.parameterCount];
+        this.parameterTypes = new MysqlType[this.parameterCount];
     }
 
     @Override
@@ -368,7 +367,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 for (int i = 0; (i < numParameters) && (i < ourNumParameters); i++) {
                     if (this.parameterBindings[i] != null) {
                         if (this.parameterBindings[i].isNull) {
-                            pStmtForSub.setNull(i + 1, Types.NULL);
+                            pStmtForSub.setNull(i + 1, MysqlType.NULL);
                         } else {
                             BindValue bindValue = this.parameterBindings[i];
 
@@ -1473,7 +1472,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
                 setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -1496,7 +1495,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.DECIMAL);
+                setNull(parameterIndex, MysqlType.DECIMAL);
             } else {
 
                 BindValue binding = getBinding(parameterIndex, false);
@@ -1514,7 +1513,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
                 setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -1537,7 +1536,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
                 setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -1578,7 +1577,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.BINARY);
+            setNull(parameterIndex, MysqlType.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_VAR_STRING);
@@ -1594,7 +1593,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (reader == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
                 setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -1617,7 +1616,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (x == null) {
-                setNull(parameterIndex, java.sql.Types.BINARY);
+                setNull(parameterIndex, MysqlType.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
                 setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -1651,7 +1650,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void setDateInternal(int parameterIndex, Date x, TimeZone tz) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.DATE);
+            setNull(parameterIndex, MysqlType.DATE);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_DATE);
@@ -1783,7 +1782,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.CHAR);
+            setNull(parameterIndex, MysqlType.VARCHAR);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_VAR_STRING);
@@ -1810,7 +1809,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void setTimeInternal(int parameterIndex, Time x, TimeZone tz) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.TIME);
+            setNull(parameterIndex, MysqlType.TIME);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_TIME);
@@ -1839,7 +1838,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private void setTimestampInternal(int parameterIndex, java.sql.Timestamp x, TimeZone tz) throws SQLException {
         if (x == null) {
-            setNull(parameterIndex, java.sql.Types.TIMESTAMP);
+            setNull(parameterIndex, MysqlType.TIMESTAMP);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
             setType(binding, MysqlaConstants.FIELD_TYPE_DATETIME);
@@ -2318,7 +2317,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         for (int j = 0; j < paramArg.length; j++) {
             if (paramArg[j].isNull) {
-                batchedStatement.setNull(batchedParamIndex++, Types.NULL);
+                batchedStatement.setNull(batchedParamIndex++, MysqlType.NULL.getJdbcType());
             } else {
                 if (paramArg[j].isLongData) {
                     Object value = paramArg[j].value;
@@ -2427,7 +2426,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         if (reader == null) {
-            setNull(parameterIndex, java.sql.Types.BINARY);
+            setNull(parameterIndex, MysqlType.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
             setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -2459,7 +2458,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         if (reader == null) {
-            setNull(parameterIndex, java.sql.Types.NCLOB);
+            setNull(parameterIndex, MysqlType.TEXT);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
             setType(binding, MysqlaConstants.FIELD_TYPE_BLOB);
@@ -2486,13 +2485,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        PreparedStatementHelper.setRowId(this, parameterIndex, x);
-    }
-
-    @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
+        setSQLXML(parameterIndex, xmlObject);
     }
 
 }

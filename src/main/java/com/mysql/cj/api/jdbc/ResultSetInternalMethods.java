@@ -23,6 +23,7 @@
 
 package com.mysql.cj.api.jdbc;
 
+import java.math.BigInteger;
 import java.sql.SQLException;
 
 import com.mysql.cj.core.result.Field;
@@ -175,4 +176,6 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
     void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException;
 
     void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData);
+
+    BigInteger getBigInteger(int columnIndex) throws SQLException;
 }

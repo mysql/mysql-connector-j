@@ -4677,6 +4677,11 @@ public class StatementRegressionTest extends BaseTestCase {
             public boolean isWrapperFor(Class<?> iface) throws SQLException {
                 return false;
             }
+
+            @Override
+            public BigInteger getBigInteger(int columnIndex) throws SQLException {
+                return null;
+            }
         };
     }
 

@@ -25,11 +25,7 @@ package com.mysql.cj.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
@@ -128,52 +124,102 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
-        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
 
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
         sqlBuf.append(" AS DATA_TYPE, ");
 
-        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND "
-                    + "LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS TYPE_NAME,");
-        } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 AND LOCATE('set', DATA_TYPE) <> 1 AND "
-                    + "LOCATE('enum', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS TYPE_NAME,");
+        sqlBuf.append("UPPER(CASE");
+        sqlBuf.append(" WHEN LOCATE('UNSIGNED', COLUMN_TYPE) != 0 AND LOCATE('UNSIGNED', DATA_TYPE) = 0 AND LOCATE('SET', DATA_TYPE) <> 1 AND LOCATE('ENUM', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
+        if (this.tinyInt1isBit) {
+            sqlBuf.append(" WHEN DATA_TYPE='TINYINT' THEN CASE");
+            if (this.transformedBitIsBoolean) {
+                sqlBuf.append(" WHEN LOCATE('(1)', COLUMN_TYPE) != 0 THEN 'BOOLEAN'");
+            } else {
+                sqlBuf.append(" WHEN LOCATE('(1)', COLUMN_TYPE) != 0 THEN 'BIT'");
+            }
+            sqlBuf.append(" WHEN LOCATE('UNSIGNED', COLUMN_TYPE) != 0 AND LOCATE('UNSIGNED', DATA_TYPE) = 0 THEN 'TINYINT UNSIGNED'");
+            sqlBuf.append(" ELSE DATA_TYPE END ");
         }
 
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
-                + "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
-                + Integer.MAX_VALUE
-                + " THEN "
-                + Integer.MAX_VALUE
-                + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
-                + MysqlIO.getMaxBuf()
-                + " AS BUFFER_LENGTH,"
-                + "NUMERIC_SCALE AS DECIMAL_DIGITS,"
-                + "10 AS NUM_PREC_RADIX,"
-                + "CASE WHEN IS_NULLABLE='NO' THEN "
-                + columnNoNulls
-                + " ELSE CASE WHEN IS_NULLABLE='YES' THEN "
-                + columnNullable
-                + " ELSE "
-                + columnNullableUnknown
-                + " END END AS NULLABLE,"
-                + "COLUMN_COMMENT AS REMARKS,"
-                + "COLUMN_DEFAULT AS COLUMN_DEF,"
-                + "0 AS SQL_DATA_TYPE,"
-                + "0 AS SQL_DATETIME_SUB,"
-                + "CASE WHEN CHARACTER_OCTET_LENGTH > "
-                + Integer.MAX_VALUE
-                + " THEN "
-                + Integer.MAX_VALUE
-                + " ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
-                + "ORDINAL_POSITION,"
-                + "IS_NULLABLE,"
-                + "NULL AS SCOPE_CATALOG,"
-                + "NULL AS SCOPE_SCHEMA,"
-                + "NULL AS SCOPE_TABLE,"
-                + "NULL AS SOURCE_DATA_TYPE,"
-                + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, "
-                + "IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+        // spatial data types
+        sqlBuf.append(" WHEN DATA_TYPE='POINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='LINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='POLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
+
+        sqlBuf.append(" ELSE DATA_TYPE END) AS TYPE_NAME,");
+
+        sqlBuf.append("UPPER(CASE");
+        sqlBuf.append(" WHEN DATA_TYPE='DATE' THEN 10"); // supported range is '1000-01-01' to '9999-12-31'
+        sqlBuf.append(" WHEN DATA_TYPE='TIME' THEN 16"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
+        sqlBuf.append(" WHEN DATA_TYPE='DATETIME' THEN 26"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+        sqlBuf.append(" WHEN DATA_TYPE='TIMESTAMP' THEN 26"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+        sqlBuf.append(" WHEN DATA_TYPE='YEAR' THEN 4");
+        if (this.tinyInt1isBit) {
+            sqlBuf.append(" WHEN DATA_TYPE='TINYINT' AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
+        }
+        // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+        sqlBuf.append(" WHEN DATA_TYPE='MEDIUMINT' AND LOCATE('UNSIGNED', COLUMN_TYPE) != 0 THEN 8");
+        sqlBuf.append(" WHEN DATA_TYPE='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
+
+        // spatial data types
+        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRY' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='POINT' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='LINESTRING' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='POLYGON' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN 65535");
+        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN 65535");
+
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH");
+        sqlBuf.append(" END) AS COLUMN_SIZE,");
+
+        sqlBuf.append(MysqlIO.getMaxBuf());
+        sqlBuf.append(" AS BUFFER_LENGTH,");
+
+        sqlBuf.append("UPPER(CASE");
+        sqlBuf.append(" WHEN DATA_TYPE='DECIMAL' THEN NUMERIC_SCALE");
+        sqlBuf.append(" WHEN DATA_TYPE='FLOAT' OR DATA_TYPE='DOUBLE' THEN");
+        sqlBuf.append(" CASE WHEN NUMERIC_SCALE IS NULL THEN 0");
+        sqlBuf.append(" ELSE NUMERIC_SCALE END");
+        sqlBuf.append(" ELSE NULL END) AS DECIMAL_DIGITS,");
+
+        sqlBuf.append("10 AS NUM_PREC_RADIX,");
+
+        sqlBuf.append("UPPER(CASE");
+        sqlBuf.append(" WHEN IS_NULLABLE='NO' THEN ");
+        sqlBuf.append(columnNoNulls);
+        sqlBuf.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ");
+        sqlBuf.append(columnNullable);
+        sqlBuf.append(" ELSE ");
+        sqlBuf.append(columnNullableUnknown);
+        sqlBuf.append(" END END) AS NULLABLE,");
+
+        sqlBuf.append("COLUMN_COMMENT AS REMARKS,");
+        sqlBuf.append("COLUMN_DEFAULT AS COLUMN_DEF,");
+        sqlBuf.append("0 AS SQL_DATA_TYPE,");
+        sqlBuf.append("0 AS SQL_DATETIME_SUB,");
+
+        sqlBuf.append("CASE WHEN CHARACTER_OCTET_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,");
+
+        sqlBuf.append("ORDINAL_POSITION, IS_NULLABLE, NULL AS SCOPE_CATALOG, NULL AS SCOPE_SCHEMA, NULL AS SCOPE_TABLE, NULL AS SOURCE_DATA_TYPE,");
+        sqlBuf.append("IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, ");
+        sqlBuf.append("IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN ");
+
+        sqlBuf.append("FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
 
         final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
 
@@ -652,18 +698,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 + " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn + " ELSE " + procedureColumnUnknown + " END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
-        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER");
 
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                    + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
-        } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                    + "ELSE DATA_TYPE END AS `TYPE_NAME`,");
-        }
+        sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION</B> int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
@@ -806,7 +847,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 }
             } else {
                 for (int i = 0; i < 5; i++) {
-                    pStmt.setNull(3 + i, Types.VARCHAR);
+                    pStmt.setNull(3 + i, MysqlType.VARCHAR.getJdbcType());
                 }
 
                 int idx = 3;
@@ -845,7 +886,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
 
-        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
         sqlBuf.append(" AS DATA_TYPE, ");
 
         sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
@@ -924,18 +965,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
-        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+        appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER");
 
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        if (this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
-            sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                    + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
-        } else {
-            sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                    + "ELSE DATA_TYPE END AS `TYPE_NAME`,");
-        }
+        sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
+                + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
@@ -1066,40 +1102,49 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
     }
 
-    private static final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName) {
+    private final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName, String fullMysqlTypeColumnName) {
 
         buf.append("CASE ");
-        Map<String, Integer> typesMap = new HashMap<String, Integer>();
-        for (MysqlType ftype : MysqlType.values()) {
-            typesMap.put(ftype.getName(), ftype.getJdbcType());
-        }
-        typesMap.put("BINARY", Integer.valueOf(Types.BINARY));
-        typesMap.put("VARBINARY", Integer.valueOf(Types.VARBINARY));
+        for (MysqlType mysqlType : MysqlType.values()) {
 
-        Iterator<String> mysqlTypes = typesMap.keySet().iterator();
-
-        while (mysqlTypes.hasNext()) {
-            String mysqlTypeName = mysqlTypes.next();
             buf.append(" WHEN ");
             buf.append(mysqlTypeColumnName);
             buf.append("='");
-            buf.append(mysqlTypeName);
+            buf.append(mysqlType.getName());
             buf.append("' THEN ");
-            buf.append(typesMap.get(mysqlTypeName));
 
-            if (mysqlTypeName.equalsIgnoreCase("DOUBLE") || mysqlTypeName.equalsIgnoreCase("FLOAT") || mysqlTypeName.equalsIgnoreCase("DECIMAL")
-                    || mysqlTypeName.equalsIgnoreCase("NUMERIC")) {
-                buf.append(" WHEN ");
-                buf.append(mysqlTypeColumnName);
-                buf.append("='");
-                buf.append(mysqlTypeName);
-                buf.append(" unsigned' THEN ");
-                buf.append(typesMap.get(mysqlTypeName));
+            switch (mysqlType) {
+                case TINYINT:
+                case TINYINT_UNSIGNED:
+                    if (this.tinyInt1isBit) {
+                        buf.append("CASE");
+                        if (this.transformedBitIsBoolean) {
+                            buf.append(" WHEN LOCATE('(1)', ");
+                            buf.append(fullMysqlTypeColumnName);
+                            buf.append(") != 0 THEN 16");
+                        } else {
+                            buf.append(" WHEN LOCATE('(1)', ");
+                            buf.append(fullMysqlTypeColumnName);
+                            buf.append(") != 0 THEN -7");
+                        }
+                        buf.append(" ELSE -6 END ");
+                        break;
+                    }
+
+                default:
+                    buf.append(mysqlType.getJdbcType());
             }
         }
 
-        buf.append(" ELSE ");
-        buf.append(Types.OTHER);
+        buf.append(" WHEN DATA_TYPE='POINT' THEN -2");
+        buf.append(" WHEN DATA_TYPE='LINESTRING' THEN -2");
+        buf.append(" WHEN DATA_TYPE='POLYGON' THEN -2");
+        buf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN -2");
+        buf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN -2");
+        buf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN -2");
+        buf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN -2");
+
+        buf.append(" ELSE 1111");
         buf.append(" END ");
 
     }

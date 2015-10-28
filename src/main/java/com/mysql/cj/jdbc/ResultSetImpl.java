@@ -47,7 +47,6 @@ import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -73,6 +72,7 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BinaryStreamValueFactory;
@@ -1024,6 +1024,20 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         return getNonStringValueFromRow(columnIndex, this.integerValueFactory);
     }
 
+    public BigInteger getBigInteger(int columnIndex) throws SQLException {
+        String stringVal = getString(columnIndex);
+        if (stringVal == null) {
+            return null;
+        }
+        try {
+            return new BigInteger(stringVal);
+        } catch (NumberFormatException nfe) {
+            throw SQLError.createSQLException(
+                    Messages.getString("ResultSet.Bad_format_for_BigInteger", new Object[] { Integer.valueOf(columnIndex), stringVal }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        }
+    }
+
     public int getInt(String columnName) throws SQLException {
         return getInt(findColumn(columnName));
     }
@@ -1322,43 +1336,23 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 return Integer.valueOf(getByte(columnIndex));
 
             case TINYINT_UNSIGNED:
-                return Integer.valueOf(getInt(columnIndex));
-
             case SMALLINT:
             case SMALLINT_UNSIGNED:
-                return Integer.valueOf(getInt(columnIndex));
-
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
             case INT:
                 return Integer.valueOf(getInt(columnIndex));
 
             case INT_UNSIGNED:
-                return Long.valueOf(getLong(columnIndex));
-
-            case MEDIUMINT:
-            case MEDIUMINT_UNSIGNED:
-                return Integer.valueOf(getInt(columnIndex));
-
             case BIGINT:
                 return Long.valueOf(getLong(columnIndex));
 
             case BIGINT_UNSIGNED:
-                String stringVal = getString(columnIndex);
-
-                if (stringVal == null) {
-                    return null;
-                }
-
-                try {
-                    return new BigInteger(stringVal);
-                } catch (NumberFormatException nfe) {
-                    throw SQLError.createSQLException(
-                            Messages.getString("ResultSet.Bad_format_for_BigInteger", new Object[] { Integer.valueOf(columnIndex), stringVal }),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                }
+                return getBigInteger(columnIndex);
 
             case DECIMAL:
             case DECIMAL_UNSIGNED:
-                stringVal = getString(columnIndex);
+                String stringVal = getString(columnIndex);
 
                 if (stringVal != null) {
                     if (stringVal.length() == 0) {
@@ -1387,13 +1381,13 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             case ENUM:
             case SET:
             case VARCHAR:
-            case JSON:
             case TINYTEXT:
                 return getString(columnIndex);
 
+            case TEXT:
             case MEDIUMTEXT:
             case LONGTEXT:
-            case TEXT:
+            case JSON:
                 return getStringForClob(columnIndex);
 
             case GEOMETRY:
@@ -1469,6 +1463,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         } else if (type.equals(BigDecimal.class)) {
             return (T) getBigDecimal(columnIndex);
+
+        } else if (type.equals(BigInteger.class)) {
+            return (T) getBigInteger(columnIndex);
 
         } else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
             return (T) Boolean.valueOf(getBoolean(columnIndex));
@@ -1592,39 +1589,40 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return null;
         }
 
-        Field field;
-        field = this.fields[columnIndex - 1];
+        Field field = this.fields[columnIndex - 1];
 
-        switch (desiredSqlType) {
-            case Types.BIT:
-            case Types.BOOLEAN:
+        MysqlType desiredMysqlType = MysqlType.getByJdbcType(desiredSqlType);
+
+        switch (desiredMysqlType) {
+            case BIT:
+            case BOOLEAN:
                 return Boolean.valueOf(getBoolean(columnIndex));
 
-            case Types.TINYINT:
+            case TINYINT:
+            case TINYINT_UNSIGNED:
                 return Integer.valueOf(getInt(columnIndex));
 
-            case Types.SMALLINT:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
                 return Integer.valueOf(getInt(columnIndex));
 
-            case Types.INTEGER:
-
+            case INT:
+            case INT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
                 if (!field.isUnsigned() || field.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_INT24) {
                     return Integer.valueOf(getInt(columnIndex));
                 }
-
                 return Long.valueOf(getLong(columnIndex));
 
-            case Types.BIGINT:
+            case BIGINT:
+                Long.valueOf(getLong(columnIndex));
 
-                if (field.isUnsigned()) {
-                    return getBigDecimal(columnIndex);
-                }
+            case BIGINT_UNSIGNED:
+                return getBigInteger(columnIndex);
 
-                return Long.valueOf(getLong(columnIndex));
-
-            case Types.DECIMAL:
-            case Types.NUMERIC:
-
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
                 String stringVal = getString(columnIndex);
                 BigDecimal val;
 
@@ -1648,36 +1646,48 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                 return null;
 
-            case Types.REAL:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
                 return new Float(getFloat(columnIndex));
 
-            case Types.FLOAT:
-                return new Double(getFloat(columnIndex));
-
-            case Types.DOUBLE:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
                 return new Double(getDouble(columnIndex));
 
-            case Types.CHAR:
-            case Types.VARCHAR:
+            case CHAR:
+            case ENUM:
+            case SET:
+            case VARCHAR:
+            case TINYTEXT:
                 return getString(columnIndex);
-            case Types.LONGVARCHAR:
+
+            case JSON:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
                 return getStringForClob(columnIndex);
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
+
+            case BINARY:
+            case GEOMETRY:
+            case VARBINARY:
+            case TINYBLOB:
+            case BLOB:
+            case MEDIUMBLOB:
+            case LONGBLOB:
                 return getBytes(columnIndex);
 
-            case Types.DATE:
-                if (field.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && !this.yearIsDateType) {
+            case YEAR:
+            case DATE:
+                if (field.getMysqlType() == MysqlType.YEAR && !this.yearIsDateType) {
                     return Short.valueOf(getShort(columnIndex));
                 }
 
                 return getDate(columnIndex);
 
-            case Types.TIME:
+            case TIME:
                 return getTime(columnIndex);
 
-            case Types.TIMESTAMP:
+            case TIMESTAMP:
                 return getTimestamp(columnIndex);
 
             default:

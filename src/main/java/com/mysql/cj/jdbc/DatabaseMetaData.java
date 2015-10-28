@@ -31,7 +31,6 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -166,11 +165,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         int charOctetLength;
 
-        Integer columnSize;
+        Integer columnSize = null;
 
-        short dataType;
-
-        Integer decimalDigits;
+        Integer decimalDigits = null;
 
         String isNullable;
 
@@ -178,193 +175,145 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         int numPrecRadix = 10;
 
-        String typeName;
+        String mysqlTypeName;
+        MysqlType mysqlType;
 
         TypeDescriptor(String typeInfo, String nullabilityInfo) throws SQLException {
             if (typeInfo == null) {
                 throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            String mysqlType = "";
-            String fullMysqlType = null;
-
-            if (typeInfo.indexOf("(") != -1) {
-                mysqlType = typeInfo.substring(0, typeInfo.indexOf("(")).trim();
-            } else {
-                mysqlType = typeInfo;
-            }
-
-            int indexOfUnsignedInMysqlType = StringUtils.indexOfIgnoreCase(mysqlType, "unsigned");
-
-            if (indexOfUnsignedInMysqlType != -1) {
-                mysqlType = mysqlType.substring(0, (indexOfUnsignedInMysqlType - 1));
-            }
-
-            // Add unsigned to typename reported to enduser as 'native type', if present
-
-            boolean isUnsigned = false;
-
-            if ((StringUtils.indexOfIgnoreCase(typeInfo, "unsigned") != -1) && (StringUtils.indexOfIgnoreCase(typeInfo, "set") != 0)
-                    && (StringUtils.indexOfIgnoreCase(typeInfo, "enum") != 0)) {
-                fullMysqlType = mysqlType + " unsigned";
-                isUnsigned = true;
-            } else {
-                fullMysqlType = mysqlType;
-            }
-
-            if (DatabaseMetaData.this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_capitalizeTypeNames).getValue()) {
-                fullMysqlType = fullMysqlType.toUpperCase(Locale.ENGLISH);
-            }
-
-            MysqlType ft = MysqlType.getByName(mysqlType.toUpperCase());
-            this.dataType = (short) ft.getJdbcType();
-
-            this.typeName = fullMysqlType;
+            this.mysqlType = MysqlType.getByName(typeInfo);
 
             // Figure Out the Size
 
-            // TODO move next logic to MysqlType
+            String temp;
+            java.util.StringTokenizer tokenizer;
+            int maxLength = 0;
 
-            if (StringUtils.startsWithIgnoreCase(typeInfo, "enum")) {
-                String temp = typeInfo.substring(typeInfo.indexOf("("), typeInfo.lastIndexOf(")"));
-                java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(temp, ",");
-                int maxLength = 0;
-
-                while (tokenizer.hasMoreTokens()) {
-                    maxLength = Math.max(maxLength, (tokenizer.nextToken().length() - 2));
-                }
-
-                this.columnSize = Integer.valueOf(maxLength);
-                this.decimalDigits = null;
-            } else if (StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
-                String temp = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"));
-                java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(temp, ",");
-                int maxLength = 0;
-
-                int numElements = tokenizer.countTokens();
-
-                if (numElements > 0) {
-                    maxLength += (numElements - 1);
-                }
-
-                while (tokenizer.hasMoreTokens()) {
-                    String setMember = tokenizer.nextToken().trim();
-
-                    if (setMember.startsWith("'") && setMember.endsWith("'")) {
-                        maxLength += setMember.length() - 2;
-                    } else {
-                        maxLength += setMember.length();
+            switch (this.mysqlType) {
+                case ENUM:
+                    temp = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"));
+                    tokenizer = new java.util.StringTokenizer(temp, ",");
+                    while (tokenizer.hasMoreTokens()) {
+                        String nextToken = tokenizer.nextToken();
+                        maxLength = Math.max(maxLength, (nextToken.length() - 2));
                     }
-                }
+                    this.columnSize = Integer.valueOf(maxLength);
+                    break;
 
-                this.columnSize = Integer.valueOf(maxLength);
-                this.decimalDigits = null;
-            } else if (typeInfo.indexOf(",") != -1) {
-                // Numeric with decimals
-                this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(","))).trim());
-                this.decimalDigits = Integer.valueOf(typeInfo.substring((typeInfo.indexOf(",") + 1), (typeInfo.indexOf(")"))).trim());
-            } else {
-                this.columnSize = null;
-                this.decimalDigits = null;
+                case SET:
+                    temp = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"));
+                    tokenizer = new java.util.StringTokenizer(temp, ",");
 
-                /* If the size is specified with the DDL, use that */
-                if ((StringUtils.indexOfIgnoreCase(typeInfo, "char") != -1 || StringUtils.indexOfIgnoreCase(typeInfo, "text") != -1
-                        || StringUtils.indexOfIgnoreCase(typeInfo, "blob") != -1 || StringUtils.indexOfIgnoreCase(typeInfo, "binary") != -1 || StringUtils
-                        .indexOfIgnoreCase(typeInfo, "bit") != -1) && typeInfo.indexOf("(") != -1) {
-                    int endParenIndex = typeInfo.indexOf(")");
-
-                    if (endParenIndex == -1) {
-                        endParenIndex = typeInfo.length();
+                    int numElements = tokenizer.countTokens();
+                    if (numElements > 0) {
+                        maxLength += (numElements - 1);
                     }
 
-                    this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), endParenIndex).trim());
+                    while (tokenizer.hasMoreTokens()) {
+                        String setMember = tokenizer.nextToken().trim();
 
-                    // Adjust for pseudo-boolean
-                    if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1 && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
-                        if (DatabaseMetaData.this.transformedBitIsBoolean) {
-                            this.dataType = Types.BOOLEAN;
-                            this.typeName = "BOOLEAN";
+                        if (setMember.startsWith("'") && setMember.endsWith("'")) {
+                            maxLength += setMember.length() - 2;
                         } else {
-                            this.dataType = Types.BIT;
-                            this.typeName = "BIT";
+                            maxLength += setMember.length();
                         }
                     }
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyint")) {
+                    this.columnSize = Integer.valueOf(maxLength);
+                    break;
+
+                case DECIMAL:
+                case DECIMAL_UNSIGNED:
+                case FLOAT:
+                case FLOAT_UNSIGNED:
+                case DOUBLE:
+                case DOUBLE_UNSIGNED:
+                    if (typeInfo.indexOf(",") != -1) {
+                        // Numeric with decimals
+                        this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(","))).trim());
+                        this.decimalDigits = Integer.valueOf(typeInfo.substring((typeInfo.indexOf(",") + 1), (typeInfo.indexOf(")"))).trim());
+                    } else {
+                        switch (this.mysqlType) {
+                            case DECIMAL:
+                            case DECIMAL_UNSIGNED:
+                                this.columnSize = Integer.valueOf(65);
+                                break;
+                            case FLOAT:
+                            case FLOAT_UNSIGNED:
+                                this.columnSize = Integer.valueOf(12);
+                                break;
+                            case DOUBLE:
+                            case DOUBLE_UNSIGNED:
+                                this.columnSize = Integer.valueOf(22);
+                            default:
+                        }
+                        this.decimalDigits = 0;
+                    }
+                    break;
+
+                case CHAR:
+                    this.columnSize = Integer.valueOf(1);
+                case VARCHAR:
+                case TINYTEXT:
+                case MEDIUMTEXT:
+                case LONGTEXT:
+                case JSON:
+                case TEXT:
+                case TINYBLOB:
+                case MEDIUMBLOB:
+                case LONGBLOB:
+                case BLOB:
+                case BINARY:
+                case VARBINARY:
+                case BIT:
+                    if (typeInfo.indexOf("(") != -1) {
+                        int endParenIndex = typeInfo.indexOf(")");
+
+                        if (endParenIndex == -1) {
+                            endParenIndex = typeInfo.length();
+                        }
+
+                        this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), endParenIndex).trim());
+
+                        // Adjust for pseudo-boolean
+                        if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1 && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
+                            if (DatabaseMetaData.this.transformedBitIsBoolean) {
+                                this.mysqlType = MysqlType.BOOLEAN;
+                            } else {
+                                this.mysqlType = MysqlType.BIT;
+                            }
+                        }
+                    }
+
+                    break;
+
+                case TINYINT:
+                case TINYINT_UNSIGNED:
                     if (DatabaseMetaData.this.tinyInt1isBit && typeInfo.indexOf("(1)") != -1) {
                         if (DatabaseMetaData.this.transformedBitIsBoolean) {
-                            this.dataType = Types.BOOLEAN;
-                            this.typeName = "BOOLEAN";
+                            this.mysqlType = MysqlType.BOOLEAN;
                         } else {
-                            this.dataType = Types.BIT;
-                            this.typeName = "BIT";
+                            this.mysqlType = MysqlType.BIT;
                         }
                     } else {
                         this.columnSize = Integer.valueOf(3);
-                        this.decimalDigits = Integer.valueOf(0);
                     }
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "smallint")) {
-                    this.columnSize = Integer.valueOf(5);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumint")) {
-                    this.columnSize = Integer.valueOf(isUnsigned ? 8 : 7);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int")) {
-                    this.columnSize = Integer.valueOf(10);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "integer")) {
-                    this.columnSize = Integer.valueOf(10);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "bigint")) {
-                    this.columnSize = Integer.valueOf(isUnsigned ? 20 : 19);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int24")) {
-                    this.columnSize = Integer.valueOf(19);
-                    this.decimalDigits = Integer.valueOf(0);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "real")) {
-                    this.columnSize = Integer.valueOf(12);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "float")) {
-                    this.columnSize = Integer.valueOf(12);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "decimal")) {
-                    this.columnSize = Integer.valueOf(12);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "numeric")) {
-                    this.columnSize = Integer.valueOf(12);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "double")) {
-                    this.columnSize = Integer.valueOf(22);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "char")) {
-                    this.columnSize = Integer.valueOf(1);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "varchar")) {
-                    this.columnSize = Integer.valueOf(255);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "timestamp")) {
-                    this.columnSize = Integer.valueOf(19);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "datetime")) {
-                    this.columnSize = Integer.valueOf(19);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "date")) {
-                    this.columnSize = Integer.valueOf(10);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "time")) {
-                    this.columnSize = Integer.valueOf(8);
+                    break;
 
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyblob")) {
-                    this.columnSize = Integer.valueOf(255);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "blob")) {
-                    this.columnSize = Integer.valueOf(65535);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumblob")) {
-                    this.columnSize = Integer.valueOf(16777215);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longblob")) {
-                    this.columnSize = Integer.valueOf(Integer.MAX_VALUE);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinytext")) {
-                    this.columnSize = Integer.valueOf(255);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "text")) {
-                    this.columnSize = Integer.valueOf(65535);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumtext")) {
-                    this.columnSize = Integer.valueOf(16777215);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longtext")) {
-                    this.columnSize = Integer.valueOf(Integer.MAX_VALUE);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "enum")) {
-                    this.columnSize = Integer.valueOf(255);
-                } else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "set")) {
-                    this.columnSize = Integer.valueOf(255);
-                }
+                case BOOLEAN:
+                case GEOMETRY:
+                case NULL:
+                case UNKNOWN:
+                case YEAR:
 
+                default:
+            }
+
+            // if not defined explicitly take the max precision
+            if (this.columnSize == null) {
+                // JDBC spec reserved only 'int' type for precision, thus we need to cut longer values
+                this.columnSize = this.mysqlType.getPrecision() > Integer.MAX_VALUE ? Integer.MAX_VALUE : this.mysqlType.getPrecision().intValue();
             }
 
             // BUFFER_LENGTH
@@ -783,17 +732,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     static java.sql.ResultSet buildResultSet(Field[] fields, ArrayList<ResultSetRow> rows, JdbcConnection c) throws SQLException {
-        int fieldsLength = fields.length;
-
-        for (int i = 0; i < fieldsLength; i++) {
-            int jdbcType = fields[i].getJavaType();
-
-            switch (jdbcType) {
-                case Types.CHAR:
-                case Types.VARCHAR:
-                case Types.LONGVARCHAR:
+        for (Field f : fields) {
+            switch (f.getMysqlType()) {
+                case CHAR:
+                case VARCHAR:
+                case TINYTEXT:
+                case TEXT:
+                case MEDIUMTEXT:
+                case LONGTEXT:
+                case JSON:
                     // TODO: this becomes moot when DBMD results aren't built from ByteArrayRow
-                    fields[i].setEncoding(c.getCharacterSetMetadata(), c.getServerVersion());
+                    // it possibly overrides correct encoding already existing in the Field instance
+                    f.setEncoding(c.getCharacterSetMetadata(), c.getServerVersion());
                     break;
                 default:
                     // do nothing
@@ -916,29 +866,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     private ResultSetRow convertTypeDescriptorToProcedureRow(byte[] procNameAsBytes, byte[] procCatAsBytes, String paramName, boolean isOutParam,
             boolean isInParam, boolean isReturnParam, TypeDescriptor typeDesc, boolean forGetFunctionColumns, int ordinal) throws SQLException {
         byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[20][];
-        row[0] = procCatAsBytes; // PROCEDURE_CAT
-        row[1] = null; // PROCEDURE_SCHEM
-        row[2] = procNameAsBytes; // PROCEDURE/NAME
-        row[3] = s2b(paramName); // COLUMN_NAME
-        row[4] = s2b(String.valueOf(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns))); // COLUMN_TYPE
-        row[5] = s2b(Short.toString(typeDesc.dataType)); // DATA_TYPE
-        row[6] = s2b(typeDesc.typeName); // TYPE_NAME
-        row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString()); // PRECISION
-        row[8] = row[7]; // LENGTH
-        row[9] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString()); // SCALE
-        row[10] = s2b(Integer.toString(typeDesc.numPrecRadix)); // RADIX
+        row[0] = procCatAsBytes;                                                                                    // PROCEDURE_CAT
+        row[1] = null;                                                                                              // PROCEDURE_SCHEM
+        row[2] = procNameAsBytes;                                                                                   // PROCEDURE/NAME
+        row[3] = s2b(paramName);                                                                                    // COLUMN_NAME
+        row[4] = s2b(String.valueOf(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns)));   // COLUMN_TYPE
+        row[5] = s2b(Short.toString((short) typeDesc.mysqlType.getJdbcType()));                                                            // DATA_TYPE
+        row[6] = s2b(typeDesc.mysqlType.getName());                                                                            // TYPE_NAME
+        row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());                          // PRECISION
+        row[8] = row[7];                                                                                            // LENGTH
+        row[9] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());                    // SCALE
+        row[10] = s2b(Integer.toString(typeDesc.numPrecRadix));                                                     // RADIX
         // Map 'column****' to 'procedure****'
         switch (typeDesc.nullability) {
             case columnNoNulls:
-                row[11] = s2b(String.valueOf(procedureNoNulls)); // NULLABLE
+                row[11] = s2b(String.valueOf(procedureNoNulls));                                                    // NULLABLE
                 break;
 
             case columnNullable:
-                row[11] = s2b(String.valueOf(procedureNullable)); // NULLABLE
+                row[11] = s2b(String.valueOf(procedureNullable));                                                   // NULLABLE
                 break;
 
             case columnNullableUnknown:
-                row[11] = s2b(String.valueOf(procedureNullableUnknown)); // NULLABLE
+                row[11] = s2b(String.valueOf(procedureNullableUnknown));                                            // NULLABLE
                 break;
 
             default:
@@ -948,38 +898,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         row[12] = null;
 
         if (forGetFunctionColumns) {
-            // CHAR_OCTECT_LENGTH
-            row[13] = null;
+            row[13] = null;                                                                                         // CHAR_OCTECT_LENGTH
+            row[14] = s2b(String.valueOf(ordinal));                                                                 // ORDINAL_POSITION
+            row[15] = s2b(typeDesc.isNullable);                                                                     // IS_NULLABLE
+            row[16] = procNameAsBytes;                                                                              // SPECIFIC_NAME
 
-            // ORDINAL_POSITION
-            row[14] = s2b(String.valueOf(ordinal));
-
-            // IS_NULLABLE
-            row[15] = s2b(typeDesc.isNullable);
-
-            // SPECIFIC_NAME
-            row[16] = procNameAsBytes;
         } else {
-            // COLUMN_DEF
-            row[13] = null;
-
-            // SQL_DATA_TYPE (future use)
-            row[14] = null;
-
-            // SQL_DATETIME_SUB (future use)
-            row[15] = null;
-
-            // CHAR_OCTET_LENGTH
-            row[16] = null;
-
-            // ORDINAL_POSITION
-            row[17] = s2b(String.valueOf(ordinal));
-
-            // IS_NULLABLE
-            row[18] = s2b(typeDesc.isNullable);
-
-            // SPECIFIC_NAME
-            row[19] = procNameAsBytes;
+            row[13] = null;                                                                                         // COLUMN_DEF
+            row[14] = null;                                                                                         // SQL_DATA_TYPE (future use)
+            row[15] = null;                                                                                         // SQL_DATETIME_SUB (future use)
+            row[16] = null;                                                                                         // CHAR_OCTET_LENGTH
+            row[17] = s2b(String.valueOf(ordinal));                                                                 // ORDINAL_POSITION
+            row[18] = s2b(typeDesc.isNullable);                                                                     // IS_NULLABLE
+            row[19] = procNameAsBytes;                                                                              // SPECIFIC_NAME
         }
 
         return new ByteArrayRow(row, getExceptionInterceptor());
@@ -2081,13 +2012,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         tuple[1] = null;
                         tuple[2] = s2b(table);
                         tuple[3] = s2b(columnName);
-
-                        if (grantor != null) {
-                            tuple[4] = s2b(grantor);
-                        } else {
-                            tuple[4] = null;
-                        }
-
+                        tuple[4] = grantor != null ? s2b(grantor) : null;
                         tuple[5] = s2b(fullUser.toString());
                         tuple[6] = s2b(privilege);
                         tuple[7] = null;
@@ -2236,29 +2161,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             int ordPos = 1;
 
                             while (results.next()) {
-                                byte[][] rowVal = new byte[24][];
-                                rowVal[0] = s2b(catalogStr); // TABLE_CAT
-                                rowVal[1] = null; // TABLE_SCHEM (No schemas
-                                // in MySQL)
-
-                                rowVal[2] = s2b(tableName); // TABLE_NAME
-                                rowVal[3] = results.getBytes("Field");
-
                                 TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
 
-                                rowVal[4] = Short.toString(typeDesc.dataType).getBytes();
-
-                                // DATA_TYPE (jdbc)
-                                rowVal[5] = s2b(typeDesc.typeName); // TYPE_NAME
-                                // (native)
-                                if (typeDesc.columnSize == null) {
+                                byte[][] rowVal = new byte[24][];
+                                rowVal[0] = s2b(catalogStr);                    // TABLE_CAT
+                                rowVal[1] = null;                               // TABLE_SCHEM (No schemas in MySQL)
+                                rowVal[2] = s2b(tableName);                     // TABLE_NAME
+                                rowVal[3] = results.getBytes("Field");
+                                rowVal[4] = Short.toString((short) typeDesc.mysqlType.getJdbcType()).getBytes();// DATA_TYPE (jdbc)
+                                rowVal[5] = s2b(typeDesc.mysqlType.getName());  // TYPE_NAME (native)
+                                if (typeDesc.columnSize == null) {              // COLUMN_SIZE
                                     rowVal[6] = null;
                                 } else {
                                     String collation = results.getString("Collation");
                                     int mbminlen = 1;
-                                    if (collation != null
-                                            && ("TEXT".equals(typeDesc.typeName) || "TINYTEXT".equals(typeDesc.typeName) || "MEDIUMTEXT"
-                                                    .equals(typeDesc.typeName))) {
+                                    if (collation != null) {
+                                        // not null collation could only be returned by server for character types, so we don't need to check type name
                                         if (collation.indexOf("ucs2") > -1 || collation.indexOf("utf16") > -1) {
                                             mbminlen = 2;
                                         } else if (collation.indexOf("utf32") > -1) {
@@ -2276,26 +2194,23 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 //
                                 // Doesn't always have this field, depending on version
                                 //
-                                //
-                                // REMARK column
-                                //
                                 try {
-                                    rowVal[11] = results.getBytes("Comment");
+                                    rowVal[11] = results.getBytes("Comment");   // REMARK column
                                 } catch (Exception E) {
-                                    rowVal[11] = new byte[0];
+                                    rowVal[11] = new byte[0];                   // REMARK column
                                 }
 
-                                // COLUMN_DEF
-                                rowVal[12] = results.getBytes("Default");
+                                rowVal[12] = results.getBytes("Default");       // COLUMN_DEF
+                                rowVal[13] = new byte[] { (byte) '0' };         // SQL_DATA_TYPE
+                                rowVal[14] = new byte[] { (byte) '0' };         // SQL_DATE_TIME_SUB
 
-                                rowVal[13] = new byte[] { (byte) '0' }; // SQL_DATA_TYPE
-                                rowVal[14] = new byte[] { (byte) '0' }; // SQL_DATE_TIME_SUB
-
-                                if (StringUtils.indexOfIgnoreCase(typeDesc.typeName, "CHAR") != -1
-                                        || StringUtils.indexOfIgnoreCase(typeDesc.typeName, "BLOB") != -1
-                                        || StringUtils.indexOfIgnoreCase(typeDesc.typeName, "TEXT") != -1
-                                        || StringUtils.indexOfIgnoreCase(typeDesc.typeName, "BINARY") != -1) {
-                                    rowVal[15] = rowVal[6]; // CHAR_OCTET_LENGTH
+                                if (StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "CHAR") != -1
+                                        || StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "BLOB") != -1
+                                        || StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "TEXT") != -1
+                                        || StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "ENUM") != -1
+                                        || StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "SET") != -1
+                                        || StringUtils.indexOfIgnoreCase(typeDesc.mysqlType.getName(), "BINARY") != -1) {
+                                    rowVal[15] = rowVal[6];                     // CHAR_OCTET_LENGTH
                                 } else {
                                     rowVal[15] = null;
                                 }
@@ -2365,7 +2280,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[2] = new Field("", "TABLE_NAME", MysqlType.CHAR, 255);
         fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 32);
         fields[4] = new Field("", "DATA_TYPE", MysqlType.INT, 5);
-        fields[5] = new Field("", "TYPE_NAME", MysqlType.CHAR, 16);
+        fields[5] = new Field("", "TYPE_NAME", MysqlType.CHAR, 16); // TODO why is it 16 bytes long? we have longer types specifications 
         fields[6] = new Field("", "COLUMN_SIZE", MysqlType.INT, Integer.toString(Integer.MAX_VALUE).length());
         fields[7] = new Field("", "BUFFER_LENGTH", MysqlType.INT, 10);
         fields[8] = new Field("", "DECIMAL_DIGITS", MysqlType.INT, 10);
@@ -3508,7 +3423,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         }
                         proceduresStmt.setString(2, db);
                     } else {
-                        proceduresStmt.setNull(2, Types.VARCHAR);
+                        proceduresStmt.setNull(2, MysqlType.VARCHAR.getJdbcType());
                     }
 
                     int nameIndex = 1;
@@ -3849,13 +3764,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 tuple[0] = s2b(db);
                                 tuple[1] = null;
                                 tuple[2] = s2b(table);
-
-                                if (grantor != null) {
-                                    tuple[3] = s2b(grantor);
-                                } else {
-                                    tuple[3] = null;
-                                }
-
+                                tuple[3] = grantor != null ? s2b(grantor) : null;
                                 tuple[4] = s2b(fullUser.toString());
                                 tuple[5] = s2b(privilege);
                                 tuple[6] = null;
@@ -4153,6 +4062,84 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC";
     }
 
+    /**
+     * 
+     * @param mysqlTypeName
+     *            we use a string name here to allow aliases for the same MysqlType to be listed too
+     * @return
+     * @throws SQLException
+     */
+    private byte[][] getTypeInfo(String mysqlTypeName) throws SQLException {
+
+        MysqlType mt = MysqlType.getByName(mysqlTypeName);
+        byte[][] rowVal = new byte[18][];
+
+        rowVal[0] = s2b(mysqlTypeName);                                                     // Type name
+        rowVal[1] = Integer.toString(mt.getJdbcType()).getBytes();                          // JDBC Data type
+        // JDBC spec reserved only 'int' type for precision, thus we need to cut longer values
+        rowVal[2] = Integer.toString(mt.getPrecision() > Integer.MAX_VALUE ? Integer.MAX_VALUE : mt.getPrecision().intValue()).getBytes(); // Precision
+        switch (mt) {
+            case TINYBLOB:
+            case BLOB:
+            case MEDIUMBLOB:
+            case LONGBLOB:
+            case TINYTEXT:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case JSON:
+            case BINARY:
+            case VARBINARY:
+            case CHAR:
+            case VARCHAR:
+            case ENUM:
+            case SET:
+            case DATE:
+            case TIME:
+            case DATETIME:
+            case TIMESTAMP:
+            case GEOMETRY:
+            case UNKNOWN:
+                rowVal[3] = s2b("'");                                                       // Literal Prefix
+                rowVal[4] = s2b("'");                                                       // Literal Suffix
+                break;
+            default:
+                rowVal[3] = s2b("");                                                        // Literal Prefix
+                rowVal[4] = s2b("");                                                        // Literal Suffix
+        }
+        rowVal[5] = s2b(mt.getCreateParams());                                              // Create Params
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();    // Nullable
+        rowVal[7] = s2b("true");                                                            // Case Sensitive
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();  // Searchable
+        rowVal[9] = s2b(mt.isAllowed(MysqlType.FIELD_FLAG_UNSIGNED) ? "true" : "false");    // Unsignable
+        rowVal[10] = s2b("false");                                                          // Fixed Prec Scale
+        rowVal[11] = s2b("false");                                                          // Auto Increment
+        rowVal[12] = s2b(mt.getName());                                                     // Locale Type Name
+        switch (mt) {
+            case DECIMAL: // TODO is it right? DECIMAL isn't a floating-point number...
+            case DECIMAL_UNSIGNED:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+                rowVal[13] = s2b("-308");                                                   // Minimum Scale
+                rowVal[14] = s2b("308");                                                    // Maximum Scale
+                break;
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+                rowVal[13] = s2b("-38");                                                    // Minimum Scale
+                rowVal[14] = s2b("38");                                                     // Maximum Scale
+                break;
+            default:
+                rowVal[13] = s2b("0");                                                      // Minimum Scale
+                rowVal[14] = s2b("0");                                                      // Maximum Scale
+        }
+
+        rowVal[15] = s2b("0");                                                              // SQL Data Type (not used)
+        rowVal[16] = s2b("0");                                                              // SQL DATETIME SUB (not used)
+        rowVal[17] = s2b("10");                                                             // NUM_PREC_RADIX (2 or 10)
+
+        return rowVal;
+    }
+
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Field[] fields = new Field[18];
         fields[0] = new Field("", "TYPE_NAME", MysqlType.CHAR, 32);
@@ -4174,1202 +4161,54 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[16] = new Field("", "SQL_DATETIME_SUB", MysqlType.INT, 10);
         fields[17] = new Field("", "NUM_PREC_RADIX", MysqlType.INT, 10);
 
-        byte[][] rowVal = null;
         ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
         /*
          * The following are ordered by java.sql.Types, and then by how closely the MySQL type matches the JDBC Type (per spec)
          */
-        /*
-         * MySQL Type: BIT (silently converted to TINYINT(1)) JDBC Type: BIT
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BIT");
-        rowVal[1] = Integer.toString(java.sql.Types.BIT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("1"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("BIT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: BOOL (silently converted to TINYINT(1)) JDBC Type: BIT
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BOOL");
-        rowVal[1] = Integer.toString(java.sql.Types.BIT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("1"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("BOOL"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TINYINT JDBC Type: TINYINT
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TINYINT");
-        rowVal[1] = Integer.toString(java.sql.Types.TINYINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("3"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("TINYINT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TINYINT UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.TINYINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("3"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("TINYINT UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: BIGINT JDBC Type: BIGINT
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BIGINT");
-        rowVal[1] = Integer.toString(java.sql.Types.BIGINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("19"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("BIGINT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BIGINT UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.BIGINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("20"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("BIGINT UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: LONG VARBINARY JDBC Type: LONGVARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("LONG VARBINARY");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("16777215"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("LONG VARBINARY"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: MEDIUMBLOB JDBC Type: LONGVARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("MEDIUMBLOB");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("16777215"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("MEDIUMBLOB"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: LONGBLOB JDBC Type: LONGVARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("LONGBLOB");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = Integer.toString(Integer.MAX_VALUE).getBytes();
-
-        // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("LONGBLOB"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: BLOB JDBC Type: LONGVARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BLOB");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("65535"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("BLOB"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TINYBLOB JDBC Type: LONGVARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TINYBLOB");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("TINYBLOB"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: VARBINARY (sliently converted to VARCHAR(M) BINARY) JDBC
-         * Type: VARBINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("VARBINARY");
-        rowVal[1] = Integer.toString(java.sql.Types.VARBINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("VARBINARY"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: BINARY (silently converted to CHAR(M) BINARY) JDBC Type:
-         * BINARY
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("BINARY");
-        rowVal[1] = Integer.toString(java.sql.Types.BINARY).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("BINARY"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: LONG VARCHAR JDBC Type: LONGVARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("LONG VARCHAR");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("16777215"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("LONG VARCHAR"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: MEDIUMTEXT JDBC Type: LONGVARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("MEDIUMTEXT");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("16777215"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("MEDIUMTEXT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: LONGTEXT JDBC Type: LONGVARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("LONGTEXT");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = Integer.toString(Integer.MAX_VALUE).getBytes();
-
-        // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("LONGTEXT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TEXT JDBC Type: LONGVARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TEXT");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("65535"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("TEXT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TINYTEXT JDBC Type: LONGVARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TINYTEXT");
-        rowVal[1] = Integer.toString(java.sql.Types.LONGVARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("TINYTEXT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: CHAR JDBC Type: CHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("CHAR");
-        rowVal[1] = Integer.toString(java.sql.Types.CHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("CHAR"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        int decimalPrecision = 65; // The maximum number of digits for DECIMAL or NUMERIC
-
-        /*
-         * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type: NUMERIC
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("NUMERIC");
-        rowVal[1] = Integer.toString(java.sql.Types.NUMERIC).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b(String.valueOf(decimalPrecision)); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("NUMERIC"); // Locale Type Name
-        rowVal[13] = s2b("-308"); // Minimum Scale
-        rowVal[14] = s2b("308"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: DECIMAL JDBC Type: DECIMAL
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("DECIMAL");
-        rowVal[1] = Integer.toString(java.sql.Types.DECIMAL).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b(String.valueOf(decimalPrecision)); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("DECIMAL"); // Locale Type Name
-        rowVal[13] = s2b("-308"); // Minimum Scale
-        rowVal[14] = s2b("308"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: INTEGER JDBC Type: INTEGER
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("INTEGER");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("10"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("INTEGER"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("INTEGER UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("10"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("INTEGER UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: INT JDBC Type: INTEGER
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("INT");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("10"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("INT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("INT UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("10"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("INT UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: MEDIUMINT JDBC Type: INTEGER
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("MEDIUMINT");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("7"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("MEDIUMINT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("MEDIUMINT UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("8"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("MEDIUMINT UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: SMALLINT JDBC Type: SMALLINT
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("SMALLINT");
-        rowVal[1] = Integer.toString(java.sql.Types.SMALLINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("5"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("SMALLINT"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("SMALLINT UNSIGNED");
-        rowVal[1] = Integer.toString(java.sql.Types.SMALLINT).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("5"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("true"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("SMALLINT UNSIGNED"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION
-         * floating point type)
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("FLOAT");
-        rowVal[1] = Integer.toString(java.sql.Types.REAL).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("10"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("FLOAT"); // Locale Type Name
-        rowVal[13] = s2b("-38"); // Minimum Scale
-        rowVal[14] = s2b("38"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: DOUBLE JDBC Type: DOUBLE
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("DOUBLE");
-        rowVal[1] = Integer.toString(java.sql.Types.DOUBLE).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("17"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("DOUBLE"); // Locale Type Name
-        rowVal[13] = s2b("-308"); // Minimum Scale
-        rowVal[14] = s2b("308"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: DOUBLE PRECISION JDBC Type: DOUBLE
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("DOUBLE PRECISION");
-        rowVal[1] = Integer.toString(java.sql.Types.DOUBLE).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("17"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("DOUBLE PRECISION"); // Locale Type Name
-        rowVal[13] = s2b("-308"); // Minimum Scale
-        rowVal[14] = s2b("308"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: REAL (does not map to Types.REAL) JDBC Type: DOUBLE
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("REAL");
-        rowVal[1] = Integer.toString(java.sql.Types.DOUBLE).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("17"); // Precision
-        rowVal[3] = s2b(""); // Literal Prefix
-        rowVal[4] = s2b(""); // Literal Suffix
-        rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("true"); // Auto Increment
-        rowVal[12] = s2b("REAL"); // Locale Type Name
-        rowVal[13] = s2b("-308"); // Minimum Scale
-        rowVal[14] = s2b("308"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: VARCHAR JDBC Type: VARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("VARCHAR");
-        rowVal[1] = Integer.toString(java.sql.Types.VARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b(this.conn.getSession().versionMeetsMinimum(5, 0, 3) ? "65535" : "255"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("VARCHAR"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: ENUM JDBC Type: VARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("ENUM");
-        rowVal[1] = Integer.toString(java.sql.Types.VARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("65535"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("ENUM"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: SET JDBC Type: VARCHAR
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("SET");
-        rowVal[1] = Integer.toString(java.sql.Types.VARCHAR).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("64"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("SET"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: DATE JDBC Type: DATE
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("DATE");
-        rowVal[1] = Integer.toString(java.sql.Types.DATE).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("0"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("DATE"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TIME JDBC Type: TIME
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TIME");
-        rowVal[1] = Integer.toString(java.sql.Types.TIME).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("0"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("TIME"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: DATETIME JDBC Type: TIMESTAMP
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("DATETIME");
-        rowVal[1] = Integer.toString(java.sql.Types.TIMESTAMP).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("0"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("DATETIME"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-
-        /*
-         * MySQL Type: TIMESTAMP JDBC Type: TIMESTAMP
-         */
-        rowVal = new byte[18][];
-        rowVal[0] = s2b("TIMESTAMP");
-        rowVal[1] = Integer.toString(java.sql.Types.TIMESTAMP).getBytes();
-
-        // JDBC Data type
-        rowVal[2] = s2b("0"); // Precision
-        rowVal[3] = s2b("'"); // Literal Prefix
-        rowVal[4] = s2b("'"); // Literal Suffix
-        rowVal[5] = s2b("[(M)]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
-
-        // Nullable
-        rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
-
-        // Searchable
-        rowVal[9] = s2b("false"); // Unsignable
-        rowVal[10] = s2b("false"); // Fixed Prec Scale
-        rowVal[11] = s2b("false"); // Auto Increment
-        rowVal[12] = s2b("TIMESTAMP"); // Locale Type Name
-        rowVal[13] = s2b("0"); // Minimum Scale
-        rowVal[14] = s2b("0"); // Maximum Scale
-        rowVal[15] = s2b("0"); // SQL Data Type (not used)
-        rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
-        rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-        tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BIT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BOOL"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYINT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARBINARY"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMBLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONGBLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("VARBINARY"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYBLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BINARY"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARCHAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMTEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONGTEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("CHAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("ENUM"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("SET"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DECIMAL"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("NUMERIC"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("FLOAT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE PRECISION"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("REAL"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("VARCHAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYTEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DATE"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("YEAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TIME"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DATETIME"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TIMESTAMP"), getExceptionInterceptor()));
+
+        // TODO add missed types (aliases)
 
         return buildResultSet(fields, tuples);
     }
@@ -5488,23 +4327,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             while (results.next()) {
                                 TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
                                 byte[][] rowVal = new byte[8][];
-                                // SCOPE is not used
-                                rowVal[0] = null;
-                                // COLUMN_NAME
-                                rowVal[1] = results.getBytes("Field");
-                                // DATA_TYPE
-                                rowVal[2] = Short.toString(typeDesc.dataType).getBytes();
-                                // TYPE_NAME
-                                rowVal[3] = s2b(typeDesc.typeName);
-                                // COLUMN_SIZE
-                                rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
-                                // BUFFER_LENGTH
-                                rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));
-                                // DECIMAL_DIGITS
-                                rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
-                                // PSEUDO_COLUMN
-                                rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo).getBytes();
-
+                                rowVal[0] = null;                                                                           // SCOPE is not used
+                                rowVal[1] = results.getBytes("Field");                                                      // COLUMN_NAME
+                                rowVal[2] = Short.toString((short) typeDesc.mysqlType.getJdbcType()).getBytes();                                   // DATA_TYPE
+                                rowVal[3] = s2b(typeDesc.mysqlType.getName());                                                         // TYPE_NAME
+                                rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());       // COLUMN_SIZE
+                                rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));                                   // BUFFER_LENGTH
+                                rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString()); // DECIMAL_DIGITS
+                                rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo).getBytes();  // PSEUDO_COLUMN
                                 rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
                             }
                         }
@@ -5974,175 +4804,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    /**
-     * Is CONVERT between the given SQL types supported?
-     * 
-     * @param fromType
-     *            the type to convert from
-     * @param toType
-     *            the type to convert to
-     * @return true if so
-     * @throws SQLException
-     *             if an error occurs
-     * @see Types
-     */
     public boolean supportsConvert(int fromType, int toType) throws SQLException {
-        switch (fromType) {
-        /*
-         * The char/binary types can be converted to pretty much anything.
-         */
-            case java.sql.Types.CHAR:
-            case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
-            case java.sql.Types.BINARY:
-            case java.sql.Types.VARBINARY:
-            case java.sql.Types.LONGVARBINARY:
-
-                switch (toType) {
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.OTHER:
-                    case java.sql.Types.DATE:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.TIMESTAMP:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /*
-                 * We don't handle the BIT type yet.
-                 */
-            case java.sql.Types.BIT:
-                return false;
-
-                /*
-                 * The numeric types. Basically they can convert among themselves, and with char/binary types.
-                 */
-            case java.sql.Types.DECIMAL:
-            case java.sql.Types.NUMERIC:
-            case java.sql.Types.REAL:
-            case java.sql.Types.TINYINT:
-            case java.sql.Types.SMALLINT:
-            case java.sql.Types.INTEGER:
-            case java.sql.Types.BIGINT:
-            case java.sql.Types.FLOAT:
-            case java.sql.Types.DOUBLE:
-
-                switch (toType) {
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /* MySQL doesn't support a NULL type. */
-            case java.sql.Types.NULL:
-                return false;
-
-                /*
-                 * With this driver, this will always be a serialized object, so the char/binary types will work.
-                 */
-            case java.sql.Types.OTHER:
-
-                switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /* Dates can be converted to char/binary types. */
-            case java.sql.Types.DATE:
-
-                switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /* Time can be converted to char/binary types */
-            case java.sql.Types.TIME:
-
-                switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /*
-                 * Timestamp can be converted to char/binary types and date/time types (with loss of precision).
-                 */
-            case java.sql.Types.TIMESTAMP:
-
-                switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.DATE:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-                /* We shouldn't get here! */
-            default:
-                return false; // not sure
-        }
+        return MysqlType.supportsConvert(fromType, toType);
     }
 
     /**

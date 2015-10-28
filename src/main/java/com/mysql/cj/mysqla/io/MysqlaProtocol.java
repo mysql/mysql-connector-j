@@ -1898,8 +1898,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
                         && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
-                    // *TEXT masquerading as blob
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
                     return MysqlType.TINYTEXT;
                 }
                 return MysqlType.TINYBLOB;
@@ -1908,8 +1906,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
                         && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
-                    // *TEXT masquerading as blob
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
                     return MysqlType.MEDIUMTEXT;
                 }
                 return MysqlType.MEDIUMBLOB;
@@ -1918,8 +1914,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
                         && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
-                    // *TEXT masquerading as blob
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
                     return MysqlType.LONGTEXT;
                 }
                 return MysqlType.LONGBLOB;
@@ -1931,26 +1925,21 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 int newMysqlTypeId = mysqlTypeId;
 
                 // fixing initial type according to length
-                if (length <= MysqlType.TINYBLOB.getMaxLength()) {
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
+                if (length <= MysqlType.TINYBLOB.getPrecision()) {
                     newMysqlTypeId = MysqlaConstants.FIELD_TYPE_TINY_BLOB;
 
-                } else if (length <= MysqlType.BLOB.getMaxLength()) {
+                } else if (length <= MysqlType.BLOB.getPrecision()) {
                     if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                             || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue() || isFromFunction
                             && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
-                        // *TEXT masquerading as blob
-                        //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
                         newMysqlTypeId = MysqlaConstants.FIELD_TYPE_VARCHAR;
                         return MysqlType.TEXT;
                     }
                     return MysqlType.BLOB;
 
-                } else if (length <= MysqlType.MEDIUMBLOB.getMaxLength()) {
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
+                } else if (length <= MysqlType.MEDIUMBLOB.getPrecision()) {
                     newMysqlTypeId = MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB;
                 } else {
-                    //this.mysqlTypeId = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
                     newMysqlTypeId = MysqlaConstants.FIELD_TYPE_LONG_BLOB;
                 }
 

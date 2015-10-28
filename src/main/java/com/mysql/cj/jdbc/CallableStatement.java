@@ -42,7 +42,6 @@ import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -56,6 +55,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
@@ -67,7 +67,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 public class CallableStatement extends PreparedStatement implements java.sql.CallableStatement {
 
     protected static class CallableStatementParam {
-        int desiredJdbcType;
 
         int index;
 
@@ -88,6 +87,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         int scale;
 
         String typeName;
+
+        MysqlType desiredMysqlType = MysqlType.UNKNOWN;
 
         CallableStatementParam(String name, int idx, boolean in, boolean out, int jdbcType, String typeName, int precision, int scale, short nullability,
                 int inOutModifier) {
@@ -541,7 +542,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 if (paramIndex == 1) {
 
                     if (this.returnValueParam == null) {
-                        this.returnValueParam = new CallableStatementParam("", 0, false, true, Types.VARCHAR, "VARCHAR", 0, 0,
+                        this.returnValueParam = new CallableStatementParam("", 0, false, true, MysqlType.VARCHAR.getJdbcType(), "VARCHAR", 0, 0,
                                 java.sql.DatabaseMetaData.attributeNullableUnknown, java.sql.DatabaseMetaData.procedureColumnReturn);
                     }
 
@@ -660,8 +661,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                 row[4] = s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn));
 
-                row[5] = s2b(String.valueOf(Types.VARCHAR)); // DATA_TYPE
-                row[6] = s2b("VARCHAR"); // TYPE_NAME
+                row[5] = s2b(String.valueOf(MysqlType.VARCHAR.getJdbcType())); // DATA_TYPE
+                row[6] = s2b(MysqlType.VARCHAR.getName()); // TYPE_NAME
                 row[7] = s2b(Integer.toString(65535)); // PRECISION
                 row[8] = s2b(Integer.toString(65535)); // LENGTH
                 row[9] = s2b(Integer.toString(0)); // SCALE
@@ -774,6 +775,20 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 this.results = null;
             }
 
+            // TODO There is something strange here:
+            // From ResultSetRegressionTest.testBug14562():
+            //
+            // $ CREATE  TABLE testBug14562 (row_order INT, signed_field MEDIUMINT, unsigned_field MEDIUMINT UNSIGNED)
+            // $ INSERT INTO testBug14562 VALUES (1, -8388608, 0), (2, 8388607, 16777215)
+            // $ CREATE  PROCEDURE sp_testBug14562_1 (OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED)
+            //    BEGIN
+            //     SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1;
+            //    END
+            // $ CALL sp_testBug14562_1(@com_mysql_jdbc_outparam_param_1, @com_mysql_jdbc_outparam_param_2)
+            // $ SELECT @com_mysql_jdbc_outparam_param_1,@com_mysql_jdbc_outparam_param_2
+            //
+            // ResultSet metadata returns BIGINT for @com_mysql_jdbc_outparam_param_1 and @com_mysql_jdbc_outparam_param_2
+            // instead of expected MEDIUMINT. I wonder what happens to other types...
             retrieveOutParams();
 
             if (!this.callingStoredFunction) {
@@ -1328,7 +1343,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
-            Object retVal = rs.getObjectStoredProc(mapOutputParameterIndexToRsIndex(parameterIndex), paramDescriptor.desiredJdbcType);
+            Object retVal = rs.getObjectStoredProc(mapOutputParameterIndexToRsIndex(parameterIndex), paramDescriptor.desiredMysqlType.getJdbcType());
 
             this.outputParamWasNull = rs.wasNull();
 
@@ -1714,16 +1729,16 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
-        switch (sqlType) {
-            case Types.REF_CURSOR:
-            case Types.TIME_WITH_TIMEZONE:
-            case Types.TIMESTAMP_WITH_TIMEZONE:
-                throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
-                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
-        }
+        try {
+            MysqlType mt = MysqlType.getByJdbcType(sqlType);
 
-        CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
-        paramDescriptor.desiredJdbcType = sqlType;
+            CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
+            paramDescriptor.desiredMysqlType = mt;
+
+        } catch (FeatureNotAvailableException nae) {
+            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        }
     }
 
     public void registerOutParameter(int parameterIndex, SQLType sqlType) throws SQLException {
@@ -1742,20 +1757,24 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @see java.sql.CallableStatement#registerOutParameter(int, int, java.lang.String)
      */
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException {
-        switch (sqlType) {
-            case Types.REF_CURSOR:
-            case Types.TIME_WITH_TIMEZONE:
-            case Types.TIMESTAMP_WITH_TIMEZONE:
-                throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
-                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        try {
+            MysqlType mt = MysqlType.getByJdbcType(sqlType);
+
+            CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
+            paramDescriptor.desiredMysqlType = mt;
+
+            // TODO why we ignore typeName?
+
+        } catch (FeatureNotAvailableException nae) {
+            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
-
-        checkIsOutputParam(parameterIndex);
-
-        // TODO why we ignore typeName?
     }
 
     public void registerOutParameter(int parameterIndex, SQLType sqlType, String typeName) throws SQLException {
+
+        // TODO (MYSQLCONNJ-644) MysqlType also implements SQLType, we need to analyze SQLType instance here and in other methods where SQLType is used
+
         registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), typeName);
     }
 
@@ -1986,15 +2005,15 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                                             && parameterAsBytes[6] == 'y' && parameterAsBytes[7] == '\'') {
                                         setPstmt.setBytesNoEscapeNoQuotes(1, parameterAsBytes);
                                     } else {
-                                        int sqlType = inParamInfo.desiredJdbcType;
-
-                                        switch (sqlType) {
-                                            case Types.BIT:
-                                            case Types.BINARY:
-                                            case Types.BLOB:
-                                            case Types.JAVA_OBJECT:
-                                            case Types.LONGVARBINARY:
-                                            case Types.VARBINARY:
+                                        switch (inParamInfo.desiredMysqlType) {
+                                            case BIT:
+                                            case BINARY:
+                                            case GEOMETRY:
+                                            case TINYBLOB:
+                                            case BLOB:
+                                            case MEDIUMBLOB:
+                                            case LONGBLOB:
+                                            case VARBINARY:
                                                 setPstmt.setBytes(1, parameterAsBytes);
                                                 break;
                                             default:
@@ -2003,7 +2022,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                                         }
                                     }
                                 } else {
-                                    setPstmt.setNull(1, Types.NULL);
+                                    setPstmt.setNull(1, MysqlType.NULL);
                                 }
                             }
 
@@ -2361,7 +2380,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void setRowId(String parameterName, RowId x) throws SQLException {
-        PreparedStatementHelper.setRowId(this, getNamedParamIndex(parameterName, false), x);
+        setRowId(getNamedParamIndex(parameterName, false), x);
     }
 
     public void setNString(String parameterName, String value) throws SQLException {
@@ -2369,7 +2388,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void setNClob(String parameterName, NClob value) throws SQLException {
-        PreparedStatementHelper.setNClob(this, getNamedParamIndex(parameterName, false), value);
+        setNClob(getNamedParamIndex(parameterName, false), value);
 
     }
 
@@ -2384,7 +2403,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
-        PreparedStatementHelper.setSQLXML(this, getNamedParamIndex(parameterName, false), xmlObject);
+        setSQLXML(getNamedParamIndex(parameterName, false), xmlObject);
 
     }
 

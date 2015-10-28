@@ -384,7 +384,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
             // This row doesn't have 'unsigned' attribute
             assertTrue(this.rs.next());
-            assertTrue(this.rs.getString(6).toLowerCase().indexOf("unsigned") != -1);
+            assertTrue(StringUtils.indexOfIgnoreCase(this.rs.getString(6), "unsigned") != -1);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testGetUnsignedCols");
         }
@@ -1605,7 +1605,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#23304 - DBMD using "show" and DBMD using
-     * information_schema do not return results consistent with eachother.
+     * information_schema do not return results consistent with each other.
      * 
      * (note this fix only addresses the inconsistencies, not the issue that the
      * driver is treating schemas differently than some users expect.
@@ -1660,9 +1660,58 @@ public class MetaDataRegressionTest extends BaseTestCase {
              * compareResultSets(rsShow, rsInfoSchema);
              */
 
-            createTable(
-                    "t_testBug23304",
-                    "(field1 int primary key not null, field2 tinyint, field3 mediumint, field4 mediumint, field5 bigint, field6 float, field7 double, field8 decimal, field9 char(32), field10 varchar(32), field11 blob, field12 mediumblob, field13 longblob, field14 text, field15 mediumtext, field16 longtext, field17 date, field18 time, field19 datetime, field20 timestamp)");
+            StringBuilder sb = new StringBuilder("(");
+            sb.append("field01 int primary key not null, ");
+            sb.append("field02 int unsigned, ");
+            sb.append("field03 tinyint, ");
+            sb.append("field04 tinyint unsigned, ");
+            sb.append("field05 smallint, ");
+            sb.append("field06 smallint unsigned, ");
+            sb.append("field07 mediumint, ");
+            sb.append("field08 mediumint unsigned, ");
+            sb.append("field09 bigint, ");
+            sb.append("field10 bigint unsigned, ");
+            sb.append("field11 float, ");
+            sb.append("field12 float unsigned, ");
+            sb.append("field13 double, ");
+            sb.append("field14 double unsigned, ");
+            sb.append("field15 decimal, ");
+            sb.append("field16 decimal unsigned, ");
+            sb.append("field17 char(32), ");
+            sb.append("field18 varchar(32), ");
+            sb.append("field19 binary(32), ");
+            sb.append("field20 varbinary(65000), ");
+            sb.append("field21 tinyblob, ");
+            sb.append("field22 blob, ");
+            sb.append("field23 mediumblob, ");
+            sb.append("field24 longblob, ");
+            sb.append("field25 tinytext, ");
+            sb.append("field26 text, ");
+            sb.append("field27 mediumtext, ");
+            sb.append("field28 longtext, ");
+            sb.append("field29 date, ");
+            sb.append("field30 time, ");
+            sb.append("field31 datetime, ");
+            sb.append("field32 timestamp, ");
+            sb.append("field33 year, ");
+            sb.append("field34 json, ");
+            sb.append("field35 boolean, ");
+            sb.append("field36 bit, ");
+            sb.append("field37 bit(64), ");
+            sb.append("field38 enum('a','b', 'c' ), ");
+            sb.append("field39 set('d', 'e', 'f' ), ");
+
+            sb.append("field40 geometry, ");
+            sb.append("field41 POINT, ");
+            sb.append("field42 LINESTRING, ");
+            sb.append("field43 POLYGON, ");
+            sb.append("field44 MULTIPOINT, ");
+            sb.append("field45 MULTILINESTRING, ");
+            sb.append("field46 MULTIPOLYGON, ");
+            sb.append("field47 GEOMETRYCOLLECTION ");
+
+            sb.append(")");
+            createTable("t_testBug23304", sb.toString());
 
             rsShow = dbmdUsingShow.getColumns(connShow.getCatalog(), null, "t_testBug23304", "%");
             rsInfoSchema = dbmdUsingInfoSchema.getColumns(connInfoSchema.getCatalog(), null, "t_testBug23304", "%");
@@ -1730,7 +1779,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         || (!expected.getObject(i + 1).equals(actual.getObject(i + 1)))) {
                     if ("COLUMN_DEF".equals(metadataExpected.getColumnName(i + 1))
                             && (expected.getObject(i + 1) == null && actual.getString(i + 1).length() == 0)
-                            || (expected.getString(i + 1).length() == 0 && actual.getObject(i + 1) == null)) {
+                            || ((expected.getString(i + 1) == null || expected.getString(i + 1).length() == 0) && actual.getObject(i + 1) == null)) {
                         continue; // known bug with SHOW FULL COLUMNS, and we
                                   // can't distinguish between null and ''
                                   // for a default

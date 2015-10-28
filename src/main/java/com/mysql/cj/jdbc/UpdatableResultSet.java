@@ -32,7 +32,6 @@ import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLXML;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +43,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
@@ -387,11 +387,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getJavaType());
+            this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getMysqlType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int index = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getJavaType());
+                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getMysqlType());
 
             }
         }
@@ -404,45 +404,62 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     }
 
-    private synchronized void setParamValue(PreparedStatement ps, int psIdx, ResultSetRow row, int rsIdx, int sqlType) throws SQLException {
+    private synchronized void setParamValue(PreparedStatement ps, int psIdx, ResultSetRow row, int rsIdx, MysqlType mysqlType) throws SQLException {
 
         byte[] val = row.getColumnValue(rsIdx);
         if (val == null) {
-            ps.setNull(psIdx, Types.NULL);
+            ps.setNull(psIdx, MysqlType.NULL);
             return;
         }
-        switch (sqlType) {
-            case Types.NULL:
-                ps.setNull(psIdx, Types.NULL);
+        switch (mysqlType) {
+            case NULL:
+                ps.setNull(psIdx, MysqlType.NULL);
                 break;
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
+            case TINYINT:
+            case TINYINT_UNSIGNED:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
+            case INT:
+            case INT_UNSIGNED:
+            case YEAR:
                 ps.setInt(psIdx, getInt(rsIdx + 1));
                 break;
-            case Types.BIGINT:
+            case BIGINT:
                 ps.setLong(psIdx, getLong(rsIdx + 1));
                 break;
-            case Types.CHAR:
-            case Types.VARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.DECIMAL:
-            case Types.NUMERIC:
+            case BIGINT_UNSIGNED:
+                ps.setBigInteger(psIdx, getBigInteger(rsIdx + 1));
+                break;
+            case CHAR:
+            case ENUM:
+            case SET:
+            case VARCHAR:
+            case JSON:
+            case TINYTEXT:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
                 ps.setString(psIdx, getString(rsIdx + 1));
                 break;
-            case Types.DATE:
+            case DATE:
                 ps.setDate(psIdx, getDate(rsIdx + 1));
                 break;
-            case Types.TIMESTAMP:
+            case TIMESTAMP:
+            case DATETIME:
                 ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1));
                 break;
-            case Types.TIME:
+            case TIME:
                 ps.setTime(psIdx, getTime(rsIdx + 1));
                 break;
-            case Types.FLOAT:
-            case Types.DOUBLE:
-            case Types.REAL:
-            case Types.BOOLEAN:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+            case BOOLEAN:
                 ps.setBytesNoEscapeNoQuotes(psIdx, val);
                 break;
             /*
@@ -859,7 +876,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
                     newRowData[i] = defaultValueCopy;
                 } else {
-                    this.inserter.setNull(i + 1, java.sql.Types.NULL);
+                    this.inserter.setNull(i + 1, MysqlType.NULL);
                     newRowData[i] = null;
                 }
             }
@@ -1001,7 +1018,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
             }
 
-            if (this.fields[index].getvalueNeedsQuoting()) {
+            if (this.fields[index].getValueNeedsQuoting()) {
                 this.refresher.setBytesNoEscape(1, dataFrom);
             } else {
                 this.refresher.setBytesNoEscapeNoQuotes(1, dataFrom);
@@ -1125,7 +1142,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         for (int i = 0; i < numFields; i++) {
             if (this.thisRow.getColumnValue(i) != null) {
 
-                if (this.fields[i].getvalueNeedsQuoting()) {
+                if (this.fields[i].getValueNeedsQuoting()) {
                     this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.fields[i].isBinary(), false);
                 } else {
                     this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getColumnValue(i));
@@ -1139,11 +1156,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getJavaType());
+            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getMysqlType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int idx = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getJavaType());
+                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getMysqlType());
             }
         }
     }
@@ -1937,10 +1954,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public NClob getNClob(String columnName) throws SQLException {
         return getNClob(findColumn(columnName));
-    }
-
-    private final java.sql.NClob getNClobFromString(String stringVal, int columnIndex) throws SQLException {
-        return new com.mysql.cj.jdbc.NClob(stringVal, getExceptionInterceptor());
     }
 
     @Override

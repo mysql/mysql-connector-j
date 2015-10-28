@@ -24,7 +24,6 @@
 package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
-import java.sql.Types;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
@@ -107,7 +106,10 @@ public abstract class ResultSetRow {
     private <T> T decodeAndCreateReturnValue(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         Field f = this.metadata[columnIndex];
 
-        // figure out which decoder method to call based on the value type from metadata
+        // First, figure out which decoder method to call basing on the protocol value type from metadata;
+        // it's the best way to find the appropriate decoder, we can't rely completely on MysqlType here
+        // because the same MysqlType can be represented by different protocol types and also DatabaseMetaData methods,
+        // eg. buildResultSet(), could imply unexpected conversions when substitutes RowData in ResultSet;
         switch (f.getMysqlTypeId()) {
             case MysqlaConstants.FIELD_TYPE_DATETIME:
             case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
@@ -122,24 +124,21 @@ public abstract class ResultSetRow {
             case MysqlaConstants.FIELD_TYPE_TINY:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt1(bytes, offset, length, vf);
-                } else {
-                    return this.valueDecoder.decodeInt1(bytes, offset, length, vf);
                 }
+                return this.valueDecoder.decodeInt1(bytes, offset, length, vf);
 
             case MysqlaConstants.FIELD_TYPE_YEAR:
             case MysqlaConstants.FIELD_TYPE_SHORT:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt2(bytes, offset, length, vf);
-                } else {
-                    return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
                 }
+                return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
 
             case MysqlaConstants.FIELD_TYPE_LONG:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt4(bytes, offset, length, vf);
-                } else {
-                    return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
                 }
+                return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
 
             case MysqlaConstants.FIELD_TYPE_INT24:
                 return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
@@ -147,9 +146,8 @@ public abstract class ResultSetRow {
             case MysqlaConstants.FIELD_TYPE_LONGLONG:
                 if (f.isUnsigned()) {
                     return this.valueDecoder.decodeUInt8(bytes, offset, length, vf);
-                } else {
-                    return this.valueDecoder.decodeInt8(bytes, offset, length, vf);
                 }
+                return this.valueDecoder.decodeInt8(bytes, offset, length, vf);
 
             case MysqlaConstants.FIELD_TYPE_FLOAT:
                 return this.valueDecoder.decodeFloat(bytes, offset, length, vf);
@@ -181,54 +179,72 @@ public abstract class ResultSetRow {
                 return vf.createFromNull();
         }
 
-        // hack for some internal code that creates rows without MySQL types, only JDBC types incl ps bindings as RS, DBMD
-        switch (f.getJavaType()) {
-            case Types.BOOLEAN:
-                return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
-            case Types.INTEGER:
-                return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
-            case Types.SMALLINT:
+        // If the protocol type isn't available then select decoder basing on MysqlType; that's for some internal
+        // code that creates rows without MySQL protocol types, only MysqlType types, including PS bindings as RS, DBMD
+        switch (f.getMysqlType()) {
+            case TINYINT:
+                return this.valueDecoder.decodeInt1(bytes, offset, length, vf);
+            case TINYINT_UNSIGNED:
+                return this.valueDecoder.decodeUInt1(bytes, offset, length, vf);
+            case SMALLINT:
+            case YEAR:
                 return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
-            case Types.BIGINT:
+            case SMALLINT_UNSIGNED:
+                return this.valueDecoder.decodeUInt2(bytes, offset, length, vf);
+            case INT:
+            case MEDIUMINT:
+                return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
+            case INT_UNSIGNED:
+            case MEDIUMINT_UNSIGNED:
+                return this.valueDecoder.decodeUInt4(bytes, offset, length, vf);
+            case BIGINT:
+                return this.valueDecoder.decodeInt8(bytes, offset, length, vf);
+            case BIGINT_UNSIGNED:
                 return this.valueDecoder.decodeUInt8(bytes, offset, length, vf);
-
-            case Types.DOUBLE:
-            case Types.FLOAT:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+                return this.valueDecoder.decodeFloat(bytes, offset, length, vf);
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
                 return this.valueDecoder.decodeDouble(bytes, offset, length, vf);
-            case Types.DECIMAL:
-            case Types.REAL:
+            case DECIMAL:
+            case DECIMAL_UNSIGNED:
                 return this.valueDecoder.decodeDecimal(bytes, offset, length, vf);
 
-            case Types.VARCHAR:
-            case Types.CHAR:
+            case BOOLEAN:
+            case VARBINARY:
+            case VARCHAR:
+            case BINARY:
+            case CHAR:
+            case TINYBLOB:
+            case BLOB:
+            case MEDIUMBLOB:
+            case LONGBLOB:
+            case TINYTEXT:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case JSON:
+            case ENUM:
+            case SET:
+            case GEOMETRY:
+            case UNKNOWN:
                 return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
 
-            case Types.ARRAY:
-            case Types.BINARY:
-            case Types.BIT:
-            case Types.BLOB:
-            case Types.CLOB:
-            case Types.DATALINK:
-            case Types.DATE:
-            case Types.DISTINCT:
-            case Types.JAVA_OBJECT:
-            case Types.LONGNVARCHAR:
-            case Types.LONGVARBINARY:
-            case Types.LONGVARCHAR:
-            case Types.NCHAR:
-            case Types.NCLOB:
-            case Types.NULL:
-            case Types.NUMERIC:
-            case Types.NVARCHAR:
-            case Types.OTHER:
-            case Types.REF:
-            case Types.ROWID:
-            case Types.SQLXML:
-            case Types.STRUCT:
-            case Types.TIME:
-            case Types.TIMESTAMP:
-            case Types.TINYINT:
-            case Types.VARBINARY:
+            case BIT:
+                return this.valueDecoder.decodeBit(bytes, offset, length, vf);
+
+            case DATETIME:
+            case TIMESTAMP:
+                return this.valueDecoder.decodeTimestamp(bytes, offset, length, vf);
+            case DATE:
+                return this.valueDecoder.decodeDate(bytes, offset, length, vf);
+            case TIME:
+                return this.valueDecoder.decodeTime(bytes, offset, length, vf);
+
+            case NULL:
+                return vf.createFromNull();
+
         }
 
         throw new DataReadException(Messages.getString("ResultSet.UnknownSourceType"));

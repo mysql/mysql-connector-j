@@ -24,13 +24,11 @@
 package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
-import java.sql.Types;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -47,30 +45,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         }
 
         return (int) fieldLength;
-    }
-
-    /**
-     * Checks if the SQL Type is a Decimal/Number Type
-     * 
-     * @param type
-     *            SQL Type
-     */
-    private static final boolean isDecimalType(int type) {
-        switch (type) {
-            case Types.BIT:
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
-            case Types.BIGINT:
-            case Types.FLOAT:
-            case Types.REAL:
-            case Types.DOUBLE:
-            case Types.NUMERIC:
-            case Types.DECIMAL:
-                return true;
-        }
-
-        return false;
     }
 
     /* Session, used only for `getMaxBytesPerChar()' */
@@ -281,8 +255,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * 
      * @throws SQLException
      *             if a database access error occurs
-     * 
-     * @see java.sql.Types
      */
     public int getColumnType(int column) throws SQLException {
         return getField(column).getJavaType();
@@ -301,13 +273,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     public String getColumnTypeName(int column) throws java.sql.SQLException {
         Field field = getField(column);
-
-        StringBuilder sb = new StringBuilder(field.getMysqlType().getName());
-        if (field.isUnsigned() && field.getMysqlType().isAllowed(MysqlType.FIELD_FLAG_UNSIGNED)) {
-            sb.append(" UNSIGNED");
-        }
-
-        return sb.toString();
+        return field.getMysqlType().getName();
     }
 
     /**
@@ -343,11 +309,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public int getPrecision(int column) throws SQLException {
         Field f = getField(column);
 
-        // if (f.getMysqlType() == MysqlaConstants.FIELD_TYPE_NEW_DECIMAL) {
-        // return f.getLength();
-        // }
-
-        if (isDecimalType(f.getJavaType())) {
+        if (f.getMysqlType().isDecimal()) {
             if (f.getDecimals() > 0) {
                 return clampedGetLength(f) - 1 + getPrecisionAdjustFactor(f);
             }
@@ -355,13 +317,14 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return clampedGetLength(f) + getPrecisionAdjustFactor(f);
         }
 
-        switch (f.getMysqlTypeId()) {
-            case MysqlaConstants.FIELD_TYPE_TINY_BLOB:
-            case MysqlaConstants.FIELD_TYPE_BLOB:
-            case MysqlaConstants.FIELD_TYPE_MEDIUM_BLOB:
-            case MysqlaConstants.FIELD_TYPE_LONG_BLOB:
-                return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
-                                            // lengths indicating the _maximum_ size for each BLOB type.
+        switch (f.getMysqlType()) {
+            case TINYBLOB:
+            case BLOB:
+            case MEDIUMBLOB:
+            case LONGBLOB:
+                // for binary BLOBS returning the full length, *TEXT types are handled by default clause below
+                return clampedGetLength(f);
+
             default:
                 return clampedGetLength(f) / this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
@@ -416,7 +379,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public int getScale(int column) throws SQLException {
         Field f = getField(column);
 
-        if (isDecimalType(f.getJavaType())) {
+        if (f.getMysqlType().isDecimal()) {
             return f.getDecimals();
         }
 
@@ -490,32 +453,39 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public boolean isCaseSensitive(int column) throws java.sql.SQLException {
         Field field = getField(column);
 
-        int sqlType = field.getJavaType();
-
-        switch (sqlType) {
-            case Types.BIT:
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
-            case Types.BIGINT:
-            case Types.FLOAT:
-            case Types.REAL:
-            case Types.DOUBLE:
-            case Types.DATE:
-            case Types.TIME:
-            case Types.TIMESTAMP:
+        switch (field.getMysqlType()) {
+            case BIT:
+            case TINYINT:
+            case TINYINT_UNSIGNED:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
+            case INT:
+            case INT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
+            case BIGINT:
+            case BIGINT_UNSIGNED:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+            case DATE:
+            case YEAR:
+            case TIME:
+            case TIMESTAMP:
+            case DATETIME:
                 return false;
 
-            case Types.CHAR:
-            case Types.VARCHAR:
-            case Types.LONGVARCHAR:
-
-                if (field.isBinary()) {
-                    return true;
-                }
-
+            case CHAR:
+            case VARCHAR:
+            case TINYTEXT:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case JSON:
+            case ENUM:
+            case SET:
                 String collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[field.getCollationIndex()];
-
                 return ((collationName != null) && !collationName.endsWith("_ci"));
 
             default:
@@ -629,7 +599,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case MEDIUMINT:
             case FLOAT:
             case DOUBLE:
-                return !f.isUnsigned();
+                return true;
 
             default:
                 return false;
