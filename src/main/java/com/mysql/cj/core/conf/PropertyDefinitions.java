@@ -111,9 +111,6 @@ public class PropertyDefinitions {
     public static final String SYSP_testsuite_runLongTests /*                 */= "com.mysql.cj.testsuite.runLongTests";
     public static final String SYSP_testsuite_serverController_basedir /*     */= "com.mysql.cj.testsuite.serverController.basedir";
 
-    /** For testsuite.regression.ConnectionRegressionTest.testBug12218() */
-    public static final String SYSP_testsuite_slave_properties /*             */= "com.mysql.cj.testsuite.replicationConnection.isSlave";
-
     /*
      * Properties added internally after parsing connection string
      */
@@ -382,6 +379,8 @@ public class PropertyDefinitions {
     public static final String PNAME_autoConfigureForColdFusion = "autoConfigureForColdFusion";
 
     public static final String PNAME_testsuite_faultInjection_serverCharsetIndex = "com.mysql.cj.testsuite.faultInjection.serverCharsetIndex"; // was "com.mysql.jdbc.faultInjection.serverCharsetIndex"
+    /** For testsuite.regression.ConnectionRegressionTest.testBug12218() */
+    public static final String PNAME_testsuite_slave_properties = "com.mysql.cj.testsuite.replicationConnection.isSlave";
     // ----------------
 
     /*
