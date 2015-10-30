@@ -473,7 +473,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                 if (result instanceof com.mysql.cj.api.jdbc.Statement) {
                     ((com.mysql.cj.api.jdbc.Statement) result).setPingTarget(this);
                 }
-                result = proxyIfIsJdbcInterface(result);
+                result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
             }
 
         } catch (InvocationTargetException e) {

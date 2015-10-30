@@ -31,6 +31,7 @@ import java.sql.Timestamp;
 import testsuite.fabric.BaseFabricTestCase;
 
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 
 /**
@@ -123,5 +124,33 @@ public class TestRegressions extends BaseFabricTestCase {
         rs.close();
         ps.close();
         this.conn.close();
+    }
+
+    public void testBug21876798() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
+
+        FabricMySQLDataSource ds = getNewDefaultDataSource();
+        ds.getModifiableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).setValue(true);
+
+        this.conn = (FabricMysqlConnection) ds.getConnection(this.username, this.password);
+        this.conn.setServerGroupName("ha_config1_group");
+
+        this.conn.createStatement().executeUpdate("drop table if exists bug21876798");
+        this.conn.createStatement().executeUpdate("create table bug21876798(x varchar(100))");
+        PreparedStatement ps = this.conn.prepareStatement("update bug21876798 set x = ?");
+        ps.setString(1, "abc");
+        ps.addBatch();
+        ps.setString(1, "def");
+        ps.addBatch();
+        ps.setString(1, "def");
+        ps.addBatch();
+        ps.setString(1, "def");
+        ps.addBatch();
+        ps.setString(1, "def");
+        ps.addBatch();
+        // this would throw a ClassCastException
+        ps.executeBatch();
     }
 }

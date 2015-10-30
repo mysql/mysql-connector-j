@@ -943,10 +943,13 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
+        return getMasterSlaveReplicationConnection(null);
+    }
 
+    protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
         String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix,
                 ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
-        Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getMasterSlaveProps());
+        Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getMasterSlaveProps(props));
 
         return replConn;
     }
@@ -983,11 +986,16 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Properties getMasterSlaveProps() throws SQLException {
-        Properties props = getPropertiesFromTestsuiteUrl();
+        return getMasterSlaveProps(null);
+    }
 
-        removeHostRelatedProps(props);
-
-        return props;
+    protected Properties getMasterSlaveProps(Properties props) throws SQLException {
+        Properties parsedProps = getPropertiesFromTestsuiteUrl();
+        if (props != null) {
+            parsedProps.putAll(props);
+        }
+        removeHostRelatedProps(parsedProps);
+        return parsedProps;
     }
 
     protected void removeHostRelatedProps(Properties props) {

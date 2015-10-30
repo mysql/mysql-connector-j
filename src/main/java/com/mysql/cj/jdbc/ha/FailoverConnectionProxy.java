@@ -472,7 +472,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
         try {
             result = method.invoke(this.thisAsConnection, args);
-            result = proxyIfIsJdbcInterface(result);
+            result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
         } catch (InvocationTargetException e) {
             dealWithInvocationException(e);
         }

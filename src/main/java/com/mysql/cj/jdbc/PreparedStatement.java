@@ -53,6 +53,7 @@ import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Wrapper;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -1277,9 +1278,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (this.retrieveGeneratedKeys) {
-                        batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch), RETURN_GENERATED_KEYS);
+                        batchedStatement = ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch),
+                                RETURN_GENERATED_KEYS)).unwrap(java.sql.PreparedStatement.class);
                     } else {
-                        batchedStatement = locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch));
+                        batchedStatement = ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch)))
+                                .unwrap(java.sql.PreparedStatement.class);
                     }
 
                     if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()

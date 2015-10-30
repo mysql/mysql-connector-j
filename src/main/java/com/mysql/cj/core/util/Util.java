@@ -288,24 +288,21 @@ public class Util {
             return (Util.isJdbcInterfaceCache.get(clazz));
         }
 
-        for (Class<?> iface : clazz.getInterfaces()) {
-            String packageName = null;
+        if (clazz.isInterface()) {
             try {
-                packageName = iface.getPackage().getName();
+                if (isJdbcPackage(clazz.getPackage().getName())) {
+                    Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
+                    return true;
+                }
             } catch (Exception ex) {
                 /*
                  * We may experience a NPE from getPackage() returning null, or class-loading facilities.
                  * This happens when this class is instrumented to implement runtime-generated interfaces.
                  */
-                continue;
             }
+        }
 
-            if (isJdbcPackage(packageName)) {
-                Util.isJdbcInterfaceCache.putIfAbsent(iface, true);
-                Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
-                return true;
-            }
-
+        for (Class<?> iface : clazz.getInterfaces()) {
             if (isJdbcInterface(iface)) {
                 Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
                 return true;

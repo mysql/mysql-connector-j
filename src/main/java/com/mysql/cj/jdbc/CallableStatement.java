@@ -342,12 +342,27 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return this.numParameters;
         }
 
-        public <T> T unwrap(Class<T> iface) throws SQLException {
-            return null;
+        /**
+         * @see java.sql.Wrapper#isWrapperFor(Class)
+         */
+        public boolean isWrapperFor(Class<?> iface) throws SQLException {
+            checkClosed();
+
+            // This works for classes that aren't actually wrapping anything
+            return iface.isInstance(this);
         }
 
-        public boolean isWrapperFor(Class<?> iface) throws SQLException {
-            return false;
+        /**
+         * @see java.sql.Wrapper#unwrap(Class)
+         */
+        public <T> T unwrap(Class<T> iface) throws java.sql.SQLException {
+            try {
+                // This works for classes that aren't actually wrapping anything
+                return iface.cast(this);
+            } catch (ClassCastException cce) {
+                throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            }
         }
     }
 
