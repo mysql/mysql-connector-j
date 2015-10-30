@@ -1170,6 +1170,14 @@ public class MysqlIO {
             this.clientParam |= CLIENT_CONNECT_WITH_DB;
         }
 
+        // Changing SSL defaults for 5.7+ server: useSSL=true, requireSSL=false, verifyServerCertificate=false
+        if (versionMeetsMinimum(5, 7, 0) && !this.connection.getUseSSL() && !this.connection.isUseSSLExplicit()) {
+            this.connection.setUseSSL(true);
+            this.connection.setVerifyServerCertificate(false);
+            this.connection.getLog().logWarn(Messages.getString("MysqlIO.SSLWarning"));
+        }
+
+        // check SSL availability
         if (((this.serverCapabilities & CLIENT_SSL) == 0) && this.connection.getUseSSL()) {
             if (this.connection.getRequireSSL()) {
                 this.connection.close();

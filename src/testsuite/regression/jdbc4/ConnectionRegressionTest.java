@@ -137,12 +137,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         final Properties props = new Properties();
-        final Callable<Void> callableInstance = new Callable<Void>() {
-            public Void call() throws Exception {
-                getConnectionWithProps(props);
-                return null;
-            }
-        };
 
         /*
          * case 1: non verifying server certificate
@@ -152,11 +146,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
 
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
         getConnectionWithProps(props);
 
         /*
@@ -169,12 +158,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
-
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
 
         getConnectionWithProps(props);
 
@@ -191,12 +174,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
-
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
 
         getConnectionWithProps(props);
     }

@@ -91,6 +91,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
                 validateStringValues(extractedValue, exceptionInterceptor);
 
                 this.valueAsObject = Boolean.valueOf(extractedValue.equalsIgnoreCase("TRUE") || extractedValue.equalsIgnoreCase("YES"));
+                this.wasExplicitlySet = true;
             } else {
                 this.valueAsObject = this.defaultValue;
             }
@@ -107,6 +108,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
         void setValue(boolean valueFlag) {
             this.valueAsObject = Boolean.valueOf(valueFlag);
+            this.wasExplicitlySet = true;
             this.updateCount++;
         }
     }
@@ -138,6 +140,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
         String description;
 
         int updateCount = 0;
+
+        boolean wasExplicitlySet = false;
 
         public ConnectionProperty() {
         }
@@ -198,6 +202,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
         int getUpdateCount() {
             return this.updateCount;
+        }
+
+        boolean isExplicitlySet() {
+            return this.wasExplicitlySet;
         }
 
         abstract boolean hasValueConstraints();
@@ -416,6 +424,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
             }
 
             this.valueAsObject = Integer.valueOf(intValue);
+            this.wasExplicitlySet = true;
             this.updateCount++;
         }
     }
@@ -448,6 +457,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
                 }
             }
             this.valueAsObject = Long.valueOf(longValue);
+            this.wasExplicitlySet = true;
             this.updateCount++;
         }
 
@@ -563,6 +573,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
                 validateStringValues(extractedValue, exceptionInterceptor);
 
                 this.valueAsObject = extractedValue;
+                this.wasExplicitlySet = true;
             } else {
                 this.valueAsObject = this.defaultValue;
             }
@@ -579,6 +590,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
         void setValue(String valueFlag) {
             this.valueAsObject = valueFlag;
+            this.wasExplicitlySet = true;
             this.updateCount++;
         }
     }
@@ -2326,6 +2338,15 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      */
     public boolean getUseSSL() {
         return this.useSSL.getValueAsBoolean();
+    }
+
+    /**
+     * Was the value of useSSL set explicitly or just got from defaults.
+     * 
+     * @return
+     */
+    public boolean isUseSSLExplicit() {
+        return this.useSSL.wasExplicitlySet;
     }
 
     /*

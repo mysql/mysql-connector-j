@@ -2427,4 +2427,8 @@ public class MultiHostMySQLConnection implements MySQLConnection {
     public void setEnableEscapeProcessing(boolean flag) {
         getActiveMySQLConnection().setEnableEscapeProcessing(flag);
     }
+
+    public boolean isUseSSLExplicit() {
+        return getActiveMySQLConnection().isUseSSLExplicit();
+    }
 }

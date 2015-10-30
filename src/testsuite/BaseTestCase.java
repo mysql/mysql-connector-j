@@ -57,8 +57,6 @@ import com.mysql.jdbc.Util;
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
-    protected final static String CUSTOM_SSL_CIPHERS = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
-            + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
 
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
 
@@ -591,8 +589,10 @@ public abstract class BaseTestCase extends TestCase {
             }
         } else {
             try {
-                this.conn = DriverManager.getConnection(dbUrl);
                 Properties props = new Properties();
+                props.setProperty("useSSL", "false"); // testsuite is built upon non-SSL default connection
+                this.conn = DriverManager.getConnection(dbUrl, props);
+
                 props.setProperty("allowPublicKeyRetrieval", "true");
                 this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
             } catch (Exception ex) {
@@ -775,26 +775,6 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected boolean isEnterpriseEdition() {
         return Util.isEnterpriseEdition(((MySQLConnection) this.conn).getServerVersion());
-    }
-
-    /**
-     * Checks whether all requirements to connect using SSL are met for the default connection
-     */
-    protected boolean requiresSSLCipherSuitesCustomization() throws SQLException {
-        return requiresSSLCipherSuitesCustomization(this.conn);
-    }
-
-    /**
-     * Checks whether all requirements to connect using SSL are met for the given connection
-     * - MySQL 5.5.45+
-     * - MySQL 5.6.26+ (community edition)
-     * - MySQL 5.7.6+ (community edition)
-     */
-    protected boolean requiresSSLCipherSuitesCustomization(Connection c) throws SQLException {
-        MySQLConnection myConn = (MySQLConnection) c;
-        return Util.getJVMVersion() < 8
-                && (myConn.versionMeetsMinimum(5, 5, 45) && !myConn.versionMeetsMinimum(5, 6, 0) || Util.isCommunityEdition(myConn.getServerVersion())
-                        && (myConn.versionMeetsMinimum(5, 6, 26) && !myConn.versionMeetsMinimum(5, 7, 0) || myConn.versionMeetsMinimum(5, 7, 6)));
     }
 
     protected boolean isClassAvailable(String classname) {

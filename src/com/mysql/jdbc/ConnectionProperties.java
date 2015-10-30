@@ -375,6 +375,8 @@ public interface ConnectionProperties {
 
     public boolean getUseSSL();
 
+    boolean isUseSSLExplicit();
+
     public boolean getUseStreamLengthsInPrepStmts();
 
     public boolean getUseTimezone();

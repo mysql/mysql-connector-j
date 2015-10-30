@@ -3022,4 +3022,8 @@ public class ReplicationConnection implements Connection, PingTarget {
     public void setEnableEscapeProcessing(boolean flag) {
         getCurrentConnection().setEnableEscapeProcessing(flag);
     }
+
+    public boolean isUseSSLExplicit() {
+        return getCurrentConnection().isUseSSLExplicit();
+    }
 }

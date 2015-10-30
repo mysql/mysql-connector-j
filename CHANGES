@@ -4,6 +4,8 @@ dd-mm-yy - Version 5.1.38
 
   - Fix for Bug#21978216, GETTYPEINFO REPORT MAXIMUM PRECISION OF 255 FOR VARBINARY.
 
+  - Fix for Bug#78706 (21947042), Prefer TLS where supported by MySQL Server.
+
   - Fix for Bug#21934573, FABRIC CODE INVOLVED IN THREAD DEADLOCK.
     Duplicate: Bug#78710 (21966391), Deadlock on ReplicationConnection and ReplicationConnectionGroup when failover.
 

@@ -2852,4 +2852,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     public void setEnableEscapeProcessing(boolean flag) {
         this.mc.setEnableEscapeProcessing(flag);
     }
+
+    public boolean isUseSSLExplicit() {
+        return this.mc.isUseSSLExplicit();
+    }
 }

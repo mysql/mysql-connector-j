@@ -34,8 +34,6 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.net.ssl.SSLException;
-
 import com.mysql.jdbc.exceptions.MySQLDataException;
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
@@ -1100,10 +1098,6 @@ public class SQLError {
                     // too many client connections???
                     exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
                 }
-            } else if (Util.getJVMVersion() < 8 && underlyingException instanceof SSLException && (cause = underlyingException.getCause()) != null
-                    && cause.getMessage().equals("Could not generate DH keypair") && (cause = cause.getCause()) != null
-                    && cause.getMessage().equals("Prime size must be multiple of 64, and can only range from 512 to 1024 (inclusive)")) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"));
             }
         }
 

@@ -1551,9 +1551,6 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("useSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
         props.setProperty("requireSSL", "true");
-        if (requiresSSLCipherSuitesCustomization()) {
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
         getConnectionWithProps(props);
     }
 

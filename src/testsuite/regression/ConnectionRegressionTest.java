@@ -1731,9 +1731,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty("useSSL", "true");
             props.setProperty("requireSSL", "true");
-            if (requiresSSLCipherSuitesCustomization()) {
-                props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-            }
 
             sslConn = getConnectionWithProps(props);
             sslConn.prepareCall("{ call testBug25545()}").execute();
@@ -1773,8 +1770,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
                     + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
-                    + "&trustCertificateKeyStorePassword=password"
-                    + (requiresSSLCipherSuitesCustomization() ? "&enabledSSLCipherSuites=" + CUSTOM_SSL_CIPHERS : "");
+                    + "&trustCertificateKeyStorePassword=password";
 
             _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"), (String) this.getPropertiesFromTestsuiteUrl()
                     .get("password"));
@@ -3976,6 +3972,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props = new Properties();
                 props.setProperty("user", "wl5735user");
                 props.setProperty("password", "");
+                props.setProperty("useSSL", "false");
 
                 Connection testConn = null;
                 Statement testSt = null;
@@ -3998,9 +3995,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                     System.setProperty("javax.net.ssl.trustStorePassword", "password");
                     props.setProperty("useSSL", "true");
-                    if (requiresSSLCipherSuitesCustomization()) {
-                        props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                    }
                     testConn = getConnectionWithProps(props);
 
                     assertTrue("SSL connection isn't actually established!", ((MySQLConnection) testConn).getIO().isSSLEstablished());
@@ -4079,27 +4073,36 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Properties propsNoRetrieval = new Properties();
                 propsNoRetrieval.setProperty("user", "wl5602user");
                 propsNoRetrieval.setProperty("password", "pwd");
+                propsNoRetrieval.setProperty("useSSL", "false");
 
                 final Properties propsNoRetrievalNoPassword = new Properties();
                 propsNoRetrievalNoPassword.setProperty("user", "wl5602nopassword");
                 propsNoRetrievalNoPassword.setProperty("password", "");
+                propsNoRetrievalNoPassword.setProperty("useSSL", "false");
 
                 final Properties propsAllowRetrieval = new Properties();
                 propsAllowRetrieval.setProperty("user", "wl5602user");
                 propsAllowRetrieval.setProperty("password", "pwd");
                 propsAllowRetrieval.setProperty("allowPublicKeyRetrieval", "true");
+                propsAllowRetrieval.setProperty("useSSL", "false");
 
                 final Properties propsAllowRetrievalNoPassword = new Properties();
                 propsAllowRetrievalNoPassword.setProperty("user", "wl5602nopassword");
                 propsAllowRetrievalNoPassword.setProperty("password", "");
                 propsAllowRetrievalNoPassword.setProperty("allowPublicKeyRetrieval", "true");
+                propsAllowRetrievalNoPassword.setProperty("useSSL", "false");
 
                 // 1. without SSL
                 // SQLException expected due to server doesn't recognize Public Key Retrieval packet
                 assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
                     public Void call() throws Exception {
-                        getConnectionWithProps(propsNoRetrieval);
-                        return null;
+                        try {
+                            getConnectionWithProps(propsNoRetrieval);
+                            return null;
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            throw ex;
+                        }
                     }
                 });
                 assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
@@ -4140,12 +4143,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsNoRetrievalNoPassword.setProperty("useSSL", "true");
                 propsAllowRetrieval.setProperty("useSSL", "true");
                 propsAllowRetrievalNoPassword.setProperty("useSSL", "true");
-                if (requiresSSLCipherSuitesCustomization()) {
-                    propsNoRetrieval.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                    propsNoRetrievalNoPassword.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                    propsAllowRetrieval.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                    propsAllowRetrievalNoPassword.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                }
 
                 assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -5859,6 +5856,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+                props.setProperty("useSSL", "false");
 
                 Connection testConn = null;
                 try {
@@ -7402,12 +7400,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         final Properties props = new Properties();
-        final Callable<Void> callableInstance = new Callable<Void>() {
-            public Void call() throws Exception {
-                getConnectionWithProps(props);
-                return null;
-            }
-        };
 
         /*
          * case 1: non verifying server certificate
@@ -7417,11 +7409,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
 
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
         getConnectionWithProps(props);
 
         /*
@@ -7434,12 +7421,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
-
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
 
         getConnectionWithProps(props);
 
@@ -7456,12 +7437,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
-
-        if (requiresSSLCipherSuitesCustomization()) {
-            assertThrows(SQLException.class, Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"), callableInstance);
-
-            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-        }
 
         getConnectionWithProps(props);
     }
@@ -7772,9 +7747,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         props.setProperty("useSSL", "true");
                         props.setProperty("requireSSL", "true");
                         props.setProperty("verifyServerCertificate", "false");
-                        if (requiresSSLCipherSuitesCustomization(testBaseConn)) {
-                            props.setProperty("enabledSSLCipherSuites", CUSTOM_SSL_CIPHERS);
-                        }
                         testCaseMsg = "SSL";
                         break;
 
@@ -7918,6 +7890,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 props.setProperty("password", pwd);
                                 props.setProperty("defaultAuthenticationPlugin", defAuthPlugin.getName());
                                 props.setProperty("allowPublicKeyRetrieval", Boolean.toString(allowPubKeyRetrieval));
+                                props.setProperty("useSSL", "false");
 
                                 if (expectedPubKeyRetrievalFail) {
                                     // connection will fail due to public key retrieval failure
@@ -8189,6 +8162,105 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 TestBug21934573ExceptionInterceptor.mainThreadLock.notify();
             }
             return null;
+        }
+    }
+
+    /**
+     * Tests fix for BUG#21947042, PREFER TLS WHERE SUPPORTED BY MYSQL SERVER.
+     * 
+     * Requires test certificates from testsuite/ssl-test-certs to be installed
+     * on the server being tested.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug21947042() throws Exception {
+        Connection sslConn = null;
+        Properties props = new Properties();
+        props.setProperty("logger", "StandardLogger");
+
+        StandardLogger.startLoggingToBuffer();
+
+        try {
+            int searchFrom = 0;
+            int found = 0;
+
+            // 1. No explicit useSSL
+            sslConn = getConnectionWithProps(props);
+            if (versionMeetsMinimum(5, 7)) {
+                assertTrue(((MySQLConnection) sslConn).getUseSSL());
+                assertFalse(((MySQLConnection) sslConn).getVerifyServerCertificate());
+                assertTrue(((MySQLConnection) sslConn).getIO().isSSLEstablished());
+            } else {
+                assertFalse(((MySQLConnection) sslConn).getUseSSL());
+                assertTrue(((MySQLConnection) sslConn).getVerifyServerCertificate());
+                assertFalse(((MySQLConnection) sslConn).getIO().isSSLEstablished());
+            }
+
+            ResultSet rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_cipher'");
+            assertTrue(rset.next());
+            String cipher = rset.getString(2);
+            System.out.println("ssl_cipher=" + cipher);
+
+            sslConn.close();
+
+            // check for warning
+            String log = StandardLogger.getBuffer().toString();
+            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
+            searchFrom = found + 1;
+            if (versionMeetsMinimum(5, 7)) {
+                assertTrue(found != -1);
+            }
+
+            // 2. Explicit useSSL=false
+            props.setProperty("useSSL", "false");
+            sslConn = getConnectionWithProps(props);
+            assertFalse(((MySQLConnection) sslConn).getUseSSL());
+            assertTrue(((MySQLConnection) sslConn).getVerifyServerCertificate()); // we left with default value here
+            assertFalse(((MySQLConnection) sslConn).getIO().isSSLEstablished());
+
+            rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_cipher'");
+            assertTrue(rset.next());
+            cipher = rset.getString(2);
+            System.out.println("ssl_cipher=" + cipher);
+
+            sslConn.close();
+
+            // check for warning
+            log = StandardLogger.getBuffer().toString();
+            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
+            if (found != -1) {
+                searchFrom = found + 1;
+                fail("Warning is not expected when useSSL is explicitly set to 'false'.");
+            }
+
+            // 3. Explicit useSSL=true
+            props.setProperty("useSSL", "true");
+            props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+            props.setProperty("trustCertificateKeyStoreType", "JKS");
+            props.setProperty("trustCertificateKeyStorePassword", "password");
+            sslConn = getConnectionWithProps(props);
+            assertTrue(((MySQLConnection) sslConn).getUseSSL());
+            assertTrue(((MySQLConnection) sslConn).getVerifyServerCertificate()); // we left with default value here
+            assertTrue(((MySQLConnection) sslConn).getIO().isSSLEstablished());
+
+            rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_cipher'");
+            assertTrue(rset.next());
+            cipher = rset.getString(2);
+            System.out.println("ssl_cipher=" + cipher);
+
+            sslConn.close();
+
+            // check for warning
+            log = StandardLogger.getBuffer().toString();
+            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
+            if (found != -1) {
+                searchFrom = found + 1;
+                fail("Warning is not expected when useSSL is explicitly set to 'false'.");
+            }
+
+        } finally {
+            StandardLogger.dropBuffer();
         }
     }
 }
