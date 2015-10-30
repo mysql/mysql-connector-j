@@ -38,6 +38,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -139,6 +140,10 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     private boolean reportErrors = false;
 
     protected ConnectionString connectionString;
+
+    // Synchronized Set that holds temporary "locks" on ReplicationConnectionGroups being synced.
+    // These locks are used to prevent simultaneous syncing of the state of the current group's servers.
+    private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
 
     public FabricMySQLConnectionProxy(ConnectionString connectionString) throws SQLException {
         this.connectionString = connectionString;
@@ -244,22 +249,30 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
             this.fabricConnection.getClient().reportServerError(currentServer, sqlEx.toString(), true);
         }
 
-        // refresh group status. (after reporting the error. error reporting may trigger a failover)
-        try {
-            this.fabricConnection.refreshState();
-            setCurrentServerGroup(this.serverGroup.getName());
-        } catch (SQLException ex) {
-            return SQLError.createSQLException("Unable to refresh Fabric state. Failover impossible", SQLError.SQL_STATE_CONNECTION_FAILURE, ex,
-                    getExceptionInterceptor(), this);
-        }
+        // no need for concurrent threads to duplicate this work
+        if (replConnGroupLocks.add(this.serverGroup.getName())) {
+            try {
+                // refresh group status. (after reporting the error. error reporting may trigger a failover)
+                try {
+                    this.fabricConnection.refreshState();
+                    setCurrentServerGroup(this.serverGroup.getName());
+                } catch (SQLException ex) {
+                    return SQLError.createSQLException("Unable to refresh Fabric state. Failover impossible", SQLError.SQL_STATE_CONNECTION_FAILURE, ex, null);
+                }
 
-        // propagate to repl conn group
-        try {
-            syncGroupServersToReplicationConnectionGroup(ReplicationConnectionGroupManager.getConnectionGroup(groupName));
-        } catch (SQLException ex) {
-            return ex;
+                // propagate to repl conn group
+                try {
+                    syncGroupServersToReplicationConnectionGroup(ReplicationConnectionGroupManager.getConnectionGroup(groupName));
+                } catch (SQLException ex) {
+                    return ex;
+                }
+            } finally {
+                replConnGroupLocks.remove(this.serverGroup.getName());
+            }
+        } else {
+            return SQLError.createSQLException("Fabric state syncing already in progress in another thread.", SQLError.SQL_STATE_CONNECTION_FAILURE, sqlEx,
+                    null);
         }
-
         return null;
     }
 
@@ -478,61 +491,57 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
      * </ul>
      */
     private void syncGroupServersToReplicationConnectionGroup(ReplicationConnectionGroup replConnGroup) throws SQLException {
-        // perform sync at once for all connections to this group
-        synchronized (replConnGroup) {
-            String currentMasterString = null;
-            if (replConnGroup.getMasterHosts().size() == 1) {
-                currentMasterString = replConnGroup.getMasterHosts().iterator().next();
+        String currentMasterString = null;
+        if (replConnGroup.getMasterHosts().size() == 1) {
+            currentMasterString = replConnGroup.getMasterHosts().iterator().next();
+        }
+        // check if master has changed
+        if (currentMasterString != null && !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString())) {
+            // old master is gone (there may be a new one) (closeGently=false)
+            try {
+                replConnGroup.removeMasterHost(currentMasterString, false);
+            } catch (SQLException ex) {
+                // effectively ignored
+                getLog().logWarn("Unable to remove master: " + currentMasterString, ex);
             }
-            // check if master has changed
-            if (currentMasterString != null && !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString())) {
-                // old master is gone (there may be a new one) (closeGently=false)
+        }
+
+        // add new master (if exists and the old master was absent has been removed)
+        Server newMaster = this.serverGroup.getMaster();
+        if (newMaster != null && replConnGroup.getMasterHosts().size() == 0) {
+            getLog().logInfo("Changing master for group '" + replConnGroup.getGroupName() + "' to: " + newMaster);
+            try {
+                if (!replConnGroup.getSlaveHosts().contains(newMaster.getHostPortString())) {
+                    replConnGroup.addSlaveHost(newMaster.getHostPortString());
+                }
+                replConnGroup.promoteSlaveToMaster(newMaster.getHostPortString());
+            } catch (SQLException ex) {
+                throw SQLError.createSQLException("Unable to promote new master '" + newMaster.toString() + "'", ex.getSQLState(), ex, null);
+            }
+        }
+
+        // synchronize HA group state with replication connection group in two steps:
+        // 1. add any new slaves to the connection group
+        for (Server s : this.serverGroup.getServers()) {
+            if (s.isSlave()) {
+                // this is a no-op if the slave is already present
                 try {
-                    replConnGroup.removeMasterHost(currentMasterString, false);
+                    replConnGroup.addSlaveHost(s.getHostPortString());
                 } catch (SQLException ex) {
                     // effectively ignored
-                    getLog().logWarn("Unable to remove master: " + currentMasterString, ex);
+                    getLog().logWarn("Unable to add slave: " + s.toString(), ex);
                 }
             }
-
-            // add new master (if exists and the old master was absent has been removed)
-            Server newMaster = this.serverGroup.getMaster();
-            if (newMaster != null && replConnGroup.getMasterHosts().size() == 0) {
-                getLog().logInfo("Changing master for group '" + replConnGroup.getGroupName() + "' to: " + newMaster);
+        }
+        // 2. remove any old slaves from the connection group
+        for (String hostPortString : replConnGroup.getSlaveHosts()) {
+            Server fabServer = this.serverGroup.getServer(hostPortString);
+            if (fabServer == null || !(fabServer.isSlave())) {
                 try {
-                    if (!replConnGroup.getSlaveHosts().contains(newMaster.getHostPortString())) {
-                        replConnGroup.addSlaveHost(newMaster.getHostPortString());
-                    }
-                    replConnGroup.promoteSlaveToMaster(newMaster.getHostPortString());
+                    replConnGroup.removeSlaveHost(hostPortString, true);
                 } catch (SQLException ex) {
-                    throw SQLError.createSQLException("Unable to promote new master '" + newMaster.toString() + "'", ex.getSQLState(), ex,
-                            getExceptionInterceptor(), this);
-                }
-            }
-
-            // synchronize HA group state with replication connection group in two steps:
-            // 1. add any new slaves to the connection group
-            for (Server s : this.serverGroup.getServers()) {
-                if (s.isSlave()) {
-                    // this is a no-op if the slave is already present
-                    try {
-                        replConnGroup.addSlaveHost(s.getHostPortString());
-                    } catch (SQLException ex) {
-                        // effectively ignored
-                        getLog().logWarn("Unable to add slave: " + s.toString(), ex);
-                    }
-                }
-            }
-            // 2. remove any old slaves from the connection group
-            for (String hostPortString : replConnGroup.getSlaveHosts()) {
-                Server fabServer = this.serverGroup.getServer(hostPortString);
-                if (fabServer == null || !(fabServer.isSlave())) {
-                    try {
-                        replConnGroup.removeSlaveHost(hostPortString, true);
-                    } catch (SQLException ex) {
-                        // effectively ignored
-                        getLog().logWarn("Unable to remove slave: " + hostPortString, ex);
-                    }
+                    // effectively ignored
+                    getLog().logWarn("Unable to remove slave: " + hostPortString, ex);
                 }
             }
         }
@@ -566,7 +575,13 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         Properties info = getPropertySet().exposeAsProperties(null);
         ReplicationConnectionGroup replConnGroup = ReplicationConnectionGroupManager.getConnectionGroup(this.serverGroup.getName());
         if (replConnGroup != null) {
-            syncGroupServersToReplicationConnectionGroup(replConnGroup);
+            if (replConnGroupLocks.add(this.serverGroup.getName())) {
+                try {
+                    syncGroupServersToReplicationConnectionGroup(replConnGroup);
+                } finally {
+                    replConnGroupLocks.remove(this.serverGroup.getName());
+                }
+            }
         }
         info.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, this.serverGroup.getName());
         info.setProperty(PropertyDefinitions.PNAME_user, this.username);

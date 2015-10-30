@@ -32,6 +32,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,6 +57,7 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -77,6 +80,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,6 +119,7 @@ import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.fabric.jdbc.ErrorReportingExceptionInterceptor;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
@@ -128,6 +133,7 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
 import com.mysql.cj.jdbc.ha.RandomBalanceStrategy;
 import com.mysql.cj.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
@@ -7616,4 +7622,149 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#21934573 - FABRIC CODE INVOLVED IN THREAD DEADLOCK.
+     * (Duplicate Bug#78710 (21966391) - Deadlock on ReplicationConnection and ReplicationConnectionGroup when failover)
+     * 
+     * Two threads with different Fabric connections using the same server group (and consequently the same {@link ReplicationConnectionGroup}) may hit a
+     * deadlock when one executes a failover procedure and the other, simultaneously, calls a method that acquires a lock on the {@link ReplicationConnection}
+     * instance monitor.
+     * 
+     * This happens when, in one thread, a Fabric connection (performing the failover) and while owning a lock on {@link ReplicationConnectionGroup},
+     * sequentially tries to lock the object monitor from each {@link ReplicationConnection} belonging to the same {@link ReplicationConnectionGroup}, in the
+     * attempt of updating their servers lists by calling the synchronized methods {@link ReplicationConnection#removeMasterHost(String)},
+     * {@link ReplicationConnection#addSlaveHost(String)}, {@link ReplicationConnection#removeSlaveHost(String)} or
+     * {@link ReplicationConnection#promoteSlaveToMaster(String)} while, at the same time, a second thread is executing one of the synchronized methods from the
+     * {@link ReplicationConnection} instance, such as {@link ReplicationConnection#close()} or {@link ReplicationConnection#doPing()} (*), in one of those
+     * connections. Later on, the second thread, eventually initiates a failover procedure too and hits the lock on {@link ReplicationConnectionGroup} owned by
+     * the first thread. The first thread, at the same time, requires that the lock on {@link ReplicationConnection} is released by the second thread to be able
+     * to complete the failover procedure is has initiated before.
+     * (*) Executing a query may trigger this too via locking on {@link LoadBalancingConnectionProxy}.
+     * 
+     * This test simulates the way Fabric connections operate when they need to synchronize the list of servers from a {@link ReplicationConnection} with the
+     * Fabric's server group. In that operation we, like Fabric connections, use an {@link ExceptionInterceptor} that ends up changing the
+     * {@link ReplicationConnection}s from a given {@link ReplicationConnectionGroup}.
+     * 
+     * This test is unable to cover the failing scenario since the fix in the main code was also reproduced here, with the addition of the {@link ReentrantLock}
+     * {@code singleSynchWorkerMonitor} in the {@link TestBug21934573ExceptionInterceptor} the same way as in {@link ErrorReportingExceptionInterceptor}. The
+     * way to reproduce it and observe the deadlock happening is by setting the connection property {@code __useReplConnGroupLocks__} to {@code False}.
+     * 
+     * WARNING! If this test fails there is no guarantee that the JVM will remain stable and won't affect any other tests. It is imperative that this test
+     * passes to ensure other tests results.
+     */
+    public void testBug21934573() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("exceptionInterceptors", TestBug21934573ExceptionInterceptor.class.getName());
+        props.setProperty("replicationConnectionGroup", "deadlock");
+        props.setProperty("allowMultiQueries", "true");
+        props.setProperty("__useReplConnGroupLocks__", "true"); // Set this to 'false' to observe the deadlock.
+
+        final Connection connA = getMasterSlaveReplicationConnection(props);
+        final Connection connB = getMasterSlaveReplicationConnection(props);
+
+        for (final Connection testConn : new Connection[] { connA, connB }) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        // Lock on testConn to emulate runtime locking behavior of Repl/LB connections.
+                        synchronized (testConn) {
+                            testConn.createStatement().executeQuery("SELECT column FROM table");
+                        }
+                    } catch (Exception e) {
+                    }
+                }
+            }, testConn.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(testConn)) + "_thread").start();
+        }
+
+        // Let the two concurrent threads run concurrently for 2secs, at the most, before checking if they hit a deadlock situation.
+        // Wait two times 1sec as TestBug21934573ExceptionInterceptor.mainThreadLock.notify() should be called twice (once per secondary thread).
+        synchronized (TestBug21934573ExceptionInterceptor.mainThreadLock) {
+            TestBug21934573ExceptionInterceptor.mainThreadLock.wait(1000);
+            TestBug21934573ExceptionInterceptor.mainThreadLock.wait(1000);
+        }
+
+        int deadlockCount = 0;
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        long[] threadIds = threadMXBean.findMonitorDeadlockedThreads();
+        if (threadIds != null) {
+            ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+            for (ThreadInfo ti : threadInfos) {
+                System.out.println();
+                System.out.println(ti);
+                System.out.println("Stack trace:");
+                for (StackTraceElement ste : ti.getStackTrace()) {
+                    System.out.println("   " + ste);
+                }
+                if (ti.getThreadName().equals("early_syncing_thread") || ti.getThreadName().equals("late_syncing_thread")) {
+                    deadlockCount++;
+                }
+            }
+            if (deadlockCount == 2) {// Acquire the connection's monitor to mimic the behavior of other synchronized methods (like close() or doPing()).
+                fail("Deadlock detected. WARNING: this failure may lead to JVM instability.");
+            } else {
+                fail("Unexpected deadlock detected. Consult system output for more details. WARNING: this failure may lead to JVM instability.");
+            }
+        }
+    }
+
+    /*
+     * Mimics the behavior of ErrorReportingExceptionInterceptor/FabricMySQLConnectionProxy.syncGroupServersToReplicationConnectionGroup() but actuates on any
+     * SQLException (not only communication related exceptions) and calls directly methods changing servers lists from ReplicationConnectionGroup.
+     */
+    public static class TestBug21934573ExceptionInterceptor implements ExceptionInterceptor {
+        static Object mainThreadLock = new Object();
+        private static boolean threadIsWaiting = false;
+        private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
+
+        private boolean useSyncGroupServersLock = true;
+
+        public void init(MysqlConnection conn, Properties props, Log log) {
+            if (props.containsKey("__useReplConnGroupLocks__")) {
+                this.useSyncGroupServersLock = Boolean.parseBoolean(props.getProperty("__useReplConnGroupLocks__"));
+            }
+        }
+
+        public void destroy() {
+        }
+
+        public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
+            // Make sure both threads execute the code after the synchronized block concurrently.
+            synchronized (TestBug21934573ExceptionInterceptor.class) {
+                if (threadIsWaiting) {
+                    TestBug21934573ExceptionInterceptor.class.notify();
+                } else {
+                    threadIsWaiting = true;
+                    try {
+                        TestBug21934573ExceptionInterceptor.class.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            ReplicationConnectionGroup replConnGrp = ReplicationConnectionGroupManager.getConnectionGroup("deadlock");
+            if (!this.useSyncGroupServersLock || replConnGroupLocks.add(replConnGrp.getGroupName())) {
+                try {
+                    System.out.println("Emulating syncing state in: " + replConnGrp + " on thread " + Thread.currentThread().getName() + ".");
+                    replConnGrp.removeMasterHost("localhost:1234");
+                    replConnGrp.addSlaveHost("localhost:1234");
+                    replConnGrp.removeSlaveHost("localhost:1234", false);
+                    replConnGrp.promoteSlaveToMaster("localhost:1234");
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                } finally {
+                    if (this.useSyncGroupServersLock) {
+                        replConnGroupLocks.remove(replConnGrp.getGroupName());
+                    }
+                }
+            } else {
+                System.out.println("Giving up syncing state on thread " + Thread.currentThread() + ". Let the other thread do it!");
+            }
+
+            synchronized (TestBug21934573ExceptionInterceptor.mainThreadLock) {
+                TestBug21934573ExceptionInterceptor.mainThreadLock.notify();
+            }
+            return null;
+        }
+    }
 }

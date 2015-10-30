@@ -14,6 +14,8 @@ Please refer to files README and COPYING, available in this repository, and [Leg
 
 MySQL Connector/J can be installed from pre-compiled packages that can be downloaded from the [MySQL downloads page](http://dev.mysql.com/downloads/connector/j/). Installing Connector/J only requires extracting the corresponding Jar file from the downloaded bundle and place it somewhere in the application's CLASSPATH.
 
+Alternatively you can setup [Maven's dependency management](http://search.maven.org/#search|ga|1|g%3A%22mysql%22%20AND%20a%3A%22mysql-connector-java%22) directly in your project and let it download it for you.
+
 ### Building from sources
 
 This driver can also be complied and installed from the sources available in this repository. Please refer to the documentation for [detailed instructions](http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html) on how to do it.

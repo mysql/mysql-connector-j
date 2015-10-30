@@ -55,8 +55,7 @@ public class ErrorReportingExceptionInterceptor implements ExceptionInterceptor 
         try {
             return fabricProxy.interceptException(sqlEx, conn, this.fabricHaGroup, this.hostname, this.port);
         } catch (FabricCommunicationException ex) {
-            return SQLError.createSQLException("Failed to report error to Fabric.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex,
-                    conn.getExceptionInterceptor(), conn);
+            return SQLError.createSQLException("Failed to report error to Fabric.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, null);
         }
     }
 
