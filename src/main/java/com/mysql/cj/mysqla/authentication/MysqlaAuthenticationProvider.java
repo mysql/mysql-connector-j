@@ -34,6 +34,7 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
@@ -148,13 +149,24 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             clientParam |= MysqlaServerSession.CLIENT_CONNECT_WITH_DB;
         }
 
-        if (((capabilityFlags & MysqlaServerSession.CLIENT_SSL) == 0)
-                && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
+        // Changing SSL defaults for 5.7+ server: useSSL=true, requireSSL=false, verifyServerCertificate=false
+
+        ModifiableProperty<Boolean> useSSL = this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL);
+        if (!useSSL.getValue() && !useSSL.isExplicitlySet()) {
+            useSSL.setValue(true);
+            this.propertySet.getModifiableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(false);
+            if (this.log != null) {
+                this.log.logWarn(Messages.getString("MysqlIO.SSLWarning"));
+            }
+        }
+
+        // check SSL availability
+        if (((capabilityFlags & MysqlaServerSession.CLIENT_SSL) == 0) && useSSL.getValue()) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_requireSSL).getValue()) {
                 this.protocol.rejectConnection(Messages.getString("MysqlIO.15"));
             }
 
-            this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(false);
+            useSSL.setValue(false);
         }
 
         if ((capabilityFlags & MysqlaServerSession.CLIENT_LONG_FLAG) != 0) {

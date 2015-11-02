@@ -59,8 +59,6 @@ import com.mysql.cj.jdbc.ha.ReplicationConnection;
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase extends TestCase {
-    protected final static String CUSTOM_SSL_CIPHERS = "TLS_RSA_WITH_AES_128_CBC_SHA,SSL_RSA_WITH_RC4_128_SHA,SSL_RSA_WITH_3DES_EDE_CBC_SHA,"
-            + "SSL_RSA_WITH_RC4_128_MD5,SSL_RSA_WITH_DES_CBC_SHA";
 
     /**
      * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
@@ -568,8 +566,10 @@ public abstract class BaseTestCase extends TestCase {
         Class.forName(this.dbClass).newInstance();
         this.createdObjects = new ArrayList<String[]>();
 
-        this.conn = DriverManager.getConnection(dbUrl);
         Properties props = new Properties();
+        props.setProperty("useSSL", "false"); // testsuite is built upon non-SSL default connection
+        this.conn = DriverManager.getConnection(dbUrl, props);
+
         props.setProperty("allowPublicKeyRetrieval", "true");
         this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
 
@@ -750,24 +750,6 @@ public abstract class BaseTestCase extends TestCase {
      */
     protected boolean isEnterpriseEdition() {
         return Util.isEnterpriseEdition(((JdbcConnection) this.conn).getServerVersion().toString());
-    }
-
-    /**
-     * Checks whether all requirements to connect using SSL are met for the default connection
-     */
-    protected boolean requiresSSLCipherSuitesCustomization() throws SQLException {
-        return requiresSSLCipherSuitesCustomization(this.conn);
-    }
-
-    /**
-     * Checks whether all requirements to connect using SSL are met for the given connection
-     * - MySQL 5.5.45+
-     * - MySQL 5.6.26+ (community edition)
-     * - MySQL 5.7.6+ (community edition)
-     */
-    protected boolean requiresSSLCipherSuitesCustomization(Connection c) throws SQLException {
-        // TODO: is not needed 'cause we always run under Java 8
-        return false;
     }
 
     protected boolean isClassAvailable(String classname) {

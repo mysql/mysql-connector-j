@@ -41,4 +41,6 @@ public interface RuntimeProperty<T> {
      * Reset to initial value (default or defined in connection string/Properties)
      */
     void resetValue();
+
+    boolean isExplicitlySet();
 }

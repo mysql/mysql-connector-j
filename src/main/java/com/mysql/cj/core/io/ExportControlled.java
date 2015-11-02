@@ -43,6 +43,9 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
@@ -100,10 +103,26 @@ public class ExportControlled {
         // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
         ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
 
+        // check allowed cipher suites
         String enabledSSLCipherSuites = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
                 .getValue();
-        if (enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0) {
-            ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(enabledSSLCipherSuites.split("\\s*,\\s*"));
+        boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
+
+        if (overrideCiphers) {
+            // If "enabledSSLCipherSuites" is set we just check that JVM allows provided values,
+            // we don't disable DH algorithm, that allows c/J to deal with custom server builds with different security restrictions
+            List<String> allowedCiphers = new ArrayList<String>();
+            List<String> availableCiphers = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getEnabledCipherSuites());
+            for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
+                if (availableCiphers.contains(cipher)) {
+                    allowedCiphers.add(cipher);
+                }
+            }
+
+            // if some ciphers were filtered into allowedCiphers 
+            if (allowedCiphers != null) {
+                ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+            }
         }
 
         ((SSLSocket) socketConnection.getMysqlSocket()).startHandshake();

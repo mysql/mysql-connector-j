@@ -67,7 +67,6 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -1513,9 +1512,6 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
-        if (Util.getJVMVersion() < 8 && versionMeetsMinimum(5, 7, 6) && isCommunityEdition()) {
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, CUSTOM_SSL_CIPHERS);
-        }
         getConnectionWithProps(props);
     }
 

@@ -71,6 +71,7 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
         }
 
         this.valueAsObject = Integer.valueOf(intValue);
+        this.wasExplicitlySet = true;
     }
 
     @Override

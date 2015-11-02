@@ -428,7 +428,7 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PNAME_trustCertificateKeyStorePassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", CATEGORY_SECURITY, 10),
 
-                new BooleanPropertyDefinition(PNAME_verifyServerCertificate, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_verifyServerCertificate, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", CATEGORY_SECURITY, 4),
 
                 new StringPropertyDefinition(PNAME_enabledSSLCipherSuites, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,

@@ -25,8 +25,6 @@ package com.mysql.cj.core.exceptions;
 
 import java.net.BindException;
 
-import javax.net.ssl.SSLException;
-
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ServerSession;
@@ -249,8 +247,6 @@ public class ExceptionFactory {
             //
             // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
             //
-
-            Throwable cause;
             if (underlyingException instanceof BindException) {
                 String localSocketAddress = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_localSocketAddress).getValue();
                 if (localSocketAddress != null && !Util.interfaceExists(localSocketAddress)) {
@@ -259,10 +255,6 @@ public class ExceptionFactory {
                     // too many client connections???
                     exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
                 }
-            } else if (underlyingException instanceof SSLException && (cause = underlyingException.getCause()) != null
-                    && cause.getMessage().equals("Could not generate DH keypair") && (cause = cause.getCause()) != null
-                    && cause.getMessage().equals("Prime size must be multiple of 64, and can only range from 512 to 1024 (inclusive)")) {
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.incompatibleSSLCipherSuites"));
             }
         }
 

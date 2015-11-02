@@ -51,6 +51,7 @@ public class ModifiableBooleanProperty extends ReadableBooleanProperty implement
     @Override
     public void setValue(Boolean value, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsObject = value;
+        this.wasExplicitlySet = true;
     }
 
     @Override

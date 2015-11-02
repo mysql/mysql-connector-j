@@ -43,6 +43,8 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     protected T initialValueAsObject;
 
+    protected boolean wasExplicitlySet = false;
+
     public AbstractRuntimeProperty() {
     }
 
@@ -82,11 +84,16 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
         this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
+        this.wasExplicitlySet = true;
     }
 
     @Override
     public void resetValue() {
         // no-op for readable properties
+    }
+
+    public boolean isExplicitlySet() {
+        return this.wasExplicitlySet;
     }
 
 }
