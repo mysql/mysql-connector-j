@@ -120,7 +120,7 @@ public class JDBC4MultiHostMySQLConnection extends MultiHostMySQLConnection impl
         return this.getJDBC4Connection().createNClob();
     }
 
-    protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+    public JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getThisAsProxy()) {
             return this.getJDBC4Connection().getClientInfoProviderImpl();
         }

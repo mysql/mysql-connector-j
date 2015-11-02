@@ -45,8 +45,8 @@ public class JDBC4ReplicationMySQLConnection extends ReplicationMySQLConnection 
         super(proxy);
     }
 
-    private JDBC4Connection getJDBC4Connection() {
-        return (JDBC4Connection) getActiveMySQLConnection();
+    private JDBC4MySQLConnection getJDBC4Connection() {
+        return (JDBC4MySQLConnection) getActiveMySQLConnection();
     }
 
     public SQLXML createSQLXML() throws SQLException {
@@ -118,7 +118,7 @@ public class JDBC4ReplicationMySQLConnection extends ReplicationMySQLConnection 
         return this.getJDBC4Connection().createNClob();
     }
 
-    protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+    public JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getThisAsProxy()) {
             return this.getJDBC4Connection().getClientInfoProviderImpl();
         }

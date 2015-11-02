@@ -56,12 +56,14 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     protected LoadBalancedConnection slavesConnection;
 
     private static Constructor<?> JDBC_4_REPL_CONNECTION_CTOR;
+    private static Class<?>[] INTERFACES_TO_PROXY;
 
     static {
         if (Util.isJdbc4()) {
             try {
                 JDBC_4_REPL_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4ReplicationMySQLConnection")
                         .getConstructor(new Class[] { ReplicationConnectionProxy.class });
+                INTERFACES_TO_PROXY = new Class<?>[] { ReplicationConnection.class, Class.forName("com.mysql.jdbc.JDBC4MySQLConnection") };
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -69,6 +71,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            INTERFACES_TO_PROXY = new Class<?>[] { ReplicationConnection.class };
         }
     }
 
@@ -76,8 +80,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             Properties slaveProperties) throws SQLException {
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(masterHostList, masterProperties, slaveHostList, slaveProperties);
 
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
-                new Class[] { ReplicationConnection.class }, connProxy);
+        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(), INTERFACES_TO_PROXY, connProxy);
     }
 
     /**

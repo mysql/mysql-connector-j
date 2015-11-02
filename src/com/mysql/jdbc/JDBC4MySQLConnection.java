@@ -64,5 +64,9 @@ public interface JDBC4MySQLConnection extends MySQLConnection {
     public Clob createClob();
 
     public NClob createNClob();
-
+    
+    /*
+     * Non standard methods:
+     */
+    JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException;
 }

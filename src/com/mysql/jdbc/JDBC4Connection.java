@@ -208,7 +208,7 @@ public class JDBC4Connection extends ConnectionImpl implements JDBC4MySQLConnect
         return new com.mysql.jdbc.JDBC4NClob(getExceptionInterceptor());
     }
 
-    protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+    public JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
                 try {

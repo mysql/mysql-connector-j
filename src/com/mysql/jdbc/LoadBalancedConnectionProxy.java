@@ -77,12 +77,14 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     private LoadBalanceExceptionChecker exceptionChecker;
 
     private static Constructor<?> JDBC_4_LB_CONNECTION_CTOR;
+    private static Class<?>[] INTERFACES_TO_PROXY;
 
     static {
         if (Util.isJdbc4()) {
             try {
                 JDBC_4_LB_CONNECTION_CTOR = Class.forName("com.mysql.jdbc.JDBC4LoadBalancedMySQLConnection")
-                        .getConstructor(new Class[] { LoadBalancedConnectionProxy.class });
+                        .getConstructor(new Class<?>[] { LoadBalancedConnectionProxy.class });
+                INTERFACES_TO_PROXY = new Class<?>[] { LoadBalancedConnection.class, Class.forName("com.mysql.jdbc.JDBC4MySQLConnection") };
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -90,14 +92,15 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            INTERFACES_TO_PROXY = new Class<?>[] { LoadBalancedConnection.class };
         }
     }
 
     public static LoadBalancedConnection createProxyInstance(List<String> hosts, Properties props) throws SQLException {
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(hosts, props);
 
-        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
-                new Class[] { LoadBalancedConnection.class }, connProxy);
+        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(), INTERFACES_TO_PROXY, connProxy);
     }
 
     /**

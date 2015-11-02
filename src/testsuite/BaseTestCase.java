@@ -43,8 +43,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import junit.framework.TestCase;
-
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -52,6 +50,8 @@ import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
+
+import junit.framework.TestCase;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
@@ -968,6 +968,14 @@ public abstract class BaseTestCase extends TestCase {
         } catch (Exception ex) {
             return System.currentTimeMillis();
         }
+    }
+
+    protected Connection getFailoverConnection() throws SQLException {
+        return getFailoverConnection(null);
+    }
+
+    protected Connection getFailoverConnection(Properties props) throws SQLException {
+        return DriverManager.getConnection(getMasterSlaveUrl(), getMasterSlaveProps(props));
     }
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {

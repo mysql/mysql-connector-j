@@ -56,6 +56,7 @@ import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.JDBC4Connection;
+import com.mysql.jdbc.JDBC4ClientInfoProvider;
 import com.mysql.jdbc.JDBC4MySQLConnection;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlIO;
@@ -141,4 +142,7 @@ public class JDBC4FabricMySQLConnectionProxy extends FabricMySQLConnectionProxy 
         return getActiveConnection().createStruct(typeName, attributes);
     }
 
+    public JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+        return ((JDBC4MySQLConnection) getActiveConnection()).getClientInfoProviderImpl();
+    }
 }

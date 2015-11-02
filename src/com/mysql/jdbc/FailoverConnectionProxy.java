@@ -58,6 +58,20 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     private long primaryHostFailTimeMillis = 0;
     private long queriesIssuedSinceFailover = 0;
 
+    private static Class<?>[] INTERFACES_TO_PROXY;
+
+    static {
+        if (Util.isJdbc4()) {
+            try {
+                INTERFACES_TO_PROXY = new Class<?>[] { Class.forName("com.mysql.jdbc.JDBC4MySQLConnection") };
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            INTERFACES_TO_PROXY = new Class<?>[] { MySQLConnection.class };
+        }
+    }
+
     /**
      * Proxy class to intercept and deal with errors that may occur in any object bound to the current connection.
      * Additionally intercepts query executions and triggers an execution count on the outer class.
@@ -92,7 +106,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     public static Connection createProxyInstance(List<String> hosts, Properties props) throws SQLException {
         FailoverConnectionProxy connProxy = new FailoverConnectionProxy(hosts, props);
 
-        return (Connection) java.lang.reflect.Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, connProxy);
+        return (Connection) java.lang.reflect.Proxy.newProxyInstance(Connection.class.getClassLoader(), INTERFACES_TO_PROXY, connProxy);
     }
 
     /**
