@@ -566,6 +566,7 @@ public class StringRegressionTest extends BaseTestCase {
             System.setErr(newErr);
 
             Properties props = new Properties();
+            props.setProperty("useSSL", "false");
             props.setProperty("characterEncoding", "utf8");
             getConnectionWithProps(props).close();
             String withExclaims = new String(bOut.toByteArray());
