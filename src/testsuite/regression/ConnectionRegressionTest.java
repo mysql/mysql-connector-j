@@ -91,10 +91,6 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-import testsuite.UnreliableSocketFactory;
-
 import com.mysql.fabric.jdbc.ErrorReportingExceptionInterceptor;
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Buffer;
@@ -116,6 +112,7 @@ import com.mysql.jdbc.ReplicationConnectionGroup;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.SocketMetadata;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
@@ -131,6 +128,10 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
 import com.mysql.jdbc.log.StandardLogger;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
+import testsuite.UnreliableSocketFactory;
 
 /**
  * Regression tests for Connections
@@ -797,11 +798,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue(this.rs.next());
 
                 if (!versionMeetsMinimum(4, 1, 11)) {
-                    assertEquals("sjis".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
-                            .toLowerCase(Locale.ENGLISH));
+                    assertEquals("sjis".toLowerCase(Locale.ENGLISH),
+                            ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
                 } else {
-                    assertEquals("windows-31j".toLowerCase(Locale.ENGLISH), ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1)
-                            .toLowerCase(Locale.ENGLISH));
+                    assertEquals("windows-31j".toLowerCase(Locale.ENGLISH),
+                            ((com.mysql.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
                 }
 
                 props = new Properties();
@@ -1088,8 +1089,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 replConn = getMasterSlaveReplicationConnection();
-                assertTrue(!((MySQLConnection) ((ReplicationConnection) replConn).getMasterConnection()).hasSameProperties(((ReplicationConnection) replConn)
-                        .getSlavesConnection()));
+                assertTrue(!((MySQLConnection) ((ReplicationConnection) replConn).getMasterConnection())
+                        .hasSameProperties(((ReplicationConnection) replConn).getSlavesConnection()));
             } finally {
                 if (replConn != null) {
                     replConn.close();
@@ -1502,7 +1503,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         newHostBuf.append(",");
         // newHostBuf.append(host);
         newHostBuf.append("192.0.2.1"); // non-exsitent machine from RFC3330
-                                        // test network
+                                       // test network
         newHostBuf.append(":65532"); // make sure the slave fails
 
         props.remove("PORT");
@@ -1772,8 +1773,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
                     + "&trustCertificateKeyStorePassword=password";
 
-            _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"), (String) this.getPropertiesFromTestsuiteUrl()
-                    .get("password"));
+            _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"),
+                    (String) this.getPropertiesFromTestsuiteUrl().get("password"));
 
             assertTrue(true);
         } finally {
@@ -2687,7 +2688,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         try {
-            getConnectionWithProps("jdbc:mysql://localhost:9999,localhost:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
+            getConnectionWithProps(
+                    "jdbc:mysql://localhost:9999,localhost:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getCause() instanceof IOException);
         }
@@ -2791,10 +2793,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug51266() throws Exception {
         Properties props = new Properties();
         props.setProperty("roundRobinLoadBalance", "true"); // shouldn't be
-                                                            // needed, but used
-                                                            // in reported bug,
-                                                            // it's removed by
-                                                            // the driver
+                                                           // needed, but used
+                                                           // in reported bug,
+                                                           // it's removed by
+                                                           // the driver
         Set<String> downedHosts = new HashSet<String>();
         downedHosts.add("first");
 
@@ -3079,7 +3081,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assert (startConnCount > 0);
 
             failoverConnection.setAutoCommit(false); // this will fail if state
-                                                     // not copied over
+                                                    // not copied over
 
             for (int i = 0; i < 20; i++) {
 
@@ -3099,7 +3101,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assert (endConnCount > 0);
 
             if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this
-                                                       // testsuite?
+                                                      // testsuite?
                 fail("We're leaking connections even when not failed over");
             }
         } finally {
@@ -3236,7 +3238,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertTrue(detectedDeadConn);
         rConn.prepareStatement("SELECT 1").executeQuery();
 
-        Connection rConn2 = getConnectionWithProps("autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
+        Connection rConn2 = getConnectionWithProps(
+                "autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
         rConn2.prepareStatement("SELECT 1").executeQuery();
 
     }
@@ -3507,11 +3510,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 createUser("'plug_dest'@'%'", "IDENTIFIED BY 'foo'");
                 this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'%' TO 'wl5851user'@'%'");
                 this.stmt.executeUpdate("delete from mysql.db where user='plug_dest'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
                                 + dbname + "', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
                 this.stmt.executeUpdate("flush privileges");
 
                 props = new Properties();
@@ -3557,8 +3560,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             try {
 
                 // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
+                this.rs = this.stmt.executeQuery(
+                        "select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`" + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
                 if (this.rs.next()) {
                     if (!this.rs.getBoolean(1)) {
                         install_plugin_in_runtime = true;
@@ -3580,11 +3583,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 createUser("'wl5851user2'@'%'", "identified WITH two_questions AS 'two_questions_password'");
                 this.stmt.executeUpdate("delete from mysql.db where user='wl5851user2'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
                                 + dbname + "', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
                 this.stmt.executeUpdate("flush privileges");
 
                 props = new Properties();
@@ -3629,8 +3632,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             try {
 
                 // install plugin if required
-                this.rs = this.stmt.executeQuery("select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`"
-                        + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
+                this.rs = this.stmt.executeQuery(
+                        "select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`" + " FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
                 if (this.rs.next()) {
                     if (!this.rs.getBoolean(1)) {
                         install_plugin_in_runtime = true;
@@ -3652,11 +3655,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 createUser("'wl5851user3'@'%'", "identified WITH three_attempts AS 'three_attempts_password'");
                 this.stmt.executeUpdate("delete from mysql.db where user='wl5851user3'");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"
                                 + dbname + "', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
-                this.stmt
-                        .executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+                this.stmt.executeUpdate(
+                        "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
                 this.stmt.executeUpdate("flush privileges");
 
                 props = new Properties();
@@ -4187,9 +4190,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
-                this.sha256Stmt
-                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
-                                : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -4610,8 +4612,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testRs = testSt.executeQuery("SELECT * FROM `" + dbname + "`.`\u307b\u3052\u307b\u3052`");
                 } catch (SQLException e2) {
                     if (e2.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
-                        assertEquals("\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '" + dbname
-                                + ".\u307b\u3052\u307b\u3052' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
+                        assertEquals(
+                                "\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '" + dbname
+                                        + ".\u307b\u3052\u307b\u3052' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442",
+                                e2.getMessage());
                     } else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
                         // this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
                         assertTrue("File not found error message should be russian but is this one: " + e2.getMessage(),
@@ -4674,8 +4678,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean normalState = ((ConnectionImpl) this.conn).isServerLocal();
 
         if (normalState) {
-            boolean isNotLocal = ((ConnectionImpl) getConnectionWithProps(StandardSocketFactory.IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME
-                    + "=www.oracle.com:3306")).isServerLocal();
+            boolean isNotLocal = ((ConnectionImpl) getConnectionWithProps(
+                    SocketMetadata.Helper.IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME + "=www.oracle.com:3306")).isServerLocal();
 
             assertFalse(isNotLocal == normalState);
         }
@@ -4889,7 +4893,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     fail("SQLException expected due to password expired");
                 } catch (SQLException e1) {
 
-                    if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
+                    if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD
+                            || e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
 
                         props.setProperty("disconnectOnExpiredPasswords", "false");
                         try {
@@ -4903,8 +4908,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 testConn = getConnectionWithProps(props);
                                 testSt = testConn.createStatement();
                             }
-                            testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'"
-                                    : "SET PASSWORD = PASSWORD('newpwd')");
+                            testSt.executeUpdate(
+                                    versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'" : "SET PASSWORD = PASSWORD('newpwd')");
                             testConn.close();
 
                             props.setProperty("user", "must_change1");
@@ -5588,8 +5593,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("Test related connections in MAP after GC: " + connectionNumber);
         System.out.println("MAP: " + connectionTrackingMap.size());
 
-        assertEquals("No connection with \"" + attributeValue
-                + "\" connection attribute should exist in NonRegisteringDriver.connectionPhantomRefs map after GC", 0, connectionNumber);
+        assertEquals(
+                "No connection with \"" + attributeValue + "\" connection attribute should exist in NonRegisteringDriver.connectionPhantomRefs map after GC", 0,
+                connectionNumber);
     }
 
     private int countTestConnections(Map<?, ?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
@@ -5840,21 +5846,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl6134user'@'%'");
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
-                this.sha256Stmt
-                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                                 + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                                 + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                                 + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
-                                : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+                        : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 props.setProperty("user", "wl6134user");
-                props.setProperty("password", "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
+                props.setProperty("password",
+                        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
                 props.setProperty("useSSL", "false");
 
@@ -5921,8 +5928,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         for (int i = 0; i < testMemUnits.length; i++) {
             for (int j = 0; j < testMemUnits[i].length; j++) {
                 // testing with memory values under 2GB because higher values aren't supported.
-                connWithMemProps = (com.mysql.jdbc.Connection) getConnectionWithProps(String.format(
-                        "blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
+                connWithMemProps = (com.mysql.jdbc.Connection) getConnectionWithProps(
+                        String.format("blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
                 // test values of property 'blobSendChunkSize'
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2),
@@ -6239,8 +6246,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertThrows(Exception.class, "ExceptionInterceptor.init\\(\\) called 1 time\\(s\\)", new Callable<Void>() {
             @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
-                getConnectionWithProps("exceptionInterceptors=testsuite.regression.ConnectionRegressionTest$TestBug71850ExceptionInterceptor,"
-                        + "user=unexistent_user");
+                getConnectionWithProps(
+                        "exceptionInterceptors=testsuite.regression.ConnectionRegressionTest$TestBug71850ExceptionInterceptor," + "user=unexistent_user");
                 return null;
             }
         });
@@ -6416,17 +6423,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user2'@'%'");
                 createUser(this.sha256Stmt, "'bug18869381user3'@'%'", "identified WITH mysql_native_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
-                this.sha256Stmt
-                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
-                                : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'" : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
-                this.sha256Stmt
-                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
-                                : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
-                this.sha256Stmt
-                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
-                                : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
+                        : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
+                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'" : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 Properties props = new Properties();
@@ -7568,8 +7573,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 String[] plugins;
 
                 // install cleartext plugin if required
-                this.rs = testStmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') FROM INFORMATION_SCHEMA.PLUGINS"
-                        + " WHERE PLUGIN_NAME='cleartext_plugin_server'");
+                this.rs = testStmt.executeQuery(
+                        "SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') FROM INFORMATION_SCHEMA.PLUGINS" + " WHERE PLUGIN_NAME='cleartext_plugin_server'");
                 if (!this.rs.next() || !this.rs.getBoolean(1)) {
                     String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
                     testStmt.execute("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
@@ -7878,9 +7883,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 final Connection testConn;
                                 Statement testStmt;
 
-                                boolean expectedPubKeyRetrievalFail = (user.endsWith("_sha") || user.endsWith("_mnp")
-                                        && defAuthPlugin.equals(Sha256PasswordPlugin.class))
-                                        && !allowPubKeyRetrieval && pwd.length() > 0;
+                                boolean expectedPubKeyRetrievalFail = (user.endsWith("_sha")
+                                        || user.endsWith("_mnp") && defAuthPlugin.equals(Sha256PasswordPlugin.class)) && !allowPubKeyRetrieval
+                                        && pwd.length() > 0;
                                 boolean expectedAccessDeniedFail = !user.equals(pwd);
                                 System.out.printf("%-25s : %-18s : %-25s : %-25s : %s%n", defAuthPlugin.getSimpleName(), allowPubKeyRetrieval, user, pwd,
                                         expectedPubKeyRetrievalFail ? "Fail [Pub. Key retrieval]" : expectedAccessDeniedFail ? "Fail [Access denied]" : "Ok");
@@ -7936,9 +7941,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                                     // change user using different credentials
                                     final String swapUser = user.indexOf("_sha") == -1 ? "bug75670user_sha" : "bug75670user_mnp";
-                                    expectedPubKeyRetrievalFail = (swapUser.endsWith("_sha") || swapUser.endsWith("_mnp")
-                                            && defAuthPlugin.equals(Sha256PasswordPlugin.class))
-                                            && !allowPubKeyRetrieval;
+                                    expectedPubKeyRetrievalFail = (swapUser.endsWith("_sha")
+                                            || swapUser.endsWith("_mnp") && defAuthPlugin.equals(Sha256PasswordPlugin.class)) && !allowPubKeyRetrieval;
                                     System.out.printf("%25s : %-18s : %-25s : %-25s : %s%n", "| ChangeUser (diff)", allowPubKeyRetrieval, swapUser, swapUser,
                                             expectedPubKeyRetrievalFail ? "Fail [Pub. Key retrieval]" : "Ok");
 

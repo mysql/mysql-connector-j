@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,11 +27,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -234,65 +231,8 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         throw new SocketException("Unable to create socket");
     }
 
-    public static final String IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME = "com.mysql.jdbc.test.isLocalHostnameReplacement";
-
     public boolean isLocallyConnected(com.mysql.jdbc.ConnectionImpl conn) throws SQLException {
-        long threadId = conn.getId();
-        java.sql.Statement processListStmt = conn.getMetadataSafeStatement();
-        ResultSet rs = null;
-
-        try {
-            String processHost = null;
-
-            rs = processListStmt.executeQuery("SHOW PROCESSLIST");
-
-            while (rs.next()) {
-                long id = rs.getLong(1);
-
-                if (threadId == id) {
-
-                    processHost = rs.getString(3);
-
-                    break;
-                }
-            }
-
-            // "inject" for tests
-            if (System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-                processHost = System.getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-            } else if (conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME) != null) {
-                processHost = conn.getProperties().getProperty(IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME);
-            }
-
-            if (processHost != null) {
-                if (processHost.indexOf(":") != -1) {
-                    processHost = processHost.split(":")[0];
-
-                    try {
-                        boolean isLocal = false;
-
-                        InetAddress whereMysqlThinksIConnectedFrom = InetAddress.getByName(processHost);
-                        SocketAddress remoteSocketAddr = this.rawSocket.getRemoteSocketAddress();
-
-                        if (remoteSocketAddr instanceof InetSocketAddress) {
-                            InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
-
-                            isLocal = whereMysqlThinksIConnectedFrom.equals(whereIConnectedTo);
-                        }
-
-                        return isLocal;
-                    } catch (UnknownHostException e) {
-                        conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
-
-                        return false;
-                    }
-                }
-            }
-
-            return false;
-        } finally {
-            processListStmt.close();
-        }
+        return SocketMetadata.Helper.isLocallyConnected(conn);
     }
 
     /**

@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 5.1.38
 
+  - StandardSSLSocketFactory implements SocketMetadata.
+
   - Fix for Bug#21978216, GETTYPEINFO REPORT MAXIMUM PRECISION OF 255 FOR VARBINARY.
 
   - Fix for Bug#78706 (21947042), Prefer TLS where supported by MySQL Server.

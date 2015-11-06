@@ -109,8 +109,8 @@ public class ExportControlled {
             } else {
                 // If we don't override ciphers, then we check for known restrictions
                 boolean disableDHAlgorithm = false;
-                if (mysqlIO.versionMeetsMinimum(5, 5, 45) && !mysqlIO.versionMeetsMinimum(5, 6, 0) || mysqlIO.versionMeetsMinimum(5, 6, 26)
-                        && !mysqlIO.versionMeetsMinimum(5, 7, 0) || mysqlIO.versionMeetsMinimum(5, 7, 6)) {
+                if (mysqlIO.versionMeetsMinimum(5, 5, 45) && !mysqlIO.versionMeetsMinimum(5, 6, 0)
+                        || mysqlIO.versionMeetsMinimum(5, 6, 26) && !mysqlIO.versionMeetsMinimum(5, 7, 0) || mysqlIO.versionMeetsMinimum(5, 7, 6)) {
                     // Workaround for JVM bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6521495
                     // Starting from 5.5.45, 5.6.26 and 5.7.6 server the key length used for creating Diffie-Hellman keys has been
                     // increased from 512 to 2048 bits, while JVMs affected by this bug allow only range from 512 to 1024 (inclusive).
@@ -118,7 +118,7 @@ public class ExportControlled {
                     if (Util.getJVMVersion() < 8) {
                         disableDHAlgorithm = true;
                     }
-                } else if (Util.getJVMVersion() >= 8) { // TODO check later for Java 9 behaviour
+                } else if (Util.getJVMVersion() >= 8) { // TODO check later for Java 9 behavior
                     // Java 8 default java.security contains jdk.tls.disabledAlgorithms=DH keySize < 768
                     // That causes handshake failures with older MySQL servers, eg 5.6.11. Thus we have to disable DH for them when running on Java 8+
                     disableDHAlgorithm = true;
@@ -162,7 +162,7 @@ public class ExportControlled {
     /**
      * Implementation of internal socket factory to wrap the SSL socket.
      */
-    public static class StandardSSLSocketFactory implements SocketFactory {
+    public static class StandardSSLSocketFactory implements SocketFactory, SocketMetadata {
         private SSLSocket rawSocket = null;
         private final SSLSocketFactory sslFact;
         private final SocketFactory existingSocketFactory;
@@ -186,6 +186,10 @@ public class ExportControlled {
         public Socket connect(String host, int portNumber, Properties props) throws SocketException, IOException {
             this.rawSocket = (SSLSocket) this.sslFact.createSocket(this.existingSocket, host, portNumber, true);
             return this.rawSocket;
+        }
+
+        public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException {
+            return SocketMetadata.Helper.isLocallyConnected(conn);
         }
 
     }
