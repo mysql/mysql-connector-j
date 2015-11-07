@@ -54,7 +54,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Unsupported.
-     * @todo determine status of this feature
+     * TODO determine status of this feature
      */
     ModifyStatement merge(String document);
 
@@ -70,7 +70,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Unsupported.
-     * @todo determine status of this feature
+     * TODO determine status of this feature
      */
     ModifyStatement arrayDelete(String field, int position);
 }
