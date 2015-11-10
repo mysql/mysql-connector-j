@@ -1446,11 +1446,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             int slaveConnectionId = Integer.parseInt(getSingleIndexedValueWithQuery(replConn, 1, "SELECT CONNECTION_ID()").toString());
 
-            // The following test is okay for now, as the chance
-            // of MySQL wrapping the connection id counter during our
-            // testsuite is very small.
-
-            assertTrue("Slave id " + slaveConnectionId + " is not newer than master id " + masterConnectionId, slaveConnectionId > masterConnectionId);
+            // The following test is okay for now, as the chance of MySQL wrapping the connection id counter during our testsuite is very small.
+            // As per Bug#21286268 fix a Replication connection first initializes the Slaves sub-connection, then the Masters.
+            assertTrue("Master id " + masterConnectionId + " is not newer than slave id " + slaveConnectionId, masterConnectionId > slaveConnectionId);
 
             assertEquals(currentCatalog, replConn.getCatalog());
 
@@ -8285,10 +8283,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#56100 - Replication driver routes DML statements to read-only slaves.
-     * 
-     * @throws Exception
-     *             if the test fails.
+     * Tests fix for Bug#56100 - Replication driver routes DML statements to read-only slaves.
      */
     public void testBug56100() throws Exception {
         final String port = getPort(null, new NonRegisteringDriver());
@@ -8421,6 +8416,331 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             sslConn.close();
         }
+    }
 
+    /**
+     * Tests fix for Bug#21286268 - CONNECTOR/J REPLICATION USE MASTER IF SLAVE IS UNAVAILABLE.
+     */
+    public void testBug21286268() throws Exception {
+        final String MASTER = "master";
+        final String SLAVE = "slave";
+
+        final String MASTER_OK = UnreliableSocketFactory.getHostConnectedStatus(MASTER);
+        final String MASTER_FAIL = UnreliableSocketFactory.getHostFailedStatus(MASTER);
+        final String SLAVE_OK = UnreliableSocketFactory.getHostConnectedStatus(SLAVE);
+        final String SLAVE_FAIL = UnreliableSocketFactory.getHostFailedStatus(SLAVE);
+
+        final String[] hosts = new String[] { MASTER, SLAVE };
+        final Properties props = new Properties();
+        props.setProperty("connectTimeout", "100");
+        props.setProperty("retriesAllDown", "2"); // Failed connection attempts will show up twice.
+        final Set<String> downedHosts = new HashSet<String>();
+        Connection testConn = null;
+
+        /*
+         * Initialization case 1: Masters and Slaves up.
+         */
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        /*
+         * Initialization case 2a: Masters up and Slaves down (readFromMasterWhenNoSlaves=false).
+         */
+        props.setProperty("readFromMasterWhenNoSlaves", "false");
+        downedHosts.clear();
+        downedHosts.add(SLAVE);
+        UnreliableSocketFactory.flushAllStaticData();
+
+        assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            public Void call() throws Exception {
+                getUnreliableReplicationConnection(hosts, props, downedHosts);
+                return null;
+            }
+        });
+        assertConnectionsHistory(SLAVE_FAIL);
+        props.remove("readFromMasterWhenNoSlaves");
+
+        /*
+         * Initialization case 2b: Masters up and Slaves down (allowSlaveDownConnections=true).
+         */
+        props.setProperty("allowSlaveDownConnections", "true");
+        downedHosts.clear();
+        downedHosts.add(SLAVE);
+        UnreliableSocketFactory.flushAllStaticData();
+
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_FAIL, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+        props.remove("allowSlaveDownConnections");
+
+        /*
+         * Initialization case 3a: Masters down and Slaves up (allowSlaveDownConnections=false).
+         */
+        props.setProperty("allowSlaveDownConnections", "false");
+        downedHosts.clear();
+        downedHosts.add(MASTER);
+        UnreliableSocketFactory.flushAllStaticData();
+
+        assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            public Void call() throws Exception {
+                getUnreliableReplicationConnection(hosts, props, downedHosts);
+                return null;
+            }
+        });
+        assertConnectionsHistory(SLAVE_OK, MASTER_FAIL, MASTER_FAIL);
+        props.remove("allowSlaveDownConnections");
+
+        /*
+         * Initialization case 3b: Masters down and Slaves up (allowMasterDownConnections=true).
+         */
+        props.setProperty("allowMasterDownConnections", "true");
+        downedHosts.clear();
+        downedHosts.add(MASTER);
+        UnreliableSocketFactory.flushAllStaticData();
+
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_FAIL, MASTER_FAIL);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+        props.remove("allowMasterDownConnections");
+
+        /*
+         * Initialization case 4: Masters down and Slaves down (allowMasterDownConnections=[false|true] + allowSlaveDownConnections=[false|true]).
+         */
+        for (int tst = 0; tst < 4; tst++) {
+            boolean allowMasterDownConnections = (tst & 0x1) != 0;
+            boolean allowSlaveDownConnections = (tst & 0x2) != 0;
+
+            String testCase = String.format("Case: %d [ %s | %s ]", tst, allowMasterDownConnections ? "alwMstDn" : "-",
+                    allowSlaveDownConnections ? "alwSlvDn" : "-");
+            System.out.println(testCase);
+
+            props.setProperty("allowMasterDownConnections", Boolean.toString(allowMasterDownConnections));
+            props.setProperty("allowSlaveDownConnections", Boolean.toString(allowSlaveDownConnections));
+            downedHosts.clear();
+            downedHosts.add(MASTER);
+            downedHosts.add(SLAVE);
+            UnreliableSocketFactory.flushAllStaticData();
+
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                @SuppressWarnings("synthetic-access")
+                public Void call() throws Exception {
+                    getUnreliableReplicationConnection(hosts, props, downedHosts);
+                    return null;
+                }
+            });
+            if (allowSlaveDownConnections) {
+                assertConnectionsHistory(SLAVE_FAIL, SLAVE_FAIL, MASTER_FAIL, MASTER_FAIL);
+            } else {
+                assertConnectionsHistory(SLAVE_FAIL, SLAVE_FAIL);
+            }
+            props.remove("allowMasterDownConnections");
+            props.remove("allowSlaveDownConnections");
+        }
+
+        /*
+         * Run-time case 1: Switching between masters and slaves.
+         */
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        // Use Masters.
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+
+        // Use Masters.
+        testConn.setReadOnly(false);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        /*
+         * Run-time case 2a: Running with Masters down (Masters doesn't recover).
+         */
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        // Use Masters.
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Master server down.
+        UnreliableSocketFactory.downHost(MASTER);
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+
+        // Use Masters (fail!).
+        testConn.setReadOnly(false);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        {
+            final Connection localTestConn = testConn;
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+        }
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL);
+
+        /*
+         * Run-time case 2b: Running with Masters down (Masters recover in time).
+         */
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        // Use Masters.
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Find Masters conn ID.
+        long connId = ((MySQLConnection) testConn).getId();
+
+        // Master server down.
+        UnreliableSocketFactory.downHost(MASTER);
+        this.stmt.execute("KILL CONNECTION " + connId); // Actually kill the Masters connection at server side.
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+
+        // Master server up.
+        UnreliableSocketFactory.dontDownHost(MASTER);
+
+        // Use Masters.
+        testConn.setReadOnly(false);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        {
+            final Connection localTestConn = testConn;
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+        }
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_OK); // Masters connection re-initialized.
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        /*
+         * Run-time case 3a: Running with Slaves down (readFromMasterWhenNoSlaves=false).
+         */
+        props.setProperty("readFromMasterWhenNoSlaves", "false");
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        // Use Masters.
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Find Slaves conn ID.
+        testConn.setReadOnly(true);
+        connId = ((MySQLConnection) testConn).getId();
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+        testConn.setReadOnly(false);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Slave server down.
+        UnreliableSocketFactory.downHost(SLAVE);
+        this.stmt.execute("KILL CONNECTION " + connId); // Actually kill the Slaves connection at server side.
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        {
+            final Connection localTestConn = testConn;
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+        }
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
+        // Retry using Slaves. Will fail definitely.
+        {
+            final Connection localTestConn = testConn;
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    localTestConn.setReadOnly(true);
+                    return null;
+                }
+            });
+        }
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL); // Failed connecting to Slaves.
+
+        /*
+         * Run-time case 3b: Running with Slaves down (readFromMasterWhenNoSlaves=true).
+         */
+        props.setProperty("readFromMasterWhenNoSlaves", "true");
+        downedHosts.clear();
+        UnreliableSocketFactory.flushAllStaticData();
+
+        // Use Masters.
+        testConn = getUnreliableReplicationConnection(hosts, props, downedHosts);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Find Slaves conn ID.
+        testConn.setReadOnly(true);
+        connId = ((MySQLConnection) testConn).getId();
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+        testConn.setReadOnly(false);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Slave server down.
+        UnreliableSocketFactory.downHost(SLAVE);
+        this.stmt.execute("KILL CONNECTION " + connId); // Actually kill the Slaves connection at server side.
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        {
+            final Connection localTestConn = testConn;
+            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+        }
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
+        // Retry using Slaves. Will fall-back to Masters as read-only.
+        testConn.setReadOnly(true);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL); // Failed connecting to Slaves, failed-over to Masters.
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, true);
+
+        // Use Masters.
+        testConn.setReadOnly(false);
+        testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
+
+        // Slave server up.
+        UnreliableSocketFactory.dontDownHost(SLAVE);
+
+        // Use Slaves.
+        testConn.setReadOnly(true);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL, SLAVE_FAIL, SLAVE_OK); // Slaves connection re-initialized.
+        testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
+        props.remove("readFromMasterWhenNoSlaves");
+    }
+
+    private void testBug21286268AssertConnectedToAndReadOnly(Connection testConn, String expectedHost, boolean expectedReadOnly) throws SQLException {
+        testConn.createStatement().executeQuery("SELECT 1");
+        assertEquals(expectedHost, ((MySQLConnection) testConn).getHost());
+        assertEquals(expectedReadOnly, testConn.isReadOnly());
     }
 }

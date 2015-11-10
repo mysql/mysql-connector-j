@@ -71,6 +71,18 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     private int portNumber;
     private Properties props;
 
+    public static String getHostConnectedStatus(String host) {
+        return STATUS_CONNECTED + host;
+    }
+
+    public static String getHostFailedStatus(String host) {
+        return STATUS_FAILED + host;
+    }
+
+    public static String getHostUnknownStatus(String host) {
+        return STATUS_FAILED + host;
+    }
+
     public static void flushAllStaticData() {
         IMMEDIATELY_DOWNED_HOSTS.clear();
         HUNG_CONNECT_HOSTS.clear();
@@ -172,7 +184,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     private Socket getNewSocket() throws SocketException, IOException {
         if (IMMEDIATELY_DOWNED_HOSTS.contains(this.hostname)) {
-
             sleepMillisForProperty(this.props, "connectTimeout");
 
             throw new SocketTimeoutException();
@@ -238,61 +249,51 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     class HangingSocket extends Socket {
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
-
             this.underlyingSocket.bind(bindpoint);
         }
 
         @Override
         public synchronized void close() throws IOException {
-
             this.underlyingSocket.close();
         }
 
         @Override
         public SocketChannel getChannel() {
-
             return this.underlyingSocket.getChannel();
         }
 
         @Override
         public InetAddress getInetAddress() {
-
             return this.underlyingSocket.getInetAddress();
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
-
             return new HangingInputStream(this.underlyingSocket.getInputStream(), this.props, this.aliasedHostname);
         }
 
         @Override
         public boolean getKeepAlive() throws SocketException {
-
             return this.underlyingSocket.getKeepAlive();
         }
 
         @Override
         public InetAddress getLocalAddress() {
-
             return this.underlyingSocket.getLocalAddress();
         }
 
         @Override
         public int getLocalPort() {
-
             return this.underlyingSocket.getLocalPort();
         }
 
         @Override
         public SocketAddress getLocalSocketAddress() {
-
             return this.underlyingSocket.getLocalSocketAddress();
         }
 
         @Override
         public boolean getOOBInline() throws SocketException {
-
             return this.underlyingSocket.getOOBInline();
         }
 
@@ -303,43 +304,36 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         @Override
         public int getPort() {
-
             return this.underlyingSocket.getPort();
         }
 
         @Override
         public synchronized int getReceiveBufferSize() throws SocketException {
-
             return this.underlyingSocket.getReceiveBufferSize();
         }
 
         @Override
         public SocketAddress getRemoteSocketAddress() {
-
             return this.underlyingSocket.getRemoteSocketAddress();
         }
 
         @Override
         public boolean getReuseAddress() throws SocketException {
-
             return this.underlyingSocket.getReuseAddress();
         }
 
         @Override
         public synchronized int getSendBufferSize() throws SocketException {
-
             return this.underlyingSocket.getSendBufferSize();
         }
 
         @Override
         public int getSoLinger() throws SocketException {
-
             return this.underlyingSocket.getSoLinger();
         }
 
         @Override
         public synchronized int getSoTimeout() throws SocketException {
-
             return this.underlyingSocket.getSoTimeout();
         }
 
@@ -452,7 +446,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
             this.props = props;
             this.aliasedHostname = aliasedHostname;
         }
-
     }
 
     static class HangingInputStream extends InputStream {
@@ -487,6 +480,18 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         }
 
         @Override
+        public synchronized void reset() throws IOException {
+            this.underlyingInputStream.reset();
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.skip(n);
+        }
+
+        @Override
         public int read(byte[] b, int off, int len) throws IOException {
             failIfRequired();
 
@@ -501,15 +506,10 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         }
 
         @Override
-        public synchronized void reset() throws IOException {
-            this.underlyingInputStream.reset();
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
+        public int read() throws IOException {
             failIfRequired();
 
-            return this.underlyingInputStream.skip(n);
+            return this.underlyingInputStream.read();
         }
 
         private void failIfRequired() throws SocketTimeoutException {
@@ -518,13 +518,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
                 throw new SocketTimeoutException();
             }
-        }
-
-        @Override
-        public int read() throws IOException {
-            failIfRequired();
-
-            return this.underlyingInputStream.read();
         }
     }
 
@@ -576,6 +569,5 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                 throw new SocketTimeoutException();
             }
         }
-
     }
 }

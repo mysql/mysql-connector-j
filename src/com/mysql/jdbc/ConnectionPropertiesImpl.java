@@ -687,6 +687,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty allowMasterDownConnections = new BooleanConnectionProperty("allowMasterDownConnections", false,
             Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE);
 
+    private BooleanConnectionProperty allowSlaveDownConnections = new BooleanConnectionProperty("allowSlaveDownConnections", false,
+            Messages.getString("ConnectionProperties.allowSlaveDownConnections"), "5.1.38", HA_CATEGORY, Integer.MAX_VALUE);
+
+    private BooleanConnectionProperty readFromMasterWhenNoSlaves = new BooleanConnectionProperty("readFromMasterWhenNoSlaves", false,
+            Messages.getString("ConnectionProperties.readFromMasterWhenNoSlaves"), "5.1.38", HA_CATEGORY, Integer.MAX_VALUE);
+
     private BooleanConnectionProperty autoDeserialize = new BooleanConnectionProperty("autoDeserialize", false,
             Messages.getString("ConnectionProperties.autoDeserialize"), "3.1.5", MISC_CATEGORY, Integer.MIN_VALUE);
 
@@ -4796,6 +4802,22 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
         this.allowMasterDownConnections.setValue(connectIfMasterDown);
+    }
+
+    public boolean getAllowSlaveDownConnections() {
+        return this.allowSlaveDownConnections.getValueAsBoolean();
+    }
+
+    public void setAllowSlaveDownConnections(boolean connectIfSlaveDown) {
+        this.allowSlaveDownConnections.setValue(connectIfSlaveDown);
+    }
+
+    public boolean getReadFromMasterWhenNoSlaves() {
+        return this.readFromMasterWhenNoSlaves.getValueAsBoolean();
+    }
+
+    public void setReadFromMasterWhenNoSlaves(boolean useMasterIfSlavesDown) {
+        this.readFromMasterWhenNoSlaves.setValue(useMasterIfSlavesDown);
     }
 
     public boolean getReplicationEnableJMX() {

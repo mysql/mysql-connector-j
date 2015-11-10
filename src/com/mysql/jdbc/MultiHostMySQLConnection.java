@@ -2352,6 +2352,22 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         getActiveMySQLConnection().setAllowMasterDownConnections(connectIfMasterDown);
     }
 
+    public boolean getAllowSlaveDownConnections() {
+        return getActiveMySQLConnection().getAllowSlaveDownConnections();
+    }
+
+    public void setAllowSlaveDownConnections(boolean connectIfSlaveDown) {
+        getActiveMySQLConnection().setAllowSlaveDownConnections(connectIfSlaveDown);
+    }
+
+    public boolean getReadFromMasterWhenNoSlaves() {
+        return getActiveMySQLConnection().getReadFromMasterWhenNoSlaves();
+    }
+
+    public void setReadFromMasterWhenNoSlaves(boolean useMasterIfSlavesDown) {
+        getActiveMySQLConnection().setReadFromMasterWhenNoSlaves(useMasterIfSlavesDown);
+    }
+
     public boolean getReplicationEnableJMX() {
         return getActiveMySQLConnection().getReplicationEnableJMX();
     }

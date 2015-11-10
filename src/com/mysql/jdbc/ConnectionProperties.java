@@ -1368,6 +1368,14 @@ public interface ConnectionProperties {
 
     public void setAllowMasterDownConnections(boolean connectIfMasterDown);
 
+    public boolean getAllowSlaveDownConnections();
+
+    public void setAllowSlaveDownConnections(boolean connectIfSlaveDown);
+
+    public boolean getReadFromMasterWhenNoSlaves();
+
+    public void setReadFromMasterWhenNoSlaves(boolean useMasterIfSlavesDown);
+
     public boolean getReplicationEnableJMX();
 
     public void setReplicationEnableJMX(boolean replicationEnableJMX);

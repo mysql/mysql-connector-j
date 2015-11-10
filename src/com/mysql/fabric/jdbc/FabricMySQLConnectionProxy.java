@@ -606,6 +606,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         info.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty("connectionAttributes", "fabricHaGroup:" + this.serverGroup.getName());
         info.setProperty("retriesAllDown", "1");
+        info.setProperty("allowSlaveDownConnections", "true");
+        info.setProperty("readFromMasterWhenNoSlaves", "true");
         this.currentConnection = ReplicationConnectionProxy.createProxyInstance(masterHost, info, slaveHosts, info);
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 

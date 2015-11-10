@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 5.1.38
 
+  - Fix for Bug#21286268, CONNECTOR/J REPLICATION USE MASTER IF SLAVE IS UNAVAILABLE.
+
   - Fix for Bug#21296840 & Bug#17910835, Server information in a group from Fabric is not refreshed after expired TTL.
 
   - Fix for Bug#56122 (11763419), JDBC4 functionality failure when using replication connections.
