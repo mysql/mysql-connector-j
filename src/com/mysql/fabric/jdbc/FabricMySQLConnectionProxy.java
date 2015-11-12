@@ -214,8 +214,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String port)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
-        if (!(sqlEx.getSQLState().startsWith("08")
-                || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
+        if (sqlEx.getSQLState() != null && !(sqlEx.getSQLState().startsWith("08")
+                        || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
             return null;
         }
 
@@ -257,6 +257,23 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                     null);
         }
         return null;
+    }
+
+    /**
+     * Refresh the client Fabric state cache if the TTL has expired.
+     */
+    private void refreshStateIfNecessary() throws SQLException {
+        if (this.fabricConnection.isStateExpired()) {
+            try {
+                this.fabricConnection.refreshState();
+            } catch (FabricCommunicationException ex) {
+                throw SQLError.createSQLException("Unable to establish connection to the Fabric server", SQLError.SQL_STATE_CONNECTION_REJECTED, ex,
+                        getExceptionInterceptor(), this);
+            }
+            if (this.serverGroup != null) {
+                setCurrentServerGroup(this.serverGroup.getName());
+            }
+        }
     }
 
     /////////////////////////////////////////
@@ -429,6 +446,18 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             throw SQLError.createSQLException("Cannot find server group: `" + serverGroupName + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
                     getExceptionInterceptor(), this);
         }
+
+        // check for any changes that need to be propagated to the entire group
+        ReplicationConnectionGroup replConnGroup = ReplicationConnectionGroupManager.getConnectionGroup(serverGroupName);
+        if (replConnGroup != null) {
+            if (replConnGroupLocks.add(this.serverGroup.getName())) {
+                try {
+                    syncGroupServersToReplicationConnectionGroup(replConnGroup);
+                } finally {
+                    replConnGroupLocks.remove(this.serverGroup.getName());
+                }
+            }
+        }
     }
 
     //////////////////////////////////////////////////////
@@ -479,7 +508,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             currentMasterString = replConnGroup.getMasterHosts().iterator().next();
         }
         // check if master has changed
-        if (currentMasterString != null && !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString())) {
+        if (currentMasterString != null &&
+                (this.serverGroup.getMaster() == null || !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString()))) {
             // old master is gone (there may be a new one) (closeGently=false)
             try {
                 replConnGroup.removeMasterHost(currentMasterString, false);
@@ -531,6 +561,10 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     protected Connection getActiveConnection() throws SQLException {
+        if (!this.transactionInProgress) {
+            refreshStateIfNecessary();
+        }
+
         if (this.currentConnection != null) {
             return this.currentConnection;
         }
@@ -678,6 +712,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
 
     public void transactionCompleted() throws SQLException {
         this.transactionInProgress = false;
+        refreshStateIfNecessary();
     }
 
     public boolean getAutoCommit() {
