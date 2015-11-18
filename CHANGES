@@ -30,7 +30,7 @@ dd-mm-yy - Version 5.1.38
 
   - Added tests for Optimizer hints syntax introduced in MySQL 5.7.7.
 
-  - Fix for Bug#Bug #21860833, JSON DATA TYPE DOESN'T WORK WITH SSPS.
+  - Fix for Bug#21860833, JSON DATA TYPE DOESN'T WORK WITH SSPS.
     Added support for JSON data type.
 
   - Added support for JDBC 4.2 new features.
