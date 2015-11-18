@@ -87,8 +87,15 @@ public class ExportControlled {
         try {
             mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
-            // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
-            ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
+            List<String> allowedProtocols = new ArrayList<String>();
+            List<String> supportedProtocols = Arrays.asList(((SSLSocket) mysqlIO.mysqlConnection).getSupportedProtocols());
+            for (String protocol : (Util.isEnterpriseEdition(mysqlIO.getServerVersion()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] {
+                    "TLSv1.1", "TLSv1" })) {
+                if (supportedProtocols.contains(protocol)) {
+                    allowedProtocols.add(protocol);
+                }
+            }
+            ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
             // check allowed cipher suites
             String enabledSSLCipherSuites = mysqlIO.connection.getEnabledSSLCipherSuites();
@@ -109,8 +116,8 @@ public class ExportControlled {
             } else {
                 // If we don't override ciphers, then we check for known restrictions
                 boolean disableDHAlgorithm = false;
-                if (mysqlIO.versionMeetsMinimum(5, 5, 45) && !mysqlIO.versionMeetsMinimum(5, 6, 0)
-                        || mysqlIO.versionMeetsMinimum(5, 6, 26) && !mysqlIO.versionMeetsMinimum(5, 7, 0) || mysqlIO.versionMeetsMinimum(5, 7, 6)) {
+                if (mysqlIO.versionMeetsMinimum(5, 5, 45) && !mysqlIO.versionMeetsMinimum(5, 6, 0) || mysqlIO.versionMeetsMinimum(5, 6, 26)
+                        && !mysqlIO.versionMeetsMinimum(5, 7, 0) || mysqlIO.versionMeetsMinimum(5, 7, 6)) {
                     // Workaround for JVM bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6521495
                     // Starting from 5.5.45, 5.6.26 and 5.7.6 server the key length used for creating Diffie-Hellman keys has been
                     // increased from 512 to 2048 bits, while JVMs affected by this bug allow only range from 512 to 1024 (inclusive).
@@ -136,7 +143,7 @@ public class ExportControlled {
 
             // if some ciphers were filtered into allowedCiphers 
             if (allowedCiphers != null) {
-                ((SSLSocket) mysqlIO.mysqlConnection).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+                ((SSLSocket) mysqlIO.mysqlConnection).setEnabledCipherSuites(allowedCiphers.toArray(new String[0]));
             }
 
             ((SSLSocket) mysqlIO.mysqlConnection).startHandshake();

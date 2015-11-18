@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 5.1.38
 
+  - Added support for TLSv1.1 and TLSv1.2
+
   - Fix for Bug#78961 (22096981), Can't call MySQL procedure with InOut parameters in Fabric environment.
 
   - Fix for Bug#56100 (11763401), Replication driver routes DML statements to read-only slaves.
