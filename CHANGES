@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+mm-dd-yy - Version 5.1.39
+
 11-30-15 - Version 5.1.38
 
   - Fix for Bug#21286268, CONNECTOR/J REPLICATION USE MASTER IF SLAVE IS UNAVAILABLE.
