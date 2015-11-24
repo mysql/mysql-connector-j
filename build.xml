@@ -678,6 +678,8 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
         <mkdir dir="${toPackage}" />
         <mkdir dir="${packageDest}" />
 
+        <delete dir="${toPackage}" />
+
         <patternset id="non.test.sources">
             <exclude name="**/*.nb*" />
             <exclude name="**/*.bak" />
