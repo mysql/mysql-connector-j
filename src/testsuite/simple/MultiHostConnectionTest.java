@@ -32,7 +32,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 
 import testsuite.BaseTestCase;
@@ -136,38 +135,29 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
      */
     public void testFailoverConnection() throws Exception {
-        Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
 
         String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         if (!NonRegisteringDriver.isHostPropertiesList(host)) {
             String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
             host = host + ":" + port;
         }
-        String noHost = "nohost:12345";
-        String user = props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        String password = props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
-        String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        String noHost = "testfoconn-nohost:12345";
 
         StringBuilder testURL = new StringBuilder("jdbc:mysql://");
         testURL.append(noHost).append(",");
         testURL.append(noHost).append(",");
-        testURL.append(noHost).append("/").append(database);
+        testURL.append(noHost).append("/");
         final String allDownURL = testURL.toString();
 
-        StringBuilder propsListBuilder = new StringBuilder("retriesAllDown=2");
-        if (user != null) {
-            propsListBuilder.append(",user=").append(user);
-        }
-        if (password != null) {
-            propsListBuilder.append(",password=").append(password);
-        }
-        final String propsList = propsListBuilder.toString();
+        final Properties testConnProps = getHostFreePropertiesFromTestsuiteUrl();
+        testConnProps.setProperty("retriesAllDown", "2");
 
         // all hosts down
         assertThrows(SQLException.class, COMM_LINK_ERR_PATTERN, new Callable<Void>() {
             @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
-                getConnectionWithProps(allDownURL, propsList);
+                getConnectionWithProps(allDownURL, testConnProps);
                 return null;
             }
         });
@@ -177,9 +167,9 @@ public class MultiHostConnectionTest extends BaseTestCase {
             testURL = new StringBuilder("jdbc:mysql://");
             testURL.append((i & 1) == 0 ? noHost : host).append(",");
             testURL.append((i & 2) == 0 ? noHost : host).append(",");
-            testURL.append((i & 4) == 0 ? noHost : host).append("/").append(database);
+            testURL.append((i & 4) == 0 ? noHost : host).append("/");
 
-            Connection testConn = getConnectionWithProps(testURL.toString(), propsList);
+            Connection testConn = getConnectionWithProps(testURL.toString(), testConnProps);
 
             final Statement testStmt = testConn.createStatement();
 

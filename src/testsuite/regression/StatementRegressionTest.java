@@ -5477,18 +5477,17 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug51776() throws Exception {
-
-        Properties props = new Properties();
-        NonRegisteringDriver d = new NonRegisteringDriver();
-        this.copyBasePropertiesIntoProps(props, d);
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-        Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+
+        NonRegisteringDriver d = new NonRegisteringDriver();
+        Properties parsed = d.parseURL(BaseTestCase.dbUrl, null);
         String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props, d);
+
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost("first", host);
-        props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
         Connection testConn = getConnectionWithProps("jdbc:mysql://first:" + port + "/" + db, props);
         testConn.setAutoCommit(false);

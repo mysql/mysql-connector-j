@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,7 +38,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         if (versionMeetsMinimum(5, 0)) {
             Connection replConn = null;
-            Properties props = getMasterSlaveProps();
+            Properties props = getHostFreePropertiesFromTestsuiteUrl();
             props.setProperty("autoReconnect", "true");
 
             try {
@@ -72,7 +72,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 0)) {
 
             Connection replConn = null;
-            Properties props = getMasterSlaveProps();
+            Properties props = getHostFreePropertiesFromTestsuiteUrl();
             props.setProperty("autoReconnect", "true");
 
             try {
