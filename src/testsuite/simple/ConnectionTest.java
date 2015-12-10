@@ -54,9 +54,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
@@ -66,6 +63,9 @@ import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.log.StandardLogger;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 /**
  * Tests java.sql.Connection functionality
@@ -540,8 +540,9 @@ public class ConnectionTest extends BaseTestCase {
                 if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
                     this.conn.setTransactionIsolation(isolationLevels[i]);
 
-                    assertTrue("Transaction isolation level that was set (" + isoLevelNames[i]
-                            + ") was not returned, nor was a more restrictive isolation level used by the server",
+                    assertTrue(
+                            "Transaction isolation level that was set (" + isoLevelNames[i]
+                                    + ") was not returned, nor was a more restrictive isolation level used by the server",
                             this.conn.getTransactionIsolation() == isolationLevels[i] || this.conn.getTransactionIsolation() > isolationLevels[i]);
                 }
             }
@@ -863,7 +864,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testFailoverConnection() throws Exception {
 
         if (!isServerRunningOnWindows()) { // windows sockets don't
-                                           // work for this test
+                                          // work for this test
             Properties props = new Properties();
             props.setProperty("autoReconnect", "true");
             props.setProperty("failOverReadOnly", "false");
@@ -1641,8 +1642,13 @@ public class ConnectionTest extends BaseTestCase {
         String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", host, port, user != null ? user : "",
                 password != null ? password : "", database);
 
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
+        props.remove(NonRegisteringDriver.USER_PROPERTY_KEY);
+        props.remove(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+        props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
         try {
-            getConnectionWithProps(newUrl, new Properties());
+            getConnectionWithProps(newUrl, props);
         } catch (SQLException sqlEx) {
             throw new RuntimeException("Failed to connect with URL " + newUrl, sqlEx);
         }
@@ -1745,7 +1751,6 @@ public class ConnectionTest extends BaseTestCase {
         String host = "::1"; // IPv6 loopback
         int port = Integer.parseInt(connProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
         String username = connProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-        String password = connProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
 
         String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", host, port);
 
@@ -1753,7 +1758,9 @@ public class ConnectionTest extends BaseTestCase {
         Statement testStmt = null;
         ResultSet testRS = null;
 
-        testConn = DriverManager.getConnection(ipv6Url, username, password);
+        connProps = getHostFreePropertiesFromTestsuiteUrl();
+
+        testConn = DriverManager.getConnection(ipv6Url, connProps);
         testStmt = testConn.createStatement();
         testRS = testStmt.executeQuery("SELECT USER()");
 
@@ -1934,12 +1941,12 @@ public class ConnectionTest extends BaseTestCase {
                 boolean isPreparedStatement = interceptedStatement instanceof PreparedStatement;
 
                 String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
-                        processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-", isPreparedStatement ? "PreparedStatement"
-                                : "Statement");
+                        processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-",
+                        isPreparedStatement ? "PreparedStatement" : "Statement");
 
                 boolean escapeProcessingDone = sql.indexOf('{') == -1;
-                assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone || !isPreparedStatement
-                        && enableEscapeProcessing == escapeProcessingDone);
+                assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone
+                        || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
             return super.preProcess(sql, interceptedStatement, connection);
         }

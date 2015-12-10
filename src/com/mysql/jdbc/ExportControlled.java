@@ -89,8 +89,8 @@ public class ExportControlled {
 
             List<String> allowedProtocols = new ArrayList<String>();
             List<String> supportedProtocols = Arrays.asList(((SSLSocket) mysqlIO.mysqlConnection).getSupportedProtocols());
-            for (String protocol : (Util.isEnterpriseEdition(mysqlIO.getServerVersion()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] {
-                    "TLSv1.1", "TLSv1" })) {
+            for (String protocol : (mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion()) ? new String[] { "TLSv1.2",
+                    "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1", "TLSv1" })) {
                 if (supportedProtocols.contains(protocol)) {
                     allowedProtocols.add(protocol);
                 }

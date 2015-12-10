@@ -1752,12 +1752,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug36948() throws Exception {
-
         Connection _conn = null;
 
         try {
-
-            Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+            Properties props = getPropertiesFromTestsuiteUrl();
             String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
             String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
             String db = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "test");
@@ -1768,14 +1766,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 hostSpec = host + ":" + port;
             }
 
+            props = getHostFreePropertiesFromTestsuiteUrl();
+            props.remove("useSSL");
+            props.remove("requireSSL");
+            props.remove("verifyServerCertificate");
+            props.remove("trustCertificateKeyStoreUrl");
+            props.remove("trustCertificateKeyStoreType");
+            props.remove("trustCertificateKeyStorePassword");
+
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
                     + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
                     + "&trustCertificateKeyStorePassword=password";
 
-            _conn = DriverManager.getConnection(url, (String) this.getPropertiesFromTestsuiteUrl().get("user"),
-                    (String) this.getPropertiesFromTestsuiteUrl().get("password"));
-
-            assertTrue(true);
+            _conn = DriverManager.getConnection(url, props);
         } finally {
             if (_conn != null) {
                 _conn.close();
@@ -1822,7 +1825,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testFailoverReadOnly() throws Exception {
-        Properties props = getMasterSlaveProps();
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.setProperty("autoReconnect", "true");
         props.setProperty("queriesBeforeRetryMaster", "0");
         props.setProperty("secondsBeforeRetryMaster", "0"); // +^ enable fall back to primary as soon as possible
@@ -2044,7 +2047,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         StringBuilder urlBuf = new StringBuilder();
         urlBuf.append(getMasterSlaveUrl());
         urlBuf.append("?");
-        Properties props = getMasterSlaveProps();
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         String key = null;
 
         Enumeration<Object> keyEnum = props.keys();
@@ -2583,10 +2586,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug46637() throws Exception {
-        NonRegisteringDriver driver = new NonRegisteringDriver();
-        Properties props = new Properties();
-        copyBasePropertiesIntoProps(props, driver);
-        String hostname = getPortFreeHostname(props, driver);
+        String hostname = getPortFreeHostname(null, new NonRegisteringDriver());
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.downHost(hostname);
 
@@ -5643,9 +5643,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             createUser(st1, "'\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'", "identified by 'msandbox'");
             st1.execute("grant all on `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`.* to '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'");
 
-            props = new Properties();
+            props = getHostFreePropertiesFromTestsuiteUrl();
             props.setProperty("user", "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
             props.setProperty("password", "msandbox");
+            props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
             c2 = DriverManager.getConnection(url + "/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
             c2.createStatement().executeQuery("select 1");
             c2.close();
