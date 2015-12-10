@@ -1224,14 +1224,14 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
         </junit>
 
         <local name="test.message.jdbc42" />
-        <condition property="test.message.jdbc4"
+        <condition property="test.message.jdbc42"
                    value="Running JDBC 4.2 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc42.testsuite.jvm.java}'"
                    else="">
             <not>
                 <isset property="test" />
             </not>
         </condition>
-        <echo>${test.message.jdbc4}</echo>
+        <echo>${test.message.jdbc42}</echo>
 
         <junit printsummary="yes"
                fork="on"
