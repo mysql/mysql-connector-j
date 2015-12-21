@@ -59,6 +59,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
@@ -170,6 +171,10 @@ public class ExportControlled {
             return this.rawSocket;
         }
 
+        @Override
+        public boolean isLocallyConnected(MysqlConnection conn) {
+            return this.existingSocketFactory.isLocallyConnected(conn);
+        }
     }
 
     private ExportControlled() { /* prevent instantiation */

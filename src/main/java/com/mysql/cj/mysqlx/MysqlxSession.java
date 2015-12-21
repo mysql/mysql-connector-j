@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -62,8 +63,8 @@ import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
+import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.RowResultImpl;
 import com.mysql.cj.mysqlx.devapi.SqlDataResult;
 import com.mysql.cj.mysqlx.devapi.SqlResultImpl;
@@ -85,7 +86,8 @@ public class MysqlxSession implements Session {
      *
      * @param<T> the type of the result that this constructor will create
      */
-    public static interface ResultCtor<T> extends Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> {}
+    public static interface ResultCtor<T> extends Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> {
+    }
 
     private MysqlxProtocol protocol;
     private ResultStreamer currentResult;
@@ -438,8 +440,8 @@ public class MysqlxSession implements Session {
 
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
-        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f,
-                (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new DbDocValueFactory()));
+        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f, (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0,
+                new DbDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);
@@ -588,5 +590,11 @@ public class MysqlxSession implements Session {
     public boolean isSSLEstablished() {
         // TODO;
         return false;
+    }
+
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

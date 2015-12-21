@@ -23,9 +23,63 @@
 
 package com.mysql.cj.api.io;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
+
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.core.Messages;
 
 public interface SocketMetadata {
 
-    boolean isLocallyConnected(MysqlConnection conn);
+    default boolean isLocallyConnected(MysqlConnection conn) {
+        String processHost = conn.getProcessHost();
+        return isLocallyConnected(conn, processHost);
+    }
+
+    default boolean isLocallyConnected(MysqlConnection conn, String processHost) {
+        if (processHost != null) {
+            conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.0", new Object[] { processHost }));
+
+            int endIndex = processHost.lastIndexOf(":");
+            if (endIndex != -1) {
+                processHost = processHost.substring(0, endIndex);
+
+                try {
+
+                    InetAddress[] whereMysqlThinksIConnectedFrom = InetAddress.getAllByName(processHost);
+
+                    SocketAddress remoteSocketAddr = conn.getSession().getRemoteSocketAddress();
+
+                    if (remoteSocketAddr instanceof InetSocketAddress) {
+                        InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
+
+                        for (InetAddress hostAddr : whereMysqlThinksIConnectedFrom) {
+                            if (hostAddr.equals(whereIConnectedTo)) {
+                                conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
+                                return true;
+                            }
+                            conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
+                        }
+
+                    } else {
+                        conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
+                    }
+
+                    return false;
+                } catch (UnknownHostException e) {
+                    conn.getSession().getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
+
+                    return false;
+                }
+
+            }
+            conn.getSession().getLog().logWarn(Messages.getString("SocketMetadata.4", new Object[] { processHost }));
+            return false;
+        }
+
+        return false;
+    }
+
 }

@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqla;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -389,11 +390,11 @@ public class MysqlaSession extends AbstractSession implements Session {
         synchronized (conn.getConnectionMutex()) {
             SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
 
-            if (factory instanceof SocketMetadata) {
-                return ((SocketMetadata) factory).isLocallyConnected(conn);
-            }
-            this.log.logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
-            return false;
+            //if (factory instanceof SocketMetadata) {
+            return ((SocketMetadata) factory).isLocallyConnected(conn);
+            //}
+            //this.log.logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
+            //return false;
         }
     }
 
@@ -543,6 +544,11 @@ public class MysqlaSession extends AbstractSession implements Session {
 
     public int getCommandCount() {
         return this.protocol.getCommandCount();
+    }
+
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        return this.protocol.getSocketConnection().getMysqlSocket().getRemoteSocketAddress();
     }
 
 }

@@ -27,21 +27,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
  */
-public class StandardSocketFactory implements SocketFactory, SocketMetadata {
+public class StandardSocketFactory implements SocketFactory {
 
     public static final String TCP_KEEP_ALIVE_DEFAULT_VALUE = "true";
 
@@ -224,40 +220,6 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         }
 
         throw new SocketException("Unable to create socket");
-    }
-
-    public boolean isLocallyConnected(MysqlConnection conn) {
-        String processHost = conn.getProcessHost();
-        return isLocallyConnected(conn, processHost);
-    }
-
-    protected boolean isLocallyConnected(MysqlConnection conn, String processHost) {
-        if (processHost != null) {
-            if (processHost.indexOf(":") != -1) {
-                processHost = processHost.split(":")[0];
-
-                try {
-                    boolean isLocal = false;
-
-                    InetAddress whereMysqlThinksIConnectedFrom = InetAddress.getByName(processHost);
-                    SocketAddress remoteSocketAddr = this.rawSocket.getRemoteSocketAddress();
-
-                    if (remoteSocketAddr instanceof InetSocketAddress) {
-                        InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
-
-                        isLocal = whereMysqlThinksIConnectedFrom.equals(whereIConnectedTo);
-                    }
-
-                    return isLocal;
-                } catch (UnknownHostException e) {
-                    conn.getSession().getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { this.host }), e);
-
-                    return false;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**

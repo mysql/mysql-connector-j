@@ -33,13 +33,12 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.core.Messages;
 
 /**
  * A socket factory for named pipes (on Windows)
  */
-public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
+public class NamedPipeSocketFactory implements SocketFactory {
     /**
      * A socket that encapsulates named pipes on Windows
      */

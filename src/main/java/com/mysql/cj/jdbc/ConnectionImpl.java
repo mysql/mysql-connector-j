@@ -4729,26 +4729,50 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             String processHost = null;
 
             try {
+                processHost = findProcessHost(threadId, processListStmt);
 
-                ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+                if (processHost == null) {
+                    // http://bugs.mysql.com/bug.php?id=44167 - connection ids on the wire wrap at 4 bytes even though they're 64-bit numbers
+                    this.session.getLog().logWarn(
+                            String.format("Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead",
+                                    threadId));
 
-                while (rs.next()) {
-                    long id = rs.getLong(1);
-
-                    if (threadId == id) {
-
-                        processHost = rs.getString(3);
-
-                        break;
+                    ResultSet rs = processListStmt.executeQuery("SELECT CONNECTION_ID()");
+                    if (rs.next()) {
+                        threadId = rs.getLong(1);
+                        processHost = findProcessHost(threadId, processListStmt);
+                    } else {
+                        this.session.getLog().logError(
+                                "No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
                     }
                 }
             } finally {
                 processListStmt.close();
             }
+
+            if (processHost == null) {
+                this.session.getLog().logWarn(
+                        String.format("Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected",
+                                threadId));
+            }
             return processHost;
         } catch (SQLException ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
         }
+    }
+
+    private static String findProcessHost(long threadId, java.sql.Statement processListStmt) throws SQLException {
+        String processHost = null;
+        ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+        while (rs.next()) {
+            long id = rs.getLong(1);
+            if (threadId == id) {
+                processHost = rs.getString(3);
+                break;
+            }
+        }
+        return processHost;
+
     }
 
     @Override

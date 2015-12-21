@@ -23,6 +23,7 @@
 
 package com.mysql.cj.api;
 
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -159,5 +160,7 @@ public interface Session {
     ServerSession getServerSession();
 
     boolean isSSLEstablished();
+
+    SocketAddress getRemoteSocketAddress();
 
 }
