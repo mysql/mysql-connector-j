@@ -75,14 +75,11 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-import testsuite.UnreliableSocketFactory;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
@@ -97,8 +94,11 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.jdbc.util.TimeUtil;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
+import testsuite.UnreliableSocketFactory;
 
 /**
  * Regression tests for the Statement class
@@ -8767,8 +8767,8 @@ public class StatementRegressionTest extends BaseTestCase {
             boolean useServerSidePreparedStatements = (tst & 0x2) != 0;
             boolean sendFractionalSeconds = (tst & 0x4) != 0;
 
-            String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-",
-                    useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
+            String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-", useServerSidePreparedStatements
+                    ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
             props.setProperty("statementInterceptors", TestBug77449StatementInterceptor.class.getName());

@@ -102,6 +102,7 @@ import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
@@ -126,11 +127,11 @@ import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
+import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.RandomBalanceStrategy;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
@@ -2191,7 +2192,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         UnreliableSocketFactory.dontDownHost("second");
         try {
             // won't work now even though master is back up connection has already been implicitly closed when a new master host cannot be found:
-            conn2.createStatement().execute("SELECT 1");
+            Statement lstmt = conn2.createStatement();
+            lstmt.execute("SELECT 1");
             fail("Will fail because inability to find new master host implicitly closes connection.");
         } catch (SQLException e) {
             assertEquals("08003", e.getSQLState());
@@ -2818,7 +2820,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts,
                 Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             if (forcedFutureServer == null || forceFutureServerTimes == 0 || !configuredHosts.contains(forcedFutureServer)) {
                 return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
@@ -2923,7 +2925,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts,
                 Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             rebalancedTimes++;
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
@@ -3231,10 +3233,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConnection2 = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
 
-            assert (((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assertTrue(((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // Two different Connection objects should not equal each other:
-            assert (!failoverConnection1.equals(failoverConnection2));
+            assertFalse(failoverConnection1.equals(failoverConnection2));
 
             int hc = failoverConnection1.hashCode();
 
@@ -3248,10 +3250,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
             // ensure we're now connected to the slave
-            assert (!((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assertFalse(((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // ensure that hashCode() result is persistent across failover events when proxy state changes
-            assert (failoverConnection1.hashCode() == hc);
+            assertEquals(hc, failoverConnection1.hashCode());
         } finally {
             if (failoverConnection1 != null) {
                 failoverConnection1.close();
@@ -5878,7 +5880,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         List<String> masterHosts = new ArrayList<String>();
         masterHosts.add(masterHost);
         List<String> slaveHosts = new ArrayList<String>(); // empty
-        ReplicationConnection replConn = new ReplicationConnection(new ConnectionString(dbUrl, props), props, props, masterHosts, slaveHosts);
+        ReplicationConnection replConn = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), masterHosts, props, slaveHosts,
+                props);
         return replConn;
     }
 
@@ -7604,7 +7607,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * connections. Later on, the second thread, eventually initiates a failover procedure too and hits the lock on {@link ReplicationConnectionGroup} owned by
      * the first thread. The first thread, at the same time, requires that the lock on {@link ReplicationConnection} is released by the second thread to be able
      * to complete the failover procedure is has initiated before.
-     * (*) Executing a query may trigger this too via locking on {@link LoadBalancingConnectionProxy}.
+     * (*) Executing a query may trigger this too via locking on {@link LoadBalancedConnectionProxy}.
      * 
      * This test simulates the way Fabric connections operate when they need to synchronize the list of servers from a {@link ReplicationConnection} with the
      * Fabric's server group. In that operation we, like Fabric connections, use an {@link ExceptionInterceptor} that ends up changing the
@@ -7836,4 +7839,88 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("ssl_cipher=" + cipher);
     }
 
+    /**
+     * Tests fix for BUG#56100 - Replication driver routes DML statements to read-only slaves.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug56100() throws Exception {
+        final String port = getPort(null);
+        final String hostMaster = "master:" + port;
+        final String hostSlave = "slave:" + port;
+
+        final Properties props = new Properties();
+        props.setProperty("statementInterceptors", Bug56100StatementInterceptor.class.getName());
+
+        final ReplicationConnection testConn = getUnreliableReplicationConnection(new String[] { "master", "slave" }, props);
+
+        assertTrue(testConn.isHostMaster(hostMaster));
+        assertTrue(testConn.isHostSlave(hostSlave));
+
+        // verify that current connection is 'master'
+        assertTrue(testConn.isMasterConnection());
+
+        final Statement testStmt1 = testConn.createStatement();
+        testBug56100AssertHost(testStmt1, "master");
+
+        // set connection to read-only state and verify that current connection is 'slave' now
+        testConn.setReadOnly(true);
+        assertFalse(testConn.isMasterConnection());
+
+        final Statement testStmt2 = testConn.createStatement();
+        testBug56100AssertHost(testStmt1, "slave");
+        testBug56100AssertHost(testStmt2, "slave");
+
+        // set connection to read/write state and verify that current connection is 'master' again
+        testConn.setReadOnly(false);
+        assertTrue(testConn.isMasterConnection());
+
+        final Statement testStmt3 = testConn.createStatement();
+        testBug56100AssertHost(testStmt1, "master");
+        testBug56100AssertHost(testStmt2, "master");
+        testBug56100AssertHost(testStmt3, "master");
+
+        // let Connection.close() also close open statements
+        testConn.close();
+
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt1.execute("SELECT 'Bug56100'");
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt2.execute("SELECT 'Bug56100'");
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt3.execute("SELECT 'Bug56100'");
+                return null;
+            }
+        });
+    }
+
+    private void testBug56100AssertHost(Statement testStmt, String expectedHost) throws SQLException {
+        this.rs = testStmt.executeQuery("SELECT '<HOST_NAME>'");
+        assertTrue(this.rs.next());
+        assertEquals(expectedHost, this.rs.getString(1));
+        this.rs.close();
+    }
+
+    public static class Bug56100StatementInterceptor extends BaseStatementInterceptor {
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
+            if (sql.contains("<HOST_NAME>")) {
+                return (ResultSetInternalMethods) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", connection.getHost()));
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
+        }
+    }
 }

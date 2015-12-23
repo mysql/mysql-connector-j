@@ -4,6 +4,8 @@ dd-mm-yy - Version 6.0.2
 
   - Merged version 5.1.38.
 
+  - Fix for Bug#56100 (11763401), Replication driver routes DML statements to read-only slaves.
+
   - StandardSSLSocketFactory implements SocketMetadata.
 
   - Fix for Bug#21978216, GETTYPEINFO REPORT MAXIMUM PRECISION OF 255 FOR VARBINARY.

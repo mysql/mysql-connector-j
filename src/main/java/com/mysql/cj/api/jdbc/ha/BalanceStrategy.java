@@ -29,7 +29,7 @@ import java.util.Map;
 
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
+import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 
 /**
  * Implement this interface to provide a new load balancing strategy for URLs of the form "jdbc:mysql:loadbalance://..", and provide the implementation class
@@ -70,8 +70,8 @@ public interface BalanceStrategy extends Extension {
      *             if a new connection can not be found or created by this
      *             strategy.
      * 
-     * @see LoadBalancingConnectionProxy#createConnectionForHost(String)
+     * @see LoadBalancedConnectionProxy#createConnectionForHost(String)
      */
-    abstract ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+    abstract ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException;
 }

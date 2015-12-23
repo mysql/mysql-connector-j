@@ -59,6 +59,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     boolean autoReconnect = false;
 
     JdbcConnection thisAsConnection = null;
+    JdbcConnection proxyConnection = null;
+
     JdbcConnection currentConnection = null;
 
     boolean isClosed = false;
@@ -148,6 +150,41 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     }
 
     /**
+     * Get this connection's proxy.
+     * A multi-host connection may not be at top level in the multi-host connections chain. In such case the first connection in the chain is available as a
+     * proxy.
+     * 
+     * @return
+     *         Returns this connection's proxy if there is one or itself if this is the first one.
+     */
+    protected JdbcConnection getProxy() {
+        return this.proxyConnection != null ? this.proxyConnection : this.thisAsConnection;
+    }
+
+    /**
+     * Sets this connection's proxy. This proxy should be the first connection in the multi-host connections chain.
+     * After setting the connection proxy locally, propagates it through the dependant connections.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    protected final void setProxy(JdbcConnection proxyConn) {
+        this.proxyConnection = proxyConn;
+        propagateProxyDown(proxyConn);
+    }
+
+    /**
+     * Propagates the connection proxy down through the multi-host connections chain.
+     * This method is intended to be overridden in subclasses that manage more than one active connection at same time.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    protected void propagateProxyDown(JdbcConnection proxyConn) {
+        this.currentConnection.setProxy(proxyConn);
+    }
+
+    /**
      * Wraps this object with a new multi-host Connection instance.
      * 
      * @return
@@ -217,6 +254,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     abstract boolean shouldExceptionTriggerConnectionSwitch(Throwable t);
 
     /**
+     * Checks if current connection is to a master host.
+     */
+    abstract boolean isMasterConnection();
+
+    /**
      * Invalidates the current connection.
      */
     synchronized void invalidateCurrentConnection() throws SQLException {
@@ -277,8 +319,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(this.connectionString, hostName, Integer.parseInt(portNumber), connProps, dbName,
                 "jdbc:mysql://" + hostName + ":" + portNumber + "/");
 
-        conn.setProxy(this.thisAsConnection);
-        conn.setRealProxy(this);
+        conn.setProxy(getProxy());
 
         return conn;
     }
@@ -344,7 +385,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         String methodName = method.getName();
 
         if (METHOD_GET_MULTI_HOST_SAFE_PROXY.equals(methodName)) {
-            return this.currentConnection;
+            return this.thisAsConnection;
         }
 
         if (METHOD_EQUALS.equals(methodName)) {
@@ -383,7 +424,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return this.isClosed;
         }
 
-        return invokeMore(proxy, method, args);
+        try {
+            return invokeMore(proxy, method, args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause() != null ? e.getCause() : e;
+        }
     }
 
     /*

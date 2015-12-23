@@ -40,7 +40,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
     private int matchingAfterStatementThreshold = 0;
     private String matchingAfterStatementRegex;
     private ConnectionImpl conn;
-    private LoadBalancingConnectionProxy proxy = null;
+    private LoadBalancedConnectionProxy proxy = null;
 
     public void destroy() {
         // do nothing here
@@ -58,7 +58,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         try {
             this.matchingAfterStatementThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
-            // nothing here, being handled in LoadBalancingConnectionProxy.
+            // nothing here, being handled in LoadBalancedConnectionProxy.
         }
         String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
         if ("".equals(autoCommitSwapRegex)) {
@@ -83,7 +83,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
                     lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
                 }
                 if (lcl_proxy != null) {
-                    this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getProxy();
+                    this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
                 }
 
             }

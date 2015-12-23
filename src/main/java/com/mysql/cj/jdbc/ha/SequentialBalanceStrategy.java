@@ -52,7 +52,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
         // we don't have anything to initialize
     }
 
-    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+    public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
         int numHosts = configuredHosts.size();
 
@@ -139,7 +139,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 } catch (SQLException sqlEx) {
                     ex = sqlEx;
 
-                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+                    if (proxy.shouldExceptionTriggerConnectionSwitch(sqlEx)) {
 
                         proxy.addToGlobalBlacklist(hostPortSpec);
 

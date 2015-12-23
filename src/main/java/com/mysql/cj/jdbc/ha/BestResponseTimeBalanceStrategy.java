@@ -35,9 +35,6 @@ import com.mysql.cj.jdbc.ConnectionImpl;
 
 public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
-    /**
-     * @param loadBalancingConnectionProxy
-     */
     public BestResponseTimeBalanceStrategy() {
     }
 
@@ -49,7 +46,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
         // we don't have anything to initialize
     }
 
-    public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
+    public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
 
         Map<String, Long> blackList = proxy.getGlobalBlacklist();
@@ -91,7 +88,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
                 } catch (SQLException sqlEx) {
                     ex = sqlEx;
 
-                    if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
+                    if (proxy.shouldExceptionTriggerConnectionSwitch(sqlEx)) {
                         proxy.addToGlobalBlacklist(bestHost);
                         blackList.put(bestHost, null);
 

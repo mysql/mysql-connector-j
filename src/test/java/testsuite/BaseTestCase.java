@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import junit.framework.TestCase;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.ServerVersion;
@@ -53,7 +54,6 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
@@ -1231,7 +1231,6 @@ public abstract class BaseTestCase extends TestCase {
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
-
     }
 
     protected boolean assertEqualsFSAware(String matchStr, String inStr) throws Exception {

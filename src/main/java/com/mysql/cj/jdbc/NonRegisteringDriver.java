@@ -45,8 +45,8 @@ import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.cj.jdbc.ha.FailoverConnectionProxy;
-import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
@@ -201,19 +201,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             switch (conStr.connectionStringType) {
                 case LOADBALANCING_CONNECTION:
-                    LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(conStr);
-
-                    return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                            new Class[] { com.mysql.cj.api.jdbc.ha.LoadBalancedConnection.class }, proxyBal);
+                    return LoadBalancedConnectionProxy.createProxyInstance(conStr);
 
                 case FAILOVER_CONNECTION:
-                    FailoverConnectionProxy connProxy = new FailoverConnectionProxy(conStr);
-
-                    return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                            new Class[] { JdbcConnection.class }, connProxy);
+                    return FailoverConnectionProxy.createProxyInstance(conStr);
 
                 case REPLICATION_CONNECTION:
-                    return new ReplicationConnection(conStr);
+                    return ReplicationConnectionProxy.createProxyInstance(conStr);
 
                 case FABRIC_CONNECTION:
                     // TODO test it

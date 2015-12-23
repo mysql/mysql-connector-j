@@ -60,21 +60,39 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 
+/**
+ * Each instance of MultiHostMySQLConnection is coupled with a MultiHostConnectionProxy instance.
+ * 
+ * While this class implements MySQLConnection directly, MultiHostConnectionProxy does the same but via a dynamic proxy.
+ * 
+ * Most of the methods in this class refer directly to the active connection from its MultiHostConnectionProxy pair, providing a non-proxied access to the
+ * current active connection managed by this multi-host structure. The remaining methods either implement some local behavior or refer to the proxy itself
+ * instead of the sub-connection.
+ * 
+ * Referring to the higher level proxy connection is needed when some operation needs to be extended to all open sub-connections existing in this multi-host
+ * structure as opposed to just refer to the active current connection, such as with close() which is most likely required to close all sub-connections as
+ * well.
+ */
 public class MultiHostMySQLConnection implements JdbcConnection {
 
-    protected MultiHostConnectionProxy proxy;
+    /**
+     * thisAsProxy holds the proxy (MultiHostConnectionProxy or one of its subclasses) this connection is associated with.
+     * It is used as a gateway to the current active sub-connection managed by this multi-host structure or as a target to where some of the methods implemented
+     * here in this class refer to.
+     */
+    protected MultiHostConnectionProxy thisAsProxy;
 
     public MultiHostMySQLConnection(MultiHostConnectionProxy proxy) {
-        this.proxy = proxy;
+        this.thisAsProxy = proxy;
     }
 
-    public MultiHostConnectionProxy getProxy() {
-        return this.proxy;
+    public MultiHostConnectionProxy getThisAsProxy() {
+        return this.thisAsProxy;
     }
 
     protected JdbcConnection getActiveMySQLConnection() {
-        synchronized (this.proxy) {
-            return this.proxy.currentConnection;
+        synchronized (this.thisAsProxy) {
+            return this.thisAsProxy.currentConnection;
         }
     }
 
@@ -215,7 +233,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public JdbcConnection getMultiHostSafeProxy() {
-        return getActiveMySQLConnection().getMultiHostSafeProxy();
+        return getThisAsProxy().getProxy();
     }
 
     public DatabaseMetaData getMetaData() throws SQLException {
@@ -311,7 +329,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public boolean isMasterConnection() {
-        return getActiveMySQLConnection().isMasterConnection();
+        return getThisAsProxy().isMasterConnection();
     }
 
     public boolean isNoBackslashEscapesSet() {
@@ -475,7 +493,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public void setProxy(JdbcConnection proxy) {
-        getActiveMySQLConnection().setProxy(proxy);
+        getThisAsProxy().setProxy(proxy);
     }
 
     public void setReadInfoMsgEnabled(boolean flag) {
@@ -539,7 +557,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public boolean isClosed() throws SQLException {
-        return getActiveMySQLConnection().isClosed();
+        return getThisAsProxy().isClosed;
     }
 
     public boolean isProxySet() {
@@ -578,18 +596,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getConnectionMutex();
     }
 
-    public boolean getAllowMasterDownConnections() {
-        return false;
-    }
-
-    public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
-    }
-
-    // TODO: we should expose here functionality available in l/b and replication connections
-    public boolean getHaEnableJMX() {
-        return false;
-    }
-
     public int getSessionMaxRows() {
         return getActiveMySQLConnection().getSessionMaxRows();
     }
@@ -619,9 +625,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public boolean isValid(int timeout) throws SQLException {
-        synchronized (this.proxy) {
-            return getActiveMySQLConnection().isValid(timeout);
-        }
+        return getActiveMySQLConnection().isValid(timeout);
     }
 
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
@@ -633,8 +637,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        //checkClosed();
-
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
@@ -674,7 +676,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-        synchronized (this.proxy) {
+        synchronized (getThisAsProxy()) {
             return ((ConnectionImpl) getActiveMySQLConnection()).getClientInfoProviderImpl();
         }
     }

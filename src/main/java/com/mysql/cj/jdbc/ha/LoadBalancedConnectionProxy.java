@@ -41,11 +41,14 @@ import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
+import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionGroup;
@@ -68,7 +71,7 @@ import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
  * This implementation is thread-safe, but it's questionable whether sharing a connection instance amongst threads is a good idea, given that transactions are
  * scoped to connections in JDBC.
  */
-public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
+public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
     private ConnectionGroup connectionGroup = null;
     private long connectionGroupProxyID = 0;
 
@@ -95,6 +98,13 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
 
     private Log log = new NullLogger("LoadBalancingConnectionProxy");
 
+    public static LoadBalancedConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
+        LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionString);
+
+        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
+                new Class[] { LoadBalancedConnection.class }, connProxy);
+    }
+
     /**
      * Creates a proxy for java.sql.Connection that routes requests between the given list of host:port and uses the given properties when creating connections.
      * 
@@ -104,7 +114,7 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
      *            Connection properties from where to get initial settings and to be used in new connections.
      * @throws SQLException
      */
-    public LoadBalancingConnectionProxy(ConnectionString connectionString) throws SQLException {
+    public LoadBalancedConnectionProxy(ConnectionString connectionString) throws SQLException {
         super();
 
         List<String> hosts = ConnectionString.getHosts(connectionString.getProperties());
@@ -228,6 +238,19 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
         return new LoadBalancedMySQLConnection(this);
     }
 
+    /**
+     * Propagates the connection proxy down through all live connections.
+     * 
+     * @param proxyConn
+     *            The top level connection in the multi-host connections chain.
+     */
+    @Override
+    protected void propagateProxyDown(JdbcConnection proxyConn) {
+        for (JdbcConnection c : this.liveConnections.values()) {
+            c.setProxy(proxyConn);
+        }
+    }
+
     @Deprecated
     public boolean shouldExceptionTriggerFailover(Throwable t) {
         return shouldExceptionTriggerConnectionSwitch(t);
@@ -243,6 +266,14 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
         return t instanceof SQLException && this.exceptionChecker.shouldExceptionTriggerFailover(t);
+    }
+
+    /**
+     * Always returns 'true' as there are no "masters" and "slaves" in this type of connection.
+     */
+    @Override
+    boolean isMasterConnection() {
+        return true;
     }
 
     /**
@@ -454,7 +485,13 @@ public class LoadBalancingConnectionProxy extends MultiHostConnectionProxy imple
                 if (this.closedReason != null) {
                     reason += ("  " + this.closedReason);
                 }
-                throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
+
+                for (Class<?> excls : method.getExceptionTypes()) {
+                    if (SQLException.class.isAssignableFrom(excls)) {
+                        throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to an interceptor here... */);
+                    }
+                }
+                throw ExceptionFactory.createException(CJCommunicationsException.class, reason);
             }
         }
 

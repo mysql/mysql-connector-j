@@ -99,15 +99,22 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
     }
 
+    public static JdbcConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
+        FailoverConnectionProxy connProxy = new FailoverConnectionProxy(connectionString);
+
+        return (JdbcConnection) java.lang.reflect.Proxy
+                .newProxyInstance(JdbcConnection.class.getClassLoader(), new Class[] { JdbcConnection.class }, connProxy);
+    }
+
     /**
-     * Instantiates a new FailoverConnectionProxy for the given list of host and connection properties.
+     * Instantiates a new FailoverConnectionProxy for the given list of hosts and connection properties.
      * 
      * @param hosts
      *            The lists of hosts available to switch on.
      * @param props
      *            The properties to be used in new internal connections.
      */
-    public FailoverConnectionProxy(ConnectionString connectionString) throws SQLException {
+    private FailoverConnectionProxy(ConnectionString connectionString) throws SQLException {
         super(connectionString);
 
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
@@ -157,6 +164,14 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
 
         return false;
+    }
+
+    /**
+     * Checks if current connection is to a master host.
+     */
+    @Override
+    boolean isMasterConnection() {
+        return connectedToPrimaryHost();
     }
 
     /*

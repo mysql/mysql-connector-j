@@ -26,15 +26,22 @@ package com.mysql.cj.jdbc.ha;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection {
-    public LoadBalancedMySQLConnection(LoadBalancingConnectionProxy proxy) {
+    public LoadBalancedMySQLConnection(LoadBalancedConnectionProxy proxy) {
         super(proxy);
     }
 
     @Override
-    public LoadBalancingConnectionProxy getProxy() {
-        return (LoadBalancingConnectionProxy) super.getProxy();
+    public LoadBalancedConnectionProxy getThisAsProxy() {
+        return (LoadBalancedConnectionProxy) super.getThisAsProxy();
+    }
+
+    @Override
+    public void close() throws SQLException {
+        getThisAsProxy().doClose();
     }
 
     @Override
@@ -44,21 +51,38 @@ public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implem
 
     public void ping(boolean allConnections) throws SQLException {
         if (allConnections) {
-            getProxy().doPing();
+            getThisAsProxy().doPing();
         } else {
             getActiveMySQLConnection().ping();
         }
     }
 
     public boolean addHost(String host) throws SQLException {
-        return getProxy().addHost(host);
+        return getThisAsProxy().addHost(host);
     }
 
     public void removeHost(String host) throws SQLException {
-        getProxy().removeHost(host);
+        getThisAsProxy().removeHost(host);
     }
 
     public void removeHostWhenNotInUse(String host) throws SQLException {
-        getProxy().removeHostWhenNotInUse(host);
+        getThisAsProxy().removeHostWhenNotInUse(host);
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        // This works for classes that aren't actually wrapping anything
+        return iface.isInstance(this);
+    }
+
+    @Override
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        try {
+            // This works for classes that aren't actually wrapping anything
+            return iface.cast(this);
+        } catch (ClassCastException cce) {
+            throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        }
     }
 }

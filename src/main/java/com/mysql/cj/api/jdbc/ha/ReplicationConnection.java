@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,14 +27,28 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 
-public interface LoadBalancedConnection extends JdbcConnection {
+public interface ReplicationConnection extends JdbcConnection {
+    public long getConnectionGroupId();
 
-    boolean addHost(String host) throws SQLException;
+    public JdbcConnection getCurrentConnection();
 
-    void removeHost(String host) throws SQLException;
+    public JdbcConnection getMasterConnection();
 
-    void removeHostWhenNotInUse(String host) throws SQLException;
+    public void promoteSlaveToMaster(String host) throws SQLException;
 
-    void ping(boolean allConnections) throws SQLException;
+    public void removeMasterHost(String host) throws SQLException;
 
+    public void removeMasterHost(String host, boolean waitUntilNotInUse) throws SQLException;
+
+    public boolean isHostMaster(String host);
+
+    public JdbcConnection getSlavesConnection();
+
+    public void addSlaveHost(String host) throws SQLException;
+
+    public void removeSlave(String host) throws SQLException;
+
+    public void removeSlave(String host, boolean closeGently) throws SQLException;
+
+    public boolean isHostSlave(String host);
 }

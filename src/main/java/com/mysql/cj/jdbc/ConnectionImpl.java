@@ -100,6 +100,7 @@ import com.mysql.cj.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
 import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
 import com.mysql.cj.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
@@ -132,7 +133,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private JdbcConnection proxy = null;
-
     private InvocationHandler realProxy = null;
 
     public boolean isProxySet() {
@@ -141,14 +141,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public void setProxy(JdbcConnection proxy) {
         this.proxy = proxy;
+        this.realProxy = this.proxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
     }
 
-    public void setRealProxy(InvocationHandler proxy) {
-        this.realProxy = proxy;
-    }
-
-    // We have to proxy ourselves when we're load balanced so that statements get routed to the right physical connection
-    // (when load balanced, we're a "logical" connection)
+    // this connection has to be proxied when using multi-host settings so that statements get routed to the right physical connection
+    // (works as "logical" connection)
     private JdbcConnection getProxy() {
         return (this.proxy != null) ? this.proxy : (JdbcConnection) this;
     }
@@ -158,7 +155,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public Object getConnectionMutex() {
-        return (this.realProxy != null) ? this.realProxy : this;
+        return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
     class ExceptionInterceptorChain implements ExceptionInterceptor {

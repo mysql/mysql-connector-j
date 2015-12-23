@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
+
 /**
  * Group of connection objects which can be configured as a group. This is used for promotion/demotion of slaves and masters in a replication configuration,
  * and for exposing metrics around replication-aware connections.

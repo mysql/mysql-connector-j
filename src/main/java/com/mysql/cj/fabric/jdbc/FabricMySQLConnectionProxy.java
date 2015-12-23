@@ -56,6 +56,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.ConnectionString;
@@ -75,10 +76,10 @@ import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.ha.LoadBalancingConnectionProxy;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
+import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -458,7 +459,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
      * 
      * {@link getActiveConnection()} is provided for the general case.
      * The returned object is not a {@link ReplicationConnection}, but
-     * instead the {@link LoadBalancingConnectionProxy} for either the
+     * instead the {@link LoadBalancedConnectionProxy} for either the
      * master or slaves.
      */
     protected JdbcConnection getActiveMySQLConnection() throws SQLException {
@@ -589,7 +590,9 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
         info.setProperty("retriesAllDown", "1");
-        this.currentConnection = new ReplicationConnection(this.connectionString, info, info, masterHost, slaveHosts);
+
+        this.currentConnection = ReplicationConnectionProxy.createProxyInstance(this.connectionString, masterHost, info, slaveHosts, info);
+
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 
         this.currentConnection.setProxy(this);

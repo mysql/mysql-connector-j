@@ -48,6 +48,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
+import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
@@ -83,7 +84,7 @@ import com.mysql.cj.jdbc.UpdatableResultSet;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.ha.LoadBalancedMySQLConnection;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
-import com.mysql.cj.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.jdbc.ha.ReplicationMySQLConnection;
 import com.mysql.cj.mysqla.io.Buffer;
 
 public class TranslateExceptions {
@@ -237,8 +238,8 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         // com.mysql.cj.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
-        clazz = pool.get(ReplicationConnection.class.getName());
-        instrumentJdbcMethods(clazz, JdbcConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
+        clazz = pool.get(ReplicationMySQLConnection.class.getName());
+        instrumentJdbcMethods(clazz, ReplicationConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
         // ConnectionWrapper extends WrapperBase implements JdbcConnection
