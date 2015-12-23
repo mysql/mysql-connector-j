@@ -64,6 +64,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
@@ -71,6 +72,7 @@ import com.mysql.cj.core.exceptions.RSAException;
 import com.mysql.cj.core.exceptions.SSLParamsException;
 import com.mysql.cj.core.util.Base64Decoder;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -95,14 +97,22 @@ public class ExportControlled {
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(SocketConnection socketConnection) throws IOException, SSLParamsException, FeatureNotAvailableException {
+    public static void transformSocketToSSLSocket(SocketConnection socketConnection, ServerVersion serverVersion) throws IOException, SSLParamsException,
+            FeatureNotAvailableException {
         SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(socketConnection.getPropertySet(),
                 socketConnection.getExceptionInterceptor()), socketConnection.getSocketFactory(), socketConnection.getMysqlSocket());
 
         socketConnection.setMysqlSocket(sslFact.connect(socketConnection.getHost(), socketConnection.getPort(), null, 0));
 
-        // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake which MySQL doesn't understand
-        ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledProtocols(new String[] { "TLSv1" });
+        List<String> allowedProtocols = new ArrayList<String>();
+        List<String> supportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
+        for (String protocol : (Util.isEnterpriseEdition(serverVersion.toString()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1",
+                "TLSv1" })) {
+            if (supportedProtocols.contains(protocol)) {
+                allowedProtocols.add(protocol);
+            }
+        }
+        ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
         // check allowed cipher suites
         String enabledSSLCipherSuites = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
@@ -121,9 +131,7 @@ public class ExportControlled {
             }
 
             // if some ciphers were filtered into allowedCiphers 
-            if (allowedCiphers != null) {
-                ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
-            }
+            ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
         }
 
         ((SSLSocket) socketConnection.getMysqlSocket()).startHandshake();

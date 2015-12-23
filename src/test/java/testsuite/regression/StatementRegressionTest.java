@@ -369,8 +369,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
         String tableName = "testBug6823";
 
-        createTable(tableName, "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255),"
-                + " UNIQUE INDEX (strdata1(100)))");
+        createTable(tableName,
+                "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1(100)))");
 
         PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO " + tableName + " (strdata1, strdata2) VALUES (?,?)");
 
@@ -1174,8 +1174,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
-            this.stmt.executeUpdate("CREATE TABLE testBug3557 (`a` varchar(255) NOT NULL default 'XYZ', `b` varchar(255) default '123', "
-                    + "PRIMARY KEY  (`a`(100)))");
+            this.stmt
+                    .executeUpdate("CREATE TABLE testBug3557 (`a` varchar(255) NOT NULL default 'XYZ', `b` varchar(255) default '123', PRIMARY KEY  (`a`(100)))");
 
             Statement updStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             this.rs = updStmt.executeQuery("SELECT * FROM testBug3557");
@@ -1528,8 +1528,8 @@ public class StatementRegressionTest extends BaseTestCase {
                     + "`field6` varchar(75) default NULL, `field7` varchar(75) default NULL, `field8` datetime default NULL,"
                     + " PRIMARY KEY  (`field1`(100)))");
 
-            PreparedStatement pStmt = this.conn.prepareStatement("insert into testBug4119 (field2, field3,"
-                    + "field4, field5, field6, field7, field8, field1) values (?, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement pStmt = this.conn
+                    .prepareStatement("insert into testBug4119 (field2, field3, field4, field5, field6, field7, field8, field1) values (?, ?, ?, ?, ?, ?, ?, ?)");
 
             pStmt.setString(1, "0");
             pStmt.setString(2, "0");
@@ -1722,8 +1722,8 @@ public class StatementRegressionTest extends BaseTestCase {
                  */
             }
 
-            pStmt = this.conn.prepareStatement("SELECT qc.QuestionId, q.Text FROM testBug5191Q q, testBug5191C qc WHERE qc.CategoryId = ? "
-                    + " AND q.QuestionId = qc.QuestionId");
+            pStmt = this.conn
+                    .prepareStatement("SELECT qc.QuestionId, q.Text FROM testBug5191Q q, testBug5191C qc WHERE qc.CategoryId = ? AND q.QuestionId = qc.QuestionId");
 
             int catId = 0;
             for (int i = 0; i < 100; i++) {
@@ -9048,5 +9048,32 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             assertFalse(testCase, this.rs.next());
         }
+    }
+
+    /**
+     * Tests fix for Bug#78961 - Can't call MySQL procedure with InOut parameters in Fabric environment.
+     * 
+     * Although this is a Fabric related bug we are able reproduce it using a couple of multi-host connections.
+     */
+    public void testBug78961() throws Exception {
+        createProcedure("testBug78961", "(IN c1 FLOAT, IN c2 FLOAT, OUT h FLOAT, INOUT t FLOAT) BEGIN SET h = SQRT(c1 * c1 + c2 * c2); SET t = t + h; END;");
+
+        Connection highLevelConn = getLoadBalancedConnection(null);
+        assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy"));
+
+        Connection lowLevelConn = getMasterSlaveReplicationConnection(null);
+        // This simulates the behavior from Fabric connections that are causing the problem.
+        ((ReplicationConnection) lowLevelConn).setProxy((JdbcConnection) highLevelConn);
+
+        CallableStatement cstmt = lowLevelConn.prepareCall("{CALL testBug78961 (?, ?, ?, ?)}");
+        cstmt.setFloat(1, 3.0f);
+        cstmt.setFloat(2, 4.0f);
+        cstmt.setFloat(4, 5.0f);
+        cstmt.registerOutParameter(3, Types.FLOAT);
+        cstmt.registerOutParameter(4, Types.FLOAT);
+        cstmt.execute();
+
+        assertEquals(5.0f, cstmt.getFloat(3));
+        assertEquals(10.0f, cstmt.getFloat(4));
     }
 }

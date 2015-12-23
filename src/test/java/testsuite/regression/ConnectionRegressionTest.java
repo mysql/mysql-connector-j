@@ -116,6 +116,7 @@ import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.Util;
 import com.mysql.cj.fabric.jdbc.ErrorReportingExceptionInterceptor;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
@@ -7768,6 +7769,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
             testBug21947042_PrintCipher(sslConn);
+            testBug21947042_PrintVersion(sslConn);
             sslConn.close();
 
             // check for warning
@@ -7791,6 +7793,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
             testBug21947042_PrintCipher(sslConn);
+            testBug21947042_PrintVersion(sslConn);
             sslConn.close();
 
             // check for warning
@@ -7817,6 +7820,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
             testBug21947042_PrintCipher(sslConn);
+            testBug21947042_PrintVersion(sslConn);
             sslConn.close();
 
             // check for warning
@@ -7837,6 +7841,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertTrue(rset.next());
         String cipher = rset.getString(2);
         System.out.println("ssl_cipher=" + cipher);
+    }
+
+    private void testBug21947042_PrintVersion(Connection con) throws Exception {
+        ResultSet rset = con.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
+        assertTrue(rset.next());
+        String version = rset.getString(2);
+        System.out.println("ssl_version=" + version);
     }
 
     /**
@@ -7922,5 +7933,60 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedStatement, connection);
         }
+    }
+
+    /**
+     * Tests fix for WL#8196, Support for TLSv1.2 Protocol.
+     * 
+     * This test requires community server (with yaSSL) in -Dcom.mysql.cj.testsuite.url and
+     * commercial server (with OpenSSL) in -Dcom.mysql.cj.testsuite.url.openssl
+     * 
+     * Test certificates from test/config/ssl-test-certs must be installed on both servers.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testTLSVersion() throws Exception {
+
+        final String[] testDbUrls;
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/test-cert-store");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+
+        if (this.sha256Conn != null) {
+            testDbUrls = new String[] { BaseTestCase.dbUrl, sha256Url };
+        } else {
+            testDbUrls = new String[] { BaseTestCase.dbUrl };
+        }
+
+        for (String testDbUrl : testDbUrls) {
+            System.out.println(testDbUrl);
+            System.out.println(System.getProperty("java.version"));
+            Connection sslConn = getConnectionWithProps(testDbUrl, props);
+            assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+            ResultSet rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
+            assertTrue(rset.next());
+            String tlsVersion = rset.getString(2);
+            System.out.println(tlsVersion);
+            System.out.println();
+
+            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 10)) {
+                if (Util.isEnterpriseEdition(((JdbcConnection) sslConn).getServerVersion().toString())) {
+                    assertEquals("TLSv1.2", tlsVersion);
+                } else {
+                    assertEquals("TLSv1.1", tlsVersion);
+                }
+            } else {
+                assertEquals("TLSv1", tlsVersion);
+            }
+
+            sslConn.close();
+        }
+
     }
 }

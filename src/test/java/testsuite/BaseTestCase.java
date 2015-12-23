@@ -61,13 +61,13 @@ import com.mysql.cj.jdbc.NonRegisteringDriver;
 public abstract class BaseTestCase extends TestCase {
 
     /**
-     * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
+     * JDBC URL, initialized from com.mysql.cj.testsuite.url system property,
      * or defaults to jdbc:mysql:///test
      */
     public static String dbUrl = "jdbc:mysql:///test";
 
     /**
-     * JDBC URL, initialized from com.mysql.jdbc.testsuite.url.sha256default system property
+     * JDBC URL, initialized from com.mysql.cj.testsuite.url.openssl system property
      */
     protected static String sha256Url = null;
 

@@ -271,7 +271,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         send(packet, packet.getPosition());
 
         try {
-            ExportControlled.transformSocketToSSLSocket(this.socketConnection);
+            ExportControlled.transformSocketToSSLSocket(this.socketConnection, this.serverSession.getServerVersion());
         } catch (FeatureNotAvailableException nae) {
             throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder()
                     .getLastPacketSentTime(), nae);
@@ -1268,10 +1268,9 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (int) (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf
-                                .toString()));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(), (callingStatement != null)
+                        ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(), (int) (queryEndTime - queryStartTime),
+                        this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
@@ -1313,13 +1312,13 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
                 ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(), (callingStatement != null)
+                        ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(), (queryEndTime - queryStartTime),
+                        this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
-                        (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(), (callingStatement != null)
+                        ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(), (fetchEndTime - fetchBeginTime),
+                        this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
             }
 
             if (this.hadWarnings) {
@@ -1811,8 +1810,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         boolean isOpaqueBinary = (isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && (mysqlTypeId == MysqlaConstants.FIELD_TYPE_STRING
                 || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VAR_STRING || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VARCHAR)) ?
         // queries resolved by temp tables also have this 'signature', check for that
-        !isImplicitTemporaryTable
-                : "binary".equalsIgnoreCase(encoding);
+                !isImplicitTemporaryTable : "binary".equalsIgnoreCase(encoding);
 
         switch (mysqlTypeId) {
             case MysqlaConstants.FIELD_TYPE_DECIMAL:

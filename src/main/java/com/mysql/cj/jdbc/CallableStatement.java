@@ -42,6 +42,7 @@ import java.sql.SQLType;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Wrapper;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -2006,7 +2007,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         PreparedStatement setPstmt = null;
 
                         try {
-                            setPstmt = (PreparedStatement) this.connection.clientPrepareStatement(queryBuf.toString());
+                            setPstmt = ((Wrapper) this.connection.clientPrepareStatement(queryBuf.toString())).unwrap(PreparedStatement.class);
 
                             if (this.isNull[inParamInfo.index]) {
                                 setPstmt.setBytesNoEscapeNoQuotes(1, "NULL".getBytes());
