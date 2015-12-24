@@ -447,6 +447,33 @@ public abstract class BaseTestCase extends TestCase {
         return props;
     }
 
+    protected Properties getHostFreePropertiesFromTestsuiteUrl() throws SQLException {
+        return getHostFreePropertiesFromTestsuiteUrl(null);
+    }
+
+    protected Properties getHostFreePropertiesFromTestsuiteUrl(Properties props) throws SQLException {
+        Properties parsedProps = getPropertiesFromTestsuiteUrl();
+        if (props != null) {
+            parsedProps.putAll(props);
+        }
+        removeHostRelatedProps(parsedProps);
+        return parsedProps;
+    }
+
+    protected void removeHostRelatedProps(Properties props) {
+        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+
+        int numHosts = Integer.parseInt(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
+
+        for (int i = 1; i <= numHosts; i++) {
+            props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + i);
+            props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + i);
+        }
+
+        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
+    }
+
     protected int getRowCount(String tableName) throws SQLException {
         ResultSet countRs = null;
 
@@ -979,7 +1006,7 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getFailoverConnection(Properties props) throws SQLException {
-        return DriverManager.getConnection(getMasterSlaveUrl(), getMasterSlaveProps(props));
+        return DriverManager.getConnection(getMasterSlaveUrl(), getHostFreePropertiesFromTestsuiteUrl(props));
     }
 
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
@@ -989,7 +1016,7 @@ public abstract class BaseTestCase extends TestCase {
     protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
         String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix,
                 ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
-        Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getMasterSlaveProps(props));
+        Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getHostFreePropertiesFromTestsuiteUrl(props));
 
         return replConn;
     }
@@ -1023,33 +1050,6 @@ public abstract class BaseTestCase extends TestCase {
         urlBuf.append("/");
 
         return urlBuf.toString();
-    }
-
-    protected Properties getMasterSlaveProps() throws SQLException {
-        return getMasterSlaveProps(null);
-    }
-
-    protected Properties getMasterSlaveProps(Properties props) throws SQLException {
-        Properties parsedProps = getPropertiesFromTestsuiteUrl();
-        if (props != null) {
-            parsedProps.putAll(props);
-        }
-        removeHostRelatedProps(parsedProps);
-        return parsedProps;
-    }
-
-    protected void removeHostRelatedProps(Properties props) {
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        int numHosts = Integer.parseInt(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
-
-        for (int i = 1; i <= numHosts; i++) {
-            props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + i);
-            props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + i);
-        }
-
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
     }
 
     protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
@@ -1102,37 +1102,6 @@ public abstract class BaseTestCase extends TestCase {
         return getLoadBalancedConnection(1, "", props);
     }
 
-    protected void copyBasePropertiesIntoProps(Properties props) throws SQLException {
-        Properties testCaseProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
-        String user = testCaseProps.getProperty(PropertyDefinitions.PNAME_user);
-
-        if (user != null) {
-            props.setProperty(PropertyDefinitions.PNAME_user, user);
-        }
-
-        String password = testCaseProps.getProperty(PropertyDefinitions.PNAME_password);
-
-        if (password != null) {
-            props.setProperty(PropertyDefinitions.PNAME_password, password);
-        }
-
-        String port = testCaseProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        if (port != null) {
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, port);
-        } else {
-            String host = testCaseProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-
-            if (host != null) {
-                String[] hostPort = host.split(":");
-
-                if (hostPort.length > 1) {
-                    props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, hostPort[1]);
-                }
-            }
-        }
-    }
-
     protected String getPort(Properties props) throws SQLException {
         String port = ConnectionString.parseUrl(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         if (port == null) {
@@ -1153,21 +1122,17 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getUnreliableMultiHostConnection(String haMode, String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
-        if (props == null) {
-            props = new Properties();
-        }
-
         if (downedHosts == null) {
             downedHosts = new HashSet<String>();
         }
 
-        copyBasePropertiesIntoProps(props);
+        props = getHostFreePropertiesFromTestsuiteUrl(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         Properties parsedProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(props);
+        String host = getPortFreeHostname(parsedProps);
 
         UnreliableSocketFactory.flushAllStaticData();
 
@@ -1183,8 +1148,6 @@ public abstract class BaseTestCase extends TestCase {
                 UnreliableSocketFactory.downHost(hostName);
             }
         }
-
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         if (haMode == null) {
             haMode = "";
@@ -1243,13 +1206,15 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
-        this.copyBasePropertiesIntoProps(props);
+        props = getHostFreePropertiesFromTestsuiteUrl(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
         Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(props);
+        String host = getPortFreeHostname(parsed);
+
         UnreliableSocketFactory.flushAllStaticData();
+
         StringBuilder hostString = new StringBuilder();
         String glue = "";
         for (MockConnectionConfiguration config : configs) {
@@ -1263,9 +1228,7 @@ public abstract class BaseTestCase extends TestCase {
             if (config.isDowned) {
                 UnreliableSocketFactory.downHost(config.hostName);
             }
-
         }
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
     }

@@ -156,7 +156,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <property name="com.mysql.cj.build.driver.version.major" value="6" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
-    <property name="com.mysql.cj.build.driver.version.subminor" value="1" />
+    <property name="com.mysql.cj.build.driver.version.subminor" value="2" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
     <property name="com.mysql.cj.build.driver.version" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}${com.mysql.cj.build.driver.version.status}" />
@@ -165,7 +165,8 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.build.driver.version.snapshot" value="-SNAPSHOT" />
     <property name="com.mysql.cj.build.driver.version.extra" value="" />
     <property name="com.mysql.cj.build.driver.version.full" value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
-    <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.name}-${com.mysql.cj.build.driver.version.full}" />
+    <property name="com.mysql.cj.build.driver.extraName" value="" />
+    <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}-${com.mysql.cj.build.driver.version.full}" />
 
     <property name="com.mysql.cj.build.dir" value="./build" />
     <property name="com.mysql.cj.build.dir.driver" value="${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}" />
@@ -625,6 +626,8 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <mkdir dir="${com.mysql.cj.dist.dir}" />
         <mkdir dir="${com.mysql.cj.dist.dir.prepare}" />
         <mkdir dir="${com.mysql.cj.dist.dir.package}" />
+
+        <delete dir="${com.mysql.cj.dist.dir.prepare}" />
 
         <patternset id="non.test.sources">
             <exclude name="**/*.nb*" />

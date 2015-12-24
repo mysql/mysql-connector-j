@@ -1602,8 +1602,13 @@ public class ConnectionTest extends BaseTestCase {
         String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", host, port, user != null ? user : "",
                 password != null ? password : "", database);
 
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
+        props.remove(PropertyDefinitions.PNAME_user);
+        props.remove(PropertyDefinitions.PNAME_password);
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+
         try {
-            getConnectionWithProps(newUrl, new Properties());
+            getConnectionWithProps(newUrl, props);
         } catch (SQLException sqlEx) {
             throw new RuntimeException("Failed to connect with URL " + newUrl, sqlEx);
         }
@@ -1699,7 +1704,6 @@ public class ConnectionTest extends BaseTestCase {
         String host = "::1"; // IPv6 loopback
         int port = Integer.parseInt(connProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
-        String password = connProps.getProperty(PropertyDefinitions.PNAME_password);
 
         String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", host, port);
 
@@ -1707,7 +1711,9 @@ public class ConnectionTest extends BaseTestCase {
         Statement testStmt = null;
         ResultSet testRS = null;
 
-        testConn = DriverManager.getConnection(ipv6Url, username, password);
+        connProps = getHostFreePropertiesFromTestsuiteUrl();
+
+        testConn = DriverManager.getConnection(ipv6Url, connProps);
         testStmt = testConn.createStatement();
         testRS = testStmt.executeQuery("SELECT USER()");
 

@@ -37,11 +37,11 @@ import java.sql.Types;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
+
+import testsuite.BaseTestCase;
 
 /**
  * Regression tests for syntax
@@ -638,7 +638,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         createTable("testWL5787", "(id INT AUTO_INCREMENT PRIMARY KEY, ipv4 INT UNSIGNED, ipv6 VARBINARY(16))");
 
-        this.pstmt = this.conn.prepareStatement("INSERT INTO testWL5787 VALUES (NULL, INET_ATON(?), INET6_ATON(?))");
+        Connection testConn = this.conn;
+        if (versionMeetsMinimum(5, 7, 10)) {
+            // MySQL 5.7.10+ requires non STRICT_TRANS_TABLES to use these functions with invalid data.
+            testConn = getConnectionWithProps(PropertyDefinitions.PNAME_jdbcCompliantTruncation + "=false");
+        }
+        this.pstmt = testConn.prepareStatement("INSERT INTO testWL5787 VALUES (NULL, INET_ATON(?), INET6_ATON(?))");
 
         for (String[] data : dataSamples) {
             this.pstmt.setString(1, data[0]);
@@ -658,6 +663,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
             assertEquals("Wrong IPv4 data in row [" + i + "].", dataExpected[i - 1][0], this.rs.getString(2));
             assertEquals("Wrong IPv6 data in row [" + i + "].", dataExpected[i - 1][1], this.rs.getString(3));
         }
+
+        this.pstmt.close();
+        testConn.close();
     }
 
     /**

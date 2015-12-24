@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 6.0.2
 
+  - Merged version 5.1.39.
+
   - Merged version 5.1.38.
 
   - Fix for Bug#21286268, CONNECTOR/J REPLICATION USE MASTER IF SLAVE IS UNAVAILABLE.

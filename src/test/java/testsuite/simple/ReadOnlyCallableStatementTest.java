@@ -28,9 +28,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.conf.PropertyDefinitions;
+
+import testsuite.BaseTestCase;
 
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public ReadOnlyCallableStatementTest(String name) {
@@ -39,7 +39,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
-        Properties props = getMasterSlaveProps();
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
         try {
@@ -70,7 +70,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 
     public void testNotReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
-        Properties props = getMasterSlaveProps();
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
         try {

@@ -46,8 +46,6 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import junit.framework.ComparisonFailure;
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -60,6 +58,9 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -2574,37 +2575,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         String host = ConnectionString.host(oldProps);
         int port = ConnectionString.port(oldProps);
-        String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
-        String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
-
         StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
-
         if (host != null) {
             newUrlToTestNoDB.append(host);
         }
-
-        newUrlToTestNoDB.append(":").append(port);
-
-        newUrlToTestNoDB.append("/");
-
-        if ((user != null) || (password != null)) {
-            newUrlToTestNoDB.append("?");
-
-            if (user != null) {
-                newUrlToTestNoDB.append("user=").append(user);
-
-                if (password != null) {
-                    newUrlToTestNoDB.append("&");
-                }
-            }
-
-            if (password != null) {
-                newUrlToTestNoDB.append("password=").append(password);
-            }
-        }
+        newUrlToTestNoDB.append(":").append(port).append("/");
 
         Statement savedSt = this.stmt;
-        Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString());
+
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString(), props);
 
         this.stmt = conn1.createStatement();
         createDatabase("TST1");

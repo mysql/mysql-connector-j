@@ -88,7 +88,6 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
@@ -5596,18 +5595,16 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug51776() throws Exception {
-
-        Properties props = new Properties();
-        NonRegisteringDriver d = new NonRegisteringDriver();
-        this.copyBasePropertiesIntoProps(props);
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
+
         Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
         String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String host = getPortFreeHostname(props);
+
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost("first", host);
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
 
         Connection testConn = getConnectionWithProps("jdbc:mysql://first:" + port + "/" + db, props);
         testConn.setAutoCommit(false);
