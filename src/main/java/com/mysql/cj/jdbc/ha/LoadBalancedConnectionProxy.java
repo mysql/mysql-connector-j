@@ -328,7 +328,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         boolean pingBeforeReturn = this.currentConnection.getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer).getValue();
 
-        for (int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried <= hostsToTry; hostsTried++) {
+        for (int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried < hostsToTry; hostsTried++) {
             ConnectionImpl newConn = null;
             try {
                 newConn = this.balancer.pickConnection(this, Collections.unmodifiableList(this.hostList), Collections.unmodifiableMap(this.liveConnections),
@@ -473,7 +473,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public synchronized Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 
-        if (this.isClosed) {
+        if (this.isClosed && !allowedOnClosedConnection(method) && method.getExceptionTypes().length > 0) { // TODO remove method.getExceptionTypes().length ?
             if (this.autoReconnect && !this.closedExplicitly) {
                 // try to reconnect first!
                 this.currentConnection = null;

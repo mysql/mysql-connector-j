@@ -468,7 +468,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
             }
         }
 
-        if (this.isClosed) {
+        if (this.isClosed && !allowedOnClosedConnection(method)) {
             if (this.autoReconnect && !this.closedExplicitly) {
                 this.currentHostIndex = NO_CONNECTION_INDEX; // Act as if this is the first connection but let it sync with the previous one.
                 pickNewConnection();

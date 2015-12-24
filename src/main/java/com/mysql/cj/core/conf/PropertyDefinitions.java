@@ -200,6 +200,8 @@ public class PropertyDefinitions {
     public static final String PNAME_alwaysSendSetIsolation = "alwaysSendSetIsolation";
     public static final String PNAME_autoClosePStmtStreams = "autoClosePStmtStreams";
     public static final String PNAME_allowMasterDownConnections = "allowMasterDownConnections";
+    public static final String PNAME_allowSlaveDownConnections = "allowSlaveDownConnections";
+    public static final String PNAME_readFromMasterWhenNoSlaves = "readFromMasterWhenNoSlaves";
     public static final String PNAME_autoDeserialize = "autoDeserialize";
     public static final String PNAME_autoGenerateTestcaseScript = "autoGenerateTestcaseScript";
     public static final String PNAME_autoReconnect = "autoReconnect";
@@ -460,6 +462,12 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_allowMasterDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
+
+                new BooleanPropertyDefinition(PNAME_allowSlaveDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.allowSlaveDownConnections"), "5.1.38", CATEGORY_HA, Integer.MAX_VALUE),
+
+                new BooleanPropertyDefinition(PNAME_readFromMasterWhenNoSlaves, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.readFromMasterWhenNoSlaves"), "5.1.38", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_autoDeserialize, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoDeserialize"), "3.1.5", CATEGORY_BLOBS, Integer.MIN_VALUE),
@@ -986,6 +994,8 @@ public class PropertyDefinitions {
                 put(PNAME_alwaysSendSetIsolation, "alwaysSendSetIsolation");
                 put(PNAME_autoClosePStmtStreams, "autoClosePStmtStreams");
                 put(PNAME_allowMasterDownConnections, "allowMasterDownConnections");
+                put(PNAME_allowSlaveDownConnections, "allowSlaveDownConnections");
+                put(PNAME_readFromMasterWhenNoSlaves, "readFromMasterWhenNoSlaves");
                 put(PNAME_autoDeserialize, "autoDeserialize");
                 put(PNAME_autoGenerateTestcaseScript, "autoGenerateTestcaseScript");
                 put(PNAME_autoReconnect, "autoReconnect");

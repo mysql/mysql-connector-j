@@ -8773,7 +8773,7 @@ public class StatementRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77449StatementInterceptor.class.getName());
             props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode)); // TODO property was removed in 6.0
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerSidePreparedStatements));
+            props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements)); // TODO PropertyDefinitions.PNAME_useServerPrepStmts
             props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, Boolean.toString(sendFractionalSeconds));
 
             Connection testConn = getConnectionWithProps(props);

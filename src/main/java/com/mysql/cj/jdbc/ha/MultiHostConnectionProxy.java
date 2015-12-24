@@ -51,6 +51,10 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     private static final String METHOD_ABORT_INTERNAL = "abortInternal";
     private static final String METHOD_ABORT = "abort";
     private static final String METHOD_IS_CLOSED = "isClosed";
+    private static final String METHOD_GET_AUTO_COMMIT = "getAutoCommit";
+    private static final String METHOD_GET_CATALOG = "getCatalog";
+    private static final String METHOD_GET_TRANSACTION_ISOLATION = "getTransactionIsolation";
+    private static final String METHOD_GET_SESSION_MAX_ROWS = "getSessionMaxRows";
 
     List<String> hostList;
     Properties localProps;
@@ -67,6 +71,10 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     boolean closedExplicitly = false;
     String closedReason = null;
 
+    // Keep track of the last exception processed in 'dealWithInvocationException()' in order to avoid creating connections repeatedly from each time the same
+    // exception is caught in every proxy instance belonging to the same call stack.
+    protected Throwable lastExceptionDealtWith = null;
+
     /**
      * Proxy class to intercept and deal with errors that may occur in any object bound to the current connection.
      */
@@ -78,16 +86,18 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            Object result = null;
+            synchronized (MultiHostConnectionProxy.this) {
+                Object result = null;
 
-            try {
-                result = method.invoke(this.invokeOn, args);
-                result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
-            } catch (InvocationTargetException e) {
-                dealWithInvocationException(e);
+                try {
+                    result = method.invoke(this.invokeOn, args);
+                    result = proxyIfReturnTypeIsJdbcInterface(method.getReturnType(), result);
+                } catch (InvocationTargetException e) {
+                    dealWithInvocationException(e);
+                }
+
+                return result;
             }
-
-            return result;
         }
     }
 
@@ -236,9 +246,10 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         Throwable t = e.getTargetException();
 
         if (t != null) {
-            if (shouldExceptionTriggerConnectionSwitch(t)) {
+            if (this.lastExceptionDealtWith != t && shouldExceptionTriggerConnectionSwitch(t)) {
                 invalidateCurrentConnection();
                 pickNewConnection();
+                this.lastExceptionDealtWith = t;
             }
             throw t;
         }
@@ -350,7 +361,9 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *            The new read-only status.
      */
     static void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
-        target.setReadOnly(readOnly);
+        if (target != null) {
+            target.setReadOnly(readOnly);
+        }
 
         if (source == null || target == null) {
             return;
@@ -376,7 +389,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      */
     abstract void doAbort(Executor executor) throws SQLException;
 
-    /*
+    /**
      * Proxies method invocation on the java.sql.Connection interface, trapping multi-host specific methods and generic methods.
      * Subclasses have to override this to complete the method invocation process, deal with exceptions and decide when to switch connection.
      * To avoid unnecessary additional exception handling overriders should consult #canDealWith(Method) before chaining here.
@@ -431,8 +444,18 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         }
     }
 
-    /*
+    /**
      * Continuation of the method invocation process, to be implemented within each subclass.
      */
     abstract Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable;
+
+    /**
+     * Checks if the given method is allowed on closed connections.
+     */
+    protected boolean allowedOnClosedConnection(Method method) {
+        String methodName = method.getName();
+
+        return methodName.equals(METHOD_GET_AUTO_COMMIT) || methodName.equals(METHOD_GET_CATALOG) || methodName.equals(METHOD_GET_TRANSACTION_ISOLATION)
+                || methodName.equals(METHOD_GET_SESSION_MAX_ROWS);
+    }
 }

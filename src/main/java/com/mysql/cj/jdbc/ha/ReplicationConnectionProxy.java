@@ -51,8 +51,12 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     private NonRegisteringDriver driver;
 
-    boolean allowMasterDownConnections = false;
-    private boolean readOnly = false;
+    protected boolean enableJMX = false;
+    protected boolean allowMasterDownConnections = false;
+    protected boolean allowSlaveDownConnections = false;
+    protected boolean readFromMasterWhenNoSlaves = false;
+    protected boolean readFromMasterWhenNoSlavesOriginal = false;
+    protected boolean readOnly = false;
 
     ReplicationConnectionGroup connectionGroup;
     private long connectionGroupID = -1;
@@ -121,9 +125,9 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         this.connectionString = connectionString;
 
         String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
-        boolean enableJMX = false;
+        //boolean enableJMX = false;
         try {
-            enableJMX = Boolean.parseBoolean(enableJMXAsString);
+            this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
@@ -134,15 +138,34 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(
-                    Messages.getString("ReplicationConnection.badValueForAllowMasterDownConnections", new Object[] { enableJMXAsString }),
+                    Messages.getString("ReplicationConnectionProxy.badValueForAllowMasterDownConnections", new Object[] { enableJMXAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+        }
+
+        String allowSlaveDownConnectionsAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "false");
+        try {
+            this.allowSlaveDownConnections = Boolean.parseBoolean(allowSlaveDownConnectionsAsString);
+        } catch (Exception e) {
+            throw SQLError.createSQLException(
+                    Messages.getString("ReplicationConnectionProxy.badValueForAllowSlaveDownConnections", new Object[] { allowSlaveDownConnectionsAsString }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+        }
+
+        String readFromMasterWhenNoSlavesAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves);
+        try {
+            this.readFromMasterWhenNoSlavesOriginal = Boolean.parseBoolean(readFromMasterWhenNoSlavesAsString);
+
+        } catch (Exception e) {
+            throw SQLError
+                    .createSQLException(Messages.getString("ReplicationConnectionProxy.badValueForReadFromMasterWhenNoSlaves",
+                            new Object[] { readFromMasterWhenNoSlavesAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String group = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
 
         if (group != null) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
-            if (enableJMX) {
+            if (this.enableJMX) {
                 ReplicationConnectionGroupManager.registerJmx();
             }
             this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this.thisAsReplicationConnection, masterHostList, slaveHostList);
@@ -158,14 +181,29 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         this.slaveProperties = slaveProperties;
         this.masterProperties = masterProperties;
 
-        boolean createdMaster = initializeMasterConnection();
-        initializeSlavesConnection();
-        if (!createdMaster) {
-            this.readOnly = true;
-            this.currentConnection = this.slavesConnection;
-            return;
+        resetReadFromMasterWhenNoSlaves();
+
+        // Initialize slaves connection first so that it is ready to be used in case the masters connection fails and 'allowMasterDownConnections=true'.
+        try {
+            initializeSlavesConnection();
+        } catch (SQLException e) {
+            if (!this.allowSlaveDownConnections) {
+                throw e;
+            } // Else swallow this exception.
         }
-        this.currentConnection = this.masterConnection;
+
+        try {
+            this.currentConnection = initializeMasterConnection();
+        } catch (SQLException e) {
+            if (this.allowMasterDownConnections && this.slavesConnection != null) {
+                // Set read-only and fail over to the slaves connection.
+                this.readOnly = true;
+                this.currentConnection = this.slavesConnection;
+            } else {
+                throw e;
+            }
+        }
+
     }
 
     /**
@@ -211,7 +249,14 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      */
     @Override
     public boolean isMasterConnection() {
-        return this.currentConnection == null || this.currentConnection == this.masterConnection;
+        return this.currentConnection != null && this.currentConnection == this.masterConnection;
+    }
+
+    /**
+     * Checks if current connection is the slaves l/b connection.
+     */
+    public boolean isSlavesConnection() {
+        return this.currentConnection != null && this.currentConnection == this.slavesConnection;
     }
 
     @Override
@@ -273,17 +318,15 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      */
     public void doPing() throws SQLException {
         boolean isMasterConn = isMasterConnection();
+
+        SQLException mastersPingException = null;
+        SQLException slavesPingException = null;
+
         if (this.masterConnection != null) {
             try {
                 this.masterConnection.ping();
             } catch (SQLException e) {
-                if (isMasterConn) {
-                    // flip to slave connections
-                    this.currentConnection = this.slavesConnection;
-                    this.masterConnection = null;
-
-                    throw e;
-                }
+                mastersPingException = e;
             }
         } else {
             initializeMasterConnection();
@@ -293,139 +336,133 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             try {
                 this.slavesConnection.ping();
             } catch (SQLException e) {
-                if (!isMasterConn) {
-                    // flip to master connection
-                    this.currentConnection = this.masterConnection;
-                    this.slavesConnection = null;
-
-                    throw e;
-                }
+                slavesPingException = e;
             }
         } else {
-            initializeSlavesConnectionSwappingIfNecessary();
-        }
-    }
-
-    private boolean initializeMasterConnection() throws SQLException {
-        return this.initializeMasterConnection(this.allowMasterDownConnections);
-    }
-
-    private boolean initializeMasterConnection(boolean allowMasterDown) throws SQLException {
-        // get this value before we change the masterConnection reference:
-        boolean isMaster = isMasterConnection();
-
-        StringBuilder masterUrl = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
-        boolean firstHost = true;
-        for (String host : this.masterHosts) {
-            if (!firstHost) {
-                masterUrl.append(',');
-            }
-            masterUrl.append(host);
-            firstHost = false;
-        }
-        masterUrl.append("/");
-        String masterDb = this.masterProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        if (masterDb != null) {
-            masterUrl.append(masterDb);
-        }
-
-        LoadBalancedConnection newMasterConn = null;
-        try {
-            newMasterConn = (LoadBalancedConnection) this.driver.connect(masterUrl.toString(), this.masterProperties);
-            newMasterConn.setProxy(getProxy());
-        } catch (SQLException ex) {
-            if (allowMasterDown) {
-                this.currentConnection = this.slavesConnection;
-                this.masterConnection = null;
-                this.readOnly = true;
-                return false;
-            }
-            throw ex;
-        }
-
-        if (isMaster && this.currentConnection != null) {
-            syncSessionState(this.currentConnection, newMasterConn);
-            this.currentConnection = newMasterConn;
-        }
-
-        if (this.masterConnection != null) {
             try {
-                this.masterConnection.close();
-                this.masterConnection = null;
+                initializeSlavesConnection();
+                if (switchToSlavesConnectionIfNecessary()) {
+                    isMasterConn = false;
+                }
             } catch (SQLException e) {
+                if (!this.readFromMasterWhenNoSlaves) {
+                    throw e;
+                } // Else swallow this exception.
             }
         }
+
+        if (isMasterConn && mastersPingException != null) {
+            // Switch to slaves connection.
+            if (this.slavesConnection != null && slavesPingException == null) {
+                this.masterConnection = null;
+                this.currentConnection = this.slavesConnection;
+                this.readOnly = true;
+            }
+            throw mastersPingException;
+
+        } else if (!isMasterConn && (slavesPingException != null || this.slavesConnection == null)) {
+            // Switch to masters connection, setting read-only state, if 'readFromMasterWhenNoSlaves=true'.
+            if (this.readFromMasterWhenNoSlaves && mastersPingException == null) {
+                this.slavesConnection = null;
+                this.currentConnection = this.masterConnection;
+                this.readOnly = true;
+                this.currentConnection.setReadOnly(true);
+            }
+            if (slavesPingException != null) {
+                throw slavesPingException;
+            }
+        }
+
+    }
+
+    private JdbcConnection initializeMasterConnection() throws SQLException {
+        this.masterConnection = null;
+
+        if (this.masterHosts.size() == 0) {
+            return null;
+        }
+
+        LoadBalancedConnection newMasterConn = (LoadBalancedConnection) this.driver.connect(buildURL(this.masterHosts, this.masterProperties),
+                this.masterProperties);
+        newMasterConn.setProxy(getProxy());
 
         this.masterConnection = newMasterConn;
-        return true;
+        return this.masterConnection;
     }
 
-    private void initializeSlavesConnectionSwappingIfNecessary() throws SQLException {
-        initializeSlavesConnection();
+    private JdbcConnection initializeSlavesConnection() throws SQLException {
+        this.slavesConnection = null;
 
-        // switch to slaves connection if we're in read-only mode and currently on the master. this means we didn't have any slaves to use until now
-        if (this.currentConnection != null && this.currentConnection == this.masterConnection && this.readOnly) {
-            switchToSlavesConnection();
-        }
-    }
-
-    private void initializeSlavesConnection() throws SQLException {
         if (this.slaveHosts.size() == 0) {
-            return;
+            return null;
         }
 
-        StringBuilder slaveUrl = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
+        LoadBalancedConnection newSlavesConn = (LoadBalancedConnection) this.driver.connect(buildURL(this.slaveHosts, this.slaveProperties),
+                this.slaveProperties);
+        newSlavesConn.setProxy(getProxy());
+        newSlavesConn.setReadOnly(true);
+
+        this.slavesConnection = newSlavesConn;
+        return this.slavesConnection;
+    }
+
+    private String buildURL(List<String> hosts, Properties props) {
+        StringBuilder url = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
+
         boolean firstHost = true;
-        for (String host : this.slaveHosts) {
+        for (String host : hosts) {
             if (!firstHost) {
-                slaveUrl.append(',');
+                url.append(',');
             }
-            slaveUrl.append(host);
+            url.append(host);
             firstHost = false;
         }
-        slaveUrl.append("/");
-        String slaveDb = this.slaveProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        if (slaveDb != null) {
-            slaveUrl.append(slaveDb);
+        url.append("/");
+        String masterDb = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        if (masterDb != null) {
+            url.append(masterDb);
         }
 
-        this.slavesConnection = (LoadBalancedConnection) this.driver.connect(slaveUrl.toString(), this.slaveProperties);
-        this.slavesConnection.setProxy(getProxy());
-        this.slavesConnection.setReadOnly(true);
+        return url.toString();
     }
-
-    /*
-     * public synchronized void close() throws SQLException {
-     * if (this.masterConnection != null) {
-     * this.masterConnection.close();
-     * }
-     * if (this.slavesConnection != null) {
-     * this.slavesConnection.close();
-     * }
-     * 
-     * if (this.connectionGroup != null) {
-     * this.connectionGroup.handleCloseConnection(this);
-     * }
-     * 
-     * }
-     */
 
     private synchronized void switchToMasterConnection() throws SQLException {
         if (this.masterConnection == null || this.masterConnection.isClosed()) {
-            initializeMasterConnection();
+            try {
+                initializeMasterConnection();
+            } catch (SQLException e) {
+                this.currentConnection = null;
+                throw e;
+            }
         }
-        syncSessionState(this.slavesConnection, this.masterConnection, false);
-        this.currentConnection = this.masterConnection;
+        if (!isMasterConnection() && this.masterConnection != null) {
+            syncSessionState(this.currentConnection, this.masterConnection, false);
+            this.currentConnection = this.masterConnection;
+        }
     }
 
     private synchronized void switchToSlavesConnection() throws SQLException {
         if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
-            initializeSlavesConnection();
+            try {
+                initializeSlavesConnection();
+            } catch (SQLException e) {
+                this.currentConnection = null;
+                throw e;
+            }
         }
-        if (this.slavesConnection != null) {
-            syncSessionState(this.masterConnection, this.slavesConnection, true);
+        if (!isSlavesConnection() && this.slavesConnection != null) {
+            syncSessionState(this.currentConnection, this.slavesConnection, true);
             this.currentConnection = this.slavesConnection;
         }
+    }
+
+    private boolean switchToSlavesConnectionIfNecessary() throws SQLException {
+        // Switch to slaves connection if we're in read-only mode and currently on the master. This means we didn't have any slaves to use until now.
+        if (isMasterConnection() && this.readOnly) {
+            switchToSlavesConnection();
+            return true;
+        }
+        return false;
     }
 
     public synchronized JdbcConnection getCurrentConnection() {
@@ -459,6 +496,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     public synchronized void removeMasterHost(String host, boolean waitUntilNotInUse, boolean isNowSlave) throws SQLException {
         if (isNowSlave) {
             this.slaveHosts.add(host);
+            resetReadFromMasterWhenNoSlaves();
+
         }
         this.masterHosts.remove(host);
 
@@ -497,8 +536,10 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             return;
         }
         this.slaveHosts.add(host);
+        resetReadFromMasterWhenNoSlaves();
         if (this.slavesConnection == null) {
-            initializeSlavesConnectionSwappingIfNecessary();
+            initializeSlavesConnection();
+            switchToSlavesConnectionIfNecessary();
         } else {
             this.slavesConnection.addHost(host);
         }
@@ -510,6 +551,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     public synchronized void removeSlave(String host, boolean closeGently) throws SQLException {
         this.slaveHosts.remove(host);
+        resetReadFromMasterWhenNoSlaves();
+
         if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
             this.slavesConnection = null;
             return;
@@ -523,10 +566,12 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
         // close the connection if it's the last slave
         if (this.slaveHosts.isEmpty()) {
-            switchToMasterConnection();
             this.slavesConnection.close();
             this.slavesConnection = null;
-            setReadOnly(this.readOnly); // maintain
+
+            // Default behavior, no need to check this.readFromMasterWhenNoSlaves
+            switchToMasterConnection();
+            this.currentConnection.setReadOnly(this.readOnly); // maintain
         }
     }
 
@@ -545,23 +590,39 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     public synchronized void setReadOnly(boolean readOnly) throws SQLException {
         if (readOnly) {
-            if (this.currentConnection != this.slavesConnection) {
-                switchToSlavesConnection();
+            if (!isSlavesConnection() || this.currentConnection.isClosed()) {
+                try {
+                    switchToSlavesConnection();
+                } catch (SQLException e) {
+                    if (this.readFromMasterWhenNoSlaves) {
+                        switchToMasterConnection();
+                    } else {
+                        throw e;
+                    }
+                }
             }
         } else {
-            if (this.currentConnection != this.masterConnection) {
+            if (!isMasterConnection() || this.currentConnection.isClosed()) {
                 switchToMasterConnection();
             }
         }
         this.readOnly = readOnly;
-        // allow master connection to be set to/from read-only if there are no slaves
-        if (this.currentConnection == this.masterConnection) {
+
+        /*
+         * Reset masters connection read-only state if 'readFromMasterWhenNoSlaves=true'. If there are no slaves then the masters connection will be used with
+         * read-only state in its place. Even if not, it must be reset from a possible previous read-only state.
+         */
+        if (this.readFromMasterWhenNoSlaves && isMasterConnection()) {
             this.currentConnection.setReadOnly(this.readOnly);
         }
     }
 
     public boolean isReadOnly() throws SQLException {
-        return this.readOnly;
+        return !isMasterConnection() || this.readOnly;
+    }
+
+    private void resetReadFromMasterWhenNoSlaves() {
+        this.readFromMasterWhenNoSlaves = this.slaveHosts.isEmpty() || this.readFromMasterWhenNoSlavesOriginal;
     }
 
 }

@@ -72,6 +72,18 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     private int portNumber;
     private Properties props;
 
+    public static String getHostConnectedStatus(String host) {
+        return STATUS_CONNECTED + host;
+    }
+
+    public static String getHostFailedStatus(String host) {
+        return STATUS_FAILED + host;
+    }
+
+    public static String getHostUnknownStatus(String host) {
+        return STATUS_FAILED + host;
+    }
+
     public static void flushAllStaticData() {
         IMMEDIATELY_DOWNED_HOSTS.clear();
         HUNG_CONNECT_HOSTS.clear();
@@ -490,6 +502,18 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         }
 
         @Override
+        public synchronized void reset() throws IOException {
+            this.underlyingInputStream.reset();
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            failIfRequired();
+
+            return this.underlyingInputStream.skip(n);
+        }
+
+        @Override
         public int read(byte[] b, int off, int len) throws IOException {
             failIfRequired();
 
@@ -504,15 +528,10 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         }
 
         @Override
-        public synchronized void reset() throws IOException {
-            this.underlyingInputStream.reset();
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
+        public int read() throws IOException {
             failIfRequired();
 
-            return this.underlyingInputStream.skip(n);
+            return this.underlyingInputStream.read();
         }
 
         private void failIfRequired() throws SocketTimeoutException {
@@ -521,13 +540,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
                 throw new SocketTimeoutException();
             }
-        }
-
-        @Override
-        public int read() throws IOException {
-            failIfRequired();
-
-            return this.underlyingInputStream.read();
         }
     }
 

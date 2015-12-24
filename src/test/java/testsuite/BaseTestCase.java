@@ -905,6 +905,35 @@ public abstract class BaseTestCase extends TestCase {
         }
     }
 
+    /**
+     * Asserts the most recent history of connection attempts from the global data in UnreliableSocketFactory.
+     * 
+     * @param expectedConnectionsHistory
+     *            The list of expected events. Use UnreliableSocketFactory.getHostConnectedStatus(String), UnreliableSocketFactory.getHostFailedStatus(String)
+     *            and UnreliableSocketFactory.getHostUnknownStatus(String) to build proper syntax for host+status identification.
+     */
+    protected static void assertConnectionsHistory(String... expectedConnectionsHistory) {
+        List<String> actualConnectionsHistory = UnreliableSocketFactory.getHostsFromLastConnections(expectedConnectionsHistory.length);
+
+        int i = 1;
+        String delimiter = "";
+        StringBuilder expectedHist = new StringBuilder("");
+        for (String hostInfo : expectedConnectionsHistory) {
+            expectedHist.append(delimiter).append(i++).append(hostInfo);
+            delimiter = " ~ ";
+        }
+
+        i = 1;
+        delimiter = "";
+        StringBuilder actualHist = new StringBuilder("");
+        for (String hostInfo : actualConnectionsHistory) {
+            actualHist.append(delimiter).append(i++).append(hostInfo);
+            delimiter = " ~ ";
+        }
+
+        assertEquals("Connections history", expectedHist.toString(), actualHist.toString());
+    }
+
     /*
      * Set default values for primitives. (prevents NPE in Java 1.4 when calling via reflection)
      */
