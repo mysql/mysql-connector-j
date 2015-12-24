@@ -101,8 +101,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public static LoadBalancedConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionString);
 
-        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
-                new Class[] { LoadBalancedConnection.class }, connProxy);
+        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(), new Class[] {
+                LoadBalancedConnection.class, JdbcConnection.class }, connProxy);
     }
 
     /**

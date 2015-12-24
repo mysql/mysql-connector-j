@@ -52,6 +52,7 @@ import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -7988,5 +7989,36 @@ public class ConnectionRegressionTest extends BaseTestCase {
             sslConn.close();
         }
 
+    }
+
+    /**
+     * 
+     * @throws Exception
+     */
+    public void testBug56122() throws Exception {
+        for (final Connection testConn : new Connection[] { this.conn, getFailoverConnection(), getLoadBalancedConnection(),
+                getMasterSlaveReplicationConnection() }) {
+            testConn.createClob();
+            testConn.createBlob();
+            testConn.createNClob();
+            testConn.createSQLXML();
+            testConn.isValid(12345);
+            testConn.setClientInfo(new Properties());
+            testConn.setClientInfo("NAME", "VALUE");
+            testConn.getClientInfo();
+            testConn.getClientInfo("CLIENT");
+            assertThrows(SQLFeatureNotSupportedException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testConn.createArrayOf("A_TYPE", null);
+                    return null;
+                }
+            });
+            assertThrows(SQLFeatureNotSupportedException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testConn.createStruct("A_TYPE", null);
+                    return null;
+                }
+            });
+        }
     }
 }

@@ -945,6 +945,14 @@ public abstract class BaseTestCase extends TestCase {
         }
     }
 
+    protected Connection getFailoverConnection() throws SQLException {
+        return getFailoverConnection(null);
+    }
+
+    protected Connection getFailoverConnection(Properties props) throws SQLException {
+        return DriverManager.getConnection(getMasterSlaveUrl(), getMasterSlaveProps(props));
+    }
+
     protected Connection getMasterSlaveReplicationConnection() throws SQLException {
         return getMasterSlaveReplicationConnection(null);
     }

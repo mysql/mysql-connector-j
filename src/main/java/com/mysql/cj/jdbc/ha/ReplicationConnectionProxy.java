@@ -71,8 +71,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     public static ReplicationConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString);
 
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
-                new Class[] { ReplicationConnection.class }, connProxy);
+        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(), new Class[] {
+                ReplicationConnection.class, JdbcConnection.class }, connProxy);
     }
 
     public static ReplicationConnection createProxyInstance(ConnectionString connectionString, List<String> masterHostList, Properties masterProperties,
@@ -80,8 +80,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString, masterHostList, masterProperties, slaveHostList,
                 slaveProperties);
 
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
-                new Class[] { ReplicationConnection.class }, connProxy);
+        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(), new Class[] {
+                ReplicationConnection.class, JdbcConnection.class }, connProxy);
     }
 
     /**

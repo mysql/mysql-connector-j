@@ -420,4 +420,9 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
     boolean useAnsiQuotedIdentifiers();
 
     JdbcConnection getMultiHostSafeProxy();
+
+    /*
+     * Non standard methods:
+     */
+    ClientInfoProvider getClientInfoProviderImpl() throws SQLException;
 }

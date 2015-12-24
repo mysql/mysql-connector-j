@@ -53,7 +53,6 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
-import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -675,9 +674,9 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().createNClob();
     }
 
-    protected ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+    public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getThisAsProxy()) {
-            return ((ConnectionImpl) getActiveMySQLConnection()).getClientInfoProviderImpl();
+            return getActiveMySQLConnection().getClientInfoProviderImpl();
         }
     }
 

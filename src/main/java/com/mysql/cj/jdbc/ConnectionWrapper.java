@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
@@ -1186,6 +1187,11 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public JdbcConnection getMultiHostSafeProxy() {
         return this.mc.getMultiHostSafeProxy();
+    }
+
+    @Override
+    public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+        return this.mc.getClientInfoProviderImpl();
     }
 
 }

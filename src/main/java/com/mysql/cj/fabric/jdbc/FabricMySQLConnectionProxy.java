@@ -54,6 +54,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
+import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
@@ -230,7 +231,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     synchronized SQLException interceptException(Exception sqlEx, MysqlConnection conn, String groupName, String hostname, String port)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
-        if (!(sqlEx instanceof SQLException && (((SQLException) sqlEx).getSQLState().startsWith("08") || SQLNonTransientConnectionException.class
+        if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null && (((SQLException) sqlEx).getSQLState().startsWith("08") || SQLNonTransientConnectionException.class
                 .isAssignableFrom(sqlEx.getClass()))
 
         )) {
@@ -275,6 +276,23 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
                     null);
         }
         return null;
+    }
+
+    /**
+     * Refresh the client Fabric state cache if the TTL has expired.
+     */
+    private void refreshStateIfNecessary() throws SQLException {
+        if (this.fabricConnection.isStateExpired()) {
+            try {
+                this.fabricConnection.refreshState();
+            } catch (FabricCommunicationException ex) {
+                throw SQLError.createSQLException("Unable to establish connection to the Fabric server", SQLError.SQL_STATE_CONNECTION_REJECTED, ex,
+                        getExceptionInterceptor(), this);
+            }
+            if (this.serverGroup != null) {
+                setCurrentServerGroup(this.serverGroup.getName());
+            }
+        }
     }
 
     /////////////////////////////////////////
@@ -447,6 +465,18 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
             throw SQLError.createSQLException("Cannot find server group: `" + serverGroupName + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
                     getExceptionInterceptor(), this);
         }
+
+        // check for any changes that need to be propagated to the entire group
+        ReplicationConnectionGroup replConnGroup = ReplicationConnectionGroupManager.getConnectionGroup(serverGroupName);
+        if (replConnGroup != null) {
+            if (replConnGroupLocks.add(this.serverGroup.getName())) {
+                try {
+                    syncGroupServersToReplicationConnectionGroup(replConnGroup);
+                } finally {
+                    replConnGroupLocks.remove(this.serverGroup.getName());
+                }
+            }
+        }
     }
 
     //////////////////////////////////////////////////////
@@ -497,7 +527,8 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
             currentMasterString = replConnGroup.getMasterHosts().iterator().next();
         }
         // check if master has changed
-        if (currentMasterString != null && !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString())) {
+        if (currentMasterString != null
+                && (this.serverGroup.getMaster() == null || !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString()))) {
             // old master is gone (there may be a new one) (closeGently=false)
             try {
                 replConnGroup.removeMasterHost(currentMasterString, false);
@@ -549,6 +580,10 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     }
 
     protected JdbcConnection getActiveConnection() throws SQLException {
+        if (!this.transactionInProgress) {
+            refreshStateIfNecessary();
+        }
+
         if (this.currentConnection != null) {
             return this.currentConnection;
         }
@@ -698,6 +733,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
 
     public void transactionCompleted() throws SQLException {
         this.transactionInProgress = false;
+        refreshStateIfNecessary();
     }
 
     public boolean getAutoCommit() {
@@ -1414,6 +1450,11 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         } catch (SQLException ex) {
             throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
+    }
+
+    @Override
+    public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+        return getActiveConnection().getClientInfoProviderImpl();
     }
 
 }
