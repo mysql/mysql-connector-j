@@ -8643,8 +8643,8 @@ public class StatementRegressionTest extends BaseTestCase {
         final TimeZone defaultTZ = TimeZone.getDefault();
 
         final Properties testConnProps = new Properties();
-        testConnProps.setProperty("useTimezone", "true");
-        testConnProps.setProperty("cacheDefaultTimezone", "false");
+        testConnProps.setProperty("useTimezone", "true"); // TODO property was removed in 6.0
+        testConnProps.setProperty("cacheDefaultTimezone", "false"); // TODO property isn't defined
 
         Connection testConn = null;
 
@@ -8661,7 +8661,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 System.out.println("\nServer time zone: " + tz);
                 System.out.println("---------------------------------------------------");
 
-                testConnProps.setProperty("serverTimezone", tz);
+                testConnProps.setProperty(PropertyDefinitions.PNAME_serverTimezone, tz);
                 testConn = getConnectionWithProps(testConnProps);
 
                 checkResultSetForTestBug50348(testConn, "2015-01-01 04:00:00.0", tz.equals("Europe/Lisbon") ? "03:00:00" : "04:00:00");
@@ -8679,7 +8679,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                     System.out.println("\nServer time zone: " + tz.toString());
                     System.out.println("---------------------------------------------------");
-                    testConnProps.setProperty("serverTimezone", tz.toString());
+                    testConnProps.setProperty(PropertyDefinitions.PNAME_serverTimezone, tz.toString());
                     testConn = getConnectionWithProps(testConnProps);
 
                     final int diffTzOffset = tzOffset + 6; // CST offset = -6 hours
@@ -8771,10 +8771,10 @@ public class StatementRegressionTest extends BaseTestCase {
                     ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", TestBug77449StatementInterceptor.class.getName());
-            props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode));
-            props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements));
-            props.setProperty("sendFractionalSeconds", Boolean.toString(sendFractionalSeconds));
+            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77449StatementInterceptor.class.getName());
+            props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode)); // TODO property was removed in 6.0
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerSidePreparedStatements));
+            props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, Boolean.toString(sendFractionalSeconds));
 
             Connection testConn = getConnectionWithProps(props);
 
@@ -8890,11 +8890,11 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug77681", "(id INT, txt VARCHAR(50), PRIMARY KEY (id))");
 
         Properties props = new Properties();
-        props.setProperty("statementInterceptors", TestBug77681StatementInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77681StatementInterceptor.class.getName());
 
         for (int tst = 0; tst < 4; tst++) {
-            props.setProperty("useServerPrepStmts", Boolean.toString((tst & 0x1) != 0));
-            props.setProperty("rewriteBatchedStatements", Boolean.toString((tst & 0x2) != 0));
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString((tst & 0x1) != 0));
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString((tst & 0x2) != 0));
             Connection testConn = getConnectionWithProps(props);
 
             PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug77681 VALUES (?, ?)");
@@ -8961,10 +8961,10 @@ public class StatementRegressionTest extends BaseTestCase {
         public void init(MysqlConnection conn, Properties props, Log log) {
             // TODO Auto-generated method stub
             super.init(conn, props, log);
-            System.out.println("\nuseServerPrepStmts: " + props.getProperty("useServerPrepStmts") + " | rewriteBatchedStatements: "
-                    + props.getProperty("rewriteBatchedStatements"));
+            System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts) + " | rewriteBatchedStatements: "
+                    + props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
             System.out.println("--------------------------------------------------------------------------------");
-            this.expected = Boolean.parseBoolean(props.getProperty("rewriteBatchedStatements")) ? expectedRWBS : expectedNonRWBS;
+            this.expected = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)) ? expectedRWBS : expectedNonRWBS;
         }
 
         @Override
@@ -9000,8 +9000,8 @@ public class StatementRegressionTest extends BaseTestCase {
             boolean rewriteBatchedStatements = (tst & 0x2) != 0;
 
             Properties props = new Properties();
-            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
-            props.setProperty("rewriteBatchedStatements", Boolean.toString(rewriteBatchedStatements));
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rewriteBatchedStatements));
 
             String testCase = String
                     .format("Case: %d [ %s | %s ]", tst, useServerPrepStmts ? "useSPS" : "-", rewriteBatchedStatements ? "rwBatchedStmts" : "-");

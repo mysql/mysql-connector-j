@@ -624,7 +624,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         info.setProperty(PropertyDefinitions.PNAME_password, this.password);
         info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
-        info.setProperty("retriesAllDown", "1");
+        info.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
 
         this.currentConnection = ReplicationConnectionProxy.createProxyInstance(this.connectionString, masterHost, info, slaveHosts, info);
 

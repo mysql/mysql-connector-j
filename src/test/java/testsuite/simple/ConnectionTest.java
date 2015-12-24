@@ -55,9 +55,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
@@ -71,6 +68,9 @@ import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.jdbc.Driver;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 /**
  * Tests java.sql.Connection functionality
@@ -1784,7 +1784,7 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.setProperty("maxRows", "123");
+        props.setProperty(PropertyDefinitions.PNAME_maxRows, "123");
 
         // Default property value.
         JdbcConnection testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
@@ -1847,10 +1847,10 @@ public class ConnectionTest extends BaseTestCase {
             boolean useServerPrepStmts = (tst & 0x4) != 0;
 
             Properties props = new Properties();
-            props.setProperty("statementInterceptors", TestEnableEscapeProcessingStatementInterceptor.class.getName());
-            props.setProperty("enableEscapeProcessing", Boolean.toString(enableEscapeProcessing));
-            props.setProperty("processEscapeCodesForPrepStmts", Boolean.toString(processEscapeCodesForPrepStmts));
-            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestEnableEscapeProcessingStatementInterceptor.class.getName());
+            props.setProperty(PropertyDefinitions.PNAME_enableEscapeProcessing, Boolean.toString(enableEscapeProcessing));
+            props.setProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts, Boolean.toString(processEscapeCodesForPrepStmts));
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
 
             Connection testConn = getConnectionWithProps(testUrl, props);
             this.stmt = testConn.createStatement();
@@ -1895,9 +1895,8 @@ public class ConnectionTest extends BaseTestCase {
                 boolean useServerPrepStmts = (tst & 0x4) != 0;
                 boolean isPreparedStatement = interceptedStatement instanceof PreparedStatement;
 
-                String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
-                        processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-", isPreparedStatement ? "PreparedStatement"
-                                : "Statement");
+                String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-", processEscapeCodesForPrepStmts
+                        ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-", isPreparedStatement ? "PreparedStatement" : "Statement");
 
                 boolean escapeProcessingDone = sql.indexOf('{') == -1;
                 assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone || !isPreparedStatement

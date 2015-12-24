@@ -375,7 +375,7 @@ public abstract class BaseTestCase extends TestCase {
     protected Connection getNewSha256Connection() throws SQLException {
         if (sha256Url != null) {
             Properties props = new Properties();
-            props.setProperty("allowPublicKeyRetrieval", "true");
+            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
             return DriverManager.getConnection(sha256Url, props);
         }
         return null;
@@ -567,10 +567,10 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects = new ArrayList<String[]>();
 
         Properties props = new Properties();
-        props.setProperty("useSSL", "false"); // testsuite is built upon non-SSL default connection
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false"); // testsuite is built upon non-SSL default connection
         this.conn = DriverManager.getConnection(dbUrl, props);
 
-        props.setProperty("allowPublicKeyRetrieval", "true");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
 
         this.serverVersion = ((JdbcConnection) this.conn).getServerVersion();

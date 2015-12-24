@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
+
+import testsuite.BaseTestCase;
 
 /**
  * Tests DatabaseMetaData methods.
@@ -728,11 +728,11 @@ public class MetadataTest extends BaseTestCase {
         assertFalse(this.rs.next());
 
         Properties props = new Properties();
-        props.setProperty("nullCatalogMeansCurrent", "true");
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         for (String useIS : new String[] { "false", "true" }) {
             Connection testConn = null;
-            props.setProperty("useInformationSchema", useIS);
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, useIS);
 
             testConn = getConnectionWithProps(props);
             DatabaseMetaData dbmd = testConn.getMetaData();

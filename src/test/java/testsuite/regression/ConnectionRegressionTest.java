@@ -7624,9 +7624,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug21934573() throws Exception {
         Properties props = new Properties();
-        props.setProperty("exceptionInterceptors", TestBug21934573ExceptionInterceptor.class.getName());
-        props.setProperty("replicationConnectionGroup", "deadlock");
-        props.setProperty("allowMultiQueries", "true");
+        props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, TestBug21934573ExceptionInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, "deadlock");
+        props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
         props.setProperty("__useReplConnGroupLocks__", "true"); // Set this to 'false' to observe the deadlock.
 
         final Connection connA = getMasterSlaveReplicationConnection(props);
@@ -7750,7 +7750,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug21947042() throws Exception {
         Connection sslConn = null;
         Properties props = new Properties();
-        props.setProperty("logger", "StandardLogger");
+        props.setProperty(PropertyDefinitions.PNAME_logger, "StandardLogger");
 
         StandardLogger.startLoggingToBuffer();
 
@@ -7782,7 +7782,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             // 2. Explicit useSSL=false
-            props.setProperty("useSSL", "false");
+            props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
             sslConn = getConnectionWithProps(props);
 
             assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
@@ -7806,10 +7806,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             // 3. Explicit useSSL=true
-            props.setProperty("useSSL", "true");
-            props.setProperty("trustCertificateKeyStoreUrl", "file:src/test/config/ssl-test-certs/test-cert-store");
-            props.setProperty("trustCertificateKeyStoreType", "JKS");
-            props.setProperty("trustCertificateKeyStorePassword", "password");
+            props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/test-cert-store");
+            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
             sslConn = getConnectionWithProps(props);
 
             assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
@@ -7863,7 +7863,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String hostSlave = "slave:" + port;
 
         final Properties props = new Properties();
-        props.setProperty("statementInterceptors", Bug56100StatementInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug56100StatementInterceptor.class.getName());
 
         final ReplicationConnection testConn = getUnreliableReplicationConnection(new String[] { "master", "slave" }, props);
 
@@ -7966,7 +7966,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         for (String testDbUrl : testDbUrls) {
             System.out.println(testDbUrl);
-            System.out.println(System.getProperty("java.version"));
+            System.out.println(System.getProperty(PropertyDefinitions.SYSP_java_version));
             Connection sslConn = getConnectionWithProps(testDbUrl, props);
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 

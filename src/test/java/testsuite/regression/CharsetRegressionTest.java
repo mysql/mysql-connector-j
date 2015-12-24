@@ -27,13 +27,13 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 public class CharsetRegressionTest extends BaseTestCase {
 
@@ -96,9 +96,9 @@ public class CharsetRegressionTest extends BaseTestCase {
                 this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
 
                 final Properties props = new Properties();
-                props.setProperty("user", "Bug72630User");
-                props.setProperty("password", "pwd");
-                props.setProperty("characterEncoding", "NonexistentEncoding");
+                props.setProperty(PropertyDefinitions.PNAME_user, "Bug72630User");
+                props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "NonexistentEncoding");
 
                 assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
                     public Void call() throws Exception {
@@ -112,8 +112,8 @@ public class CharsetRegressionTest extends BaseTestCase {
                     }
                 });
 
-                props.remove("characterEncoding");
-                props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
+                props.remove(PropertyDefinitions.PNAME_characterEncoding);
+                props.setProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding, "NonexistentEncoding");
                 assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
                     public Void call() throws Exception {
                         getConnectionWithProps(props);

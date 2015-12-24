@@ -32,12 +32,12 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Properties;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Base64Decoder;
 import com.mysql.cj.core.util.StringUtils;
+
+import testsuite.BaseTestCase;
 
 /**
  * Tests for regressions of bugs in String handling in the driver.
@@ -496,7 +496,7 @@ public class StringRegressionTest extends BaseTestCase {
             System.setErr(newErr);
 
             Properties props = new Properties();
-            props.setProperty("useSSL", "false");
+            props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "utf8");
             getConnectionWithProps(props).close();
             String withExclaims = new String(bOut.toByteArray());
