@@ -2009,6 +2009,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             return getDateFromString(stringVal, columnIndex, cal);
         }
 
+        // bug fix #69788 http://bugs.mysql.com/bug.php?id=69788
+        checkRowPos();
         checkColumnBounds(columnIndex);
 
         int columnIndexMinusOne = columnIndex - 1;
