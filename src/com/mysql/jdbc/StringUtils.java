@@ -1920,6 +1920,13 @@ public class StringUtils {
             //Presumably, if there is a database name attached and it contains dots, then it should be quoted so we first check for that
             if (isQuoted) {
                 trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, quotId + "." + quotId);
+		
+		// bug #79561 only database name is quoted, 2nd part after dot is not quoted
+                // http://bugs.mysql.com/bug.php?id=79561
+                if(trueDotIndex == -1) {
+                    trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, quotId + ".");
+                }
+
             } else {
                 // NOT quoted, fetch first DOT
                 // ex: cStmt = this.conn.prepareCall("{call bug57022.procbug57022(?, ?)}");
