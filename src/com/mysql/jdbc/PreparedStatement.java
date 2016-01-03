@@ -249,7 +249,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                                 quoteChar = 0;
                             }
                         } else {
-                            if (c == '#' || (c == '-' && (i + 1) < this.statementLength && sql.charAt(i + 1) == '-')) {
+                            //if (c == '#' || (c == '-' && (i + 1) < this.statementLength && sql.charAt(i + 1) == '-')) {
+                            // fix for bug #76623 
+                            // according to documentation https://dev.mysql.com/doc/refman/5.7/en/ansi-diff-comments.html
+                            // comment "--" must be followed by a whitespace
+                            if (c == '#' || ((c == '-' && (i + 2) < this.statementLength && sql.charAt(i + 1) == '-') && sql.charAt(i + 2) == '-')) {
                                 // run out to end of statement, or newline, whichever comes first
                                 int endOfStmt = this.statementLength - 1;
 
