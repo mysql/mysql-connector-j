@@ -1500,7 +1500,11 @@ public class StatementImpl implements Statement {
                         getExceptionInterceptor());
             }
 
-            if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) {
+            // fix bug #71929 http://bugs.mysql.com/bug.php?id=71929
+            // correct way of checking if sql starts with SELECT
+            String noCommentSql = StringUtils.stripComments(sql, "'\"", "'\"", true, false, true, true);
+            if (StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "select")) {
+//             if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) {
                 throw SQLError.createSQLException(Messages.getString("Statement.46"), "01S03", getExceptionInterceptor());
             }
 
@@ -2522,12 +2526,16 @@ public class StatementImpl implements Statement {
         int statementStartPos = 0;
 
         if (StringUtils.startsWithIgnoreCaseAndWs(sql, "/*")) {
-            statementStartPos = sql.indexOf("*/");
+            // fix bug #71929 http://bugs.mysql.com/bug.php?id=71929
+            // correct way of handling multiple slash star comments
+             while (sql.indexOf("/*", statementStartPos) >= 0) {
+                statementStartPos = sql.indexOf("*/", statementStartPos);
 
-            if (statementStartPos == -1) {
-                statementStartPos = 0;
-            } else {
-                statementStartPos += 2;
+                if (statementStartPos == -1) {
+                    statementStartPos = 0;
+                } else {
+                    statementStartPos += 2;
+                }
             }
         } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "--") || StringUtils.startsWithIgnoreCaseAndWs(sql, "#")) {
             statementStartPos = sql.indexOf('\n');
