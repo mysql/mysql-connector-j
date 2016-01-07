@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -622,6 +622,8 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
         <property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
         <property name="jdbc4-exceptions-exports"
                   value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="fabric-exports"
+                  value="com.mysql.fabric.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
 
         <property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
         <property name="integration-exports"
@@ -647,7 +649,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <attribute name="Bundle-ManifestVersion" value="2" />
             <attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
             <attribute name="Export-Package"
-                       value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
+                       value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports},${fabric-exports}" />
             <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
         </manifest>
 
