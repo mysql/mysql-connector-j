@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,7 +36,7 @@ public interface SocketMetadata {
 
     /*
      * Provides a standard way of determining whether a socket connection is local.
-     *
+     * 
      * This ensures socket factories (e.g. StandardSocketFactory, StandardSSLSocketFactory) which need to implement this interface, can delegate to a generic
      * implementation.
      */

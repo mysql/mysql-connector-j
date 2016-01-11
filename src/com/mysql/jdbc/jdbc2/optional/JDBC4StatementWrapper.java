@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -133,8 +133,8 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 
         String interfaceClassName = iface.getName();
 
-        return (interfaceClassName.equals("com.mysql.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement") || interfaceClassName
-                .equals("java.sql.Wrapper"));
+        return (interfaceClassName.equals("com.mysql.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
+                || interfaceClassName.equals("java.sql.Wrapper"));
     }
 
     /**

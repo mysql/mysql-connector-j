@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,11 +27,11 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseStatementInterceptor;
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
+
+import testsuite.BaseStatementInterceptor;
+import testsuite.BaseTestCase;
 
 public class CharsetRegressionTest extends BaseTestCase {
 
@@ -61,8 +61,8 @@ public class CharsetRegressionTest extends BaseTestCase {
             getConnectionWithProps(p);
             // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
         } else {
-            System.out
-                    .println("testBug73663 was skipped: This test is only run when character_set_server=utf8mb4 and collation-server set to one of utf8mb4 collations.");
+            System.out.println(
+                    "testBug73663 was skipped: This test is only run when character_set_server=utf8mb4 and collation-server set to one of utf8mb4 collations.");
         }
     }
 
@@ -106,8 +106,8 @@ public class CharsetRegressionTest extends BaseTestCase {
 
                 props.remove("characterEncoding");
                 props.setProperty("passwordCharacterEncoding", "NonexistentEncoding");
-                assertThrows(SQLException.class,
-                        "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.", new Callable<Void>() {
+                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding' for 'passwordCharacterEncoding' or 'characterEncoding'.",
+                        new Callable<Void>() {
                             public Void call() throws Exception {
                                 getConnectionWithProps(props);
                                 return null;

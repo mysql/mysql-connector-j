@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -60,8 +60,8 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
     public void testBug11498() throws Exception {
         assertEquals(
                 "replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")",
-                this.conn
-                        .nativeSQL("replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")"));
+                this.conn.nativeSQL(
+                        "replace into t1 (id, f1, f4) VALUES(1,\"\",\"tko { zna gdje se sakrio\"),(2,\"a\",\"sedmi { kontinentio\"),(3,\"a\",\"a } cigov si ti?\")"));
 
     }
 

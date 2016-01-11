@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -89,10 +89,10 @@ public class Security {
 
         byte[] binaryPassword = new byte[SHA1_HASH_SIZE]; /* Binary password loop pointer */
 
-        if (usingNewPasswords) /* New password version assumed */{
+        if (usingNewPasswords) /* New password version assumed */ {
             int pos = 0;
 
-            for (int i = 0; i < 4; i++) /* Iterate over these elements */{
+            for (int i = 0; i < 4; i++) /* Iterate over these elements */ {
                 val = salt[i];
 
                 for (int t = 3; t >= 0; t--) {
@@ -106,7 +106,7 @@ public class Security {
 
         int offset = 0;
 
-        for (int i = 0; i < 2; i++) /* Iterate over these elements */{
+        for (int i = 0; i < 2; i++) /* Iterate over these elements */ {
             val = salt[i];
 
             for (int t = 3; t >= 0; t--) {
@@ -303,8 +303,8 @@ public class Security {
     public static byte[] scramble411(String password, String seed, String passwordEncoding) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
 
-        byte[] passwordHashStage1 = md.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password) : StringUtils
-                .getBytes(password, passwordEncoding));
+        byte[] passwordHashStage1 = md.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password)
+                : StringUtils.getBytes(password, passwordEncoding));
         md.reset();
 
         byte[] passwordHashStage2 = md.digest(passwordHashStage1);

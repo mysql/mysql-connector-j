@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1224,7 +1224,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertFalse(testStep + ".ST:2. Statement.isClosed(): false.", testStatement.isClosed());
 
         assertTrue(testStep + ".ST:3. There should be more ResultSets.", testStatement.getMoreResults()); // closes
-                                                                                                          // testResultSet2
+                                                                                                         // testResultSet2
         testResultSet3 = testStatement.getResultSet();
 
         assertTrue(testStep + ".ST:2. ResultSet.isClosed(): true.", testResultSet1.isClosed());
@@ -1364,13 +1364,12 @@ public class StatementRegressionTest extends BaseTestCase {
         // overridesCloseOnCompletion[n] refers to the effect of connectionProperties[n] on
         // Statement.closeOnCompletion()
         boolean[] overridesCloseOnCompletion = new boolean[] { false, false, true };
-        String[] sampleQueries = new String[] {
-                "SELECT * FROM mysql.help_topic",
-                "SELECT SLEEP(1)",
+        String[] sampleQueries = new String[] { "SELECT * FROM mysql.help_topic", "SELECT SLEEP(1)",
                 "SELECT * FROM mysql.time_zone tz INNER JOIN mysql.time_zone_name tzn ON tz.time_zone_id = tzn.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition tzt ON tz.time_zone_id = tzt.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition_type tztt ON tzt.time_zone_id = tztt.time_zone_id "
-                        + "AND tzt.transition_type_id = tztt.transition_type_id ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time", "SELECT 1" };
+                        + "AND tzt.transition_type_id = tztt.transition_type_id ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time",
+                "SELECT 1" };
         int threadCount = sampleQueries.length;
 
         for (int c = 0; c < connectionProperties.length; c++) {

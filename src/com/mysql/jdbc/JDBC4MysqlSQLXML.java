@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -258,7 +258,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
      *    javax.xml.transform.sax.SAXSource - returns a SAXSource
      *    javax.xml.transform.stax.StAXSource - returns a StAXSource
      *    javax.xml.transform.stream.StreamSource - returns a StreamSource
-     * </pre>
+     *            </pre>
      * 
      * @return a Source for reading the XML value.
      * @throws SQLException
@@ -445,7 +445,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
      *    javax.xml.transform.sax.SAXResult - returns a SAXResult
      *    javax.xml.transform.stax.StAXResult - returns a StAXResult
      *    javax.xml.transform.stream.StreamResult - returns a StreamResult
-     * </pre>
+     *            </pre>
      * 
      * @return Returns a Result for setting the XML value.
      * @throws SQLException
@@ -771,8 +771,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
                 default:
 
-                    if (((c >= 0x01 && c <= 0x1F && c != 0x09 && c != 0x0A) || (c >= 0x7F && c <= 0x9F) || c == 0x2028) || isAttributeData
-                            && (c == 0x09 || c == 0x0A)) {
+                    if (((c >= 0x01 && c <= 0x1F && c != 0x09 && c != 0x0A) || (c >= 0x7F && c <= 0x9F) || c == 0x2028)
+                            || isAttributeData && (c == 0x09 || c == 0x0A)) {
                         this.buf.append("&#x");
                         this.buf.append(Integer.toHexString(c).toUpperCase());
                         this.buf.append(";");

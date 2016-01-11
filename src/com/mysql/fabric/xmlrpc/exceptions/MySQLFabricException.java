@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,8 +37,8 @@ public class MySQLFabricException extends SQLException {
     }
 
     public MySQLFabricException(Fault fault) {
-        super((String) ((Struct) fault.getValue().getValue()).getMember().get(1).getValue().getValue(), "", (Integer) ((Struct) fault.getValue().getValue())
-                .getMember().get(0).getValue().getValue());
+        super((String) ((Struct) fault.getValue().getValue()).getMember().get(1).getValue().getValue(), "",
+                (Integer) ((Struct) fault.getValue().getValue()).getMember().get(0).getValue().getValue());
     }
 
     public MySQLFabricException(String reason, String SQLState, int vendorCode) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,13 +24,13 @@
 package testsuite.fabric.jdbc;
 
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
-
-import testsuite.fabric.BaseFabricTestCase;
+import java.sql.Statement;
 
 import com.mysql.fabric.jdbc.FabricMySQLConnection;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;
+
+import testsuite.fabric.BaseFabricTestCase;
 
 /**
  * TODO: document required setup for this test
@@ -120,7 +120,7 @@ public class TestHABasics extends BaseFabricTestCase {
         try {
             s.executeQuery("show variables like 'port'");
             fail("Master should be unavailable");
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             rs = s.executeQuery("show variables like 'port'");
             rs.next();
             System.err.println("New master Port: " + rs.getString(2));
@@ -186,7 +186,7 @@ public class TestHABasics extends BaseFabricTestCase {
             System.err.println("Failure encountered: " + ex.getMessage());
             System.err.println("Waiting 10 seconds before trying a new connection");
             try {
-                Thread.sleep(10*1000);
+                Thread.sleep(10 * 1000);
             } catch (Exception ex2) {
             }
         }
@@ -229,7 +229,7 @@ public class TestHABasics extends BaseFabricTestCase {
             System.err.println("Failure encountered: " + ex.getMessage());
             System.err.println("Waiting 10 seconds before trying a new connection");
             try {
-                Thread.sleep(10*1000);
+                Thread.sleep(10 * 1000);
             } catch (Exception ex2) {
             }
         }

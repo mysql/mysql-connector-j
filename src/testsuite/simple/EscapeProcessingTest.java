@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -51,18 +51,14 @@ public class EscapeProcessingTest extends BaseTestCase {
      */
     public void testEscapeProcessing() throws Exception {
         String results = "select dayname (abs(now())),   -- Today    \n" //
-                + "           '1997-05-24',  -- a date                    \n"
-                + "           '10:30:29',  -- a time                     \n"
+                + "           '1997-05-24',  -- a date                    \n" + "           '10:30:29',  -- a time                     \n"
                 + (versionMeetsMinimum(5, 6, 4) ? "           '1997-05-24 10:30:29.123', -- a timestamp  \n"
                         : "           '1997-05-24 10:30:29', -- a timestamp  \n")
-                + "          '{string data with { or } will not be altered'   \n"
-                + "--  Also note that you can safely include { and } in comments";
+                + "          '{string data with { or } will not be altered'   \n" + "--  Also note that you can safely include { and } in comments";
 
         String exSql = "select {fn dayname ({fn abs({fn now()})})},   -- Today    \n" //
-                + "           {d '1997-05-24'},  -- a date                    \n"
-                + "           {t '10:30:29' },  -- a time                     \n"
-                + "           {ts '1997-05-24 10:30:29.123'}, -- a timestamp  \n"
-                + "          '{string data with { or } will not be altered'   \n"
+                + "           {d '1997-05-24'},  -- a date                    \n" + "           {t '10:30:29' },  -- a time                     \n"
+                + "           {ts '1997-05-24 10:30:29.123'}, -- a timestamp  \n" + "          '{string data with { or } will not be altered'   \n"
                 + "--  Also note that you can safely include { and } in comments";
 
         String escapedSql = this.conn.nativeSQL(exSql);

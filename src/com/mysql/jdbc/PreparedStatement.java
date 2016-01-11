@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -86,8 +86,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42PreparedStatement" : "com.mysql.jdbc.JDBC4PreparedStatement";
                 JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(new Class[] { MySQLConnection.class, String.class });
                 JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(new Class[] { MySQLConnection.class, String.class, String.class });
-                JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
-                        new Class[] { MySQLConnection.class, String.class, String.class, ParseInfo.class });
+                JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { MySQLConnection.class, String.class, String.class, ParseInfo.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -1902,7 +1902,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 return rs;
             } catch (NullPointerException npe) {
                 checkClosed(); // we can't synchronize ourselves against async connection-close due to deadlock issues, so this is the next best thing for
-                               // this particular corner case.
+                              // this particular corner case.
 
                 throw npe;
             }
@@ -2586,9 +2586,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     private final char getSuccessor(char c, int n) {
-        return ((c == 'y') && (n == 2)) ? 'X' : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
-                : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2)) ? 'H'
-                        : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+        return ((c == 'y') && (n == 2)) ? 'X'
+                : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
+                        : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
+                                ? 'H'
+                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 
     /**
@@ -2698,8 +2700,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 if (this.numberOfExecutions <= 1) {
                     String message = Messages.getString("PreparedStatement.43");
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1, System
-                            .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
 
@@ -2812,9 +2814,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 int parameterIndexOffset = getParameterIndexOffset();
 
                 if ((parameterIndex < 1) || (parameterIndex > this.staticSqlStrings.length)) {
-                    throw SQLError.createSQLException(Messages.getString("PreparedStatement.2") + parameterIndex + Messages.getString("PreparedStatement.3")
-                            + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                            getExceptionInterceptor());
+                    throw SQLError.createSQLException(
+                            Messages.getString("PreparedStatement.2") + parameterIndex + Messages.getString("PreparedStatement.3")
+                                    + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"),
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 } else if (parameterIndexOffset == -1 && parameterIndex == 1) {
                     throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
@@ -2929,9 +2932,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 String connectionEncoding = this.connection.getEncoding();
 
                 try {
-                    if (this.connection.isNoBackslashEscapesSet()
-                            || (escapeForMBChars && this.connection.getUseUnicode() && connectionEncoding != null && CharsetMapping
-                                    .isMultibyteCharset(connectionEncoding))) {
+                    if (this.connection.isNoBackslashEscapesSet() || (escapeForMBChars && this.connection.getUseUnicode() && connectionEncoding != null
+                            && CharsetMapping.isMultibyteCharset(connectionEncoding))) {
 
                         // Send as hex
 
@@ -3316,9 +3318,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.49") + paramIndex + Messages.getString("PreparedStatement.50"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if (paramIndex > this.parameterCount) {
-                throw SQLError.createSQLException(Messages.getString("PreparedStatement.51") + paramIndex + Messages.getString("PreparedStatement.52")
-                        + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError
+                        .createSQLException(
+                                Messages.getString("PreparedStatement.51") + paramIndex + Messages.getString("PreparedStatement.52")
+                                        + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"),
+                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if (parameterIndexOffset == -1 && paramIndex == 1) {
                 throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -3750,8 +3754,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                     SQLException sqlEx = SQLError.createSQLException(
                             Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
-                                    + ex.getClass().getName() + Messages.getString("PreparedStatement.19") + ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR,
-                            getExceptionInterceptor());
+                                    + ex.getClass().getName() + Messages.getString("PreparedStatement.19") + ex.getMessage(),
+                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
                     sqlEx.initCause(ex);
 
@@ -4234,7 +4238,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         buf.append('\'');
 
                         setInternal(parameterIndex, buf.toString()); // SimpleDateFormat is not
-                                                                     // thread-safe
+                                                                    // thread-safe
                     }
                 }
             }
@@ -4435,9 +4439,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 boolean hexEscape = false;
 
                 try {
-                    if (this.connection.isNoBackslashEscapesSet()
-                            || (this.connection.getUseUnicode() && connectionEncoding != null && CharsetMapping.isMultibyteCharset(connectionEncoding) && !this.connection
-                                    .parserKnowsUnicode())) {
+                    if (this.connection.isNoBackslashEscapesSet() || (this.connection.getUseUnicode() && connectionEncoding != null
+                            && CharsetMapping.isMultibyteCharset(connectionEncoding) && !this.connection.parserKnowsUnicode())) {
                         hexEscape = true;
                     }
                 } catch (RuntimeException ex) {

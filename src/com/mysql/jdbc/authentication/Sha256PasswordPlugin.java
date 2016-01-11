@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -100,8 +100,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
             try {
                 bresp = new Buffer(StringUtils.getBytes(this.password, this.connection.getPasswordCharacterEncoding()));
             } catch (UnsupportedEncodingException e) {
-                throw SQLError.createSQLException(
-                        Messages.getString("Sha256PasswordPlugin.3", new Object[] { this.connection.getPasswordCharacterEncoding() }),
+                throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.3", new Object[] { this.connection.getPasswordCharacterEncoding() }),
                         SQLError.SQL_STATE_GENERAL_ERROR, null);
             }
             bresp.setPosition(bresp.getBufLength());

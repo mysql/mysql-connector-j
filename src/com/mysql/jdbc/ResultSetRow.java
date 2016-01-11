@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -240,8 +240,8 @@ public abstract class ResultSetRow {
 
                     throw SQLError.createSQLException(
                             Messages.getString("ResultSet.Bad_format_for_Date",
-                                    new Object[] { StringUtils.toString(dateAsBytes), Integer.valueOf(columnIndex + 1) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                            this.exceptionInterceptor);
+                                    new Object[] { StringUtils.toString(dateAsBytes), Integer.valueOf(columnIndex + 1) }),
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
                 if (length != 18) {
@@ -383,7 +383,8 @@ public abstract class ResultSetRow {
 
                     if (length > 7) {
                         // MySQL uses microseconds
-                        nanos = ((bits[offset + 7] & 0xff) | ((bits[offset + 8] & 0xff) << 8) | ((bits[offset + 9] & 0xff) << 16) | ((bits[offset + 10] & 0xff) << 24)) * 1000;
+                        nanos = ((bits[offset + 7] & 0xff) | ((bits[offset + 8] & 0xff) << 8) | ((bits[offset + 9] & 0xff) << 16)
+                                | ((bits[offset + 10] & 0xff) << 24)) * 1000;
                     }
                 }
 
@@ -581,8 +582,8 @@ public abstract class ResultSetRow {
     public abstract Time getNativeTime(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
             throws SQLException;
 
-    protected Timestamp getNativeTimestamp(byte[] bits, int offset, int length, Calendar targetCalendar, TimeZone tz, boolean rollForward,
-            MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+    protected Timestamp getNativeTimestamp(byte[] bits, int offset, int length, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn,
+            ResultSetImpl rs) throws SQLException {
         int year = 0;
         int month = 0;
         int day = 0;
@@ -606,7 +607,8 @@ public abstract class ResultSetRow {
 
             if (length > 7) {
                 // MySQL uses microseconds
-                nanos = ((bits[offset + 7] & 0xff) | ((bits[offset + 8] & 0xff) << 8) | ((bits[offset + 9] & 0xff) << 16) | ((bits[offset + 10] & 0xff) << 24)) * 1000;
+                nanos = ((bits[offset + 7] & 0xff) | ((bits[offset + 8] & 0xff) << 8) | ((bits[offset + 9] & 0xff) << 16) | ((bits[offset + 10] & 0xff) << 24))
+                        * 1000;
             }
         }
 
@@ -861,8 +863,8 @@ public abstract class ResultSetRow {
                 if ((length != 5) && (length != 8)) {
                     throw SQLError.createSQLException(
                             Messages.getString("ResultSet.Bad_format_for_Time____267") + StringUtils.toString(timeAsBytes)
-                                    + Messages.getString("ResultSet.___in_column__268") + (columnIndex + 1), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                            this.exceptionInterceptor);
+                                    + Messages.getString("ResultSet.___in_column__268") + (columnIndex + 1),
+                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
                 hr = StringUtils.getInt(timeAsBytes, offset + 0, offset + 2);
@@ -1152,8 +1154,9 @@ public abstract class ResultSetRow {
                     }
 
                     default:
-                        throw new java.sql.SQLException("Bad format for Timestamp '" + StringUtils.toString(timestampAsBytes) + "' in column "
-                                + (columnIndex + 1) + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        throw new java.sql.SQLException(
+                                "Bad format for Timestamp '" + StringUtils.toString(timestampAsBytes) + "' in column " + (columnIndex + 1) + ".",
+                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                 }
 
                 if (!rs.useLegacyDatetimeCode) {
@@ -1164,8 +1167,9 @@ public abstract class ResultSetRow {
                         rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), conn.getServerTimezoneTZ(), tz, rollForward);
             }
         } catch (RuntimeException e) {
-            SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + getString(columnIndex, "ISO8859_1", conn) + "' from column "
-                    + (columnIndex + 1) + " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(
+                    "Cannot convert value '" + getString(columnIndex, "ISO8859_1", conn) + "' from column " + (columnIndex + 1) + " to TIMESTAMP.",
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             sqlEx.initCause(e);
 
             throw sqlEx;

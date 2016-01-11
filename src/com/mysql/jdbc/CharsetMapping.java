@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -129,8 +129,7 @@ public class CharsetMapping {
 
     static {
         // complete list of mysql character sets and their corresponding java encoding names
-        MysqlCharset[] charset = new MysqlCharset[] {
-                new MysqlCharset(MYSQL_4_0_CHARSET_NAME_usa7, 1, 0, new String[] { "US-ASCII" }, 4, 0),
+        MysqlCharset[] charset = new MysqlCharset[] { new MysqlCharset(MYSQL_4_0_CHARSET_NAME_usa7, 1, 0, new String[] { "US-ASCII" }, 4, 0),
                 new MysqlCharset(MYSQL_CHARSET_NAME_ascii, 1, 0, new String[] { "US-ASCII", "ASCII" }),
 
                 new MysqlCharset(MYSQL_CHARSET_NAME_big5, 2, 0, new String[] { "Big5" }),
@@ -647,10 +646,13 @@ public class CharsetMapping {
 
     /**
      * MySQL charset could map to several Java encodings.
-     * So here we choose the one according to next rules: <li>if there is no static mapping for this charset then return javaEncoding value as is because this
-     * could be a custom charset for example <li>if static mapping exists and javaEncoding equals to one of Java encoding canonical names or aliases available
+     * So here we choose the one according to next rules:
+     * <li>if there is no static mapping for this charset then return javaEncoding value as is because this
+     * could be a custom charset for example
+     * <li>if static mapping exists and javaEncoding equals to one of Java encoding canonical names or aliases available
      * for this mapping then javaEncoding value as is; this is required when result should match to connection encoding, for example if connection encoding is
-     * Cp943 we must avoid getting SHIFT_JIS for sjis mysql charset <li>if static mapping exists and javaEncoding doesn't match any Java encoding canonical
+     * Cp943 we must avoid getting SHIFT_JIS for sjis mysql charset
+     * <li>if static mapping exists and javaEncoding doesn't match any Java encoding canonical
      * names or aliases available for this mapping then return default Java encoding (the first in mapping list)
      * 
      * @param mysqlCharsetName

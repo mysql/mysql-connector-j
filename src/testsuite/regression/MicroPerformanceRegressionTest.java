@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,9 +30,9 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.Util;
+
+import testsuite.BaseTestCase;
 
 /**
  * Microperformance benchmarks to track increase/decrease in performance of core methods in the driver over time.
@@ -117,8 +117,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             return;
         }
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
-        this.stmt
-                .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
+        this.stmt.executeUpdate(
+                "INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
         this.rs = this.stmt.executeQuery("SELECT intField, floatField, timeField, datetimeField, stringField FROM marktest");
 
@@ -207,8 +207,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             return;
         }
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
-        this.stmt
-                .executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
+        this.stmt.executeUpdate(
+                "INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
         long start = currentTimeMillis();
 
@@ -429,12 +429,11 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             int numRows = 550000;
             int numSelects = 100000;
 
-            createTable(
-                    "testBug6359",
+            createTable("testBug6359",
                     "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT, field2 INT, field3 INT, field4 INT, field5 INT, field6 INT, field7 INT, field8 INT, field9 INT,  INDEX (field1))");
 
-            PreparedStatement pStmt = this.conn
-                    .prepareStatement("INSERT INTO testBug6359 (field1, field2, field3, field4, field5, field6, field7, field8, field9) VALUES (?, 1, 2, 3, 4, 5, 6, 7, 8)");
+            PreparedStatement pStmt = this.conn.prepareStatement(
+                    "INSERT INTO testBug6359 (field1, field2, field3, field4, field5, field6, field7, field8, field9) VALUES (?, 1, 2, 3, 4, 5, 6, 7, 8)");
 
             logDebug("Loading " + numRows + " rows...");
 

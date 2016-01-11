@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,7 +32,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
     private final static int REPETITIONS = 100;
 
     /**
-	 */
+     */
     public SubqueriesRegressionTest(String name) {
         super(name);
     }
@@ -72,8 +72,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt
-                        .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = t1.colB)");
+                this.rs = this.stmt.executeQuery(
+                        "select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = t1.colB)");
                 assertTrue(this.rs.next());
                 assertTrue("bbbb".equals(this.rs.getString(1)));
                 assertTrue(!this.rs.next());
@@ -85,8 +85,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(4, 1)) {
             for (int i = 0; i < REPETITIONS; i++) {
 
-                this.rs = this.stmt
-                        .executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = 2)");
+                this.rs = this.stmt.executeQuery(
+                        "select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = 2)");
                 assertTrue(this.rs.next());
                 assertTrue("bbbb".equals(this.rs.getString(1)));
                 assertTrue(!this.rs.next());

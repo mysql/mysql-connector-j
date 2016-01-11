@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -253,8 +253,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 /* If the size is specified with the DDL, use that */
                 if ((StringUtils.indexOfIgnoreCase(typeInfo, "char") != -1 || StringUtils.indexOfIgnoreCase(typeInfo, "text") != -1
-                        || StringUtils.indexOfIgnoreCase(typeInfo, "blob") != -1 || StringUtils.indexOfIgnoreCase(typeInfo, "binary") != -1 || StringUtils
-                        .indexOfIgnoreCase(typeInfo, "bit") != -1) && typeInfo.indexOf("(") != -1) {
+                        || StringUtils.indexOfIgnoreCase(typeInfo, "blob") != -1 || StringUtils.indexOfIgnoreCase(typeInfo, "binary") != -1
+                        || StringUtils.indexOfIgnoreCase(typeInfo, "bit") != -1) && typeInfo.indexOf("(") != -1) {
                     int endParenIndex = typeInfo.indexOf(")");
 
                     if (endParenIndex == -1) {
@@ -528,8 +528,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Enumeration for Table Types
      */
     protected enum TableType {
-        LOCAL_TEMPORARY("LOCAL TEMPORARY"), SYSTEM_TABLE("SYSTEM TABLE"), SYSTEM_VIEW("SYSTEM VIEW"), TABLE("TABLE", new String[] { "BASE TABLE" }), VIEW(
-                "VIEW"), UNKNOWN("UNKNOWN");
+        LOCAL_TEMPORARY("LOCAL TEMPORARY"), SYSTEM_TABLE("SYSTEM TABLE"), SYSTEM_VIEW("SYSTEM VIEW"), TABLE("TABLE", new String[] { "BASE TABLE" }),
+        VIEW("VIEW"), UNKNOWN("UNKNOWN");
 
         private String name;
         private byte[] nameAsBytes;
@@ -646,10 +646,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     static {
         if (Util.isJdbc4()) {
             try {
-                JDBC_4_DBMD_SHOW_CTOR = Class.forName("com.mysql.jdbc.JDBC4DatabaseMetaData").getConstructor(
-                        new Class[] { com.mysql.jdbc.MySQLConnection.class, String.class });
-                JDBC_4_DBMD_IS_CTOR = Class.forName("com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema").getConstructor(
-                        new Class[] { com.mysql.jdbc.MySQLConnection.class, String.class });
+                JDBC_4_DBMD_SHOW_CTOR = Class.forName("com.mysql.jdbc.JDBC4DatabaseMetaData")
+                        .getConstructor(new Class[] { com.mysql.jdbc.MySQLConnection.class, String.class });
+                JDBC_4_DBMD_IS_CTOR = Class.forName("com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema")
+                        .getConstructor(new Class[] { com.mysql.jdbc.MySQLConnection.class, String.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -671,18 +671,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "DESC", "DESCRIBE", "DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE", "DROP", "DUAL", "EACH", "ELSE", "ELSEIF", "ENCLOSED", "ESCAPED",
             "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH", "FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM", "FULLTEXT", "GENERATED", "GET",
             "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY", "HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IN", "INDEX", "INFILE", "INNER",
-            "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS",
-            "IO_BEFORE_GTIDS", "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD",
-            "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT",
-            "MATCH", "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL",
-            "NOT", "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTIMIZER_COSTS", "OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER",
-            "OUTFILE", "PARTITION", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES", "REGEXP",
-            "RELEASE", "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE", "SCHEMA", "SCHEMAS",
-            "SECOND_MICROSECOND", "SELECT", "SENSITIVE", "SEPARATOR", "SET", "SHOW", "SIGNAL", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL", "SQLEXCEPTION",
-            "SQLSTATE", "SQLWARNING", "SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING", "STORED", "STRAIGHT_JOIN", "TABLE",
-            "TERMINATED", "THEN", "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE", "UNLOCK", "UNSIGNED",
-            "UPDATE", "USAGE", "USE", "USING", "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "VIRTUAL",
-            "WHEN", "WHERE", "WHILE", "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
+            "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS", "IO_BEFORE_GTIDS",
+            "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD", "LOCALTIME",
+            "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT", "MATCH",
+            "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL", "NOT",
+            "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTIMIZER_COSTS", "OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE",
+            "PARTITION", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES", "REGEXP", "RELEASE",
+            "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE", "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND",
+            "SELECT", "SENSITIVE", "SEPARATOR", "SET", "SHOW", "SIGNAL", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING",
+            "SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING", "STORED", "STRAIGHT_JOIN", "TABLE", "TERMINATED", "THEN",
+            "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE",
+            "USING", "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "VIRTUAL", "WHEN", "WHERE", "WHILE",
+            "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
 
     // SQL:92 reserved words from 'ANSI X3.135-1992, January 4, 1993'
     private static final String[] SQL92_KEYWORDS = new String[] { "ABSOLUTE", "ACTION", "ADD", "ALL", "ALLOCATE", "ALTER", "AND", "ANY", "ARE", "AS", "ASC",
@@ -720,13 +720,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "OLD", "ON", "ONLY", "OPEN", "OR", "ORDER", "OUT", "OUTER", "OVER", "OVERLAPS", "OVERLAY", "PARAMETER", "PARTITION", "PERCENTILE_CONT",
             "PERCENTILE_DISC", "PERCENT_RANK", "POSITION", "POWER", "PRECISION", "PREPARE", "PRIMARY", "PROCEDURE", "RANGE", "RANK", "READS", "REAL",
             "RECURSIVE", "REF", "REFERENCES", "REFERENCING", "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2", "REGR_SLOPE", "REGR_SXX",
-            "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "ROW_NUMBER",
-            "SAVEPOINT", "SCOPE", "SCROLL", "SEARCH", "SECOND", "SELECT", "SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC",
-            "SPECIFICTYPE", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQRT", "START", "STATIC", "STDDEV_POP", "STDDEV_SAMP", "SUBMULTISET",
-            "SUBSTRING", "SUM", "SYMMETRIC", "SYSTEM", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE",
-            "TO", "TRAILING", "TRANSLATE", "TRANSLATION", "TREAT", "TRIGGER", "TRIM", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE",
-            "UPPER", "USER", "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN", "WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW",
-            "WITH", "WITHIN", "WITHOUT", "YEAR" };
+            "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "ROW_NUMBER", "SAVEPOINT",
+            "SCOPE", "SCROLL", "SEARCH", "SECOND", "SELECT", "SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC", "SPECIFICTYPE",
+            "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQRT", "START", "STATIC", "STDDEV_POP", "STDDEV_SAMP", "SUBMULTISET", "SUBSTRING", "SUM",
+            "SYMMETRIC", "SYSTEM", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING",
+            "TRANSLATE", "TRANSLATION", "TREAT", "TRIGGER", "TRIM", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE", "UPPER", "USER",
+            "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN", "WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW", "WITH", "WITHIN",
+            "WITHOUT", "YEAR" };
 
     private static volatile String mysqlKeywords = null;
 
@@ -875,8 +875,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     rowData[5] = s2b(functionName);                      // SPECFIC NAME
                 }
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, functionName), new ByteArrayRow(rowData,
-                        getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, functionName),
+                        new ByteArrayRow(rowData, getExceptionInterceptor())));
             }
         }
     }
@@ -935,8 +935,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 rowData[8] = s2b(procedureName);
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, procedureName), new ByteArrayRow(rowData,
-                        getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, procedureName),
+                        new ByteArrayRow(rowData, getExceptionInterceptor())));
             }
         }
     }
@@ -1630,9 +1630,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 String procedureDef = paramRetrievalRs.getString(fieldName);
 
                 if (!this.conn.getNoAccessToProcedureBodies() && (procedureDef == null || procedureDef.length() == 0)) {
-                    throw SQLError.createSQLException("User does not have access to metadata required to determine "
-                            + "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
-                            + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+                    throw SQLError.createSQLException(
+                            "User does not have access to metadata required to determine "
+                                    + "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
+                                    + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
                             SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 }
 
@@ -2393,11 +2394,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 }
 
                                 fullColumnQueryBuf.append("COLUMNS FROM ");
-                                fullColumnQueryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                fullColumnQueryBuf.append(
+                                        StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
                                 fullColumnQueryBuf.append(" FROM ");
-                                fullColumnQueryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                fullColumnQueryBuf.append(
+                                        StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
 
                                 results = stmt.executeQuery(fullColumnQueryBuf.toString());
 
@@ -2437,17 +2438,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 } else {
                                     String collation = results.getString("Collation");
                                     int mbminlen = 1;
-                                    if (collation != null
-                                            && ("TEXT".equals(typeDesc.typeName) || "TINYTEXT".equals(typeDesc.typeName) || "MEDIUMTEXT"
-                                                    .equals(typeDesc.typeName))) {
+                                    if (collation != null && ("TEXT".equals(typeDesc.typeName) || "TINYTEXT".equals(typeDesc.typeName)
+                                            || "MEDIUMTEXT".equals(typeDesc.typeName))) {
                                         if (collation.indexOf("ucs2") > -1 || collation.indexOf("utf16") > -1) {
                                             mbminlen = 2;
                                         } else if (collation.indexOf("utf32") > -1) {
                                             mbminlen = 4;
                                         }
                                     }
-                                    rowVal[6] = mbminlen == 1 ? s2b(typeDesc.columnSize.toString()) : s2b(((Integer) (typeDesc.columnSize / mbminlen))
-                                            .toString());
+                                    rowVal[6] = mbminlen == 1 ? s2b(typeDesc.columnSize.toString())
+                                            : s2b(((Integer) (typeDesc.columnSize / mbminlen)).toString());
                                 }
                                 rowVal[7] = s2b(Integer.toString(typeDesc.bufferLength));
                                 rowVal[8] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
@@ -2637,8 +2637,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      *             if a database access error occurs
      */
-    public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable,
-            final String foreignCatalog, final String foreignSchema, final String foreignTable) throws SQLException {
+    public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable, final String foreignCatalog,
+            final String foreignSchema, final String foreignTable) throws SQLException {
         if (primaryTable == null) {
             throw SQLError.createSQLException("Table not specified.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
@@ -2668,8 +2668,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
                             } else {
                                 StringBuilder queryBuf = new StringBuilder("SHOW TABLE STATUS FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                queryBuf.append(
+                                        StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
 
                                 fkresults = stmt.executeQuery(queryBuf.toString());
                             }
@@ -2961,8 +2961,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
                             } else {
                                 StringBuilder queryBuf = new StringBuilder("SHOW TABLE STATUS FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                queryBuf.append(
+                                        StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
 
                                 fkresults = stmt.executeQuery(queryBuf.toString());
                             }
@@ -3175,8 +3175,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             } else {
                                 StringBuilder queryBuf = new StringBuilder("SHOW TABLE STATUS ");
                                 queryBuf.append(" FROM ");
-                                queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.conn.getPedantic()));
+                                queryBuf.append(
+                                        StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic()));
                                 queryBuf.append(" LIKE ");
                                 queryBuf.append(StringUtils.quoteIdentifier(table, "'", true));
 
@@ -3804,7 +3804,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * <li><b>SQL_DATA_TYPE</b> int => reserved for future use</li>
      * <li><b>SQL_DATETIME_SUB</b> int => reserved for future use</li>
      * <li><b>CHAR_OCTET_LENGTH</b> int => the maximum length of binary and character based columns. For any other datatype the returned value is a NULL</li>
-     * <li><b>ORDINAL_POSITION</b> int => the ordinal position, starting from 1. A value of 0 is returned if this row describes the procedure's return value.</li>
+     * <li><b>ORDINAL_POSITION</b> int => the ordinal position, starting from 1. A value of 0 is returned if this row describes the procedure's return value.
+     * </li>
      * <li><b>IS_NULLABLE</b> String => ISO rules are used to determine the nullability for a column.
      * <ul>
      * <li>YES --- if the parameter can include NULLs</li>
@@ -3906,8 +3907,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 boolean hasResults = false;
                 while (procsAndOrFuncsRs.next()) {
-                    procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1),
-                            procsAndOrFuncsRs.getString(3)), procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
+                    procsOrFuncsToExtractList.add(
+                            new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
+                                    procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                     hasResults = true;
                 }
 
@@ -4628,10 +4630,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     try {
 
                         try {
-                            results = stmt.executeQuery((!DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2) ? "SHOW TABLES FROM "
-                                    : "SHOW FULL TABLES FROM ")
-                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic())
-                                    + " LIKE " + StringUtils.quoteIdentifier(tableNamePat, "'", true));
+                            results = stmt
+                                    .executeQuery((!DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2) ? "SHOW TABLES FROM " : "SHOW FULL TABLES FROM ")
+                                            + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.conn.getPedantic())
+                                            + " LIKE " + StringUtils.quoteIdentifier(tableNamePat, "'", true));
                         } catch (SQLException sqlEx) {
                             if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                                 throw sqlEx;
@@ -4772,8 +4774,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 if (shouldReportTables) {
                                     // Pre-MySQL-5.0.1, tables only
                                     row[3] = TableType.TABLE.asBytes();
-                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)), new ByteArrayRow(
-                                            row, getExceptionInterceptor()));
+                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)),
+                                            new ByteArrayRow(row, getExceptionInterceptor()));
                                 }
                             }
                         }
@@ -6935,9 +6937,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsConvert(int fromType, int toType) throws SQLException {
         switch (fromType) {
-        /*
-         * The char/binary types can be converted to pretty much anything.
-         */
+            /*
+             * The char/binary types can be converted to pretty much anything.
+             */
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
             case java.sql.Types.LONGVARCHAR:
@@ -6977,9 +6979,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             case java.sql.Types.BIT:
                 return false;
 
-                /*
-                 * The numeric types. Basically they can convert among themselves, and with char/binary types.
-                 */
+            /*
+             * The numeric types. Basically they can convert among themselves, and with char/binary types.
+             */
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             case java.sql.Types.REAL:
@@ -7016,9 +7018,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             case java.sql.Types.NULL:
                 return false;
 
-                /*
-                 * With this driver, this will always be a serialized object, so the char/binary types will work.
-                 */
+            /*
+             * With this driver, this will always be a serialized object, so the char/binary types will work.
+             */
             case java.sql.Types.OTHER:
 
                 switch (toType) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -219,36 +219,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
                 + "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
-                + Integer.MAX_VALUE
-                + " THEN "
-                + Integer.MAX_VALUE
-                + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
-                + MysqlIO.getMaxBuf()
-                + " AS BUFFER_LENGTH,"
-                + "NUMERIC_SCALE AS DECIMAL_DIGITS,"
-                + "10 AS NUM_PREC_RADIX,"
-                + "CASE WHEN IS_NULLABLE='NO' THEN "
-                + columnNoNulls
-                + " ELSE CASE WHEN IS_NULLABLE='YES' THEN "
-                + columnNullable
-                + " ELSE "
-                + columnNullableUnknown
-                + " END END AS NULLABLE,"
-                + "COLUMN_COMMENT AS REMARKS,"
-                + "COLUMN_DEFAULT AS COLUMN_DEF,"
-                + "0 AS SQL_DATA_TYPE,"
-                + "0 AS SQL_DATETIME_SUB,"
-                + "CASE WHEN CHARACTER_OCTET_LENGTH > "
-                + Integer.MAX_VALUE
-                + " THEN "
-                + Integer.MAX_VALUE
-                + " ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
-                + "ORDINAL_POSITION,"
-                + "IS_NULLABLE,"
-                + "NULL AS SCOPE_CATALOG,"
-                + "NULL AS SCOPE_SCHEMA,"
-                + "NULL AS SCOPE_TABLE,"
-                + "NULL AS SOURCE_DATA_TYPE,"
+                + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, " + MysqlIO.getMaxBuf()
+                + " AS BUFFER_LENGTH," + "NUMERIC_SCALE AS DECIMAL_DIGITS," + "10 AS NUM_PREC_RADIX," + "CASE WHEN IS_NULLABLE='NO' THEN " + columnNoNulls
+                + " ELSE CASE WHEN IS_NULLABLE='YES' THEN " + columnNullable + " ELSE " + columnNullableUnknown + " END END AS NULLABLE,"
+                + "COLUMN_COMMENT AS REMARKS," + "COLUMN_DEFAULT AS COLUMN_DEF," + "0 AS SQL_DATA_TYPE," + "0 AS SQL_DATETIME_SUB,"
+                + "CASE WHEN CHARACTER_OCTET_LENGTH > " + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE
+                + " ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH," + "ORDINAL_POSITION," + "IS_NULLABLE," + "NULL AS SCOPE_CATALOG,"
+                + "NULL AS SCOPE_SCHEMA," + "NULL AS SCOPE_TABLE," + "NULL AS SOURCE_DATA_TYPE,"
                 + "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, "
                 + "IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
 
@@ -384,27 +361,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
                 + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
-                + generateUpdateRuleClause()
-                + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause()
-                + " AS DELETE_RULE,"
-                + "A.CONSTRAINT_NAME AS FK_NAME,"
-                + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
-                + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND"
-                + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
-                + " AS PK_NAME,"
-                + importedKeyNotDeferrable
-                + " AS DEFERRABILITY "
-                + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN "
-                + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
-                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) "
-                + generateOptionalRefContraintsJoin()
-                + "WHERE "
-                + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
+                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
+                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
+                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
+                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN " + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
+                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) " + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
                 + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
                 + "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
@@ -503,29 +465,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, "
                 + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME,"
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
-                + generateUpdateRuleClause()
-                + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause()
-                + " AS DELETE_RULE,"
-                + "A.CONSTRAINT_NAME AS FK_NAME,"
-                + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
-                + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND"
-                + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
-                + " AS PK_NAME,"
-                + importedKeyNotDeferrable
-                + " AS DEFERRABILITY "
-                + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN "
-                + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
-                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) "
-                + generateOptionalRefContraintsJoin()
-                + "WHERE "
-                + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
-                + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
-                + "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
+                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
+                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
+                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
+                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN " + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
+                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) " + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
+                + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? " + "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -634,31 +580,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
                 + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,"
-                + generateUpdateRuleClause()
-                + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause()
-                + " AS DELETE_RULE,"
-                + "A.CONSTRAINT_NAME AS FK_NAME,"
-                + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
-                + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND"
-                + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
-                + " AS PK_NAME,"
-                + importedKeyNotDeferrable
-                + " AS DEFERRABILITY "
-                + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A "
-                + "JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING "
-                + "(CONSTRAINT_NAME, TABLE_NAME) "
-                + generateOptionalRefContraintsJoin()
-                + "WHERE "
-                + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
-                + "AND A.TABLE_SCHEMA LIKE ? "
-                + "AND A.TABLE_NAME=? "
-                + "AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
-                + "ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION";
+                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
+                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
+                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
+                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
+                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A " + "JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING " + "(CONSTRAINT_NAME, TABLE_NAME) "
+                + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' " + "AND A.TABLE_SCHEMA LIKE ? " + "AND A.TABLE_NAME=? "
+                + "AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL " + "ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION";
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -1612,10 +1540,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, functionNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] { new Field("", "FUNCTION_CAT", Types.CHAR, 255),
-                    new Field("", "FUNCTION_SCHEM", Types.CHAR, 255), new Field("", "FUNCTION_NAME", Types.CHAR, 255),
-                    new Field("", "REMARKS", Types.CHAR, 255), new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6),
-                    new Field("", "SPECIFIC_NAME", Types.CHAR, 255) });
+            ((com.mysql.jdbc.ResultSetInternalMethods) rs)
+                    .redefineFieldsForDBMD(new Field[] { new Field("", "FUNCTION_CAT", Types.CHAR, 255), new Field("", "FUNCTION_SCHEM", Types.CHAR, 255),
+                            new Field("", "FUNCTION_NAME", Types.CHAR, 255), new Field("", "REMARKS", Types.CHAR, 255),
+                            new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6), new Field("", "SPECIFIC_NAME", Types.CHAR, 255) });
 
             return rs;
         } finally {

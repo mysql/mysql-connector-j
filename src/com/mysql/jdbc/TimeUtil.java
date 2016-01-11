@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -283,8 +283,9 @@ public class TimeUtil {
 
     final static Time fastTimeCreate(Calendar cal, int hour, int minute, int second, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (hour < 0 || hour > 24) {
-            throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second)
-                    + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(
+                    "Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (minute < 0 || minute > 59) {
@@ -318,8 +319,9 @@ public class TimeUtil {
 
     final static Time fastTimeCreate(int hour, int minute, int second, Calendar targetCalendar, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (hour < 0 || hour > 23) {
-            throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second)
-                    + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(
+                    "Illegal hour value '" + hour + "' for java.sql.Time type in value '" + timeFormattedString(hour, minute, second) + ".",
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         if (minute < 0 || minute > 59) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -233,8 +233,8 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 
         if (streamSize < this.charData.length()) {
             try {
-                out.write(StringUtils.getBytes(this.charData, null, null, false, null, this.exceptionInterceptor), streamSize, this.charData.length()
-                        - streamSize);
+                out.write(StringUtils.getBytes(this.charData, null, null, false, null, this.exceptionInterceptor), streamSize,
+                        this.charData.length() - streamSize);
             } catch (SQLException ex) {
                 //
             }

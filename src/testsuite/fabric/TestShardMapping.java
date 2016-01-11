@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,13 +26,13 @@ package testsuite.fabric;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 import com.mysql.fabric.HashShardMapping;
 import com.mysql.fabric.RangeShardMapping;
 import com.mysql.fabric.ShardIndex;
 import com.mysql.fabric.ShardMapping;
 import com.mysql.fabric.ShardingType;
+
+import junit.framework.TestCase;
 
 /**
  * Tests for shard mappings.
@@ -84,11 +84,8 @@ public class TestShardMapping extends TestCase {
     public void testHashShardMappingKeyLookup() throws Exception {
         final String globalGroupName = "My global group";
 
-        final String lowerBounds[] = new String[] {
-        /* 0 = */"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        /* 1 = */"66666666666666666666666666666666",
-        /* 2 = */"2809A05A22A4A9C1882A580BCC0AD8A6",
-        /* 3 = */"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD" };
+        final String lowerBounds[] = new String[] { /* 0 = */"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", /* 1 = */"66666666666666666666666666666666",
+                /* 2 = */"2809A05A22A4A9C1882A580BCC0AD8A6", /* 3 = */"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD" };
 
         // setup the mapping
         Set<ShardIndex> shardIndices = new HashSet<ShardIndex>();

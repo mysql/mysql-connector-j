@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -106,14 +106,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         if (Util.isJdbc4()) {
             try {
                 String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ResultSet" : "com.mysql.jdbc.JDBC4ResultSet";
-                JDBC_4_RS_4_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
-                        new Class[] { Long.TYPE, Long.TYPE, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
-                JDBC_4_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
-                        new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
+                JDBC_4_RS_4_ARG_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { Long.TYPE, Long.TYPE, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
+                JDBC_4_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
 
                 jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42UpdatableResultSet" : "com.mysql.jdbc.JDBC4UpdatableResultSet";
-                JDBC_4_UPD_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName).getConstructor(
-                        new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
+                JDBC_4_UPD_RS_5_ARG_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { String.class, Field[].class, RowData.class, MySQLConnection.class, com.mysql.jdbc.StatementImpl.class });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -761,13 +761,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             if ((columnIndex < 1)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if ((columnIndex > this.fields.length)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_high",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.profileSql || this.useUsageAdvisor) {
@@ -977,7 +977,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         }
     }
 
-    protected Timestamp fastTimestampCreate(Calendar cal, int year, int month, int day, int hour, int minute, int seconds, int secondsPart) throws SQLException {
+    protected Timestamp fastTimestampCreate(Calendar cal, int year, int month, int day, int hour, int minute, int seconds, int secondsPart)
+            throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.useLegacyDatetimeCode) {
                 return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour, minute, seconds, secondsPart);
@@ -989,8 +990,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
             boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
 
-            return TimeUtil
-                    .fastTimestampCreate(useGmtMillis, useGmtMillis ? getGmtCalendar() : null, cal, year, month, day, hour, minute, seconds, secondsPart);
+            return TimeUtil.fastTimestampCreate(useGmtMillis, useGmtMillis ? getGmtCalendar() : null, cal, year, month, day, hour, minute, seconds,
+                    secondsPart);
         }
     }
 
@@ -1351,8 +1352,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     try {
                         return bdVal.setScale(scale, BigDecimal.ROUND_HALF_UP);
                     } catch (ArithmeticException arEx) {
-                        throw new SQLException(Messages.getString("ResultSet.Bad_format_for_BigDecimal",
-                                new Object[] { stringVal, Integer.valueOf(columnIndex) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        throw new SQLException(
+                                Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
+                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                     }
                 }
             }
@@ -1364,8 +1366,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     try {
                         return new BigDecimal(stringVal).setScale(scale, BigDecimal.ROUND_HALF_UP);
                     } catch (ArithmeticException arEx) {
-                        throw new SQLException(Messages.getString("ResultSet.Bad_format_for_BigDecimal",
-                                new Object[] { stringVal, Integer.valueOf(columnIndex) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                        throw new SQLException(
+                                Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
+                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                     }
                 }
             } catch (NumberFormatException ex) {
@@ -1378,8 +1381,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         try {
                             return new BigDecimal(valueAsLong).setScale(scale, BigDecimal.ROUND_HALF_UP);
                         } catch (ArithmeticException arEx2) {
-                            throw new SQLException(Messages.getString("ResultSet.Bad_format_for_BigDecimal",
-                                    new Object[] { stringVal, Integer.valueOf(columnIndex) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                            throw new SQLException(
+                                    Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
+                                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
                         }
                     }
                 }
@@ -2448,9 +2452,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 // ignore, it's not a number
             }
 
-            throw SQLError.createSQLException(
-                    Messages.getString("ResultSet.Invalid_value_for_getFloat()_-____200") + val + Messages.getString("ResultSet.___in_column__201")
-                            + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Invalid_value_for_getFloat()_-____200") + val
+                    + Messages.getString("ResultSet.___in_column__201") + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2642,10 +2645,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 // ignore, it's not a number
             }
 
-            throw SQLError
-                    .createSQLException(
-                            Messages.getString("ResultSet.Invalid_value_for_getInt()_-____206") + val + Messages.getString("ResultSet.___in_column__207")
-                                    + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(
+                    Messages.getString("ResultSet.Invalid_value_for_getInt()_-____206") + val + Messages.getString("ResultSet.___in_column__207") + columnIndex,
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2782,9 +2784,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 // ignore, it's not a number
             }
 
-            throw SQLError.createSQLException(
-                    Messages.getString("ResultSet.Invalid_value_for_getLong()_-____211") + val + Messages.getString("ResultSet.___in_column__212")
-                            + (columnIndexZeroBased + 1), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Invalid_value_for_getLong()_-____211") + val
+                    + Messages.getString("ResultSet.___in_column__212") + (columnIndexZeroBased + 1), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
     }
 
@@ -3450,9 +3452,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                                     objIn.close();
                                     bytesIn.close();
                                 } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(
-                                            Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                                    + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
                                 } catch (IOException ex) {
                                     obj = data; // not serialized?
                                 }
@@ -3728,9 +3729,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 String stringVal = getNativeString(columnIndex + 1);
 
                 if (this.useUsageAdvisor) {
-                    issueConversionViaParsingWarning("getDouble()", columnIndex, stringVal, this.fields[columnIndex], new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
-                            MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG, MysqlDefs.FIELD_TYPE_LONGLONG,
-                            MysqlDefs.FIELD_TYPE_FLOAT });
+                    issueConversionViaParsingWarning("getDouble()", columnIndex, stringVal, this.fields[columnIndex],
+                            new int[] { MysqlDefs.FIELD_TYPE_DOUBLE, MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG,
+                                    MysqlDefs.FIELD_TYPE_LONGLONG, MysqlDefs.FIELD_TYPE_FLOAT });
                 }
 
                 return getDoubleFromString(stringVal, columnIndex + 1);
@@ -3822,9 +3823,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 String stringVal = getNativeString(columnIndex + 1);
 
                 if (this.useUsageAdvisor) {
-                    issueConversionViaParsingWarning("getFloat()", columnIndex, stringVal, this.fields[columnIndex], new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
-                            MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG, MysqlDefs.FIELD_TYPE_LONGLONG,
-                            MysqlDefs.FIELD_TYPE_FLOAT });
+                    issueConversionViaParsingWarning("getFloat()", columnIndex, stringVal, this.fields[columnIndex],
+                            new int[] { MysqlDefs.FIELD_TYPE_DOUBLE, MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG,
+                                    MysqlDefs.FIELD_TYPE_LONGLONG, MysqlDefs.FIELD_TYPE_FLOAT });
                 }
 
                 return getFloatFromString(stringVal, columnIndex + 1);
@@ -3939,9 +3940,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 String stringVal = getNativeString(columnIndex + 1);
 
                 if (this.useUsageAdvisor) {
-                    issueConversionViaParsingWarning("getInt()", columnIndex, stringVal, this.fields[columnIndex], new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
-                            MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG, MysqlDefs.FIELD_TYPE_LONGLONG,
-                            MysqlDefs.FIELD_TYPE_FLOAT });
+                    issueConversionViaParsingWarning("getInt()", columnIndex, stringVal, this.fields[columnIndex],
+                            new int[] { MysqlDefs.FIELD_TYPE_DOUBLE, MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG,
+                                    MysqlDefs.FIELD_TYPE_LONGLONG, MysqlDefs.FIELD_TYPE_FLOAT });
                 }
 
                 return getIntFromString(stringVal, columnIndex + 1);
@@ -4015,10 +4016,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 BigInteger asBigInt = convertLongToUlong(valueAsLong);
 
-                if (overflowCheck
-                        && this.jdbcCompliantTruncationForReads
-                        && ((asBigInt.compareTo(new BigInteger(String.valueOf(Long.MAX_VALUE))) > 0) || (asBigInt.compareTo(new BigInteger(String
-                                .valueOf(Long.MIN_VALUE))) < 0))) {
+                if (overflowCheck && this.jdbcCompliantTruncationForReads && ((asBigInt.compareTo(new BigInteger(String.valueOf(Long.MAX_VALUE))) > 0)
+                        || (asBigInt.compareTo(new BigInteger(String.valueOf(Long.MIN_VALUE))) < 0))) {
                     throwRangeException(asBigInt.toString(), columnIndex + 1, Types.BIGINT);
                 }
 
@@ -4048,9 +4047,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 String stringVal = getNativeString(columnIndex + 1);
 
                 if (this.useUsageAdvisor) {
-                    issueConversionViaParsingWarning("getLong()", columnIndex, stringVal, this.fields[columnIndex], new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
-                            MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG, MysqlDefs.FIELD_TYPE_LONGLONG,
-                            MysqlDefs.FIELD_TYPE_FLOAT });
+                    issueConversionViaParsingWarning("getLong()", columnIndex, stringVal, this.fields[columnIndex],
+                            new int[] { MysqlDefs.FIELD_TYPE_DOUBLE, MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG,
+                                    MysqlDefs.FIELD_TYPE_LONGLONG, MysqlDefs.FIELD_TYPE_FLOAT });
                 }
 
                 return getLongFromString(stringVal, columnIndex + 1);
@@ -4165,10 +4164,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 BigInteger asBigInt = convertLongToUlong(valueAsLong);
 
-                if (overflowCheck
-                        && this.jdbcCompliantTruncationForReads
-                        && ((asBigInt.compareTo(new BigInteger(String.valueOf(Short.MAX_VALUE))) > 0) || (asBigInt.compareTo(new BigInteger(String
-                                .valueOf(Short.MIN_VALUE))) < 0))) {
+                if (overflowCheck && this.jdbcCompliantTruncationForReads && ((asBigInt.compareTo(new BigInteger(String.valueOf(Short.MAX_VALUE))) > 0)
+                        || (asBigInt.compareTo(new BigInteger(String.valueOf(Short.MIN_VALUE))) < 0))) {
                     throwRangeException(asBigInt.toString(), columnIndex + 1, Types.SMALLINT);
                 }
 
@@ -4198,9 +4195,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 String stringVal = getNativeString(columnIndex + 1);
 
                 if (this.useUsageAdvisor) {
-                    issueConversionViaParsingWarning("getShort()", columnIndex, stringVal, this.fields[columnIndex], new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
-                            MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG, MysqlDefs.FIELD_TYPE_LONGLONG,
-                            MysqlDefs.FIELD_TYPE_FLOAT });
+                    issueConversionViaParsingWarning("getShort()", columnIndex, stringVal, this.fields[columnIndex],
+                            new int[] { MysqlDefs.FIELD_TYPE_DOUBLE, MysqlDefs.FIELD_TYPE_TINY, MysqlDefs.FIELD_TYPE_SHORT, MysqlDefs.FIELD_TYPE_LONG,
+                                    MysqlDefs.FIELD_TYPE_LONGLONG, MysqlDefs.FIELD_TYPE_FLOAT });
                 }
 
                 return getShortFromString(stringVal, columnIndex + 1);
@@ -4325,8 +4322,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
             default:
 
-                tsVal = (Timestamp) this.thisRow.getNativeDateTimeValue(columnIndexMinusOne, null, Types.TIMESTAMP, mysqlType, tz, rollForward,
-                        this.connection, this);
+                tsVal = (Timestamp) this.thisRow.getNativeDateTimeValue(columnIndexMinusOne, null, Types.TIMESTAMP, mysqlType, tz, rollForward, this.connection,
+                        this);
         }
 
         //
@@ -4563,9 +4560,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                                     objIn.close();
                                     bytesIn.close();
                                 } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(
-                                            Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                                    + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
                                 } catch (IOException ex) {
                                     obj = data; // not serialized?
                                 }
@@ -4643,8 +4639,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 try {
                     return type.cast(getObject(columnIndex));
                 } catch (ClassCastException cce) {
-                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
                     sqlEx.initCause(cce);
 
                     throw sqlEx;
@@ -4803,7 +4799,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     return new Double(getFloat(columnIndex));
                 }
                 return new Float(getFloat(columnIndex)); // NB - bug in JDBC compliance test, according to JDBC spec, FLOAT type should return DOUBLE
-                                                         // but causes ClassCastException in CTS :(
+                                                        // but causes ClassCastException in CTS :(
 
             case Types.DOUBLE:
                 return new Double(getDouble(columnIndex));
@@ -5110,9 +5106,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 // ignore, it's not a number
             }
 
-            throw SQLError.createSQLException(
-                    Messages.getString("ResultSet.Invalid_value_for_getShort()_-____217") + val + Messages.getString("ResultSet.___in_column__218")
-                            + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Invalid_value_for_getShort()_-____217") + val
+                    + Messages.getString("ResultSet.___in_column__218") + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -5137,10 +5132,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         } catch (SQLException sqlEx) {
             if (!this.retainOwningStatement) {
-                throw SQLError.createSQLException(
-                        "Operation not allowed on closed ResultSet. Statements "
-                                + "can be retained over result set closure by setting the connection property "
-                                + "\"retainStatementAfterResultSetClose\" to \"true\".", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException("Operation not allowed on closed ResultSet. Statements "
+                        + "can be retained over result set closure by setting the connection property " + "\"retainStatementAfterResultSetClose\" to \"true\".",
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (this.wrapperStatement != null) {
@@ -5170,7 +5164,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             Field f = this.fields[columnIndex - 1];
 
             if (f.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING) {
-                int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// f.getMaxBytesPerCharacter(); /* safe, this will never be 0 */
+                int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 */ / f.getMaxBytesPerCharacter(); /* safe, this will never be 0 */
 
                 int currentLength = stringVal.length();
 
@@ -5537,9 +5531,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 } else {
                     // convert a String to a Time
                     if ((timeAsString.length() != 5) && (timeAsString.length() != 8)) {
-                        throw SQLError.createSQLException(
-                                Messages.getString("ResultSet.Bad_format_for_Time____267") + timeAsString + Messages.getString("ResultSet.___in_column__268")
-                                        + columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        throw SQLError
+                                .createSQLException(
+                                        Messages.getString("ResultSet.Bad_format_for_Time____267") + timeAsString
+                                                + Messages.getString("ResultSet.___in_column__268") + columnIndex,
+                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     hr = Integer.parseInt(timeAsString.substring(0, 2));
@@ -5692,10 +5688,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();
 
-            if ((length > 0)
-                    && (timestampValue.charAt(0) == '0')
-                    && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00") || timestampValue.equals("00000000000000") || timestampValue
-                            .equals("0"))) {
+            if ((length > 0) && (timestampValue.charAt(0) == '0') && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00")
+                    || timestampValue.equals("00000000000000") || timestampValue.equals("0"))) {
 
                 if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(this.connection.getZeroDateTimeBehavior())) {
                     this.wasNullFlag = true;
@@ -6199,21 +6193,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 convertibleTypesBuf.append("\n");
             }
 
-            String message = Messages.getString(
-                    "ResultSet.CostlyConversion",
-                    new Object[] {
-                            methodName,
-                            Integer.valueOf(columnIndex + 1),
-                            fieldInfo.getOriginalName(),
-                            fieldInfo.getOriginalTableName(),
+            String message = Messages.getString("ResultSet.CostlyConversion",
+                    new Object[] { methodName, Integer.valueOf(columnIndex + 1), fieldInfo.getOriginalName(), fieldInfo.getOriginalTableName(),
                             originalQueryBuf.toString(),
-                            value != null ? value.getClass().getName() : ResultSetMetaData.getClassNameForJavaType(fieldInfo.getSQLType(),
-                                    fieldInfo.isUnsigned(), fieldInfo.getMysqlType(), fieldInfo.isBinary() || fieldInfo.isBlob(), fieldInfo.isOpaqueBinary(),
-                                    this.connection.getYearIsDateType()), MysqlDefs.typeToName(fieldInfo.getMysqlType()), convertibleTypesBuf.toString() });
+                            value != null ? value.getClass().getName()
+                                    : ResultSetMetaData.getClassNameForJavaType(fieldInfo.getSQLType(), fieldInfo.isUnsigned(), fieldInfo.getMysqlType(),
+                                            fieldInfo.isBinary() || fieldInfo.isBlob(), fieldInfo.isOpaqueBinary(), this.connection.getYearIsDateType()),
+                    MysqlDefs.typeToName(fieldInfo.getMysqlType()), convertibleTypesBuf.toString() });
 
-            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
-                    : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
-                    this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+            this.eventSink
+                    .consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog,
+                            this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(),
+                            0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
         }
     }
 
@@ -6427,8 +6418,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         return longValue;
     }
 
-    private long parseLongWithOverflowCheck(int columnIndexZeroBased, byte[] valueAsBytes, String valueAsString, boolean doCheck) throws NumberFormatException,
-            SQLException {
+    private long parseLongWithOverflowCheck(int columnIndexZeroBased, byte[] valueAsBytes, String valueAsString, boolean doCheck)
+            throws NumberFormatException, SQLException {
 
         long longValue = 0;
 
@@ -6640,10 +6631,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     // Report on result set closed by driver instead of application
 
                     if (!calledExplicitly) {
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
-                                : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
-                                this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages
-                                        .getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
+                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "",
+                                (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog, this.connectionId,
+                                (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
+                                Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
                     }
 
                     if (this.rowData instanceof RowDataStatic) {
@@ -6651,20 +6642,21 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         // Report on possibly too-large result sets
 
                         if (this.rowData.size() > this.connection.getResultSetSizeThreshold()) {
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
-                                    .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
-                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.Too_Large_Result_Set", new Object[] {
-                                            Integer.valueOf(this.rowData.size()), Integer.valueOf(this.connection.getResultSetSizeThreshold()) })));
+                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "",
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
+                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
+                                    Messages.getString("ResultSet.Too_Large_Result_Set", new Object[] { Integer.valueOf(this.rowData.size()),
+                                            Integer.valueOf(this.connection.getResultSetSizeThreshold()) })));
                         }
 
                         if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
-                                    .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
-                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString(
-                                            "ResultSet.Possible_incomplete_traversal_of_result_set",
+                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "",
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
+                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
+                                    Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set",
                                             new Object[] { Integer.valueOf(getRow()), Integer.valueOf(this.rowData.size()) })));
                         }
                     }
@@ -6691,9 +6683,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         }
 
                         if (issueWarn) {
-                            this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
-                                    : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement
-                                    .getId(), 0, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
+                            this.eventSink.consumeEvent(
+                                    new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog,
+                                            this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), 0,
+                                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
                         }
                     }
                 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,18 +40,18 @@ public class ExceptionSubclassesTest extends BaseTestCase {
 
     public void testBug17750877() throws Exception {
 
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException", SQLError.createSQLException("test", "08000", 0, true, null)
-                .getClass().getCanonicalName());
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException", SQLError.createSQLException("test", "08000", 0, false, null)
-                .getClass().getCanonicalName());
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException", SQLError.createSQLException("test", "42000", null).getClass()
-                .getCanonicalName());
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException", SQLError.createSQLException("test", "23000", null)
-                .getClass().getCanonicalName());
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException", SQLError.createSQLException("test", "40000", null).getClass()
-                .getCanonicalName());
-        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLQueryInterruptedException", SQLError.createSQLException("test", "70100", null).getClass()
-                .getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException",
+                SQLError.createSQLException("test", "08000", 0, true, null).getClass().getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException",
+                SQLError.createSQLException("test", "08000", 0, false, null).getClass().getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException",
+                SQLError.createSQLException("test", "42000", null).getClass().getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException",
+                SQLError.createSQLException("test", "23000", null).getClass().getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException",
+                SQLError.createSQLException("test", "40000", null).getClass().getCanonicalName());
+        assertEquals("com.mysql.jdbc.exceptions.jdbc4.MySQLQueryInterruptedException",
+                SQLError.createSQLException("test", "70100", null).getClass().getCanonicalName());
 
     }
 

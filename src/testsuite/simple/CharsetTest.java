@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,9 +41,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.CharsetMapping;
+
+import testsuite.BaseTestCase;
 
 public class CharsetTest extends BaseTestCase {
 
@@ -321,7 +321,8 @@ public class CharsetTest extends BaseTestCase {
         assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(6));
         assertEquals(Types.LONGVARCHAR, this.rs.getMetaData().getColumnType(6));
 
-        utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern=.*include.*,utf8OutsideBmpExcludedColumnNamePattern=.*blob");
+        utf8Conn = getConnectionWithProps(
+                "useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern=.*include.*,utf8OutsideBmpExcludedColumnNamePattern=.*blob");
 
         this.rs = utf8Conn.createStatement().executeQuery(query);
         this.rs.next();
@@ -364,7 +365,8 @@ public class CharsetTest extends BaseTestCase {
         // Check error handling
         //
 
-        utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{");
+        utf8Conn = getConnectionWithProps(
+                "useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{");
 
         try {
             utf8Conn.createStatement().executeQuery(query);
@@ -374,7 +376,8 @@ public class CharsetTest extends BaseTestCase {
             assertEquals("java.util.regex.PatternSyntaxException", sqlEx.getCause().getClass().getName());
         }
 
-        utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*");
+        utf8Conn = getConnectionWithProps(
+                "useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*");
 
         try {
             utf8Conn.createStatement().executeQuery(query);
@@ -384,7 +387,8 @@ public class CharsetTest extends BaseTestCase {
             assertEquals("java.util.regex.PatternSyntaxException", sqlEx.getCause().getClass().getName());
         }
 
-        utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{,paranoid=true");
+        utf8Conn = getConnectionWithProps(
+                "useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{,paranoid=true");
 
         try {
             utf8Conn.createStatement().executeQuery(query);
@@ -393,7 +397,8 @@ public class CharsetTest extends BaseTestCase {
             assertNull(sqlEx.getCause());
         }
 
-        utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*,paranoid=true");
+        utf8Conn = getConnectionWithProps(
+                "useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*,paranoid=true");
 
         try {
             utf8Conn.createStatement().executeQuery(query);

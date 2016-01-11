@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -69,7 +69,7 @@ public class NumbersTest extends BaseTestCase {
 
     private void createTestTable() throws SQLException {
         createTable("number_test", "(minBigInt bigint, maxBigInt bigint, testBigInt bigint)");
-        this.stmt.executeUpdate("INSERT INTO number_test (minBigInt,maxBigInt,testBigInt) values (" + Long.MIN_VALUE + "," + Long.MAX_VALUE + ","
-                + TEST_BIGINT_VALUE + ")");
+        this.stmt.executeUpdate(
+                "INSERT INTO number_test (minBigInt,maxBigInt,testBigInt) values (" + Long.MIN_VALUE + "," + Long.MAX_VALUE + "," + TEST_BIGINT_VALUE + ")");
     }
 }

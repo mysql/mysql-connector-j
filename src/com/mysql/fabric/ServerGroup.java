@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,6 +47,7 @@ public class ServerGroup {
 
     /**
      * Find the master server for this group.
+     * 
      * @return the master server, or null if there's no master for the current group state
      */
     public Server getMaster() {
@@ -60,6 +61,7 @@ public class ServerGroup {
 
     /**
      * Lookup a server in this group for the matching host:port string.
+     * 
      * @return the server, if found. null otherwise
      */
     public Server getServer(String hostPortString) {

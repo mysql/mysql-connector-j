@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -59,8 +59,8 @@ public class DigestAuthentication {
                 }
             } else if (400 == conn.getResponseCode()) {
                 // 400 usually means that auth is disabled on the Fabric node
-                throw new IOException("Fabric returns status 400. If authentication is disabled on the Fabric node, " +
-                        "omit the `fabricUsername' and `fabricPassword' properties from your connection.");
+                throw new IOException("Fabric returns status 400. If authentication is disabled on the Fabric node, "
+                        + "omit the `fabricUsername' and `fabricPassword' properties from your connection.");
             } else {
                 throw ex;
             }

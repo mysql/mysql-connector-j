@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -430,7 +430,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
             case MysqlDefs.FIELD_TYPE_LONG_BLOB:
                 return clampedGetLength(f); // this may change in the future for now, the server only returns FIELD_TYPE_BLOB for _all_ BLOB types, but varying
-                                            // lengths indicating the _maximum_ size for each BLOB type.
+                                           // lengths indicating the _maximum_ size for each BLOB type.
             default:
                 return clampedGetLength(f) / f.getMaxBytesPerCharacter();
 

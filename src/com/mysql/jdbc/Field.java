@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -330,8 +330,8 @@ public class Field {
     /**
      * Constructor used when communicating with pre 4.1 servers
      */
-    Field(MySQLConnection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, int tableNameLength, int length, int mysqlType,
-            short colFlag, int colDecimals) throws SQLException {
+    Field(MySQLConnection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, int tableNameLength, int length, int mysqlType, short colFlag,
+            int colDecimals) throws SQLException {
         this(conn, buffer, -1, -1, tableNameStart, tableNameLength, -1, -1, nameStart, nameLength, -1, -1, length, mysqlType, colFlag, colDecimals, -1, -1,
                 NO_CHARSET_INFO);
     }
@@ -781,8 +781,8 @@ public class Field {
     }
 
     private boolean isNativeDateTimeType() {
-        return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE
-                || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
+        return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME
+                || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
     }
 
     public void setConnection(MySQLConnection conn) {

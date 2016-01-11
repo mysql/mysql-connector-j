@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import junit.framework.ComparisonFailure;
+
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
@@ -55,8 +57,6 @@ import com.mysql.jdbc.Util;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
-
-import junit.framework.ComparisonFailure;
 
 /**
  * Regression tests for DatabaseMetaData

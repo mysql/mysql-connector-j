@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,9 +41,8 @@ public class PacketTooBigException extends SQLException {
      *            the maximum size the server will accept
      */
     public PacketTooBigException(long packetSize, long maximumPacketSize) {
-        super(
-                Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") + maximumPacketSize
-                        + Messages.getString("PacketTooBigException.2") + Messages.getString("PacketTooBigException.3")
-                        + Messages.getString("PacketTooBigException.4"), SQLError.SQL_STATE_GENERAL_ERROR);
+        super(Messages.getString("PacketTooBigException.0") + packetSize + Messages.getString("PacketTooBigException.1") + maximumPacketSize
+                + Messages.getString("PacketTooBigException.2") + Messages.getString("PacketTooBigException.3") + Messages.getString("PacketTooBigException.4"),
+                SQLError.SQL_STATE_GENERAL_ERROR);
     }
 }

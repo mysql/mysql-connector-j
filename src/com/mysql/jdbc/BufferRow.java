@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -267,8 +267,9 @@ public class BufferRow extends ResultSetRow {
                     break;
 
                 default:
-                    throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[i].getMysqlType() + Messages.getString("MysqlIO.98")
-                            + (i + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
+                    throw SQLError.createSQLException(
+                            Messages.getString("MysqlIO.97") + this.metadata[i].getMysqlType() + Messages.getString("MysqlIO.98") + (i + 1)
+                                    + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
                             SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         }
@@ -361,8 +362,9 @@ public class BufferRow extends ResultSetRow {
                 return this.rowFromServer.readLenByteArray(0);
 
             default:
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.97") + this.metadata[index].getMysqlType() + Messages.getString("MysqlIO.98")
-                        + (index + 1) + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
+                throw SQLError.createSQLException(
+                        Messages.getString("MysqlIO.97") + this.metadata[index].getMysqlType() + Messages.getString("MysqlIO.98") + (index + 1)
+                                + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
                         SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         }
     }

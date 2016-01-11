@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -592,6 +592,7 @@ public class Util {
 
     /** Main MySQL JDBC package name */
     private static final String MYSQL_JDBC_PACKAGE_ROOT;
+
     static {
         String packageName = MultiHostConnectionProxy.class.getPackage().getName();
         // assume that packageName includes "jdbc"

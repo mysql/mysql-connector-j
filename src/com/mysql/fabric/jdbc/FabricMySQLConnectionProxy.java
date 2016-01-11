@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -215,7 +215,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
         if (sqlEx.getSQLState() != null && !(sqlEx.getSQLState().startsWith("08")
-                        || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
+                || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
             return null;
         }
 
@@ -508,8 +508,8 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             currentMasterString = replConnGroup.getMasterHosts().iterator().next();
         }
         // check if master has changed
-        if (currentMasterString != null &&
-                (this.serverGroup.getMaster() == null || !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString()))) {
+        if (currentMasterString != null
+                && (this.serverGroup.getMaster() == null || !currentMasterString.equals(this.serverGroup.getMaster().getHostPortString()))) {
             // old master is gone (there may be a new one) (closeGently=false)
             try {
                 replConnGroup.removeMasterHost(currentMasterString, false);

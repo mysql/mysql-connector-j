@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -679,7 +679,8 @@ public class StatementImpl implements Statement {
      *         than read all at once.
      */
     protected boolean createStreamingResultSet() {
-        return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY) && (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
+        return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY) && (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY)
+                && (this.fetchSize == Integer.MIN_VALUE));
     }
 
     private int originalResultSetType = 0;
@@ -837,8 +838,8 @@ public class StatementImpl implements Statement {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency,
-                                createStreamingResultSet(), this.currentCatalog, cachedFields);
+                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency, createStreamingResultSet(),
+                                this.currentCatalog, cachedFields);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1163,7 +1164,7 @@ public class StatementImpl implements Statement {
                     String nextQuery = (String) this.batchedArgs.get(commandIndex);
 
                     if (((((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar) + 1 /* for semicolon */
-                    + MysqlIO.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
+                            + MysqlIO.HEADER_LENGTH) * escapeAdjust) + 32 > this.connection.getMaxAllowedPacket()) {
                         try {
                             batchStmt.execute(queryBuf.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);
                         } catch (SQLException ex) {
@@ -2185,8 +2186,8 @@ public class StatementImpl implements Statement {
                 if (!calledExplicitly) {
                     String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
 
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1, System
-                            .currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
 

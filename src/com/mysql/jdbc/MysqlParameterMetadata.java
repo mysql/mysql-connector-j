@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -154,8 +154,9 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         }
 
         if (paramNumber > this.parameterCount) {
-            throw SQLError.createSQLException("Parameter index of '" + paramNumber + "' is greater than number of parameters, which is '" + this.parameterCount
-                    + "'.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(
+                    "Parameter index of '" + paramNumber + "' is greater than number of parameters, which is '" + this.parameterCount + "'.",
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 
         }
     }

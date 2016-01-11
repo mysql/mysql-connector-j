@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -176,11 +176,11 @@ public class StatementsTest extends BaseTestCase {
         final Statement stmtTmp = this.stmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
                 + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.getGeneratedKeys();
-                return null;
-            }
-        });
+                    public Void call() throws Exception {
+                        stmtTmp.getGeneratedKeys();
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -344,11 +344,11 @@ public class StatementsTest extends BaseTestCase {
         final Statement stmtTmp = this.pstmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
                 + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.getGeneratedKeys();
-                return null;
-            }
-        });
+                    public Void call() throws Exception {
+                        stmtTmp.getGeneratedKeys();
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -700,8 +700,8 @@ public class StatementsTest extends BaseTestCase {
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
          */
         createTable("testSetObjectCS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
-        createProcedure("testSetObjectCS1Proc", "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN "
-                + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
+        createProcedure("testSetObjectCS1Proc",
+                "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN " + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
 
         CallableStatement testCstmt = this.conn.prepareCall("{CALL testSetObjectCS1Proc(?, ?, ?, ?, ?)}");
         validateTestDataLocalDTTypes("testSetObjectCS1", insertTestDataLocalDTTypes(testCstmt));

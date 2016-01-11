@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -62,8 +62,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         if (Util.isJdbc4()) {
             try {
                 String jdbc4ClassName = Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ServerPreparedStatement" : "com.mysql.jdbc.JDBC4ServerPreparedStatement";
-                JDBC_4_SPS_CTOR = Class.forName(jdbc4ClassName).getConstructor(
-                        new Class[] { MySQLConnection.class, String.class, String.class, Integer.TYPE, Integer.TYPE });
+                JDBC_4_SPS_CTOR = Class.forName(jdbc4ClassName)
+                        .getConstructor(new Class[] { MySQLConnection.class, String.class, String.class, Integer.TYPE, Integer.TYPE });
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchMethodException e) {
@@ -324,8 +324,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
 
         try {
-            return (ServerPreparedStatement) JDBC_4_SPS_CTOR.newInstance(new Object[] { conn, sql, catalog, Integer.valueOf(resultSetType),
-                    Integer.valueOf(resultSetConcurrency) });
+            return (ServerPreparedStatement) JDBC_4_SPS_CTOR
+                    .newInstance(new Object[] { conn, sql, catalog, Integer.valueOf(resultSetType), Integer.valueOf(resultSetConcurrency) });
         } catch (IllegalArgumentException e) {
             throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
         } catch (InstantiationException e) {
@@ -857,9 +857,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             parameterIndex--;
 
             if ((parameterIndex < 0) || (parameterIndex >= this.parameterBindings.length)) {
-                throw SQLError.createSQLException(
-                        Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1) + Messages.getString("ServerPreparedStatement.10")
-                                + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1)
+                        + Messages.getString("ServerPreparedStatement.10") + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             if (this.parameterBindings[parameterIndex] == null) {
@@ -1337,8 +1337,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append(asSql(true));
 
                         this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), getId(),
-                                0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null, LogUtils
-                                        .findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
+                                0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null,
+                                LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
                     if (gatherPerformanceMetrics) {
@@ -1352,8 +1352,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
                     this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
-                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
-                                    .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
+                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null,
+                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
                 com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
@@ -1375,8 +1375,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                                                                                                                                                           * rs.
                                                                                                                                                           * resultId
                                                                                                                                                           */,
-                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null, LogUtils
-                                    .findCallingClassAndMethod(new Throwable()), null));
+                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), mysql.getQueryTimingUnits(), null,
+                            LogUtils.findCallingClassAndMethod(new Throwable()), null));
                 }
 
                 if (queryWasSlow && this.connection.getExplainSlowQueries()) {
@@ -1520,8 +1520,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.profileSQL) {
                     this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
-                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null, LogUtils
-                                    .findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
+                            System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null,
+                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
                 if (this.parameterCount > 0) {
@@ -2690,7 +2690,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            long sizeOfEntireBatch = 1 + /* com_execute */+4 /* stmt id */+ 1 /* flags */+ 4 /* batch count padding */;
+            long sizeOfEntireBatch = 1 + /* com_execute */+4 /* stmt id */ + 1 /* flags */ + 4 /* batch count padding */;
             long maxSizeOfParameterSet = 0;
 
             for (int i = 0; i < numBatchedArgs; i++) {
@@ -2800,8 +2800,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown type when re-binding parameter into batched statement for parameter index "
-                                    + batchedParamIndex);
+                            throw new IllegalArgumentException(
+                                    "Unknown type when re-binding parameter into batched statement for parameter index " + batchedParamIndex);
                     }
                 }
             }

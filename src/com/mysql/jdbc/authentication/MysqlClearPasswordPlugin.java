@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -75,8 +75,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
             String encoding = this.connection.versionMeetsMinimum(5, 7, 6) ? this.connection.getPasswordCharacterEncoding() : "UTF-8";
             bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
         } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(
-                    Messages.getString("MysqlClearPasswordPlugin.1", new Object[] { this.connection.getPasswordCharacterEncoding() }),
+            throw SQLError.createSQLException(Messages.getString("MysqlClearPasswordPlugin.1", new Object[] { this.connection.getPasswordCharacterEncoding() }),
                     SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
 

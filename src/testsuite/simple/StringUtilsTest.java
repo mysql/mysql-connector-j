@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,10 +29,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.StringUtils.SearchMode;
+
+import testsuite.BaseTestCase;
 
 public class StringUtilsTest extends BaseTestCase {
     /**
@@ -231,8 +231,8 @@ public class StringUtilsTest extends BaseTestCase {
         }
 
         // 3a. search mode: all but skip line comments
-        searchMode = EnumSet
-                .of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS, SearchMode.SKIP_WHITE_SPACE);
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
+                SearchMode.SKIP_WHITE_SPACE);
         pos = 0;
         expectedIdx = new int[] { 5, 10, 15, 20, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
@@ -451,8 +451,8 @@ public class StringUtilsTest extends BaseTestCase {
         assertEquals(3, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, searchMode));
         assertEquals(3, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE));
         // 2.3. search within line comments and unidentified markers
-        searchMode = EnumSet
-                .of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS, SearchMode.SKIP_WHITE_SPACE);
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
+                SearchMode.SKIP_WHITE_SPACE);
         assertEquals(61, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, "'`(", "'`)", searchMode));
         assertEquals(116, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, "\"`(", "\"`)", searchMode));
         assertEquals(188, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, "\"'(", "\"')", searchMode));

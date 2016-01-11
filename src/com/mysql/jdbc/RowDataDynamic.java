@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -188,14 +188,13 @@ public class RowDataDynamic implements RowData {
 
                         ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
 
-                        eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.owner.owningStatement == null ? "N/A"
-                                : this.owner.owningStatement.currentCatalog, this.owner.connectionId, this.owner.owningStatement == null ? -1
-                                : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null, Messages
-                                .getString("RowDataDynamic.2")
-                                + howMuchMore
-                                + Messages.getString("RowDataDynamic.3")
-                                + Messages.getString("RowDataDynamic.4")
-                                + Messages.getString("RowDataDynamic.5") + Messages.getString("RowDataDynamic.6") + this.owner.pointOfOrigin));
+                        eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "",
+                                this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, this.owner.connectionId,
+                                this.owner.owningStatement == null ? -1 : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0,
+                                Constants.MILLIS_I18N, null, null,
+                                Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
+                                        + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
+                                        + Messages.getString("RowDataDynamic.6") + this.owner.pointOfOrigin));
                     }
                 }
             }
@@ -405,8 +404,9 @@ public class RowDataDynamic implements RowData {
             exceptionMessage += Messages.getString("RowDataDynamic.7");
             exceptionMessage += Util.stackTraceToString(ex);
 
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9")
-                    + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(
+                    Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9") + exceptionMessage,
+                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             sqlEx.initCause(ex);
 
             throw sqlEx;

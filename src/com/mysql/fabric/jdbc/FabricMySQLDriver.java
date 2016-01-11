@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -73,8 +73,8 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
         parsedProps.setProperty(FABRIC_PROTOCOL_PROPERTY_KEY, "http");
         if (com.mysql.jdbc.Util.isJdbc4()) {
             try {
-                Constructor<?> jdbc4proxy = Class.forName("com.mysql.fabric.jdbc.JDBC4FabricMySQLConnectionProxy").getConstructor(
-                        new Class[] { Properties.class });
+                Constructor<?> jdbc4proxy = Class.forName("com.mysql.fabric.jdbc.JDBC4FabricMySQLConnectionProxy")
+                        .getConstructor(new Class[] { Properties.class });
                 return (Connection) com.mysql.jdbc.Util.handleNewInstance(jdbc4proxy, new Object[] { parsedProps }, null);
             } catch (Exception e) {
                 throw (SQLException) new SQLException(e.getMessage()).initCause(e);

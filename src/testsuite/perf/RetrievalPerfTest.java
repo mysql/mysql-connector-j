@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -65,10 +65,10 @@ public class RetrievalPerfTest extends BaseTestCase {
         createTable("retrievalPerfTestMyIsam", "(priKey INT NOT NULL PRIMARY KEY, charField VARCHAR(80)) ", "MyISAM");
 
         for (int i = 0; i < NUM_ROWS; i++) {
-            this.stmt.executeUpdate("INSERT INTO retrievalPerfTestHeap (priKey, charField) VALUES (" + i
-                    + ",'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')");
-            this.stmt.executeUpdate("INSERT INTO retrievalPerfTestMyIsam (priKey, charField) VALUES (" + i
-                    + ",'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')");
+            this.stmt.executeUpdate(
+                    "INSERT INTO retrievalPerfTestHeap (priKey, charField) VALUES (" + i + ",'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')");
+            this.stmt.executeUpdate(
+                    "INSERT INTO retrievalPerfTestMyIsam (priKey, charField) VALUES (" + i + ",'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')");
         }
     }
 
