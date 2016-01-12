@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -72,8 +72,8 @@ public class InternalXmlRpcMethodCaller implements XmlRpcMethodCaller {
         return v.getValue();
     }
 
-    private List methodResponseArrayToList(Array array) {
-        List result = new ArrayList();
+    private List<Object> methodResponseArrayToList(Array array) {
+        List<Object> result = new ArrayList<Object>();
         for (Value v : array.getData().getValue()) {
             result.add(unwrapValue(v));
         }
@@ -88,7 +88,7 @@ public class InternalXmlRpcMethodCaller implements XmlRpcMethodCaller {
         this.xmlRpcClient.clearHeader(name);
     }
 
-    public List call(String methodName, Object args[]) throws FabricCommunicationException {
+    public List<Object> call(String methodName, Object args[]) throws FabricCommunicationException {
         MethodCall methodCall = new MethodCall();
         Params p = new Params();
         if (args == null) {

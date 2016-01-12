@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import junit.framework.ComparisonFailure;
-
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
@@ -57,6 +55,8 @@ import com.mysql.jdbc.Util;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
+
+import junit.framework.ComparisonFailure;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -741,7 +741,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug7033() throws Exception {
-        if (false) { // disabled for now
+        if (!this.DISABLED_testBug7033) {
             Connection big5Conn = null;
             Statement big5Stmt = null;
             PreparedStatement big5PrepStmt = null;

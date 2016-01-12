@@ -195,7 +195,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug2654() throws Exception {
-        if (false) { // this is currently a server-level bug
+        if (!this.DISABLED_testBug2654) { // this is currently a server-level bug
 
             createTable("foo", "(id tinyint(3) default NULL, data varchar(255) default NULL) DEFAULT CHARSET=latin1", "MyISAM ");
             this.stmt.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
@@ -217,6 +217,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.next();
 
             String fooData = this.rs.getString(column);
+            assertNotNull(fooData);
 
         }
     }
@@ -898,7 +899,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug5136() throws Exception {
-        if (false) {
+        if (!this.DISABLED_testBug5136) {
             PreparedStatement toGeom = this.conn.prepareStatement("select GeomFromText(?)");
             PreparedStatement toText = this.conn.prepareStatement("select AsText(?)");
 
@@ -1000,6 +1001,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * @throws Exception
      *             if the test fails.
      */
+    @SuppressWarnings("deprecation")
     public void testBug6537() throws Exception {
         if (versionMeetsMinimum(4, 1, 0)) {
             String tableName = "testBug6537";
@@ -2193,6 +2195,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         stmt2.executeUpdate("DROP TABLE IF EXISTS testAllTypes");
     }
 
+    @SuppressWarnings("deprecation")
     private void testAllFieldsForNull(ResultSet rsToTest) throws Exception {
         ResultSetMetaData rsmd = this.rs.getMetaData();
         int numCols = rsmd.getColumnCount();
@@ -2254,6 +2257,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void testAllFieldsForNotNull(ResultSet rsToTest, List<Boolean> wasDatetimeTypeList) throws Exception {
         ResultSetMetaData rsmd = this.rs.getMetaData();
         int numCols = rsmd.getColumnCount();
@@ -4262,7 +4266,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug65503() throws Exception {
-        if (false) {
+        if (!this.DISABLED_testBug65503) {
             createTable("testBug65503", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, value INTEGER)");
 
             PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug65503 (value) VALUES (?)", Statement.RETURN_GENERATED_KEYS),

@@ -198,8 +198,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         this.log = LogFactory.getLogger(getLogger(), "FabricMySQLConnectionProxy", null);
     }
 
-    private boolean intercepting = false; // prevent recursion
-
     /**
      * Deal with an exception thrown on an underlying connection. We only consider connection exceptions (SQL State 08xxx). We internally handle a possible
      * failover situation.
@@ -208,10 +206,10 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * @param conn
      * @param group
      * @param hostname
-     * @param port
+     * @param portNumber
      * @throws FabricCommunicationException
      */
-    synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String port)
+    synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String portNumber)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
         if (sqlEx.getSQLState() != null && !(sqlEx.getSQLState().startsWith("08")
@@ -220,7 +218,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         }
 
         // find the Server corresponding to this connection
-        Server currentServer = this.serverGroup.getServer(hostname + ":" + port);
+        Server currentServer = this.serverGroup.getServer(hostname + ":" + portNumber);
 
         // we have already failed over or dealt with this connection, let the exception propagate
         if (currentServer == null) {
@@ -3024,6 +3022,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
+    /**
+     * 
+     * @param name
+     * @return
+     */
     public String getClientInfo(String name) {
         return null;
     }

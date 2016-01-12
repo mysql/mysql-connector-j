@@ -272,11 +272,6 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.CallableStatement#getDouble(int)
-     */
     public double getDouble(int parameterIndex) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -291,11 +286,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.CallableStatement#getBigDecimal(int, int)
-     */
+    @Deprecated
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -329,11 +320,6 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.sql.CallableStatement#getDate(int)
-     */
     public Date getDate(int parameterIndex) throws SQLException {
         try {
             if (this.wrappedStmt != null) {

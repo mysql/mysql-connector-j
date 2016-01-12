@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -805,22 +805,33 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("profileSQL", "true");
         props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
 
-        Connection conn1 = getConnectionWithProps(props);
-
+        Connection conn1 = null;
+        Connection conn2 = null;
         try {
-            // eliminate side-effects when not run in isolation
-            StandardLogger.startLoggingToBuffer();
+            conn1 = getConnectionWithProps(props);
 
-            Connection conn2 = getConnectionWithProps(props);
+            try {
+                // eliminate side-effects when not run in isolation
+                StandardLogger.startLoggingToBuffer();
 
-            assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES") == -1);
+                conn2 = getConnectionWithProps(props);
 
-            if (versionMeetsMinimum(4, 1)) {
-                assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW COLLATION") == -1);
+                assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES") == -1);
 
+                if (versionMeetsMinimum(4, 1)) {
+                    assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW COLLATION") == -1);
+
+                }
+            } finally {
+                StandardLogger.dropBuffer();
             }
         } finally {
-            StandardLogger.dropBuffer();
+            if (conn1 != null) {
+                conn1.close();
+            }
+            if (conn2 != null) {
+                conn2.close();
+            }
         }
     }
 

@@ -532,7 +532,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug15121() throws Exception {
-        if (false /* needs to be fixed on server */) {
+        if (!this.DISABLED_testBug15121 /* needs to be fixed on server */) {
             if (versionMeetsMinimum(5, 0)) {
                 createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
