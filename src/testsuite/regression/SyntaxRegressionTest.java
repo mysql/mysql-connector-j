@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -685,7 +685,14 @@ public class SyntaxRegressionTest extends BaseTestCase {
         Connection testConn = this.conn;
         if (versionMeetsMinimum(5, 7, 10)) {
             // MySQL 5.7.10+ requires non STRICT_TRANS_TABLES to use these functions with invalid data.
-            testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+            Properties props = new Properties();
+            props.put("jdbcCompliantTruncation", "false");
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+            }
+            testConn = getConnectionWithProps(props);
         }
         this.pstmt = testConn.prepareStatement("INSERT INTO testWL5787 VALUES (NULL, INET_ATON(?), INET6_ATON(?))");
 
