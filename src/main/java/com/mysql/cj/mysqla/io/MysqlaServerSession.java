@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -238,8 +238,8 @@ public class MysqlaServerSession implements ServerSession {
 
     public boolean characterSetNamesMatches(String mysqlEncodingName) {
         // set names is equivalent to character_set_client ..._results and ..._connection, but we set _results later, so don't check it here.
-        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(getServerVariable("character_set_client")) && mysqlEncodingName
-                .equalsIgnoreCase(getServerVariable("character_set_connection")));
+        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(getServerVariable("character_set_client"))
+                && mysqlEncodingName.equalsIgnoreCase(getServerVariable("character_set_connection")));
     }
 
     public final ServerVersion getServerVersion() {

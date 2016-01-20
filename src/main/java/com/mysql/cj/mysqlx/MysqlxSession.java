@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -84,7 +84,8 @@ public class MysqlxSession implements Session {
     /**
      * A function to create a result set from the metadata, row list and ok packet (curried representation).
      *
-     * @param<T> the type of the result that this constructor will create
+     * @param<T> the
+     *               type of the result that this constructor will create
      */
     public static interface ResultCtor<T> extends Function<ArrayList<Field>, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> {
     }
@@ -440,8 +441,8 @@ public class MysqlxSession implements Session {
 
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
-        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f, (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0,
-                new DbDocValueFactory()));
+        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f,
+                (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new DbDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);

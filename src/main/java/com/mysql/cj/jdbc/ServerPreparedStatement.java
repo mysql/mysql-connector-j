@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -756,9 +756,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             parameterIndex--;
 
             if ((parameterIndex < 0) || (parameterIndex >= this.parameterBindings.length)) {
-                throw SQLError.createSQLException(
-                        Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1) + Messages.getString("ServerPreparedStatement.10")
-                                + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1)
+                        + Messages.getString("ServerPreparedStatement.10") + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             if (this.parameterBindings[parameterIndex] == null) {
@@ -827,9 +827,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return null;
             }
 
-            return new ResultSetMetaData(this.session, this.resultFields, this.session.getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.session.getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
+            return new ResultSetMetaData(this.session, this.resultFields,
+                    this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
+                    this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
     }
 
@@ -1211,8 +1211,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append(asSql(true));
 
                         this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(),
-                                getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null, LogUtils
-                                        .findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
+                                getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null,
+                                LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
                     if (gatherPerformanceMetrics) {
@@ -1230,9 +1230,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                             LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
-                com.mysql.cj.api.jdbc.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve,
-                        this.resultSetType, this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount,
-                        metadataFromCache);
+                com.mysql.cj.api.jdbc.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
+                        this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
 
                 if (this.session.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1245,13 +1244,13 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = this.session.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(),
-                            0 /*
-                               * FIXME
-                               * rs.
-                               * resultId
-                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), this.session.getQueryTimingUnits(), null, LogUtils
-                                    .findCallingClassAndMethod(new Throwable()), null));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(), 0 /*
+                                                                                                                                                              * FIXME
+                                                                                                                                                              * rs.
+                                                                                                                                                              * resultId
+                                                                                                                                                              */,
+                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), this.session.getQueryTimingUnits(), null,
+                            LogUtils.findCallingClassAndMethod(new Throwable()), null));
                 }
 
                 if (queryWasSlow && this.explainSlowQueries.getValue()) {
@@ -2014,8 +2013,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
-            String clobEncoding = (forcedEncoding == null ? this.session.getPropertySet()
-                    .getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
+            String clobEncoding = (forcedEncoding == null
+                    ? this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
 
             int maxBytesChar = 2;
 
@@ -2273,7 +2272,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     @Override
     protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            long sizeOfEntireBatch = 1 + /* com_execute */+4 /* stmt id */+ 1 /* flags */+ 4 /* batch count padding */;
+            long sizeOfEntireBatch = 1 + /* com_execute */+4 /* stmt id */ + 1 /* flags */ + 4 /* batch count padding */;
             long maxSizeOfParameterSet = 0;
 
             for (int i = 0; i < numBatchedArgs; i++) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,17 +32,15 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.MessageLite;
-
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
-import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 
 /**
  * Asynchronous message writer.
@@ -131,14 +129,15 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
      * Asynchronously write a message with a notification being delivered to <code>callback</code> upon completion of write of entire message.
      *
      * @param msg
-     * @param callback an optional callback to receive notification of when the message is completely written
+     * @param callback
+     *            an optional callback to receive notification of when the message is completely written
      */
     public void writeAsync(MessageLite msg, SentListener callback) {
         int type = MessageWriter.getTypeForMessageClass(msg.getClass());
         int size = msg.getSerializedSize();
         int payloadSize = size + 1;
         // we check maxAllowedPacket against payloadSize as that's considered the "packet size" (not including 4 byte size header)
-        if (this.maxAllowedPacket > 0 && payloadSize > maxAllowedPacket) {
+        if (this.maxAllowedPacket > 0 && payloadSize > this.maxAllowedPacket) {
             throw new CJPacketTooBigException(size, this.maxAllowedPacket);
         }
         // for debugging
@@ -170,24 +169,20 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
                 completedWrites.add(this.pendingWrites.remove());
             }
             // notify listener(s) before initiating write to satisfy ordering guarantees
-            completedWrites.stream()
-                    .map(System::identityHashCode)
-                    .map(this.bufToListener::remove)
-                    .filter(Objects::nonNull)
-                    .forEach(l -> {
-                                // prevent exceptions in listener from blocking other notifications
-                                try {
-                                    l.completed();
-                                } catch (Throwable ex) {
-                                    // presumably unexpected, notify so futures don't block
-                                    try {
-                                        l.error(ex);
-                                    } catch (Throwable ex2) {
-                                        // nothing we can do here
-                                        ex2.printStackTrace();
-                                    }
-                                }
-                            });
+            completedWrites.stream().map(System::identityHashCode).map(this.bufToListener::remove).filter(Objects::nonNull).forEach(l -> {
+                // prevent exceptions in listener from blocking other notifications
+                try {
+                    l.completed();
+                } catch (Throwable ex) {
+                    // presumably unexpected, notify so futures don't block
+                    try {
+                        l.error(ex);
+                    } catch (Throwable ex2) {
+                        // nothing we can do here
+                        ex2.printStackTrace();
+                    }
+                }
+            });
             if (this.pendingWrites.size() > 0) {
                 initiateWrite();
             }
@@ -201,11 +196,11 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
         } catch (Exception ex) {
         }
         this.bufToListener.values().forEach((SentListener l) -> {
-                    try {
-                        l.error(t);
-                    } catch (Exception ex) {
-                    }
-                });
+            try {
+                l.error(t);
+            } catch (Exception ex) {
+            }
+        });
         this.bufToListener.clear();
         this.pendingWrites.clear();
     }

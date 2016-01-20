@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -75,8 +75,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     public static ReplicationConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString);
 
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(), new Class[] {
-                ReplicationConnection.class, JdbcConnection.class }, connProxy);
+        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
+                new Class[] { ReplicationConnection.class, JdbcConnection.class }, connProxy);
     }
 
     public static ReplicationConnection createProxyInstance(ConnectionString connectionString, List<String> masterHostList, Properties masterProperties,
@@ -84,8 +84,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString, masterHostList, masterProperties, slaveHostList,
                 slaveProperties);
 
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(), new Class[] {
-                ReplicationConnection.class, JdbcConnection.class }, connProxy);
+        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
+                new Class[] { ReplicationConnection.class, JdbcConnection.class }, connProxy);
     }
 
     /**
@@ -96,8 +96,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @throws SQLException
      */
     public ReplicationConnectionProxy(ConnectionString connectionString) throws SQLException {
-        this(connectionString, connectionString.getMasterHostList(), connectionString.getMasterProps(), connectionString.getSlaveHostList(), connectionString
-                .getSlavesProps());
+        this(connectionString, connectionString.getMasterHostList(), connectionString.getMasterProps(), connectionString.getSlaveHostList(),
+                connectionString.getSlavesProps());
     }
 
     /**
@@ -156,9 +156,9 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             this.readFromMasterWhenNoSlavesOriginal = Boolean.parseBoolean(readFromMasterWhenNoSlavesAsString);
 
         } catch (Exception e) {
-            throw SQLError
-                    .createSQLException(Messages.getString("ReplicationConnectionProxy.badValueForReadFromMasterWhenNoSlaves",
-                            new Object[] { readFromMasterWhenNoSlavesAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+            throw SQLError.createSQLException(
+                    Messages.getString("ReplicationConnectionProxy.badValueForReadFromMasterWhenNoSlaves", new Object[] { readFromMasterWhenNoSlavesAsString }),
+                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String group = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -45,8 +45,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import junit.framework.ComparisonFailure;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
@@ -61,6 +59,8 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
+
+import junit.framework.ComparisonFailure;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -261,8 +261,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
 
             assertTrue("Ordinal position in full column list of '" + ordinalPosOfCol2Full + "' != ordinal position in pattern search, '"
-                    + ordinalPosOfCol2Scoped + "'.", (ordinalPosOfCol2Full != 0) && (ordinalPosOfCol2Scoped != 0)
-                    && (ordinalPosOfCol2Scoped == ordinalPosOfCol2Full));
+                    + ordinalPosOfCol2Scoped + "'.",
+                    (ordinalPosOfCol2Full != 0) && (ordinalPosOfCol2Scoped != 0) && (ordinalPosOfCol2Scoped == ordinalPosOfCol2Full));
 
         } finally {
             if (con != null) {
@@ -411,8 +411,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testIsCaseSensitive() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testIsCaseSensitive");
-            this.stmt
-                    .executeUpdate("CREATE TABLE testIsCaseSensitive (bin_char CHAR(1) BINARY, bin_varchar VARCHAR(64) BINARY, ci_char CHAR(1), ci_varchar VARCHAR(64))");
+            this.stmt.executeUpdate(
+                    "CREATE TABLE testIsCaseSensitive (bin_char CHAR(1) BINARY, bin_varchar VARCHAR(64) BINARY, ci_char CHAR(1), ci_varchar VARCHAR(64))");
             this.rs = this.stmt.executeQuery("SELECT bin_char, bin_varchar, ci_char, ci_varchar FROM testIsCaseSensitive");
 
             ResultSetMetaData rsmd = this.rs.getMetaData();
@@ -572,8 +572,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
 
             for (int i = 0; i < typesToTest.length; i++) {
-                assertTrue("JDBC Data Type of " + this.rs.getShort("DATA_TYPE") + " for MySQL type '" + this.rs.getString("TYPE_NAME")
-                        + "' from 'DATA_TYPE' column does not match expected value of " + jdbcMapping[i] + ".", jdbcMapping[i] == this.rs.getShort("DATA_TYPE"));
+                assertTrue(
+                        "JDBC Data Type of " + this.rs.getShort("DATA_TYPE") + " for MySQL type '" + this.rs.getString("TYPE_NAME")
+                                + "' from 'DATA_TYPE' column does not match expected value of " + jdbcMapping[i] + ".",
+                        jdbcMapping[i] == this.rs.getShort("DATA_TYPE"));
                 this.rs.next();
             }
 
@@ -689,8 +691,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug6399() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6399");
-            this.stmt
-                    .executeUpdate("CREATE TABLE testBug6399 (field1 CHAR(3) CHARACTER SET UTF8, field2 CHAR(3) CHARACTER SET LATIN1, field3 CHAR(3) CHARACTER SET SJIS)");
+            this.stmt.executeUpdate(
+                    "CREATE TABLE testBug6399 (field1 CHAR(3) CHARACTER SET UTF8, field2 CHAR(3) CHARACTER SET LATIN1, field3 CHAR(3) CHARACTER SET SJIS)");
             this.stmt.executeUpdate("INSERT INTO testBug6399 VALUES ('a', 'a', 'a')");
 
             this.rs = this.stmt.executeQuery("SELECT field1, field2, field3 FROM testBug6399");
@@ -1782,14 +1784,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
                             && (expected.getObject(i + 1) == null && actual.getString(i + 1).length() == 0)
                             || ((expected.getString(i + 1) == null || expected.getString(i + 1).length() == 0) && actual.getObject(i + 1) == null)) {
                         continue; // known bug with SHOW FULL COLUMNS, and we
-                                  // can't distinguish between null and ''
-                                  // for a default
+                                 // can't distinguish between null and ''
+                                 // for a default
                     }
 
                     if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
-                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getMaxBytesPerChar(
-                                CharsetMapping.getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getSession()
-                                        .getServerCharset())) > 1) {
+                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getMaxBytesPerChar(CharsetMapping
+                                .getJavaEncodingForMysqlCharset(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getSession().getServerCharset())) > 1) {
                             continue; // SHOW CREATE and CHAR_OCT *will* differ
                         }
                     }
@@ -1838,8 +1839,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug27867() throws Exception {
         String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
-        createTable("ColumnNameEncoding", "(`" + gbkColumnName + "` varchar(1) default NULL, `ASCIIColumn` varchar(1) default NULL"
-                + ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
+        createTable("ColumnNameEncoding",
+                "(`" + gbkColumnName + "` varchar(1) default NULL, `ASCIIColumn` varchar(1) default NULL" + ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
 
         this.rs = this.stmt.executeQuery("SELECT * FROM ColumnNameEncoding");
         java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
@@ -2203,7 +2204,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 Types.INTEGER, // 5. DATA_TYPE int => SQL type from java.sql.Types
                 Types.CHAR, // 6. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
                 Types.INTEGER, // 7. COLUMN_SIZE int => column size. For char or date types this is the maximum number of characters, for numeric or decimal
-                               // types this is precision.
+                // types this is precision.
                 Types.INTEGER, // 8. BUFFER_LENGTH is not used.
                 Types.INTEGER, // 9. DECIMAL_DIGITS int => the number of fractional digits
                 Types.INTEGER, // 10. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
@@ -2215,12 +2216,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 Types.INTEGER, // 16. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
                 Types.INTEGER, // 17. ORDINAL_POSITION int => index of column in table (starting at 1)
                 Types.CHAR, // 18. IS_NULLABLE String => "NO" means column definitely does not allow NULL values; "YES" means the column might allow NULL 
-                            // values. An empty string means nobody knows.
+                // values. An empty string means nobody knows.
                 Types.CHAR, // 19. SCOPE_CATLOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
                 Types.CHAR, // 20. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
                 Types.CHAR, // 21. SCOPE_TABLE String => table name that this the scope of a reference attribute (null if the DATA_TYPE isn't REF)
                 Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null
-                                // if DATA_TYPE isn't DISTINCT or user-generated REF)
+                // if DATA_TYPE isn't DISTINCT or user-generated REF)
                 Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether this column is auto incremented
                 Types.CHAR // 24. IS_GENERATEDCOLUMN String => Indicates whether this is a generated column 
         };
@@ -2265,11 +2266,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 Types.SMALLINT, // 8. ORDINAL_POSITION short => column sequence number within index; zero when TYPE is tableIndexStatistic
                 Types.CHAR, // 9. COLUMN_NAME String => column name; null when TYPE is tableIndexStatistic
                 Types.CHAR, // 10. ASC_OR_DESC String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not
-                            // supported; null when TYPE is tableIndexStatistic
+                // supported; null when TYPE is tableIndexStatistic
                 Types.BIGINT, // 11. CARDINALITY int/long => When TYPE is tableIndexStatistic, then this is the number of rows
-                              // in the table; otherwise, it is the number of unique values in the index.
+                // in the table; otherwise, it is the number of unique values in the index.
                 Types.BIGINT, // 12. PAGES int/long => When TYPE is tableIndexStatisic then this is the number of pages used
-                              // for the table, otherwise it is the number of pages used for the current index.
+                // for the table, otherwise it is the number of pages used for the current index.
                 Types.CHAR // 13. FILTER_CONDITION String => Filter condition, if any. (may be null)
         };
 
@@ -2501,7 +2502,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
 
     public void testBug38367() throws Exception {
-        createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))" + "\nBEGIN\nEND");
+        createProcedure("sptestBug38367",
+                "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))" + "\nBEGIN\nEND");
 
         Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
         try {
@@ -2718,8 +2720,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;");
             this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' FUNCTION testbug61203fn(a float) RETURNS INT NO SQL BEGIN RETURN a; END");
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;");
-            this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' PROCEDURE testbug61203pr(INOUT a float, b bigint, c int) "
-                    + "NO SQL BEGIN SET @a = b + c; END");
+            this.stmt.executeUpdate(
+                    "CREATE DEFINER='bug61203user'@'%' PROCEDURE testbug61203pr(INOUT a float, b bigint, c int) " + "NO SQL BEGIN SET @a = b + c; END");
             testBug61203checks(rootConn, userConn);
             this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;");
             this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;");
@@ -3062,8 +3064,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug65871() throws Exception {
-        createTable("testbug65871_foreign", "(cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null,"
-                + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)) ", "InnoDB");
+        createTable("testbug65871_foreign",
+                "(cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null," + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)) ", "InnoDB");
 
         Connection pedanticConn = null;
         Connection pedanticConn_IS = null;
@@ -3210,8 +3212,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             try {
                 this.rs = conn1.getMetaData().getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);
                 if (!this.rs.next() || !"`B`EST`".equals(this.rs.getString("COLUMN_NAME"))) {
-                    failedTests.append("conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, "
-                            + "true);\n");
+                    failedTests.append(
+                            "conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, " + "true);\n");
                 }
             } catch (Exception e) {
                 failedTests
@@ -3786,8 +3788,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
             for (String tableType : tableTypes) {
                 this.rs = testDbMetaData.getTables(null, null, "%", new String[] { tableType });
                 while (this.rs.next()) {
-                    assertEquals(testStepDescription[i] + ", table type filter '" + tableType + "', wrong table type for '" + this.rs.getString("TABLE_NAME")
-                            + "'.", tableType, this.rs.getString("TABLE_TYPE"));
+                    assertEquals(
+                            testStepDescription[i] + ", table type filter '" + tableType + "', wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
+                            tableType, this.rs.getString("TABLE_TYPE"));
                     countResults[i][j]++;
                 }
                 j++;
@@ -4142,8 +4145,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // check the relative position of each element in the result set compared to the previous element.
         String previousDb = "";
         while (this.rs.next()) {
-            assertTrue(
-                    "'" + this.rs.getString(1) + "' is lexicographically lower than the previous catalog. Check the system output to see the catalogs list.",
+            assertTrue("'" + this.rs.getString(1) + "' is lexicographically lower than the previous catalog. Check the system output to see the catalogs list.",
                     previousDb.compareTo(this.rs.getString(1)) < 0);
             previousDb = this.rs.getString(1);
         }

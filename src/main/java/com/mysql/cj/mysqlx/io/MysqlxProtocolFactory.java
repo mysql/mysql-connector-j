@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -66,8 +66,8 @@ public class MysqlxProtocolFactory {
         try {
             final AsynchronousSocketChannel sockChan = AsynchronousSocketChannel.open();
             //sockChan.setOption(java.net.StandardSocketOptions.TCP_NODELAY, true);
-            sockChan.setOption(java.net.StandardSocketOptions.SO_SNDBUF, 128*1024);
-            sockChan.setOption(java.net.StandardSocketOptions.SO_RCVBUF, 128*1024);
+            sockChan.setOption(java.net.StandardSocketOptions.SO_SNDBUF, 128 * 1024);
+            sockChan.setOption(java.net.StandardSocketOptions.SO_RCVBUF, 128 * 1024);
 
             Future<Void> connectPromise = sockChan.connect(new InetSocketAddress(host, port));
             connectPromise.get();

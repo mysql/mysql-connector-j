@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -226,10 +226,10 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         });
         tests.put("9223372036854775807 as a_large_integer", (metadata, row) -> {
             // max signed 64bit integer
-                assertEquals("a_large_integer", metadata.get(0).getColumnLabel());
-                assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlTypeId());
-                assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory()));
-            });
+            assertEquals("a_large_integer", metadata.get(0).getColumnLabel());
+            assertEquals(MysqlaConstants.FIELD_TYPE_LONGLONG, metadata.get(0).getMysqlTypeId());
+            assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory()));
+        });
         tests.put("a_float, a_set, an_enum from xprotocol_types_test", (metadata, row) -> {
             assertEquals("a_float", metadata.get(0).getColumnLabel());
             assertEquals("xprotocol_types_test", metadata.get(0).getTableName());
@@ -290,7 +290,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
         this.protocol.readStatementExecuteOk();
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName, "$.testVal = 2-1");
@@ -335,7 +335,7 @@ public class MysqlxProtocolTest extends BaseInternalMysqlxTest {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
         this.protocol.readStatementExecuteOk();
 
         List<UpdateSpec> updates = new ArrayList<>();

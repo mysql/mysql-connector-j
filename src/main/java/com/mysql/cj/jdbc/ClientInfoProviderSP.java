@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -49,14 +49,14 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
 
         String catalog = "".equals(clientInfoCatalog) ? conn.getCatalog() : clientInfoCatalog;
 
-        this.setClientInfoSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
-                + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
+        this.setClientInfoSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement(
+                "CALL " + identifierQuote + catalog + identifierQuote + "." + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
 
-        this.getClientInfoSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL" + identifierQuote + catalog + identifierQuote + "."
-                + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
+        this.getClientInfoSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement(
+                "CALL" + identifierQuote + catalog + identifierQuote + "." + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
 
-        this.getClientInfoBulkSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement("CALL " + identifierQuote + catalog + identifierQuote + "."
-                + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
+        this.getClientInfoBulkSp = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).clientPrepareStatement(
+                "CALL " + identifierQuote + catalog + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
     }
 
     public synchronized void destroy() throws SQLException {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -449,9 +449,8 @@ public class MysqlIO implements ResultsHandler {
                         this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
                     }
 
-                    this.protocol.getServerSession().setStatusFlags(
-                            (this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
-                                    | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
+                    this.protocol.getServerSession().setStatusFlags((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
+                            | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
                     this.protocol.checkTransactionState();
 
                     remaining -= 2;
@@ -654,7 +653,7 @@ public class MysqlIO implements ResultsHandler {
      */
     protected final ResultSetImpl readResultsForQueryOrUpdate(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache)
-            throws SQLException {
+                    throws SQLException {
         long columnCount = resultPacket.readFieldLength();
 
         if (columnCount == 0) {
@@ -837,13 +836,13 @@ public class MysqlIO implements ResultsHandler {
         Buffer filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
         int maxAllowedPacket = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).getValue();
-        int bigPacketLength = Math.min(maxAllowedPacket - (MysqlaConstants.HEADER_LENGTH * 3), alignPacketSize(maxAllowedPacket - 16, 4096)
-                - (MysqlaConstants.HEADER_LENGTH * 3));
+        int bigPacketLength = Math.min(maxAllowedPacket - (MysqlaConstants.HEADER_LENGTH * 3),
+                alignPacketSize(maxAllowedPacket - 16, 4096) - (MysqlaConstants.HEADER_LENGTH * 3));
 
         int oneMeg = 1024 * 1024;
 
-        int smallerPacketSizeAligned = Math.min(oneMeg - (MysqlaConstants.HEADER_LENGTH * 3), alignPacketSize(oneMeg - 16, 4096)
-                - (MysqlaConstants.HEADER_LENGTH * 3));
+        int smallerPacketSizeAligned = Math.min(oneMeg - (MysqlaConstants.HEADER_LENGTH * 3),
+                alignPacketSize(oneMeg - 16, 4096) - (MysqlaConstants.HEADER_LENGTH * 3));
 
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 
@@ -1014,9 +1013,11 @@ public class MysqlIO implements ResultsHandler {
         } else if (len > 0) {
             unpackedRowData[columnIndex] = binaryData.getBytes(len);
         } else {
-            throw SQLError.createSQLException(
-                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex + Messages.getString("MysqlIO.99") + fields.length
-                            + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.protocol.getExceptionInterceptor());
+            throw SQLError
+                    .createSQLException(
+                            Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex + Messages.getString("MysqlIO.99")
+                                    + fields.length + Messages.getString("MysqlIO.100"),
+                            SQLError.SQL_STATE_GENERAL_ERROR, this.protocol.getExceptionInterceptor());
         }
     }
 
@@ -1053,9 +1054,8 @@ public class MysqlIO implements ResultsHandler {
                         .getValue();
 
                 if (!shouldClobber) {
-                    throw SQLError.createSQLException(
-                            Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40") + Messages.getString("MysqlIO.41")
-                                    + Messages.getString("MysqlIO.42"), this.protocol.getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
+                            + Messages.getString("MysqlIO.41") + Messages.getString("MysqlIO.42"), this.protocol.getExceptionInterceptor());
                 }
 
                 // Close the result set

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -67,8 +67,8 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
             return;
         }
 
-        String message = Messages.getString("ResultSet.CostlyConversion", new Object[] { this.targetVf.getTargetTypeName(), -1, "<unknown>", "<unknown>",
-                "<unknown>", "<unknown>", "<unknown>", "<unknown>" });
+        String message = Messages.getString("ResultSet.CostlyConversion",
+                new Object[] { this.targetVf.getTargetTypeName(), -1, "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>" });
 
         this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", "<unknown>", -1, -1, -1, System.currentTimeMillis(), 0,
                 Constants.MILLIS_I18N, null, LogUtils.findCallingClassAndMethod(new Throwable()), message));
@@ -77,6 +77,7 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
     /**
      * Implement the logic for indirect conversions.
      */
+    @Override
     public T createFromBytes(byte[] origBytes, int offset, int length) {
         MysqlTextValueDecoder stringInterpreter = new MysqlTextValueDecoder();
 
@@ -118,6 +119,6 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
                 && s.charAt(4) == '-' && s.charAt(7) == '-' && s.charAt(10) == ' ' && s.charAt(13) == ':' && s.charAt(16) == ':') {
             return stringInterpreter.decodeTimestamp(bytes, 0, bytes.length, vf);
         }
-        throw new DataConversionException(Messages.getString("ResultSet.UnableToInterpretString", new Object[] {s}));
+        throw new DataConversionException(Messages.getString("ResultSet.UnableToInterpretString", new Object[] { s }));
     }
 }

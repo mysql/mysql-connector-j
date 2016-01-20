@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -74,8 +74,8 @@ public class CompressedPacketSender implements PacketSender {
         MysqlaUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
         uncompressedHeader[3] = packetSequence;
         this.deflater.setInput(uncompressedHeader);
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen, this.compressedPacket.length
-                - this.compressedPayloadLen);
+        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
+                this.compressedPacket.length - this.compressedPayloadLen);
     }
 
     /**
@@ -85,8 +85,8 @@ public class CompressedPacketSender implements PacketSender {
      */
     private void addPayload(byte[] payload, int payloadOffset, int payloadLen) {
         this.deflater.setInput(payload, payloadOffset, payloadLen);
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen, this.compressedPacket.length
-                - this.compressedPayloadLen);
+        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
+                this.compressedPacket.length - this.compressedPayloadLen);
     }
 
     /**
@@ -94,8 +94,8 @@ public class CompressedPacketSender implements PacketSender {
      */
     private void completeCompression() {
         this.deflater.finish();
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen, this.compressedPacket.length
-                - this.compressedPayloadLen);
+        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
+                this.compressedPacket.length - this.compressedPayloadLen);
     }
 
     /**

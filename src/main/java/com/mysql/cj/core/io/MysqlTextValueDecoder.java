@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -59,7 +59,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != DATE_BUF_LEN) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "DATE"}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
         }
         int year = StringUtils.getInt(bytes, offset, offset + 4);
         int month = StringUtils.getInt(bytes, offset + 5, offset + 7);
@@ -73,7 +73,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         int segmentLen;
 
         if (length < TIME_STR_LEN_MIN || length > TIME_STR_LEN_MAX) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "TIME"}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIME" }));
         }
 
         boolean negative = false;
@@ -84,11 +84,12 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         }
 
         // parse hours field
-        for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++)
+        for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
             ;
+        }
         if (segmentLen == 0 || bytes[offset + pos + segmentLen] != ':') {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                            new Object[] {"TIME", StringUtils.toString(bytes, offset, length)}));
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidFormatForType", new Object[] { "TIME", StringUtils.toString(bytes, offset, length) }));
         }
         int hours = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
         if (negative) {
@@ -97,21 +98,23 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         pos += segmentLen + 1; // +1 for ':' character
 
         // parse minutes field
-        for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++)
+        for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
             ;
+        }
         if (segmentLen != 2 || bytes[offset + pos + segmentLen] != ':') {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                            new Object[] {"TIME", StringUtils.toString(bytes, offset, length)}));
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidFormatForType", new Object[] { "TIME", StringUtils.toString(bytes, offset, length) }));
         }
         int minutes = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
         pos += segmentLen + 1;
 
         // parse seconds field
-        for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++)
+        for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
             ;
+        }
         if (segmentLen != 2) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                            new Object[] {StringUtils.toString(bytes, offset, length), "TIME"}));
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIME" }));
         }
         int seconds = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
         pos += segmentLen;
@@ -121,11 +124,12 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         if (length > pos) {
             pos++; // skip '.' character
 
-            for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++)
+            for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
                 ;
+            }
             if (segmentLen + pos != length) {
-                throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                                new Object[] {StringUtils.toString(bytes, offset, length), "TIME"}));
+                throw new DataReadException(
+                        Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIME" }));
             }
             nanos = 1000 * StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
         }
@@ -135,20 +139,20 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length < TIMESTAMP_NOFRAC_STR_LEN || (length > TIMESTAMP_STR_LEN_MAX && length != TIMESTAMP_STR_LEN_WITH_NANOS)) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] {length, "TIMESTAMP"}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
         } else if (length != TIMESTAMP_NOFRAC_STR_LEN) {
             // need at least two extra bytes for fractional, '.' and a digit
             if (bytes[offset + TIMESTAMP_NOFRAC_STR_LEN] != (byte) '.' || length < TIMESTAMP_NOFRAC_STR_LEN + 2) {
-                throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                                new Object[] {StringUtils.toString(bytes, offset, length), "TIMESTAMP"}));
+                throw new DataReadException(
+                        Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIMESTAMP" }));
             }
         }
 
         // delimiter verification
         if (bytes[offset + 4] != (byte) '-' || bytes[offset + 7] != (byte) '-' || bytes[offset + 10] != (byte) ' ' || bytes[offset + 13] != (byte) ':'
                 || bytes[offset + 16] != (byte) ':') {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidFormatForType",
-                            new Object[] {StringUtils.toString(bytes, offset, length), "TIMESTAMP"}));
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIMESTAMP" }));
         }
 
         int year = StringUtils.getInt(bytes, offset, offset + 4);

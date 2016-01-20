@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,8 +25,8 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.api.x.DocResult;
+import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.api.x.FindStatement;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.x.json.DbDoc;
@@ -35,7 +35,7 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
     private CollectionImpl collection;
     private DocFindParams findParams;
 
-    /* package private */FindStatementImpl(CollectionImpl collection, String criteria) {
+    /* package private */ FindStatementImpl(CollectionImpl collection, String criteria) {
         super(new DocFindParams(collection.getSchema().getName(), collection.getName()));
         this.findParams = (DocFindParams) this.filterParams;
         this.collection = collection;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,16 +23,17 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -140,10 +141,9 @@ public class AsyncQueryTest extends CollectionTest {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
         CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
-                    assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
-                    return this.collection.find("firstName like '%Fra%'").executeAsync();
-                });
-
+            assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+            return this.collection.find("firstName like '%Fra%'").executeAsync();
+        });
 
         DbDoc d = docF.thenApply((DocResult docs) -> docs.next()).get(5, TimeUnit.SECONDS);
         JsonString val = (JsonString) d.get("lastName");
@@ -173,28 +173,28 @@ public class AsyncQueryTest extends CollectionTest {
     public void sqlUpdate() throws Exception {
         CompletableFuture<SqlResult> resF = this.session.sql("set @cjTestVar = 1").executeAsync();
         resF.thenAccept(res -> {
-                    assertFalse(res.hasData());
-                    assertEquals(0, res.getAffectedItemsCount());
-                    assertEquals(null, res.getLastInsertId());
-                    assertEquals(0, res.getWarningsCount());
-                    assertFalse(res.getWarnings().hasNext());
-                }).get();
+            assertFalse(res.hasData());
+            assertEquals(0, res.getAffectedItemsCount());
+            assertEquals(null, res.getLastInsertId());
+            assertEquals(0, res.getWarningsCount());
+            assertFalse(res.getWarnings().hasNext());
+        }).get();
     }
 
     @Test
     public void sqlQuery() throws Exception {
         CompletableFuture<SqlResult> resF = this.session.sql("select 1,2,3 from dual").executeAsync();
         resF.thenAccept(res -> {
-                    assertTrue(res.hasData());
-                    Row r = res.next();
-                    assertEquals("1", r.getString(0));
-                    assertEquals("2", r.getString(1));
-                    assertEquals("3", r.getString(2));
-                    assertEquals("1", r.getString("1"));
-                    assertEquals("2", r.getString("2"));
-                    assertEquals("3", r.getString("3"));
-                    assertFalse(res.hasNext());
-                }).get();
+            assertTrue(res.hasData());
+            Row r = res.next();
+            assertEquals("1", r.getString(0));
+            assertEquals("2", r.getString(1));
+            assertEquals("3", r.getString(2));
+            assertEquals("1", r.getString("1"));
+            assertEquals("2", r.getString("2"));
+            assertEquals("3", r.getString("3"));
+            assertFalse(res.hasNext());
+        }).get();
     }
 
     @Test
@@ -215,11 +215,11 @@ public class AsyncQueryTest extends CollectionTest {
     public void manyFutures() throws Exception {
         int MANY = 1000;
         Collection coll = this.collection;
-        List<CompletableFuture<DocResult>> futures =  new ArrayList<>();
+        List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < MANY; ++i) {
-            if(i%3==0) {
+            if (i % 3 == 0) {
                 futures.add(coll.find("F1  like '%Field%-5'").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync());
-            } else if(i%3==1) {
+            } else if (i % 3 == 1) {
                 futures.add(coll.find("NON_EXISTING_FUNCTION()").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync()); // Expecting Error
             } else {
                 futures.add(coll.find("F3 = ?").bind(106).executeAsync());
@@ -227,11 +227,11 @@ public class AsyncQueryTest extends CollectionTest {
         }
         DocResult docs;
         for (int i = 0; i < MANY; ++i) {
-            if(i%3==0) {
+            if (i % 3 == 0) {
                 //Expect Success and check F1  is like  %Field%-5
                 docs = futures.get(i).get();
                 assertFalse(docs.hasNext());
-            } else if(i%3==1) {
+            } else if (i % 3 == 1) {
                 try {
                     //Expecting Error FUNCTION test.NON_EXISTING_FUNCTION does not exist
                     docs = futures.get(i).get();

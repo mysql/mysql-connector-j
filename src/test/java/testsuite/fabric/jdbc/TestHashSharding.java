@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,10 +26,10 @@ package testsuite.fabric.jdbc;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import testsuite.fabric.BaseFabricTestCase;
-
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
+
+import testsuite.fabric.BaseFabricTestCase;
 
 /**
  * @todo this hash sharding test is incompatible with the

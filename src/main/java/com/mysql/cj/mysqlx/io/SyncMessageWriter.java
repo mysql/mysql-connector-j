@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,11 +29,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.google.protobuf.MessageLite;
-
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
-import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 
 /**
  * Synchronous-only implementation of {@link MessageWriter}.
@@ -55,14 +53,16 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
     /**
      * Send a message.
      *
-     * @param msg the message to send
-     * @throws CJCommunicationsException to wrap any occurring IOException
+     * @param msg
+     *            the message to send
+     * @throws CJCommunicationsException
+     *             to wrap any occurring IOException
      */
     public void write(MessageLite msg) {
         try {
             int type = MessageWriter.getTypeForMessageClass(msg.getClass());
             int size = 1 + msg.getSerializedSize();
-            if (this.maxAllowedPacket > 0 && size > maxAllowedPacket) {
+            if (this.maxAllowedPacket > 0 && size > this.maxAllowedPacket) {
                 throw new CJPacketTooBigException(size, this.maxAllowedPacket);
             }
             // for debugging

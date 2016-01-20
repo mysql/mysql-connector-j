@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -601,13 +601,13 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if ((columnIndex < 1)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if ((columnIndex > this.fields.length)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_high",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.profileSQL || this.useUsageAdvisor) {
@@ -1072,7 +1072,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_STRING) {
             int maxBytesPerChar = this.session.getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
-            int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 *// maxBytesPerChar; /* safe, this will never be 0 */
+            int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 */ / maxBytesPerChar; /* safe, this will never be 0 */
             return StringUtils.padString(stringVal, fieldLength);
         }
 
@@ -1268,8 +1268,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new ResultSetMetaData(this.session, this.fields, this.session.getPropertySet()
-                .getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType, getExceptionInterceptor());
+        return new ResultSetMetaData(this.session, this.fields,
+                this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType,
+                getExceptionInterceptor());
     }
 
     /**
@@ -1310,9 +1311,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                                     objIn.close();
                                     bytesIn.close();
                                 } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(
-                                            Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                                    + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
                                 } catch (IOException ex) {
                                     obj = data; // not serialized?
                                 }
@@ -1415,9 +1415,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                                     objIn.close();
                                     bytesIn.close();
                                 } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(
-                                            Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                                    + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
                                 } catch (IOException ex) {
                                     obj = data; // not serialized?
                                 }
@@ -1558,8 +1557,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             }
         }
 
-        throw SQLError
-                .createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                getExceptionInterceptor());
 
     }
 
@@ -2026,10 +2025,10 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                     // Report on result set closed by driver instead of application
 
                     if (!calledExplicitly) {
-                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
-                                : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(),
-                                this.resultId, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages
-                                        .getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                                (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog, this.connectionId,
+                                (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
+                                Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
                     }
 
                     if (this.rowData instanceof RowDataStatic) {
@@ -2039,20 +2038,21 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                         int resultSetSizeThreshold = locallyScopedConn.getPropertySet()
                                 .getIntegerReadableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).getValue();
                         if (this.rowData.size() > resultSetSizeThreshold) {
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
-                                    .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
-                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.Too_Large_Result_Set", new Object[] {
-                                            Integer.valueOf(this.rowData.size()), Integer.valueOf(resultSetSizeThreshold) })));
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
+                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
+                                    Messages.getString("ResultSet.Too_Large_Result_Set",
+                                            new Object[] { Integer.valueOf(this.rowData.size()), Integer.valueOf(resultSetSizeThreshold) })));
                         }
 
                         if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? Messages
-                                    .getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog, this.connectionId,
-                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString(
-                                            "ResultSet.Possible_incomplete_traversal_of_result_set",
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
+                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
+                                    Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set",
                                             new Object[] { Integer.valueOf(getRow()), Integer.valueOf(this.rowData.size()) })));
                         }
                     }
@@ -2079,9 +2079,10 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                         }
 
                         if (issueWarn) {
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A"
-                                    : this.owningStatement.currentCatalog, this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement
-                                    .getId(), 0, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
+                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                                    (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog, this.connectionId,
+                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), 0, System.currentTimeMillis(), 0,
+                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
                         }
                     }
                 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,12 +47,14 @@ public class AssertionFailedException extends CJException {
     /**
      * Create (and caller should subsequently throw) an <code>AssertionFailedException</code>.
      *
-     * <P>Typical use is as follows:
-     *<PRE>
-     *       if (something == null) {
-     *           throw AssertionFailedException.shouldNotHappen("Something cannot be null");
-     *       }
-     *</PRE>
+     * <P>
+     * Typical use is as follows:
+     * 
+     * <PRE>
+     * if (something == null) {
+     *     throw AssertionFailedException.shouldNotHappen("Something cannot be null");
+     * }
+     * </PRE>
      *
      * @return the exception. exception should be thrown by the caller to satisfy compiler checks for data-flow, etc
      */
@@ -78,6 +80,6 @@ public class AssertionFailedException extends CJException {
      *            a description of the assertion that failed
      */
     public AssertionFailedException(String assertion) {
-        super(Messages.getString("AssertionFailedException.2", new Object[] {assertion}));
+        super(Messages.getString("AssertionFailedException.2", new Object[] { assertion }));
     }
 }

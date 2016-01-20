@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,11 +23,13 @@
 
 package testsuite.mysqlx.devapi;
 
+import static com.mysql.cj.api.x.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +42,6 @@ import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonNumber;
 import com.mysql.cj.x.json.JsonString;
-import static com.mysql.cj.api.x.Expression.expr;
 
 /**
  * @todo

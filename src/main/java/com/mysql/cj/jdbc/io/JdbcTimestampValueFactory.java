@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -74,7 +74,7 @@ public class JdbcTimestampValueFactory extends DefaultValueFactory<Timestamp> {
     @Override
     public Timestamp createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] {"" + hours + ":" + minutes + ":" + seconds}));
+            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
         }
 
         return createFromTimestamp(1970, 1, 1, hours, minutes, seconds, nanos);

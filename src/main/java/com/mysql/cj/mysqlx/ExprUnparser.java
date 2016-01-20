@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,6 +46,7 @@ public class ExprUnparser {
      * List of operators which will be serialized as infix operators.
      */
     static Set<String> infixOperators = new HashSet<>();
+
     static {
         infixOperators.add("and");
         infixOperators.add("or");
@@ -206,14 +207,8 @@ public class ExprUnparser {
     }
 
     static String objectToString(Object o) {
-        String fields = o.getFldList().stream()
-                .map(f -> new StringBuilder()
-                        .append("'")
-                        .append(quoteJsonKey(f.getKey()))
-                        .append("'")
-                        .append(":")
-                        .append(exprToString(f.getValue()))
-                        .toString())
+        String fields = o.getFldList().stream().map(
+                f -> new StringBuilder().append("'").append(quoteJsonKey(f.getKey())).append("'").append(":").append(exprToString(f.getValue())).toString())
                 .collect(Collectors.joining(", "));
         return new StringBuilder("{").append(fields).append("}").toString();
     }

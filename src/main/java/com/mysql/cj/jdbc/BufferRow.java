@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -212,9 +212,11 @@ public class BufferRow extends ResultSetRow {
                 if (length == 0) {
                     this.rowFromServer.fastSkipLenByteArray();
                 } else if (length == -1) {
-                    throw SQLError.createSQLException(
-                            Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1) + Messages.getString("MysqlIO.99")
-                                    + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                    throw SQLError
+                            .createSQLException(
+                                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1) + Messages.getString("MysqlIO.99")
+                                            + this.metadata.length + Messages.getString("MysqlIO.100"),
+                                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
                 } else {
                     int curPosition = this.rowFromServer.getPosition();
                     this.rowFromServer.setPosition(curPosition + length);
@@ -254,9 +256,11 @@ public class BufferRow extends ResultSetRow {
                 if (length == 0) {
                     return this.rowFromServer.readLenByteArray(0);
                 } else if (length == -1) {
-                    throw SQLError.createSQLException(
-                            Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1) + Messages.getString("MysqlIO.99")
-                                    + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                    throw SQLError
+                            .createSQLException(
+                                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1) + Messages.getString("MysqlIO.99")
+                                            + this.metadata.length + Messages.getString("MysqlIO.100"),
+                                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
                 } else {
                     return this.rowFromServer.getBytes(length);
                 }
@@ -357,9 +361,11 @@ public class BufferRow extends ResultSetRow {
             if (length == 0) {
                 length = (int) this.rowFromServer.readFieldLength();
             } else if (length == -1) {
-                throw SQLError.createSQLException(
-                        Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1) + Messages.getString("MysqlIO.99")
-                                + this.metadata.length + Messages.getString("MysqlIO.100"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError
+                        .createSQLException(
+                                Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1)
+                                        + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
+                                SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } else {
             length = (int) this.rowFromServer.readFieldLength();

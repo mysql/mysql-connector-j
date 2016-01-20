@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.MessageLite;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
@@ -300,7 +299,7 @@ public class MysqlxProtocol implements Protocol {
     // TODO: the following methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName),
-                        ExprUtil.buildAny(collectionName)));
+                ExprUtil.buildAny(collectionName)));
     }
 
     /**
@@ -308,7 +307,7 @@ public class MysqlxProtocol implements Protocol {
      */
     public void sendDropCollection(String schemaName, String collectionName) {
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName),
-                        ExprUtil.buildAny(collectionName)));
+                ExprUtil.buildAny(collectionName)));
     }
 
     /**
@@ -439,7 +438,7 @@ public class MysqlxProtocol implements Protocol {
                 return MysqlaConstants.FIELD_TYPE_ENUM;
             case BIT:
                 return MysqlaConstants.FIELD_TYPE_BIT;
-                // TODO: longlong
+            // TODO: longlong
         }
         throw new WrongArgumentException("TODO: unknown field type: " + type);
     }
@@ -478,13 +477,14 @@ public class MysqlxProtocol implements Protocol {
                 return MysqlType.ENUM;
             case BIT:
                 return MysqlType.BIT;
-                // TODO: longlong
+            // TODO: longlong
         }
         throw new WrongArgumentException("TODO: unknown field type: " + type);
     }
 
     // TODO: put this in CharsetMapping..
     public static Map<String, Integer> COLLATION_NAME_TO_COLLATION_INDEX = new java.util.HashMap<>();
+
     static {
         for (int i = 0; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; ++i) {
             COLLATION_NAME_TO_COLLATION_INDEX.put(CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i], i);
@@ -578,7 +578,8 @@ public class MysqlxProtocol implements Protocol {
      * @param findParams
      * @param metadataCharacterSet
      * @param callbacks
-     * @param errorFuture the future to complete exceptionally if the request fails
+     * @param errorFuture
+     *            the future to complete exceptionally if the request fails
      */
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);

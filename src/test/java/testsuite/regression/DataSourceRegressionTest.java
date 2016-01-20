@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -52,9 +52,6 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import testsuite.BaseTestCase;
-import testsuite.simple.DataSourceTest;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -67,6 +64,9 @@ import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.PreparedStatementWrapper;
 import com.mysql.cj.jdbc.StatementWrapper;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
+
+import testsuite.BaseTestCase;
+import testsuite.simple.DataSourceTest;
 
 /**
  * Tests fixes for bugs related to datasources.
@@ -470,8 +470,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1", new int[0]));
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1", new String[0]));
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY));
-        assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
-                ResultSet.HOLD_CURSORS_OVER_COMMIT));
+        assertNotNull(
+                pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT));
     }
 
     public void testBug35810() throws Exception {

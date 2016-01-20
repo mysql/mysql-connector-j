@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -339,8 +339,8 @@ public class StressRegressionTest extends BaseTestCase {
                         testPstmt.setTime(3, tm);
                         testPstmt.execute();
                     }
-                    System.out.println("Finishing job 1 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job1Iterations
-                            + " iterations...");
+                    System.out.println(
+                            "Finishing job 1 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job1Iterations + " iterations...");
                     testPstmt.close();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -368,8 +368,8 @@ public class StressRegressionTest extends BaseTestCase {
                         testRs.getTime(3);
                         testRs.close();
                     }
-                    System.out.println("Finishing job 2 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job2Iterations
-                            + " iterations...");
+                    System.out.println(
+                            "Finishing job 2 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job2Iterations + " iterations...");
                     testPstmt.close();
                 } catch (Exception e) {
                     e.printStackTrace();

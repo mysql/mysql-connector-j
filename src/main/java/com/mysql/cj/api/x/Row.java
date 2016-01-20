@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,62 +35,77 @@ public interface Row {
      * Retrieve the value for column `fieldName' as a decimal value.
      */
     BigDecimal getBigDecimal(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a decimal value.
      */
     BigDecimal getBigDecimal(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a boolean value.
      */
     boolean getBoolean(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a boolean value.
      */
     boolean getBoolean(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a byte value.
      */
     byte getByte(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
      */
     byte getByte(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a DbDoc value.
      */
     DbDoc getDbDoc(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a DbDoc value.
      */
     DbDoc getDbDoc(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a double value.
      */
     double getDouble(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a double value.
      */
     double getDouble(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as an integer value.
      */
     int getInt(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as an integer value.
      */
     int getInt(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a long value.
      */
     long getLong(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a long value.
      */
     long getLong(int pos);
+
     /**
      * Retrieve the value for column `fieldName' as a string value.
      */
     String getString(String fieldName);
+
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a string value.
      */

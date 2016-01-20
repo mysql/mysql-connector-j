@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,7 +32,6 @@ import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.BufferedRowList;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession.ResultCtor;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
@@ -40,7 +39,8 @@ import com.mysql.cj.mysqlx.result.MysqlxRow;
 /**
  * Create an entire (buffered) result from the data fed to this result listener.
  *
- * @param <RES_T> The type of result that will be created (and posted to the future)
+ * @param <RES_T>
+ *            The type of result that will be created (and posted to the future)
  */
 public class ResultCreatingResultListener<RES_T> implements ResultListener {
     private ArrayList<Field> metadata;
@@ -63,7 +63,7 @@ public class ResultCreatingResultListener<RES_T> implements ResultListener {
 
     public void onComplete(StatementExecuteOk ok) {
         RowList rowList = new BufferedRowList(this.rows);
-        RES_T result = resultCtor.apply(this.metadata).apply(rowList, () -> ok);
+        RES_T result = this.resultCtor.apply(this.metadata).apply(rowList, () -> ok);
         this.future.complete(result);
     }
 

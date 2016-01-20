@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -158,8 +158,8 @@ public class BlobFromLocator implements java.sql.Blob {
      */
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
-        return new BufferedInputStream(new LocatorInputStream(), this.creatorResultSet.connection.getPropertySet()
-                .getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
+        return new BufferedInputStream(new LocatorInputStream(),
+                this.creatorResultSet.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
     }
 
     /**

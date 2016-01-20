@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,20 +23,15 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.Columns;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.Warning;
-import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.core.io.StatementExecuteOk;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.io.ResultStreamer;
 
 /**
@@ -70,7 +65,9 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
     }
 
     public void finishStreaming() {
-        while (nextResult()) ;
+        while (nextResult()) {
+            ;
+        }
     }
 
     public boolean hasData() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,13 +23,14 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +59,7 @@ public class BindTest extends CollectionTest {
         assertEquals(3, this.collection.count());
 
         assertTrue(this.collection.find("x = 3").execute().hasNext());
-        this.collection.remove("x = ?").bind(new Object[] {3}).execute();
+        this.collection.remove("x = ?").bind(new Object[] { 3 }).execute();
         assertEquals(2, this.collection.count());
         assertFalse(this.collection.find("x = 3").execute().hasNext());
     }
@@ -71,7 +72,7 @@ public class BindTest extends CollectionTest {
 
         assertEquals(3, this.collection.count());
 
-        assertTrue(this.collection.find("x = ?").bind(new Object[] {3}).execute().hasNext());
+        assertTrue(this.collection.find("x = ?").bind(new Object[] { 3 }).execute().hasNext());
         Map<String, Object> params = new HashMap<>();
         params.put("thePlaceholder", 3);
         this.collection.remove("x = :thePlaceholder").bind(params).execute();
@@ -103,11 +104,9 @@ public class BindTest extends CollectionTest {
     public void bindArgsOrder() {
         this.collection.add("{'x':1,'y':2}".replaceAll("'", "\"")).execute();
         // same order as query
-        assertEquals(1, this.collection.find("x = :x and y = :y")
-                .bind("x", 1).bind("y", 2).execute().count());
+        assertEquals(1, this.collection.find("x = :x and y = :y").bind("x", 1).bind("y", 2).execute().count());
         // opposite order as query
-        assertEquals(1, this.collection.find("x = :x and y = :y")
-                .bind("y", 2).bind("x", 1).execute().count());
+        assertEquals(1, this.collection.find("x = :x and y = :y").bind("y", 2).bind("x", 1).execute().count());
     }
 
     // TODO: more tests with unnamed (x = ?) and different bind value types

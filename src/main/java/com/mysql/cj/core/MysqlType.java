@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -197,8 +197,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#BIGINT
      */
-    BIGINT_UNSIGNED("BIGINT UNSIGNED", Types.BIGINT, BigInteger.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL,
-            20L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    BIGINT_UNSIGNED("BIGINT UNSIGNED", Types.BIGINT, BigInteger.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 20L,
+            "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]
      * A medium-sized integer. The signed range is -8388608 to 8388607. The unsigned range is 0 to 16777215.
@@ -302,7 +302,8 @@ public enum MysqlType implements SQLType {
      * 
      * Protocol: FIELD_TYPE_ENUM = 247
      */
-    ENUM("ENUM", Types.CHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"),
+    ENUM("ENUM", Types.CHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 65535L,
+            "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * SET('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]
      * A set. A string object that can have zero or more values, each of which must be chosen from the list
@@ -415,12 +416,11 @@ public enum MysqlType implements SQLType {
      * 
      * Protocol: no concrete type on the wire TODO: really?
      */
-    BINARY("BINARY", Types.BINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 255L, "(M)"),
-    /**
-     * Top class for Spatial Data Types
-     * 
-     * Protocol: FIELD_TYPE_GEOMETRY = 255
-     */
+    BINARY("BINARY", Types.BINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 255L, "(M)"), /**
+                                                                                     * Top class for Spatial Data Types
+                                                                                     * 
+                                                                                     * Protocol: FIELD_TYPE_GEOMETRY = 255
+                                                                                     */
     GEOMETRY("GEOMETRY", Types.BINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65535L, ""), // TODO check precision, it isn't well documented, only mentioned that WKB format is represented by BLOB 
     /**
      * Fall-back type for those MySQL data types which c/J can't recognize.
@@ -686,9 +686,9 @@ public enum MysqlType implements SQLType {
         // TODO use MysqlTypes here ?
 
         switch (fromType) {
-        /*
-         * The char/binary types can be converted to pretty much anything.
-         */
+            /*
+             * The char/binary types can be converted to pretty much anything.
+             */
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
             case java.sql.Types.LONGVARCHAR:
@@ -728,9 +728,9 @@ public enum MysqlType implements SQLType {
             case java.sql.Types.BIT:
                 return false;
 
-                /*
-                 * The numeric types. Basically they can convert among themselves, and with char/binary types.
-                 */
+            /*
+             * The numeric types. Basically they can convert among themselves, and with char/binary types.
+             */
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             case java.sql.Types.REAL:
@@ -767,9 +767,9 @@ public enum MysqlType implements SQLType {
             case java.sql.Types.NULL:
                 return false;
 
-                /*
-                 * With this driver, this will always be a serialized object, so the char/binary types will work.
-                 */
+            /*
+             * With this driver, this will always be a serialized object, so the char/binary types will work.
+             */
             case java.sql.Types.OTHER:
 
                 switch (toType) {
@@ -860,10 +860,15 @@ public enum MysqlType implements SQLType {
      * @param maxLen
      * @param isDec
      * @param precision
-     *            represents the maximum column size that the server supports for the given datatype. <li>For numeric data, this is the maximum precision. <li>
-     *            For character data, this is the length in characters. <li>For datetime datatypes, this is the length in characters of the String
-     *            representation (assuming the maximum allowed precision of the fractional seconds component). <li>For binary data, this is the length in bytes.
-     *            <li>For the ROWID datatype, this is the length in bytes. <li>Null is returned for data types where the column size is not applicable.
+     *            represents the maximum column size that the server supports for the given datatype.
+     *            <li>For numeric data, this is the maximum precision.
+     *            <li>
+     *            For character data, this is the length in characters.
+     *            <li>For datetime datatypes, this is the length in characters of the String
+     *            representation (assuming the maximum allowed precision of the fractional seconds component).
+     *            <li>For binary data, this is the length in bytes.
+     *            <li>For the ROWID datatype, this is the length in bytes.
+     *            <li>Null is returned for data types where the column size is not applicable.
      * @param createParams
      */
     private MysqlType(String mysqlTypeName, int jdbcType, Class<?> javaClass, int allowedFlags, boolean isDec, Long precision, String createParams) {
@@ -903,10 +908,16 @@ public enum MysqlType implements SQLType {
     }
 
     /**
-     * The PRECISION column represents the maximum column size that the server supports for the given datatype. <li>For numeric data, this is the maximum
-     * precision. <li>For character data, this is the length in characters. <li>For datetime datatypes, this is the length in characters of the String
-     * representation (assuming the maximum allowed precision of the fractional seconds component). <li>For binary data, this is the length in bytes. <li>For
-     * the ROWID datatype, this is the length in bytes. <li>Null is returned for data types where the column size is not applicable.
+     * The PRECISION column represents the maximum column size that the server supports for the given datatype.
+     * <li>For numeric data, this is the maximum
+     * precision.
+     * <li>For character data, this is the length in characters.
+     * <li>For datetime datatypes, this is the length in characters of the String
+     * representation (assuming the maximum allowed precision of the fractional seconds component).
+     * <li>For binary data, this is the length in bytes.
+     * <li>For
+     * the ROWID datatype, this is the length in bytes.
+     * <li>Null is returned for data types where the column size is not applicable.
      * 
      * @return
      */

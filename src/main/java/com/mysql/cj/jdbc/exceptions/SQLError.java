@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -709,8 +709,9 @@ public class SQLError {
             return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
 
         } catch (Exception sqlEx) {
-            SQLException unexpectedEx = new SQLException("Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: "
-                    + Util.stackTraceToString(sqlEx), SQL_STATE_GENERAL_ERROR);
+            SQLException unexpectedEx = new SQLException(
+                    "Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: " + Util.stackTraceToString(sqlEx),
+                    SQL_STATE_GENERAL_ERROR);
 
             return runThroughExceptionInterceptor(interceptor, unexpectedEx, conn);
 
@@ -781,10 +782,11 @@ public class SQLError {
      * @param updateCounts
      * @param interceptor
      */
-    public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor) throws SQLException {
-        SQLException newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException", new Class[] { String.class, String.class, int.class,
-                long[].class, Throwable.class }, new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(),
-                updateCounts, underlyingEx }, interceptor);
+    public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor)
+            throws SQLException {
+        SQLException newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException",
+                new Class[] { String.class, String.class, int.class, long[].class, Throwable.class },
+                new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts, underlyingEx }, interceptor);
         return runThroughExceptionInterceptor(interceptor, newEx, null);
     }
 

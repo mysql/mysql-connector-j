@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,10 +63,11 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
     void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
         if (getPropertyDefinition().isRangeBased()) {
             if ((longValue < getPropertyDefinition().getLowerBound()) || (longValue > getPropertyDefinition().getUpperBound())) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, "The connection property '" + getPropertyDefinition().getName()
-                        + "' only accepts long integer values in the range of " + getPropertyDefinition().getLowerBound() + " - "
-                        + getPropertyDefinition().getUpperBound() + ", the value '" + (valueAsString == null ? longValue : valueAsString)
-                        + "' exceeds this range.", exceptionInterceptor);
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        "The connection property '" + getPropertyDefinition().getName() + "' only accepts long integer values in the range of "
+                                + getPropertyDefinition().getLowerBound() + " - " + getPropertyDefinition().getUpperBound() + ", the value '"
+                                + (valueAsString == null ? longValue : valueAsString) + "' exceeds this range.",
+                        exceptionInterceptor);
             }
         }
         this.valueAsObject = Long.valueOf(longValue);

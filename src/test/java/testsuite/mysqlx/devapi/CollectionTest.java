@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,9 +23,10 @@
 
 package testsuite.mysqlx.devapi;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,14 +45,14 @@ public class CollectionTest extends BaseDevApiTest {
     @Before
     public void setupCollectionTest() {
         setupTestSession();
-        collectionName = "CollectionTest-" + new Random().nextInt(1000);
-        dropCollection(collectionName);
-        this.collection = this.schema.createCollection(collectionName);
+        this.collectionName = "CollectionTest-" + new Random().nextInt(1000);
+        dropCollection(this.collectionName);
+        this.collection = this.schema.createCollection(this.collectionName);
     }
 
     @After
     public void teardownCollectionTest() {
-        dropCollection(collectionName);
+        dropCollection(this.collectionName);
         destroyTestSession();
     }
 
@@ -74,7 +75,7 @@ public class CollectionTest extends BaseDevApiTest {
         this.schema.getCollection(collName).drop();
     }
 
-    @Test(expected=WrongArgumentException.class)
+    @Test(expected = WrongArgumentException.class)
     public void getNonExistentCollectionWithRequireExistsShouldThrow() {
         String collName = "testRequireExists";
         dropCollection(collName);

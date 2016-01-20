@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -43,30 +43,34 @@ public class IntegerBoundsEnforcer<T> extends BaseDecoratingValueFactory<T> {
         this.max = max;
     }
 
+    @Override
     public T createFromLong(long l) {
         if (l < this.min || l > this.max) {
-            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] {l, this.targetVf.getTargetTypeName()}));
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { l, this.targetVf.getTargetTypeName() }));
         }
         return this.targetVf.createFromLong(l);
     }
 
+    @Override
     public T createFromBigInteger(BigInteger i) {
         if (i.compareTo(BigInteger.valueOf(this.min)) < 0 || i.compareTo(BigInteger.valueOf(this.max)) > 0) {
-            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] {i, this.targetVf.getTargetTypeName()}));
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, this.targetVf.getTargetTypeName() }));
         }
         return this.targetVf.createFromBigInteger(i);
     }
 
+    @Override
     public T createFromDouble(double d) {
         if (d < this.min || d > this.max) {
-            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] {d, this.targetVf.getTargetTypeName()}));
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, this.targetVf.getTargetTypeName() }));
         }
         return this.targetVf.createFromDouble(d);
     }
 
+    @Override
     public T createFromBigDecimal(BigDecimal d) {
         if (d.compareTo(BigDecimal.valueOf(this.min)) < 0 || d.compareTo(BigDecimal.valueOf(this.max)) > 0) {
-            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] {d, this.targetVf.getTargetTypeName()}));
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, this.targetVf.getTargetTypeName() }));
         }
         return this.targetVf.createFromBigDecimal(d);
     }

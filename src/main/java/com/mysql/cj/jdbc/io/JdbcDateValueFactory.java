@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -72,7 +72,7 @@ public class JdbcDateValueFactory extends DefaultValueFactory<Date> {
     public Date createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (this.warningListener != null) {
             // TODO: need column context
-            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] {"java.sql.Date"}));
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Date" }));
         }
 
         // truncate any time information

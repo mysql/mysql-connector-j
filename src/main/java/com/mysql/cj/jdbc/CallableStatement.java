@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -231,8 +231,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 int scale = paramTypesRs.getInt(10);
                 short nullability = paramTypesRs.getShort(12);
 
-                CallableStatementParam paramInfoToAdd = new CallableStatementParam(paramName, i++, isInParameter, isOutParameter, jdbcType, typeName,
-                        precision, scale, nullability, inOutModifier);
+                CallableStatementParam paramInfoToAdd = new CallableStatementParam(paramName, i++, isInParameter, isOutParameter, jdbcType, typeName, precision,
+                        scale, nullability, inOutModifier);
 
                 this.parameterList.add(paramInfoToAdd);
                 this.parameterMap.put(paramName, paramInfoToAdd);
@@ -472,8 +472,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             if (this.paramInfo != null && this.parameterCount != parameterCountFromMetaData) {
                 this.placeholderToParameterIndexMap = new int[this.parameterCount];
 
-                int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, "SELECT") : StringUtils.indexOfIgnoreCase(
-                        this.originalSql, "CALL");
+                int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, "SELECT")
+                        : StringUtils.indexOfIgnoreCase(this.originalSql, "CALL");
 
                 if (startPos != -1) {
                     int parenOpenPos = this.originalSql.indexOf('(', startPos + 4);
@@ -1457,8 +1457,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             if (this.outputParameterResults == null) {
                 if (this.paramInfo.numberOfParameters() == 0) {
-                    throw SQLError
-                            .createSQLException(Messages.getString("CallableStatement.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("CallableStatement.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
                 }
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }

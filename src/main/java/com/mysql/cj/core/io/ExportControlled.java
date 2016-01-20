@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -97,17 +97,18 @@ public class ExportControlled {
      *             Connector/J doesn't contain the SSL crytpo hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(SocketConnection socketConnection, ServerVersion serverVersion) throws IOException, SSLParamsException,
-            FeatureNotAvailableException {
-        SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(socketConnection.getPropertySet(),
-                socketConnection.getExceptionInterceptor()), socketConnection.getSocketFactory(), socketConnection.getMysqlSocket());
+    public static void transformSocketToSSLSocket(SocketConnection socketConnection, ServerVersion serverVersion)
+            throws IOException, SSLParamsException, FeatureNotAvailableException {
+        SocketFactory sslFact = new StandardSSLSocketFactory(
+                getSSLSocketFactoryDefaultOrConfigured(socketConnection.getPropertySet(), socketConnection.getExceptionInterceptor()),
+                socketConnection.getSocketFactory(), socketConnection.getMysqlSocket());
 
         socketConnection.setMysqlSocket(sslFact.connect(socketConnection.getHost(), socketConnection.getPort(), null, 0));
 
         List<String> allowedProtocols = new ArrayList<String>();
         List<String> supportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
-        for (String protocol : (Util.isEnterpriseEdition(serverVersion.toString()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1",
-                "TLSv1" })) {
+        for (String protocol : (Util.isEnterpriseEdition(serverVersion.toString()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" }
+                : new String[] { "TLSv1.1", "TLSv1" })) {
             if (supportedProtocols.contains(protocol)) {
                 allowedProtocols.add(protocol);
             }
@@ -237,8 +238,8 @@ public class ExportControlled {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         exceptionInterceptor);
             } catch (CertificateException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load client" + clientCertificateKeyStoreType + " keystore from "
-                        + clientCertificateKeyStoreUrl, nsae, exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class,
+                        "Could not load client" + clientCertificateKeyStoreType + " keystore from " + clientCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
                 throw ExceptionFactory.createException(SSLParamsException.class, clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         exceptionInterceptor);
@@ -276,8 +277,8 @@ public class ExportControlled {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         exceptionInterceptor);
             } catch (CertificateException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load trust" + trustCertificateKeyStoreType + " keystore from "
-                        + trustCertificateKeyStoreUrl, nsae, exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class,
+                        "Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
                 throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         exceptionInterceptor);
@@ -313,7 +314,8 @@ public class ExportControlled {
                                 public X509Certificate[] getAcceptedIssuers() {
                                     return null;
                                 }
-                            } }, null);
+                            } },
+                    null);
 
             return sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException nsae) {

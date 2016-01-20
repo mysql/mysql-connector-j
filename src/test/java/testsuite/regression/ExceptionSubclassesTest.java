@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,9 +23,9 @@
 
 package testsuite.regression;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.jdbc.exceptions.SQLError;
+
+import testsuite.BaseTestCase;
 
 public class ExceptionSubclassesTest extends BaseTestCase {
     /**
@@ -44,10 +44,10 @@ public class ExceptionSubclassesTest extends BaseTestCase {
         assertEquals("java.sql.SQLNonTransientConnectionException", SQLError.createSQLException("test", "08000", 0, false, null).getClass().getCanonicalName());
         assertEquals("java.sql.SQLSyntaxErrorException", SQLError.createSQLException("test", "42000", null).getClass().getCanonicalName());
         assertEquals("java.sql.SQLIntegrityConstraintViolationException", SQLError.createSQLException("test", "23000", null).getClass().getCanonicalName());
-        assertEquals("com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException", SQLError.createSQLException("test", "40000", null).getClass()
-                .getCanonicalName());
-        assertEquals("com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException", SQLError.createSQLException("test", "70100", null).getClass()
-                .getCanonicalName());
+        assertEquals("com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException",
+                SQLError.createSQLException("test", "40000", null).getClass().getCanonicalName());
+        assertEquals("com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException",
+                SQLError.createSQLException("test", "70100", null).getClass().getCanonicalName());
 
     }
 

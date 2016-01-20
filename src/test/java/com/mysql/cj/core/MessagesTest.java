@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -77,7 +77,8 @@ public class MessagesTest {
         assertEquals(
                 "Unknown initial character set index 'Test' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
                 Messages.getString("Connection.6", new Object[] { "Test" }));
-        assertEquals("Can't map Test given for characterSetResults to a supported MySQL encoding.", Messages.getString("Connection.7", new Object[] { "Test" }));
+        assertEquals("Can't map Test given for characterSetResults to a supported MySQL encoding.",
+                Messages.getString("Connection.7", new Object[] { "Test" }));
         assertEquals(
                 "Connection setting too low for 'maxAllowedPacket'. When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than 10. Check also 'max_allowed_packet' in MySQL configuration files.",
                 Messages.getString("Connection.15", new Object[] { 10 }));
@@ -85,9 +86,10 @@ public class MessagesTest {
         assertEquals("Unsupported transaction isolation level 'Test'", Messages.getString("Connection.25", new Object[] { "Test" }));
 
         assertEquals("Parameter/Column name pattern can not be NULL or empty.", Messages.getString("DatabaseMetaData.3"));
-        assertEquals("User does not have access to metadata required to determine stored procedure parameter types."
-                + " If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
-                + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+        assertEquals(
+                "User does not have access to metadata required to determine stored procedure parameter types."
+                        + " If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "
+                        + "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
                 Messages.getString("DatabaseMetaData.4"));
 
         assertEquals("Syntax error while processing {fn convert (... , ...)} token, missing opening parenthesis in token 'Test'.",

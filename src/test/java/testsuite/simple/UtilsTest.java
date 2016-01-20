@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,8 +30,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.core.util.Util;
@@ -39,6 +37,8 @@ import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.ResultSetImpl;
 import com.mysql.cj.jdbc.StatementImpl;
+
+import testsuite.BaseTestCase;
 
 public class UtilsTest extends BaseTestCase {
     /**

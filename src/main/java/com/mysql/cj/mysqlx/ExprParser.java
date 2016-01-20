@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -105,11 +105,10 @@ public class ExprParser {
      */
     public static enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
-        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, DOLLAR, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX,
-        BIN, NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
-        MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD,
-        COLON, ORDERBY_ASC, ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON,
-        COLDOCPATH
+        LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, DOLLAR, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN,
+        NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
+        HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC,
+        ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON, COLDOCPATH
     }
 
     /**
@@ -141,6 +140,7 @@ public class ExprParser {
 
     /** Mapping of reserved words to token types. */
     static Map<String, TokenType> reservedWords = new HashMap<>();
+
     static {
         reservedWords.put("and", TokenType.AND);
         reservedWords.put("or", TokenType.OR);
@@ -206,7 +206,8 @@ public class ExprParser {
      * Helper function to match integer or floating point numbers. This function should be called when the position is on the first character of the number (a
      * digit or '.').
      *
-     * @param i The current position in the string
+     * @param i
+     *            The current position in the string
      * @return the next position in the string after the number.
      */
     private int lexNumber(int i) {
@@ -378,8 +379,8 @@ public class ExprParser {
                         char quoteChar = c;
                         StringBuilder val = new StringBuilder();
                         try {
-                            for (c = this.string.charAt(++i); c != quoteChar || (i + 1 < this.string.length() && this.string.charAt(i + 1) == quoteChar);
-                                 c = this.string.charAt(++i)) {
+                            for (c = this.string.charAt(++i); c != quoteChar
+                                    || (i + 1 < this.string.length() && this.string.charAt(i + 1) == quoteChar); c = this.string.charAt(++i)) {
                                 if (c == '\\' || c == quoteChar) {
                                     ++i;
                                 }
@@ -600,8 +601,7 @@ public class ExprParser {
     public Expr documentField() {
         ColumnIdentifier.Builder builder = ColumnIdentifier.newBuilder();
         if (currentTokenTypeEquals(TokenType.IDENT)) {
-            builder.addDocumentPath(DocumentPathItem.newBuilder().setType(
-                            DocumentPathItem.Type.MEMBER).setValue(consumeToken(TokenType.IDENT)).build());
+            builder.addDocumentPath(DocumentPathItem.newBuilder().setType(DocumentPathItem.Type.MEMBER).setValue(consumeToken(TokenType.IDENT)).build());
         }
         builder.addAllDocumentPath(documentPath());
         return Expr.newBuilder().setType(Expr.Type.IDENT).setIdentifier(builder.build()).build();
@@ -706,13 +706,11 @@ public class ExprParser {
                 Object.Builder builder = Object.newBuilder();
                 if (currentTokenTypeEquals(TokenType.LSTRING)) {
                     parseCommaSeparatedList(() -> {
-                                String key = consumeToken(TokenType.LSTRING);
-                                consumeToken(TokenType.COLON);
-                                Expr value = expr();
-                                return Collections.singletonMap(key, value);
-                            }).stream()
-                            .map(pair -> pair.entrySet().iterator().next())
-                            .map(e -> ObjectField.newBuilder().setKey(e.getKey()).setValue(e.getValue()))
+                        String key = consumeToken(TokenType.LSTRING);
+                        consumeToken(TokenType.COLON);
+                        Expr value = expr();
+                        return Collections.singletonMap(key, value);
+                    }).stream().map(pair -> pair.entrySet().iterator().next()).map(e -> ObjectField.newBuilder().setKey(e.getKey()).setValue(e.getValue()))
                             .forEach(builder::addFld);
                 }
                 consumeToken(TokenType.RCURLY);
@@ -749,8 +747,8 @@ public class ExprParser {
                         // don't add optional INTEGER to type string argument
                         consumeToken(TokenType.INTEGER);
                     }
-                } else if (currentTokenTypeEquals(TokenType.JSON) || currentTokenTypeEquals(TokenType.DATE) || currentTokenTypeEquals(TokenType.DATETIME) ||
-                        currentTokenTypeEquals(TokenType.TIME)) {
+                } else if (currentTokenTypeEquals(TokenType.JSON) || currentTokenTypeEquals(TokenType.DATE) || currentTokenTypeEquals(TokenType.DATETIME)
+                        || currentTokenTypeEquals(TokenType.TIME)) {
                     this.tokenPos++;
                 } else {
                     throw new WrongArgumentException("Expected valid CAST type argument at " + this.tokenPos);
@@ -790,9 +788,8 @@ public class ExprParser {
             case IDENT:
                 this.tokenPos--; // stay on the identifier
                 // check for function call which may be: func(...) or schema.func(...)
-                if (nextTokenTypeEquals(TokenType.LPAREN)
-                        || (posTokenTypeEquals(this.tokenPos + 1, TokenType.DOT) && posTokenTypeEquals(this.tokenPos + 2, TokenType.IDENT) && posTokenTypeEquals(
-                                this.tokenPos + 3, TokenType.LPAREN))) {
+                if (nextTokenTypeEquals(TokenType.LPAREN) || (posTokenTypeEquals(this.tokenPos + 1, TokenType.DOT)
+                        && posTokenTypeEquals(this.tokenPos + 2, TokenType.IDENT) && posTokenTypeEquals(this.tokenPos + 3, TokenType.LPAREN))) {
                     return functionCall();
                 } else {
                     if (this.allowRelationalColumns) {
@@ -891,7 +888,8 @@ public class ExprParser {
     }
 
     Expr compExpr() {
-        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT, TokenType.EQ, TokenType.NE }, this::bitExpr);
+        return parseLeftAssocBinaryOpExpr(new TokenType[] { TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT, TokenType.EQ, TokenType.NE },
+                this::bitExpr);
     }
 
     /**
@@ -908,7 +906,8 @@ public class ExprParser {
 
     Expr ilriExpr() {
         Expr lhs = compExpr();
-        List<TokenType> expected = Arrays.asList(new TokenType[] {TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT});
+        List<TokenType> expected = Arrays
+                .asList(new TokenType[] { TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT });
         while (this.tokenPos < this.tokens.size() && expected.contains(this.tokens.get(this.tokenPos).type)) {
             boolean isNot = false;
             if (currentTokenTypeEquals(TokenType.NOT)) {
@@ -998,8 +997,10 @@ public class ExprParser {
     /**
      * Utility method to wrap a parser of a list of elements separated by comma.
      *
-     * @param <T> the type of element to be parsed
-     * @param elementParser the single element parser
+     * @param <T>
+     *            the type of element to be parsed
+     * @param elementParser
+     *            the single element parser
      * @return a list of elements parsed
      */
     private <T> List<T> parseCommaSeparatedList(Supplier<T> elementParser) {
@@ -1021,17 +1022,17 @@ public class ExprParser {
      */
     public List<Order> parseOrderSpec() {
         return parseCommaSeparatedList(() -> {
-                    Order.Builder builder = Order.newBuilder();
-                    builder.setExpr(expr());
-                    if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
-                        consumeToken(TokenType.ORDERBY_ASC);
-                        builder.setDirection(Order.Direction.ASC);
-                    } else if (currentTokenTypeEquals(TokenType.ORDERBY_DESC)) {
-                        consumeToken(TokenType.ORDERBY_DESC);
-                        builder.setDirection(Order.Direction.DESC);
-                    }
-                    return builder.build();
-                });
+            Order.Builder builder = Order.newBuilder();
+            builder.setExpr(expr());
+            if (currentTokenTypeEquals(TokenType.ORDERBY_ASC)) {
+                consumeToken(TokenType.ORDERBY_ASC);
+                builder.setDirection(Order.Direction.ASC);
+            } else if (currentTokenTypeEquals(TokenType.ORDERBY_DESC)) {
+                consumeToken(TokenType.ORDERBY_DESC);
+                builder.setDirection(Order.Direction.DESC);
+            }
+            return builder.build();
+        });
     }
 
     /**
@@ -1039,18 +1040,19 @@ public class ExprParser {
      */
     public List<Projection> parseTableSelectProjection() {
         return parseCommaSeparatedList(() -> {
-                    Projection.Builder builder = Projection.newBuilder();
-                    builder.setSource(expr());
-                    if (currentTokenTypeEquals(TokenType.AS)) {
-                        consumeToken(TokenType.AS);
-                        builder.setAlias(consumeToken(TokenType.IDENT));
-                    }
-                    return builder.build();
-                });
+            Projection.Builder builder = Projection.newBuilder();
+            builder.setSource(expr());
+            if (currentTokenTypeEquals(TokenType.AS)) {
+                consumeToken(TokenType.AS);
+                builder.setAlias(consumeToken(TokenType.IDENT));
+            }
+            return builder.build();
+        });
     }
 
     /**
      * Parse an INSERT field name.
+     * 
      * @todo unit test
      */
     public Column parseTableInsertField() {
@@ -1070,13 +1072,13 @@ public class ExprParser {
     public List<Projection> parseDocumentProjection() {
         this.allowRelationalColumns = false;
         return parseCommaSeparatedList(() -> {
-                    Projection.Builder builder = Projection.newBuilder();
-                    builder.setSource(expr());
-                    // alias is not optional for document projection
-                    consumeToken(TokenType.AS);
-                    builder.setAlias(consumeToken(TokenType.IDENT));
-                    return builder.build();
-                });
+            Projection.Builder builder = Projection.newBuilder();
+            builder.setSource(expr());
+            // alias is not optional for document projection
+            consumeToken(TokenType.AS);
+            builder.setAlias(consumeToken(TokenType.IDENT));
+            return builder.build();
+        });
     }
 
     /**

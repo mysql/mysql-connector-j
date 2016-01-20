@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,9 +56,6 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseTestCase;
-import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.core.CharsetMapping;
@@ -69,6 +66,9 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
+
+import testsuite.BaseTestCase;
+import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
@@ -103,16 +103,16 @@ public class StatementsTest extends BaseTestCase {
 
         this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_batch_test");
 
-        this.stmt
-                .executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+        this.stmt.executeUpdate(
+                "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
         try {
             this.stmt.executeUpdate("CREATE TABLE statement_batch_test (id int not null primary key auto_increment, "
                     + "strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
         } catch (SQLException sqlEx) {
             if (sqlEx.getMessage().indexOf("max key length") != -1) {
-                createTable("statement_batch_test", "(id int not null primary key auto_increment, strdata1 varchar(175) not null, strdata2 varchar(175), "
-                        + "UNIQUE INDEX (strdata1))");
+                createTable("statement_batch_test",
+                        "(id int not null primary key auto_increment, strdata1 varchar(175) not null, strdata2 varchar(175), " + "UNIQUE INDEX (strdata1))");
             }
         }
 
@@ -438,8 +438,8 @@ public class StatementsTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS callStmtTbl");
             this.stmt.executeUpdate("CREATE TABLE callStmtTbl (x CHAR(16), y INT)");
 
-            this.stmt.executeUpdate("CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT) WHILE n DO SET n = n - 1;"
-                    + " INSERT INTO callStmtTbl VALUES (x, y); END WHILE;");
+            this.stmt.executeUpdate(
+                    "CREATE PROCEDURE testCallStmt(n INT, x CHAR(16), y INT) WHILE n DO SET n = n - 1;" + " INSERT INTO callStmtTbl VALUES (x, y); END WHILE;");
 
             int rowsToCheck = 15;
 
@@ -1141,13 +1141,14 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1", " (c1 DECIMAL," // instance of String
-                + "c2 VARCHAR(255)," // instance of String
-                + "c3 BLOB," // instance of byte[]
-                + "c4 DATE," // instance of java.util.Date
-                + "c5 TIMESTAMP," // instance of String
-                + "c6 TIME," // instance of String
-                + "c7 TIME)"); // instance of java.sql.Timestamp
+        createTable("t1",
+                " (c1 DECIMAL," // instance of String
+                        + "c2 VARCHAR(255)," // instance of String
+                        + "c3 BLOB," // instance of byte[]
+                        + "c4 DATE," // instance of java.util.Date
+                        + "c5 TIMESTAMP," // instance of String
+                        + "c6 TIME," // instance of String
+                        + "c7 TIME)"); // instance of java.sql.Timestamp
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
@@ -1291,9 +1292,10 @@ public class StatementsTest extends BaseTestCase {
 
             Object[][] differentTypes = new Object[1000][14];
 
-            createTable("rewriteBatchTypes", "(internalOrder int, f1 tinyint null, " + "f2 smallint null, f3 int null, f4 bigint null, "
-                    + "f5 decimal(8, 2) null, f6 float null, f7 double null, " + "f8 varchar(255) null, f9 text null, f10 blob null, f11 blob null, "
-                    + "f12 datetime(3) null, f13 time(3) null, f14 date null)");
+            createTable("rewriteBatchTypes",
+                    "(internalOrder int, f1 tinyint null, " + "f2 smallint null, f3 int null, f4 bigint null, "
+                            + "f5 decimal(8, 2) null, f6 float null, f7 double null, " + "f8 varchar(255) null, f9 text null, f10 blob null, f11 blob null, "
+                            + "f12 datetime(3) null, f13 time(3) null, f14 date null)");
 
             for (int i = 0; i < 1000; i++) {
                 differentTypes[i][0] = Math.random() < .5 ? null : new Byte((byte) (Math.random() * 127));
@@ -1316,8 +1318,8 @@ public class StatementsTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
             props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
-            pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES "
-                    + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            pStmt = multiConn.prepareStatement(
+                    "INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES " + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
             for (int i = 0; i < 1000; i++) {
                 pStmt.setInt(1, i);
@@ -1403,7 +1405,8 @@ public class StatementsTest extends BaseTestCase {
                         } else if (differentTypes[idx][k] instanceof Timestamp) {
                             assertEquals("On row " + idx + ", column " + (k + 1), sdf.format(differentTypes[idx][k]), sdf.format(this.rs.getObject(k + 1)));
                         } else if (differentTypes[idx][k] instanceof Double) {
-                            assertEquals("On row " + idx + ", column " + (k + 1), ((Double) differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1), .1);
+                            assertEquals("On row " + idx + ", column " + (k + 1), ((Double) differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1),
+                                    .1);
                         } else if (differentTypes[idx][k] instanceof Float) {
                             assertEquals("On row " + idx + ", column " + (k + 1), ((Float) differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1);
                         } else if (className.equals("java.lang.Byte")) {
@@ -1761,8 +1764,8 @@ public class StatementsTest extends BaseTestCase {
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
             ((com.mysql.cj.api.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(
+            this.stmt.execute(
+                    "LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                             this.serverVersion));
             assertEquals(-1, stream.read());
@@ -2453,11 +2456,11 @@ public class StatementsTest extends BaseTestCase {
         final Statement stmtTmp = this.stmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
                 + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.getGeneratedKeys();
-                return null;
-            }
-        });
+                    public Void call() throws Exception {
+                        stmtTmp.getGeneratedKeys();
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -2621,11 +2624,11 @@ public class StatementsTest extends BaseTestCase {
         final Statement stmtTmp = this.pstmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
                 + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.getGeneratedKeys();
-                return null;
-            }
-        });
+                    public Void call() throws Exception {
+                        stmtTmp.getGeneratedKeys();
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -2977,8 +2980,8 @@ public class StatementsTest extends BaseTestCase {
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
          */
         createTable("testSetObjectCS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
-        createProcedure("testSetObjectCS1Proc", "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN "
-                + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
+        createProcedure("testSetObjectCS1Proc",
+                "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN " + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
 
         CallableStatement testCstmt = this.conn.prepareCall("{CALL testSetObjectCS1Proc(?, ?, ?, ?, ?)}");
         validateTestDataLocalDTTypes("testSetObjectCS1", insertTestDataLocalDTTypes(testCstmt));

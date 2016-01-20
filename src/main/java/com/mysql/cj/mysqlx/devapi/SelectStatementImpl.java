@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,8 +25,8 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.TableFindParams;
@@ -35,7 +35,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
     private TableImpl table;
     private FindParams findParams;
 
-    /* package private */SelectStatementImpl(TableImpl table, String projection) {
+    /* package private */ SelectStatementImpl(TableImpl table, String projection) {
         super(new TableFindParams(table.getSchema().getName(), table.getName()));
         this.findParams = (TableFindParams) this.filterParams;
         this.table = table;

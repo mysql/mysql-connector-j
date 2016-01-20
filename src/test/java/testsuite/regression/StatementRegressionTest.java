@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1077,9 +1077,11 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testBug2671() throws Exception {
-        createTable("test3", "(`field1` int(8) NOT NULL auto_increment, `field2` int(8) unsigned zerofill default NULL,"
-                + " `field3` varchar(30) binary NOT NULL default '', `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
-                + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`)) CHARACTER SET utf8", "InnoDB");
+        createTable("test3",
+                "(`field1` int(8) NOT NULL auto_increment, `field2` int(8) unsigned zerofill default NULL,"
+                        + " `field3` varchar(30) binary NOT NULL default '', `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
+                        + " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`)) CHARACTER SET utf8",
+                "InnoDB");
 
         this.stmt.executeUpdate("insert into test3 (field1, field3, field4) values (1, 'blewis', 'Bob Lewis')");
 
@@ -1128,8 +1130,7 @@ public class StatementRegressionTest extends BaseTestCase {
             java.util.Date retrUtilDate = new java.util.Date(this.rs.getTimestamp(1).getTime());
 
             // We can only compare on the day/month/year hour/minute/second interval, because the timestamp has added milliseconds to the internal date...
-            assertTrue(
-                    "Dates not equal",
+            assertTrue("Dates not equal",
                     (utilDate.getMonth() == retrUtilDate.getMonth()) && (utilDate.getDate() == retrUtilDate.getDate())
                             && (utilDate.getYear() == retrUtilDate.getYear()) && (utilDate.getHours() == retrUtilDate.getHours())
                             && (utilDate.getMinutes() == retrUtilDate.getMinutes()) && (utilDate.getSeconds() == retrUtilDate.getSeconds()));
@@ -1173,8 +1174,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
-            this.stmt
-                    .executeUpdate("CREATE TABLE testBug3557 (`a` varchar(255) NOT NULL default 'XYZ', `b` varchar(255) default '123', PRIMARY KEY  (`a`(100)))");
+            this.stmt.executeUpdate(
+                    "CREATE TABLE testBug3557 (`a` varchar(255) NOT NULL default 'XYZ', `b` varchar(255) default '123', PRIMARY KEY  (`a`(100)))");
 
             Statement updStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             this.rs = updStmt.executeQuery("SELECT * FROM testBug3557");
@@ -1288,14 +1289,15 @@ public class StatementRegressionTest extends BaseTestCase {
 
             long pStmtDeltaTWithCal = (ts.getTime() - tsValuePstmtNoCal.getTime());
 
-            System.out.println(Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) + " < " + epsillon
-                    + (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
-            assertTrue("Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
-                    + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + pStmtDeltaTWithCal,
+            System.out.println(
+                    Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) + " < " + epsillon + (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
+            assertTrue(
+                    "Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
+                            + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + pStmtDeltaTWithCal,
                     (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
 
-            System.out.println("Difference between original ts and ts with no calendar: " + (ts.getTime() - tsValuePstmtNoCal.getTime())
-                    + ", offset should be " + pointInTimeOffset);
+            System.out.println("Difference between original ts and ts with no calendar: " + (ts.getTime() - tsValuePstmtNoCal.getTime()) + ", offset should be "
+                    + pointInTimeOffset);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3620");
         }
@@ -1398,8 +1400,8 @@ public class StatementRegressionTest extends BaseTestCase {
             assertTrue("Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
                     + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + deltaOrig, (deltaOrig < epsillon));
 
-            System.out.println("Difference between original ts and ts with no calendar: " + (tsValuePstmtNoCal.getTime() - ts.getTime())
-                    + ", offset should be " + pointInTimeOffset);
+            System.out.println("Difference between original ts and ts with no calendar: " + (tsValuePstmtNoCal.getTime() - ts.getTime()) + ", offset should be "
+                    + pointInTimeOffset);
         } finally {
             TimeZone.setDefault(defaultTimeZone);
         }
@@ -1527,8 +1529,8 @@ public class StatementRegressionTest extends BaseTestCase {
                     + "`field6` varchar(75) default NULL, `field7` varchar(75) default NULL, `field8` datetime default NULL,"
                     + " PRIMARY KEY  (`field1`(100)))");
 
-            PreparedStatement pStmt = this.conn
-                    .prepareStatement("insert into testBug4119 (field2, field3, field4, field5, field6, field7, field8, field1) values (?, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement pStmt = this.conn.prepareStatement(
+                    "insert into testBug4119 (field2, field3, field4, field5, field6, field7, field8, field1) values (?, ?, ?, ?, ?, ?, ?, ?)");
 
             pStmt.setString(1, "0");
             pStmt.setString(2, "0");
@@ -1721,8 +1723,8 @@ public class StatementRegressionTest extends BaseTestCase {
                  */
             }
 
-            pStmt = this.conn
-                    .prepareStatement("SELECT qc.QuestionId, q.Text FROM testBug5191Q q, testBug5191C qc WHERE qc.CategoryId = ? AND q.QuestionId = qc.QuestionId");
+            pStmt = this.conn.prepareStatement(
+                    "SELECT qc.QuestionId, q.Text FROM testBug5191Q q, testBug5191C qc WHERE qc.CategoryId = ? AND q.QuestionId = qc.QuestionId");
 
             int catId = 0;
             for (int i = 0; i < 100; i++) {
@@ -1835,11 +1837,13 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug5510() throws Exception {
-        createTable("`testBug5510`", "(`a` bigint(20) NOT NULL auto_increment, `b` varchar(64) default NULL, `c` varchar(64) default NULL,"
-                + "`d` varchar(255) default NULL, `e` int(11) default NULL, `f` varchar(32) default NULL, `g` varchar(32) default NULL,"
-                + "`h` varchar(80) default NULL, `i` varchar(255) default NULL, `j` varchar(255) default NULL, `k` varchar(255) default NULL,"
-                + "`l` varchar(32) default NULL, `m` varchar(32) default NULL, `n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
-                + " CURRENT_TIMESTAMP, `o` int(11) default NULL, `p` int(11) default NULL, PRIMARY KEY  (`a`)) DEFAULT CHARSET=latin1", "InnoDB ");
+        createTable("`testBug5510`",
+                "(`a` bigint(20) NOT NULL auto_increment, `b` varchar(64) default NULL, `c` varchar(64) default NULL,"
+                        + "`d` varchar(255) default NULL, `e` int(11) default NULL, `f` varchar(32) default NULL, `g` varchar(32) default NULL,"
+                        + "`h` varchar(80) default NULL, `i` varchar(255) default NULL, `j` varchar(255) default NULL, `k` varchar(255) default NULL,"
+                        + "`l` varchar(32) default NULL, `m` varchar(32) default NULL, `n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
+                        + " CURRENT_TIMESTAMP, `o` int(11) default NULL, `p` int(11) default NULL, PRIMARY KEY  (`a`)) DEFAULT CHARSET=latin1",
+                "InnoDB ");
         PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
         pStmt.setNull(1, 0);
         pStmt.executeUpdate();
@@ -1900,7 +1904,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
                 long retrievedOffsetForTimestamp = retrTimestamp.getTime() - timestampOnServer.getTime();
 
-                assertEquals("Original timestamp and timestamp retrieved using client timezone are not the same", offsetDifference, retrievedOffsetForTimestamp);
+                assertEquals("Original timestamp and timestamp retrieved using client timezone are not the same", offsetDifference,
+                        retrievedOffsetForTimestamp);
 
                 String retrTimeString = new String(this.rs.getBytes(2));
                 Time retrTime = this.rs.getTime(2);
@@ -2341,9 +2346,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '"
-                    + fileNameBuf.toString()
-                    + "' INTO TABLE loadDataRegress CHARACTER SET "
+            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                             this.serverVersion));
@@ -3813,8 +3816,8 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.setTimestamp(3, ts);
             this.pstmt.executeUpdate();
 
-            this.rs = nonLegacyConn.createStatement().executeQuery(
-                    "SELECT id, field_datetime, field_timestamp , UNIX_TIMESTAMP(field_datetime), UNIX_TIMESTAMP(field_timestamp) "
+            this.rs = nonLegacyConn.createStatement()
+                    .executeQuery("SELECT id, field_datetime, field_timestamp , UNIX_TIMESTAMP(field_datetime), UNIX_TIMESTAMP(field_timestamp) "
                             + "FROM testBug32577 ORDER BY id ASC");
 
             this.rs.next();
@@ -4925,12 +4928,12 @@ public class StatementRegressionTest extends BaseTestCase {
             int rowsAffected = this.stmt.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("First UPD failed", 1, rowsAffected);
 
-            rowsAffected = affectedRowsConn.createStatement().executeUpdate(
-                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
+            rowsAffected = affectedRowsConn.createStatement()
+                    .executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("2nd UPD failed", 2, rowsAffected);
 
-            rowsAffected = affectedRowsConn.createStatement().executeUpdate(
-                    "INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
+            rowsAffected = affectedRowsConn.createStatement()
+                    .executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') ON DUPLICATE KEY UPDATE data=values(data)");
             assertEquals("3rd UPD failed", 0, rowsAffected);
 
         } finally {
@@ -5697,7 +5700,7 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             rewriteStmt.executeBatch(); // this should pass, because mysqld doesn't validate any escape sequences, 
-                                        // it just strips them, where our escape processor validates them
+                                       // it just strips them, where our escape processor validates them
 
             Statement batchStmt = this.conn.createStatement();
             batchStmt.setEscapeProcessing(false);
@@ -6181,9 +6184,9 @@ public class StatementRegressionTest extends BaseTestCase {
         }
         Connection connection = getConnectionWithProps(properties);
 
-        PreparedStatement statement = connection.prepareStatement("INSERT INTO " + tableName
-                + "(id, name, version) VALUES(?,?,?) ON DUPLICATE KEY UPDATE version = "
-                + (realUpdate ? "CONCAT(VALUES(version),'updated'), name = CONCAT(VALUES(name),'updated')" : "VALUES(version), name = VALUES(name)"));
+        PreparedStatement statement = connection
+                .prepareStatement("INSERT INTO " + tableName + "(id, name, version) VALUES(?,?,?) ON DUPLICATE KEY UPDATE version = "
+                        + (realUpdate ? "CONCAT(VALUES(version),'updated'), name = CONCAT(VALUES(name),'updated')" : "VALUES(version), name = VALUES(name)"));
         for (int i = 0; i < batchSize; i++) {
             statement.setInt(1, i);
             statement.setString(2, "name" + i);
@@ -7913,7 +7916,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertFalse(testStep + ".ST:2. Statement.isClosed(): false.", testStatement.isClosed());
 
         assertTrue(testStep + ".ST:3. There should be more ResultSets.", testStatement.getMoreResults()); // closes
-                                                                                                          // testResultSet2
+                                                                                                         // testResultSet2
         testResultSet3 = testStatement.getResultSet();
 
         assertTrue(testStep + ".ST:2. ResultSet.isClosed(): true.", testResultSet1.isClosed());
@@ -8053,13 +8056,12 @@ public class StatementRegressionTest extends BaseTestCase {
         // overridesCloseOnCompletion[n] refers to the effect of connectionProperties[n] on
         // Statement.closeOnCompletion()
         boolean[] overridesCloseOnCompletion = new boolean[] { false, false, true };
-        String[] sampleQueries = new String[] {
-                "SELECT * FROM mysql.help_topic",
-                "SELECT SLEEP(1)",
+        String[] sampleQueries = new String[] { "SELECT * FROM mysql.help_topic", "SELECT SLEEP(1)",
                 "SELECT * FROM mysql.time_zone tz INNER JOIN mysql.time_zone_name tzn ON tz.time_zone_id = tzn.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition tzt ON tz.time_zone_id = tzt.time_zone_id "
                         + "INNER JOIN mysql.time_zone_transition_type tztt ON tzt.time_zone_id = tztt.time_zone_id "
-                        + "AND tzt.transition_type_id = tztt.transition_type_id ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time", "SELECT 1" };
+                        + "AND tzt.transition_type_id = tztt.transition_type_id ORDER BY tzn.name , tztt.abbreviation , tzt.transition_time",
+                "SELECT 1" };
         int threadCount = sampleQueries.length;
 
         for (int c = 0; c < connectionProperties.length; c++) {
@@ -8378,7 +8380,8 @@ public class StatementRegressionTest extends BaseTestCase {
      * Check the update count and returned keys for an INSERT query using a PreparedStatement object. If expectedUpdateCount < 0 then runs
      * PreparedStatement.execute() otherwise PreparedStatement.executeUpdate().
      */
-    public void testBug71672PreparedStatement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys) throws SQLException {
+    public void testBug71672PreparedStatement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys)
+            throws SQLException {
         PreparedStatement testPStmt = testConn.prepareStatement(query);
 
         if (expectedUpdateCount < 0) {
@@ -8764,8 +8767,8 @@ public class StatementRegressionTest extends BaseTestCase {
             boolean useServerSidePreparedStatements = (tst & 0x2) != 0;
             boolean sendFractionalSeconds = (tst & 0x4) != 0;
 
-            String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-", useServerSidePreparedStatements
-                    ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
+            String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-",
+                    useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77449StatementInterceptor.class.getName());
@@ -9000,8 +9003,8 @@ public class StatementRegressionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
             props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rewriteBatchedStatements));
 
-            String testCase = String
-                    .format("Case: %d [ %s | %s ]", tst, useServerPrepStmts ? "useSPS" : "-", rewriteBatchedStatements ? "rwBatchedStmts" : "-");
+            String testCase = String.format("Case: %d [ %s | %s ]", tst, useServerPrepStmts ? "useSPS" : "-",
+                    rewriteBatchedStatements ? "rwBatchedStmts" : "-");
 
             Connection highLevelConn = getLoadBalancedConnection(props);
             assertTrue(testCase, highLevelConn.getClass().getName().startsWith("com.sun.proxy"));

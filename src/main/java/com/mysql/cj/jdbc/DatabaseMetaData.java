@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -277,7 +277,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), endParenIndex).trim());
 
                         // Adjust for pseudo-boolean
-                        if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1 && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
+                        if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1
+                                && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
                             if (DatabaseMetaData.this.transformedBitIsBoolean) {
                                 this.mysqlType = MysqlType.BOOLEAN;
                             } else {
@@ -492,8 +493,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Enumeration for Table Types
      */
     protected enum TableType {
-        LOCAL_TEMPORARY("LOCAL TEMPORARY"), SYSTEM_TABLE("SYSTEM TABLE"), SYSTEM_VIEW("SYSTEM VIEW"), TABLE("TABLE", new String[] { "BASE TABLE" }), VIEW(
-                "VIEW"), UNKNOWN("UNKNOWN");
+        LOCAL_TEMPORARY("LOCAL TEMPORARY"), SYSTEM_TABLE("SYSTEM TABLE"), SYSTEM_VIEW("SYSTEM VIEW"), TABLE("TABLE", new String[] { "BASE TABLE" }),
+        VIEW("VIEW"), UNKNOWN("UNKNOWN");
 
         private String name;
         private byte[] nameAsBytes;
@@ -611,18 +612,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "DESC", "DESCRIBE", "DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE", "DROP", "DUAL", "EACH", "ELSE", "ELSEIF", "ENCLOSED", "ESCAPED",
             "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH", "FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM", "FULLTEXT", "GENERATED", "GET",
             "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY", "HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IN", "INDEX", "INFILE", "INNER",
-            "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS",
-            "IO_BEFORE_GTIDS", "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD",
-            "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT",
-            "MATCH", "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL",
-            "NOT", "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTIMIZER_COSTS", "OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER",
-            "OUTFILE", "PARTITION", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES", "REGEXP",
-            "RELEASE", "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE", "SCHEMA", "SCHEMAS",
-            "SECOND_MICROSECOND", "SELECT", "SENSITIVE", "SEPARATOR", "SET", "SHOW", "SIGNAL", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL", "SQLEXCEPTION",
-            "SQLSTATE", "SQLWARNING", "SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING", "STORED", "STRAIGHT_JOIN", "TABLE",
-            "TERMINATED", "THEN", "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE", "UNLOCK", "UNSIGNED",
-            "UPDATE", "USAGE", "USE", "USING", "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "VIRTUAL",
-            "WHEN", "WHERE", "WHILE", "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
+            "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS", "IO_BEFORE_GTIDS",
+            "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD", "LOCALTIME",
+            "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT", "MATCH",
+            "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL", "NOT",
+            "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTIMIZER_COSTS", "OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE",
+            "PARTITION", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES", "REGEXP", "RELEASE",
+            "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE", "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND",
+            "SELECT", "SENSITIVE", "SEPARATOR", "SET", "SHOW", "SIGNAL", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING",
+            "SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING", "STORED", "STRAIGHT_JOIN", "TABLE", "TERMINATED", "THEN",
+            "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE",
+            "USING", "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "VIRTUAL", "WHEN", "WHERE", "WHILE",
+            "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
 
     // SQL:2003 reserved words from 'ISO/IEC 9075-2:2003 (E), 2003-07-25'
     private static final String[] SQL2003_KEYWORDS = new String[] { "ABS", "ALL", "ALLOCATE", "ALTER", "AND", "ANY", "ARE", "ARRAY", "AS", "ASENSITIVE",
@@ -641,13 +642,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "OLD", "ON", "ONLY", "OPEN", "OR", "ORDER", "OUT", "OUTER", "OVER", "OVERLAPS", "OVERLAY", "PARAMETER", "PARTITION", "PERCENTILE_CONT",
             "PERCENTILE_DISC", "PERCENT_RANK", "POSITION", "POWER", "PRECISION", "PREPARE", "PRIMARY", "PROCEDURE", "RANGE", "RANK", "READS", "REAL",
             "RECURSIVE", "REF", "REFERENCES", "REFERENCING", "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2", "REGR_SLOPE", "REGR_SXX",
-            "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "ROW_NUMBER",
-            "SAVEPOINT", "SCOPE", "SCROLL", "SEARCH", "SECOND", "SELECT", "SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC",
-            "SPECIFICTYPE", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQRT", "START", "STATIC", "STDDEV_POP", "STDDEV_SAMP", "SUBMULTISET",
-            "SUBSTRING", "SUM", "SYMMETRIC", "SYSTEM", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE",
-            "TO", "TRAILING", "TRANSLATE", "TRANSLATION", "TREAT", "TRIGGER", "TRIM", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE",
-            "UPPER", "USER", "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN", "WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW",
-            "WITH", "WITHIN", "WITHOUT", "YEAR" };
+            "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "ROW_NUMBER", "SAVEPOINT",
+            "SCOPE", "SCROLL", "SEARCH", "SECOND", "SELECT", "SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC", "SPECIFICTYPE",
+            "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQRT", "START", "STATIC", "STDDEV_POP", "STDDEV_SAMP", "SUBMULTISET", "SUBSTRING", "SUM",
+            "SYMMETRIC", "SYSTEM", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING",
+            "TRANSLATE", "TRANSLATION", "TREAT", "TRIGGER", "TRIM", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE", "UPPER", "USER",
+            "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN", "WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW", "WITH", "WITHIN",
+            "WITHOUT", "YEAR" };
 
     private static volatile String mysqlKeywords = null;
 
@@ -799,8 +800,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     rowData[5] = s2b(functionName);                      // SPECFIC NAME
                 }
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, functionName), new ByteArrayRow(rowData,
-                        getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, functionName),
+                        new ByteArrayRow(rowData, getExceptionInterceptor())));
             }
         }
     }
@@ -857,8 +858,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 rowData[8] = s2b(procedureName);
 
-                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, procedureName), new ByteArrayRow(rowData,
-                        getExceptionInterceptor())));
+                procedureRows.add(new ComparableWrapper<String, ResultSetRow>(getFullyQualifiedName(catalog, procedureName),
+                        new ByteArrayRow(rowData, getExceptionInterceptor())));
             }
         }
     }
@@ -1553,8 +1554,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     if ((openParenIndex == -1) || (endOfParamDeclarationIndex == -1)) {
                         // parse error?
-                        throw SQLError
-                                .createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                getExceptionInterceptor());
                     }
 
                     parameterDef = procedureDef.substring(openParenIndex + 1, endOfParamDeclarationIndex);
@@ -1664,8 +1665,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         typeDesc = new TypeDescriptor(typeInfo, "YES");
                     } else {
-                        throw SQLError
-                                .createSQLException(Messages.getString("DatabaseMetaData.7"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.7"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                getExceptionInterceptor());
                     }
 
                     if ((paramName.startsWith("`") && paramName.endsWith("`"))
@@ -2136,11 +2137,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fixUpOrdinalsRequired = true;
 
                                 StringBuilder fullColumnQueryBuf = new StringBuilder("SHOW FULL COLUMNS FROM ");
-                                fullColumnQueryBuf.append(StringUtils
-                                        .quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                                fullColumnQueryBuf
+                                        .append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                                 fullColumnQueryBuf.append(" FROM ");
-                                fullColumnQueryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId,
-                                        DatabaseMetaData.this.pedantic));
+                                fullColumnQueryBuf
+                                        .append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                                 results = stmt.executeQuery(fullColumnQueryBuf.toString());
 
@@ -2183,8 +2184,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                             mbminlen = 4;
                                         }
                                     }
-                                    rowVal[6] = mbminlen == 1 ? s2b(typeDesc.columnSize.toString()) : s2b(((Integer) (typeDesc.columnSize / mbminlen))
-                                            .toString());
+                                    rowVal[6] = mbminlen == 1 ? s2b(typeDesc.columnSize.toString())
+                                            : s2b(((Integer) (typeDesc.columnSize / mbminlen)).toString());
                                 }
                                 rowVal[7] = s2b(Integer.toString(typeDesc.bufferLength));
                                 rowVal[8] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
@@ -2313,8 +2314,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return this.conn;
     }
 
-    public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable,
-            final String foreignCatalog, final String foreignSchema, final String foreignTable) throws SQLException {
+    public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable, final String foreignCatalog,
+            final String foreignSchema, final String foreignTable) throws SQLException {
         if (primaryTable == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
@@ -3209,8 +3210,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             throws SQLException {
         Field[] fields = createProcedureColumnsFields();
 
-        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true, this.conn.getPropertySet()
-                .getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
+        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
+                this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
     }
 
     protected Field[] createProcedureColumnsFields() {
@@ -3278,8 +3279,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
-                procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1),
-                        procsAndOrFuncsRs.getString(3)), procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
+                procsOrFuncsToExtractList
+                        .add(new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
+                                procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                 hasResults = true;
             }
 
@@ -3992,8 +3994,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 if (shouldReportTables) {
                                     // Pre-MySQL-5.0.1, tables only
                                     row[3] = TableType.TABLE.asBytes();
-                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)), new ByteArrayRow(
-                                            row, getExceptionInterceptor()));
+                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)),
+                                            new ByteArrayRow(row, getExceptionInterceptor()));
                                 }
                             }
                         }
@@ -5417,10 +5419,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new Field("", "FUNCTION_NAME", MysqlType.VARCHAR, 512), new Field("", "COLUMN_NAME", MysqlType.VARCHAR, 512),
                 new Field("", "COLUMN_TYPE", MysqlType.VARCHAR, 64), new Field("", "DATA_TYPE", MysqlType.SMALLINT, 6),
                 new Field("", "TYPE_NAME", MysqlType.VARCHAR, 64), new Field("", "PRECISION", MysqlType.INT, 12), new Field("", "LENGTH", MysqlType.INT, 12),
-                new Field("", "SCALE", MysqlType.SMALLINT, 12), new Field("", "RADIX", MysqlType.SMALLINT, 6),
-                new Field("", "NULLABLE", MysqlType.SMALLINT, 6), new Field("", "REMARKS", MysqlType.VARCHAR, 512),
-                new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 32), new Field("", "ORDINAL_POSITION", MysqlType.INT, 32),
-                new Field("", "IS_NULLABLE", MysqlType.VARCHAR, 12), new Field("", "SPECIFIC_NAME", MysqlType.VARCHAR, 64) };
+                new Field("", "SCALE", MysqlType.SMALLINT, 12), new Field("", "RADIX", MysqlType.SMALLINT, 6), new Field("", "NULLABLE", MysqlType.SMALLINT, 6),
+                new Field("", "REMARKS", MysqlType.VARCHAR, 512), new Field("", "CHAR_OCTET_LENGTH", MysqlType.INT, 32),
+                new Field("", "ORDINAL_POSITION", MysqlType.INT, 32), new Field("", "IS_NULLABLE", MysqlType.VARCHAR, 12),
+                new Field("", "SPECIFIC_NAME", MysqlType.VARCHAR, 64) };
         return fields;
     }
 

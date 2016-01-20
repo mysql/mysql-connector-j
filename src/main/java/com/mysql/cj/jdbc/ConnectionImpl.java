@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -678,9 +678,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         } catch (Exception ex) {
             cleanup(ex);
 
-            throw SQLError.createSQLException(
-                    this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0") : Messages
-                            .getString("Connection.1", new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
+            throw SQLError
+                    .createSQLException(
+                            this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
+                                    : Messages.getString("Connection.1",
+                                            new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
                     SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
 
@@ -707,8 +709,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.isClosed = false;
 
         List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props,
-                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
-                "MysqlIo.BadStatementInterceptor", getExceptionInterceptor(), this.session.getLog());
+                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(), "MysqlIo.BadStatementInterceptor",
+                getExceptionInterceptor(), this.session.getLog());
 
         this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
@@ -751,8 +753,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private void addToPerformanceHistogram(long value, int numberOfTimes) {
         checkAndCreatePerformanceHistogram();
 
-        addToHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, value, numberOfTimes, this.shortestQueryTimeMs == Long.MAX_VALUE ? 0
-                : this.shortestQueryTimeMs, this.longestQueryTimeMs);
+        addToHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, value, numberOfTimes,
+                this.shortestQueryTimeMs == Long.MAX_VALUE ? 0 : this.shortestQueryTimeMs, this.longestQueryTimeMs);
     }
 
     private void addToTablesAccessedHistogram(long value, int numberOfTimes) {
@@ -1355,8 +1357,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 // Fault injection for testing server character set indices
                 if (this.props != null && this.props.getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex) != null) {
-                    this.session.setServerDefaultCollationIndex(Integer.parseInt(this.props
-                            .getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex)));
+                    this.session.setServerDefaultCollationIndex(
+                            Integer.parseInt(this.props.getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex)));
                 }
 
                 String serverEncodingToSet = CharsetMapping.getJavaEncodingForCollationIndex(this.session.getServerDefaultCollationIndex());
@@ -1841,8 +1843,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         } catch (Exception EEE) {
 
-            if ((EEE instanceof PasswordExpiredException || EEE instanceof SQLException
-                    && ((SQLException) EEE).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD)
+            if ((EEE instanceof PasswordExpiredException
+                    || EEE instanceof SQLException && ((SQLException) EEE).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD)
                     && !this.disconnectOnExpiredPasswords.getValue()) {
                 return;
             }
@@ -1889,16 +1891,14 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, cacheSize, this.prepStmtCacheSqlLimit.getValue(), this.props);
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { parseInfoCacheFactory,
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
+                        new Object[] { parseInfoCacheFactory, PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (Exception e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { parseInfoCacheFactory,
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantLoadCacheFactory",
+                        new Object[] { parseInfoCacheFactory, PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
@@ -2022,13 +2022,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     // resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
     // unpackFields);
     // }
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata, false);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         synchronized (getConnectionMutex()) {
             //
             // Fall-back if the master is back online if we've issued queriesBeforeRetryMaster queries since we failed over
@@ -2417,8 +2417,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
 
         if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
-            this.parsedCallableStatementCache = new LRUCache(getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize)
-                    .getValue());
+            this.parsedCallableStatementCache = new LRUCache(
+                    getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue());
         }
 
         if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
@@ -2449,8 +2449,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         if (connectionInterceptorClasses != null) {
             try {
-                this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses,
-                        "Connection.badLifecycleInterceptor", getExceptionInterceptor(), this.session.getLog());
+                this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses, "Connection.badLifecycleInterceptor",
+                        getExceptionInterceptor(), this.session.getLog());
             } catch (CJException e) {
                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
@@ -2731,8 +2731,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 } catch (SQLException ex1) {
                     if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                        throw SQLError
-                                .createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex1, getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex1,
+                                getExceptionInterceptor());
                     }
                 }
 
@@ -2848,18 +2848,18 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     ((ExceptionInterceptorChain) this.exceptionInterceptor).addRingZero(evictOnCommsError);
                 }
             } catch (ClassNotFoundException e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory",
-                                new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
-                                        PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
+                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }),
+                        getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (InstantiationException | IllegalAccessException | CJException e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory",
-                                new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
-                                        PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantLoadCacheFactory",
+                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                                PropertyDefinitions.PNAME_parseInfoCacheFactory }),
+                        getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
@@ -3339,17 +3339,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (this.useUsageAdvisor.getValue()) {
                     if (!calledExplicitly) {
-                        this.session.getProfilerEventHandler().consumeEvent(
-                                new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System.currentTimeMillis(), 0,
-                                        Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
+                        this.session.getProfilerEventHandler().consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(),
+                                -1, -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
                     }
 
                     long connectionLifeTime = System.currentTimeMillis() - this.connectionCreationTimeMillis;
 
                     if (connectionLifeTime < 500) {
-                        this.session.getProfilerEventHandler().consumeEvent(
-                                new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1, System.currentTimeMillis(), 0,
-                                        Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.19")));
+                        this.session.getProfilerEventHandler().consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(),
+                                -1, -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.19")));
                     }
                 }
 
@@ -3473,15 +3471,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private void repartitionPerformanceHistogram() {
         checkAndCreatePerformanceHistogram();
 
-        repartitionHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints, this.shortestQueryTimeMs == Long.MAX_VALUE ? 0
-                : this.shortestQueryTimeMs, this.longestQueryTimeMs);
+        repartitionHistogram(this.perfMetricsHistCounts, this.perfMetricsHistBreakpoints,
+                this.shortestQueryTimeMs == Long.MAX_VALUE ? 0 : this.shortestQueryTimeMs, this.longestQueryTimeMs);
     }
 
     private void repartitionTablesAccessedHistogram() {
         checkAndCreateTablesAccessedHistogram();
 
-        repartitionHistogram(this.numTablesMetricsHistCounts, this.numTablesMetricsHistBreakpoints, this.minimumNumberTablesAccessed == Long.MAX_VALUE ? 0
-                : this.minimumNumberTablesAccessed, this.maximumNumberTablesAccessed);
+        repartitionHistogram(this.numTablesMetricsHistCounts, this.numTablesMetricsHistBreakpoints,
+                this.minimumNumberTablesAccessed == Long.MAX_VALUE ? 0 : this.minimumNumberTablesAccessed, this.maximumNumberTablesAccessed);
     }
 
     private void reportMetrics() {
@@ -3603,8 +3601,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     protected void reportMetricsIfNeeded() {
         if (this.gatherPerfMetrics.getValue()) {
-            if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getPropertySet().getIntegerReadableProperty(
-                    PropertyDefinitions.PNAME_reportMetricsIntervalMillis).getValue()) {
+            if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getPropertySet()
+                    .getIntegerReadableProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis).getValue()) {
                 reportMetrics();
             }
         }
@@ -4167,8 +4165,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private void setupServerForTruncationChecks() throws SQLException {
-        ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet().<Boolean> getModifiableProperty(
-                PropertyDefinitions.PNAME_jdbcCompliantTruncation);
+        ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet()
+                .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation);
         if (jdbcCompliantTruncation.getValue()) {
             String currentSqlMode = this.session.getServerVariable("sql_mode");
 
@@ -4730,17 +4728,16 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (processHost == null) {
                     // http://bugs.mysql.com/bug.php?id=44167 - connection ids on the wire wrap at 4 bytes even though they're 64-bit numbers
-                    this.session.getLog().logWarn(
-                            String.format("Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead",
-                                    threadId));
+                    this.session.getLog().logWarn(String.format(
+                            "Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead", threadId));
 
                     ResultSet rs = processListStmt.executeQuery("SELECT CONNECTION_ID()");
                     if (rs.next()) {
                         threadId = rs.getLong(1);
                         processHost = findProcessHost(threadId, processListStmt);
                     } else {
-                        this.session.getLog().logError(
-                                "No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
+                        this.session.getLog()
+                                .logError("No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
                     }
                 }
             } finally {
@@ -4748,9 +4745,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (processHost == null) {
-                this.session.getLog().logWarn(
-                        String.format("Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected",
-                                threadId));
+                this.session.getLog().logWarn(String.format(
+                        "Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected", threadId));
             }
             return processHost;
         } catch (SQLException ex) {

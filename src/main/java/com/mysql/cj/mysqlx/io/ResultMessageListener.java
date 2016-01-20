@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.google.protobuf.GeneratedMessage;
-
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqlx.MysqlxError;
@@ -62,7 +61,8 @@ public class ResultMessageListener implements MessageListener {
     /**
      * The type for the function to transform the {@link ColumnMetaData} to a {@link Field}.
      */
-    public static interface ColToFieldTransformer extends Function<ColumnMetaData, Field> {}
+    public static interface ColToFieldTransformer extends Function<ColumnMetaData, Field> {
+    }
 
     public ResultMessageListener(ColToFieldTransformer colToField, ResultListener callbacks) {
         this.callbacks = callbacks;
@@ -82,7 +82,7 @@ public class ResultMessageListener implements MessageListener {
     }
 
     private boolean handleStmtExecuteOk() {
-        this.callbacks.onComplete(okBuilder.build());
+        this.callbacks.onComplete(this.okBuilder.build());
         return true; /* done reading? */
     }
 

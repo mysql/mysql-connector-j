@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,7 +38,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     private CollectionImpl collection;
     private List<UpdateSpec> updates = new ArrayList<>();
 
-    /* package private */ModifyStatementImpl(CollectionImpl collection, String criteria) {
+    /* package private */ ModifyStatementImpl(CollectionImpl collection, String criteria) {
         super(collection.getSchema().getName(), collection.getName(), false);
         this.collection = collection;
         if (criteria != null && criteria.length() > 0) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,6 @@ import java.util.Map;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
-
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
@@ -52,11 +51,11 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDoneMoreResultsets;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
-import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 
 /**
  * Constants related to MySQL-X messages.
@@ -69,6 +68,7 @@ public class MessageConstants {
 
     /**
      * Map of class to "ServerMessages" type tag for validation of parsed message class.
+     * 
      * @todo Find a clever way to generate both maps with a single set of input pairs.
      */
     public static final Map<Class<? extends GeneratedMessage>, Integer> MESSAGE_CLASS_TO_TYPE;

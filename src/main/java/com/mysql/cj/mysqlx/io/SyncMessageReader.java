@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,11 +30,10 @@ import java.nio.ByteOrder;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
-
-import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
@@ -59,7 +58,8 @@ public class SyncMessageReader implements MessageReader {
     /**
      * Read the header for the next message.
      *
-     * <p>Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
+     * <p>
+     * Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
      * bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session multiplexing is
      * supported by the protocol. The protocol will be able to accomodate it but we will have to separate reading data after the header (size).
      */
@@ -139,8 +139,8 @@ public class SyncMessageReader implements MessageReader {
 
         // ensure that parsed message class matches incoming tag
         if (expectedClass != messageClass) {
-            throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
-                    messageClass.getSimpleName() + "'");
+            throw new WrongArgumentException(
+                    "Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" + messageClass.getSimpleName() + "'");
         }
 
         return readAndParse((Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass));

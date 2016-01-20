@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -75,14 +75,14 @@ public class LogFactory {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     "Logger class does not have a single-arg constructor that takes an instance name", nsme, exceptionInterceptor);
         } catch (InstantiationException inse) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Unable to instantiate logger class '" + className
-                    + "', exception in constructor?", inse, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    "Unable to instantiate logger class '" + className + "', exception in constructor?", inse, exceptionInterceptor);
         } catch (InvocationTargetException ite) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Unable to instantiate logger class '" + className
-                    + "', exception in constructor?", ite, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    "Unable to instantiate logger class '" + className + "', exception in constructor?", ite, exceptionInterceptor);
         } catch (IllegalAccessException iae) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Unable to instantiate logger class '" + className
-                    + "', constructor not public", iae, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    "Unable to instantiate logger class '" + className + "', constructor not public", iae, exceptionInterceptor);
         } catch (ClassCastException cce) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     "Logger class '" + className + "' does not implement the '" + Log.class.getName() + "' interface", cce, exceptionInterceptor);

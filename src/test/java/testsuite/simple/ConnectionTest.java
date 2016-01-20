@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -539,8 +539,9 @@ public class ConnectionTest extends BaseTestCase {
             if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
                 this.conn.setTransactionIsolation(isolationLevels[i]);
 
-                assertTrue("Transaction isolation level that was set (" + isoLevelNames[i]
-                        + ") was not returned, nor was a more restrictive isolation level used by the server",
+                assertTrue(
+                        "Transaction isolation level that was set (" + isoLevelNames[i]
+                                + ") was not returned, nor was a more restrictive isolation level used by the server",
                         this.conn.getTransactionIsolation() == isolationLevels[i] || this.conn.getTransactionIsolation() > isolationLevels[i]);
             }
         }
@@ -719,10 +720,9 @@ public class ConnectionTest extends BaseTestCase {
         Connection loadConn = getConnectionWithProps(props);
         Statement loadStmt = loadConn.createStatement();
 
-        String charset = " CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                        ((MysqlConnection) loadConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                        ((JdbcConnection) loadConn).getServerVersion());
+        String charset = " CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                ((MysqlConnection) loadConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                ((JdbcConnection) loadConn).getServerVersion());
 
         try {
             loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url + "' INTO TABLE testLocalInfileWithUrl" + charset);
@@ -857,7 +857,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testFailoverConnection() throws Exception {
 
         if (!isServerRunningOnWindows()) { // windows sockets don't
-                                           // work for this test
+                                          // work for this test
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
             props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
@@ -1744,8 +1744,7 @@ public class ConnectionTest extends BaseTestCase {
      * - connect() throws SQLException if URL is null.
      */
     public void testDriverConnectNullArgument() throws Exception {
-        assertThrows(
-                SQLException.class,
+        assertThrows(SQLException.class,
                 "Cannot load connection class because of underlying exception: com.mysql.cj.core.exceptions.WrongArgumentException: Url is not allowed to be null.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
@@ -1901,12 +1900,13 @@ public class ConnectionTest extends BaseTestCase {
                 boolean useServerPrepStmts = (tst & 0x4) != 0;
                 boolean isPreparedStatement = interceptedStatement instanceof PreparedStatement;
 
-                String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-", processEscapeCodesForPrepStmts
-                        ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-", isPreparedStatement ? "PreparedStatement" : "Statement");
+                String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
+                        processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-",
+                        isPreparedStatement ? "PreparedStatement" : "Statement");
 
                 boolean escapeProcessingDone = sql.indexOf('{') == -1;
-                assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone || !isPreparedStatement
-                        && enableEscapeProcessing == escapeProcessingDone);
+                assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone
+                        || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
             return super.preProcess(sql, interceptedStatement, connection);
         }

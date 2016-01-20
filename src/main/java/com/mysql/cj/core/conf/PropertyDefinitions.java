@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -60,56 +60,56 @@ public class PropertyDefinitions {
     /*
      * Custom system properties
      */
-    public static final String SYSP_testsuite_url /*                          */= "com.mysql.cj.testsuite.url";
-    public final static String SYSP_testsuite_url_admin /*                    */= "com.mysql.cj.testsuite.url.admin";
-    public static final String SYSP_testsuite_url_cluster /*                  */= "com.mysql.cj.testsuite.url.cluster";
+    public static final String SYSP_testsuite_url /*                          */ = "com.mysql.cj.testsuite.url";
+    public final static String SYSP_testsuite_url_admin /*                    */ = "com.mysql.cj.testsuite.url.admin";
+    public static final String SYSP_testsuite_url_cluster /*                  */ = "com.mysql.cj.testsuite.url.cluster";
     /** Connection string to server compiled with OpenSSL */
-    public static final String SYSP_testsuite_url_openssl /*                  */= "com.mysql.cj.testsuite.url.openssl";
+    public static final String SYSP_testsuite_url_openssl /*                  */ = "com.mysql.cj.testsuite.url.openssl";
 
-    public static final String SYSP_testsuite_url_mysqlx /*                   */= "com.mysql.cj.testsuite.mysqlx.url";
+    public static final String SYSP_testsuite_url_mysqlx /*                   */ = "com.mysql.cj.testsuite.mysqlx.url";
 
-    public static final String SYSP_testsuite_fabric_hostname /*              */= "com.mysql.cj.testsuite.fabric.hostname";
-    public static final String SYSP_testsuite_fabric_port /*                  */= "com.mysql.cj.testsuite.fabric.port";
-    public static final String SYSP_testsuite_fabric_database /*              */= "com.mysql.cj.testsuite.fabric.database";
-    public static final String SYSP_testsuite_fabric_username /*              */= "com.mysql.cj.testsuite.fabric.username";
-    public static final String SYSP_testsuite_fabric_password /*              */= "com.mysql.cj.testsuite.fabric.password";
-    public static final String SYSP_testsuite_fabric_fabricUsername /*        */= "com.mysql.cj.testsuite.fabric.fabricUsername";
-    public static final String SYSP_testsuite_fabric_fabricPassword /*        */= "com.mysql.cj.testsuite.fabric.fabricPassword";
-    public static final String SYSP_testsuite_fabric_global_host /*           */= "com.mysql.cj.testsuite.fabric.global.host";
-    public static final String SYSP_testsuite_fabric_global_port /*           */= "com.mysql.cj.testsuite.fabric.global.port";
-    public static final String SYSP_testsuite_fabric_shard1_host /*           */= "com.mysql.cj.testsuite.fabric.shard1.host";
-    public static final String SYSP_testsuite_fabric_shard1_port /*           */= "com.mysql.cj.testsuite.fabric.shard1.port";
-    public static final String SYSP_testsuite_fabric_shard2_host /*           */= "com.mysql.cj.testsuite.fabric.shard2.host";
-    public static final String SYSP_testsuite_fabric_shard2_port /*           */= "com.mysql.cj.testsuite.fabric.shard2.port";
+    public static final String SYSP_testsuite_fabric_hostname /*              */ = "com.mysql.cj.testsuite.fabric.hostname";
+    public static final String SYSP_testsuite_fabric_port /*                  */ = "com.mysql.cj.testsuite.fabric.port";
+    public static final String SYSP_testsuite_fabric_database /*              */ = "com.mysql.cj.testsuite.fabric.database";
+    public static final String SYSP_testsuite_fabric_username /*              */ = "com.mysql.cj.testsuite.fabric.username";
+    public static final String SYSP_testsuite_fabric_password /*              */ = "com.mysql.cj.testsuite.fabric.password";
+    public static final String SYSP_testsuite_fabric_fabricUsername /*        */ = "com.mysql.cj.testsuite.fabric.fabricUsername";
+    public static final String SYSP_testsuite_fabric_fabricPassword /*        */ = "com.mysql.cj.testsuite.fabric.fabricPassword";
+    public static final String SYSP_testsuite_fabric_global_host /*           */ = "com.mysql.cj.testsuite.fabric.global.host";
+    public static final String SYSP_testsuite_fabric_global_port /*           */ = "com.mysql.cj.testsuite.fabric.global.port";
+    public static final String SYSP_testsuite_fabric_shard1_host /*           */ = "com.mysql.cj.testsuite.fabric.shard1.host";
+    public static final String SYSP_testsuite_fabric_shard1_port /*           */ = "com.mysql.cj.testsuite.fabric.shard1.port";
+    public static final String SYSP_testsuite_fabric_shard2_host /*           */ = "com.mysql.cj.testsuite.fabric.shard2.host";
+    public static final String SYSP_testsuite_fabric_shard2_port /*           */ = "com.mysql.cj.testsuite.fabric.shard2.port";
 
-    public static final String SYSP_testsuite_cantGrant /*                    */= "com.mysql.cj.testsuite.cantGrant";
-    public static final String SYSP_testsuite_disable_multihost_tests /*      */= "com.mysql.cj.testsuite.disable.multihost.tests"; // TODO should be more specific for different types of multi-host configs
+    public static final String SYSP_testsuite_cantGrant /*                    */ = "com.mysql.cj.testsuite.cantGrant";
+    public static final String SYSP_testsuite_disable_multihost_tests /*      */ = "com.mysql.cj.testsuite.disable.multihost.tests"; // TODO should be more specific for different types of multi-host configs
 
     /** For testsuite.regression.DataSourceRegressionTest */
-    public static final String SYSP_testsuite_ds_host /*                      */= "com.mysql.cj.testsuite.ds.host";
+    public static final String SYSP_testsuite_ds_host /*                      */ = "com.mysql.cj.testsuite.ds.host";
     /** For testsuite.regression.DataSourceRegressionTest */
-    public static final String SYSP_testsuite_ds_port /*                      */= "com.mysql.cj.testsuite.ds.port";
+    public static final String SYSP_testsuite_ds_port /*                      */ = "com.mysql.cj.testsuite.ds.port";
     /** For testsuite.regression.DataSourceRegressionTest */
-    public static final String SYSP_testsuite_ds_db /*                        */= "com.mysql.cj.testsuite.ds.db";
+    public static final String SYSP_testsuite_ds_db /*                        */ = "com.mysql.cj.testsuite.ds.db";
     /** For testsuite.regression.DataSourceRegressionTest */
-    public static final String SYSP_testsuite_ds_user /*                      */= "com.mysql.cj.testsuite.ds.user";
+    public static final String SYSP_testsuite_ds_user /*                      */ = "com.mysql.cj.testsuite.ds.user";
     /** For testsuite.regression.DataSourceRegressionTest */
-    public static final String SYSP_testsuite_ds_password /*                  */= "com.mysql.cj.testsuite.ds.password";
+    public static final String SYSP_testsuite_ds_password /*                  */ = "com.mysql.cj.testsuite.ds.password";
 
     /** For testsuite.perf.LoadStorePerfTest */
-    public static final String SYSP_testsuite_loadstoreperf_tabletype /*      */= "com.mysql.cj.testsuite.loadstoreperf.tabletype"; // TODO document allowed types
+    public static final String SYSP_testsuite_loadstoreperf_tabletype /*      */ = "com.mysql.cj.testsuite.loadstoreperf.tabletype"; // TODO document allowed types
     /** For testsuite.perf.LoadStorePerfTest */
-    public static final String SYSP_testsuite_loadstoreperf_useBigResults /*  */= "com.mysql.cj.testsuite.loadstoreperf.useBigResults";
+    public static final String SYSP_testsuite_loadstoreperf_useBigResults /*  */ = "com.mysql.cj.testsuite.loadstoreperf.useBigResults";
 
     /** The system property that must exist to run the shutdown test in testsuite.simple.MiniAdminTest */
-    public static final String SYSP_testsuite_miniAdminTest_runShutdown /*    */= "com.mysql.cj.testsuite.miniAdminTest.runShutdown";
+    public static final String SYSP_testsuite_miniAdminTest_runShutdown /*    */ = "com.mysql.cj.testsuite.miniAdminTest.runShutdown";
 
     /** Suppress debug output when running testsuite */
-    public static final String SYSP_testsuite_noDebugOutput /*                */= "com.mysql.cj.testsuite.noDebugOutput";
+    public static final String SYSP_testsuite_noDebugOutput /*                */ = "com.mysql.cj.testsuite.noDebugOutput";
     /** Don't remove database object created by tests */
-    public static final String SYSP_testsuite_retainArtifacts /*              */= "com.mysql.cj.testsuite.retainArtifacts";
-    public static final String SYSP_testsuite_runLongTests /*                 */= "com.mysql.cj.testsuite.runLongTests";
-    public static final String SYSP_testsuite_serverController_basedir /*     */= "com.mysql.cj.testsuite.serverController.basedir";
+    public static final String SYSP_testsuite_retainArtifacts /*              */ = "com.mysql.cj.testsuite.retainArtifacts";
+    public static final String SYSP_testsuite_runLongTests /*                 */ = "com.mysql.cj.testsuite.runLongTests";
+    public static final String SYSP_testsuite_serverController_basedir /*     */ = "com.mysql.cj.testsuite.serverController.basedir";
 
     /*
      * Properties added internally after parsing connection string
@@ -151,10 +151,9 @@ public class PropertyDefinitions {
     public static final String CATEGORY_FABRIC = Messages.getString("ConnectionProperties.categoryFabric");
     public static final String CATEGORY_MYSQLX = Messages.getString("ConnectionProperties.categoryMysqlx");
 
-    public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK,
-            CATEGORY_SECURITY, CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES,
-            CATEGORY_HA, CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_FABRIC,
-            CATEGORY_MYSQLX };
+    public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK, CATEGORY_SECURITY,
+            CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES, CATEGORY_HA,
+            CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_FABRIC, CATEGORY_MYSQLX };
 
     /*
      * Property modifiers
@@ -397,9 +396,8 @@ public class PropertyDefinitions {
     private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
     static {
-        PropertyDefinition<?>[] pdefs = new PropertyDefinition[] {
-                new BooleanPropertyDefinition(PNAME_paranoid, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.paranoid"),
-                        "3.0.1", CATEGORY_SECURITY, Integer.MIN_VALUE),
+        PropertyDefinition<?>[] pdefs = new PropertyDefinition[] { new BooleanPropertyDefinition(PNAME_paranoid, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                Messages.getString("ConnectionProperties.paranoid"), "3.0.1", CATEGORY_SECURITY, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PNAME_passwordCharacterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.passwordCharacterEncoding"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
@@ -484,8 +482,8 @@ public class PropertyDefinitions {
                 new MemorySizePropertyDefinition(PNAME_blobSendChunkSize, 1024 * 1024, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.blobSendChunkSize"), "3.1.9", CATEGORY_BLOBS, Integer.MIN_VALUE, 0, 0),
 
-                new BooleanPropertyDefinition(PNAME_autoSlowLog, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.autoSlowLog"), "5.1.4", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_autoSlowLog, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.autoSlowLog"),
+                        "5.1.4", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_blobsAreStrings, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.blobsAreStrings"), "5.0.8", CATEGORY_BLOBS, Integer.MIN_VALUE),
@@ -608,8 +606,8 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_ignoreNonTxTables, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ignoreNonTxTables"), "3.0.9", CATEGORY_EXCEPTIONS, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_initialTimeout, 2, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.initialTimeout"),
-                        "1.1", CATEGORY_HA, 5, 1, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_initialTimeout, 2, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.initialTimeout"), "1.1",
+                        CATEGORY_HA, 5, 1, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_interactiveClient, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.interactiveClient"), "3.1.0", CATEGORY_CONNECTION, Integer.MIN_VALUE),
@@ -658,8 +656,9 @@ public class PropertyDefinitions {
                 new MemorySizePropertyDefinition(PNAME_locatorFetchBufferSize, 1024 * 1024, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.locatorFetchBufferSize"), "3.2.1", CATEGORY_BLOBS, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
-                new StringPropertyDefinition(PNAME_logger, STANDARD_LOGGER_NAME, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.logger",
-                        new Object[] { Log.class.getName(), STANDARD_LOGGER_NAME }), "3.1.1", CATEGORY_DEBUGING_PROFILING, 0),
+                new StringPropertyDefinition(PNAME_logger, STANDARD_LOGGER_NAME, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.logger", new Object[] { Log.class.getName(), STANDARD_LOGGER_NAME }), "3.1.1",
+                        CATEGORY_DEBUGING_PROFILING, 0),
 
                 new BooleanPropertyDefinition(PNAME_logSlowQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.logSlowQueries"), "3.1.2", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
@@ -676,8 +675,8 @@ public class PropertyDefinitions {
                 new IntegerPropertyDefinition(PNAME_maxReconnects, 3, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxReconnects"), "1.1",
                         CATEGORY_HA, 4, 1, Integer.MAX_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_retriesAllDown, 120, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.retriesAllDown"),
-                        "5.1.6", CATEGORY_HA, 4, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PNAME_retriesAllDown, 120, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.retriesAllDown"), "5.1.6",
+                        CATEGORY_HA, 4, 0, Integer.MAX_VALUE),
 
                 new IntegerPropertyDefinition(PNAME_maxRows, -1, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxRows"),
                         Messages.getString("ConnectionProperties.allVersions"), CATEGORY_RESULT_SETS, Integer.MIN_VALUE, -1, Integer.MAX_VALUE),
@@ -883,8 +882,8 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useReadAheadInput, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useReadAheadInput"), "3.1.5", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"),
-                        "3.0.2", CATEGORY_SECURITY, 2),
+                new BooleanPropertyDefinition(PNAME_useSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"), "3.0.2",
+                        CATEGORY_SECURITY, 2),
 
                 new BooleanPropertyDefinition(PNAME_useStreamLengthsInPrepStmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useStreamLengthsInPrepStmts"), "3.0.2", CATEGORY_PREPARED_STATEMENTS, Integer.MIN_VALUE),
@@ -898,10 +897,11 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_yearIsDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.yearIsDateType"), "3.1.9", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_zeroDateTimeBehavior, ZERO_DATETIME_BEHAVIOR_EXCEPTION, RUNTIME_MODIFIABLE, Messages.getString(
-                        "ConnectionProperties.zeroDateTimeBehavior", new Object[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND,
-                                ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }), "3.1.4", CATEGORY_DATETIMES, Integer.MIN_VALUE, new String[] {
-                        ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
+                new StringPropertyDefinition(PNAME_zeroDateTimeBehavior, ZERO_DATETIME_BEHAVIOR_EXCEPTION, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.zeroDateTimeBehavior",
+                                new Object[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
+                        "3.1.4", CATEGORY_DATETIMES, Integer.MIN_VALUE,
+                        new String[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
 
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
@@ -972,6 +972,7 @@ public class PropertyDefinitions {
 
         Map<String, String> aliases = new HashMap<String, String>() {
             private static final long serialVersionUID = -3808474490779118979L;
+
             {
                 put(PNAME_paranoid, "paranoid");
                 put(PNAME_passwordCharacterEncoding, "passwordCharacterEncoding");

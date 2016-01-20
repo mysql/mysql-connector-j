@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -688,19 +688,14 @@ public class JsonDocTest {
     @Test
     public void testToJsonString() {
 
-        DbDoc doc = new DbDoc()
-                .add("field1", new JsonString().setValue("value 1"))
-                .add("field2", new JsonNumber().setValue("12345.44E22"))
-                .add("field3", JsonLiteral.TRUE)
-                .add("field4", JsonLiteral.FALSE)
-                .add("field5", JsonLiteral.NULL)
+        DbDoc doc = new DbDoc().add("field1", new JsonString().setValue("value 1")).add("field2", new JsonNumber().setValue("12345.44E22"))
+                .add("field3", JsonLiteral.TRUE).add("field4", JsonLiteral.FALSE).add("field5", JsonLiteral.NULL)
                 .add("field6",
                         new DbDoc().add("inner field 1", new JsonString().setValue("inner value 1")).add("inner field 2", new JsonNumber().setValue("2"))
                                 .add("inner field 3", JsonLiteral.TRUE).add("inner field 4", JsonLiteral.FALSE).add("inner field 5", JsonLiteral.NULL)
                                 .add("inner field 6", new JsonArray()).add("inner field 7", new DbDoc()))
-                .add("field7",
-                        new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
-                                .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDoc()));
+                .add("field7", new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
+                        .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDoc()));
 
         assertEquals("{\n\"field1\" : \"value 1\",\n\"field2\" : 1.234544E+26,\n\"field3\" : true,\n\"field4\" : false,\n\"field5\" : null,\n"
                 + "\"field6\" : {\n\"inner field 1\" : \"inner value 1\",\n\"inner field 2\" : 2,\n\"inner field 3\" : true,\n"

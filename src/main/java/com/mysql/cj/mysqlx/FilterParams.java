@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.mysqlx.ExprParser;
-import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
@@ -38,6 +36,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 
 /**
  * Filter parameters.
+ * 
  * @todo better documentation
  */
 public class FilterParams {
@@ -124,27 +123,25 @@ public class FilterParams {
     /**
      * Verify that all arguments are bound.
      *
-     * @throws WrongArgumentException if any placeholder argument is not bound
+     * @throws WrongArgumentException
+     *             if any placeholder argument is not bound
      */
     public void verifyAllArgsBound() {
-        if (args != null) {
+        if (this.args != null) {
             IntStream.range(0, this.args.length)
                     // find unbound params
                     .filter(i -> this.args[i] == null)
                     // get the parameter name from the map
-                    .mapToObj(i -> this.placeholderNameToPosition.entrySet()
-                            .stream()
-                            .filter(e -> e.getValue() == i)
-                            .map(Map.Entry::getKey)
-                            .findFirst().get())
-                    .forEach(name -> {throw new WrongArgumentException("Placeholder '" + name + "' is not bound");});
+                    .mapToObj(i -> this.placeholderNameToPosition.entrySet().stream().filter(e -> e.getValue() == i).map(Map.Entry::getKey).findFirst().get())
+                    .forEach(name -> {
+                        throw new WrongArgumentException("Placeholder '" + name + "' is not bound");
+                    });
         }
     }
 
     public void clearArgs() {
         if (this.args != null) {
-            IntStream.range(0, this.args.length)
-                    .forEach(i -> this.args[i] = null);
+            IntStream.range(0, this.args.length).forEach(i -> this.args[i] = null);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -50,26 +50,21 @@ public class JsonParser {
         /**
          * [ U+005B left square bracket
          */
-        LSQBRACKET('\u005B'),
-        /**
-         * ] U+005D right square bracket
-         */
-        RSQBRACKET('\u005D'),
-        /**
-         * { U+007B left curly bracket
-         */
-        LCRBRACKET('\u007B'),
-        /**
-         * } U+007D right curly bracket
-         */
-        RCRBRACKET('\u007D'),
-        /**
-         * : U+003A colon
-         */
-        COLON('\u003A'),
-        /**
-         * , U+002C comma
-         */
+        LSQBRACKET('\u005B'), /**
+                               * ] U+005D right square bracket
+                               */
+        RSQBRACKET('\u005D'), /**
+                               * { U+007B left curly bracket
+                               */
+        LCRBRACKET('\u007B'), /**
+                               * } U+007D right curly bracket
+                               */
+        RCRBRACKET('\u007D'), /**
+                               * : U+003A colon
+                               */
+        COLON('\u003A'), /**
+                          * , U+002C comma
+                          */
         COMMA('\u002C');
 
         public final char CHAR;
@@ -84,34 +79,27 @@ public class JsonParser {
         /**
          * \" represents the quotation mark character (U+0022)
          */
-        QUOTE('\u0022', "\\\""),
-        /**
-         * \\ represents the reverse solidus character (U+005C)
-         */
-        RSOLIDUS('\\', "\\\\"),
-        /**
-         * \/ represents the solidus character (U+002F)
-         */
-        SOLIDUS('\u002F', "\\\u002F"),
-        /**
-         * \b represents the backspace character (U+0008)
-         */
-        BACKSPACE('\u0008', "\\b"),
-        /**
-         * \f represents the form feed character (U+000C)
-         */
-        FF('\u000C', "\\f"),
-        /**
-         * \n represents the line feed character (U+000A)
-         */
-        LF('\n', "\\n"),
-        /**
-         * \r represents the carriage return character (U+000D)
-         */
-        CR('\r', "\\r"),
-        /**
-         * \t represents the character tabulation character (U+0009)
-         */
+        QUOTE('\u0022', "\\\""), /**
+                                  * \\ represents the reverse solidus character (U+005C)
+                                  */
+        RSOLIDUS('\\', "\\\\"), /**
+                                 * \/ represents the solidus character (U+002F)
+                                 */
+        SOLIDUS('\u002F', "\\\u002F"), /**
+                                        * \b represents the backspace character (U+0008)
+                                        */
+        BACKSPACE('\u0008', "\\b"), /**
+                                     * \f represents the form feed character (U+000C)
+                                     */
+        FF('\u000C', "\\f"), /**
+                              * \n represents the line feed character (U+000A)
+                              */
+        LF('\n', "\\n"), /**
+                          * \r represents the carriage return character (U+000D)
+                          */
+        CR('\r', "\\r"), /**
+                          * \t represents the character tabulation character (U+0009)
+                          */
         TAB('\t', "\\t");
 
         public final char CHAR;
@@ -425,8 +413,8 @@ public class JsonParser {
                 if (lastChar == 'E' || lastChar == 'e') {
                     sb.append(ch);
                 } else {
-                    throw ExceptionFactory
-                            .createException(WrongArgumentException.class, Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
+                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                            Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
                 }
 
             } else if (ch >= '\u0030' && ch <= '\u0039') { // 0-9
@@ -435,8 +423,8 @@ public class JsonParser {
                     if (baseLength < 10) {
                         baseLength++;
                     } else {
-                        throw ExceptionFactory
-                                .createException(WrongArgumentException.class, Messages.getString("JsonParser.9", new Object[] { sb.toString() }));
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("JsonParser.9", new Object[] { sb.toString() }));
                     }
                 }
 
@@ -446,8 +434,8 @@ public class JsonParser {
                     hasExponent = true;
                     sb.append(ch);
                 } else {
-                    throw ExceptionFactory
-                            .createException(WrongArgumentException.class, Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
+                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                            Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
                 }
 
             } else if (ch == '\u002E') {
@@ -463,8 +451,8 @@ public class JsonParser {
                     hasFractionalPart = true;
                     sb.append(ch);
                 } else {
-                    throw ExceptionFactory
-                            .createException(WrongArgumentException.class, Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
+                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                            Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
                 }
 
             } else if (ch == '\u002B') {
@@ -472,8 +460,8 @@ public class JsonParser {
                 if (lastChar == 'E' || lastChar == 'e') {
                     sb.append(ch);
                 } else {
-                    throw ExceptionFactory
-                            .createException(WrongArgumentException.class, Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
+                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                            Messages.getString("JsonParser.8", new Object[] { ch, sb.toString() }));
                 }
 
             } else if (whitespaceChars.contains(ch) || isValidEndOfValue(ch)) {

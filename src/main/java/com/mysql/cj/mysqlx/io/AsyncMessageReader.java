@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,12 +40,10 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
-
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
-import com.mysql.cj.mysqlx.io.MessageConstants;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
@@ -93,10 +91,10 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /** Possible state of reading messages. */
     private static enum ReadingState {
         /** Waiting to read the header. */
-        READING_HEADER,
-        /** Waiting to read the message body. */
+        READING_HEADER, /** Waiting to read the message body. */
         READING_MESSAGE
     };
+
     private ReadingState state;
 
     public AsyncMessageReader(AsynchronousSocketChannel channel) {
@@ -129,9 +127,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      * <li>If there's no current and none in the queue, we either return <code>null</code> if <code>block</code> is <code>false</code> or wait for one to be put
      * in the queue if <code>block</code> is true.</li>
      * </ul>
-     * <P>This method assigns to "current" the returned message listener.
+     * <P>
+     * This method assigns to "current" the returned message listener.
      *
-     * @param block whether to block waiting for a <code>MessageListener</code>
+     * @param block
+     *            whether to block waiting for a <code>MessageListener</code>
      * @return the new current <code>MessageListener</code>
      */
     private MessageListener getMessageListener(boolean block) {
@@ -166,7 +166,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         // process the completed header and initiate message reading
         this.headerBuf.clear();
         this.messageSize = this.headerBuf.getInt() - 1;
-        if (this.messageSize > 200*1024*1024) {
+        if (this.messageSize > 200 * 1024 * 1024) {
             throw new CJCommunicationsException("Receving message larger than 200 megs not supported temporary due to xplugin bug");
         }
         this.messageType = this.headerBuf.get();
@@ -294,11 +294,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 }
             }
             this.messageListenerQueue.forEach(l -> {
-                        try {
-                            l.error(t);
-                        } catch (Exception ex) {
-                        }
-                    });
+                try {
+                    l.error(t);
+                } catch (Exception ex) {
+                }
+            });
             // if case we have a getNextMessageClass() request pending
             synchronized (this.pendingMsgMonitor) {
                 this.pendingMsgClass = new CompletableFuture<>();
@@ -375,16 +375,16 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         public T read() {
             try {
                 return this.future.thenApply(f -> f.apply((msgClass, msg) -> {
-                                    if (Error.class.equals(msgClass)) {
-                                        throw new MysqlxError(Error.class.cast(msg));
-                                    }
-                                    // ensure that parsed message class matches incoming tag
-                                    if (!msgClass.equals(expectedClass)) {
-                                        throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '" +
-                                                msgClass.getSimpleName() + "'");
-                                    }
-                                    return this.expectedClass.cast(msg);
-                                })).get();
+                    if (Error.class.equals(msgClass)) {
+                        throw new MysqlxError(Error.class.cast(msg));
+                    }
+                    // ensure that parsed message class matches incoming tag
+                    if (!msgClass.equals(this.expectedClass)) {
+                        throw new WrongArgumentException("Unexpected message class. Expected '" + this.expectedClass.getSimpleName()
+                                + "' but actually received '" + msgClass.getSimpleName() + "'");
+                    }
+                    return this.expectedClass.cast(msg);
+                })).get();
             } catch (ExecutionException ex) {
                 if (MysqlxError.class.equals(ex.getCause().getClass())) {
                     // wrap the other thread's exception and include this thread's context

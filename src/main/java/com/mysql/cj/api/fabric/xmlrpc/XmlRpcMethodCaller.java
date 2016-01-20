@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -22,10 +22,10 @@
  */
 
 package com.mysql.cj.api.fabric.xmlrpc;
+
 import java.util.List;
 
 import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
-
 
 /**
  * Implementations of this class perform XML-RPC method calls.

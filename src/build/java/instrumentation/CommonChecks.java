@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,10 +31,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
@@ -42,6 +38,10 @@ import com.mysql.cj.jdbc.MysqlSavepoint;
 import com.mysql.cj.jdbc.ServerPreparedStatement.BindValue;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
 import com.mysql.cj.mysqla.io.Buffer;
+
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
 
 public class CommonChecks {
     public static void main(String[] args) throws Exception {

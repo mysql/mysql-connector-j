@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -101,8 +101,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public static LoadBalancedConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionString);
 
-        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(), new Class[] {
-                LoadBalancedConnection.class, JdbcConnection.class }, connProxy);
+        return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
+                new Class[] { LoadBalancedConnection.class, JdbcConnection.class }, connProxy);
     }
 
     /**
@@ -171,11 +171,11 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         String strategy = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
         try {
             if ("random".equals(strategy)) {
-                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null,
-                        this.log).get(0);
+                this.balancer = (BalanceStrategy) Util
+                        .loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null, this.log).get(0);
             } else if ("bestResponseTime".equals(strategy)) {
-                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(),
-                        "InvalidLoadBalanceStrategy", null, this.log).get(0);
+                this.balancer = (BalanceStrategy) Util
+                        .loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null, this.log).get(0);
             } else {
                 this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null, this.log).get(0);
             }
@@ -195,9 +195,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             try {
                 "".matches(autoCommitSwapRegex);
             } catch (Exception e) {
-                throw SQLError
-                        .createSQLException(Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex",
-                                new Object[] { autoCommitSwapRegex }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                throw SQLError.createSQLException(
+                        Messages.getString("LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex", new Object[] { autoCommitSwapRegex }),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
             }
         }
 
@@ -206,8 +206,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             if (statementInterceptors == null) {
                 this.localProps.setProperty(PropertyDefinitions.PNAME_statementInterceptors, LoadBalancedAutoCommitInterceptor.class.getName());
             } else if (statementInterceptors.length() > 0) {
-                this.localProps.setProperty(PropertyDefinitions.PNAME_statementInterceptors, statementInterceptors + ","
-                        + LoadBalancedAutoCommitInterceptor.class.getName());
+                this.localProps.setProperty(PropertyDefinitions.PNAME_statementInterceptors,
+                        statementInterceptors + "," + LoadBalancedAutoCommitInterceptor.class.getName());
             }
             props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, this.localProps.getProperty(PropertyDefinitions.PNAME_statementInterceptors));
 
@@ -218,8 +218,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
             String lbExceptionChecker = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
                     StandardLoadBalanceExceptionChecker.class.getName());
-            this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker",
-                    null, this.log).get(0);
+            this.exceptionChecker = (LoadBalanceExceptionChecker) Util
+                    .loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null, this.log).get(0);
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e, null);
         }

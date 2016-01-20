@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,7 +23,7 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import static com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
+import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning;
 
 public class WarningImpl implements com.mysql.cj.api.x.Warning {
     private Warning message;

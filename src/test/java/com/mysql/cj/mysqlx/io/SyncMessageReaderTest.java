@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,11 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,23 +35,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
-import org.junit.Before;
-import org.junit.Test;
-
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.FullReadInputStream;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 
 /**
  * Tests for {@link SyncMessageReader}.
@@ -55,8 +55,8 @@ public class SyncMessageReaderTest {
     private SyncMessageReader reader;
 
     private static final byte[] okMsgPacket = serializeMessage(Ok.newBuilder().build(), ServerMessages.Type.OK_VALUE);
-    private static final byte[] errMsgPacket = serializeMessage(Error.newBuilder().setMsg("oops").setCode(5432).setSqlState("12S34")
-            .setSeverity(Error.Severity.FATAL).build(), ServerMessages.Type.ERROR_VALUE);
+    private static final byte[] errMsgPacket = serializeMessage(
+            Error.newBuilder().setMsg("oops").setCode(5432).setSqlState("12S34").setSeverity(Error.Severity.FATAL).build(), ServerMessages.Type.ERROR_VALUE);
 
     @Before
     public void setUp() {
@@ -73,37 +73,37 @@ public class SyncMessageReaderTest {
 
     @Test
     public void testNextMessageClass() {
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
-        assertEquals(Ok.class, reader.getNextMessageClass());
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        assertEquals(Ok.class, this.reader.getNextMessageClass());
     }
 
     @Test
     public void testReadKnownMessageType() {
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
-        Ok msg = reader.read(Ok.class);
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        Ok msg = this.reader.read(Ok.class);
         assertTrue(msg.isInitialized());
     }
 
     @Test
     public void testReadWrongMessageType() {
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
         // will throw a WrongArgumentException if failed
         try {
-            Error msg = reader.read(Error.class);
+            Error msg = this.reader.read(Error.class);
             fail("Should not be able to read an error message when one is not present");
             assertTrue(msg.isInitialized()); // to squelch compiler warnings
         } catch (WrongArgumentException ex) {
-            assertEquals("Unexpected message class. Expected '" + Error.class.getSimpleName() + "' but actually received '" + Ok.class.getSimpleName() +
-                    "'", ex.getMessage());
+            assertEquals("Unexpected message class. Expected '" + Error.class.getSimpleName() + "' but actually received '" + Ok.class.getSimpleName() + "'",
+                    ex.getMessage());
         }
     }
 
     @Test
     public void testUnexpectedError() {
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
         try {
             // attempt to read an Ok packet
-            reader.read(Ok.class);
+            this.reader.read(Ok.class);
             fail("Should not be able to read the OK packet");
         } catch (MysqlxError ex) {
             // check that the exception contains the error info from the server
@@ -130,25 +130,25 @@ public class SyncMessageReaderTest {
         x.write(okMsgPacket);
         x.write(errMsgPacket);
 
-        reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
         // read first three errors "unexpectedly" in a loop
         for (int i = 0; i < 3; ++i) {
             try {
-                reader.read(Ok.class);
+                this.reader.read(Ok.class);
             } catch (MysqlxError err) {
                 assertEquals(5432, err.getErrorCode());
             }
         }
         // read remaining messages normally
-        reader.read(Ok.class);
+        this.reader.read(Ok.class);
         try {
-            reader.read(Error.class);
+            this.reader.read(Error.class);
         } catch (MysqlxError err) {
             // expected
         }
-        reader.read(Ok.class);
+        this.reader.read(Ok.class);
         try {
-            reader.read(Error.class);
+            this.reader.read(Error.class);
         } catch (MysqlxError err) {
             // expected
         }
@@ -156,6 +156,7 @@ public class SyncMessageReaderTest {
 
     /**
      * Verification test to help prevent bugs in the typecode/class/parser mapping tables. We check that all classes that are mapped have a parser.
+     * 
      * @todo Test in the other direction also
      */
     @Test

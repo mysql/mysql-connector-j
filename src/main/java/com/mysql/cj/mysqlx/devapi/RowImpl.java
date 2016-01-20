@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BooleanValueFactory;
 import com.mysql.cj.core.io.ByteValueFactory;
@@ -36,7 +37,6 @@ import com.mysql.cj.core.io.DoubleValueFactory;
 import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.x.json.DbDoc;
 
 public class RowImpl implements com.mysql.cj.api.x.Row {
@@ -51,7 +51,8 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
     /**
      * Map a field name to it's index in the row.
      *
-     * @throws DataReadException if the field name is not in the row
+     * @throws DataReadException
+     *             if the field name is not in the row
      */
     private int fieldNameToIndex(String fieldName) {
         Integer idx = this.lazyFieldNameToIndex.get().get(fieldName);

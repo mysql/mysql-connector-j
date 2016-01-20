@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,11 +23,11 @@
 
 package testsuite.fabric;
 
-import junit.framework.TestCase;
-
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 import com.mysql.cj.jdbc.Driver;
+
+import junit.framework.TestCase;
 
 public abstract class BaseFabricTestCase extends TestCase {
     String hostname = System.getProperty(PropertyDefinitions.SYSP_testsuite_fabric_hostname);

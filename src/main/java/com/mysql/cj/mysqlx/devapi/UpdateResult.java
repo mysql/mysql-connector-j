@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,8 +39,10 @@ public class UpdateResult implements Result {
     /**
      * Create a new result.
      *
-     * @param updates the response from the server
-     * @param lastDocId the (optional) ID of the inserted document
+     * @param updates
+     *            the response from the server
+     * @param lastDocId
+     *            the (optional) ID of the inserted document
      */
     public UpdateResult(StatementExecuteOk ok, String lastDocId) {
         this.ok = ok;

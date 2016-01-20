@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,7 +27,8 @@ package com.mysql.cj.api.x;
  * MySQLx introduces a new, high-level database session concept that is called XSession. When working with MySQLx it is important to understand this new
  * XSession concept which is different from working with traditional low-level MySQL connections.
  * 
- * XSessions encapsulate one or more actual MySQL connections. Use of this higher abstraction level decouples the physical MySQL setup from the application code.
+ * XSessions encapsulate one or more actual MySQL connections. Use of this higher abstraction level decouples the physical MySQL setup from the application
+ * code.
  * An application using the XSession class can be run against a single MySQL server or large number of MySQL servers forming a sharding cluster with no code
  * changes. When a low-level MySQL connection to a single MySQL instance is needed this is still supported by using a low-level {@link NodeSession}.
  */

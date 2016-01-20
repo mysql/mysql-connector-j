@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -211,12 +211,16 @@ public class MetadataTest extends BaseTestCase {
         }
 
         createTable("cpd_foreign_2", "(id int(8) not null auto_increment primary key,key (id),name varchar(255)) ", "InnoDB");
-        createTable("cpd_foreign_3", "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
-                + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
-                + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)) ", "InnoDB");
-        createTable("cpd_foreign_4", "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
-                + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
-                + "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE) ", "InnoDB");
+        createTable("cpd_foreign_3",
+                "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                        + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
+                        + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)) ",
+                "InnoDB");
+        createTable("cpd_foreign_4",
+                "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                        + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
+                        + "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE) ",
+                "InnoDB");
 
         createTable("fktable1", "(TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID))", "InnoDB");
         createTable("fktable2", "(KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
@@ -611,8 +615,8 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
         this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
         this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        this.stmt.executeUpdate(
+                "CREATE TABLE child(id INT, parent_id INT, " + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
@@ -641,8 +645,8 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
         this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
         this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        this.stmt.executeUpdate(
+                "CREATE TABLE child(id INT, parent_id INT, " + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
@@ -671,8 +675,8 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
         this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
         this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-        this.stmt.executeUpdate("CREATE TABLE child(id INT, parent_id INT, "
-                + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+        this.stmt.executeUpdate(
+                "CREATE TABLE child(id INT, parent_id INT, " + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         Connection conn1 = null;
@@ -708,10 +712,11 @@ public class MetadataTest extends BaseTestCase {
         }
 
         // Test GENERATED columns syntax.
-        createTable("pythagorean_triple", "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
-                + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
-                + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
-                + "PRIMARY KEY)");
+        createTable("pythagorean_triple",
+                "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
+                        + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
+                        + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
+                        + "PRIMARY KEY)");
 
         // Test data for generated columns.
         assertEquals(1, this.stmt.executeUpdate("INSERT INTO pythagorean_triple (side_a, side_b) VALUES (3, 4)"));

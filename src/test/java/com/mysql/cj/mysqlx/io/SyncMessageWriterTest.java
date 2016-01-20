@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,25 +23,23 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.protobuf.ByteString;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
-import static com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
-
-import static com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
+import com.google.protobuf.ByteString;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages;
+import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
+import com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset;
 
 public class SyncMessageWriterTest {
     private ByteArrayOutputStream outputStream;

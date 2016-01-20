@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,6 @@ import java.util.function.Function;
 import com.mysql.cj.api.x.DataStatement.Reducer;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.mysqlx.result.RowToElement;
@@ -45,7 +44,8 @@ public class RowWiseReducingResultListener<RES_ELEMENT_T, R> implements ResultLi
     private MetadataToRowToElement<RES_ELEMENT_T> metadataToRowToElement;
     private RowToElement<RES_ELEMENT_T> rowToElement;
 
-    public static interface MetadataToRowToElement<T> extends Function<ArrayList<Field>, RowToElement<T>> {}
+    public static interface MetadataToRowToElement<T> extends Function<ArrayList<Field>, RowToElement<T>> {
+    }
 
     public RowWiseReducingResultListener(R accumulator, Reducer<RES_ELEMENT_T, R> reducer, CompletableFuture<R> future,
             MetadataToRowToElement<RES_ELEMENT_T> metadataToRowToElement) {
@@ -64,7 +64,7 @@ public class RowWiseReducingResultListener<RES_ELEMENT_T, R> implements ResultLi
     }
 
     public void onComplete(StatementExecuteOk ok) {
-        this.future.complete(accumulator);
+        this.future.complete(this.accumulator);
     }
 
     public void onError(MysqlxError error) {

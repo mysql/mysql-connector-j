@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,11 +32,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+
+import testsuite.BaseTestCase;
 
 /**
  * Tests callable statement functionality.
@@ -56,8 +56,8 @@ public class CallableStatementTest extends BaseTestCase {
     public void testInOutParams() throws Exception {
         CallableStatement storedProc = null;
 
-        createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\nSET z = p2 + 1;\nSET p2 = z;\n"
-                + "SELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
+        createProcedure("testInOutParam",
+                "(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\nSET z = p2 + 1;\nSET p2 = z;\n" + "SELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
 
         storedProc = this.conn.prepareCall("{call testInOutParam(?, ?)}");
 

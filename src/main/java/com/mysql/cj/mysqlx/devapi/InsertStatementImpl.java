@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,25 +36,25 @@ public class InsertStatementImpl implements InsertStatement {
     private TableImpl table;
     private InsertParams insertParams = new InsertParams();
 
-    /* package private */InsertStatementImpl(TableImpl table, String[] fields) {
+    /* package private */ InsertStatementImpl(TableImpl table, String[] fields) {
         this.table = table;
         this.insertParams.setProjection(fields);
     }
 
-    /* package private */InsertStatementImpl(TableImpl table, Map<String, Object> fieldsAndValues) {
+    /* package private */ InsertStatementImpl(TableImpl table, Map<String, Object> fieldsAndValues) {
         this.table = table;
         this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.table.getSession().getMysqlxSession()
-                .insertRows(this.table.getSchema().getName(), this.table.getName(), this.insertParams);
+        StatementExecuteOk ok = this.table.getSession().getMysqlxSession().insertRows(this.table.getSchema().getName(), this.table.getName(),
+                this.insertParams);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession()
-                .asyncInsertRows(this.table.getSchema().getName(), this.table.getName(), this.insertParams);
+        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession().asyncInsertRows(this.table.getSchema().getName(),
+                this.table.getName(), this.insertParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,10 +38,10 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.Properties;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+
+import testsuite.BaseTestCase;
 
 /**
  * Tests fixes for bugs in CallableStatement code.
@@ -175,15 +175,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
             createDatabase(db2st, "db_9319_2");
             db2Connection.setCatalog("db_9319_2");
-            createProcedure(db2st, "COMPROVAR_USUARI", "(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
-                    + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1),\nOUT p_idioma VARCHAR(2))\nBEGIN"
-                    + (doASelect ? "\nselect 2;" : "\nSELECT 2 INTO p_administrador;") + "\nEND");
+            createProcedure(db2st, "COMPROVAR_USUARI",
+                    "(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
+                            + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1),\nOUT p_idioma VARCHAR(2))\nBEGIN"
+                            + (doASelect ? "\nselect 2;" : "\nSELECT 2 INTO p_administrador;") + "\nEND");
 
             createDatabase(db1st, "db_9319_1");
             db1Connection.setCatalog("db_9319_1");
-            createProcedure(db1st, "COMPROVAR_USUARI", "(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
-                    + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1))\nBEGIN"
-                    + (doASelect ? "\nselect 1;" : "\nSELECT 1 INTO p_administrador;") + "\nEND");
+            createProcedure(db1st, "COMPROVAR_USUARI",
+                    "(IN p_CodiUsuari VARCHAR(10),\nIN p_contrasenya VARCHAR(10),\nOUT p_userId INTEGER,"
+                            + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1))\nBEGIN"
+                            + (doASelect ? "\nselect 1;" : "\nSELECT 1 INTO p_administrador;") + "\nEND");
 
             CallableStatement cstmt = db2Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
             cstmt.setString(1, "abc");
@@ -237,8 +239,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
             String quoteChar = db2Connection.getMetaData().getIdentifierQuoteString();
 
-            cstmt = db2Connection.prepareCall("{ call " + quoteChar + db1Connection.getCatalog() + quoteChar + "." + quoteChar + "COMPROVAR_USUARI" + quoteChar
-                    + "(?, ?, ?, ?, ?) }");
+            cstmt = db2Connection.prepareCall(
+                    "{ call " + quoteChar + db1Connection.getCatalog() + quoteChar + "." + quoteChar + "COMPROVAR_USUARI" + quoteChar + "(?, ?, ?, ?, ?) }");
             cstmt.setString(1, "abc");
             cstmt.setString(2, "def");
             cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
@@ -467,8 +469,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
     public void testBug15464() throws Exception {
 
-        createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\n"
-                + "SET z = p2 + 1;\nSET p2 = z;\nSELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
+        createProcedure("testInOutParam",
+                "(IN p1 VARCHAR(255), INOUT p2 INT)\nbegin\n DECLARE z INT;\n" + "SET z = p2 + 1;\nSET p2 = z;\nSELECT p1;\nSELECT CONCAT('zyxw', p1);\nend\n");
 
         CallableStatement storedProc = null;
 
@@ -756,13 +758,14 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug26959() throws Exception {
-        createProcedure("testBug26959", "(_ACTION varchar(20),\n`/*dumb-identifier-1*/` int,\n`#dumb-identifier-2` int,\n`--dumb-identifier-3` int,"
-                + "\n_CLIENT_ID int, -- ABC\n_LOGIN_ID  int, # DEF\n_WHERE varchar(2000),\n_SORT varchar(2000),"
-                + "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000),\n _SONG_ID int,\n  _NOTES varchar(2000),\n out _RESULT varchar(10)"
-                + "\n /*\n ,    -- Generic result parameter"
-                + "\n out _PERIOD_ID int,         -- Returns the period_id. Useful when using @PREDEFLINK to return which is the last period"
-                + "\n   _SONGS_LIST varchar(8000),\n  _COMPOSERID int,\n  _PUBLISHERID int,"
-                + "\n   _PREDEFLINK int        -- If the user is accessing through a predefined link: 0=none  1=last period\n */) BEGIN SELECT 1; END");
+        createProcedure("testBug26959",
+                "(_ACTION varchar(20),\n`/*dumb-identifier-1*/` int,\n`#dumb-identifier-2` int,\n`--dumb-identifier-3` int,"
+                        + "\n_CLIENT_ID int, -- ABC\n_LOGIN_ID  int, # DEF\n_WHERE varchar(2000),\n_SORT varchar(2000),"
+                        + "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000),\n _SONG_ID int,\n  _NOTES varchar(2000),\n out _RESULT varchar(10)"
+                        + "\n /*\n ,    -- Generic result parameter"
+                        + "\n out _PERIOD_ID int,         -- Returns the period_id. Useful when using @PREDEFLINK to return which is the last period"
+                        + "\n   _SONGS_LIST varchar(8000),\n  _COMPOSERID int,\n  _PUBLISHERID int,"
+                        + "\n   _PREDEFLINK int        -- If the user is accessing through a predefined link: 0=none  1=last period\n */) BEGIN SELECT 1; END");
 
         createProcedure("testBug26959_1", "(`/*id*/` /* before type 1 */ varchar(20),"
                 + "/* after type 1 */ OUT result2 DECIMAL(/*size1*/10,/*size2*/2) /* p2 */)BEGIN SELECT action, result; END");
@@ -853,8 +856,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         try {
             cStmt = this.conn.prepareCall("{CALL /* SOME COMMENT */ testBug27400( /* does this work too? */ ?, ?)} # and a commented ? here too");
             assertTrue(cStmt.toString().indexOf("/*") != -1); // we don't want
-                                                              // to strip the
-                                                              // comments
+                                                             // to strip the
+                                                             // comments
             cStmt.setInt(1, 1);
             cStmt.setString(2, "bleh");
             cStmt.execute();
@@ -1086,10 +1089,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
             createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
             this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
-            createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY, "
-                    + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
-            createFunction("test_function", "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN "
-                    + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
+            createTable("test_table_2",
+                    "(value_2 BIGINT PRIMARY KEY, " + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
+            createFunction("test_function",
+                    "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN " + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
 
             callable = aConn.prepareCall("{? = call test_function(?)}");
             callable.registerOutParameter(1, Types.BIGINT);
@@ -1225,10 +1228,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug43576() throws Exception {
-        createTable("TMIX91P", "(F01SMALLINT         SMALLINT NOT NULL, F02INTEGER          INTEGER,F03REAL             REAL,"
-                + "F04FLOAT            FLOAT,F05NUMERIC31X4      NUMERIC(31,4), F06NUMERIC16X16     NUMERIC(16,16), F07CHAR_10          CHAR(10),"
-                + " F08VARCHAR_10       VARCHAR(10), F09CHAR_20          CHAR(20), F10VARCHAR_20       VARCHAR(20), F11DATE         DATE,"
-                + " F12DATETIME         DATETIME, PRIMARY KEY (F01SMALLINT))");
+        createTable("TMIX91P",
+                "(F01SMALLINT         SMALLINT NOT NULL, F02INTEGER          INTEGER,F03REAL             REAL,"
+                        + "F04FLOAT            FLOAT,F05NUMERIC31X4      NUMERIC(31,4), F06NUMERIC16X16     NUMERIC(16,16), F07CHAR_10          CHAR(10),"
+                        + " F08VARCHAR_10       VARCHAR(10), F09CHAR_20          CHAR(20), F10VARCHAR_20       VARCHAR(20), F11DATE         DATE,"
+                        + " F12DATETIME         DATETIME, PRIMARY KEY (F01SMALLINT))");
 
         this.stmt.executeUpdate("INSERT INTO TMIX91P VALUES (1,1,1234567.12,1234567.12,111111111111111111111111111.1111,.111111111111111,'1234567890',"
                 + "'1234567890','CHAR20CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
@@ -1239,10 +1243,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO TMIX91P VALUES (12,12,1234567.12,1234567.12,111222333.4444,.1234567890,'2234567891','2234567891','CHAR20',"
                 + "'VARCHAR20VARCHAR20','2001-01-01','2001-01-01 01:01:01.111')");
 
-        createProcedure("MSQSPR100", "\n( p1_in  INTEGER , p2_in  CHAR(20), OUT p3_out INTEGER, OUT p4_out CHAR(11))\nBEGIN "
-                + "\n SELECT F01SMALLINT,F02INTEGER, F11DATE,F12DATETIME,F03REAL \n FROM TMIX91P WHERE F02INTEGER = p1_in; "
-                + "\n SELECT F02INTEGER,F07CHAR_10,F08VARCHAR_10,F09CHAR_20 \n FROM TMIX91P WHERE  F09CHAR_20 = p2_in ORDER BY F02INTEGER ; "
-                + "\n SET p3_out  = 144; \n SET p4_out  = 'CHARACTER11'; \n SELECT p3_out, p4_out; END");
+        createProcedure("MSQSPR100",
+                "\n( p1_in  INTEGER , p2_in  CHAR(20), OUT p3_out INTEGER, OUT p4_out CHAR(11))\nBEGIN "
+                        + "\n SELECT F01SMALLINT,F02INTEGER, F11DATE,F12DATETIME,F03REAL \n FROM TMIX91P WHERE F02INTEGER = p1_in; "
+                        + "\n SELECT F02INTEGER,F07CHAR_10,F08VARCHAR_10,F09CHAR_20 \n FROM TMIX91P WHERE  F09CHAR_20 = p2_in ORDER BY F02INTEGER ; "
+                        + "\n SET p3_out  = 144; \n SET p4_out  = 'CHARACTER11'; \n SELECT p3_out, p4_out; END");
 
         String sql = "{call MSQSPR100(1,'CHAR20',?,?)}";
 

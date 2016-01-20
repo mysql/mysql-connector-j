@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,13 +47,13 @@ public class AddStatementImpl implements AddStatement {
     private CollectionImpl collection;
     private List<DbDoc> newDocs;
 
-    /* package private */AddStatementImpl(CollectionImpl collection, DbDoc newDoc) {
+    /* package private */ AddStatementImpl(CollectionImpl collection, DbDoc newDoc) {
         this.collection = collection;
         this.newDocs = new ArrayList<>();
         this.newDocs.add(newDoc);
     }
 
-    /* package private */AddStatementImpl(CollectionImpl collection, DbDoc[] newDocs) {
+    /* package private */ AddStatementImpl(CollectionImpl collection, DbDoc[] newDocs) {
         this.collection = collection;
         this.newDocs = Arrays.asList(newDocs);
     }
@@ -91,16 +91,16 @@ public class AddStatementImpl implements AddStatement {
 
     public Result execute() {
         List<String> newIds = assignIds();
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession()
-                .addDocs(this.collection.getSchema().getName(), this.collection.getName(), serializeDocs());
+        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(),
+                serializeDocs());
         // TODO allow more than one new assigned doc id
         return new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null);
     }
 
     public CompletableFuture<Result> executeAsync() {
         final List<String> newIds = assignIds();
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
-                .asyncAddDocs(this.collection.getSchema().getName(), this.collection.getName(), serializeDocs());
+        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncAddDocs(this.collection.getSchema().getName(),
+                this.collection.getName(), serializeDocs());
         // TODO allow more than one new assigned doc id
         return okF.thenApply(ok -> new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null));
     }

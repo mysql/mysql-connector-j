@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -140,8 +140,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                         // so we check payload length to detect that.
 
                         // read key response
-                        Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(),
-                                this.protocol.getPasswordCharacterEncoding()));
+                        Buffer bresp = new Buffer(
+                                encryptPassword(this.password, this.seed, fromServer.readString(), this.protocol.getPasswordCharacterEncoding()));
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
@@ -187,8 +187,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } catch (IOException ioEx) {
 
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Sha256PasswordPlugin.0", propertySet
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("Sha256PasswordPlugin.0", propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue()
+                            ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
                     exceptionInterceptor);
 
         } finally {

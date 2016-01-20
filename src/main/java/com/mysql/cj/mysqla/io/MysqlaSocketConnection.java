@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,8 +25,8 @@ package com.mysql.cj.mysqla.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 import com.mysql.cj.api.conf.PropertySet;
@@ -36,13 +36,14 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.AbstractSocketConnection;
-import com.mysql.cj.core.io.ReadAheadInputStream;
 import com.mysql.cj.core.io.FullReadInputStream;
+import com.mysql.cj.core.io.ReadAheadInputStream;
 
 public class MysqlaSocketConnection extends AbstractSocketConnection implements SocketConnection {
 
     @Override
-    public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout) {
+    public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log,
+            int loginTimeout) {
 
         // TODO we don't need both Properties and PropertySet in method params
 
@@ -68,8 +69,8 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
 
             InputStream rawInputStream;
             if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
-                rawInputStream = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384, propertySet.getBooleanReadableProperty(
-                        PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
+                rawInputStream = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384,
+                        propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
             } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
                 rawInputStream = this.mysqlSocket.getInputStream();
             } else {

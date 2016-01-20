@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,7 +35,7 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Re
     private TableImpl table;
     private UpdateParams updateParams = new UpdateParams();
 
-    /* package private */UpdateStatementImpl(TableImpl table) {
+    /* package private */ UpdateStatementImpl(TableImpl table) {
         super(table.getSchema().getName(), table.getName(), true);
         this.table = table;
     }

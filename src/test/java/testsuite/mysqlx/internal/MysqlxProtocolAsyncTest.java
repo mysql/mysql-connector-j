@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,10 @@
 
 package testsuite.mysqlx.internal;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,9 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class MysqlxProtocolAsyncTest extends BaseInternalMysqlxTest {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] {json}));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
         this.protocol.readStatementExecuteOk();
 
         final ValueHolder<ArrayList<Field>> metadataHolder = new ValueHolder<>();
@@ -96,35 +97,35 @@ public class MysqlxProtocolAsyncTest extends BaseInternalMysqlxTest {
         final ValueHolder<Throwable> excHolder = new ValueHolder<>();
 
         this.protocol.asyncFind(new DocFindParams(getTestDatabase(), collName), DEFAULT_METADATA_CHARSET, new ResultListener() {
-                public void onMetadata(ArrayList<Field> metadata) {
-                    metadataHolder.accept(metadata);
-                }
+            public void onMetadata(ArrayList<Field> metadata) {
+                metadataHolder.accept(metadata);
+            }
 
-                public void onRow(MysqlxRow r) {
-                    rowHolder.get().add(r);
-                }
+            public void onRow(MysqlxRow r) {
+                rowHolder.get().add(r);
+            }
 
-                public void onComplete(StatementExecuteOk ok) {
-                    okHolder.accept(ok);
-                    synchronized (MysqlxProtocolAsyncTest.this) {
-                        MysqlxProtocolAsyncTest.this.notify();
-                    }
+            public void onComplete(StatementExecuteOk ok) {
+                okHolder.accept(ok);
+                synchronized (MysqlxProtocolAsyncTest.this) {
+                    MysqlxProtocolAsyncTest.this.notify();
                 }
+            }
 
-                public void onError(MysqlxError err) {
-                    errHolder.accept(err);
-                    synchronized (MysqlxProtocolAsyncTest.this) {
-                        MysqlxProtocolAsyncTest.this.notify();
-                    }
+            public void onError(MysqlxError err) {
+                errHolder.accept(err);
+                synchronized (MysqlxProtocolAsyncTest.this) {
+                    MysqlxProtocolAsyncTest.this.notify();
                 }
+            }
 
-                public void onException(Throwable t) {
-                    excHolder.accept(t);
-                    synchronized (MysqlxProtocolAsyncTest.this) {
-                        MysqlxProtocolAsyncTest.this.notify();
-                    }
+            public void onException(Throwable t) {
+                excHolder.accept(t);
+                synchronized (MysqlxProtocolAsyncTest.this) {
+                    MysqlxProtocolAsyncTest.this.notify();
                 }
-            }, new CompletableFuture<Void>());
+            }
+        }, new CompletableFuture<Void>());
 
         synchronized (this) {
             // timeout in case we get stuck

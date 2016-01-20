@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,7 +38,6 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import com.google.protobuf.ByteString;
-
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqlx.CreateIndexParams;
@@ -74,10 +73,10 @@ public class MessageBuilder {
     private static final String XPLUGIN_NAMESPACE = "xplugin";
 
     public static enum XpluginStatementCommand {
-        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"), XPLUGIN_STMT_DROP_COLLECTION(
-                "drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"), XPLUGIN_STMT_LIST_OBJECTS(
-                "list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"), XPLUGIN_STMT_LIST_NOTICES(
-                "list_notices");
+        XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
+        XPLUGIN_STMT_DROP_COLLECTION("drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"),
+        XPLUGIN_STMT_LIST_OBJECTS("list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"),
+        XPLUGIN_STMT_LIST_NOTICES("list_notices");
 
         public String commandName;
 

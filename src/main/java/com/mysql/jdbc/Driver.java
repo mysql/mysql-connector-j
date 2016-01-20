@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,7 +34,7 @@ public class Driver extends com.mysql.cj.jdbc.Driver {
     }
 
     static {
-        System.err.println("Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. " +
-                "The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.");
+        System.err.println("Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. "
+                + "The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.");
     }
 }

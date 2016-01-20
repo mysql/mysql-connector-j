@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,9 +26,9 @@ package testsuite.simple;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.cj.jdbc.NonRegisteringDriver;
+
+import testsuite.BaseTestCase;
 
 public class ExceptionsTest extends BaseTestCase {
 
@@ -39,8 +39,7 @@ public class ExceptionsTest extends BaseTestCase {
     public void testExceptionsTranslation() throws Exception {
 
         // java.sql.Driver methods
-        assertThrows(
-                SQLException.class,
+        assertThrows(SQLException.class,
                 "Communications link failure\n\nThe last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.",
                 new Callable<Void>() {
                     public Void call() throws Exception {

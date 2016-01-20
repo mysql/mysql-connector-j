@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -231,8 +231,8 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     synchronized SQLException interceptException(Exception sqlEx, MysqlConnection conn, String groupName, String hostname, String port)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
-        if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null && (((SQLException) sqlEx).getSQLState().startsWith("08") || SQLNonTransientConnectionException.class
-                .isAssignableFrom(sqlEx.getClass()))
+        if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
+                && (((SQLException) sqlEx).getSQLState().startsWith("08") || SQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))
 
         )) {
             return null;
@@ -358,8 +358,8 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
                 setCurrentServerGroup(this.shardMapping.getGlobalGroupName());
 
             } catch (FabricCommunicationException ex) {
-                throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex,
-                        getExceptionInterceptor(), this);
+                throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor(),
+                        this);
             }
         }
     }
@@ -907,14 +907,14 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return getActiveConnection().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata, isBatch);
     }

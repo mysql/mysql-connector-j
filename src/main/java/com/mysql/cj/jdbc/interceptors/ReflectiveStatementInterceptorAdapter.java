@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,9 +63,9 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
             JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         try {
-            return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy, new Object[] { sql, interceptedStatement, originalResultSet,
-                    connection, Integer.valueOf(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE,
-                    statementException });
+            return (ResultSetInternalMethods) this.v2PostProcessMethod.invoke(this.toProxy,
+                    new Object[] { sql, interceptedStatement, originalResultSet, connection, Integer.valueOf(warningCount),
+                            noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE : Boolean.FALSE, statementException });
         } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             throw new SQLException(Messages.getString("ReflectiveStatementInterceptorAdapter.0"), e);
         }
