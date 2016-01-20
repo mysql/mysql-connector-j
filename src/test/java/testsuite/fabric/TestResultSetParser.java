@@ -44,29 +44,34 @@ public class TestResultSetParser extends TestCase {
     //         [07eee140-d466-11e3-abdf-dfb2de41aa92, fabric_test1_shard1, 127.0.0.1, 3402, 1, 2, 1.0]],
     //   info={names=[server_uuid, group_id, host, port, mode, status, weight]}}
     // ]]
-    List<Map> exampleServersResultSet;
+    List<Map<String, ?>> exampleServersResultSet;
 
     public TestResultSetParser(String name) {
         super(name);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void setUp() throws Exception {
-        final Map columns = new HashMap() {
+        final Map<String, ?> columns = new HashMap<String, List<String>>() {
+            private static final long serialVersionUID = 1L;
+
             {
                 put("names", Arrays.asList(new String[] { "server_uuid", "group_id", "host", "port", "mode", "status", "weight" }));
             }
         };
-        final List row1 = Arrays.asList(new Object[] { "5e26a7ab-de84-11e2-a885-df73a3d95316", "fabric_test1_global", "127.0.0.1", 3401, 3, 3, 1.0 });
-        final List row2 = Arrays.asList(new Object[] { "07eee140-d466-11e3-abdf-dfb2de41aa92", "fabric_test1_shard1", "127.0.0.1", 3402, 1, 2, 1.0 });
-        final List rows = Arrays.asList(new List[] { row1, row2 });
-        Map resultData = new HashMap() {
+        final List<?> row1 = Arrays.asList(new Object[] { "5e26a7ab-de84-11e2-a885-df73a3d95316", "fabric_test1_global", "127.0.0.1", 3401, 3, 3, 1.0 });
+        final List<?> row2 = Arrays.asList(new Object[] { "07eee140-d466-11e3-abdf-dfb2de41aa92", "fabric_test1_shard1", "127.0.0.1", 3402, 1, 2, 1.0 });
+        final List<?> rows = Arrays.asList(new List[] { row1, row2 });
+        Map<String, ?> resultData = new HashMap<String, Object>() {
+            private static final long serialVersionUID = 1L;
+
             {
                 put("info", columns);
                 put("rows", rows);
             }
         };
-        this.exampleServersResultSet = new ResultSetParser().parse((Map) resultData.get("info"), (List<List>) resultData.get("rows"));
+        this.exampleServersResultSet = new ResultSetParser().parse((Map<String, ?>) resultData.get("info"), (List<List<Object>>) resultData.get("rows"));
     }
 
     public void testExampleData() throws Exception {

@@ -298,6 +298,7 @@ public class MysqlaServerSession implements ServerSession {
     public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
 
         String charset = null;
+        int res = 1;
 
         // if we can get it by charsetIndex just doing it
 
@@ -328,10 +329,10 @@ public class MysqlaServerSession implements ServerSession {
         }
 
         if (mblen != null) {
-            return mblen.intValue();
+            res = mblen.intValue();
         }
 
-        return 1; // we don't know
+        return res; // we don't know
     }
 
     public String getEncodingForIndex(int charsetIndex) {

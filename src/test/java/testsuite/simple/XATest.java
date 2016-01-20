@@ -179,7 +179,7 @@ public class XATest extends BaseTestCase {
 
             XAResource xaRes = xaConn.getXAResource();
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            c.createStatement().executeQuery("SELECT 1");
+            c.createStatement().execute("SELECT 1");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.prepare(xid);
 
@@ -384,10 +384,10 @@ public class XATest extends BaseTestCase {
             XAResource xaRes1 = xaConn1.getXAResource();
             conn1 = xaConn1.getConnection();
             xaRes1.start(xid, XAResource.TMNOFLAGS);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.start(xid, XAResource.TMRESUME);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.commit(xid, true);
 
@@ -409,10 +409,10 @@ public class XATest extends BaseTestCase {
             xaRes1 = xaConn1.getXAResource();
             conn1 = xaConn1.getConnection();
             xaRes1.start(xid, XAResource.TMNOFLAGS);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.start(xid, XAResource.TMJOIN);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.commit(xid, true);
         } finally {

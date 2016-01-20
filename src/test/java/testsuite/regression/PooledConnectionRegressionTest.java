@@ -301,7 +301,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         }
 
         // This should still work okay, even though the last query on the same connection didn't...
-        connFromPool.createStatement().executeQuery("SELECT 1");
+        this.rs = connFromPool.createStatement().executeQuery("SELECT 1");
 
         assertTrue(this.connectionErrorEventCount == 0);
         assertTrue(this.closeEventCount == 0);

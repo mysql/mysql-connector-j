@@ -215,8 +215,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
                 "FabricMySQLConnectionProxy", null);
     }
 
-    private boolean intercepting = false; // prevent recursion
-
     /**
      * Deal with an exception thrown on an underlying connection. We only consider connection exceptions (SQL State 08xxx). We internally handle a possible
      * failover situation.
@@ -225,10 +223,10 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
      * @param conn
      * @param group
      * @param hostname
-     * @param port
+     * @param portNumber
      * @throws FabricCommunicationException
      */
-    synchronized SQLException interceptException(Exception sqlEx, MysqlConnection conn, String groupName, String hostname, String port)
+    synchronized SQLException interceptException(Exception sqlEx, MysqlConnection conn, String groupName, String hostname, String portNumber)
             throws FabricCommunicationException {
         // we are only concerned with connection failures, skip anything else
         if (!(sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
@@ -239,7 +237,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         }
 
         // find the Server corresponding to this connection
-        Server currentServer = this.serverGroup.getServer(hostname + ":" + port);
+        Server currentServer = this.serverGroup.getServer(hostname + ":" + portNumber);
 
         // we have already failed over or dealt with this connection, let the exception propagate
         if (currentServer == null) {
@@ -962,6 +960,10 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
     }
 
+    /**
+     * 
+     * @param query
+     */
     public void dumpTestcaseQuery(String query) {
         // no-op
     }
@@ -1190,6 +1192,11 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return getEncodingForIndex(charsetIndex);
     }
 
+    /**
+     * 
+     * @param charsetIndex
+     * @return
+     */
     public String getEncodingForIndex(int charsetIndex) {
         return null;
     }
@@ -1219,10 +1226,21 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return -1;
     }
 
+    /**
+     * 
+     * @param javaCharsetName
+     * @return
+     */
     public int getMaxBytesPerChar(String javaCharsetName) {
         return -1;
     }
 
+    /**
+     * 
+     * @param charsetIndex
+     * @param javaCharsetName
+     * @return
+     */
     public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
         return -1;
     }
@@ -1385,6 +1403,10 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return null;
     }
 
+    /**
+     * 
+     * @param h
+     */
     public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
     }
 

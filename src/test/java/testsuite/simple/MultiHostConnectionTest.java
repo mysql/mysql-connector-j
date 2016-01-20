@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -127,7 +127,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private static void assertSQLException(final Statement testStmt, final String query, String messageRegEx) {
         assertThrows(SQLException.class, messageRegEx, new Callable<Void>() {
             public Void call() throws Exception {
-                testStmt.executeQuery(query);
+                testStmt.execute(query);
                 return null;
             }
         });
@@ -569,9 +569,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
                 if (testStmt2 != null) {
                     testStmt2.close();
                 }
-                if (testConn != null) {
-                    testConn.close();
-                }
+                testConn.close();
             }
         }
     }
@@ -1267,9 +1265,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
             if (testStmt != null) {
                 testStmt.close();
             }
-            if (testConn != null) {
-                testConn.close();
-            }
+            testConn.close();
         }
     }
 }

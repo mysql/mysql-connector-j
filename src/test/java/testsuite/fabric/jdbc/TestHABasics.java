@@ -119,7 +119,8 @@ public class TestHABasics extends BaseFabricTestCase {
         Thread.sleep(secs);
         System.err.println("Continuing");
         try {
-            s.executeQuery("show variables like 'port'");
+            rs = s.executeQuery("show variables like 'port'");
+            rs.close();
             fail("Master should be unavailable");
         } catch (SQLException ex) {
             rs = s.executeQuery("show variables like 'port'");
@@ -135,16 +136,16 @@ public class TestHABasics extends BaseFabricTestCase {
      * therefore always has the latest state. Future shared state implementation may loosen this constraint.
      */
     public void manualTestNewConnHasNewState() throws Exception {
-        FabricMysqlConnection conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
+        FabricMysqlConnection conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
 
         String query = "SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'";
-        ResultSet rs = conn.createStatement().executeQuery(query);
+        ResultSet rs = conn1.createStatement().executeQuery(query);
         rs.next();
         String startingMaster = rs.getString(1);
         System.err.println("Starting master: " + startingMaster);
         rs.close();
-        conn.close();
+        conn1.close();
 
         // allow time to perform manual failover
         int secs = 15000;
@@ -153,15 +154,15 @@ public class TestHABasics extends BaseFabricTestCase {
         System.err.println("Continuing");
 
         // do the exact same thing and expect it to connect to the new master without an exception
-        conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
+        conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
 
-        rs = conn.createStatement().executeQuery(query);
+        rs = conn1.createStatement().executeQuery(query);
         rs.next();
         String newMaster = rs.getString(1);
         System.err.println("New master: " + newMaster);
         assertFalse(startingMaster.equals(newMaster));
-        conn.close();
+        conn1.close();
     }
 
     /**
@@ -169,10 +170,10 @@ public class TestHABasics extends BaseFabricTestCase {
      * connections by being a part of the replication connection group.
      */
     public void manualTestFailedOldMasterDoesntBlockNewConnections() throws Exception {
-        FabricMysqlConnection conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
+        FabricMysqlConnection conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
 
-        Statement s = conn.createStatement();
+        Statement s = conn1.createStatement();
 
         // run a query until a failure happens. this will cause the master connection in the replication connection to be closed
         try {
@@ -196,25 +197,25 @@ public class TestHABasics extends BaseFabricTestCase {
         // removeMasterHost() call failed
 
         // make sure a new connection is successful
-        conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
+        conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
 
-        ResultSet rs = conn.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
+        ResultSet rs = conn1.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
         rs.next();
         System.err.println("New master: " + rs.getString(1));
         rs.close();
-        conn.close();
+        conn1.close();
     }
 
     /**
      * Same as test `manualTestFailedOldMasterDoesntBlockNewConnections' for slaves. There must be only one slave in the HA group for this test.
      */
     public void manualTestFailedSingleSlaveDoesntBlockNewConnections() throws Exception {
-        FabricMysqlConnection conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
-        conn.setReadOnly(true);
+        FabricMysqlConnection conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
+        conn1.setReadOnly(true);
 
-        Statement s = conn.createStatement();
+        Statement s = conn1.createStatement();
 
         // run a query until a failure happens. this will cause the slaves connection in the replication connection to be closed
         try {
@@ -239,14 +240,14 @@ public class TestHABasics extends BaseFabricTestCase {
         // removeSlaveHost() call failed
 
         // make sure a new connection is successful
-        conn = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
-        conn.setReadOnly(true);
+        conn1 = (FabricMysqlConnection) this.ds.getConnection(this.username, this.password);
+        conn1.setServerGroupName("ha_config1_group");
+        conn1.setReadOnly(true);
 
-        ResultSet rs = conn.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
+        ResultSet rs = conn1.createStatement().executeQuery("SELECT CONCAT(@@hostname, ':', @@port) AS 'Value'");
         rs.next();
         System.err.println("New slave: " + rs.getString(1));
         rs.close();
-        conn.close();
+        conn1.close();
     }
 }

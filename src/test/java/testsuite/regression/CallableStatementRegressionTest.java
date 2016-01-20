@@ -374,6 +374,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             assertEquals(null, cStmt.getObject(1));
             assertEquals(true, cStmt.wasNull());
 
+            cStmt.close();
+
             // Check with literals, not all parameters filled!
             cStmt = this.conn.prepareCall("{? = CALL testBug10310(4,5,?)}");
             cStmt.registerOutParameter(1, Types.INTEGER);
@@ -433,7 +435,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug15121() throws Exception {
-        if (false /* needs to be fixed on server */) {
+        if (!this.DISABLED_testBug15121 /* needs to be fixed on server */) {
             createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
             Properties props = new Properties();
@@ -1087,6 +1089,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 assertEquals("42S22", sqlEx.getSQLState());
             }
 
+            callable.close();
+
             createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
             this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
             createTable("test_table_2",
@@ -1357,8 +1361,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cStmt.execute();
             assertEquals(6, cStmt.getInt(2));
         } finally {
-            cStmt.clearParameters();
-            cStmt.close();
+            if (cStmt != null) {
+                cStmt.clearParameters();
+                cStmt.close();
+            }
             this.conn.setCatalog(originalCatalog);
         }
 

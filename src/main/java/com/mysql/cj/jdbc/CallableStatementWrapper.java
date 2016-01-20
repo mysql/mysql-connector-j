@@ -215,6 +215,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         return 0;
     }
 
+    @Deprecated
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -1533,7 +1534,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             }
 
             if (this.unwrappedInterfaces == null) {
-                this.unwrappedInterfaces = new HashMap();
+                this.unwrappedInterfaces = new HashMap<Class<?>, Object>();
             }
 
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);

@@ -286,13 +286,13 @@ public class StringUtils {
     public static byte[] getBytes(String s, String encoding) {
         if (encoding == null) {
             return getBytes(s);
-        } else {
-            try {
-                return s.getBytes(encoding);
-            } catch (UnsupportedEncodingException uee) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
-            }
         }
+        try {
+            return s.getBytes(encoding);
+        } catch (UnsupportedEncodingException uee) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("StringUtils.0", new Object[] { encoding }), uee);
+        }
+
     }
 
     /**
@@ -1272,9 +1272,7 @@ public class StringUtils {
         try {
             while ((currentChar = sourceReader.read()) != -1) {
 
-                if (false && currentChar == '\\') {
-                    escaped = !escaped;
-                } else if (markerTypeFound != -1 && currentChar == stringCloses.charAt(markerTypeFound) && !escaped) {
+                if (markerTypeFound != -1 && currentChar == stringCloses.charAt(markerTypeFound) && !escaped) {
                     contextMarker = Character.MIN_VALUE;
                     markerTypeFound = -1;
                 } else if ((ind = stringOpens.indexOf(currentChar)) != -1 && !escaped && contextMarker == Character.MIN_VALUE) {

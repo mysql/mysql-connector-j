@@ -320,7 +320,7 @@ public class StatementsTest extends BaseTestCase {
         sspsConn.close();
     }
 
-    private void testBinaryResultSetNumericTypesInternal(Connection conn) throws Exception {
+    private void testBinaryResultSetNumericTypesInternal(Connection con) throws Exception {
         /*
          * TINYINT 1 -128 127 SMALLINT 2 -32768 32767 MEDIUMINT 3 -8388608
          * 8388607 INT 4 -2147483648 2147483647 BIGINT 8 -9223372036854775808
@@ -380,7 +380,7 @@ public class StatementsTest extends BaseTestCase {
             inserter.setString(11, ubiMaximum);
             inserter.executeUpdate();
 
-            PreparedStatement selector = conn.prepareStatement("SELECT * FROM testBinaryResultSetNumericTypes ORDER by rowOrder ASC");
+            PreparedStatement selector = con.prepareStatement("SELECT * FROM testBinaryResultSetNumericTypes ORDER by rowOrder ASC");
             this.rs = selector.executeQuery();
 
             assertTrue(this.rs.next());
@@ -794,6 +794,8 @@ public class StatementsTest extends BaseTestCase {
         Statement stmt2 = null;
         PreparedStatement pstmt2 = null;
 
+        ResultSet rs2 = null;
+
         try {
             stmt2 = conn2.createStatement();
 
@@ -822,10 +824,11 @@ public class StatementsTest extends BaseTestCase {
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
-            pstmt2.executeQuery();
+            rs2 = pstmt2.executeQuery();
             this.rs.getInt(1);
             pstmt2.execute();
             this.rs.getInt(1);
+            rs2.close();
 
             pstmt2 = ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
@@ -838,16 +841,17 @@ public class StatementsTest extends BaseTestCase {
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
-            pstmt2.executeQuery();
+            rs2 = pstmt2.executeQuery();
             this.rs.getInt(1);
             pstmt2.execute();
             this.rs.getInt(1);
+            rs2.close();
 
             stmt2 = conn2.createStatement();
             this.rs = stmt2.executeQuery("SELECT 1");
             this.rs.next();
             this.rs.getInt(1);
-            stmt2.executeQuery("SELECT 2");
+            rs2 = stmt2.executeQuery("SELECT 2");
             this.rs.getInt(1);
             this.rs = stmt2.executeQuery("SELECT 1");
             this.rs.next();
@@ -856,6 +860,7 @@ public class StatementsTest extends BaseTestCase {
             this.rs.getInt(1);
             stmt2.execute("SET @var=2");
             this.rs.getInt(1);
+            rs2.close();
         } finally {
             if (stmt2 != null) {
                 stmt2.close();
@@ -880,7 +885,7 @@ public class StatementsTest extends BaseTestCase {
             // Test running a update for an query. It should fail.
             try {
                 this.conn.setAutoCommit(false);
-                this.stmt.executeQuery("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
+                this.stmt.execute("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
             } catch (SQLException sqlEx) {
                 assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase(SQLError.SQL_STATE_ILLEGAL_ARGUMENT));
             } finally {
@@ -1110,7 +1115,7 @@ public class StatementsTest extends BaseTestCase {
             assertEquals(3, this.rs.getInt(1));
             assertEquals(false, this.rs.next());
 
-            fetchStmt.executeQuery();
+            this.rs = fetchStmt.executeQuery();
         } finally {
             if (fetchConn != null) {
                 fetchConn.close();
@@ -1740,7 +1745,7 @@ public class StatementsTest extends BaseTestCase {
         for (int i = 0; i < valuesToTest.length; i++) {
             Object boundObject = bindings.getObject(i + 1);
 
-            if (boundObject == null && valuesToTest[i] == null) {
+            if (boundObject == null || valuesToTest[i] == null) {
                 continue;
             }
 
@@ -3047,55 +3052,55 @@ public class StatementsTest extends BaseTestCase {
      * 4 - `dt` DATETIME (or any kind of *CHAR)
      * 5 - `ts` TIMESTAMP (or any kind of *CHAR)
      * 
-     * @param pstmt
+     * @param prepStmt
      * @return the row count of inserted records.
      * @throws Exception
      */
-    private int insertTestDataLocalDTTypes(PreparedStatement pstmt) throws Exception {
-        pstmt.setInt(1, 1);
-        pstmt.setDate(2, this.testSqlDate);
-        pstmt.setTime(3, this.testSqlTime);
-        pstmt.setTimestamp(4, this.testSqlTimeStamp);
-        pstmt.setTimestamp(5, this.testSqlTimeStamp);
-        assertEquals(1, pstmt.executeUpdate());
+    private int insertTestDataLocalDTTypes(PreparedStatement prepStmt) throws Exception {
+        prepStmt.setInt(1, 1);
+        prepStmt.setDate(2, this.testSqlDate);
+        prepStmt.setTime(3, this.testSqlTime);
+        prepStmt.setTimestamp(4, this.testSqlTimeStamp);
+        prepStmt.setTimestamp(5, this.testSqlTimeStamp);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        pstmt.setInt(1, 2);
-        pstmt.setObject(2, this.testLocalDate);
-        pstmt.setObject(3, this.testLocalTime);
-        pstmt.setObject(4, this.testLocalDateTime);
-        pstmt.setObject(5, this.testLocalDateTime);
-        assertEquals(1, pstmt.executeUpdate());
+        prepStmt.setInt(1, 2);
+        prepStmt.setObject(2, this.testLocalDate);
+        prepStmt.setObject(3, this.testLocalTime);
+        prepStmt.setObject(4, this.testLocalDateTime);
+        prepStmt.setObject(5, this.testLocalDateTime);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        pstmt.setInt(1, 3);
-        pstmt.setObject(2, this.testLocalDate, JDBCType.DATE);
-        pstmt.setObject(3, this.testLocalTime, JDBCType.TIME);
-        pstmt.setObject(4, this.testLocalDateTime, JDBCType.TIMESTAMP);
-        pstmt.setObject(5, this.testLocalDateTime, JDBCType.TIMESTAMP);
-        assertEquals(1, pstmt.executeUpdate());
+        prepStmt.setInt(1, 3);
+        prepStmt.setObject(2, this.testLocalDate, JDBCType.DATE);
+        prepStmt.setObject(3, this.testLocalTime, JDBCType.TIME);
+        prepStmt.setObject(4, this.testLocalDateTime, JDBCType.TIMESTAMP);
+        prepStmt.setObject(5, this.testLocalDateTime, JDBCType.TIMESTAMP);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        pstmt.setInt(1, 4);
-        pstmt.setObject(2, this.testLocalDate, JDBCType.DATE, 10);
-        pstmt.setObject(3, this.testLocalTime, JDBCType.TIME, 8);
-        pstmt.setObject(4, this.testLocalDateTime, JDBCType.TIMESTAMP, 20);
-        pstmt.setObject(5, this.testLocalDateTime, JDBCType.TIMESTAMP, 20);
-        assertEquals(1, pstmt.executeUpdate());
+        prepStmt.setInt(1, 4);
+        prepStmt.setObject(2, this.testLocalDate, JDBCType.DATE, 10);
+        prepStmt.setObject(3, this.testLocalTime, JDBCType.TIME, 8);
+        prepStmt.setObject(4, this.testLocalDateTime, JDBCType.TIMESTAMP, 20);
+        prepStmt.setObject(5, this.testLocalDateTime, JDBCType.TIMESTAMP, 20);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        pstmt.setInt(1, 5);
-        pstmt.setObject(2, this.testLocalDate, JDBCType.VARCHAR);
-        pstmt.setObject(3, this.testLocalTime, JDBCType.VARCHAR);
-        pstmt.setObject(4, this.testLocalDateTime, JDBCType.VARCHAR);
-        pstmt.setObject(5, this.testLocalDateTime, JDBCType.VARCHAR);
-        assertEquals(1, pstmt.executeUpdate());
+        prepStmt.setInt(1, 5);
+        prepStmt.setObject(2, this.testLocalDate, JDBCType.VARCHAR);
+        prepStmt.setObject(3, this.testLocalTime, JDBCType.VARCHAR);
+        prepStmt.setObject(4, this.testLocalDateTime, JDBCType.VARCHAR);
+        prepStmt.setObject(5, this.testLocalDateTime, JDBCType.VARCHAR);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        pstmt.setInt(1, 6);
-        pstmt.setObject(2, this.testLocalDate, JDBCType.VARCHAR, 10);
-        pstmt.setObject(3, this.testLocalTime, JDBCType.VARCHAR, 8);
-        pstmt.setObject(4, this.testLocalDateTime, JDBCType.VARCHAR, 20);
-        pstmt.setObject(5, this.testLocalDateTime, JDBCType.VARCHAR, 20);
-        assertEquals(1, pstmt.executeUpdate());
+        prepStmt.setInt(1, 6);
+        prepStmt.setObject(2, this.testLocalDate, JDBCType.VARCHAR, 10);
+        prepStmt.setObject(3, this.testLocalTime, JDBCType.VARCHAR, 8);
+        prepStmt.setObject(4, this.testLocalDateTime, JDBCType.VARCHAR, 20);
+        prepStmt.setObject(5, this.testLocalDateTime, JDBCType.VARCHAR, 20);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        if (pstmt instanceof CallableStatement) {
-            CallableStatement cstmt = (CallableStatement) pstmt;
+        if (prepStmt instanceof CallableStatement) {
+            CallableStatement cstmt = (CallableStatement) prepStmt;
 
             cstmt.setInt("id", 7);
             cstmt.setDate("d", this.testSqlDate);
@@ -3212,20 +3217,20 @@ public class StatementsTest extends BaseTestCase {
      * 4 - `odt1` VARCHAR
      * 5 - `odt2` BLOB
      * 
-     * @param pstmt
+     * @param prepStmt
      * @return the row count of inserted records.
      * @throws Exception
      */
-    private int insertTestDataOffsetDTTypes(PreparedStatement pstmt) throws Exception {
-        pstmt.setInt(1, 1);
-        pstmt.setObject(2, this.testOffsetTime, JDBCType.VARCHAR);
-        pstmt.setObject(3, this.testOffsetTime);
-        pstmt.setObject(4, this.testOffsetDateTime, JDBCType.VARCHAR);
-        pstmt.setObject(5, this.testOffsetDateTime);
-        assertEquals(1, pstmt.executeUpdate());
+    private int insertTestDataOffsetDTTypes(PreparedStatement prepStmt) throws Exception {
+        prepStmt.setInt(1, 1);
+        prepStmt.setObject(2, this.testOffsetTime, JDBCType.VARCHAR);
+        prepStmt.setObject(3, this.testOffsetTime);
+        prepStmt.setObject(4, this.testOffsetDateTime, JDBCType.VARCHAR);
+        prepStmt.setObject(5, this.testOffsetDateTime);
+        assertEquals(1, prepStmt.executeUpdate());
 
-        if (pstmt instanceof CallableStatement) {
-            CallableStatement cstmt = (CallableStatement) pstmt;
+        if (prepStmt instanceof CallableStatement) {
+            CallableStatement cstmt = (CallableStatement) prepStmt;
 
             cstmt.setInt("id", 2);
             cstmt.setObject("ot1", this.testOffsetTime, JDBCType.VARCHAR);
@@ -3286,10 +3291,10 @@ public class StatementsTest extends BaseTestCase {
      * Check unsupported types behavior for the given PreparedStatement with a single placeholder. If this is a CallableStatement then the placeholder must
      * coincide with a parameter named `param`.
      * 
-     * @param pstmt
+     * @param prepStmt
      */
-    private void checkUnsupportedTypesBehavior(final PreparedStatement pstmt) {
-        final CallableStatement cstmt = pstmt instanceof CallableStatement ? (CallableStatement) pstmt : null;
+    private void checkUnsupportedTypesBehavior(final PreparedStatement prepStmt) {
+        final CallableStatement cstmt = prepStmt instanceof CallableStatement ? (CallableStatement) prepStmt : null;
 
         /*
          * Unsupported SQL types TIME_WITH_TIMEZONE and TIMESTAMP_WITH_TIMEZONE.
@@ -3297,14 +3302,14 @@ public class StatementsTest extends BaseTestCase {
         assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                pstmt.setObject(1, OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
+                prepStmt.setObject(1, OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
                 return null;
             }
         });
         assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                pstmt.setObject(1, OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
+                prepStmt.setObject(1, OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
                 return null;
             }
         });
@@ -3330,7 +3335,7 @@ public class StatementsTest extends BaseTestCase {
         assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                pstmt.setObject(1, new Object(), JDBCType.REF_CURSOR);
+                prepStmt.setObject(1, new Object(), JDBCType.REF_CURSOR);
                 return null;
             }
         });

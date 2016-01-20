@@ -33,6 +33,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.sql.Wrapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -407,13 +409,14 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
+        java.sql.PreparedStatement res = null;
         try {
-            return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
+            res = PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
         } catch (SQLException sqlException) {
             checkAndFireConnectionError(sqlException);
         }
 
-        return null; // we don't reach this code, compiler can't tell
+        return res;
     }
 
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
@@ -556,6 +559,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         this.mc.clearHasTriedMaster();
     }
@@ -630,6 +634,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getStatementComment();
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return this.mc.hasTriedMaster();
     }
@@ -944,7 +949,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             }
 
             if (this.unwrappedInterfaces == null) {
-                this.unwrappedInterfaces = new HashMap();
+                this.unwrappedInterfaces = new HashMap<Class<?>, Object>();
             }
 
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);
@@ -969,7 +974,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return true;
         }
 
-        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(JdbcConnection.class.getName()));
+        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(MysqlConnection.class.getName())
+                || iface.getName().equals(java.sql.Connection.class.getName()) || iface.getName().equals(Wrapper.class.getName())
+                || iface.getName().equals(AutoCloseable.class.getName()));
     }
 
     @Override

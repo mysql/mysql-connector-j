@@ -262,12 +262,12 @@ public class CallableStatementTest extends BaseTestCase {
      */
     public void testSPParse() throws Exception {
 
-        @SuppressWarnings("unused")
         CallableStatement storedProc = null;
 
         createProcedure("testSpParse", "(IN FOO VARCHAR(15))\nBEGIN\nSELECT 1;\nend\n");
 
         storedProc = this.conn.prepareCall("{call testSpParse()}");
+        storedProc.close();
     }
 
     /**

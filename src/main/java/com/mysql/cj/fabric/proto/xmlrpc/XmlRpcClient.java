@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -99,7 +99,7 @@ public class XmlRpcClient {
     /**
      * Unmarshall a response representing a server.
      */
-    private static Server unmarshallServer(Map serverData) throws FabricCommunicationException {
+    private static Server unmarshallServer(Map<String, ?> serverData) throws FabricCommunicationException {
         ServerMode mode;
         ServerRole role;
 
@@ -132,9 +132,9 @@ public class XmlRpcClient {
     /**
      * Convert a list of string/string/bool to Server objects.
      */
-    private static Set<Server> toServerSet(List<Map> l) throws FabricCommunicationException {
+    private static Set<Server> toServerSet(List<Map<String, ?>> l) throws FabricCommunicationException {
         Set<Server> servers = new HashSet<Server>();
-        for (Map serverData : l) {
+        for (Map<String, ?> serverData : l) {
             servers.add(unmarshallServer(serverData));
         }
         return servers;
@@ -161,7 +161,7 @@ public class XmlRpcClient {
     public Set<String> getFabricNames() throws FabricCommunicationException {
         Response resp = errorSafeCallMethod(METHOD_DUMP_FABRIC_NODES, new Object[] {});
         Set<String> names = new HashSet<String>();
-        for (Map node : resp.getResultSet()) {
+        for (Map<String, ?> node : resp.getResultSet()) {
             names.add(node.get(FIELD_HOST) + ":" + node.get(FIELD_PORT));
         }
         return names;
@@ -172,7 +172,7 @@ public class XmlRpcClient {
      */
     public Set<String> getGroupNames() throws FabricCommunicationException {
         Set<String> groupNames = new HashSet<String>();
-        for (Map row : errorSafeCallMethod(METHOD_GROUP_LOOKUP_GROUPS, null).getResultSet()) {
+        for (Map<String, ?> row : errorSafeCallMethod(METHOD_GROUP_LOOKUP_GROUPS, null).getResultSet()) {
             groupNames.add((String) row.get(FIELD_GROUP_ID));
         }
         return groupNames;
@@ -199,7 +199,7 @@ public class XmlRpcClient {
         Response response = errorSafeCallMethod(METHOD_DUMP_SERVERS, new Object[] { version, groupPattern });
         // collect all servers by group name
         Map<String, Set<Server>> serversByGroupName = new HashMap<String, Set<Server>>();
-        for (Map server : response.getResultSet()) {
+        for (Map<String, ?> server : response.getResultSet()) {
             Server s = unmarshallServer(server);
             if (serversByGroupName.get(s.getGroupName()) == null) {
                 serversByGroupName.put(s.getGroupName(), new HashSet<Server>());
@@ -225,7 +225,7 @@ public class XmlRpcClient {
         Response tablesResponse = errorSafeCallMethod(METHOD_DUMP_SHARD_TABLES, args);
         Set<ShardTable> tables = new HashSet<ShardTable>();
         // construct the tables
-        for (Map rawTable : tablesResponse.getResultSet()) {
+        for (Map<String, ?> rawTable : tablesResponse.getResultSet()) {
             String database = (String) rawTable.get(FIELD_SCHEMA_NAME);
             String table = (String) rawTable.get(FIELD_TABLE_NAME);
             String column = (String) rawTable.get(FIELD_COLUMN_NAME);
@@ -242,7 +242,7 @@ public class XmlRpcClient {
         Set<ShardIndex> indices = new HashSet<ShardIndex>();
 
         // construct the index
-        for (Map rawIndexEntry : indexResponse.getResultSet()) {
+        for (Map<String, ?> rawIndexEntry : indexResponse.getResultSet()) {
             String bound = (String) rawIndexEntry.get(FIELD_LOWER_BOUND);
             int shardId = (Integer) rawIndexEntry.get(FIELD_SHARD_ID);
             String groupName = (String) rawIndexEntry.get(FIELD_GROUP_ID);
@@ -268,7 +268,7 @@ public class XmlRpcClient {
 
         // construct the maps
         Set<ShardMapping> mappings = new HashSet<ShardMapping>();
-        for (Map rawMapping : mapsResponse.getResultSet()) {
+        for (Map<String, ?> rawMapping : mapsResponse.getResultSet()) {
             int mappingId = (Integer) rawMapping.get(FIELD_MAPPING_ID);
             ShardingType shardingType = ShardingType.valueOf((String) rawMapping.get(FIELD_TYPE_NAME));
             String globalGroupName = (String) rawMapping.get(FIELD_GLOBAL_GROUP_ID);

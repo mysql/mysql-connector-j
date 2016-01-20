@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,9 +37,10 @@ public class Response {
     private String fabricUuid;
     private int ttl;
     private String errorMessage;
-    private List<Map> resultSet;
+    private List<Map<String, ?>> resultSet;
 
-    public Response(List responseData) throws FabricCommunicationException {
+    @SuppressWarnings("unchecked")
+    public Response(List<?> responseData) throws FabricCommunicationException {
         // parser of protocol version 1 as defined by WL#7760
         this.protocolVersion = (Integer) responseData.get(0);
         if (this.protocolVersion != 1) {
@@ -51,10 +52,10 @@ public class Response {
         if ("".equals(this.errorMessage)) {
             this.errorMessage = null;
         }
-        List resultSets = (List) responseData.get(4);
+        List<Map<String, ?>> resultSets = (List<Map<String, ?>>) responseData.get(4);
         if (resultSets.size() > 0) {
-            Map<String, ?> resultData = (Map<String, ?>) resultSets.get(0);
-            this.resultSet = new ResultSetParser().parse((Map) resultData.get("info"), (List<List>) resultData.get("rows"));
+            Map<String, ?> resultData = resultSets.get(0);
+            this.resultSet = new ResultSetParser().parse((Map<String, ?>) resultData.get("info"), (List<List<Object>>) resultData.get("rows"));
         }
     }
 
@@ -74,7 +75,7 @@ public class Response {
         return this.errorMessage;
     }
 
-    public List<Map> getResultSet() {
+    public List<Map<String, ?>> getResultSet() {
         return this.resultSet;
     }
 }

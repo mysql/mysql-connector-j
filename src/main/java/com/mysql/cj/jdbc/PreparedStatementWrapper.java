@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -503,21 +503,20 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     }
 
     public ResultSet executeQuery() throws SQLException {
+        ResultSet rs = null;
         try {
-            if (this.wrappedStmt != null) {
-                ResultSet rs = ((PreparedStatement) this.wrappedStmt).executeQuery();
-
-                ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
-
-                return rs;
+            if (this.wrappedStmt == null) {
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            rs = ((PreparedStatement) this.wrappedStmt).executeQuery();
+            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
+
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);
         }
 
-        return null; // we actually never get here, but the compiler can't figure that out
+        return rs;
     }
 
     public int executeUpdate() throws SQLException {
@@ -801,7 +800,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         String interfaceClassName = iface.getName();
 
         return (interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
-                || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement"));
+                || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement")); // TODO check other interfaces
     }
 
     /**
@@ -832,7 +831,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             }
 
             if (this.unwrappedInterfaces == null) {
-                this.unwrappedInterfaces = new HashMap();
+                this.unwrappedInterfaces = new HashMap<Class<?>, Object>();
             }
 
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);

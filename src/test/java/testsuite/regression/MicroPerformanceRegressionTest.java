@@ -443,7 +443,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
                 for (int j = 0; j < 5; j++) {
                     pStmt2.setInt(1, j);
-                    pStmt2.executeQuery();
+                    this.rs = pStmt2.executeQuery();
                 }
             }
 

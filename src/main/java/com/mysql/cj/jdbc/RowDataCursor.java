@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -239,7 +239,7 @@ public class RowDataCursor implements RowData {
             return null;
         }
 
-        if (this.currentPositionInFetchedRows > (this.fetchedRows.size() - 1)) {
+        if ((this.fetchedRows == null) || (this.currentPositionInFetchedRows > (this.fetchedRows.size() - 1))) {
             fetchMoreRows();
             this.currentPositionInFetchedRows = 0;
         }

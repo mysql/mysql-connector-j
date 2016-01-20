@@ -158,7 +158,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
-    class ExceptionInterceptorChain implements ExceptionInterceptor {
+    public class ExceptionInterceptorChain implements ExceptionInterceptor {
         List<Extension> interceptors;
 
         ExceptionInterceptorChain(String interceptorClasses) {
@@ -202,6 +202,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 }
             }
         }
+
+        public List<Extension> getInterceptors() {
+            return this.interceptors;
+        }
+
     }
 
     /**
@@ -2671,9 +2676,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *         the list.
      */
     public boolean isMasterConnection() {
-        synchronized (getConnectionMutex()) {
-            return false; // handled higher up
-        }
+        return false; // handled higher up
     }
 
     /**
@@ -3973,9 +3976,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *            The failedOver to set.
      */
     public void setFailedOver(boolean flag) {
-        synchronized (getConnectionMutex()) {
-            // handled higher up
-        }
+        // handled higher up
     }
 
     public void setHoldability(int arg0) throws SQLException {

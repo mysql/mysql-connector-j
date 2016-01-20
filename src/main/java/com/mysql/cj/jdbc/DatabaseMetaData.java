@@ -391,6 +391,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
             return compareTo((IndexMetaDataKey) obj) == 0;
         }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
+        }
     }
 
     /**
@@ -439,6 +445,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
             return compareTo((TableMetaDataKey) obj) == 0;
         }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
+        }
     }
 
     /**
@@ -481,6 +493,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             Object otherKey = ((ComparableWrapper<?, ?>) obj).getKey();
             return this.key.equals(otherKey);
+        }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
         }
 
         @Override
@@ -671,8 +689,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
     protected static DatabaseMetaData getInstance(JdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
-        if (checkForInfoSchema && connToSet != null
-                && connToSet.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue()) {
+        if (checkForInfoSchema && connToSet.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
         }
 
@@ -3461,9 +3478,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     if (!hasTypeColumn) {
                         // need to go after functions too...
-                        if (proceduresStmt != null) {
-                            proceduresStmt.close();
-                        }
+                        proceduresStmt.close();
 
                         proceduresStmt = prepareMetaDataSafeStatement("SHOW FUNCTION STATUS LIKE ?");
 

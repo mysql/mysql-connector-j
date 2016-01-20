@@ -799,12 +799,12 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, String zeroDateTimeBehavior) {
         // enforce zero date/time behavior
         if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToNullValueFactory(vf);
+            return new ZeroDateTimeToNullValueFactory<T>(vf);
         } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(zeroDateTimeBehavior)) {
             // this behavior is default
             return vf;
         } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_ROUND.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToDefaultValueFactory(vf);
+            return new ZeroDateTimeToDefaultValueFactory<T>(vf);
         }
         return vf;
     }
@@ -2288,7 +2288,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @param info
      *            the server info message
      */
-    protected synchronized void setServerInfo(String info) {
+    protected void setServerInfo(String info) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.serverInfo = info;
@@ -2527,6 +2527,13 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         return this.exceptionInterceptor;
     }
 
+    /**
+     * 
+     * @param columnIndex
+     * @param x
+     * @param length
+     * @throws SQLException
+     */
     public void updateNCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
         throw SQLError.notUpdatable();
     }

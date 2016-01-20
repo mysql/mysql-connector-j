@@ -53,14 +53,17 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
 
+import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.ConnectionImpl.ExceptionInterceptorChain;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
@@ -199,7 +202,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug2654() throws Exception {
-        if (false) { // this is currently a server-level bug
+        if (!this.DISABLED_testBug2654) { // this is currently a server-level bug
 
             createTable("foo", "(id tinyint(3) default NULL, data varchar(255) default NULL) DEFAULT CHARSET=latin1", "MyISAM ");
             this.stmt.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
@@ -221,6 +224,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.next();
 
             String fooData = this.rs.getString(column);
+            assertNotNull(fooData);
 
         }
     }
@@ -283,7 +287,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 this.rs.next();
 
                 // This should proceed normally, after the driver clears the input stream
-                clobberStmt.executeQuery("SHOW VARIABLES");
+                ResultSet rs2 = clobberStmt.executeQuery("SHOW VARIABLES");
+                rs2.next();
                 this.rs.close();
             } finally {
                 if (streamStmt != null) {
@@ -895,7 +900,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug5136() throws Exception {
-        if (false) {
+        if (!this.DISABLED_testBug5136) {
             PreparedStatement toGeom = this.conn.prepareStatement("select GeomFromText(?)");
             PreparedStatement toText = this.conn.prepareStatement("select AsText(?)");
 
@@ -1002,6 +1007,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * @throws Exception
      *             if the test fails.
      */
+    @SuppressWarnings("deprecation")
     public void testBug6537() throws Exception {
         String tableName = "testBug6537";
 
@@ -3949,7 +3955,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Bug #60313 bug in com.mysql.jdbc.ResultSetRow.getTimestampFast
      */
     public void testBug60313() throws Exception {
-        this.stmt.executeQuery("select repeat('Z', 3000), now() + interval 1 microsecond");
+        this.stmt.execute("select repeat('Z', 3000), now() + interval 1 microsecond");
         this.rs = this.stmt.getResultSet();
         assertTrue(this.rs.next());
         assertEquals(1000, this.rs.getTimestamp(2).getNanos());
@@ -3983,7 +3989,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug65503() throws Exception {
-        if (false) {
+        if (!this.DISABLED_testBug65503) {
             createTable("testBug65503", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, value INTEGER)");
 
             PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug65503 (value) VALUES (?)", Statement.RETURN_GENERATED_KEYS),
@@ -4051,12 +4057,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     System.out.println("testBug64204.slave: parent thread should be hung now!!!");
                     res = true;
                 } finally {
-                    if (st2 != null) {
-                        st2.close();
-                    }
-                    if (con2 != null) {
-                        con2.close();
-                    }
+                    st2.close();
+                    con2.close();
                 }
 
                 System.out.println("testBug64204.slave: Done.");
@@ -4157,8 +4159,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug67318() throws Exception {
-        testBug67318AlreadyClosedCounter = 0;
-
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
         props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, "testsuite.regression.ResultSetRegressionTest$TestBug67318ExceptionInterceptor");
@@ -4166,20 +4166,34 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection c = null;
         try {
             c = getConnectionWithProps(props);
+            ExceptionInterceptorChain eic = (ExceptionInterceptorChain) ((JdbcConnection) c).getExceptionInterceptor();
+
+            TestBug67318ExceptionInterceptor ei = null;
+            for (Extension ext : eic.getInterceptors()) {
+                if (ext instanceof TestBug67318ExceptionInterceptor) {
+                    ei = (TestBug67318ExceptionInterceptor) ext;
+                    break;
+                }
+            }
+
+            if (ei == null) {
+                fail("TestBug67318ExceptionInterceptor is not found on connection");
+            }
+
             Statement st1 = c.createStatement();
             ResultSet rs1 = st1.executeQuery("select 1");
             rs1.close();
             rs1.close();
-            assertEquals("Operation not allowed after ResultSet closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+            assertEquals("Operation not allowed after ResultSet closed exception shouldn't be thrown second time", 0, ei.alreadyClosedCounter);
             st1.close();
             st1.close();
             ((StatementImpl) st1).isClosed();
-            assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+            assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, ei.alreadyClosedCounter);
 
             PreparedStatement ps1 = c.prepareStatement("select 1");
             ps1.close();
             ps1.close();
-            assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+            assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, ei.alreadyClosedCounter);
 
         } finally {
             if (c != null) {
@@ -4189,9 +4203,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     }
 
-    public static int testBug67318AlreadyClosedCounter = 0;
-
     public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
+
+        public int alreadyClosedCounter = 0;
 
         public void init(MysqlConnection conn, Properties props, Log log) {
         }
@@ -4205,7 +4219,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             if ("Operation not allowed after ResultSet closed".equals(sqlEx.getMessage())
                     || "No operations allowed after statement closed.".equals(sqlEx.getMessage())) {
-                testBug67318AlreadyClosedCounter++;
+                this.alreadyClosedCounter++;
             }
             return (SQLException) sqlEx;
         }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -438,6 +438,13 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             if (!done) {
 
                 if (challenge != null) {
+
+                    if (challenge.isOKPacket()) {
+                        throw ExceptionFactory.createException(
+                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
+                                getExceptionInterceptor());
+                    }
+
                     // read Auth Challenge Packet
 
                     clientParam |= MysqlaServerSession.CLIENT_PLUGIN_AUTH | MysqlaServerSession.CLIENT_LONG_PASSWORD | MysqlaServerSession.CLIENT_PROTOCOL_41
@@ -515,13 +522,15 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                 challenge = this.protocol.readNextPacket();
                 old_raw_challenge = false;
 
+                if (plugin == null) {
+                    // this shouldn't happen in normal handshake packets exchange,
+                    // we do it just to ensure that we don't get NPE in other case
+                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName
+                            : this.serverDefaultAuthenticationPluginName);
+                }
+
                 if (challenge.isOKPacket()) {
                     // if OK packet then finish handshake
-                    if (!done) {
-                        throw ExceptionFactory.createException(
-                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
-                                getExceptionInterceptor());
-                    }
                     plugin.destroy();
                     break;
 
@@ -533,7 +542,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     pluginName = challenge.readString("ASCII");
 
                     // get new plugin
-                    if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
+                    if (!plugin.getProtocolPluginName().equals(pluginName)) {
                         plugin.destroy();
                         plugin = getAuthenticationPlugin(pluginName);
                         // if plugin is not found for pluginName throw exception

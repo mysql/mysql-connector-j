@@ -742,7 +742,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug7033() throws Exception {
-        if (false) { // disabled for now
+        if (!this.DISABLED_testBug7033) { // disabled for now
             Connection big5Conn = null;
             Statement big5Stmt = null;
             PreparedStatement big5PrepStmt = null;
@@ -757,7 +757,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 big5Stmt = big5Conn.createStatement();
 
                 byte[] foobar = testString.getBytes("Big5");
-                System.out.println(foobar);
+                System.out.println(Arrays.toString(foobar));
 
                 this.rs = big5Stmt.executeQuery("select 1 as '\u5957 \u9910'");
                 String retrString = this.rs.getMetaData().getColumnName(1);
@@ -1732,12 +1732,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void compareResultSets(ResultSet expected, ResultSet actual) throws Exception {
-        if (expected == null && actual != null) {
-            fail("Expected null result set, actual was not null.");
-        } else if (expected != null && actual == null) {
+        if (expected == null) {
+            if (actual != null) {
+                fail("Expected null result set, actual was not null.");
+            } else {
+                return;
+            }
+        } else if (actual == null) {
             fail("Expected non-null actual result set.");
-        } else if (expected == null && actual == null) {
-            return;
         }
 
         expected.last();
@@ -2381,9 +2383,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
             DatabaseMetaData dbmd = c_IS.getMetaData();
             this.rs = dbmd.getExportedKeys("x", "y", "z");
         } finally {
-            try {
-                c_IS.close();
-            } catch (SQLException ex) {
+            if (c_IS != null) {
+                try {
+                    c_IS.close();
+                } catch (SQLException ex) {
+                }
             }
         }
     }

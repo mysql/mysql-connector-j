@@ -299,6 +299,7 @@ public class DateTest extends BaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void testReggieBug() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testReggieBug");

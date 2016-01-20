@@ -107,6 +107,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().checkClosed();
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         getActiveMySQLConnection().clearHasTriedMaster();
     }
@@ -291,6 +292,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().hasSameProperties(c);
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return getActiveMySQLConnection().hasTriedMaster();
     }
