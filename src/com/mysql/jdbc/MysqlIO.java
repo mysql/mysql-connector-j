@@ -1614,6 +1614,13 @@ public class MysqlIO {
             if (!done) {
 
                 if (challenge != null) {
+
+                    if (challenge.isOKPacket()) {
+                        throw SQLError.createSQLException(
+                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
+                                getExceptionInterceptor());
+                    }
+
                     // read Auth Challenge Packet
 
                     this.clientParam |= CLIENT_PLUGIN_AUTH | CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_TRANSACTIONS // Need this to get server status values
@@ -1695,13 +1702,15 @@ public class MysqlIO {
                 this.packetSequence++;
                 this.compressedPacketSequence++;
 
+                if (plugin == null) {
+                    // this shouldn't happen in normal handshake packets exchange,
+                    // we do it just to ensure that we don't get NPE in other case
+                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName != null ? this.serverDefaultAuthenticationPluginName
+                            : this.clientDefaultAuthenticationPluginName);
+                }
+
                 if (challenge.isOKPacket()) {
                     // if OK packet then finish handshake
-                    if (!done) {
-                        throw SQLError.createSQLException(
-                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
-                                getExceptionInterceptor());
-                    }
                     plugin.destroy();
                     break;
 
@@ -1712,7 +1721,7 @@ public class MysqlIO {
                     String pluginName = challenge.readString("ASCII", getExceptionInterceptor());
 
                     // get new plugin
-                    if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
+                    if (!plugin.getProtocolPluginName().equals(pluginName)) {
                         plugin.destroy();
                         plugin = getAuthenticationPlugin(pluginName);
                         // if plugin is not found for pluginName throw exception
@@ -4009,6 +4018,7 @@ public class MysqlIO {
                 int cbuflen = packetLen + ((packetLen / this.maxThreeBytes) + 1) * HEADER_LENGTH;
                 if (toCompress == null) {
                     toCompress = new Buffer(cbuflen);
+                    this.compressBufRef = new SoftReference<Buffer>(toCompress);
                 } else if (toCompress.getBufLength() < cbuflen) {
                     toCompress.setPosition(toCompress.getBufLength());
                     toCompress.ensureCapacity(cbuflen - toCompress.getBufLength());
@@ -4284,7 +4294,9 @@ public class MysqlIO {
         }
 
         // User/Password data
-        packet.writeString(user, enc, this.connection);
+        if (user != null) {
+            packet.writeString(user, enc, this.connection);
+        }
 
         if (password.length() != 0) {
             packet.writeByte((byte) 0x14);

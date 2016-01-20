@@ -268,10 +268,14 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
                     assertTrue("Connection can not be obtained from data source", dsCon != null);
                 } finally {
-                    dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
+                    if (dsStmt != null) {
+                        dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
 
-                    dsStmt.close();
-                    dsCon.close();
+                        dsStmt.close();
+                    }
+                    if (dsCon != null) {
+                        dsCon.close();
+                    }
                 }
             } finally {
                 if (boundDs != null) {
@@ -325,6 +329,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
             try {
                 Class.forName("org.jboss.resource.adapter.jdbc.ValidConnectionChecker");
             } catch (Exception ex) {
+                System.out.println("The testBug20242() is ignored because required class isn't available:");
+                ex.printStackTrace();
                 return; // class not available for testing
             }
 
@@ -398,7 +404,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         this.rs = physStatement.executeQuery("SELECT 1");
 
         try {
-            physConn.createStatement().executeQuery("SELECT 2");
+            this.rs = physConn.createStatement().executeQuery("SELECT 2");
             fail("Should have caught a streaming exception here");
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage() != null && sqlEx.getMessage().indexOf("Streaming") != -1);
@@ -417,7 +423,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         this.rs = physPrepStmt.executeQuery();
 
         try {
-            physConn.createStatement().executeQuery("SELECT 2");
+            this.rs = physConn.createStatement().executeQuery("SELECT 2");
             fail("Should have caught a streaming exception here");
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage() != null && sqlEx.getMessage().indexOf("Streaming") != -1);

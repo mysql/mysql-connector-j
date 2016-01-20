@@ -426,6 +426,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
             return compareTo((IndexMetaDataKey) obj) == 0;
         }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
+        }
     }
 
     /**
@@ -474,6 +480,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
             return compareTo((TableMetaDataKey) obj) == 0;
         }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
+        }
     }
 
     /**
@@ -516,6 +528,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             Object otherKey = ((ComparableWrapper<?, ?>) obj).getKey();
             return this.key.equals(otherKey);
+        }
+
+        @Override
+        public int hashCode() {
+            assert false : "hashCode not designed";
+            return 0;
         }
 
         @Override
@@ -741,16 +759,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
+    /**
+     * 
+     * @param connToSet
+     *            must not be null
+     * @param databaseToSet
+     * @param checkForInfoSchema
+     * @return
+     * @throws SQLException
+     */
     protected static DatabaseMetaData getInstance(MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema) throws SQLException {
         if (!Util.isJdbc4()) {
-            if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema() && connToSet.versionMeetsMinimum(5, 0, 7)) {
+            if (checkForInfoSchema && connToSet.getUseInformationSchema() && connToSet.versionMeetsMinimum(5, 0, 7)) {
                 return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet);
             }
 
             return new DatabaseMetaData(connToSet, databaseToSet);
         }
 
-        if (checkForInfoSchema && connToSet != null && connToSet.getUseInformationSchema() && connToSet.versionMeetsMinimum(5, 0, 7)) {
+        if (checkForInfoSchema && connToSet.getUseInformationSchema() && connToSet.versionMeetsMinimum(5, 0, 7)) {
 
             return (DatabaseMetaData) Util.handleNewInstance(JDBC_4_DBMD_IS_CTOR, new Object[] { connToSet, databaseToSet },
                     connToSet.getExceptionInterceptor());
@@ -4131,9 +4158,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         if (!hasTypeColumn) {
                             // need to go after functions too...
-                            if (proceduresStmt != null) {
-                                proceduresStmt.close();
-                            }
+                            proceduresStmt.close();
 
                             proceduresStmt = prepareMetaDataSafeStatement("SHOW FUNCTION STATUS LIKE ?");
 
@@ -4674,7 +4699,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             }
                         }
 
-                        int typeColumnIndex = 0;
+                        int typeColumnIndex = 1; // MySQL 4.x returns the result set containing the single field with table names, so we always refer to first column 
                         boolean hasTableTypes = false;
 
                         if (DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 2)) {

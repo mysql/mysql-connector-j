@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -424,7 +424,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSERT INTO testExplicitPartitions PARTITION(`p0-9`) VALUES (5, \"p0-9:subp3\")");
 
                 this.stmt.executeUpdate("FLUSH STATUS");
-                this.stmt.executeQuery("SELECT * FROM testExplicitPartitions PARTITION (subp2)");
+                this.stmt.execute("SELECT * FROM testExplicitPartitions PARTITION (subp2)");
 
                 this.pstmt = this.conn.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (subp2,pNeg) AS TableAlias");
                 assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
@@ -472,7 +472,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.pstmt = c
                         .prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
                 assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
-                this.stmt.executeQuery("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
+                this.stmt.execute("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
 
                 this.pstmt = this.conn.prepareStatement("ALTER TABLE testExplicitPartitions TRUNCATE PARTITION pNeg, `p10-99`");
                 assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
@@ -808,7 +808,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         final Statement locallyScopedStmt = this.stmt;
         assertThrows(SQLException.class, "GET STACKED DIAGNOSTICS when handler not active", new Callable<Void>() {
             public Void call() throws Exception {
-                locallyScopedStmt.executeQuery("GET STACKED DIAGNOSTICS @num = NUMBER");
+                locallyScopedStmt.execute("GET STACKED DIAGNOSTICS @num = NUMBER");
                 return null;
             }
         });

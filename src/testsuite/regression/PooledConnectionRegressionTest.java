@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,14 +34,15 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.PacketTooBigException;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+
+import testsuite.BaseTestCase;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * Tests a PooledConnection implementation provided by a JDBC driver. Test case provided by Johnny Macchione from bug database record BUG#884. According to
@@ -299,7 +300,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         }
 
         // This should still work okay, even though the last query on the same connection didn't...
-        connFromPool.createStatement().executeQuery("SELECT 1");
+        this.rs = connFromPool.createStatement().executeQuery("SELECT 1");
 
         assertTrue(this.connectionErrorEventCount == 0);
         assertTrue(this.closeEventCount == 0);

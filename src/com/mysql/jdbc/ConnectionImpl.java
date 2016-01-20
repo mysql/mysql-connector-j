@@ -124,8 +124,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
-    class ExceptionInterceptorChain implements ExceptionInterceptor {
-        List<Extension> interceptors;
+    public class ExceptionInterceptorChain implements ExceptionInterceptor {
+        private List<Extension> interceptors;
 
         ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
             this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
@@ -168,6 +168,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
             }
         }
+
+        public List<Extension> getInterceptors() {
+            return this.interceptors;
+        }
+
     }
 
     /**

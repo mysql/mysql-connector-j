@@ -189,7 +189,9 @@ public class StressRegressionTest extends BaseTestCase {
 
         @Override
         public void run() {
-            while (!this.stop) {
+            boolean doStop = this.stop;
+            while (!doStop) {
+                doStop = this.stop;
             }
         }
     }

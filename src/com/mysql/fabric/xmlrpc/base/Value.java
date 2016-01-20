@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,7 @@
 
 package com.mysql.fabric.xmlrpc.base;
 
+import java.util.Arrays;
 import java.util.GregorianCalendar;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -187,7 +188,7 @@ public class Value {
                 break;
 
             case Value.TYPE_base64:
-                sb.append("<base64>" + ((byte[]) this.objValue).toString() + "</base64>");
+                sb.append("<base64>" + Arrays.toString((byte[]) this.objValue) + "</base64>"); // TODO it's wrong but no harm because it isn't used in fabric protocol
                 break;
 
             case Value.TYPE_struct:

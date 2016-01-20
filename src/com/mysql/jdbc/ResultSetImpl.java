@@ -7015,7 +7015,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      * @param info
      *            the server info message
      */
-    protected synchronized void setServerInfo(String info) {
+    protected void setServerInfo(String info) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.serverInfo = info;

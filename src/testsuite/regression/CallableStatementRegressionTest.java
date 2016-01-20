@@ -1539,8 +1539,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cStmt.execute();
             assertEquals(6, cStmt.getInt(2));
         } finally {
-            cStmt.clearParameters();
-            cStmt.close();
+            if (cStmt != null) {
+                cStmt.clearParameters();
+                cStmt.close();
+            }
             this.conn.setCatalog(originalCatalog);
         }
 

@@ -122,13 +122,13 @@ public class ConnectionTest extends BaseTestCase {
                     clusterConn = new NonRegisteringDriver().connect(url, null);
 
                     clusterStmt = clusterConn.createStatement();
-                    clusterStmt.executeQuery("DROP TABLE IF EXISTS testClusterConn");
-                    clusterStmt.executeQuery("CREATE TABLE testClusterConn (field1 INT) " + getTableTypeDecl() + " =ndbcluster");
-                    clusterStmt.executeQuery("INSERT INTO testClusterConn VALUES (1)");
+                    clusterStmt.executeUpdate("DROP TABLE IF EXISTS testClusterConn");
+                    clusterStmt.executeUpdate("CREATE TABLE testClusterConn (field1 INT) " + getTableTypeDecl() + " =ndbcluster");
+                    clusterStmt.executeUpdate("INSERT INTO testClusterConn VALUES (1)");
 
                     clusterConn.setAutoCommit(false);
 
-                    clusterStmt.executeQuery("SELECT * FROM testClusterConn");
+                    clusterStmt.execute("SELECT * FROM testClusterConn");
                     clusterStmt.executeUpdate("UPDATE testClusterConn SET field1=4");
 
                     // Kill the connection
@@ -160,7 +160,7 @@ public class ConnectionTest extends BaseTestCase {
                     assertTrue("One row should be returned", rset.next());
                 } finally {
                     if (clusterStmt != null) {
-                        clusterStmt.executeQuery("DROP TABLE IF EXISTS testClusterConn");
+                        clusterStmt.executeUpdate("DROP TABLE IF EXISTS testClusterConn");
                         clusterStmt.close();
                     }
 
@@ -196,7 +196,7 @@ public class ConnectionTest extends BaseTestCase {
             deadlockConn.setAutoCommit(false);
 
             try {
-                this.conn.createStatement().executeQuery("SELECT * FROM t1 WHERE id=0 FOR UPDATE");
+                this.conn.createStatement().execute("SELECT * FROM t1 WHERE id=0 FOR UPDATE");
 
                 // The following query should hang because con1 is locking the page
                 deadlockConn.createStatement().executeUpdate("UPDATE t1 SET x=2 WHERE id=0");
@@ -756,13 +756,13 @@ public class ConnectionTest extends BaseTestCase {
             escapedPath.append(c);
         }
 
-        loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + escapedPath.toString() + "' INTO TABLE testLocalInfileWithUrl" + charset);
+        loadStmt.execute("LOAD DATA LOCAL INFILE '" + escapedPath.toString() + "' INTO TABLE testLocalInfileWithUrl" + charset);
         this.rs = this.stmt.executeQuery("SELECT * FROM testLocalInfileWithUrl");
         assertTrue(this.rs.next());
         assertTrue("Test".equals(this.rs.getString(1)));
 
         try {
-            loadStmt.executeQuery("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl" + charset);
+            loadStmt.execute("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl" + charset);
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage() != null);
             assertTrue(sqlEx.getMessage().indexOf("FileNotFoundException") != -1);
@@ -909,7 +909,7 @@ public class ConnectionTest extends BaseTestCase {
                 Thread.sleep(3000);
 
                 try {
-                    failoverConnection.createStatement().executeQuery("SELECT 1");
+                    failoverConnection.createStatement().execute("SELECT 1");
                     fail("We expect an exception here, because the connection should be gone until the reconnect code picks it up again");
                 } catch (SQLException sqlEx) {
                     // do-nothing
@@ -1062,9 +1062,9 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testSetProfileSql() throws Exception {
         ((com.mysql.jdbc.Connection) this.conn).setProfileSql(false);
-        this.stmt.executeQuery("SELECT 1");
+        this.stmt.execute("SELECT 1");
         ((com.mysql.jdbc.Connection) this.conn).setProfileSql(true);
-        this.stmt.executeQuery("SELECT 1");
+        this.stmt.execute("SELECT 1");
     }
 
     public void testCreateDatabaseIfNotExist() throws Exception {
@@ -1207,9 +1207,7 @@ public class ConnectionTest extends BaseTestCase {
         }
         assertEquals(requiredSize, count);
 
-        if (is != null) {
-            is.close();
-        }
+        is.close();
         if (bIn != null) {
             bIn.close();
         }
@@ -1572,7 +1570,7 @@ public class ConnectionTest extends BaseTestCase {
         boolean failed = false;
 
         for (int i = 0; i < 20; i++) {
-            selfDestructingConn.createStatement().executeQuery("SELECT 1");
+            selfDestructingConn.createStatement().execute("SELECT 1");
 
             try {
                 selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
@@ -1596,7 +1594,7 @@ public class ConnectionTest extends BaseTestCase {
         selfDestructingConn = getConnectionWithProps("selfDestructOnPingSecondsLifetime=1");
 
         for (int i = 0; i < 20; i++) {
-            selfDestructingConn.createStatement().executeQuery("SELECT SLEEP(1)");
+            selfDestructingConn.createStatement().execute("SELECT SLEEP(1)");
 
             try {
                 selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
@@ -1628,7 +1626,7 @@ public class ConnectionTest extends BaseTestCase {
             liConn.commit();
             assertEquals(TestLifecycleInterceptor.transactionsBegun, 1);
             assertEquals(TestLifecycleInterceptor.transactionsCompleted, 1);
-            liConn.createStatement().executeQuery("SELECT * FROM testLifecycleInterceptor");
+            liConn.createStatement().execute("SELECT * FROM testLifecycleInterceptor");
             assertEquals(TestLifecycleInterceptor.transactionsBegun, 2);
             // implicit commit
             liConn.createStatement().executeUpdate("CREATE TABLE testLifecycleFoo (field1 int)");

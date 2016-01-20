@@ -635,7 +635,10 @@ public class Util {
         } while ((superClass = superClass.getSuperclass()) != null);
 
         implementedInterfaces = interfaces.toArray(new Class<?>[interfaces.size()]);
-        Util.implementedInterfacesCache.putIfAbsent(clazz, implementedInterfaces);
+        Class<?>[] oldValue = Util.implementedInterfacesCache.putIfAbsent(clazz, implementedInterfaces);
+        if (oldValue != null) {
+            implementedInterfaces = oldValue;
+        }
         return implementedInterfaces;
     }
 

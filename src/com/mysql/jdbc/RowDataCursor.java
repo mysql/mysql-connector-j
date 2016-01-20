@@ -352,7 +352,7 @@ public class RowDataCursor implements RowData {
             return null;
         }
 
-        if (this.currentPositionInFetchedRows > (this.fetchedRows.size() - 1)) {
+        if ((this.fetchedRows == null) || (this.currentPositionInFetchedRows > (this.fetchedRows.size() - 1))) {
             fetchMoreRows();
             this.currentPositionInFetchedRows = 0;
         }

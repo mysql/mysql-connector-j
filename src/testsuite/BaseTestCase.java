@@ -848,11 +848,13 @@ public abstract class BaseTestCase extends TestCase {
             }
         });
 
-        for (int i = 0; i < possibleFiles.length; i++) {
-            try {
-                possibleFiles[i].delete();
-            } catch (Throwable t) {
-                // ignore, we're only making a best effort cleanup attempt here
+        if (possibleFiles != null) {
+            for (int i = 0; i < possibleFiles.length; i++) {
+                try {
+                    possibleFiles[i].delete();
+                } catch (Throwable t) {
+                    // ignore, we're only making a best effort cleanup attempt here
+                }
             }
         }
     }

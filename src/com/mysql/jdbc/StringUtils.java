@@ -125,7 +125,11 @@ public class StringUtils {
 
             if (cs == null) {
                 cs = Charset.forName(alias);
-                charsetsByAlias.putIfAbsent(alias, cs);
+                Charset oldCs = charsetsByAlias.putIfAbsent(alias, cs);
+                if (oldCs != null) {
+                    // if the previous value was recently set by another thread we return it instead of value we found here
+                    cs = oldCs;
+                }
             }
 
             return cs;
