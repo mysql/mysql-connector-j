@@ -152,7 +152,7 @@ public class MetadataTest extends BaseTestCase {
                 i++;
             }
 
-            if ((keySeqs[0] != 3) && (keySeqs[1] != 2) && (keySeqs[2] != 4) && (keySeqs[4] != 1)) {
+            if ((keySeqs[0] != 3) && (keySeqs[1] != 2) && (keySeqs[2] != 4) && (keySeqs[3] != 1)) {
                 fail("Keys returned in wrong order");
             }
         } finally {

@@ -1097,7 +1097,6 @@ public class SQLError {
             // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
             //
 
-            Throwable cause;
             if (underlyingException instanceof BindException) {
                 if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
                     exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));

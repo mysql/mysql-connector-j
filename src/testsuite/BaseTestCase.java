@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -61,6 +61,14 @@ public abstract class BaseTestCase extends TestCase {
     private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
 
     private final static String NO_MULTI_HOST_PROPERTY_NAME = "com.mysql.jdbc.testsuite.no-multi-hosts-tests";
+
+    // next variables disable some tests
+    protected boolean DISABLED_testBug15121 = true; // TODO needs to be fixed on server
+    protected boolean DISABLED_testBug7033 = true; // TODO disabled for unknown reason
+    protected boolean DISABLED_testBug2654 = true; // TODO check if it's still a server-level bug
+    protected boolean DISABLED_testBug5136 = true; // TODO disabled for unknown reason
+    protected boolean DISABLED_testBug65503 = true; // TODO disabled for unknown reason
+    protected boolean DISABLED_testContention = true; // TODO disabled for unknown reason
 
     /**
      * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
@@ -840,11 +848,13 @@ public abstract class BaseTestCase extends TestCase {
             }
         });
 
-        for (int i = 0; i < possibleFiles.length; i++) {
-            try {
-                possibleFiles[i].delete();
-            } catch (Throwable t) {
-                // ignore, we're only making a best effort cleanup attempt here
+        if (possibleFiles != null) {
+            for (int i = 0; i < possibleFiles.length; i++) {
+                try {
+                    possibleFiles[i].delete();
+                } catch (Throwable t) {
+                    // ignore, we're only making a best effort cleanup attempt here
+                }
             }
         }
     }

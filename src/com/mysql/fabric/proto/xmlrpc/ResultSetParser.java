@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,15 +39,16 @@ public class ResultSetParser {
      * Transform the Fabric formatted result into a list of
      * hashes/rows.
      */
-    public List<Map> parse(Map info, List<List> rows) {
+    public List<Map<String, ?>> parse(Map<String, ?> info, List<List<Object>> rows) {
+        @SuppressWarnings("unchecked")
         List<String> fieldNames = (List<String>) info.get("names");
         Map<String, Integer> fieldNameIndexes = new HashMap<String, Integer>();
         for (int i = 0; i < fieldNames.size(); ++i) {
             fieldNameIndexes.put(fieldNames.get(i), i);
         }
 
-        List<Map> result = new ArrayList<Map>(rows.size());
-        for (List r : rows) {
+        List<Map<String, ?>> result = new ArrayList<Map<String, ?>>(rows.size());
+        for (List<Object> r : rows) {
             Map<String, Object> resultRow = new HashMap<String, Object>();
             for (Map.Entry<String, Integer> f : fieldNameIndexes.entrySet()) {
                 resultRow.put(f.getKey(), r.get(f.getValue()));

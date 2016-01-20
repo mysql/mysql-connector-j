@@ -152,7 +152,7 @@ public class Field {
         boolean isFromFunction = this.originalTableNameLength == 0;
 
         if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
-            if (this.connection != null && this.connection.getBlobsAreStrings() || (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+            if (this.connection.getBlobsAreStrings() || (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
                 this.sqlType = Types.VARCHAR;
                 this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
             } else if (this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary || !this.connection.versionMeetsMinimum(4, 1, 0)) {
@@ -196,7 +196,7 @@ public class Field {
 
             if (this.connection.versionMeetsMinimum(4, 1, 0) && this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING && isBinary
                     && this.collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary) {
-                if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+                if (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction) {
                     this.sqlType = Types.VARCHAR;
                     this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
                 } else if (this.isOpaqueBinary()) {

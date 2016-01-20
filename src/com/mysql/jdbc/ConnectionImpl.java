@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -124,8 +124,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
-    class ExceptionInterceptorChain implements ExceptionInterceptor {
-        List<Extension> interceptors;
+    public class ExceptionInterceptorChain implements ExceptionInterceptor {
+        private List<Extension> interceptors;
 
         ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
             this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
@@ -168,6 +168,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
             }
         }
+
+        public List<Extension> getInterceptors() {
+            return this.interceptors;
+        }
+
     }
 
     /**
@@ -2891,6 +2896,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
 
         String charset = null;
+        int res = 1;
 
         try {
             // if we can get it by charsetIndex just doing it
@@ -2922,7 +2928,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             if (mblen != null) {
-                return mblen.intValue();
+                res = mblen.intValue();
             }
         } catch (SQLException ex) {
             throw ex;
@@ -2932,7 +2938,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             throw sqlEx;
         }
 
-        return 1; // we don't know
+        return res;
     }
 
     /**
@@ -3566,9 +3572,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *         the list.
      */
     public boolean isMasterConnection() {
-        synchronized (getConnectionMutex()) {
-            return false; // handled higher up
-        }
+        return false; // handled higher up
     }
 
     /**
@@ -3710,8 +3714,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return this.isServerTzUTC;
     }
 
-    private boolean usingCachedConfig = false;
-
     private void createConfigCacheIfNeeded() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.serverConfigCache != null) {
@@ -3796,7 +3798,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 if (cachedServerVersion != null && this.io.getServerVersion() != null && cachedServerVersion.equals(this.io.getServerVersion())) {
                     this.serverVariables = cachedVariableMap;
-                    this.usingCachedConfig = true;
 
                     return;
                 }
@@ -3886,7 +3887,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 this.serverConfigCache.put(getURL(), this.serverVariables);
 
-                this.usingCachedConfig = true;
             }
         } catch (SQLException e) {
             throw e;
@@ -4964,9 +4964,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *            The failedOver to set.
      */
     public void setFailedOver(boolean flag) {
-        synchronized (getConnectionMutex()) {
-            // handled higher up
-        }
+        // handled higher up
     }
 
     /**

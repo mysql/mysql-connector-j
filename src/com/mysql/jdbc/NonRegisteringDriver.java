@@ -595,6 +595,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     public Properties parseURL(String url, Properties defaults) throws java.sql.SQLException {
         Properties urlProps = (defaults != null) ? new Properties(defaults) : new Properties();
 

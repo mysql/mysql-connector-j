@@ -777,6 +777,8 @@ public class StatementsTest extends BaseTestCase {
         Statement stmt2 = null;
         PreparedStatement pstmt2 = null;
 
+        ResultSet rs2 = null;
+
         try {
             stmt2 = conn2.createStatement();
 
@@ -805,10 +807,11 @@ public class StatementsTest extends BaseTestCase {
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
-            pstmt2.executeQuery();
+            rs2 = pstmt2.executeQuery();
             this.rs.getInt(1);
             pstmt2.execute();
             this.rs.getInt(1);
+            rs2.close();
 
             pstmt2 = ((com.mysql.jdbc.Connection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
@@ -821,16 +824,17 @@ public class StatementsTest extends BaseTestCase {
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
-            pstmt2.executeQuery();
+            rs2 = pstmt2.executeQuery();
             this.rs.getInt(1);
             pstmt2.execute();
             this.rs.getInt(1);
+            rs2.close();
 
             stmt2 = conn2.createStatement();
             this.rs = stmt2.executeQuery("SELECT 1");
             this.rs.next();
             this.rs.getInt(1);
-            stmt2.executeQuery("SELECT 2");
+            rs2 = stmt2.executeQuery("SELECT 2");
             this.rs.getInt(1);
             this.rs = stmt2.executeQuery("SELECT 1");
             this.rs.next();
@@ -839,6 +843,7 @@ public class StatementsTest extends BaseTestCase {
             this.rs.getInt(1);
             stmt2.execute("SET @var=2");
             this.rs.getInt(1);
+            rs2.close();
         } finally {
             if (stmt2 != null) {
                 stmt2.close();
@@ -863,7 +868,7 @@ public class StatementsTest extends BaseTestCase {
             // Test running a update for an query. It should fail.
             try {
                 this.conn.setAutoCommit(false);
-                this.stmt.executeQuery("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
+                this.rs = this.stmt.executeQuery("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
             } catch (SQLException sqlEx) {
                 assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase(SQLError.SQL_STATE_ILLEGAL_ARGUMENT));
             } finally {
@@ -1098,7 +1103,7 @@ public class StatementsTest extends BaseTestCase {
                 assertEquals(3, this.rs.getInt(1));
                 assertEquals(false, this.rs.next());
 
-                fetchStmt.executeQuery();
+                this.rs = fetchStmt.executeQuery();
             } finally {
                 if (fetchConn != null) {
                     fetchConn.close();
@@ -1732,7 +1737,7 @@ public class StatementsTest extends BaseTestCase {
         for (int i = 0; i < valuesToTest.length; i++) {
             Object boundObject = bindings.getObject(i + 1);
 
-            if (boundObject == null && valuesToTest[i] == null) {
+            if (boundObject == null || valuesToTest[i] == null) {
                 continue;
             }
 

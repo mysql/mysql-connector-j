@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -369,7 +369,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // ignore
         }
 
-        reconnectableConn.createStatement().executeQuery("SELECT 1");
+        this.rs = reconnectableConn.createStatement().executeQuery("SELECT 1");
 
         assertTrue(reconnectableConn.isReadOnly() == isReadOnly);
     }
@@ -546,7 +546,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     // we expect this one
                 }
 
-                failoverStmt.executeQuery("SELECT connection_id()");
+                this.rs = failoverStmt.executeQuery("SELECT connection_id()");
             } finally {
                 if (adminConnection != null) {
                     adminConnection.close();
@@ -598,7 +598,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String originalConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
 
             for (int i = 0; i < 50; i++) {
-                failoverConnection.createStatement().executeQuery("SELECT 1");
+                this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
             }
 
             UnreliableSocketFactory.dontDownHost("master");
@@ -610,7 +610,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
             assertFalse(newConnectionId.equals(originalConnectionId));
 
-            failoverConnection.createStatement().executeQuery("SELECT 1");
+            this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
             UnreliableSocketFactory.flushAllStaticData();
 
@@ -988,9 +988,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             } catch (SQLException sqlEx) {
                 assertEquals(currentOpenStatements, ((com.mysql.jdbc.Connection) bareConn).getActiveStatementCount());
             } finally {
-                if (bareConn != null) {
-                    bareConn.close();
-                }
+                bareConn.close();
             }
         }
     }
@@ -2740,8 +2738,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         ds.setUrl(newUrl);
 
         Connection c = ds.getPooledConnection().getConnection();
-        c.createStatement().executeQuery("SELECT 1");
-        c.prepareStatement("SELECT 1").executeQuery();
+        this.rs = c.createStatement().executeQuery("SELECT 1");
+        this.rs = c.prepareStatement("SELECT 1").executeQuery();
     }
 
     public void testBug48605() throws Exception {
@@ -3158,13 +3156,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
 
             for (int i = 0; i < 50; i++) {
-                failoverConnection.createStatement().executeQuery("SELECT 1");
+                this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
             }
 
             UnreliableSocketFactory.downHost("master");
 
             try {
-                failoverConnection.createStatement().executeQuery("SELECT 1"); // this should fail and trigger failover
+                this.rs = failoverConnection.createStatement().executeQuery("SELECT 1"); // this should fail and trigger failover
                 fail("Expected exception");
             } catch (SQLException sqlEx) {
                 assertEquals("08S01", sqlEx.getSQLState());
@@ -3173,14 +3171,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
             failoverConnection.setAutoCommit(true);
             assertEquals("/slave", UnreliableSocketFactory.getHostFromLastConnection());
             assertTrue(!failoverConnection.isReadOnly());
-            failoverConnection.createStatement().executeQuery("SELECT 1");
-            failoverConnection.createStatement().executeQuery("SELECT 1");
+            this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
+            this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
             UnreliableSocketFactory.dontDownHost("master");
             Thread.sleep(2000);
             failoverConnection.setAutoCommit(true);
-            failoverConnection.createStatement().executeQuery("SELECT 1");
+            this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
             assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
-            failoverConnection.createStatement().executeQuery("SELECT 1");
+            this.rs = failoverConnection.createStatement().executeQuery("SELECT 1");
         } finally {
             UnreliableSocketFactory.flushAllStaticData();
 
@@ -3235,11 +3233,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         assertTrue(detectedDeadConn);
-        rConn.prepareStatement("SELECT 1").executeQuery();
+        this.rs = rConn.prepareStatement("SELECT 1").executeQuery();
 
         Connection rConn2 = getConnectionWithProps(
                 "autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
-        rConn2.prepareStatement("SELECT 1").executeQuery();
+        this.rs = rConn2.prepareStatement("SELECT 1").executeQuery();
 
     }
 
@@ -3275,7 +3273,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
 
-            testStmt.executeQuery("SELECT 1");
+            this.rs = testStmt.executeQuery("SELECT 1");
         }
         testConn.close();
     }
@@ -5137,8 +5135,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt = failoverconnection[i].createStatement();
             this.pstmt = failoverconnection[i].prepareStatement("SELECT 1 FROM DUAL");
             for (int j = 0; j < 10000; j++) {
-                this.pstmt.executeQuery();
-                this.stmt.executeQuery("SELECT 1 FROM DUAL");
+                this.rs = this.pstmt.executeQuery();
+                this.rs = this.stmt.executeQuery("SELECT 1 FROM DUAL");
             }
         }
 
@@ -5562,17 +5560,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (resultSet != null) {
                 resultSet.close();
             }
-            if (statement != null) {
-                statement.close();
+
+            statement.close();
+
+            if (finType == 1) {
+                connection.close();
+            } else if (finType == 2) {
+                ((com.mysql.jdbc.Connection) connection).abortInternal();
             }
-            if (connection != null) {
-                if (finType == 1) {
-                    connection.close();
-                } else if (finType == 2) {
-                    ((com.mysql.jdbc.Connection) connection).abortInternal();
-                }
-                connection = null;
-            }
+            connection = null;
         }
 
         // 2. Count connections before GC
@@ -5648,7 +5644,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.setProperty("password", "msandbox");
             props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
             c2 = DriverManager.getConnection(url + "/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
-            c2.createStatement().executeQuery("select 1");
+            this.rs = c2.createStatement().executeQuery("select 1");
             c2.close();
 
         } catch (SQLException e) {
@@ -5656,7 +5652,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             props.setProperty("user", "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
             c2 = DriverManager.getConnection(url + "/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
-            c2.createStatement().executeQuery("select 1");
+            this.rs = c2.createStatement().executeQuery("select 1");
             c2.close();
         } finally {
             if (c2 != null) {
@@ -5752,7 +5748,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testResultSet = testStatement.executeQuery("SELECT 1");
 
         // 1. Statement.execute() & Statement.getMoreResults()
-        testStatement.executeQuery("CALL testBug69746_proc");
+        this.rs = testStatement.executeQuery("CALL testBug69746_proc");
         assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
 
         ResultSet testResultSet2 = testStatement.getResultSet();
@@ -5785,7 +5781,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
 
         // 3. Statement.executeQuery()
-        testStatement.executeQuery("SELECT 2");
+        this.rs = testStatement.executeQuery("SELECT 2");
         assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
 
         // 4. Statement.executeUpdate()
@@ -5922,30 +5918,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 break;
             }
         }
-        Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
-        propMethod.setAccessible(true);
 
-        for (int i = 0; i < testMemUnits.length; i++) {
-            for (int j = 0; j < testMemUnits[i].length; j++) {
-                // testing with memory values under 2GB because higher values aren't supported.
-                connWithMemProps = (com.mysql.jdbc.Connection) getConnectionWithProps(
-                        String.format("blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
+        if (propClass != null) {
+            Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
+            propMethod.setAccessible(true);
 
-                // test values of property 'blobSendChunkSize'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2),
-                        connWithMemProps.getBlobSendChunkSize());
+            for (int i = 0; i < testMemUnits.length; i++) {
+                for (int j = 0; j < testMemUnits[i].length; j++) {
+                    // testing with memory values under 2GB because higher values aren't supported.
+                    connWithMemProps = (com.mysql.jdbc.Connection) getConnectionWithProps(
+                            String.format("blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
-                // test values of property 'largeRowSizeThreshold'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j],
-                        connWithMemProps.getLargeRowSizeThreshold());
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", (int) (memMultiplier[i] * 1.4),
-                        ((Integer) propMethod.invoke(propField.get(connWithMemProps))).intValue());
+                    // test values of property 'blobSendChunkSize'
+                    assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2),
+                            connWithMemProps.getBlobSendChunkSize());
 
-                // test values of property 'locatorFetchBufferSize'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6),
-                        connWithMemProps.getLocatorFetchBufferSize());
+                    // test values of property 'largeRowSizeThreshold'
+                    assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j],
+                            connWithMemProps.getLargeRowSizeThreshold());
+                    assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", (int) (memMultiplier[i] * 1.4),
+                            ((Integer) propMethod.invoke(propField.get(connWithMemProps))).intValue());
 
-                connWithMemProps.close();
+                    // test values of property 'locatorFetchBufferSize'
+                    assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6),
+                            connWithMemProps.getLocatorFetchBufferSize());
+
+                    connWithMemProps.close();
+                }
             }
         }
     }
@@ -6392,7 +6391,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         dataSource.setUrl(url);
         XAConnection xaConn = dataSource.getXAConnection();
         Statement st = xaConn.getConnection().createStatement();
-        st.executeQuery("SELECT 1;");
+        this.rs = st.executeQuery("SELECT 1;");
         xaConn.close();
     }
 
@@ -6523,7 +6522,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             Connection testConn = getConnectionWithProps("socketFactory=testsuite.regression.ConnectionRegressionTest$TestBug73053SocketFactory");
             Statement testStmt = this.conn.createStatement();
-            testStmt.executeQuery("SELECT 1");
+            this.rs = testStmt.executeQuery("SELECT 1");
             testStmt.close();
             testConn.close();
         } catch (SQLException e) {
@@ -8587,7 +8586,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
                 public Void call() throws Exception {
-                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
+                    rset.next();
                     return null;
                 }
             });
@@ -8626,7 +8626,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
                 public Void call() throws Exception {
-                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
+                    rset.next();
                     return null;
                 }
             });
@@ -8664,7 +8665,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
                 public Void call() throws Exception {
-                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
+                    rset.next();
                     return null;
                 }
             });
@@ -8713,7 +8715,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
                 public Void call() throws Exception {
-                    localTestConn.createStatement().executeQuery("SELECT 1");
+                    ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
+                    rset.next();
                     return null;
                 }
             });
@@ -8740,7 +8743,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     private void testBug21286268AssertConnectedToAndReadOnly(Connection testConn, String expectedHost, boolean expectedReadOnly) throws SQLException {
-        testConn.createStatement().executeQuery("SELECT 1");
+        this.rs = testConn.createStatement().executeQuery("SELECT 1");
         assertEquals(expectedHost, ((MySQLConnection) testConn).getHost());
         assertEquals(expectedReadOnly, testConn.isReadOnly());
     }

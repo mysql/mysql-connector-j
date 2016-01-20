@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,9 +37,9 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.SQLError;
+
+import testsuite.BaseTestCase;
 
 public class DateTest extends BaseTestCase {
     /**
@@ -303,6 +303,7 @@ public class DateTest extends BaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void testReggieBug() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testReggieBug");

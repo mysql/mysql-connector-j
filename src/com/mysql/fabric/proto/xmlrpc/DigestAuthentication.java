@@ -38,6 +38,8 @@ import java.util.Random;
  */
 public class DigestAuthentication {
 
+    private static Random random = new Random();
+
     /**
      * Get the digest challenge header by connecting to the resource
      * with no credentials.
@@ -163,10 +165,11 @@ public class DigestAuthentication {
      * value used in the digest calculation. Same as Python. (no
      * motivation given for this algorithm)
      */
+    @SuppressWarnings("deprecation")
     public static String generateCnonce(String nonce, String nc) {
         // Random string, keep it in basic printable ASCII range
         byte buf[] = new byte[8];
-        new Random().nextBytes(buf);
+        random.nextBytes(buf);
         for (int i = 0; i < 8; ++i) {
             buf[i] = (byte) (0x20 + (buf[i] % 95));
         }

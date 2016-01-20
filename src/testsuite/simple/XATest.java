@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,10 +36,10 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import testsuite.BaseTestCase;
-
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
+
+import testsuite.BaseTestCase;
 
 /**
  * Unit tests for our XA implementation.
@@ -194,7 +194,7 @@ public class XATest extends BaseTestCase {
 
             XAResource xaRes = xaConn.getXAResource();
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            c.createStatement().executeQuery("SELECT 1");
+            c.createStatement().execute("SELECT 1");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.prepare(xid);
 
@@ -406,10 +406,10 @@ public class XATest extends BaseTestCase {
             XAResource xaRes1 = xaConn1.getXAResource();
             conn1 = xaConn1.getConnection();
             xaRes1.start(xid, XAResource.TMNOFLAGS);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.start(xid, XAResource.TMRESUME);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.commit(xid, true);
 
@@ -431,10 +431,10 @@ public class XATest extends BaseTestCase {
             xaRes1 = xaConn1.getXAResource();
             conn1 = xaConn1.getConnection();
             xaRes1.start(xid, XAResource.TMNOFLAGS);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.start(xid, XAResource.TMJOIN);
-            conn1.createStatement().executeQuery("SELECT 1");
+            conn1.createStatement().execute("SELECT 1");
             xaRes1.end(xid, XAResource.TMSUCCESS);
             xaRes1.commit(xid, true);
         } finally {

@@ -70,7 +70,7 @@ public class StressRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public synchronized void testContention() throws Exception {
-        if (false) {
+        if (!this.DISABLED_testContention) {
             System.out.println("Calculating baseline elapsed time...");
 
             long start = System.currentTimeMillis();
@@ -189,7 +189,9 @@ public class StressRegressionTest extends BaseTestCase {
 
         @Override
         public void run() {
-            while (!this.stop) {
+            boolean doStop = this.stop;
+            while (!doStop) {
+                doStop = this.stop;
             }
         }
     }

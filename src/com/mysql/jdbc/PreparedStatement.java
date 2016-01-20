@@ -4216,7 +4216,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
                 if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
-                    doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+                    doSSPSCompatibleTimezoneShift(parameterIndex, x);
                 } else {
                     synchronized (this) {
                         if (this.tsdf == null) {
@@ -4303,7 +4303,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         }
     }
 
-    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {
+    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar sessionCalendar2 = (this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();

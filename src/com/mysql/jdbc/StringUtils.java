@@ -125,7 +125,11 @@ public class StringUtils {
 
             if (cs == null) {
                 cs = Charset.forName(alias);
-                charsetsByAlias.putIfAbsent(alias, cs);
+                Charset oldCs = charsetsByAlias.putIfAbsent(alias, cs);
+                if (oldCs != null) {
+                    // if the previous value was recently set by another thread we return it instead of value we found here
+                    cs = oldCs;
+                }
             }
 
             return cs;
@@ -1801,9 +1805,7 @@ public class StringUtils {
         try {
             while ((currentChar = sourceReader.read()) != -1) {
 
-                if (false && currentChar == '\\') {
-                    escaped = !escaped;
-                } else if (markerTypeFound != -1 && currentChar == stringCloses.charAt(markerTypeFound) && !escaped) {
+                if (markerTypeFound != -1 && currentChar == stringCloses.charAt(markerTypeFound) && !escaped) {
                     contextMarker = Character.MIN_VALUE;
                     markerTypeFound = -1;
                 } else if ((ind = stringOpens.indexOf(currentChar)) != -1 && !escaped && contextMarker == Character.MIN_VALUE) {

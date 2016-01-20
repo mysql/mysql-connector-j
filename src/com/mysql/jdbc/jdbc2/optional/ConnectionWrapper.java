@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -610,13 +610,15 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
         checkClosed();
 
+        java.sql.PreparedStatement res = null;
+
         try {
-            return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
+            res = PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql));
         } catch (SQLException sqlException) {
             checkAndFireConnectionError(sqlException);
         }
 
-        return null; // we don't reach this code, compiler can't tell
+        return res;
     }
 
     /**
@@ -806,6 +808,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         }
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         this.mc.clearHasTriedMaster();
     }
@@ -902,6 +905,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         return this.mc.getStatementComment();
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return this.mc.hasTriedMaster();
     }
@@ -1005,6 +1009,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     }
 
+    @Deprecated
     public void setPreferSlaveDuringFailover(boolean flag) {
         this.mc.setPreferSlaveDuringFailover(flag);
     }

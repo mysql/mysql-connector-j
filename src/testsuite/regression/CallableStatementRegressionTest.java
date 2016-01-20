@@ -532,7 +532,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug15121() throws Exception {
-        if (false /* needs to be fixed on server */) {
+        if (!this.DISABLED_testBug15121 /* needs to be fixed on server */) {
             if (versionMeetsMinimum(5, 0)) {
                 createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
@@ -1539,8 +1539,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cStmt.execute();
             assertEquals(6, cStmt.getInt(2));
         } finally {
-            cStmt.clearParameters();
-            cStmt.close();
+            if (cStmt != null) {
+                cStmt.clearParameters();
+                cStmt.close();
+            }
             this.conn.setCatalog(originalCatalog);
         }
 
