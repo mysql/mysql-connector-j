@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,7 @@ package com.mysql.cj.core.io;
 import java.io.IOException;
 import java.io.StringReader;
 
+import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.x.json.DbDoc;
@@ -51,7 +52,7 @@ public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
     @Override
     public DbDoc createFromBytes(byte[] bytes, int offset, int length) {
         try {
-            return JsonParser.parseDoc(new StringReader(StringUtils.toString(bytes, offset, length, encoding)));
+            return JsonParser.parseDoc(new StringReader(StringUtils.toString(bytes, offset, length, this.encoding)));
         } catch (IOException ex) {
             throw AssertionFailedException.shouldNotHappen(ex);
         }
