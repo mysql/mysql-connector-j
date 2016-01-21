@@ -144,6 +144,7 @@ public class MessageBuilder {
         return builder.build();
     }
 
+    @SuppressWarnings("unchecked")
     public Find buildFind(FindParams findParams) {
         Find.Builder builder = Find.newBuilder().setCollection((Collection) findParams.getCollection());
         builder.setDataModel(findParams.isRelational() ? DataModel.TABLE : DataModel.DOCUMENT);
@@ -176,6 +177,7 @@ public class MessageBuilder {
     }
 
     // TODO: low-level tests of this method
+    @SuppressWarnings("unchecked")
     public Update buildRowUpdate(FilterParams filterParams, UpdateParams updateParams) {
         Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection((Collection) filterParams.getCollection());
         ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
@@ -197,6 +199,7 @@ public class MessageBuilder {
         return builder.build();
     }
 
+    @SuppressWarnings("unchecked")
     public Insert buildRowInsert(String schemaName, String tableName, InsertParams insertParams) {
         Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
         if (insertParams.getProjection() != null) {
@@ -221,6 +224,7 @@ public class MessageBuilder {
      * @param setArgs
      *            the "builder.addAllArgs()" method reference
      */
+    @SuppressWarnings("unchecked")
     private static void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
             Consumer<List<Scalar>> setArgs) {
         filterParams.verifyAllArgsBound();

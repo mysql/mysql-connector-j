@@ -374,10 +374,9 @@ public class MysqlxSession implements Session {
             if (this.protocol.hasMoreResults()) {
                 // empty/fabricated OK packet
                 return new StatementExecuteOkBuilder().build();
-            } else {
-                readLastResult[0] = true;
-                return this.protocol.readStatementExecuteOk();
             }
+            readLastResult[0] = true;
+            return this.protocol.readStatementExecuteOk();
         };
         Supplier<SqlResult> resultStream = () -> {
             if (readLastResult[0]) {

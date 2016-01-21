@@ -76,9 +76,8 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
             if (decoderFunction != null) {
                 this.wasNull = false;
                 return decoderFunction.apply(CodedInputStream.newInstance(byteString.toByteArray()), vf);
-            } else {
-                throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlTypeId());
             }
+            throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlTypeId());
         } catch (IOException ex) {
             // if reading the protobuf fields fails (CodedInputStream)
             throw new DataReadException(ex);

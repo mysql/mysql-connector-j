@@ -90,10 +90,9 @@ public class SqlResultMessageListener implements MessageListener {
         if (this.resultType == ResultType.DATA) {
             // delegate to the result creation
             return this.resultListener.apply(msgClass, msg);
-        } else {
-            // done
-            return this.okListener.apply(msgClass, msg);
         }
+        // done
+        return this.okListener.apply(msgClass, msg);
     }
 
     public void closed() {

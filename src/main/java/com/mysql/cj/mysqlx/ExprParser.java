@@ -132,9 +132,8 @@ public class ExprParser {
         public String toString() {
             if (this.type == TokenType.IDENT || this.type == TokenType.LNUM_INT || this.type == TokenType.LNUM_DOUBLE || this.type == TokenType.LSTRING) {
                 return this.type.toString() + "(" + this.value + ")";
-            } else {
-                return this.type.toString();
             }
+            return this.type.toString();
         }
     }
 
@@ -791,13 +790,13 @@ public class ExprParser {
                 if (nextTokenTypeEquals(TokenType.LPAREN) || (posTokenTypeEquals(this.tokenPos + 1, TokenType.DOT)
                         && posTokenTypeEquals(this.tokenPos + 2, TokenType.IDENT) && posTokenTypeEquals(this.tokenPos + 3, TokenType.LPAREN))) {
                     return functionCall();
-                } else {
-                    if (this.allowRelationalColumns) {
-                        return columnIdentifier();
-                    } else {
-                        return documentField();
-                    }
                 }
+                if (this.allowRelationalColumns) {
+                    return columnIdentifier();
+                }
+                return documentField();
+            default:
+                break;
         }
         throw new WrongArgumentException("Cannot find atomic expression at token pos: " + (this.tokenPos - 1));
     }

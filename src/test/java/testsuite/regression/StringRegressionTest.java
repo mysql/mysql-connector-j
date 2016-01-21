@@ -112,11 +112,11 @@ public class StringRegressionTest extends BaseTestCase {
     public void testEscapeSJISDoubleEscapeBug() throws Exception {
         String testString = "'It\\'s a boy!'";
 
-        byte[] testStringAsBytes = testString.getBytes("SJIS");
+        //byte[] testStringAsBytes = testString.getBytes("SJIS");
 
         byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96, (byte) 0x5c, (byte) 0x62, (byte) 0x5c };
 
-        String origString = "\u955c\u8e96\u5c62\\";
+        //String origString = "\u955c\u8e96\u5c62\\";
 
         origByteStream = new byte[] { (byte) 0x8d, (byte) 0xb2, (byte) 0x93, (byte) 0x91, (byte) 0x81, (byte) 0x40, (byte) 0x8c, (byte) 0x5c };
 

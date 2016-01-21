@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,7 +36,7 @@ import com.mysql.cj.core.exceptions.NumberOutOfRange;
  */
 public class IntegerBoundsEnforcerTest {
     ValueFactory<String> rawStringVf = new StringValueFactory();
-    ValueFactory<String> enforcing100Vf = new IntegerBoundsEnforcer(this.rawStringVf, -100, 100);
+    ValueFactory<String> enforcing100Vf = new IntegerBoundsEnforcer<String>(this.rawStringVf, -100, 100);
 
     @Test
     public void testWithinBounds() {

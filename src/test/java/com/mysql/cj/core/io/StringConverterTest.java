@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -58,7 +58,7 @@ public class StringConverterTest {
     @Test
     public void testBooleanFromString() {
         // true/false are the only values we support
-        ValueFactory<Boolean> sc = new StringConverter(null, new BooleanValueFactory());
+        ValueFactory<Boolean> sc = new StringConverter<Boolean>(null, new BooleanValueFactory());
         assertEquals(true, sc.createFromBytes("true".getBytes(), 0, 4));
         assertEquals(false, sc.createFromBytes("false".getBytes(), 0, 5));
         try {

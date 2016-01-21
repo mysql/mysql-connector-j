@@ -150,7 +150,7 @@ public class JsonParser {
                 if (ch == StructuralToken.LCRBRACKET.CHAR) {
                     leftBrackets++;
                 }
-                if ((key = nextKey(reader)) != "") {
+                if (!(key = nextKey(reader)).equals("")) {
                     try {
                         doc.put(key, nextValue(reader));
                     } catch (WrongArgumentException ex) {

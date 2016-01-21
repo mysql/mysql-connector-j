@@ -609,7 +609,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String originalConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
 
             for (int i = 0; i < 50; i++) {
-                failoverConnection.createStatement().executeQuery("SELECT 1");
+                failoverConnection.createStatement().execute("SELECT 1");
             }
 
             UnreliableSocketFactory.dontDownHost("master");
@@ -621,7 +621,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals("/master", UnreliableSocketFactory.getHostFromLastConnection());
             assertFalse(newConnectionId.equals(originalConnectionId));
 
-            failoverConnection.createStatement().executeQuery("SELECT 1");
+            failoverConnection.createStatement().execute("SELECT 1");
         } finally {
             UnreliableSocketFactory.flushAllStaticData();
 
@@ -3144,11 +3144,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         assertTrue(detectedDeadConn);
-        rConn.prepareStatement("SELECT 1").executeQuery();
+        rConn.prepareStatement("SELECT 1").execute();
 
         Connection rConn2 = getConnectionWithProps(
                 "autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
-        rConn2.prepareStatement("SELECT 1").executeQuery();
+        rConn2.prepareStatement("SELECT 1").execute();
 
     }
 
@@ -3183,7 +3183,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
 
-            testStmt.executeQuery("SELECT 1");
+            testStmt.execute("SELECT 1");
         }
         testConn.close();
     }

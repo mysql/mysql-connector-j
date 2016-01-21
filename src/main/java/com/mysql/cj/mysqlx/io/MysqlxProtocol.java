@@ -354,9 +354,8 @@ public class MysqlxProtocol implements Protocol {
             if (this.reader.getNextMessageClass() == FetchDone.class) {
                 // possibly bug in xplugin sending FetchDone immediately following FetchDoneMoreResultsets
                 return false;
-            } else {
-                return true;
             }
+            return true;
         }
         return false;
     }
@@ -380,6 +379,7 @@ public class MysqlxProtocol implements Protocol {
     /**
      * @todo option for brief metadata (types only)
      */
+    @SuppressWarnings("unchecked")
     public void sendSqlStatement(String statement, Object args) {
         this.writer.write(this.msgBuilder.buildSqlStatement(statement, (List<Any>) args));
     }
@@ -565,6 +565,7 @@ public class MysqlxProtocol implements Protocol {
         return new MysqlxRowInputStream(metadata, this);
     }
 
+    @SuppressWarnings("unchecked")
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, final String metadataCharacterSet) {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet));

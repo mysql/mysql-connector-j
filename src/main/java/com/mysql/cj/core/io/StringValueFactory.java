@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,9 +56,8 @@ public class StringValueFactory implements ValueFactory<String> {
     public String createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (nanos > 0) {
             return String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, nanos);
-        } else {
-            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
         }
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     /**
@@ -90,7 +89,7 @@ public class StringValueFactory implements ValueFactory<String> {
      * byte array using the platform encoding.
      */
     public String createFromBytes(byte[] bytes, int offset, int length) {
-        return StringUtils.toString(bytes, offset, length, encoding);
+        return StringUtils.toString(bytes, offset, length, this.encoding);
     }
 
     public String createFromNull() {

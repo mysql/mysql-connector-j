@@ -2485,7 +2485,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        setSQLXML(parameterIndex, xmlObject);
+        super.setSQLXML(parameterIndex, xmlObject);
     }
 
 }

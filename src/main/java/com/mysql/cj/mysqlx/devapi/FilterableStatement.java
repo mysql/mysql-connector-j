@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,6 +40,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
         this.filterParams = new FilterParams(schemaName, collectionName, isRelational);
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T where(String searchCondition) {
         this.filterParams.setCriteria(searchCondition);
         return (STMT_T) this;
@@ -49,11 +50,13 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
         return orderBy(sortFields);
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T orderBy(String sortFields) {
         this.filterParams.setOrder(sortFields);
         return (STMT_T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
         return (STMT_T) this;
@@ -63,6 +66,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
         return offset(limitOffset);
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T offset(long limitOffset) {
         this.filterParams.setOffset(limitOffset);
         return (STMT_T) this;
@@ -75,11 +79,13 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
         return this.filterParams.isRelational();
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T clearBindings() {
         this.filterParams.clearArgs();
         return (STMT_T) this;
     }
 
+    @SuppressWarnings("unchecked")
     public STMT_T bind(String argName, Object value) {
         this.filterParams.addArg(argName, value);
         return (STMT_T) this;

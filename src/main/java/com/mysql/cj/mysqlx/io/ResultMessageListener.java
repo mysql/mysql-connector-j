@@ -100,11 +100,10 @@ public class ResultMessageListener implements MessageListener {
         // accumulate metadata and deliver to listener on first non-metadata message
         if (ColumnMetaData.class.equals(msgClass)) {
             return handleColumn(ColumnMetaData.class.cast(msg));
-        } else {
-            if (!this.metadataSent) {
-                this.callbacks.onMetadata(this.metadata);
-                this.metadataSent = true;
-            }
+        }
+        if (!this.metadataSent) {
+            this.callbacks.onMetadata(this.metadata);
+            this.metadataSent = true;
         }
 
         if (StmtExecuteOk.class.equals(msgClass)) {

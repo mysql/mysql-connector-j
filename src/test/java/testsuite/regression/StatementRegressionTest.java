@@ -3927,8 +3927,8 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(minBooleanVal, oRetVal);
     }
 
-    public void testBug33823() {
-        new ResultSetInternalMethods() {
+    public void testBug33823() throws Exception {
+        ResultSetInternalMethods resultSetInternalMethods = new ResultSetInternalMethods() {
 
             public void buildIndexMapping() throws SQLException {
             }
@@ -4510,10 +4510,6 @@ public class StatementRegressionTest extends BaseTestCase {
                 return false;
             }
 
-            public int getBytesSize() throws SQLException {
-                return 0;
-            }
-
             public RowId getRowId(int columnIndex) throws SQLException {
                 return null;
             }
@@ -4687,6 +4683,8 @@ public class StatementRegressionTest extends BaseTestCase {
                 return null;
             }
         };
+
+        resultSetInternalMethods.close();
     }
 
     /**

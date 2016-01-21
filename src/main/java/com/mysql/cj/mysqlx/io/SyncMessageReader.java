@@ -94,6 +94,7 @@ public class SyncMessageReader implements MessageReader {
         return this.messageType;
     }
 
+    @SuppressWarnings("unchecked")
     public Class<? extends GeneratedMessage> getNextMessageClass() {
         int type = getNextMessageType(); // forces header read if necessary
         Class<? extends GeneratedMessage> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
@@ -134,6 +135,7 @@ public class SyncMessageReader implements MessageReader {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends GeneratedMessage> T read(Class<T> expectedClass) {
         Class<? extends GeneratedMessage> messageClass = getNextMessageClass();
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,9 +56,8 @@ public class CJCommunicationsException extends CJException {
     public String getMessage() {
         if (this.exceptionMessage != null) {
             return this.exceptionMessage;
-        } else {
-            return super.getMessage();
         }
+        return super.getMessage();
     }
 
     public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {

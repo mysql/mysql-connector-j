@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -52,6 +52,10 @@ public interface Statement<STMT_T, RES_T> {
 
     /**
      * Bind the named argument to the given value.
+     * 
+     * @param argName
+     * @param value
+     * @return
      */
     default STMT_T bind(String argName, Object value) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
@@ -60,6 +64,7 @@ public interface Statement<STMT_T, RES_T> {
     /**
      * Bind the set of arguments named by the keys in the map to the associated values in the map.
      */
+    @SuppressWarnings("unchecked")
     default STMT_T bind(Map<String, Object> values) {
         clearBindings();
         values.entrySet().forEach(e -> bind(e.getKey(), e.getValue()));
@@ -69,6 +74,7 @@ public interface Statement<STMT_T, RES_T> {
     /**
      * Bind a list of objects numerically starting at 0.
      */
+    @SuppressWarnings("unchecked")
     default STMT_T bind(List<Object> values) {
         clearBindings();
         IntStream.range(0, values.size()).forEach(i -> bind(String.valueOf(i), values.get(i)));

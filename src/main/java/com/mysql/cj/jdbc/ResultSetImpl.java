@@ -1615,7 +1615,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 return Long.valueOf(getLong(columnIndex));
 
             case BIGINT:
-                Long.valueOf(getLong(columnIndex));
+                return Long.valueOf(getLong(columnIndex));
 
             case BIGINT_UNSIGNED:
                 return getBigInteger(columnIndex);

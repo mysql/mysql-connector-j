@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package com.mysql.cj.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -46,7 +47,9 @@ import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 
-public class ConnectionString {
+public class ConnectionString implements Serializable {
+
+    private static final long serialVersionUID = 2456319605323399348L;
 
     public enum ConnectionStringType {
         SINGLE_CONNECTION("jdbc:mysql://") {
@@ -253,6 +256,7 @@ public class ConnectionString {
 
     private static final String ALLOWED_QUOTES = "\"'";
 
+    @SuppressWarnings("deprecation")
     public static Properties parseUrl(String url, Properties defaults) {
 
         if (url == null) {

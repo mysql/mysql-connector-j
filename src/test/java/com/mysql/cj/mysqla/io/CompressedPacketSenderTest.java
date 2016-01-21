@@ -47,7 +47,7 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
      * Test utility to transform a buffer containing compressed packets into a sequence of payloads.
      */
     static class CompressedPackets {
-        private byte[] packetData;
+        byte[] packetData;
         private ByteArrayOutputStream decompressedStream;
 
         byte[] payload;

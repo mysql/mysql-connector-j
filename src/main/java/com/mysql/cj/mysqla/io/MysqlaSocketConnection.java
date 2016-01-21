@@ -42,21 +42,21 @@ import com.mysql.cj.core.io.ReadAheadInputStream;
 public class MysqlaSocketConnection extends AbstractSocketConnection implements SocketConnection {
 
     @Override
-    public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log,
+    public void connect(String hostName, int portNumber, Properties props, PropertySet propSet, ExceptionInterceptor excInterceptor, Log log,
             int loginTimeout) {
 
         // TODO we don't need both Properties and PropertySet in method params
 
         try {
-            this.port = port;
-            this.host = host;
-            this.propertySet = propertySet;
-            this.exceptionInterceptor = exceptionInterceptor;
+            this.port = portNumber;
+            this.host = hostName;
+            this.propertySet = propSet;
+            this.exceptionInterceptor = excInterceptor;
 
-            this.socketFactory = createSocketFactory(propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue());
+            this.socketFactory = createSocketFactory(propSet.getStringReadableProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue());
             this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, loginTimeout);
 
-            int socketTimeout = propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
+            int socketTimeout = propSet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
             if (socketTimeout != 0) {
                 try {
                     this.mysqlSocket.setSoTimeout(socketTimeout);
@@ -68,10 +68,10 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
             this.mysqlSocket = this.socketFactory.beforeHandshake();
 
             InputStream rawInputStream;
-            if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
+            if (propSet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
                 rawInputStream = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384,
-                        propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
-            } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
+                        propSet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
+            } else if (propSet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
                 rawInputStream = this.mysqlSocket.getInputStream();
             } else {
                 rawInputStream = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
@@ -80,7 +80,7 @@ public class MysqlaSocketConnection extends AbstractSocketConnection implements 
             this.mysqlInput = new FullReadInputStream(rawInputStream);
             this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(propertySet, null, 0, 0, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(propSet, null, 0, 0, ioEx, getExceptionInterceptor());
         }
     }
 

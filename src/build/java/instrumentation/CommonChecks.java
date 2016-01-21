@@ -23,21 +23,12 @@
 
 package instrumentation;
 
-import java.io.InputStream;
-import java.io.Reader;
 import java.sql.Savepoint;
-import java.sql.Statement;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Executor;
 
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
-import com.mysql.cj.jdbc.MysqlSavepoint;
-import com.mysql.cj.jdbc.ServerPreparedStatement.BindValue;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
-import com.mysql.cj.mysqla.io.Buffer;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -50,25 +41,25 @@ public class CommonChecks {
 
         // params classes
         CtClass ctClazz = pool.get(Class.class.getName());
-        CtClass ctClob = pool.get(java.sql.Clob.class.getName());
-        CtClass ctBindValue = pool.get(BindValue.class.getName());
+        //CtClass ctClob = pool.get(java.sql.Clob.class.getName());
+        //CtClass ctBindValue = pool.get(BindValue.class.getName());
         CtClass ctBool = pool.get(boolean.class.getName());
-        CtClass ctBoolArray = pool.get(boolean[].class.getName());
-        CtClass ctByteArray2 = pool.get(byte[][].class.getName());
-        CtClass ctBuffer = pool.get(Buffer.class.getName());
-        CtClass ctExecutor = pool.get(Executor.class.getName());
-        CtClass ctFieldArray = pool.get(Field[].class.getName());
+        //CtClass ctBoolArray = pool.get(boolean[].class.getName());
+        //CtClass ctByteArray2 = pool.get(byte[][].class.getName());
+        //CtClass ctBuffer = pool.get(Buffer.class.getName());
+        //CtClass ctExecutor = pool.get(Executor.class.getName());
+        //CtClass ctFieldArray = pool.get(Field[].class.getName());
         CtClass ctInt = pool.get(int.class.getName());
         CtClass ctIntArray = pool.get(int[].class.getName());
-        CtClass ctInputStreamArray = pool.get(InputStream[].class.getName());
-        CtClass ctLong = pool.get(long.class.getName());
+        //CtClass ctInputStreamArray = pool.get(InputStream[].class.getName());
+        //CtClass ctLong = pool.get(long.class.getName());
         CtClass ctMap = pool.get(Map.class.getName());
-        CtClass ctMysqlSavepoint = pool.get(MysqlSavepoint.class.getName());
+        //CtClass ctMysqlSavepoint = pool.get(MysqlSavepoint.class.getName());
         CtClass ctObjectArray = pool.get(Object[].class.getName());
-        CtClass ctProperties = pool.get(Properties.class.getName());
-        CtClass ctReader = pool.get(Reader.class.getName());
+        //CtClass ctProperties = pool.get(Properties.class.getName());
+        //CtClass ctReader = pool.get(Reader.class.getName());
         CtClass ctSavepoint = pool.get(Savepoint.class.getName());
-        CtClass ctStatement = pool.get(Statement.class.getName());
+        //CtClass ctStatement = pool.get(Statement.class.getName());
         CtClass ctString = pool.get(String.class.getName());
         CtClass ctStringArray = pool.get(String[].class.getName());
 

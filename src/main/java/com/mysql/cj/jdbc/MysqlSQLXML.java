@@ -176,7 +176,8 @@ public class MysqlSQLXML implements SQLXML {
         return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
     }
 
-    public synchronized Source getSource(Class clazz) throws SQLException {
+    @SuppressWarnings("unchecked")
+    public <T extends Source> T getSource(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
 
@@ -193,7 +194,7 @@ public class MysqlSQLXML implements SQLXML {
                 inputSource = new InputSource(new StringReader(this.stringRep));
             }
 
-            return new SAXSource(inputSource);
+            return (T) new SAXSource(inputSource);
         } else if (clazz.equals(DOMSource.class)) {
             try {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -208,7 +209,7 @@ public class MysqlSQLXML implements SQLXML {
                     inputSource = new InputSource(new StringReader(this.stringRep));
                 }
 
-                return new DOMSource(builder.parse(inputSource));
+                return (T) new DOMSource(builder.parse(inputSource));
             } catch (Throwable t) {
                 SQLException sqlEx = SQLError.createSQLException(t.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
                 throw sqlEx;
@@ -223,7 +224,7 @@ public class MysqlSQLXML implements SQLXML {
                 reader = new StringReader(this.stringRep);
             }
 
-            return new StreamSource(reader);
+            return (T) new StreamSource(reader);
         } else if (clazz.equals(StAXSource.class)) {
             try {
                 Reader reader = null;
@@ -234,7 +235,7 @@ public class MysqlSQLXML implements SQLXML {
                     reader = new StringReader(this.stringRep);
                 }
 
-                return new StAXSource(this.inputFactory.createXMLStreamReader(reader));
+                return (T) new StAXSource(this.inputFactory.createXMLStreamReader(reader));
             } catch (XMLStreamException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
                 throw sqlEx;
@@ -275,7 +276,8 @@ public class MysqlSQLXML implements SQLXML {
         return this.asStringWriter;
     }
 
-    public synchronized Result setResult(Class clazz) throws SQLException {
+    @SuppressWarnings("unchecked")
+    public synchronized <T extends Result> T setResult(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
 
@@ -292,21 +294,21 @@ public class MysqlSQLXML implements SQLXML {
 
             this.asSAXResult = new SAXResult(this.saxToReaderConverter);
 
-            return this.asSAXResult;
+            return (T) this.asSAXResult;
         } else if (clazz.equals(DOMResult.class)) {
 
             this.asDOMResult = new DOMResult();
-            return this.asDOMResult;
+            return (T) this.asDOMResult;
 
         } else if (clazz.equals(StreamResult.class)) {
-            return new StreamResult(setCharacterStreamInternal());
+            return (T) new StreamResult(setCharacterStreamInternal());
         } else if (clazz.equals(StAXResult.class)) {
             try {
                 if (this.outputFactory == null) {
                     this.outputFactory = XMLOutputFactory.newInstance();
                 }
 
-                return new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
+                return (T) new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
             } catch (XMLStreamException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
                 throw sqlEx;
@@ -495,11 +497,11 @@ public class MysqlSQLXML implements SQLXML {
         }
 
         @Override
-        public void characters(char buf[], int offset, int len) throws SAXException {
+        public void characters(char buffer[], int offset, int len) throws SAXException {
             if (!this.inCDATA) {
-                escapeCharsForXml(buf, offset, len, false);
+                escapeCharsForXml(buffer, offset, len, false);
             } else {
-                this.buf.append(buf, offset, len);
+                this.buf.append(buffer, offset, len);
             }
         }
 
@@ -546,14 +548,14 @@ public class MysqlSQLXML implements SQLXML {
             }
         }
 
-        private void escapeCharsForXml(char[] buf, int offset, int len, boolean isAttributeData) {
+        private void escapeCharsForXml(char[] buffer, int offset, int len, boolean isAttributeData) {
 
-            if (buf == null) {
+            if (buffer == null) {
                 return;
             }
 
             for (int i = 0; i < len; i++) {
-                escapeCharsForXml(buf[offset + i], isAttributeData);
+                escapeCharsForXml(buffer[offset + i], isAttributeData);
             }
         }
 

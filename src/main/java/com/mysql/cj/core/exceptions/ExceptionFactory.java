@@ -62,6 +62,13 @@ public class ExceptionFactory {
         return createException(CJException.class, message, interceptor);
     }
 
+    /**
+     * 
+     * @param clazz
+     * @param message
+     * @param interceptor
+     * @return
+     */
     public static <T extends CJException> T createException(Class<T> clazz, String message, ExceptionInterceptor interceptor) {
         T sqlEx = createException(clazz, message);
 
@@ -114,6 +121,14 @@ public class ExceptionFactory {
         return ex;
     }
 
+    /**
+     * 
+     * @param clazz
+     * @param message
+     * @param cause
+     * @param interceptor
+     * @return
+     */
     public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause, ExceptionInterceptor interceptor) {
         T sqlEx = createException(clazz, message, cause);
 

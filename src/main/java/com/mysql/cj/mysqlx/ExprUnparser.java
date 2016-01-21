@@ -129,9 +129,8 @@ public class ExprUnparser {
                 s = s + "->$" + documentPathToString(e.getDocumentPathList());
             }
             return s;
-        } else {
-            return "$" + documentPathToString(e.getDocumentPathList());
         }
+        return "$" + documentPathToString(e.getDocumentPathList());
     }
 
     /**

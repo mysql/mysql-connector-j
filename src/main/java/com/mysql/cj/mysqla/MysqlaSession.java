@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqla;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.SocketAddress;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -67,7 +68,9 @@ import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 
-public class MysqlaSession extends AbstractSession implements Session {
+public class MysqlaSession extends AbstractSession implements Session, Serializable {
+
+    private static final long serialVersionUID = 5323638898749073419L;
 
     protected transient MysqlaProtocol protocol;
 

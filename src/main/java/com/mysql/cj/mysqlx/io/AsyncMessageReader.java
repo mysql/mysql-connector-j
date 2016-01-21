@@ -389,9 +389,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 if (MysqlxError.class.equals(ex.getCause().getClass())) {
                     // wrap the other thread's exception and include this thread's context
                     throw new MysqlxError((MysqlxError) ex.getCause());
-                } else {
-                    throw new CJCommunicationsException(ex);
                 }
+                throw new CJCommunicationsException(ex);
             } catch (InterruptedException ex) {
                 throw new CJCommunicationsException(ex);
             }

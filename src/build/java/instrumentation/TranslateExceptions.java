@@ -25,17 +25,13 @@ package instrumentation;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.TreeMap;
 
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
@@ -118,13 +114,13 @@ public class TranslateExceptions {
         CtClass ctProperties = pool.get(Properties.class.getName());
         CtClass ctResultSet = pool.get(ResultSet.class.getName());
         CtClass ctResultSetInternalMethods = pool.get(ResultSetInternalMethods.class.getName());
-        CtClass ctSqlDate = pool.get(Date.class.getName());
+        //CtClass ctSqlDate = pool.get(Date.class.getName());
         CtClass ctStatement = pool.get(java.sql.Statement.class.getName());
         CtClass ctStatementImpl = pool.get(StatementImpl.class.getName());
         CtClass ctString = pool.get(String.class.getName());
-        CtClass ctTime = pool.get(Time.class.getName());
-        CtClass ctTimestamp = pool.get(Timestamp.class.getName());
-        CtClass ctTimeZone = pool.get(TimeZone.class.getName());
+        //CtClass ctTime = pool.get(Time.class.getName());
+        //CtClass ctTimestamp = pool.get(Timestamp.class.getName());
+        //CtClass ctTimeZone = pool.get(TimeZone.class.getName());
 
         // class we want to instrument
         CtClass clazz;

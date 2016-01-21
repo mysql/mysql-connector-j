@@ -96,6 +96,7 @@ public interface MessageReader {
         // TODO: 
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends GeneratedMessage> T parseNotice(ByteString payload, Class<T> noticeClass) {
         try {
             Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);

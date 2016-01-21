@@ -106,9 +106,8 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
             // integer
             if (s.charAt(0) == '-') {
                 return stringInterpreter.decodeInt8(bytes, 0, bytes.length, vf);
-            } else {
-                return stringInterpreter.decodeUInt8(bytes, 0, bytes.length, vf);
             }
+            return stringInterpreter.decodeUInt8(bytes, 0, bytes.length, vf);
         } else if (s.length() == MysqlTextValueDecoder.DATE_BUF_LEN && s.charAt(4) == '-' && s.charAt(7) == '-') {
             return stringInterpreter.decodeDate(bytes, 0, bytes.length, vf);
         } else if (s.length() >= MysqlTextValueDecoder.TIME_STR_LEN_MIN && s.length() <= MysqlTextValueDecoder.TIME_STR_LEN_MAX && s.charAt(2) == ':'
