@@ -23,7 +23,6 @@
 
 package com.mysql.cj.jdbc;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -1691,9 +1690,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         for (int attemptCount = 0; (attemptCount < getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue())
                 && !connectionGood; attemptCount++) {
             try {
-                if (this.session != null) {
-                    this.session.forceClose();
-                }
+                this.session.forceClose();
 
                 this.session.connect(getProxy(), this.origConnectionString, mergedProps, this.user, this.password, this.database,
                         DriverManager.getLoginTimeout() * 1000);
@@ -2087,8 +2084,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             } catch (Exception ex) {
                 if (this.autoReconnect.getValue()) {
                     this.needsPing = true;
-                } else if (ex instanceof IOException) {
-                    cleanup(ex);
+                    //} else if (ex instanceof IOException) {
+                    //    cleanup(ex);
                 }
 
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnexpectedException"), SQLError.SQL_STATE_GENERAL_ERROR,

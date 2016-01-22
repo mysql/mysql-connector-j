@@ -148,6 +148,12 @@ public class CollectionImpl implements Collection {
     }
 
     @Override
+    public int hashCode() {
+        assert false : "hashCode not designed";
+        return 0;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("Collection(");
         sb.append(ExprUnparser.quoteIdentifier(this.schema.getName()));

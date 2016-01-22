@@ -96,8 +96,6 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     private static final String EXPLAINABLE_STATEMENT = "SELECT";
     private static final String[] EXPLAINABLE_STATEMENT_EXTENSION = new String[] { "INSERT", "UPDATE", "REPLACE", "DELETE" };
 
-    protected JdbcConnection connection;
-
     protected MysqlaServerSession serverSession;
 
     /** Track this to manually shut down. */
@@ -191,7 +189,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     @Override
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
 
-        this.connection = (JdbcConnection) conn;
+        this.connection = conn;
         this.setPropertySet(propSet);
 
         this.socketConnection = phConnection;
@@ -239,7 +237,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         this.authProvider.init(conn, this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
         // TODO Initialize ResultsHandler properly
-        this.resultsHandler = new MysqlIO(this, this.getPropertySet(), this.connection);
+        this.resultsHandler = new MysqlIO(this, this.getPropertySet(), (JdbcConnection) this.connection);
     }
 
     /**
@@ -287,7 +285,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
     @Override
     public void rejectConnection(String message) {
         try {
-            this.connection.close();
+            ((JdbcConnection) this.connection).close();
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
         }
@@ -489,7 +487,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             // TODO: we can't cleanly handle OOM and we shouldn't even try. we should remove ALL of these except for the one allocating the large buffer for sending a file (iirc)
         } catch (OutOfMemoryError oom) {
             try {
-                this.connection.realClose(false, false, true, oom);
+                ((JdbcConnection) this.connection).realClose(false, false, true, oom);
             } catch (Exception ex) {
             }
             throw oom;
@@ -657,9 +655,9 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         int transState = this.serverSession.getTransactionState();
         try {
             if (transState == ServerSession.TRANSACTION_COMPLETED) {
-                this.connection.transactionCompleted();
+                ((JdbcConnection) this.connection).transactionCompleted();
             } else if (transState == ServerSession.TRANSACTION_STARTED) {
-                this.connection.transactionBegun();
+                ((JdbcConnection) this.connection).transactionBegun();
             }
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
@@ -1026,7 +1024,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             } catch (Exception ex) {
             }
             try {
-                this.connection.realClose(false, false, true, oom);
+                ((JdbcConnection) this.connection).realClose(false, false, true, oom);
             } catch (Exception ex) {
             }
             throw oom;
@@ -1117,7 +1115,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             long queryStartTime = 0;
             long queryEndTime = 0;
 
-            String statementComment = this.connection.getStatementComment();
+            String statementComment = ((JdbcConnection) this.connection).getStatementComment();
 
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
                 statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
@@ -1193,7 +1191,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 }
 
                 StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
-                this.connection.generateConnectionCommentBlock(debugBuf);
+                ((JdbcConnection) this.connection).generateConnectionCommentBlock(debugBuf);
                 debugBuf.append(testcaseQuery);
                 debugBuf.append(';');
                 TestUtils.dumpTestcaseQuery(debugBuf.toString());
@@ -1224,9 +1222,9 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                     if (!this.useAutoSlowLog) {
                         logSlow = queryTime > this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
                     } else {
-                        logSlow = this.connection.isAbonormallyLongQuery(queryTime);
+                        logSlow = ((JdbcConnection) this.connection).isAbonormallyLongQuery(queryTime);
 
-                        this.connection.reportQueryTime(queryTime);
+                        ((JdbcConnection) this.connection).reportQueryTime(queryTime);
                     }
 
                     if (logSlow) {
@@ -1391,7 +1389,8 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
                 //}
 
                 try {
-                    ResultSetInternalMethods interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement, this.connection);
+                    ResultSetInternalMethods interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement,
+                            (JdbcConnection) this.connection);
 
                     if (interceptedResultSet != null) {
                         previousResultSet = interceptedResultSet;
@@ -1419,7 +1418,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
                 try {
                     ResultSetInternalMethods interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet,
-                            this.connection, this.getWarningCount(), this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
+                            (JdbcConnection) this.connection, this.getWarningCount(), this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
 
                     if (interceptedResultSet != null) {
                         originalResultSet = interceptedResultSet;
@@ -1464,7 +1463,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             java.sql.ResultSet rs = null;
 
             try {
-                stmt = (PreparedStatement) this.connection.clientPrepareStatement("EXPLAIN ?");
+                stmt = (PreparedStatement) ((JdbcConnection) this.connection).clientPrepareStatement("EXPLAIN ?");
                 stmt.setBytesNoEscapeNoQuotes(1, querySQL);
                 rs = stmt.executeQuery();
 
@@ -1544,7 +1543,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             try {
-                this.connection.realClose(false, false, true, oom);
+                ((JdbcConnection) this.connection).realClose(false, false, true, oom);
             } catch (Exception ex) {
             }
             throw oom;
@@ -1716,7 +1715,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
 
     @Override
     public JdbcConnection getConnection() {
-        return this.connection;
+        return (JdbcConnection) this.connection;
     }
 
     public void setConnection(JdbcConnection connection) {

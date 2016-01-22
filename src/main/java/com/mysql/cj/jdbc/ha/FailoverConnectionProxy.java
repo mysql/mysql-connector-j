@@ -146,21 +146,21 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      */
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
-        if (!(t instanceof SQLException)) {
-            return false;
+
+        String sqlState = null;
+        if (t instanceof CommunicationsException || t instanceof CJCommunicationsException) {
+            return true;
+        } else if (t instanceof SQLException) {
+            sqlState = ((SQLException) t).getSQLState();
+        } else if (t instanceof CJException) {
+            sqlState = ((CJException) t).getSQLState();
         }
 
-        String sqlState = ((SQLException) t).getSQLState();
         if (sqlState != null) {
             if (sqlState.startsWith("08")) {
                 // connection error
                 return true;
             }
-        }
-
-        // Always handle CommunicationsException
-        if (t instanceof CommunicationsException || t instanceof CJCommunicationsException) {
-            return true;
         }
 
         return false;

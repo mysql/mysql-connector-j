@@ -179,7 +179,10 @@ public class ConnectionString implements Serializable {
 
     // -------------------------------------------------------------
 
-    public class HostInfo {
+    public class HostInfo implements Serializable {
+
+        private static final long serialVersionUID = 8987442526763929923L;
+
         private String host;
         private int port;
 

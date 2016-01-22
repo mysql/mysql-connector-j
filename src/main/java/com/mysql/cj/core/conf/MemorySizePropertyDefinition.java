@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -45,22 +45,18 @@ public class MemorySizePropertyDefinition extends IntegerPropertyDefinition {
     public Integer parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         this.multiplier = 1;
 
-        if (value != null) {
-            if (value.endsWith("k") || value.endsWith("K") || value.endsWith("kb") || value.endsWith("Kb") || value.endsWith("kB") || value.endsWith("KB")) {
-                this.multiplier = 1024;
-                int indexOfK = StringUtils.indexOfIgnoreCase(value, "k");
-                value = value.substring(0, indexOfK);
-            } else if (value.endsWith("m") || value.endsWith("M") || value.endsWith("mb") || value.endsWith("Mb") || value.endsWith("mB")
-                    || value.endsWith("MB")) {
-                this.multiplier = 1024 * 1024;
-                int indexOfM = StringUtils.indexOfIgnoreCase(value, "m");
-                value = value.substring(0, indexOfM);
-            } else if (value.endsWith("g") || value.endsWith("G") || value.endsWith("gb") || value.endsWith("Gb") || value.endsWith("gB")
-                    || value.endsWith("GB")) {
-                this.multiplier = 1024 * 1024 * 1024;
-                int indexOfG = StringUtils.indexOfIgnoreCase(value, "g");
-                value = value.substring(0, indexOfG);
-            }
+        if (value.endsWith("k") || value.endsWith("K") || value.endsWith("kb") || value.endsWith("Kb") || value.endsWith("kB") || value.endsWith("KB")) {
+            this.multiplier = 1024;
+            int indexOfK = StringUtils.indexOfIgnoreCase(value, "k");
+            value = value.substring(0, indexOfK);
+        } else if (value.endsWith("m") || value.endsWith("M") || value.endsWith("mb") || value.endsWith("Mb") || value.endsWith("mB") || value.endsWith("MB")) {
+            this.multiplier = 1024 * 1024;
+            int indexOfM = StringUtils.indexOfIgnoreCase(value, "m");
+            value = value.substring(0, indexOfM);
+        } else if (value.endsWith("g") || value.endsWith("G") || value.endsWith("gb") || value.endsWith("Gb") || value.endsWith("gB") || value.endsWith("GB")) {
+            this.multiplier = 1024 * 1024 * 1024;
+            int indexOfG = StringUtils.indexOfIgnoreCase(value, "g");
+            value = value.substring(0, indexOfG);
         }
 
         return super.parseObject(value, exceptionInterceptor);

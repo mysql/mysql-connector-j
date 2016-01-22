@@ -130,6 +130,12 @@ public class SchemaImpl implements Schema {
     }
 
     @Override
+    public int hashCode() {
+        assert false : "hashCode not designed";
+        return 0;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("Schema(");
         sb.append(ExprUnparser.quoteIdentifier(this.name));

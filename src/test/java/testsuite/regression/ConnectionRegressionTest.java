@@ -4698,6 +4698,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             testConn = getConnectionWithProps(props);
                             testSt = testConn.createStatement();
                         }
+                        if (testSt == null) {
+                            testSt = testConn.createStatement();
+                        }
                         testSt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER USER() IDENTIFIED BY 'newpwd'" : "SET PASSWORD = PASSWORD('newpwd')");
                         testConn.close();
 
