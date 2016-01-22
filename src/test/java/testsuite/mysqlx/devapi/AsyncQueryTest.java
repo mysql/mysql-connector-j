@@ -156,6 +156,7 @@ public class AsyncQueryTest extends CollectionTest {
         String json = "{'n':1}".replaceAll("'", "\"");
         this.collection.add(json).execute();
 
+        @SuppressWarnings("unchecked")
         CompletableFuture<Result> futures[] = new CompletableFuture[50];
 
         for (int i = 0; i < 50; ++i) {

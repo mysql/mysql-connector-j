@@ -31,16 +31,14 @@ import com.mysql.cj.api.x.XSessionFactory;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.x.MysqlxSessionFactory;
 
-import junit.framework.TestCase;
-
-public abstract class BaseMysqlxTestCase extends TestCase {
+public abstract class BaseMysqlxTestCase {
 
     boolean isSetForMySQLxTests = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx) != null; //false; // TODO: System.getProperty(PropertyDefinitions.SYSP_mysqlx_testsuite_url) != null;
     String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
 
     XSessionFactory f = new MysqlxSessionFactory();
 
-    public BaseMysqlxTestCase() throws Exception {
+    public BaseMysqlxTestCase() {
         super();
         // TODO create instance of XSessionFactory
     }

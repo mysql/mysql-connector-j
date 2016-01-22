@@ -53,8 +53,8 @@ public class ResultCreatingResultListener<RES_T> implements ResultListener {
         this.future = future;
     }
 
-    public void onMetadata(ArrayList<Field> metadata) {
-        this.metadata = metadata;
+    public void onMetadata(ArrayList<Field> metadataFields) {
+        this.metadata = metadataFields;
     }
 
     public void onRow(MysqlxRow r) {

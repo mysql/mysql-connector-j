@@ -3162,6 +3162,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         varConn.close();
     }
 
+    @SuppressWarnings("resource")
     public void testChangeUser() throws Exception {
         Properties props = getPropertiesFromTestsuiteUrl();
 
@@ -4387,6 +4388,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 throw e1;
             }
 
+            testSt.close();
+            testConn.close();
+
             try {
                 props.setProperty(PropertyDefinitions.PNAME_characterSetResults, "SJIS");
                 testConn = getConnectionWithProps(props);
@@ -4684,11 +4688,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         testConn = getConnectionWithProps(props);
                         testSt = testConn.createStatement();
                         testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+                        testRs.close();
                         fail("SQLException expected due to password expired");
 
                     } catch (PasswordExpiredException | ClosedOnExpiredPasswordException | SQLException e3) {
                         if (e3 instanceof SQLException && (((SQLException) e3).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN)
                                 || e3 instanceof ClosedOnExpiredPasswordException) {
+                            testSt.close();
                             testConn = getConnectionWithProps(props);
                             testSt = testConn.createStatement();
                         }

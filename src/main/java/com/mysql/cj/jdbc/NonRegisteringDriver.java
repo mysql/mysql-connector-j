@@ -219,7 +219,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 default:
                     return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr, ConnectionString.host(conStr.getProperties()),
-                            ConnectionString.port(conStr.getProperties()), conStr.getProperties(), database(conStr.getProperties()), url);
+                            ConnectionString.port(conStr.getProperties()), conStr.getProperties());
 
             }
 
@@ -233,18 +233,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
         ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
         connectionPhantomRefs.put(phantomRef, phantomRef);
-    }
-
-    /**
-     * Returns the database property from <code>props</code>
-     * 
-     * @param props
-     *            the Properties to look for the database property.
-     * 
-     * @return the database name.
-     */
-    public String database(Properties props) {
-        return props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
     /**

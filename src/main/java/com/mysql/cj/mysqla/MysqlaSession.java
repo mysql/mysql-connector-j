@@ -90,8 +90,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     protected ModifiableProperty<Integer> socketTimeout;
 
-    public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo,
-            String url, PropertySet propSet) {
+    public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, PropertySet propSet) {
         this.propertySet = propSet;
 
         this.hostToConnectTo = hostToConnectTo;

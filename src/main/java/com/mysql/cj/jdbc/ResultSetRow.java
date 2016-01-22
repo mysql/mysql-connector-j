@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,6 @@ import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.core.io.StringConverter;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -43,15 +42,16 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 public abstract class ResultSetRow {
     protected ExceptionInterceptor exceptionInterceptor;
 
-    private StringConverter stringConverter;
+    //private StringConverter stringConverter;
 
     protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    public void setStringConverter(StringConverter stringConverter) {
-        this.stringConverter = stringConverter;
-    }
+    // TODO is the next method needed?
+    //public void setStringConverter(StringConverter stringConverter) {
+    //    this.stringConverter = stringConverter;
+    //}
 
     /**
      * The metadata of the fields of this result set.

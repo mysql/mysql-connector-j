@@ -180,7 +180,7 @@ public class MysqlIO implements ResultsHandler {
             if (usingCursor) {
                 RowData rows = new RowDataCursor(this.protocol.getServerSession(), this.protocol, prepStmt, fields);
 
-                ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency, isBinaryEncoded);
+                ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency);
 
                 if (usingCursor) {
                     rs.setFetchSize(callingStatement.getFetchSize());
@@ -200,7 +200,7 @@ public class MysqlIO implements ResultsHandler {
         }
 
         ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, (metadataFromCache == null) ? fields : metadataFromCache, rowData, resultSetType,
-                resultSetConcurrency, isBinaryEncoded);
+                resultSetConcurrency);
 
         return rs;
     }
@@ -354,7 +354,7 @@ public class MysqlIO implements ResultsHandler {
                 // * we don't want a buffer row explicitly
                 // * we have a TEXT-encoded result
                 // * we don't have a multi-packet
-                return nextRowFast(packetLength, fields, columnCount);
+                return nextRowFast(packetLength, columnCount);
             }
             // else read the entire packet(s)
             rowPacket = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket(), packetLength);
@@ -411,7 +411,7 @@ public class MysqlIO implements ResultsHandler {
      * Use the 'fast' approach to reading a row. We read everything piece-meal into the byte buffers that are used to back the ByteArrayRow. This avoids reading
      * the entire packet at once.
      */
-    private ResultSetRow nextRowFast(int packetLength, Field[] fields, int columnCount) throws SQLException, IOException {
+    private ResultSetRow nextRowFast(int packetLength, int columnCount) throws SQLException, IOException {
         int remaining = packetLength;
 
         boolean firstTime = true;
@@ -686,7 +686,7 @@ public class MysqlIO implements ResultsHandler {
     }
 
     private ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, Field[] fields, RowData rows, int resultSetType,
-            int resultSetConcurrency, boolean isBinaryEncoded) throws SQLException {
+            int resultSetConcurrency) throws SQLException {
         ResultSetImpl rs = null;
 
         switch (resultSetConcurrency) {

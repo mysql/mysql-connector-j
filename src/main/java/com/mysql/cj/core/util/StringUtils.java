@@ -97,7 +97,7 @@ public class StringUtils {
     // length of MySQL version reference in comments of type '/*![00000] */'
     private static final int NON_COMMENTS_MYSQL_VERSION_REF_LENGTH = 5;
 
-    private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
+    //private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
 
     static final int WILD_COMPARE_MATCH_NO_WILD = 0;
 

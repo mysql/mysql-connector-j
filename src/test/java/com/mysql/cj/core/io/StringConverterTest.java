@@ -36,7 +36,7 @@ import com.mysql.cj.core.exceptions.DataConversionException;
  * types.
  */
 public class StringConverterTest {
-    private StringConverter stringConverter = new StringConverter(null, new StringValueFactory());
+    private StringConverter<String> stringConverter = new StringConverter<String>(null, new StringValueFactory());
 
     @Test
     public void testEmptyStringException() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -89,7 +89,7 @@ public class NodeSessionTest extends BaseDevApiTest {
         SqlStatement stmt = this.session.sql("call basicMultipleResults()");
         SqlResult res = stmt.execute();
         assertTrue(res.hasData());
-        Row r = res.next();
+        /* Row r = */ res.next();
         assertFalse(res.hasNext());
         assertTrue(res.nextResult());
         assertTrue(res.hasData());
@@ -103,7 +103,7 @@ public class NodeSessionTest extends BaseDevApiTest {
         sqlUpdate("drop procedure if exists basicMultipleResults");
         sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
         SqlStatement stmt = this.session.sql("call basicMultipleResults()");
-        SqlResult res = stmt.execute();
+        /* SqlResult res = */ stmt.execute();
         // execute another statement, should work fine
         this.session.sql("call basicMultipleResults()");
         this.session.sql("call basicMultipleResults()");

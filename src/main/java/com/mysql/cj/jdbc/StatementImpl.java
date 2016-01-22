@@ -1089,7 +1089,9 @@ public class StatementImpl implements Statement {
                                         System.arraycopy(updateCounts, 0, newUpdateCounts, 0, commandIndex);
                                     }
 
-                                    throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
+                                    sqlEx = ex;
+                                    break;
+                                    //throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
                                 }
                             }
                         }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -311,7 +311,6 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         String[] hostPortPair = ConnectionString.parseHostPortPair(hostPortSpec);
         String hostName = hostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
         String portNumber = hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX];
-        String dbName = connProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         if (hostName == null) {
             throw new SQLException(Messages.getString("MultiHostConnectionProxy.0"));
@@ -327,8 +326,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         connProps.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "1");
         connProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "false"); // make sure we don't pickup the default value
 
-        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(this.connectionString, hostName, Integer.parseInt(portNumber), connProps, dbName,
-                "jdbc:mysql://" + hostName + ":" + portNumber + "/");
+        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(this.connectionString, hostName, Integer.parseInt(portNumber), connProps);
 
         conn.setProxy(getProxy());
 

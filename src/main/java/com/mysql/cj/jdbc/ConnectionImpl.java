@@ -345,9 +345,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /**
      * Creates a connection instance
      */
-    public static JdbcConnection getInstance(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info,
-            String databaseToConnectTo, String url) throws SQLException {
-        return new ConnectionImpl(connectionString, hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
+    public static JdbcConnection getInstance(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info)
+            throws SQLException {
+        return new ConnectionImpl(connectionString, hostToConnectTo, portToConnectTo, info);
     }
 
     private static final Random random = new Random();
@@ -443,9 +443,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private long minimumNumberTablesAccessed = Long.MAX_VALUE;
 
-    /** The JDBC URL we're using */
-    private String myURL = null;
-
     /** Does this connection need to be tested? */
     private boolean needsPing = false;
 
@@ -527,8 +524,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private int origPortToConnectTo;
 
-    private String origDatabaseToConnectTo;
-
     /*
      * For testing failover scenarios
      */
@@ -589,34 +584,24 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *            the port number the server is listening on
      * @param info
      *            a Properties[] list holding the user and password
-     * @param databaseToConnectTo
-     *            the database to connect to
-     * @param url
-     *            the URL of the connection
      * @param d
      *            the Driver instantation of the connection
      * @exception SQLException
      *                if a database access error occurs
      */
-    public ConnectionImpl(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo,
-            String url) throws SQLException {
+    public ConnectionImpl(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info) throws SQLException {
 
         try {
             this.connectionCreationTimeMillis = System.currentTimeMillis();
-
-            if (databaseToConnectTo == null) {
-                databaseToConnectTo = "";
-            }
 
             // Stash away for later, used to clone this connection for Statement.cancel and Statement.setQueryTimeout().
             //
             this.origConnectionString = connectionString;
             this.origHostToConnectTo = hostToConnectTo;
             this.origPortToConnectTo = portToConnectTo;
-            this.origDatabaseToConnectTo = databaseToConnectTo;
 
             // We need Session ASAP to get access to central driver functionality
-            this.session = new MysqlaSession(this.origConnectionString, hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url, getPropertySet());
+            this.session = new MysqlaSession(this.origConnectionString, hostToConnectTo, portToConnectTo, info, getPropertySet());
 
             // we can't cache fixed values here because properties are still not initialized with user provided values
             this.characterEncoding = getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
@@ -642,8 +627,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
             this.readOnlyPropagatesToServer = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer);
 
-            this.database = databaseToConnectTo;
-            this.myURL = url;
+            this.database = this.origConnectionString.getDatabase();
             this.user = info.getProperty(PropertyDefinitions.PNAME_user);
             this.password = info.getProperty(PropertyDefinitions.PNAME_password);
 
@@ -1893,7 +1877,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
 
-                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.myURL, cacheSize, this.prepStmtCacheSqlLimit.getValue(), this.props);
+                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.origConnectionString.getUrl(), cacheSize,
+                        this.prepStmtCacheSqlLimit.getValue(), this.props);
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
@@ -1989,8 +1974,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public JdbcConnection duplicate() throws SQLException {
-        return new ConnectionImpl(this.origConnectionString, this.origHostToConnectTo, this.origPortToConnectTo, this.props, this.origDatabaseToConnectTo,
-                this.myURL);
+        return new ConnectionImpl(this.origConnectionString, this.origHostToConnectTo, this.origPortToConnectTo, this.props);
     }
 
     /**
@@ -2340,7 +2324,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public String getURL() {
-        return this.myURL;
+        return this.origConnectionString.getUrl();
     }
 
     public String getUser() {
@@ -2774,7 +2758,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             boolean directCompare = true;
 
             String otherHost = ((ConnectionImpl) otherConnection).origHostToConnectTo;
-            String otherOrigDatabase = ((ConnectionImpl) otherConnection).origDatabaseToConnectTo;
+            String otherOrigDatabase = ((ConnectionImpl) otherConnection).origConnectionString.getDatabase();
             String otherCurrentCatalog = ((ConnectionImpl) otherConnection).database;
 
             if (!nullSafeCompare(otherHost, this.origHostToConnectTo)) {
@@ -2785,7 +2769,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (directCompare) {
-                if (!nullSafeCompare(otherOrigDatabase, this.origDatabaseToConnectTo) || !nullSafeCompare(otherCurrentCatalog, this.database)) {
+                if (!nullSafeCompare(otherOrigDatabase, this.origConnectionString.getDatabase()) || !nullSafeCompare(otherCurrentCatalog, this.database)) {
                     directCompare = false;
                 }
             }
@@ -2825,7 +2809,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
 
-                this.serverConfigCache = cacheFactory.getInstance(this, this.myURL, Integer.MAX_VALUE, Integer.MAX_VALUE, this.props);
+                this.serverConfigCache = cacheFactory.getInstance(this, this.origConnectionString.getUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE, this.props);
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 

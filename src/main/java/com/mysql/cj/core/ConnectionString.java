@@ -199,6 +199,7 @@ public class ConnectionString implements Serializable {
     }
 
     public ConnectionStringType connectionStringType;
+    private String url = null;
     private Properties properties = null;
     private Properties masterProps;
     private Properties slavesProps;
@@ -206,6 +207,7 @@ public class ConnectionString implements Serializable {
     private List<String> masterHostList = new ArrayList<String>();
 
     public ConnectionString(String url, Properties info) {
+        this.url = url;
         this.properties = parseUrl(url, info);
 
         if (this.properties == null) {
@@ -232,6 +234,14 @@ public class ConnectionString implements Serializable {
 
         this.connectionStringType.fillPropertiesFromUrl(url, this.properties, this.masterProps, this.slavesProps, this.slaveHostList, this.masterHostList);
 
+    }
+
+    public String getUrl() {
+        return this.url;
+    }
+
+    public String getDatabase() {
+        return database(this.properties);
     }
 
     public Properties getProperties() {
@@ -537,6 +547,19 @@ public class ConnectionString implements Serializable {
      */
     public static int port(Properties props) {
         return Integer.parseInt(props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+    }
+
+    /**
+     * Returns the database property from <code>props</code>
+     * 
+     * @param props
+     *            the Properties to look for the database property.
+     * 
+     * @return the database name.
+     */
+    public static String database(Properties props) {
+        String databaseToConnectTo = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        return databaseToConnectTo == null ? "" : databaseToConnectTo;
     }
 
     public static List<String> getHosts(Properties props) {

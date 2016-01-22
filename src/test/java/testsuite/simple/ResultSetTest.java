@@ -289,10 +289,10 @@ public class ResultSetTest extends BaseTestCase {
         sspsConn.close();
     }
 
-    private void testDateTimeRetrieval_internal(Connection conn) throws Exception {
+    private void testDateTimeRetrieval_internal(Connection c) throws Exception {
         createTable("testDateTypes", "(d DATE, t TIME, dt DATETIME)");
         this.stmt.executeUpdate("INSERT INTO testDateTypes VALUES ('2006-02-01', '-40:20:10', '2006-02-01 12:13:14')");
-        this.rs = conn.createStatement().executeQuery("select d, t, dt from testDateTypes");
+        this.rs = c.createStatement().executeQuery("select d, t, dt from testDateTypes");
         this.rs.next();
 
         // this shows that the decoder properly decodes them

@@ -52,8 +52,6 @@ public class DataTruncationException extends CJException {
      */
     private int transferSize;
 
-    private String exceptionMessage;
-
     public DataTruncationException() {
         super();
     }

@@ -162,7 +162,7 @@ public class SyncMessageReaderTest {
     @Test
     public void testMappingTables() throws InvalidProtocolBufferException {
         for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
-            int type = entry.getValue();
+            /* int type = */entry.getValue();
             Class<? extends GeneratedMessage> messageClass = entry.getKey();
             Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
             assertNotNull(parser);

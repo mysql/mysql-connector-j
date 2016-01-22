@@ -470,7 +470,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             }
 
             if (this.enablePacketDebug) {
-                enqueuePacketForDebugging(false, false, 0, this.packetHeaderBuf, packet);
+                enqueuePacketForDebugging(false, false, this.packetHeaderBuf, packet);
             }
 
             if (this.maintainTimeStats.getValue()) {
@@ -722,7 +722,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         return packetDumpBuf.toString();
     }
 
-    private void enqueuePacketForDebugging(boolean isPacketBeingSent, boolean isPacketReused, int sendLength, byte[] header, Buffer packet) {
+    private void enqueuePacketForDebugging(boolean isPacketBeingSent, boolean isPacketReused, byte[] header, Buffer packet) {
         if ((this.packetDebugRingBuffer.size() + 1) > this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize).getValue()) {
             this.packetDebugRingBuffer.removeFirst();
         }
@@ -991,7 +991,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             }
 
             if (this.enablePacketDebug) {
-                enqueuePacketForDebugging(false, true, 0, this.packetHeaderBuf, reuse);
+                enqueuePacketForDebugging(false, true, this.packetHeaderBuf, reuse);
             }
 
             boolean isMultiPacket = false;

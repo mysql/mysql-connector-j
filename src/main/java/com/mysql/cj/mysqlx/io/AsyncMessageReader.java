@@ -322,7 +322,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
-        CompletableFuture<Class<? extends GeneratedMessage>> clazzF;
+        @SuppressWarnings("unused")
+        CompletableFuture<Class<? extends GeneratedMessage>> clazzF; // TODO why is it not used?
         synchronized (this.pendingMsgMonitor) {
             if (this.pendingMsgClass == null) {
                 try {
