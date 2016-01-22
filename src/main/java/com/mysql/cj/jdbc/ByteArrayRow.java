@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -79,14 +79,10 @@ public class ByteArrayRow extends ResultSetRow {
         return this.internalRowData[index].length;
     }
 
-    @Override
-    public void closeOpenStreams() {
-        // no-op for this type
-    }
-
     /**
      * Implementation of getValue() based on the underlying byte array. Delegate to superclass for decoding.
      */
+    @Override
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
         byte[] columnData = this.internalRowData[columnIndex];
         int length = columnData == null ? 0 : columnData.length;

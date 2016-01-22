@@ -437,10 +437,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                     this.doingUpdates = false;
                 }
 
-                if (this.thisRow != null) {
-                    this.thisRow.closeOpenStreams();
-                }
-
                 if (row == 0) {
                     beforeFirst();
                     b = false;
@@ -488,10 +484,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 this.doingUpdates = false;
             }
 
-            if (this.thisRow != null) {
-                this.thisRow.closeOpenStreams();
-            }
-
             if (this.rowData.size() != 0) {
                 this.rowData.afterLast();
                 this.thisRow = null;
@@ -514,10 +506,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
             if (this.rowData.size() == 0) {
                 return;
-            }
-
-            if (this.thisRow != null) {
-                this.thisRow.closeOpenStreams();
             }
 
             this.rowData.beforeFirst();
@@ -1869,10 +1857,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                     this.doingUpdates = false;
                 }
 
-                if (this.thisRow != null) {
-                    this.thisRow.closeOpenStreams();
-                }
-
                 this.rowData.beforeLast();
                 this.thisRow = this.rowData.next();
             }
@@ -1907,10 +1891,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if (!reallyResult()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"), SQLError.SQL_STATE_GENERAL_ERROR,
                         getExceptionInterceptor());
-            }
-
-            if (this.thisRow != null) {
-                this.thisRow.closeOpenStreams();
             }
 
             if (this.rowData.size() == 0) {
@@ -1951,10 +1931,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         synchronized (checkClosed().getConnectionMutex()) {
 
             int rowIndex = this.rowData.getCurrentRowNumber();
-
-            if (this.thisRow != null) {
-                this.thisRow.closeOpenStreams();
-            }
 
             boolean b = true;
 
@@ -2164,10 +2140,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 setRowPositionValidity();
 
                 return false;
-            }
-
-            if (this.thisRow != null) {
-                this.thisRow.closeOpenStreams();
             }
 
             this.rowData.moveRowRelative(rows);

@@ -23,11 +23,7 @@
 
 package com.mysql.cj.jdbc;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
@@ -86,8 +82,6 @@ public class BufferRow extends ResultSetRow {
      */
     private boolean[] isNull;
 
-    private List<InputStream> openStreams;
-
     public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder)
             throws SQLException {
         super(exceptionInterceptor);
@@ -101,27 +95,6 @@ public class BufferRow extends ResultSetRow {
 
         if (fields != null) {
             setMetadata(fields);
-        }
-    }
-
-    @Override
-    public synchronized void closeOpenStreams() {
-        if (this.openStreams != null) {
-            // This would've looked slicker in a "for" loop but we want to skip over streams that fail to close (they probably won't ever) to be more robust and
-            // close everything we _can_
-
-            Iterator<InputStream> iter = this.openStreams.iterator();
-
-            while (iter.hasNext()) {
-
-                try {
-                    iter.next().close();
-                } catch (IOException e) {
-                    // ignore - it can't really happen in this case
-                }
-            }
-
-            this.openStreams.clear();
         }
     }
 

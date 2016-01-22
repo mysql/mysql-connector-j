@@ -64,12 +64,6 @@ public abstract class ResultSetRow {
     private boolean wasNull;
 
     /**
-     * Called during navigation to next row to close all open
-     * streams.
-     */
-    public abstract void closeOpenStreams();
-
-    /**
      * Returns the value at the given column (index starts at 0) "raw" (i.e.
      * as-returned by the server).
      * 
