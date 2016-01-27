@@ -190,12 +190,13 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                     getExceptionInterceptor(), this);
         }
 
+        // initialize log before any further calls that might actually use it
+        this.log = LogFactory.getLogger(getLogger(), "FabricMySQLConnectionProxy", null);
+
         setShardTable(this.fabricShardTable);
         setShardKey(this.fabricShardKey);
 
         setServerGroupName(this.fabricServerGroup);
-
-        this.log = LogFactory.getLogger(getLogger(), "FabricMySQLConnectionProxy", null);
     }
 
     /**
