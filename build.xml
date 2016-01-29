@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -99,6 +99,7 @@ com.mysql.cj.extra.libs - location of third-party libraries
 com.mysql.cj.build.jdk - path to JDK used for building driver
 com.mysql.cj.build.addDebugInfo - should the driver be compiled with debugging info
 com.mysql.cj.build.noCleanBetweenCompiles - if 'yes' then 'clean' and '-clean-output' targets do nothing
+com.mysql.cj.build.failOnWarnings - fail the build when any warning is found
 
 com.mysql.cj.build.commercial - build commercial variant of the driver
 com.mysql.cj.build.filterLicense - build ISV variant of the driver
@@ -212,11 +213,15 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- The following property is needed for including the prebuilt docs into packages and must be passed on the command line to ant via -D switch. -->
     <property name="com.mysql.cj.dist.dir.prebuilt.docs" value="/tmp/connectorj/docs/prebuilt" />
 
-    <!-- The folloing propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
+    <!-- The following propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
     <propertyset id="junit.system.properties">
         <propertyref prefix="com.mysql.cj.testsuite." />
     </propertyset>
 
+    <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
+    <condition property="javac.compilerarg" value="-Xlint:all -Werror" else="">
+        <isset property="com.mysql.cj.build.failOnWarnings"/>
+    </condition>
 
     <!-- Classpaths settings. -->
     <path id="built.driver.only.classpath">
@@ -571,6 +576,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <property name="com.mysql.cj.build.meta-inf.profiling-exports" value="com.mysql.cj.jdbc.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.util-exports" value="com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log&quot;" />
         <property name="com.mysql.cj.build.meta-inf.exceptions-exports" value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.fabric-exports" value="com.mysql.cj.fabric.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
 
         <property name="com.mysql.cj.build.meta-inf.interceptors-exports" value="com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.integration-exports" value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
@@ -595,7 +601,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <attribute name="Bundle-ManifestVersion" value="2" />
             <attribute name="Bundle-SymbolicName" value="com.mysql.cj" />
             <attribute name="Export-Package"
-                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.jee-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports}" />
+                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.jee-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.fabric-exports}" />
             <attribute name="Import-Package" value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.integration-imports}" />
         </manifest>
 
@@ -784,6 +790,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <exclude name="com/mysql/cj/jdbc/integration/**" />
             <exclude name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
         <java jvm="${com.mysql.cj.build.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
@@ -813,6 +820,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                includeantruntime="false">
             <!--include name="testsuite/**" /-->
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
@@ -838,6 +846,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                includeantruntime="false">
             <include name="com/mysql/cj/jdbc/integration/c3p0/**" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
@@ -857,6 +866,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                includeantruntime="false">
             <include name="com/mysql/cj/jdbc/integration/jboss/**" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
@@ -876,6 +886,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                includeantruntime="false">
             <include name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 

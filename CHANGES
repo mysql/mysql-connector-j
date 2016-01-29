@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 6.0.2
 
+  - Fix for Bug#22385172, CONNECTOR/J MANIFEST DOES NOT EXPOSE FABRIC (OSGi).
+
   - Merged version 5.1.39.
 
   - Merged version 5.1.38.
