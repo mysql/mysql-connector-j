@@ -179,13 +179,17 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
     <!-- The following property is needed for building the docs and must be passed on the command line to ant via -D switch. -->
     <property name="com.mysql.jdbc.docs.sourceDir" value="/tmp/connectorj/docs/prebuilt" />
 
-    <!-- The folloing propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
+    <!-- The following propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
     <propertyset id="junit.system.properties">
         <propertyref prefix="com.mysql.jdbc.test." />
         <!-- Exclude 'testsuite' properties ending with '.url', '.url.N', '.jvm' or '.jvm.N'. -->
         <propertyref regex="^com\.mysql\.jdbc\.testsuite\..*(?&lt;!(?:url|jvm)(?:\.\d)?)$" />
     </propertyset>
 
+    <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
+    <condition property="javac.compilerarg" value="-Xlint:all -Werror" else="">
+        <isset property="com.mysql.jdbc.failOnWarnings"/>
+    </condition>
 
     <!-- Classpaths settings. -->
     <path id="built.driver.only.classpath">
@@ -842,6 +846,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <exclude name="**/HibernateFabric.java" />
             <exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
@@ -868,6 +873,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <exclude name="**/JDBC42*.java" />
             <include name="com/mysql/jdbc/exceptions/jdbc4/*" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
 
         <javac sourcepath=""
@@ -883,6 +889,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                target="1.8">
             <include name="**/JDBC42*.java" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
@@ -908,6 +915,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <exclude name="testsuite/requiresNonRedists/**" />
             <exclude name="testsuite/**/jdbc4*/**" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
 
         <javac sourcepath=""
@@ -924,6 +932,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                target="1.6">
             <include name="testsuite/**/jdbc4/**" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
 
         <javac sourcepath=""
@@ -939,6 +948,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                target="1.8">
             <include name="testsuite/**/jdbc42/**" />
             <classpath refid="project.build.classpath" />
+            <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
 
