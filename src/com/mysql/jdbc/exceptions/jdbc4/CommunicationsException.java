@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,6 +38,8 @@ import com.mysql.jdbc.StreamingNotifiable;
  * whether the idle time has been exceeded.
  */
 public class CommunicationsException extends SQLRecoverableException implements StreamingNotifiable {
+
+    static final long serialVersionUID = 4317904269797988677L;
 
     private String exceptionMessage;
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,6 +24,8 @@
 package com.mysql.jdbc.exceptions.jdbc4;
 
 public class MySQLQueryInterruptedException extends com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientException {
+
+    private static final long serialVersionUID = -8714521137662613517L;
 
     public MySQLQueryInterruptedException() {
         super();

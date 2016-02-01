@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -60,7 +60,7 @@ public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
     public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
         this.clientInfo = new Properties();
 
-        Enumeration propNames = properties.propertyNames();
+        Enumeration<?> propNames = properties.propertyNames();
 
         while (propNames.hasMoreElements()) {
             String name = (String) propNames.nextElement();
@@ -78,14 +78,14 @@ public class JDBC4CommentClientInfoProvider implements JDBC4ClientInfoProvider {
 
     private synchronized void setComment(java.sql.Connection conn) {
         StringBuilder commentBuf = new StringBuilder();
-        Iterator elements = this.clientInfo.entrySet().iterator();
+        Iterator<Map.Entry<Object, Object>> elements = this.clientInfo.entrySet().iterator();
 
         while (elements.hasNext()) {
             if (commentBuf.length() > 0) {
                 commentBuf.append(", ");
             }
 
-            Map.Entry entry = (Map.Entry) elements.next();
+            Map.Entry<Object, Object> entry = elements.next();
             commentBuf.append("" + entry.getKey());
             commentBuf.append("=");
             commentBuf.append("" + entry.getValue());

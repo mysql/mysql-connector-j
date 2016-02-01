@@ -121,7 +121,7 @@ public class JDBC4ClientInfoProviderSP implements JDBC4ClientInfoProvider {
 
     public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
         try {
-            Enumeration propNames = properties.propertyNames();
+            Enumeration<?> propNames = properties.propertyNames();
 
             while (propNames.hasMoreElements()) {
                 String name = (String) propNames.nextElement();

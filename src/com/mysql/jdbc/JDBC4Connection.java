@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,6 +38,9 @@ import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.SQLError;
 
 public class JDBC4Connection extends ConnectionImpl implements JDBC4MySQLConnection {
+
+    private static final long serialVersionUID = 2877471301981509475L;
+
     private JDBC4ClientInfoProvider infoProvider;
 
     public JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {
@@ -213,12 +216,12 @@ public class JDBC4Connection extends ConnectionImpl implements JDBC4MySQLConnect
             if (this.infoProvider == null) {
                 try {
                     try {
-                        this.infoProvider = (JDBC4ClientInfoProvider) Util.getInstance(getClientInfoProvider(), new Class[0], new Object[0],
+                        this.infoProvider = (JDBC4ClientInfoProvider) Util.getInstance(getClientInfoProvider(), new Class<?>[0], new Object[0],
                                 getExceptionInterceptor());
                     } catch (SQLException sqlEx) {
                         if (sqlEx.getCause() instanceof ClassCastException) {
                             // try with package name prepended
-                            this.infoProvider = (JDBC4ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class[0],
+                            this.infoProvider = (JDBC4ClientInfoProvider) Util.getInstance("com.mysql.jdbc." + getClientInfoProvider(), new Class<?>[0],
                                     new Object[0], getExceptionInterceptor());
                         }
                     }

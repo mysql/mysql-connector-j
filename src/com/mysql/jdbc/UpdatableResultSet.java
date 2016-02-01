@@ -1059,6 +1059,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                                 break;
                             }
+                            this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
+                            break;
+
                         default:
                             this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
                     }

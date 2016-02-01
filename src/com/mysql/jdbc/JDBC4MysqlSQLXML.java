@@ -271,7 +271,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
      *                if the JDBC driver does not support this method
      * @since 1.6
      */
-    public synchronized Source getSource(Class clazz) throws SQLException {
+    @SuppressWarnings("unchecked")
+    public synchronized <T extends Source> T getSource(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
 
@@ -288,7 +289,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
                 inputSource = new InputSource(new StringReader(this.stringRep));
             }
 
-            return new SAXSource(inputSource);
+            return (T) new SAXSource(inputSource);
         } else if (clazz.equals(DOMSource.class)) {
             try {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -303,7 +304,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
                     inputSource = new InputSource(new StringReader(this.stringRep));
                 }
 
-                return new DOMSource(builder.parse(inputSource));
+                return (T) new DOMSource(builder.parse(inputSource));
             } catch (Throwable t) {
                 SQLException sqlEx = SQLError.createSQLException(t.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 sqlEx.initCause(t);
@@ -320,7 +321,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
                 reader = new StringReader(this.stringRep);
             }
 
-            return new StreamSource(reader);
+            return (T) new StreamSource(reader);
         } else if (clazz.equals(StAXSource.class)) {
             try {
                 Reader reader = null;
@@ -331,7 +332,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
                     reader = new StringReader(this.stringRep);
                 }
 
-                return new StAXSource(this.inputFactory.createXMLStreamReader(reader));
+                return (T) new StAXSource(this.inputFactory.createXMLStreamReader(reader));
             } catch (XMLStreamException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 sqlEx.initCause(ex);
@@ -458,7 +459,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
      *                if the JDBC driver does not support this method
      * @since 1.6
      */
-    public synchronized Result setResult(Class clazz) throws SQLException {
+    @SuppressWarnings("unchecked")
+    public synchronized <T extends Result> T setResult(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
 
@@ -475,21 +477,21 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
             this.asSAXResult = new SAXResult(this.saxToReaderConverter);
 
-            return this.asSAXResult;
+            return (T) this.asSAXResult;
         } else if (clazz.equals(DOMResult.class)) {
 
             this.asDOMResult = new DOMResult();
-            return this.asDOMResult;
+            return (T) this.asDOMResult;
 
         } else if (clazz.equals(StreamResult.class)) {
-            return new StreamResult(setCharacterStreamInternal());
+            return (T) new StreamResult(setCharacterStreamInternal());
         } else if (clazz.equals(StAXResult.class)) {
             try {
                 if (this.outputFactory == null) {
                     this.outputFactory = XMLOutputFactory.newInstance();
                 }
 
-                return new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
+                return (T) new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
             } catch (XMLStreamException ex) {
                 SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 sqlEx.initCause(ex);

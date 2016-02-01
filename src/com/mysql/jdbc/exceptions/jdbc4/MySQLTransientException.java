@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,8 @@ import java.sql.SQLException;
 import java.sql.SQLTransientException;
 
 public class MySQLTransientException extends SQLTransientException {
+
+    static final long serialVersionUID = -1885878228558607563L;
 
     public MySQLTransientException(String reason, String SQLState, int vendorCode) {
         super(reason, SQLState, vendorCode);

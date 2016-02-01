@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -386,14 +386,14 @@ public class JDBC4CallableStatementWrapper extends CallableStatementWrapper {
             }
 
             if (unwrappedInterfaces == null) {
-                unwrappedInterfaces = new HashMap();
+                unwrappedInterfaces = new HashMap<Class<?>, Object>();
             }
 
             Object cachedUnwrapped = unwrappedInterfaces.get(iface);
 
             if (cachedUnwrapped == null) {
                 if (cachedUnwrapped == null) {
-                    cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class[] { iface },
+                    cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class<?>[] { iface },
                             new ConnectionErrorFiringInvocationHandler(this.wrappedStmt));
                     unwrappedInterfaces.put(iface, cachedUnwrapped);
                 }

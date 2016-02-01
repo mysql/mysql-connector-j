@@ -1398,6 +1398,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.isClosed = true;
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         this.hasTriedMasterFlag = false;
     }
@@ -3173,6 +3174,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return this.props;
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return this.hasTriedMasterFlag;
     }
@@ -4983,6 +4985,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @param preferSlaveDuringFailover
      *            The preferSlaveDuringFailover to set.
      */
+    @Deprecated
     public void setPreferSlaveDuringFailover(boolean flag) {
         // no-op, handled further up in the wrapper
     }

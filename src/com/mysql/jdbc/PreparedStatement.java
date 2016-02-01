@@ -3990,7 +3990,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                                         buf.append('\\');
                                     }
                                 }
-                                // fall through
+                                buf.append(c);
+                                break;
 
                             default:
                                 buf.append(c);

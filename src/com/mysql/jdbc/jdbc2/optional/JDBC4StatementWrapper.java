@@ -163,13 +163,13 @@ public class JDBC4StatementWrapper extends StatementWrapper {
             }
 
             if (unwrappedInterfaces == null) {
-                unwrappedInterfaces = new HashMap();
+                unwrappedInterfaces = new HashMap<Class<?>, Object>();
             }
 
             Object cachedUnwrapped = unwrappedInterfaces.get(iface);
 
             if (cachedUnwrapped == null) {
-                cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class[] { iface },
+                cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class<?>[] { iface },
                         new ConnectionErrorFiringInvocationHandler(this.wrappedStmt));
                 unwrappedInterfaces.put(iface, cachedUnwrapped);
             }

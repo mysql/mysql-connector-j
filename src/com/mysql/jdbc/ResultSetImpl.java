@@ -3216,16 +3216,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 if (value instanceof byte[]) {
                     return (byte[]) value;
                 }
-                // fallthrough
+                break;
             default:
-                int sqlType = field.getSQLType();
-
-                if (sqlType == Types.VARBINARY || sqlType == Types.BINARY) {
-                    return (byte[]) value;
-                }
-
-                return getBytesFromString(getNativeString(columnIndex));
+                break;
         }
+        int sqlType = field.getSQLType();
+
+        if (sqlType == Types.VARBINARY || sqlType == Types.BINARY) {
+            return (byte[]) value;
+        }
+
+        return getBytesFromString(getNativeString(columnIndex));
     }
 
     /**
@@ -3572,6 +3573,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     if (result.endsWith(".0")) {
                         return result.substring(0, result.length() - 2);
                     }
+                    return extractStringFromNativeColumn(columnIndex, mysqlType);
 
                 default:
                     return extractStringFromNativeColumn(columnIndex, mysqlType);

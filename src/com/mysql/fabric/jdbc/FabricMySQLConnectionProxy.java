@@ -84,7 +84,7 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  */
 public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl implements FabricMySQLConnection, FabricMySQLConnectionProperties {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 5845485979107347258L;
 
     private Log log;
 
@@ -1020,10 +1020,12 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         // no-op
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return false;
     }
@@ -2740,6 +2742,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     public void setFailedOver(boolean flag) {
     }
 
+    @Deprecated
     public void setPreferSlaveDuringFailover(boolean flag) {
     }
 
