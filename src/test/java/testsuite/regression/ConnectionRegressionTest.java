@@ -1942,7 +1942,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug34703() throws Exception {
 
-        Method isValid = java.sql.Connection.class.getMethod("isValid", new Class[] { Integer.TYPE });
+        Method isValid = java.sql.Connection.class.getMethod("isValid", new Class<?>[] { Integer.TYPE });
 
         Connection newConn = getConnectionWithProps((Properties) null);
         isValid.invoke(newConn, new Object[] { new Integer(1) });
@@ -4897,7 +4897,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         if ((mysqlCls != null) && (mysqlCls.isAssignableFrom(jcls))) {
-            Method abort = mysqlCls.getMethod("abortInternal", new Class[] {});
+            Method abort = mysqlCls.getMethod("abortInternal", new Class<?>[] {});
             boolean hasAbortMethod = abort != null;
             assertTrue("abortInternal() method should be found for connection class " + jcls, hasAbortMethod);
         } else {
@@ -5203,11 +5203,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (Proxy.isProxyClass(this.c.getClass())) {
                 try {
                     if (this.num == 7 || this.num == 10) {
-                        Proxy.getInvocationHandler(this.c).invoke(this.c, Connection.class.getMethod("close", new Class[] {}), null);
+                        Proxy.getInvocationHandler(this.c).invoke(this.c, Connection.class.getMethod("close", new Class<?>[] {}), null);
                     } else if (this.num == 8 || this.num == 11) {
-                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abortInternal", new Class[] {}), null);
+                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abortInternal", new Class<?>[] {}), null);
                     } else if (this.num == 9 || this.num == 12) {
-                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abort", new Class[] { Executor.class }),
+                        Proxy.getInvocationHandler(this.c).invoke(this.c, JdbcConnection.class.getMethod("abort", new Class<?>[] { Executor.class }),
                                 new Object[] { new ThreadPerTaskExecutor() });
                     }
 

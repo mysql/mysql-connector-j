@@ -102,7 +102,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionString);
 
         return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
-                new Class[] { LoadBalancedConnection.class, JdbcConnection.class }, connProxy);
+                new Class<?>[] { LoadBalancedConnection.class, JdbcConnection.class }, connProxy);
     }
 
     /**

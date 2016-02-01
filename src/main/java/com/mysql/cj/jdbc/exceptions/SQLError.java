@@ -785,7 +785,7 @@ public class SQLError {
     public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor)
             throws SQLException {
         SQLException newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException",
-                new Class[] { String.class, String.class, int.class, long[].class, Throwable.class },
+                new Class<?>[] { String.class, String.class, int.class, long[].class, Throwable.class },
                 new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts, underlyingEx }, interceptor);
         return runThroughExceptionInterceptor(interceptor, newEx, null);
     }

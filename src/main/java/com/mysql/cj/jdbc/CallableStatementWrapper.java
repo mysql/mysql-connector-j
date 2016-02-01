@@ -1540,7 +1540,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);
 
             if (cachedUnwrapped == null) {
-                cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class[] { iface },
+                cachedUnwrapped = Proxy.newProxyInstance(this.wrappedStmt.getClass().getClassLoader(), new Class<?>[] { iface },
                         new ConnectionErrorFiringInvocationHandler(this.wrappedStmt));
                 this.unwrappedInterfaces.put(iface, cachedUnwrapped);
             }

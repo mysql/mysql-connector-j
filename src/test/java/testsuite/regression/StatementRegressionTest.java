@@ -4066,10 +4066,12 @@ public class StatementRegressionTest extends BaseTestCase {
                 return null;
             }
 
+            @Deprecated
             public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
                 return null;
             }
 
+            @Deprecated
             public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
                 return null;
             }
@@ -4290,10 +4292,12 @@ public class StatementRegressionTest extends BaseTestCase {
                 return null;
             }
 
+            @Deprecated
             public InputStream getUnicodeStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Deprecated
             public InputStream getUnicodeStream(String columnName) throws SQLException {
                 return null;
             }

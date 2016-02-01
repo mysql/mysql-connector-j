@@ -1080,8 +1080,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                             buf.append(") != 0 THEN -7");
                         }
                         buf.append(" ELSE -6 END ");
-                        break;
+                    } else {
+                        buf.append(mysqlType.getJdbcType());
                     }
+                    break;
 
                 default:
                     buf.append(mysqlType.getJdbcType());

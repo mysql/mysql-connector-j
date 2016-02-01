@@ -389,7 +389,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         Connection physConn = pooledConn.getConnection();
         Statement physStatement = physConn.createStatement();
 
-        Method enableStreamingResultsMethodStmt = Class.forName(StatementWrapper.class.getName()).getMethod("enableStreamingResults", new Class[0]);
+        Method enableStreamingResultsMethodStmt = Class.forName(StatementWrapper.class.getName()).getMethod("enableStreamingResults", new Class<?>[0]);
         enableStreamingResultsMethodStmt.invoke(physStatement, (Object[]) null);
         this.rs = physStatement.executeQuery("SELECT 1");
 

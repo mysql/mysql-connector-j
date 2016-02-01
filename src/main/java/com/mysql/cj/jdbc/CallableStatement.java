@@ -278,6 +278,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     //        return MysqlType.BIT;
                     //    }
                     //}
+                    return mysqlType.getClassName();
 
                 default:
                     return mysqlType.getClassName();

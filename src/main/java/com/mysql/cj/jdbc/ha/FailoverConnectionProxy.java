@@ -102,7 +102,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     public static JdbcConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
         FailoverConnectionProxy connProxy = new FailoverConnectionProxy(connectionString);
 
-        return (JdbcConnection) java.lang.reflect.Proxy.newProxyInstance(JdbcConnection.class.getClassLoader(), new Class[] { JdbcConnection.class },
+        return (JdbcConnection) java.lang.reflect.Proxy.newProxyInstance(JdbcConnection.class.getClassLoader(), new Class<?>[] { JdbcConnection.class },
                 connProxy);
     }
 

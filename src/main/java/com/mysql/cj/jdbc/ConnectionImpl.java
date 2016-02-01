@@ -1056,6 +1056,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.isClosed = true;
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         this.hasTriedMasterFlag = false;
     }
@@ -2349,6 +2350,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.props;
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return this.hasTriedMasterFlag;
     }
@@ -4583,12 +4585,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 String clientInfoProvider = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();
                 try {
                     try {
-                        this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class[0], new Object[0], getExceptionInterceptor());
+                        this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class<?>[0], new Object[0],
+                                getExceptionInterceptor());
                     } catch (CJException ex) {
                         if (ex.getCause() instanceof ClassCastException) {
                             // try with package name prepended
                             try {
-                                this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.cj.jdbc." + clientInfoProvider, new Class[0],
+                                this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.cj.jdbc." + clientInfoProvider, new Class<?>[0],
                                         new Object[0], getExceptionInterceptor());
                             } catch (CJException e) {
                                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());

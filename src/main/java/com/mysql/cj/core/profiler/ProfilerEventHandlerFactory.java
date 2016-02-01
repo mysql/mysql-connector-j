@@ -43,7 +43,7 @@ public class ProfilerEventHandlerFactory {
 
         if (handler == null) {
             handler = (ProfilerEventHandler) Util.getInstance(
-                    conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class[0],
+                    conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
                     new Object[0], conn.getExceptionInterceptor());
 
             // we do it this way to not require exposing the connection properties for all who utilize it

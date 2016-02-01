@@ -764,6 +764,8 @@ public class ExprParser {
                     this.tokens.get(this.tokenPos).value = t.value + this.tokens.get(this.tokenPos).value;
                     return atomicExpr();
                 }
+                return buildUnaryOp(t.value, atomicExpr());
+
             case NOT:
             case NEG:
             case BANG:

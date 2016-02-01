@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -67,8 +67,8 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
         // requirement of anonymous class
         final ResultSetInternalMethods finalResultSet = originalResultSet;
 
-        return (ResultSetInternalMethods) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class[] { ResultSetInternalMethods.class },
-                new InvocationHandler() {
+        return (ResultSetInternalMethods) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(),
+                new Class<?>[] { ResultSetInternalMethods.class }, new InvocationHandler() {
 
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 

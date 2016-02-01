@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -69,7 +69,7 @@ public class CachedRowsetTest extends BaseTestCase {
             System.out.println("skipping testBug5188. Requires: " + implClass);
             return;
         }
-        populate = c.getMethod("populate", new Class[] { ResultSet.class });
+        populate = c.getMethod("populate", new Class<?>[] { ResultSet.class });
 
         createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, datafield VARCHAR(64), PRIMARY KEY(ID))");
 

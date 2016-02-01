@@ -981,10 +981,12 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Deprecated
     public void clearHasTriedMaster() {
         // no-op
     }
 
+    @Deprecated
     public boolean hasTriedMaster() {
         return false;
     }

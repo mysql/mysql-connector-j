@@ -77,7 +77,7 @@ public class ReflectiveStatementInterceptorAdapter implements StatementIntercept
 
     public static final Method getV2PostProcessMethod(Class<?> toProxyClass) {
         try {
-            Method postProcessMethod = toProxyClass.getMethod("postProcess", new Class[] { String.class, Statement.class, ResultSetInternalMethods.class,
+            Method postProcessMethod = toProxyClass.getMethod("postProcess", new Class<?>[] { String.class, Statement.class, ResultSetInternalMethods.class,
                     JdbcConnection.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE, SQLException.class });
 
             return postProcessMethod;

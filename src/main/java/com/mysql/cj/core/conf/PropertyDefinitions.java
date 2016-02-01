@@ -396,7 +396,7 @@ public class PropertyDefinitions {
     private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
     static {
-        PropertyDefinition<?>[] pdefs = new PropertyDefinition[] { new BooleanPropertyDefinition(PNAME_paranoid, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+        PropertyDefinition<?>[] pdefs = new PropertyDefinition<?>[] { new BooleanPropertyDefinition(PNAME_paranoid, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                 Messages.getString("ConnectionProperties.paranoid"), "3.0.1", CATEGORY_SECURITY, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PNAME_passwordCharacterEncoding, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,

@@ -955,7 +955,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);
 
             if (cachedUnwrapped == null) {
-                cachedUnwrapped = Proxy.newProxyInstance(this.mc.getClass().getClassLoader(), new Class[] { iface },
+                cachedUnwrapped = Proxy.newProxyInstance(this.mc.getClass().getClassLoader(), new Class<?>[] { iface },
                         new ConnectionErrorFiringInvocationHandler(this.mc));
                 this.unwrappedInterfaces.put(iface, cachedUnwrapped);
             }

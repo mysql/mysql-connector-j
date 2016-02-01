@@ -246,14 +246,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             case DOUBLE:
                             case DOUBLE_UNSIGNED:
                                 this.columnSize = Integer.valueOf(22);
+                                break;
                             default:
+                                break;
                         }
                         this.decimalDigits = 0;
                     }
                     break;
 
                 case CHAR:
-                    this.columnSize = Integer.valueOf(1);
                 case VARCHAR:
                 case TINYTEXT:
                 case MEDIUMTEXT:
@@ -267,6 +268,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 case BINARY:
                 case VARBINARY:
                 case BIT:
+                    if (this.mysqlType == MysqlType.CHAR) {
+                        this.columnSize = Integer.valueOf(1);
+                    }
                     if (typeInfo.indexOf("(") != -1) {
                         int endParenIndex = typeInfo.indexOf(")");
 

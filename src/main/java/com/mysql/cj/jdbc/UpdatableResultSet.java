@@ -865,8 +865,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                                     && this.defaultColumnValue[i][7] == (byte) '_') {
                                 this.inserter.setBytesNoEscapeNoQuotes(i + 1, this.defaultColumnValue[i]);
 
-                                break;
+                            } else {
+                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
                             }
+                            break;
+
                         default:
                             this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
                     }
