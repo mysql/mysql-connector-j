@@ -72,7 +72,7 @@ public class ExprUnparser {
             case V_SINT:
                 return "" + e.getVSignedInt();
             case V_OCTETS:
-                return "\"" + escapeLiteral(e.getVOpaque().toStringUtf8()) + "\"";
+                return "\"" + escapeLiteral(e.getVOctets().getValue().toStringUtf8()) + "\"";
             case V_STRING:
                 return "\"" + escapeLiteral(e.getVString().getValue().toStringUtf8()) + "\"";
             case V_DOUBLE:

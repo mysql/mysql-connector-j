@@ -30,6 +30,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonArray;
@@ -107,7 +108,8 @@ public class ExprUtil {
     }
 
     public static Scalar scalarOf(byte[] bytes) {
-        return Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOpaque(ByteString.copyFrom(bytes)).build();
+        Octets.Builder o = Octets.newBuilder().setValue(ByteString.copyFrom(bytes));
+        return Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOctets(o).build();
     }
 
     public static Scalar scalarOf(boolean b) {
