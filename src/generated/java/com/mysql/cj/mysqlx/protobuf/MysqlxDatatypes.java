@@ -63,21 +63,29 @@ public final class MysqlxDatatypes {
     long getVUnsignedInt();
 
     /**
-     * <code>optional bytes v_opaque = 5;</code>
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      *
      * <pre>
      * 4 is unused, was Null which doesn't have a storage anymore
      * </pre>
      */
-    boolean hasVOpaque();
+    boolean hasVOctets();
     /**
-     * <code>optional bytes v_opaque = 5;</code>
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      *
      * <pre>
      * 4 is unused, was Null which doesn't have a storage anymore
      * </pre>
      */
-    com.google.protobuf.ByteString getVOpaque();
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets getVOctets();
+    /**
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+     *
+     * <pre>
+     * 4 is unused, was Null which doesn't have a storage anymore
+     * </pre>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder getVOctetsOrBuilder();
 
     /**
      * <code>optional double v_double = 6;</code>
@@ -197,8 +205,16 @@ public final class MysqlxDatatypes {
               break;
             }
             case 42: {
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000008) == 0x00000008)) {
+                subBuilder = vOctets_.toBuilder();
+              }
+              vOctets_ = input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(vOctets_);
+                vOctets_ = subBuilder.buildPartial();
+              }
               bitField0_ |= 0x00000008;
-              vOpaque_ = input.readBytes();
               break;
             }
             case 49: {
@@ -898,6 +914,502 @@ public final class MysqlxDatatypes {
       // @@protoc_insertion_point(class_scope:Mysqlx.Datatypes.Scalar.String)
     }
 
+    public interface OctetsOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:Mysqlx.Datatypes.Scalar.Octets)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      boolean hasValue();
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      com.google.protobuf.ByteString getValue();
+
+      /**
+       * <code>optional uint32 content_type = 2;</code>
+       */
+      boolean hasContentType();
+      /**
+       * <code>optional uint32 content_type = 2;</code>
+       */
+      int getContentType();
+    }
+    /**
+     * Protobuf type {@code Mysqlx.Datatypes.Scalar.Octets}
+     *
+     * <pre>
+     * an opaque octet sequence, with an optional content_type
+     * See ``Mysqlx.Resultset.ColumnMetadata`` for list of known values.
+     * </pre>
+     */
+    public static final class Octets extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Scalar.Octets)
+        OctetsOrBuilder {
+      // Use Octets.newBuilder() to construct.
+      private Octets(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+        this.unknownFields = builder.getUnknownFields();
+      }
+      private Octets(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+      private static final Octets defaultInstance;
+      public static Octets getDefaultInstance() {
+        return defaultInstance;
+      }
+
+      public Octets getDefaultInstanceForType() {
+        return defaultInstance;
+      }
+
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+          getUnknownFields() {
+        return this.unknownFields;
+      }
+      private Octets(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        initFields();
+        int mutable_bitField0_ = 0;
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!parseUnknownField(input, unknownFields,
+                                       extensionRegistry, tag)) {
+                  done = true;
+                }
+                break;
+              }
+              case 10: {
+                bitField0_ |= 0x00000001;
+                value_ = input.readBytes();
+                break;
+              }
+              case 16: {
+                bitField0_ |= 0x00000002;
+                contentType_ = input.readUInt32();
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this);
+        } finally {
+          this.unknownFields = unknownFields.build();
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.internal_static_Mysqlx_Datatypes_Scalar_Octets_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.class, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder.class);
+      }
+
+      public static com.google.protobuf.Parser<Octets> PARSER =
+          new com.google.protobuf.AbstractParser<Octets>() {
+        public Octets parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new Octets(input, extensionRegistry);
+        }
+      };
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Octets> getParserForType() {
+        return PARSER;
+      }
+
+      private int bitField0_;
+      public static final int VALUE_FIELD_NUMBER = 1;
+      private com.google.protobuf.ByteString value_;
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required bytes value = 1;</code>
+       */
+      public com.google.protobuf.ByteString getValue() {
+        return value_;
+      }
+
+      public static final int CONTENT_TYPE_FIELD_NUMBER = 2;
+      private int contentType_;
+      /**
+       * <code>optional uint32 content_type = 2;</code>
+       */
+      public boolean hasContentType() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional uint32 content_type = 2;</code>
+       */
+      public int getContentType() {
+        return contentType_;
+      }
+
+      private void initFields() {
+        value_ = com.google.protobuf.ByteString.EMPTY;
+        contentType_ = 0;
+      }
+      private byte memoizedIsInitialized = -1;
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        if (!hasValue()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        getSerializedSize();
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          output.writeBytes(1, value_);
+        }
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          output.writeUInt32(2, contentType_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      private int memoizedSerializedSize = -1;
+      public int getSerializedSize() {
+        int size = memoizedSerializedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBytesSize(1, value_);
+        }
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeUInt32Size(2, contentType_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSerializedSize = size;
+        return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+          throws java.io.ObjectStreamException {
+        return super.writeReplace();
+      }
+
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return PARSER.parseFrom(input);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return PARSER.parseFrom(input, extensionRegistry);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return PARSER.parseDelimitedFrom(input);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return PARSER.parseFrom(input);
+      }
+      public static com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() { return Builder.create(); }
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets prototype) {
+        return newBuilder().mergeFrom(prototype);
+      }
+      public Builder toBuilder() { return newBuilder(this); }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code Mysqlx.Datatypes.Scalar.Octets}
+       *
+       * <pre>
+       * an opaque octet sequence, with an optional content_type
+       * See ``Mysqlx.Resultset.ColumnMetadata`` for list of known values.
+       * </pre>
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:Mysqlx.Datatypes.Scalar.Octets)
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor;
+        }
+
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.internal_static_Mysqlx_Datatypes_Scalar_Octets_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.class, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder.class);
+        }
+
+        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          }
+        }
+        private static Builder create() {
+          return new Builder();
+        }
+
+        public Builder clear() {
+          super.clear();
+          value_ = com.google.protobuf.ByteString.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000001);
+          contentType_ = 0;
+          bitField0_ = (bitField0_ & ~0x00000002);
+          return this;
+        }
+
+        public Builder clone() {
+          return create().mergeFrom(buildPartial());
+        }
+
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor;
+        }
+
+        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets getDefaultInstanceForType() {
+          return com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance();
+        }
+
+        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets build() {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets buildPartial() {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets result = new com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets(this);
+          int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
+          if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+            to_bitField0_ |= 0x00000001;
+          }
+          result.value_ = value_;
+          if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+            to_bitField0_ |= 0x00000002;
+          }
+          result.contentType_ = contentType_;
+          result.bitField0_ = to_bitField0_;
+          onBuilt();
+          return result;
+        }
+
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets) {
+            return mergeFrom((com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets other) {
+          if (other == com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance()) return this;
+          if (other.hasValue()) {
+            setValue(other.getValue());
+          }
+          if (other.hasContentType()) {
+            setContentType(other.getContentType());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          return this;
+        }
+
+        public final boolean isInitialized() {
+          if (!hasValue()) {
+            
+            return false;
+          }
+          return true;
+        }
+
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets) e.getUnfinishedMessage();
+            throw e;
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+        private int bitField0_;
+
+        private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
+        /**
+         * <code>required bytes value = 1;</code>
+         */
+        public boolean hasValue() {
+          return ((bitField0_ & 0x00000001) == 0x00000001);
+        }
+        /**
+         * <code>required bytes value = 1;</code>
+         */
+        public com.google.protobuf.ByteString getValue() {
+          return value_;
+        }
+        /**
+         * <code>required bytes value = 1;</code>
+         */
+        public Builder setValue(com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+          value_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>required bytes value = 1;</code>
+         */
+        public Builder clearValue() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          value_ = getDefaultInstance().getValue();
+          onChanged();
+          return this;
+        }
+
+        private int contentType_ ;
+        /**
+         * <code>optional uint32 content_type = 2;</code>
+         */
+        public boolean hasContentType() {
+          return ((bitField0_ & 0x00000002) == 0x00000002);
+        }
+        /**
+         * <code>optional uint32 content_type = 2;</code>
+         */
+        public int getContentType() {
+          return contentType_;
+        }
+        /**
+         * <code>optional uint32 content_type = 2;</code>
+         */
+        public Builder setContentType(int value) {
+          bitField0_ |= 0x00000002;
+          contentType_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional uint32 content_type = 2;</code>
+         */
+        public Builder clearContentType() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          contentType_ = 0;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:Mysqlx.Datatypes.Scalar.Octets)
+      }
+
+      static {
+        defaultInstance = new Octets(true);
+        defaultInstance.initFields();
+      }
+
+      // @@protoc_insertion_point(class_scope:Mysqlx.Datatypes.Scalar.Octets)
+    }
+
     private int bitField0_;
     public static final int TYPE_FIELD_NUMBER = 1;
     private com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Type type_;
@@ -944,27 +1456,37 @@ public final class MysqlxDatatypes {
       return vUnsignedInt_;
     }
 
-    public static final int V_OPAQUE_FIELD_NUMBER = 5;
-    private com.google.protobuf.ByteString vOpaque_;
+    public static final int V_OCTETS_FIELD_NUMBER = 5;
+    private com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets vOctets_;
     /**
-     * <code>optional bytes v_opaque = 5;</code>
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      *
      * <pre>
      * 4 is unused, was Null which doesn't have a storage anymore
      * </pre>
      */
-    public boolean hasVOpaque() {
+    public boolean hasVOctets() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>optional bytes v_opaque = 5;</code>
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      *
      * <pre>
      * 4 is unused, was Null which doesn't have a storage anymore
      * </pre>
      */
-    public com.google.protobuf.ByteString getVOpaque() {
-      return vOpaque_;
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets getVOctets() {
+      return vOctets_;
+    }
+    /**
+     * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+     *
+     * <pre>
+     * 4 is unused, was Null which doesn't have a storage anymore
+     * </pre>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder getVOctetsOrBuilder() {
+      return vOctets_;
     }
 
     public static final int V_DOUBLE_FIELD_NUMBER = 6;
@@ -1037,7 +1559,7 @@ public final class MysqlxDatatypes {
       type_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Type.V_SINT;
       vSignedInt_ = 0L;
       vUnsignedInt_ = 0L;
-      vOpaque_ = com.google.protobuf.ByteString.EMPTY;
+      vOctets_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance();
       vDouble_ = 0D;
       vFloat_ = 0F;
       vBool_ = false;
@@ -1052,6 +1574,12 @@ public final class MysqlxDatatypes {
       if (!hasType()) {
         memoizedIsInitialized = 0;
         return false;
+      }
+      if (hasVOctets()) {
+        if (!getVOctets().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
       }
       if (hasVString()) {
         if (!getVString().isInitialized()) {
@@ -1076,7 +1604,7 @@ public final class MysqlxDatatypes {
         output.writeUInt64(3, vUnsignedInt_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBytes(5, vOpaque_);
+        output.writeMessage(5, vOctets_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeDouble(6, vDouble_);
@@ -1113,7 +1641,7 @@ public final class MysqlxDatatypes {
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(5, vOpaque_);
+          .computeMessageSize(5, vOctets_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1244,6 +1772,7 @@ public final class MysqlxDatatypes {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getVOctetsFieldBuilder();
           getVStringFieldBuilder();
         }
       }
@@ -1259,7 +1788,11 @@ public final class MysqlxDatatypes {
         bitField0_ = (bitField0_ & ~0x00000002);
         vUnsignedInt_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000004);
-        vOpaque_ = com.google.protobuf.ByteString.EMPTY;
+        if (vOctetsBuilder_ == null) {
+          vOctets_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance();
+        } else {
+          vOctetsBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000008);
         vDouble_ = 0D;
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -1316,7 +1849,11 @@ public final class MysqlxDatatypes {
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.vOpaque_ = vOpaque_;
+        if (vOctetsBuilder_ == null) {
+          result.vOctets_ = vOctets_;
+        } else {
+          result.vOctets_ = vOctetsBuilder_.build();
+        }
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
         }
@@ -1362,8 +1899,8 @@ public final class MysqlxDatatypes {
         if (other.hasVUnsignedInt()) {
           setVUnsignedInt(other.getVUnsignedInt());
         }
-        if (other.hasVOpaque()) {
-          setVOpaque(other.getVOpaque());
+        if (other.hasVOctets()) {
+          mergeVOctets(other.getVOctets());
         }
         if (other.hasVDouble()) {
           setVDouble(other.getVDouble());
@@ -1385,6 +1922,12 @@ public final class MysqlxDatatypes {
         if (!hasType()) {
           
           return false;
+        }
+        if (hasVOctets()) {
+          if (!getVOctets().isInitialized()) {
+            
+            return false;
+          }
         }
         if (hasVString()) {
           if (!getVString().isInitialized()) {
@@ -1513,55 +2056,156 @@ public final class MysqlxDatatypes {
         return this;
       }
 
-      private com.google.protobuf.ByteString vOpaque_ = com.google.protobuf.ByteString.EMPTY;
+      private com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets vOctets_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder> vOctetsBuilder_;
       /**
-       * <code>optional bytes v_opaque = 5;</code>
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
        *
        * <pre>
        * 4 is unused, was Null which doesn't have a storage anymore
        * </pre>
        */
-      public boolean hasVOpaque() {
+      public boolean hasVOctets() {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional bytes v_opaque = 5;</code>
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
        *
        * <pre>
        * 4 is unused, was Null which doesn't have a storage anymore
        * </pre>
        */
-      public com.google.protobuf.ByteString getVOpaque() {
-        return vOpaque_;
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets getVOctets() {
+        if (vOctetsBuilder_ == null) {
+          return vOctets_;
+        } else {
+          return vOctetsBuilder_.getMessage();
+        }
       }
       /**
-       * <code>optional bytes v_opaque = 5;</code>
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
        *
        * <pre>
        * 4 is unused, was Null which doesn't have a storage anymore
        * </pre>
        */
-      public Builder setVOpaque(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-        vOpaque_ = value;
-        onChanged();
+      public Builder setVOctets(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets value) {
+        if (vOctetsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          vOctets_ = value;
+          onChanged();
+        } else {
+          vOctetsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000008;
         return this;
       }
       /**
-       * <code>optional bytes v_opaque = 5;</code>
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
        *
        * <pre>
        * 4 is unused, was Null which doesn't have a storage anymore
        * </pre>
        */
-      public Builder clearVOpaque() {
+      public Builder setVOctets(
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder builderForValue) {
+        if (vOctetsBuilder_ == null) {
+          vOctets_ = builderForValue.build();
+          onChanged();
+        } else {
+          vOctetsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000008;
+        return this;
+      }
+      /**
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+       *
+       * <pre>
+       * 4 is unused, was Null which doesn't have a storage anymore
+       * </pre>
+       */
+      public Builder mergeVOctets(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets value) {
+        if (vOctetsBuilder_ == null) {
+          if (((bitField0_ & 0x00000008) == 0x00000008) &&
+              vOctets_ != com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance()) {
+            vOctets_ =
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.newBuilder(vOctets_).mergeFrom(value).buildPartial();
+          } else {
+            vOctets_ = value;
+          }
+          onChanged();
+        } else {
+          vOctetsBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000008;
+        return this;
+      }
+      /**
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+       *
+       * <pre>
+       * 4 is unused, was Null which doesn't have a storage anymore
+       * </pre>
+       */
+      public Builder clearVOctets() {
+        if (vOctetsBuilder_ == null) {
+          vOctets_ = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance();
+          onChanged();
+        } else {
+          vOctetsBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000008);
-        vOpaque_ = getDefaultInstance().getVOpaque();
-        onChanged();
         return this;
+      }
+      /**
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+       *
+       * <pre>
+       * 4 is unused, was Null which doesn't have a storage anymore
+       * </pre>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder getVOctetsBuilder() {
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return getVOctetsFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+       *
+       * <pre>
+       * 4 is unused, was Null which doesn't have a storage anymore
+       * </pre>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder getVOctetsOrBuilder() {
+        if (vOctetsBuilder_ != null) {
+          return vOctetsBuilder_.getMessageOrBuilder();
+        } else {
+          return vOctets_;
+        }
+      }
+      /**
+       * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
+       *
+       * <pre>
+       * 4 is unused, was Null which doesn't have a storage anymore
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder> 
+          getVOctetsFieldBuilder() {
+        if (vOctetsBuilder_ == null) {
+          vOctetsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder>(
+                  getVOctets(),
+                  getParentForChildren(),
+                  isClean());
+          vOctets_ = null;
+        }
+        return vOctetsBuilder_;
       }
 
       private double vDouble_ ;
@@ -4995,6 +5639,11 @@ public final class MysqlxDatatypes {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Mysqlx_Datatypes_Scalar_String_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Mysqlx_Datatypes_Scalar_Octets_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Datatypes_Object_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -5024,15 +5673,17 @@ public final class MysqlxDatatypes {
   static {
     java.lang.String[] descriptorData = {
       "\n\026mysqlx_datatypes.proto\022\020Mysqlx.Datatyp" +
-      "es\"\366\002\n\006Scalar\022+\n\004type\030\001 \002(\0162\035.Mysqlx.Dat" +
+      "es\"\306\003\n\006Scalar\022+\n\004type\030\001 \002(\0162\035.Mysqlx.Dat" +
       "atypes.Scalar.Type\022\024\n\014v_signed_int\030\002 \001(\022" +
-      "\022\026\n\016v_unsigned_int\030\003 \001(\004\022\020\n\010v_opaque\030\005 \001" +
-      "(\014\022\020\n\010v_double\030\006 \001(\001\022\017\n\007v_float\030\007 \001(\002\022\016\n" +
-      "\006v_bool\030\010 \001(\010\0221\n\010v_string\030\t \001(\0132\037.Mysqlx" +
-      ".Datatypes.Scalar.String\032*\n\006String\022\r\n\005va" +
-      "lue\030\001 \002(\014\022\021\n\tcollation\030\002 \001(\004\"m\n\004Type\022\n\n\006" +
+      "\022\026\n\016v_unsigned_int\030\003 \001(\004\0221\n\010v_octets\030\005 \001" +
+      "(\0132\037.Mysqlx.Datatypes.Scalar.Octets\022\020\n\010v" +
+      "_double\030\006 \001(\001\022\017\n\007v_float\030\007 \001(\002\022\016\n\006v_bool" +
+      "\030\010 \001(\010\0221\n\010v_string\030\t \001(\0132\037.Mysqlx.Dataty" +
+      "pes.Scalar.String\032*\n\006String\022\r\n\005value\030\001 \002" +
+      "(\014\022\021\n\tcollation\030\002 \001(\004\032-\n\006Octets\022\r\n\005value" +
+      "\030\001 \002(\014\022\024\n\014content_type\030\002 \001(\r\"m\n\004Type\022\n\n\006",
       "V_SINT\020\001\022\n\n\006V_UINT\020\002\022\n\n\006V_NULL\020\003\022\014\n\010V_OC" +
-      "TETS\020\004\022\014\n\010V_DOUBLE\020\005\022\013\n\007V_FLOAT\020\006\022\n\n\006V_B",
+      "TETS\020\004\022\014\n\010V_DOUBLE\020\005\022\013\n\007V_FLOAT\020\006\022\n\n\006V_B" +
       "OOL\020\007\022\014\n\010V_STRING\020\010\"}\n\006Object\0221\n\003fld\030\001 \003" +
       "(\0132$.Mysqlx.Datatypes.Object.ObjectField" +
       "\032@\n\013ObjectField\022\013\n\003key\030\001 \002(\t\022$\n\005value\030\002 " +
@@ -5040,9 +5691,9 @@ public final class MysqlxDatatypes {
       "alue\030\001 \003(\0132\025.Mysqlx.Datatypes.Any\"\323\001\n\003An" +
       "y\022(\n\004type\030\001 \002(\0162\032.Mysqlx.Datatypes.Any.T" +
       "ype\022(\n\006scalar\030\002 \001(\0132\030.Mysqlx.Datatypes.S" +
-      "calar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Ob" +
+      "calar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Ob",
       "ject\022&\n\005array\030\004 \001(\0132\027.Mysqlx.Datatypes.A" +
-      "rray\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005",
+      "rray\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005" +
       "ARRAY\020\003B\036\n\034com.mysql.cj.mysqlx.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
@@ -5062,13 +5713,19 @@ public final class MysqlxDatatypes {
     internal_static_Mysqlx_Datatypes_Scalar_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Datatypes_Scalar_descriptor,
-        new java.lang.String[] { "Type", "VSignedInt", "VUnsignedInt", "VOpaque", "VDouble", "VFloat", "VBool", "VString", });
+        new java.lang.String[] { "Type", "VSignedInt", "VUnsignedInt", "VOctets", "VDouble", "VFloat", "VBool", "VString", });
     internal_static_Mysqlx_Datatypes_Scalar_String_descriptor =
       internal_static_Mysqlx_Datatypes_Scalar_descriptor.getNestedTypes().get(0);
     internal_static_Mysqlx_Datatypes_Scalar_String_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Datatypes_Scalar_String_descriptor,
         new java.lang.String[] { "Value", "Collation", });
+    internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor =
+      internal_static_Mysqlx_Datatypes_Scalar_descriptor.getNestedTypes().get(1);
+    internal_static_Mysqlx_Datatypes_Scalar_Octets_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Mysqlx_Datatypes_Scalar_Octets_descriptor,
+        new java.lang.String[] { "Value", "ContentType", });
     internal_static_Mysqlx_Datatypes_Object_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Mysqlx_Datatypes_Object_fieldAccessorTable = new

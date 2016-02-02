@@ -5678,6 +5678,9 @@ public final class MysqlxExpr {
    * operator: ``&lt;&lt;(a, b)``
    * .. note::
    *   Non-authoritative list of operators implemented (case sensitive):
+   *   Nullary
+   *     * ``*``
+   *     * ``default``
    *   Unary
    *     * ``!``
    *     * ``sign_plus``
@@ -6071,6 +6074,9 @@ public final class MysqlxExpr {
      * operator: ``&lt;&lt;(a, b)``
      * .. note::
      *   Non-authoritative list of operators implemented (case sensitive):
+     *   Nullary
+     *     * ``*``
+     *     * ``default``
      *   Unary
      *     * ``!``
      *     * ``sign_plus``

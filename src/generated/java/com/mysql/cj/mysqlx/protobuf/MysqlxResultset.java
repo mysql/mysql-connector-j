@@ -1207,7 +1207,7 @@ public final class MysqlxResultset {
    *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
    *       .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
    *     ``value``
-   *       variable length encoded signed 64 integer
+   *       variable length encoded unsigned 64 integer
    *   DOUBLE
    *     ``.length``
    *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
@@ -1278,6 +1278,12 @@ public final class MysqlxResultset {
    *       * seconds - optional variable length encoded unsigned64 value for the seconds
    *       * useconds - optional variable length encoded unsigned64 value for the microseconds
    *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
+   *     ``.flags &amp; 1`` (timestamp)
+   *       ============= =======
+   *       SQL Type      .flags
+   *       ============= =======
+   *       DATETIME
+   *       TIMESTAMP     1
    *   DECIMAL
    *     An arbitrary length number. The number is encoded as a single byte
    *     indicating the position of the decimal point followed by the Packed BCD
@@ -1301,7 +1307,8 @@ public final class MysqlxResultset {
    *   SET
    *     A list of strings representing a SET of values.
    *     ``value``
-   *       A list of 0 or more of protobuf's bytes.
+   *       A sequence of 0 or more of protobuf's bytes (length prepended octets) or one of
+   *       the special sequences with a predefined meaning listed below.
    *       Example (length of the bytes array shown in brackets):
    *         * ``[0]`` - the NULL value
    *         * ``[1] 0x00`` - a set containing a blank string ''
@@ -2150,7 +2157,7 @@ public final class MysqlxResultset {
      *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
      *       .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
      *     ``value``
-     *       variable length encoded signed 64 integer
+     *       variable length encoded unsigned 64 integer
      *   DOUBLE
      *     ``.length``
      *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
@@ -2221,6 +2228,12 @@ public final class MysqlxResultset {
      *       * seconds - optional variable length encoded unsigned64 value for the seconds
      *       * useconds - optional variable length encoded unsigned64 value for the microseconds
      *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
+     *     ``.flags &amp; 1`` (timestamp)
+     *       ============= =======
+     *       SQL Type      .flags
+     *       ============= =======
+     *       DATETIME
+     *       TIMESTAMP     1
      *   DECIMAL
      *     An arbitrary length number. The number is encoded as a single byte
      *     indicating the position of the decimal point followed by the Packed BCD
@@ -2244,7 +2257,8 @@ public final class MysqlxResultset {
      *   SET
      *     A list of strings representing a SET of values.
      *     ``value``
-     *       A list of 0 or more of protobuf's bytes.
+     *       A sequence of 0 or more of protobuf's bytes (length prepended octets) or one of
+     *       the special sequences with a predefined meaning listed below.
      *       Example (length of the bytes array shown in brackets):
      *         * ``[0]`` - the NULL value
      *         * ``[1] 0x00`` - a set containing a blank string ''

@@ -7504,6 +7504,30 @@ public final class MysqlxCrud {
      */
     com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRowOrBuilder getRowOrBuilder(
         int index);
+
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> 
+        getArgsList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index);
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    int getArgsCount();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+        getArgsOrBuilderList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code Mysqlx.Crud.Insert}
@@ -7514,6 +7538,7 @@ public final class MysqlxCrud {
    * :param data_model: datamodel that the operations refer to
    * :param projection: name of the columns to insert data into (empty if data_model is DOCUMENT)
    * :param row: set of rows to insert into the collection/table (a single expression with a JSON document literal or an OBJECT expression)
+   * :param args: values for parameters used in row expressions
    * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
@@ -7606,6 +7631,14 @@ public final class MysqlxCrud {
               row_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Insert.TypedRow.PARSER, extensionRegistry));
               break;
             }
+            case 42: {
+              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+                args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>();
+                mutable_bitField0_ |= 0x00000010;
+              }
+              args_.add(input.readMessage(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry));
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -7619,6 +7652,9 @@ public final class MysqlxCrud {
         }
         if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           row_ = java.util.Collections.unmodifiableList(row_);
+        }
+        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+          args_ = java.util.Collections.unmodifiableList(args_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -8446,11 +8482,47 @@ public final class MysqlxCrud {
       return row_.get(index);
     }
 
+    public static final int ARGS_FIELD_NUMBER = 5;
+    private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_;
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+        getArgsOrBuilderList() {
+      return args_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    public int getArgsCount() {
+      return args_.size();
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
+      return args_.get(index);
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+     */
+    public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
+        int index) {
+      return args_.get(index);
+    }
+
     private void initFields() {
       collection_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection.getDefaultInstance();
       dataModel_ = com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel.DOCUMENT;
       projection_ = java.util.Collections.emptyList();
       row_ = java.util.Collections.emptyList();
+      args_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -8478,6 +8550,12 @@ public final class MysqlxCrud {
           return false;
         }
       }
+      for (int i = 0; i < getArgsCount(); i++) {
+        if (!getArgs(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -8496,6 +8574,9 @@ public final class MysqlxCrud {
       }
       for (int i = 0; i < row_.size(); i++) {
         output.writeMessage(4, row_.get(i));
+      }
+      for (int i = 0; i < args_.size(); i++) {
+        output.writeMessage(5, args_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -8521,6 +8602,10 @@ public final class MysqlxCrud {
       for (int i = 0; i < row_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(4, row_.get(i));
+      }
+      for (int i = 0; i < args_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, args_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -8609,6 +8694,7 @@ public final class MysqlxCrud {
      * :param data_model: datamodel that the operations refer to
      * :param projection: name of the columns to insert data into (empty if data_model is DOCUMENT)
      * :param row: set of rows to insert into the collection/table (a single expression with a JSON document literal or an OBJECT expression)
+     * :param args: values for parameters used in row expressions
      * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
@@ -8643,6 +8729,7 @@ public final class MysqlxCrud {
           getCollectionFieldBuilder();
           getProjectionFieldBuilder();
           getRowFieldBuilder();
+          getArgsFieldBuilder();
         }
       }
       private static Builder create() {
@@ -8670,6 +8757,12 @@ public final class MysqlxCrud {
           bitField0_ = (bitField0_ & ~0x00000008);
         } else {
           rowBuilder_.clear();
+        }
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        } else {
+          argsBuilder_.clear();
         }
         return this;
       }
@@ -8728,6 +8821,15 @@ public final class MysqlxCrud {
           result.row_ = row_;
         } else {
           result.row_ = rowBuilder_.build();
+        }
+        if (argsBuilder_ == null) {
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            args_ = java.util.Collections.unmodifiableList(args_);
+            bitField0_ = (bitField0_ & ~0x00000010);
+          }
+          result.args_ = args_;
+        } else {
+          result.args_ = argsBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -8803,6 +8905,32 @@ public final class MysqlxCrud {
             }
           }
         }
+        if (argsBuilder_ == null) {
+          if (!other.args_.isEmpty()) {
+            if (args_.isEmpty()) {
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+            } else {
+              ensureArgsIsMutable();
+              args_.addAll(other.args_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.args_.isEmpty()) {
+            if (argsBuilder_.isEmpty()) {
+              argsBuilder_.dispose();
+              argsBuilder_ = null;
+              args_ = other.args_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+              argsBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getArgsFieldBuilder() : null;
+            } else {
+              argsBuilder_.addAllMessages(other.args_);
+            }
+          }
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -8824,6 +8952,12 @@ public final class MysqlxCrud {
         }
         for (int i = 0; i < getRowCount(); i++) {
           if (!getRow(i).isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getArgsCount(); i++) {
+          if (!getArgs(i).isInitialized()) {
             
             return false;
           }
@@ -9479,6 +9613,246 @@ public final class MysqlxCrud {
           row_ = null;
         }
         return rowBuilder_;
+      }
+
+      private java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> args_ =
+        java.util.Collections.emptyList();
+      private void ensureArgsIsMutable() {
+        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+          args_ = new java.util.ArrayList<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar>(args_);
+          bitField0_ |= 0x00000010;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> argsBuilder_;
+
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
+        if (argsBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(args_);
+        } else {
+          return argsBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public int getArgsCount() {
+        if (argsBuilder_ == null) {
+          return args_.size();
+        } else {
+          return argsBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);
+        } else {
+          return argsBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.set(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder setArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder addArgs(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar value) {
+        if (argsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureArgsIsMutable();
+          args_.add(index, value);
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder addArgs(
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder addArgs(
+          int index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          argsBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder addAllArgs(
+          java.lang.Iterable<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar> values) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, args_);
+          onChanged();
+        } else {
+          argsBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder clearArgs() {
+        if (argsBuilder_ == null) {
+          args_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+          onChanged();
+        } else {
+          argsBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public Builder removeArgs(int index) {
+        if (argsBuilder_ == null) {
+          ensureArgsIsMutable();
+          args_.remove(index);
+          onChanged();
+        } else {
+          argsBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder getArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
+          int index) {
+        if (argsBuilder_ == null) {
+          return args_.get(index);  } else {
+          return argsBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public java.util.List<? extends com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+           getArgsOrBuilderList() {
+        if (argsBuilder_ != null) {
+          return argsBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(args_);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder() {
+        return getArgsFieldBuilder().addBuilder(
+            com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder addArgsBuilder(
+          int index) {
+        return getArgsFieldBuilder().addBuilder(
+            index, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
+       */
+      public java.util.List<com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder> 
+           getArgsBuilderList() {
+        return getArgsFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+          getArgsFieldBuilder() {
+        if (argsBuilder_ == null) {
+          argsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.ScalarOrBuilder>(
+                  args_,
+                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  getParentForChildren(),
+                  isClean());
+          args_ = null;
+        }
+        return argsBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Mysqlx.Crud.Insert)
@@ -13515,19 +13889,20 @@ public final class MysqlxCrud {
       "it\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 " +
       "\003(\0132\022.Mysqlx.Crud.Order\022#\n\010grouping\030\010 \003(" +
       "\0132\021.Mysqlx.Expr.Expr\022,\n\021grouping_criteri" +
-      "a\030\t \001(\0132\021.Mysqlx.Expr.Expr\"\343\001\n\006Insert\022+\n" +
+      "a\030\t \001(\0132\021.Mysqlx.Expr.Expr\"\213\002\n\006Insert\022+\n" +
       "\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Collecti" +
       "on\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Dat",
       "aModel\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud" +
       ".Column\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Inser" +
-      "t.TypedRow\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021." +
+      "t.TypedRow\022&\n\004args\030\005 \003(\0132\030.Mysqlx.Dataty" +
+      "pes.Scalar\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021." +
       "Mysqlx.Expr.Expr\"\245\002\n\006Update\022+\n\ncollectio" +
       "n\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata" +
       "_model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010" +
       "criteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004arg" +
       "s\030\010 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005lim" +
-      "it\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 " +
-      "\003(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003",
+      "it\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 ",
+      "\003(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003" +
       "(\0132\034.Mysqlx.Crud.UpdateOperation\"\364\001\n\006Del" +
       "ete\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Co" +
       "llection\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Cr" +
@@ -13599,7 +13974,7 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Insert_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Insert_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Projection", "Row", });
+        new java.lang.String[] { "Collection", "DataModel", "Projection", "Row", "Args", });
     internal_static_Mysqlx_Crud_Insert_TypedRow_descriptor =
       internal_static_Mysqlx_Crud_Insert_descriptor.getNestedTypes().get(0);
     internal_static_Mysqlx_Crud_Insert_TypedRow_fieldAccessorTable = new
