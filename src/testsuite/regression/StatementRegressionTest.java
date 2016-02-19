@@ -7682,4 +7682,29 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(5.0f, cstmt.getFloat(3));
         assertEquals(10.0f, cstmt.getFloat(4));
     }
+
+    /**
+     * Test Bug#75956 - Inserting timestamps using a server PreparedStatement and useLegacyDatetimeCode=false
+     */
+    public void testBug75956() throws Exception {
+        createTable("bug75956", "(id int not null primary key auto_increment, dt1 datetime, dt2 datetime)");
+        Connection sspsConn = getConnectionWithProps("useCursorFetch=true,useLegacyDatetimeCode=false");
+        this.pstmt = sspsConn.prepareStatement("insert into bug75956 (dt1, dt2) values (?, ?)");
+        this.pstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+        this.pstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+        this.pstmt.addBatch();
+        this.pstmt.clearParameters();
+        this.pstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+        this.pstmt.setTimestamp(2, null);
+        this.pstmt.addBatch();
+        this.pstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+        this.pstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+        this.pstmt.addBatch();
+        this.pstmt.executeBatch();
+        this.pstmt.close();
+        this.rs = sspsConn.createStatement().executeQuery("select count(*) from bug75956 where dt2 is NULL");
+        this.rs.next();
+        assertEquals(1, this.rs.getInt(1));
+        sspsConn.close();
+    }
 }

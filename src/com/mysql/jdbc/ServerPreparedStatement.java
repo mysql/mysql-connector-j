@@ -130,6 +130,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
 
         void reset() {
+            this.isNull = false;
             this.isSet = false;
             this.value = null;
             this.isLongData = false;
@@ -147,6 +148,10 @@ public class ServerPreparedStatement extends PreparedStatement {
         public String toString(boolean quoteIfNeeded) {
             if (this.isLongData) {
                 return "' STREAM DATA '";
+            }
+
+            if (this.isNull) {
+                return "NULL";
             }
 
             switch (this.bufferType) {
@@ -869,9 +874,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.detectedLongParameterSwitch = true;
                 }
             }
-
-            this.parameterBindings[parameterIndex].isSet = true;
-            this.parameterBindings[parameterIndex].boundBeforeExecutionNum = this.numberOfExecutions;
 
             return this.parameterBindings[parameterIndex];
         }
@@ -1631,10 +1633,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
                 binding.value = x;
-                binding.isNull = false;
                 binding.isLongData = true;
 
                 if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -1660,14 +1661,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                 BindValue binding = getBinding(parameterIndex, false);
 
                 if (this.connection.versionMeetsMinimum(5, 0, 3)) {
-                    setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
+                    resetToType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
                 } else {
-                    setType(binding, this.stringTypeCode);
+                    resetToType(binding, this.stringTypeCode);
                 }
 
                 binding.value = StringUtils.fixDecimalExponent(StringUtils.consistentToString(x));
-                binding.isNull = false;
-                binding.isLongData = false;
             }
         }
     }
@@ -1683,10 +1682,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
                 binding.value = x;
-                binding.isNull = false;
                 binding.isLongData = true;
 
                 if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -1709,10 +1707,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
                 binding.value = x;
-                binding.isNull = false;
                 binding.isLongData = true;
 
                 if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -1740,12 +1737,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_TINY);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_TINY);
 
-        binding.value = null;
         binding.longBinding = x;
-        binding.isNull = false;
-        binding.isLongData = false;
     }
 
     /**
@@ -1759,11 +1753,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_VAR_STRING);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_VAR_STRING);
 
             binding.value = x;
-            binding.isNull = false;
-            binding.isLongData = false;
         }
     }
 
@@ -1778,10 +1770,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
                 binding.value = reader;
-                binding.isNull = false;
                 binding.isLongData = true;
 
                 if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -1804,10 +1795,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 setNull(parameterIndex, java.sql.Types.BINARY);
             } else {
                 BindValue binding = getBinding(parameterIndex, true);
-                setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+                resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
                 binding.value = x.getCharacterStream();
-                binding.isNull = false;
                 binding.isLongData = true;
 
                 if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -1856,11 +1846,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DATE);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_DATE);
 
             binding.value = x;
-            binding.isNull = false;
-            binding.isLongData = false;
         }
     }
 
@@ -1878,12 +1866,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             }
 
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DOUBLE);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_DOUBLE);
 
-            binding.value = null;
             binding.doubleBinding = x;
-            binding.isNull = false;
-            binding.isLongData = false;
         }
     }
 
@@ -1895,12 +1880,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_FLOAT);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_FLOAT);
 
-        binding.value = null;
         binding.floatBinding = x;
-        binding.isNull = false;
-        binding.isLongData = false;
     }
 
     /**
@@ -1911,12 +1893,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_LONG);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_LONG);
 
-        binding.value = null;
         binding.longBinding = x;
-        binding.isNull = false;
-        binding.isLongData = false;
     }
 
     /**
@@ -1927,12 +1906,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_LONGLONG);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_LONGLONG);
 
-        binding.value = null;
         binding.longBinding = x;
-        binding.isNull = false;
-        binding.isLongData = false;
     }
 
     /**
@@ -1943,18 +1919,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_NULL);
 
-        //
-        // Don't re-set types, but use something if this
-        // parameter was never specified
-        //
-        if (binding.bufferType == 0) {
-            setType(binding, MysqlDefs.FIELD_TYPE_NULL);
-        }
-
-        binding.value = null;
         binding.isNull = true;
-        binding.isLongData = false;
     }
 
     /**
@@ -1965,17 +1932,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_NULL);
 
-        //
-        // Don't re-set types, but use something if this parameter was never specified
-        //
-        if (binding.bufferType == 0) {
-            setType(binding, MysqlDefs.FIELD_TYPE_NULL);
-        }
-
-        binding.value = null;
         binding.isNull = true;
-        binding.isLongData = false;
     }
 
     /**
@@ -1994,12 +1953,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         checkClosed();
 
         BindValue binding = getBinding(parameterIndex, false);
-        setType(binding, MysqlDefs.FIELD_TYPE_SHORT);
+        resetToType(binding, MysqlDefs.FIELD_TYPE_SHORT);
 
-        binding.value = null;
         binding.longBinding = x;
-        binding.isNull = false;
-        binding.isLongData = false;
     }
 
     /**
@@ -2013,12 +1969,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.CHAR);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-
-            setType(binding, this.stringTypeCode);
+            resetToType(binding, this.stringTypeCode);
 
             binding.value = x;
-            binding.isNull = false;
-            binding.isLongData = false;
         }
     }
 
@@ -2082,7 +2035,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_TIME);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_TIME);
 
             if (!this.useLegacyDatetimeCode) {
                 binding.value = x;
@@ -2092,9 +2045,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
                         rollForward);
             }
-
-            binding.isNull = false;
-            binding.isLongData = false;
         }
     }
 
@@ -2143,7 +2093,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
             BindValue binding = getBinding(parameterIndex, false);
-            setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
 
             if (!this.sendFractionalSeconds) {
                 x = TimeUtil.truncateFractionalSeconds(x);
@@ -2157,20 +2107,28 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
                         rollForward);
-
-                binding.isNull = false;
-                binding.isLongData = false;
             }
         }
     }
 
-    protected void setType(BindValue oldValue, int bufferType) throws SQLException {
+    /**
+     * Reset a bind value to be used for a new value of the given type.
+     */
+    protected void resetToType(BindValue oldValue, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (oldValue.bufferType != bufferType) {
+            // clear any possible old value
+            oldValue.reset();
+
+            if (bufferType == MysqlDefs.FIELD_TYPE_NULL && oldValue.bufferType != 0) {
+                // preserve the previous type to (possibly) avoid sending types at execution time
+            } else if (oldValue.bufferType != bufferType) {
                 this.sendTypesToServer = true;
+                oldValue.bufferType = bufferType;
             }
 
-            oldValue.bufferType = bufferType;
+            // setup bind value for use
+            oldValue.isSet = true;
+            oldValue.boundBeforeExecutionNum = this.numberOfExecutions;
         }
     }
 

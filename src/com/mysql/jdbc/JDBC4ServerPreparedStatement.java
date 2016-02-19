@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,10 +56,9 @@ public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
             binding.value = reader;
-            binding.isNull = false;
             binding.isLongData = true;
 
             if (this.connection.getUseStreamLengthsInPrepStmts()) {
@@ -102,10 +101,9 @@ public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
             setNull(parameterIndex, java.sql.Types.NCLOB);
         } else {
             BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+            resetToType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
             binding.value = reader;
-            binding.isNull = false;
             binding.isLongData = true;
 
             if (this.connection.getUseStreamLengthsInPrepStmts()) {
