@@ -553,14 +553,17 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     public void testBug11629() throws Exception {
+
         PrintStream oldOut = System.out;
         PrintStream oldError = System.err;
 
         try {
+            System.out.flush();
             ByteArrayOutputStream bOut = new ByteArrayOutputStream();
             PrintStream newOut = new PrintStream(bOut);
             System.setOut(newOut);
 
+            System.err.flush();
             ByteArrayOutputStream bErr = new ByteArrayOutputStream();
             PrintStream newErr = new PrintStream(bErr);
             System.setErr(newErr);
@@ -569,15 +572,14 @@ public class StringRegressionTest extends BaseTestCase {
             props.setProperty("useSSL", "false");
             props.setProperty("characterEncoding", "utf8");
             getConnectionWithProps(props).close();
+
             String withExclaims = new String(bOut.toByteArray());
-            assertTrue(withExclaims.indexOf("!") == -1);
-            assertTrue(withExclaims.length() == 0); // to catch any other
-            // System.out.printlns()
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
 
             withExclaims = new String(bErr.toByteArray());
-            assertTrue(withExclaims.indexOf("!") == -1);
-            assertTrue(withExclaims.length() == 0); // to catch any other
-            // System.err.printlns()
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
         } finally {
             System.setOut(oldOut);
             System.setErr(oldError);
