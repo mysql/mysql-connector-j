@@ -90,10 +90,15 @@ public class AddStatementImpl implements AddStatement {
     }
 
     public Result execute() {
-        List<String> newIds = assignIds();
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(),
-                serializeDocs());
-        return new UpdateResult(ok, newIds);
+        if (this.newDocs.size() == 0) { // according to dev api sec, this is a no-op. we create an empty Result
+            StatementExecuteOk ok = new StatementExecuteOk(0, null, new ArrayList<>());
+            return new UpdateResult(ok, new ArrayList<>());
+        } else {
+            List<String> newIds = assignIds();
+            StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(),
+                    serializeDocs());
+            return new UpdateResult(ok, newIds);
+        }
     }
 
     public CompletableFuture<Result> executeAsync() {

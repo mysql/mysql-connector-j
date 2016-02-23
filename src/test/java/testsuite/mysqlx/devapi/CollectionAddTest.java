@@ -132,4 +132,12 @@ public class CollectionAddTest extends CollectionTest {
         DbDoc d = docs.next();
         assertEquals(docSize, ((JsonString) d.get("large_field")).getString().length());
     }
+
+    @Test
+    public void testAddNoDocs() {
+        Result res = this.collection.add(new DbDoc[] {}).execute();
+        assertEquals(0, res.getAffectedItemsCount());
+        assertEquals(null, res.getAutoIncrementValue());
+        assertEquals(0, res.getWarningsCount());
+    }
 }
