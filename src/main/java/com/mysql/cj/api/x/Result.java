@@ -24,6 +24,7 @@
 package com.mysql.cj.api.x;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Base result.
@@ -40,9 +41,9 @@ public interface Result {
     Long getAutoIncrementValue();
 
     /**
-     * Get the last generated document idea from a document add statement.
+     * Get the generated document ids from a document add statement.
      */
-    String getLastDocumentId();
+    List<String> getLastDocumentIds();
 
     /**
      * Count of warnings generated during statement execution.

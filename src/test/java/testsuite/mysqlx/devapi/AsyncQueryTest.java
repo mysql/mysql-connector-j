@@ -69,7 +69,7 @@ public class AsyncQueryTest extends CollectionTest {
     public void basicAsyncQuery() throws Exception {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
 
         CompletableFuture<DocResult> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
         DocResult docs = docsF.get();
@@ -84,7 +84,7 @@ public class AsyncQueryTest extends CollectionTest {
 
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
 
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
@@ -141,8 +141,8 @@ public class AsyncQueryTest extends CollectionTest {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
         CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
-            assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
-            return this.collection.find("firstName like '%Fra%'").executeAsync();
+                    assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+                    return this.collection.find("firstName like '%Fra%'").executeAsync();
         });
 
         DbDoc d = docF.thenApply((DocResult docs) -> docs.next()).get(5, TimeUnit.SECONDS);

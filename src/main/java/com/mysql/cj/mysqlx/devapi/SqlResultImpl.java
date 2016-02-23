@@ -82,8 +82,8 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         return getCurrentResult().getAutoIncrementValue();
     }
 
-    public String getLastDocumentId() {
-        return getCurrentResult().getLastDocumentId();
+    public List<String> getLastDocumentIds() {
+        return getCurrentResult().getLastDocumentIds();
     }
 
     public int getWarningsCount() {

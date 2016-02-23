@@ -58,7 +58,7 @@ public class CollectionAddTest extends CollectionTest {
     public void testBasicAddString() {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("firstName like '%Fra%'").execute();
         DbDoc d = docs.next();
@@ -72,7 +72,7 @@ public class CollectionAddTest extends CollectionTest {
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
         Result res = this.collection.add(doc).execute();
-        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("lastName like 'O\\'Kee%'").execute();
         DbDoc d = docs.next();
@@ -88,7 +88,7 @@ public class CollectionAddTest extends CollectionTest {
         doc.put("y", "this is y");
         doc.put("z", new BigDecimal("44.22"));
         Result res = this.collection.add(doc).execute();
-        assertTrue(res.getLastDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("z >= 44.22").execute();
         DbDoc d = docs.next();
@@ -100,7 +100,7 @@ public class CollectionAddTest extends CollectionTest {
     public void testAddWithAssignedId() {
         String json = "{'_id': 'Id#1', 'name': '<unknown>'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
-        assertNull(res.getLastDocumentId());
+        assertEquals(0, res.getLastDocumentIds().size());
 
         DocResult docs = this.collection.find("_id == 'Id#1'").execute();
         DbDoc d = docs.next();

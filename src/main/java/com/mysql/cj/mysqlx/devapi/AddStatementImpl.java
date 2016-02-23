@@ -93,15 +93,13 @@ public class AddStatementImpl implements AddStatement {
         List<String> newIds = assignIds();
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(),
                 serializeDocs());
-        // TODO allow more than one new assigned doc id
-        return new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null);
+        return new UpdateResult(ok, newIds);
     }
 
     public CompletableFuture<Result> executeAsync() {
         final List<String> newIds = assignIds();
         CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncAddDocs(this.collection.getSchema().getName(),
                 this.collection.getName(), serializeDocs());
-        // TODO allow more than one new assigned doc id
-        return okF.thenApply(ok -> new UpdateResult(ok, newIds.size() > 0 ? newIds.get(0) : null));
+        return okF.thenApply(ok -> new UpdateResult(ok, newIds));
     }
 }

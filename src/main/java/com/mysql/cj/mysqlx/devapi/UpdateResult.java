@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Warning;
@@ -34,19 +35,19 @@ import com.mysql.cj.core.io.StatementExecuteOk;
  */
 public class UpdateResult implements Result {
     private StatementExecuteOk ok;
-    private String lastDocId;
+    private List<String> lastDocIds;
 
     /**
      * Create a new result.
      *
      * @param updates
      *            the response from the server
-     * @param lastDocId
-     *            the (optional) ID of the inserted document
+     * @param lastDocIds
+     *            the (optional) IDs of the inserted documents
      */
-    public UpdateResult(StatementExecuteOk ok, String lastDocId) {
+    public UpdateResult(StatementExecuteOk ok, List<String> lastDocIds) {
         this.ok = ok;
-        this.lastDocId = lastDocId;
+        this.lastDocIds = lastDocIds;
     }
 
     public long getAffectedItemsCount() {
@@ -57,8 +58,8 @@ public class UpdateResult implements Result {
         return this.ok.getLastInsertId();
     }
 
-    public String getLastDocumentId() {
-        return this.lastDocId;
+    public List<String> getLastDocumentIds() {
+        return this.lastDocIds;
     }
 
     public int getWarningsCount() {

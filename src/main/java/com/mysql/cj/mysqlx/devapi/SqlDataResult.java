@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.RowList;
@@ -52,7 +53,7 @@ public class SqlDataResult extends RowResultImpl implements SqlResult {
         return getStatementExecuteOk().getLastInsertId();
     }
 
-    public String getLastDocumentId() {
+    public List<String> getLastDocumentIds() {
         throw new FeatureNotAvailableException("Document IDs are not assigned for SQL statements");
     }
 }
