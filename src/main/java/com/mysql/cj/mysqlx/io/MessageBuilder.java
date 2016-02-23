@@ -97,7 +97,7 @@ public class MessageBuilder {
         args[3] = ExprUtil.buildAny(params.isUnique());
         int argPos = 4;
         for (int i = 0; i < params.getDocPaths().size(); ++i) {
-            args[argPos++] = ExprUtil.buildAny(params.getDocPaths().get(i));
+            args[argPos++] = ExprUtil.buildAny("$" + params.getDocPaths().get(i));
             args[argPos++] = ExprUtil.buildAny(params.getTypes().get(i));
             args[argPos++] = ExprUtil.buildAny(params.getNotNulls().get(i));
         }
