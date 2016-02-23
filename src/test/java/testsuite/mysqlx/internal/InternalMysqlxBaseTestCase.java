@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,7 +38,7 @@ import com.mysql.cj.x.MysqlxSessionFactory;
 /**
  * Base class for tests of MySQL-X internal components.
  */
-public class BaseInternalMysqlxTest {
+public class InternalMysqlxBaseTestCase {
     /**
      * The default character set used to interpret metadata. Use <i>latin1</i> - MySQL's default. This value is provided by higher layers above the protocol so
      * we avoid issues by using only ASCII characters for metadata in these tests.
@@ -50,7 +50,7 @@ public class BaseInternalMysqlxTest {
 
     public Properties testProperties = new Properties();
 
-    public BaseInternalMysqlxTest() {
+    public InternalMysqlxBaseTestCase() {
         ConnectionString conStr = new ConnectionString(this.baseUrl, null);
         if (conStr.getProperties() == null) {
             throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");

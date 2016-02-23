@@ -41,7 +41,7 @@ import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 
-public class SessionTest extends BaseDevApiTest {
+public class SessionTest extends DevApiBaseTestCase {
     @Before
     public void setupCollectionTest() {
         setupTestSession();

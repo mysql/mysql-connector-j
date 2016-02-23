@@ -39,7 +39,7 @@ import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.DataReadException;
 
-public class ResultTest extends BaseDevApiTest {
+public class ResultTest extends DevApiBaseTestCase {
     @Before
     public void setupTableTest() {
         super.setupTestSession();

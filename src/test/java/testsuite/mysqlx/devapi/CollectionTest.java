@@ -37,7 +37,7 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
 
-public class CollectionTest extends BaseDevApiTest {
+public class CollectionTest extends DevApiBaseTestCase {
     /** Collection for testing. */
     protected Collection collection;
     private String collectionName;

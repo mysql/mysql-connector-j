@@ -37,7 +37,7 @@ import com.mysql.cj.api.x.Table;
 /**
  * @todo
  */
-public class TableTest extends BaseDevApiTest {
+public class TableTest extends DevApiBaseTestCase {
     @Before
     public void setupTableTest() {
         super.setupTestSession();

@@ -29,12 +29,12 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
 
-import testsuite.mysqlx.internal.BaseInternalMysqlxTest;
+import testsuite.mysqlx.internal.InternalMysqlxBaseTestCase;
 
 /**
  * Utilities for Dev API tests.
  */
-public class BaseDevApiTest extends BaseInternalMysqlxTest {
+public class DevApiBaseTestCase extends InternalMysqlxBaseTestCase {
 
     /**
      * Session for use in tests.

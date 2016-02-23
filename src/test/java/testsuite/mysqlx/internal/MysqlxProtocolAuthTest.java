@@ -38,7 +38,7 @@ import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 /**
  * Tests for protocol-level auth APIs against a running MySQL-X server.
  */
-public class MysqlxProtocolAuthTest extends BaseInternalMysqlxTest {
+public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
     private static MysqlxProtocol protocol;
 
     @Before

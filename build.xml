@@ -992,7 +992,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <junit printsummary="yes"
                fork="on"
                forkmode="once"
-               jvm="${com.mysql.cj.testsuite.jvm.java}">
+               jvm="${com.mysql.cj.testsuite.jvm.java}"
+	           errorProperty="com.mysql.cj.testsuite.junit.fail"
+    	       failureProperty="com.mysql.cj.testsuite.junit.fail">
             <jvmarg value="-Xmx1024m" />
 
             <syspropertyset refid="junit.system.properties" />
@@ -1032,6 +1034,12 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             </fileset>
             <report format="frames" todir="${com.mysql.cj.testsuite.junit.results}/report" />
         </junitreport>
+
+        <fail message="Tests failed. Check logs and/or reports in '${com.mysql.cj.testsuite.junit.results}'.">
+            <condition>
+                <isset property="com.mysql.cj.testsuite.junit.fail" />
+            </condition>
+        </fail>
     </target>
 
 

@@ -35,7 +35,7 @@ import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.SqlStatement;
 
-public class NodeSessionTest extends BaseDevApiTest {
+public class NodeSessionTest extends DevApiBaseTestCase {
     @Before
     public void setupCollectionTest() {
         setupTestSession();
