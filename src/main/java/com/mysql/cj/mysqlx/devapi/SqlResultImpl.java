@@ -78,8 +78,8 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         return getCurrentResult().getAffectedItemsCount();
     }
 
-    public Long getLastInsertId() {
-        return getCurrentResult().getLastInsertId();
+    public Long getAutoIncrementValue() {
+        return getCurrentResult().getAutoIncrementValue();
     }
 
     public String getLastDocumentId() {

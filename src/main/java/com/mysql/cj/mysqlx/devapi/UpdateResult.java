@@ -53,7 +53,7 @@ public class UpdateResult implements Result {
         return this.ok.getRowsAffected();
     }
 
-    public Long getLastInsertId() {
+    public Long getAutoIncrementValue() {
         return this.ok.getLastInsertId();
     }
 

@@ -67,7 +67,7 @@ public class NodeSessionTest extends DevApiBaseTestCase {
         SqlResult res = stmt.execute();
         assertFalse(res.hasData());
         assertEquals(0, res.getAffectedItemsCount());
-        assertEquals(null, res.getLastInsertId());
+        assertEquals(null, res.getAutoIncrementValue());
         assertEquals(0, res.getWarningsCount());
         assertFalse(res.getWarnings().hasNext());
     }

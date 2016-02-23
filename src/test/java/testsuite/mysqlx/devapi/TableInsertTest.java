@@ -63,7 +63,7 @@ public class TableInsertTest extends TableTest {
         Result res = table.insert("name").values("a").values("b").values("c").execute();
         assertEquals(3, res.getAffectedItemsCount());
         // the *first* ID
-        assertEquals(new Long(1), res.getLastInsertId());
+        assertEquals(new Long(1), res.getAutoIncrementValue());
     }
 
     @Test

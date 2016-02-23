@@ -176,7 +176,7 @@ public class AsyncQueryTest extends CollectionTest {
         resF.thenAccept(res -> {
             assertFalse(res.hasData());
             assertEquals(0, res.getAffectedItemsCount());
-            assertEquals(null, res.getLastInsertId());
+            assertEquals(null, res.getAutoIncrementValue());
             assertEquals(0, res.getWarningsCount());
             assertFalse(res.getWarnings().hasNext());
         }).get();
