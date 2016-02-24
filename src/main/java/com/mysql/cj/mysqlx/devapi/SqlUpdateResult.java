@@ -25,7 +25,7 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.List;
 
-import com.mysql.cj.api.x.Columns;
+import com.mysql.cj.api.x.Column;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
@@ -68,7 +68,7 @@ public class SqlUpdateResult extends UpdateResult implements SqlResult {
         throw new FeatureNotAvailableException("No data");
     }
 
-    public Columns getColumns() {
+    public List<Column> getColumns() {
         throw new FeatureNotAvailableException("No data");
     }
 

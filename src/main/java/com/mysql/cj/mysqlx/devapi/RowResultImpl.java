@@ -29,10 +29,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.x.Columns;
+import com.mysql.cj.api.x.Column;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
-import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 
@@ -48,8 +47,8 @@ public class RowResultImpl extends AbstractDataResult<Row> implements RowResult 
         return this.metadata.size();
     }
 
-    public Columns getColumns() {
-        throw new FeatureNotAvailableException();
+    public List<Column> getColumns() {
+        return this.metadata.stream().map(ColumnImpl::new).collect(Collectors.toList());
     }
 
     public List<String> getColumnNames() {

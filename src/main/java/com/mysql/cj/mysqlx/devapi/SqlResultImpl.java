@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.mysql.cj.api.x.Columns;
+import com.mysql.cj.api.x.Column;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.Warning;
@@ -98,7 +98,7 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         return getCurrentResult().getColumnCount();
     }
 
-    public Columns getColumns() {
+    public List<Column> getColumns() {
         return getCurrentResult().getColumns();
     }
 

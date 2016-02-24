@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,5 +24,37 @@
 package com.mysql.cj.api.x;
 
 public interface Column {
+    String getSchemaName();
 
+    String getTableName();
+
+    String getTableLabel();
+
+    String getColumnName();
+
+    String getColumnLabel();
+
+    Type getType();
+
+    long getLength();
+
+    int getFractionalDigits();
+
+    boolean isNumberSigned();
+
+    String getCollationName();
+
+    String getCharacterSetName();
+
+    boolean isPadded();
+
+    boolean isNullable();
+
+    boolean isAutoIncrement();
+
+    boolean isPrimaryKey();
+
+    boolean isUniqueKey();
+
+    boolean isPartKey();
 }

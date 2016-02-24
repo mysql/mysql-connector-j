@@ -94,16 +94,22 @@ import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 public class MysqlxProtocol implements Protocol {
     /**
      * Content-type used in type mapping.
-     * c.f. plugin/x/ngs/include/ngs/protocol.h
+     * c.f. mysqlx_resultset.proto
      */
     private static final int MYSQLX_COLUMN_BYTES_CONTENT_TYPE_GEOMETRY = 0x0001;
-    private static final int MYSQLX_COLUMN_BYTES_CONTENT_TYPE_JSON = 0x0002;
+    public static final int MYSQLX_COLUMN_BYTES_CONTENT_TYPE_JSON = 0x0002;
 
     private static final int MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_DOUBLE_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_FLOAT_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_DECIMAL_UNSIGNED = 0x0001;
     private static final int MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_DATETIME_TIMESTAMP = 0x0001;
+    private static final int MYSQLX_COLUMN_FLAGS_NOT_NULL = 0x0010;
+    private static final int MYSQLX_COLUMN_FLAGS_PRIMARY_KEY = 0x0020;
+    private static final int MYSQLX_COLUMN_FLAGS_UNIQUE_KEY = 0x0040;
+    private static final int MYSQLX_COLUMN_FLAGS_MULTIPLE_KEY = 0x0080;
+    private static final int MYSQLX_COLUMN_FLAGS_AUTO_INCREMENT = 0x0100;
 
     // TODO: need protocol type constants here (these values copied from comments in mysqlx_notice.proto)
     public static final int MysqlxNoticeFrameType_WARNING = 1;
@@ -405,7 +411,6 @@ public class MysqlxProtocol implements Protocol {
      * @return A <b>FIELD_TYPE</b> constant from {@link MysqlaConstants} corresponding to the combination of input parameters.
      */
     private static int mysqlxTypeToMysqlType(FieldType type, int contentType) {
-        // TODO: check if the signedness is represented in field flags
         switch (type) {
             case SINT:
                 // TODO: figure out ranges in detail and test them
@@ -510,10 +515,6 @@ public class MysqlxProtocol implements Protocol {
             LazyString originalColumnName = new LazyString(col.getOriginalName().toString(characterSet));
 
             long length = col.getLength();
-            // TODO: length is returning 0 for all
-            // TODO: pass length to mysql type mapping, length = 10 -> DATE, length = 19 -> DATETIME
-            // System.err.println("columnName: " + columnName);
-            // System.err.println("length (was returning 0 for all types): " + length);
             int decimals = col.getFractionalDigits();
             int collationIndex = 0;
             if (col.hasCollation()) {
@@ -531,7 +532,24 @@ public class MysqlxProtocol implements Protocol {
             if (col.getType().equals(FieldType.UINT) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_UINT_ZEROFILL)) {
                 flags |= MysqlType.FIELD_FLAG_ZEROFILL;
             } else if (col.getType().equals(FieldType.BYTES) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_BYTES_RIGHTPAD)) {
-                // TODO: propagate flag to Field
+                mysqlType = MysqlType.CHAR;
+            } else if (col.getType().equals(FieldType.DATETIME) && 0 < (col.getFlags() & MYSQLX_COLUMN_FLAGS_DATETIME_TIMESTAMP)) {
+                mysqlType = MysqlType.TIMESTAMP;
+            }
+            if ((col.getFlags() & MYSQLX_COLUMN_FLAGS_NOT_NULL) > 0) {
+                flags |= MysqlType.FIELD_FLAG_NOT_NULL;
+            }
+            if ((col.getFlags() & MYSQLX_COLUMN_FLAGS_PRIMARY_KEY) > 0) {
+                flags |= MysqlType.FIELD_FLAG_PRIMARY_KEY;
+            }
+            if ((col.getFlags() & MYSQLX_COLUMN_FLAGS_UNIQUE_KEY) > 0) {
+                flags |= MysqlType.FIELD_FLAG_UNIQUE_KEY;
+            }
+            if ((col.getFlags() & MYSQLX_COLUMN_FLAGS_MULTIPLE_KEY) > 0) {
+                flags |= MysqlType.FIELD_FLAG_MULTIPLE_KEY;
+            }
+            if ((col.getFlags() & MYSQLX_COLUMN_FLAGS_AUTO_INCREMENT) > 0) {
+                flags |= MysqlType.FIELD_FLAG_AUTO_INCREMENT;
             }
 
             Field f = new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlTypeId, flags, decimals,
