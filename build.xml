@@ -1315,27 +1315,21 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <report format="frames" todir="${junit.unitregress.results}/report" />
         </junitreport>
 
-        <!-- Don't fail the build if we're doing multi-tests or coverage test. -->
+        <!-- Don't fail the build if we're doing multi-tests. -->
         <fail message="Tests failed. Check logs and/or reports in '${junit.results}'.">
             <condition>
                 <and>
                     <equals arg1="${test.result.prefix}" arg2="" />
                     <isset property="tests.failed" />
-                    <not>
-                        <isset property="com.mysql.jdbc.coverage.result.dir.final" />
-                    </not>
                 </and>
             </condition>
         </fail>
 
         <local name="test.message.dontfail" />
-        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test...">
+        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test..." else="">
             <not>
                 <equals arg1="${test.result.prefix}" arg2="" />
             </not>
-        </condition>
-        <condition property="test.message.dontfail" value="Skipping test failures check because of coverage test..." else="">
-            <isset property="com.mysql.jdbc.coverage.result.dir.final" />
         </condition>
         <echo>${test.message.dontfail}</echo>
     </target>
