@@ -1077,21 +1077,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <condition>
                 <and>
                     <isset property="com.mysql.cj.testsuite.junit.fail" />
-                    <not>
-                        <isset property="com.mysql.cj.coverage.result.dir.final" />
-                    </not>
                 </and>
             </condition>
         </fail>
-
-        <local name="test.message.dontfail" />
-        <condition property="test.message.dontfail" value="Skipping test failures check because of coverage test..." else="">
-            <and>
-                <isset property="com.mysql.cj.testsuite.junit.fail" />
-                <isset property="com.mysql.cj.coverage.result.dir.final" />
-            </and>
-        </condition>
-        <echo>${test.message.dontfail}</echo>
     </target>
 
 
