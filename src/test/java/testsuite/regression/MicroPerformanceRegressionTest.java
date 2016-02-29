@@ -42,7 +42,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
     private final static double ORIGINAL_LOOP_TIME_MS = 2300.0;
 
-    private final static double LEEWAY = 10.0; // account for VMs
+    // (Used to be 10.0 for JVM < 1.7 but since HW and VMs are much faster now a minimal disruption can cause significant deviations)
+    private final static double LEEWAY = 50.0; // account for VMs
 
     private final static Map<String, Double> BASELINE_TIMES = new HashMap<String, Double>();
 

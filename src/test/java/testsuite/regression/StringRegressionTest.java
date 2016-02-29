@@ -24,6 +24,7 @@
 package testsuite.regression;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -483,31 +484,83 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     public void testBug11629() throws Exception {
+        class TeeByteArrayOutputStream extends ByteArrayOutputStream {
+            PrintStream branch;
+            StackTraceElement[] callStackTrace = null;
+
+            public TeeByteArrayOutputStream(PrintStream branch) {
+                this.branch = branch;
+            }
+
+            @Override
+            public void write(int b) {
+                this.branch.write(b);
+                super.write(b);
+                setCallStackTrace();
+            }
+
+            @Override
+            public void write(byte[] b) throws IOException {
+                this.branch.write(b);
+                super.write(b);
+                setCallStackTrace();
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) {
+                this.branch.write(b, off, len);
+                super.write(b, off, len);
+                setCallStackTrace();
+            }
+
+            private void setCallStackTrace() {
+                if (this.callStackTrace == null) {
+                    this.callStackTrace = Thread.currentThread().getStackTrace();
+                }
+            }
+
+            public void printCallStackTrace() {
+                if (this.callStackTrace != null) {
+                    for (StackTraceElement ste : this.callStackTrace) {
+                        this.branch.println(">>> " + ste.toString());
+                    }
+                }
+            }
+        }
+
         PrintStream oldOut = System.out;
         PrintStream oldError = System.err;
 
         try {
-            ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+            TeeByteArrayOutputStream bOut = new TeeByteArrayOutputStream(System.out);
             PrintStream newOut = new PrintStream(bOut);
+            System.out.flush();
             System.setOut(newOut);
 
-            ByteArrayOutputStream bErr = new ByteArrayOutputStream();
+            TeeByteArrayOutputStream bErr = new TeeByteArrayOutputStream(System.err);
             PrintStream newErr = new PrintStream(bErr);
+            System.err.flush();
             System.setErr(newErr);
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "utf8");
             getConnectionWithProps(props).close();
+            System.setOut(oldOut);
+            System.setErr(oldError);
+
+            bOut.printCallStackTrace();
+            bErr.printCallStackTrace();
+
             String withExclaims = new String(bOut.toByteArray());
-            assertTrue(withExclaims.indexOf("!") == -1);
-            assertTrue(withExclaims.length() == 0); // to catch any other
-            // System.out.printlns()
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
+            bOut.close();
 
             withExclaims = new String(bErr.toByteArray());
-            assertTrue(withExclaims.indexOf("!") == -1);
-            assertTrue(withExclaims.length() == 0); // to catch any other
-            // System.err.printlns()
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
+            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
+            bErr.close();
         } finally {
             System.setOut(oldOut);
             System.setErr(oldError);

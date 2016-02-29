@@ -5863,20 +5863,39 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug71038() throws Exception {
-        long cnt0 = 0;
-        long cnt1 = 0;
-        for (int i = 0; i < 1000; i++) {
-            cnt0 -= System.currentTimeMillis();
-            Connection c = getConnectionWithProps("detectCustomCollations=false");
-            cnt0 += System.currentTimeMillis();
-            c.close();
-            cnt1 -= System.currentTimeMillis();
-            c = getConnectionWithProps("detectCustomCollations=true");
-            cnt1 += System.currentTimeMillis();
-            c.close();
+        Properties p = new Properties();
+        p.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        p.setProperty(PropertyDefinitions.PNAME_detectCustomCollations, "false");
+        p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug71038StatementInterceptor.class.getName());
+
+        JdbcConnection c = (JdbcConnection) getConnectionWithProps(p);
+        Bug71038StatementInterceptor si = (Bug71038StatementInterceptor) c.getStatementInterceptorsInstances().get(0);
+        assertTrue("SHOW COLLATION was issued when detectCustomCollations=false", si.cnt == 0);
+        c.close();
+
+        p.setProperty(PropertyDefinitions.PNAME_detectCustomCollations, "true");
+        p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug71038StatementInterceptor.class.getName());
+
+        c = (JdbcConnection) getConnectionWithProps(p);
+        si = (Bug71038StatementInterceptor) c.getStatementInterceptorsInstances().get(0);
+        assertTrue("SHOW COLLATION wasn't issued when detectCustomCollations=true", si.cnt > 0);
+        c.close();
+    }
+
+    /**
+     * Counts the number of issued "SHOW COLLATION" statements.
+     */
+    public static class Bug71038StatementInterceptor extends BaseStatementInterceptor {
+        int cnt = 0;
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+                throws SQLException {
+            if (sql.contains("SHOW COLLATION")) {
+                this.cnt++;
+            }
+            return null;
         }
-        System.out.println("detectCustomCollations=false: " + cnt0 + "\ndetectCustomCollations=true : " + cnt1);
-        assertTrue(cnt0 < cnt1);
     }
 
     /**

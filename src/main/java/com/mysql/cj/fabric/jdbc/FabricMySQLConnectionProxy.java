@@ -94,7 +94,7 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMysqlConnection {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -6276256222880055706L;
 
     private Log log;
 
@@ -206,13 +206,14 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
                     getExceptionInterceptor(), this);
         }
 
+        // initialize log before any further calls that might actually use it
+        this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
+                "FabricMySQLConnectionProxy", null);
+
         setShardTable(this.fabricShardTable);
         setShardKey(this.fabricShardKey);
 
         setServerGroupName(this.fabricServerGroup);
-
-        this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
-                "FabricMySQLConnectionProxy", null);
     }
 
     /**
