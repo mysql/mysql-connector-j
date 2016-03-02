@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import com.mysql.cj.mysqlx.io.MysqlxProtocol;
-
 import com.mysql.cj.api.x.Column;
 import com.mysql.cj.api.x.Type;
 import com.mysql.cj.core.CharsetMapping;
@@ -127,12 +125,14 @@ public class ColumnImpl implements Column {
                 return Type.ENUM;
             case GEOMETRY:
                 return Type.GEOMETRY;
+            default:
+                break;
         }
         throw new IllegalArgumentException("Unknown type in metadata: " + this.field.getMysqlType());
     }
 
     public long getLength() {
-        return field.getLength();
+        return this.field.getLength();
     }
 
     public int getFractionalDigits() {
