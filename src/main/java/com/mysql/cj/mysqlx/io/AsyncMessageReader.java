@@ -166,9 +166,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         // process the completed header and initiate message reading
         this.headerBuf.clear();
         this.messageSize = this.headerBuf.getInt() - 1;
-        if (this.messageSize > 200 * 1024 * 1024) {
-            throw new CJCommunicationsException("Receving message larger than 200 megs not supported temporary due to xplugin bug");
-        }
         this.messageType = this.headerBuf.get();
         // for debugging
         // System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
