@@ -1077,17 +1077,17 @@ public class SyntaxRegressionTest extends BaseTestCase {
          * Test hints syntax variations.
          */
         // Valid hints.
-        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(0.5)", true, false);
-        testHintsSyntax("SELECT/*+ max_execution_time(100) */SLEEP(0.5)", true, false);
-        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(0.5) /*+ wrong location, just comments */", true, false);
-        testHintsSyntax("SELECT /*+ max_execution_time(100) *//* comment */ SLEEP(0.5)", true, false);
+        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(5)", true, false);
+        testHintsSyntax("SELECT/*+ max_execution_time(100) */SLEEP(5)", true, false);
+        testHintsSyntax("SELECT /*+ max_execution_time(100) */ SLEEP(5) /*+ wrong location, just comments */", true, false);
+        testHintsSyntax("SELECT /*+ max_execution_time(100) *//* comment */ SLEEP(5)", true, false);
 
         // Invalid hints.
         testHintsSyntax("SELECT /*+ max_execution_time *//*+ (100) */ SLEEP(0.5)", false, true);
         testHintsSyntax("SELECT /*+! max_execution_time (100) */ SLEEP(0.5)", false, true);
 
         // Valid and invalid hints.
-        testHintsSyntax("SELECT /*+ max_execution_time (100) bad_hint */ SLEEP(0.5)", true, true);
+        testHintsSyntax("SELECT /*+ max_execution_time (100) bad_hint */ SLEEP(5)", true, true);
 
         // No hints.
         testHintsSyntax("/*+ max_execution_time(100) */SELECT SLEEP(0.5)", false, false);
