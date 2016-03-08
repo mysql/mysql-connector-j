@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -121,7 +121,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNCharacterStream() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props1.put("useUnicode", "true");
@@ -142,7 +142,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props2.put("useUnicode", "true");
@@ -170,7 +170,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNCharacterStreamServer() throws Exception {
-        createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props1.put("useUnicode", "true");
@@ -187,7 +187,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8)");
+        createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props2.put("useUnicode", "true");
@@ -212,7 +212,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNClob() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props1.put("useUnicode", "true");
@@ -235,7 +235,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props2.put("useUnicode", "true");
@@ -265,7 +265,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNClobServer() throws Exception {
-        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
+        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props1.put("useUnicode", "true");
@@ -292,7 +292,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8)");
+        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props2.put("useUnicode", "true");
@@ -321,7 +321,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNString() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
+        createTable("testSetNString",
+                "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props1.put("useUnicode", "true");
@@ -341,7 +342,8 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
+        createTable("testSetNString",
+                "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "false"); // use client-side prepared statement
         props2.put("useUnicode", "true");
@@ -368,7 +370,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNStringServer() throws Exception {
-        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props1.put("useUnicode", "true");
@@ -385,7 +387,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.put("useServerPrepStmts", "true"); // use server-side prepared statement
         props2.put("useUnicode", "true");

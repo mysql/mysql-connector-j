@@ -1208,7 +1208,7 @@ public class StatementRegressionTest extends BaseTestCase {
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago"));
 
-            createTable("testBug3620", "(field1 TIMESTAMP)");
+            createTable("testBug3620", "(field1 TIMESTAMP) ENGINE=InnoDB");
 
             Properties props = new Properties();
             props.put("cacheDefaultTimezone", "false");
