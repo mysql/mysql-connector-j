@@ -546,8 +546,30 @@ public class DataSourceRegressionTest extends BaseTestCase {
             xaRes.end(xid, XAResource.TMSUCCESS);
             assertEquals(XAResource.XA_OK, xaRes.prepare(xid));
 
-            // Simulate a connection hang
+            // Simulate a connection hang and make sure the connection really dies.
             this.stmt.execute("KILL CONNECTION " + connId);
+            int connAliveChecks = 4;
+            while (connAliveChecks > 0) {
+                this.rs = this.stmt.executeQuery("SHOW PROCESSLIST");
+                boolean connIsAlive = false;
+                while (!connIsAlive && this.rs.next()) {
+                    connIsAlive = this.rs.getInt(1) == connId;
+                }
+                this.rs.close();
+                if (connIsAlive) {
+                    connAliveChecks--;
+                    System.out.println("Connection id " + connId + " is still alive. Checking " + connAliveChecks + " more times.");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                    }
+                } else {
+                    connAliveChecks = -1;
+                }
+            }
+            if (connAliveChecks == 0) {
+                fail("Failed to kill the Connection id " + connId + " in a timely manner.");
+            }
 
             XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
                     new Callable<Void>() {
