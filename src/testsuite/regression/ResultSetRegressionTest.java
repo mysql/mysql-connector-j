@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -4830,7 +4831,40 @@ public class ResultSetRegressionTest extends BaseTestCase {
             testConn.close();
             props.setProperty("useFastDateParsing", "false");
         }
-
     }
 
+    /**
+     * Tests fix for Bug#80522 - Using useCursorFetch leads to data corruption in Connector/J for TIME type.
+     */
+    public void testBug80522() throws Exception {
+        createTable("testBug80522", "(t TIME, d DATE, s TEXT)");
+
+        Properties props = new Properties();
+        String sqlMode = getMysqlVariable("sql_mode");
+        if (sqlMode.contains("NO_ZERO_DATE")) {
+            sqlMode = removeSqlMode("NO_ZERO_DATE", sqlMode);
+            props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
+        }
+        props.setProperty("traceProtocol", "false");
+        props.setProperty("defaultFetchSize", "5");
+        props.setProperty("useCursorFetch", "true");
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
+        testStmt.executeUpdate("INSERT INTO testBug80522 VALUES ('00:00:00', '0000-00-00', 'Zeros')");
+        final ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug80522");
+        assertTrue(testRs.next());
+        assertEquals(new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("1970-01-01 00:00:00").getTime()), testRs.getTimestamp(1));
+        assertThrows(SQLException.class, "Value '0000-00-00' can not be represented as java\\.sql\\.Timestamp", new Callable<Void>() {
+            public Void call() throws Exception {
+                System.out.println(testRs.getTimestamp(2));
+                return null;
+            }
+        });
+        assertEquals("Zeros", testRs.getString(3));
+
+        testRs.close();
+        testStmt.close();
+        testConn.close();
+    }
 }

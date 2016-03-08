@@ -392,7 +392,7 @@ public abstract class ResultSetRow {
             case MysqlDefs.FIELD_TYPE_DATE:
                 populatedFromDateTimeValue = true;
 
-                if (bits.length != 0) {
+                if (length != 0) {
                     year = (bits[offset + 0] & 0xff) | ((bits[offset + 1] & 0xff) << 8);
                     month = bits[offset + 2];
                     day = bits[offset + 3];
@@ -402,7 +402,7 @@ public abstract class ResultSetRow {
             case MysqlDefs.FIELD_TYPE_TIME:
                 populatedFromDateTimeValue = true;
 
-                if (bits.length != 0) {
+                if (length != 0) {
                     // bits[0] // skip tm->neg
                     // binaryData.readLong(); // skip daysPart
                     hour = bits[offset + 5];
