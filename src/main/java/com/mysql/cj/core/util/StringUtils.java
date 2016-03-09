@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.NumberOutOfRange;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -1787,7 +1788,7 @@ public class StringUtils {
         return asBytes;
     }
 
-    public static boolean canHandleAsServerPreparedStatementNoCache(String sql) {
+    public static boolean canHandleAsServerPreparedStatementNoCache(String sql, ServerVersion serverVersion) {
 
         // Can't use server-side prepare for CALL
         if (startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {
@@ -1804,7 +1805,7 @@ public class StringUtils {
             canHandleAsStatement = false;
         } else if (startsWithIgnoreCaseAndWs(sql, "SET")) {
             canHandleAsStatement = false;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SHOW WARNINGS")) {
+        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SHOW WARNINGS") && serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.2"))) {
             canHandleAsStatement = false;
         }
 

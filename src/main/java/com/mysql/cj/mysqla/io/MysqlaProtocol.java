@@ -1457,7 +1457,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
      */
     public void explainSlowQuery(byte[] querySQL, String truncatedQuery) {
         if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
-                || (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
+                || (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
 
             PreparedStatement stmt = null;
             java.sql.ResultSet rs = null;

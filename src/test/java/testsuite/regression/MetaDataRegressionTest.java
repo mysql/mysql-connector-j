@@ -1697,7 +1697,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
             sb.append("field31 datetime, ");
             sb.append("field32 timestamp, ");
             sb.append("field33 year, ");
-            sb.append("field34 json, ");
+            if (versionMeetsMinimum(5, 7)) {
+                sb.append("field34 json, ");
+            }
             sb.append("field35 boolean, ");
             sb.append("field36 bit, ");
             sb.append("field37 bit(64), ");
@@ -2539,11 +2541,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-            String sqlMode = getMysqlVariable("sql_mode");
-            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+            }
+            if (versionMeetsMinimum(5, 7, 5)) {
+                String sqlMode = getMysqlVariable("sql_mode");
+                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                    props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                }
             }
             props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
             Connection conn1 = null;
@@ -2839,11 +2845,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             for (String prop : new String[] { "dummyProp", PropertyDefinitions.PNAME_useInformationSchema }) {
                 props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-                String sqlMode = getMysqlVariable("sql_mode");
-                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                    props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                if (versionMeetsMinimum(5, 7, 4)) {
+                    props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                }
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                    }
                 }
                 props.setProperty(prop, "true");
                 Connection conn2 = getConnectionWithProps(props);
@@ -2852,7 +2862,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 try {
                     stmt2 = conn2.createStatement();
                     testTimestamp(conn2, stmt2, dbname);
-                    testDatetime(conn2, stmt2, dbname);
+                    if (versionMeetsMinimum(5, 6, 5)) {
+                        testDatetime(conn2, stmt2, dbname);
+                    }
                 } finally {
                     if (stmt2 != null) {
                         stmt2.close();

@@ -83,7 +83,8 @@ class EscapeProcessor {
      * @throws java.sql.SQLException
      * @throws SQLException
      */
-    public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
+    public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, boolean serverSupportsFractionalSecond,
+            ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
 
@@ -124,7 +125,8 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), defaultTimeZone, exceptionInterceptor);
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), defaultTimeZone, serverSupportsFractionalSecond,
+                                    exceptionInterceptor);
 
                             String remaining = null;
 
@@ -206,9 +208,9 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(defaultTimeZone, newSql, token, exceptionInterceptor);
+                        processTimestampToken(defaultTimeZone, newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
-                        processTimeToken(newSql, token, exceptionInterceptor);
+                        processTimeToken(newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{call") || StringUtils.startsWithIgnoreCase(collapsedToken, "{?=call")) {
 
                         int startPos = StringUtils.indexOfIgnoreCase(token, "CALL") + 5;
@@ -283,7 +285,8 @@ class EscapeProcessor {
         return epr;
     }
 
-    private static void processTimeToken(StringBuilder newSql, String token, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    private static void processTimeToken(StringBuilder newSql, String token, boolean serverSupportsFractionalSecond, ExceptionInterceptor exceptionInterceptor)
+            throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -301,7 +304,7 @@ class EscapeProcessor {
 
                 String fractionalSecond = "";
 
-                if (st.hasMoreTokens()) {
+                if (serverSupportsFractionalSecond && st.hasMoreTokens()) {
                     fractionalSecond = "." + st.nextToken();
                 }
 
@@ -311,7 +314,9 @@ class EscapeProcessor {
                 newSql.append(minute);
                 newSql.append(":");
                 newSql.append(second);
-                newSql.append(fractionalSecond);
+                if (serverSupportsFractionalSecond) {
+                    newSql.append(fractionalSecond);
+                }
                 newSql.append("'");
             } catch (java.util.NoSuchElementException e) {
                 throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
@@ -320,7 +325,8 @@ class EscapeProcessor {
         }
     }
 
-    private static void processTimestampToken(TimeZone tz, StringBuilder newSql, String token, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    private static void processTimestampToken(TimeZone tz, StringBuilder newSql, String token, boolean serverSupportsFractionalSecond,
+            ExceptionInterceptor exceptionInterceptor) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -338,7 +344,7 @@ class EscapeProcessor {
 
                 newSql.append(tsdf.format(ts));
 
-                if (ts.getNanos() > 0) {
+                if (serverSupportsFractionalSecond && ts.getNanos() > 0) {
                     newSql.append('.');
                     newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
                 }

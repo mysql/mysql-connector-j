@@ -4189,8 +4189,10 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));
-            buf.append('.');
-            buf.append(TimeUtil.formatNanos(x.getNanos(), true));
+            if (this.session.serverSupportsFracSecs()) {
+                buf.append('.');
+                buf.append(TimeUtil.formatNanos(x.getNanos(), true));
+            }
             buf.append('\'');
 
             setInternal(parameterIndex, buf.toString());

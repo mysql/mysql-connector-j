@@ -909,7 +909,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     return flag.booleanValue();
                 }
 
-                boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
+                boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion());
 
                 if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
                     this.serverSideStatementCheckCache.put(sql, canHandle ? Boolean.TRUE : Boolean.FALSE);
@@ -919,22 +919,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        return StringUtils.canHandleAsServerPreparedStatementNoCache(sql);
+        return StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion());
     }
 
-    /**
-     * Changes the user on this connection by performing a re-authentication. If
-     * authentication fails, the connection will remain under the context of the
-     * current user.
-     * 
-     * @param userName
-     *            the username to authenticate with
-     * @param newPassword
-     *            the password to authenticate with
-     * @throws SQLException
-     *             if authentication fails, or some other error occurs while
-     *             performing the command.
-     */
     public void changeUser(String userName, String newPassword) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -950,6 +937,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             try {
                 this.session.changeUser(userName, newPassword, this.database);
             } catch (CJException ex) {
+                // After Bug#16241992 fix the server doesn't return to previous credentials if COM_CHANGE_USER attempt failed. 
                 if ("28000".equals(ex.getSQLState())) {
                     cleanup(ex);
                 }
@@ -2699,7 +2687,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && !this.useLocalSessionState.getValue() && this.readOnlyPropagatesToServer.getValue()) {
+        if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
+                && this.readOnlyPropagatesToServer.getValue()) {
             java.sql.Statement stmt = null;
             java.sql.ResultSet rs = null;
 
@@ -3019,7 +3008,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getDefaultTimeZone(), getExceptionInterceptor());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getDefaultTimeZone(),
+                getMultiHostSafeProxy().getSession().serverSupportsFracSecs(), getExceptionInterceptor());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -3029,7 +3019,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getDefaultTimeZone(), getExceptionInterceptor());
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getDefaultTimeZone(),
+                getMultiHostSafeProxy().getSession().serverSupportsFracSecs(), getExceptionInterceptor());
 
         boolean isFunctionCall = false;
         String parsedSql = null;
@@ -3992,7 +3983,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         // note this this is safe even inside a transaction
-        if (this.readOnlyPropagatesToServer.getValue()) {
+        if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
             if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
                 execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
                         DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);

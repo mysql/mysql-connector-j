@@ -152,7 +152,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         // Changing SSL defaults for 5.7+ server: useSSL=true, requireSSL=false, verifyServerCertificate=false
 
         ModifiableProperty<Boolean> useSSL = this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL);
-        if (!useSSL.getValue() && !useSSL.isExplicitlySet()) {
+        if (this.protocol.versionMeetsMinimum(5, 7, 0) && !useSSL.getValue() && !useSSL.isExplicitlySet()) {
             useSSL.setValue(true);
             this.propertySet.getModifiableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(false);
             if (this.log != null) {
@@ -276,6 +276,12 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         }
 
         plugin = new Sha256PasswordPlugin();
+        plugin.init(this.connection, this.protocol, this.connection.getProperties());
+        if (addAuthenticationPlugin(plugin)) {
+            defaultIsFound = true;
+        }
+
+        plugin = new MysqlOldPasswordPlugin();
         plugin.init(this.connection, this.protocol, this.connection.getProperties());
         if (addAuthenticationPlugin(plugin)) {
             defaultIsFound = true;
@@ -477,7 +483,13 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                     String pluginName = null;
                     if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        pluginName = challenge.readString("ASCII");
+                        // Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
+                        if (!this.protocol.versionMeetsMinimum(5, 5, 10)
+                                || this.protocol.versionMeetsMinimum(5, 6, 0) && !this.protocol.versionMeetsMinimum(5, 6, 2)) {
+                            pluginName = challenge.readString("ASCII", ((MysqlaCapabilities) sessState.getCapabilities()).getAuthPluginDataLength());
+                        } else {
+                            pluginName = challenge.readString("ASCII");
+                        }
                     }
 
                     plugin = getAuthenticationPlugin(pluginName);
@@ -557,7 +569,12 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                 } else {
                     // read raw packet
-                    fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
+                    if (this.protocol.versionMeetsMinimum(5, 5, 16)) {
+                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
+                    } else {
+                        old_raw_challenge = true;
+                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition() - 1, challenge.getBufLength() - challenge.getPosition() + 1));
+                    }
                 }
 
             }

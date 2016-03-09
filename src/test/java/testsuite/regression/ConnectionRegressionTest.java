@@ -139,6 +139,7 @@ import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
+import com.mysql.cj.mysqla.authentication.MysqlOldPasswordPlugin;
 import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -3269,6 +3270,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testDefaultPlugin() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         Connection testConn = null;
         Properties props = new Properties();
 
@@ -3323,6 +3327,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testDisabledPlugins() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         Connection testConn = null;
         Properties props = new Properties();
 
@@ -3380,6 +3387,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testAuthTestPlugin() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         boolean install_plugin_in_runtime = false;
         try {
 
@@ -3453,6 +3463,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testTwoQuestionsPlugin() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         boolean install_plugin_in_runtime = false;
         try {
 
@@ -3521,6 +3534,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testThreeAttemptsPlugin() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         boolean install_plugin_in_runtime = false;
         try {
 
@@ -3725,7 +3741,121 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     }
 
+    public void testOldPasswordPlugin() throws Exception {
+
+        if (!versionMeetsMinimum(5, 5, 7) || versionMeetsMinimum(5, 7, 5)) {
+            // As of 5.7.5, support for mysql_old_password is removed.
+            System.out.println("testOldPasswordPlugin was skipped: This test is only run for 5.5.7 - 5.7.4 server versions.");
+            return;
+        }
+
+        Connection testConn = null;
+
+        try {
+            this.stmt.executeUpdate("SET @current_secure_auth = @@global.secure_auth");
+            this.stmt.executeUpdate("SET GLOBAL secure_auth= off");
+
+            createUser("'bug64983user1'@'%'", "IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user1'@'%'");
+
+            createUser("'bug64983user2'@'%'", "IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user2'@'%'");
+
+            createUser("'bug64983user3'@'%'", "IDENTIFIED WITH mysql_old_password");
+            this.stmt.executeUpdate("grant all on *.* to 'bug64983user3'@'%'");
+
+            this.stmt.executeUpdate("flush privileges");
+
+            Properties props = new Properties();
+
+            // connect with default plugin
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user1");
+            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+            testConn = getConnectionWithProps(props);
+            ResultSet testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user2");
+            props.setProperty(PropertyDefinitions.PNAME_password, "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user3");
+            props.setProperty(PropertyDefinitions.PNAME_password, "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            // connect with MysqlOldPasswordPlugin plugin
+            props.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, MysqlOldPasswordPlugin.class.getName());
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user1");
+            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user2");
+            props.setProperty(PropertyDefinitions.PNAME_password, "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+            testConn.close();
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug64983user3");
+            props.setProperty(PropertyDefinitions.PNAME_password, "");
+            testConn = getConnectionWithProps(props);
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+
+            // changeUser
+            ((JdbcConnection) testConn).changeUser("bug64983user1", "pwd");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+
+            ((JdbcConnection) testConn).changeUser("bug64983user2", "");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+
+            ((JdbcConnection) testConn).changeUser("bug64983user3", "");
+            testRs = testConn.createStatement().executeQuery("select USER()");
+            testRs.next();
+            assertEquals("bug64983user3", testRs.getString(1).split("@")[0]);
+
+        } finally {
+            try {
+                this.stmt.executeUpdate("SET GLOBAL secure_auth = @current_secure_auth");
+
+                if (testConn != null) {
+                    testConn.close();
+                }
+            } catch (Exception ex) {
+                System.err.println("Exception during cleanup:");
+                ex.printStackTrace();
+            }
+        }
+
+    }
+
     public void testAuthCleartextPlugin() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         boolean install_plugin_in_runtime = false;
         try {
 
@@ -3844,113 +3974,115 @@ public class ConnectionRegressionTest extends BaseTestCase {
         /*
          * test against server without RSA support
          */
-        if (!pluginIsActive(this.stmt, "sha256_password")) {
-            fail("sha256_password required to run this test");
-        }
-        if (allowsRsa(this.stmt)) {
-            fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
-        }
+        if (versionMeetsMinimum(5, 6, 5)) {
+            if (!pluginIsActive(this.stmt, "sha256_password")) {
+                fail("sha256_password required to run this test");
+            }
+            if (allowsRsa(this.stmt)) {
+                fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
+            }
 
-        try {
-            this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
-            createUser("'wl5602user'@'%'", "identified WITH sha256_password");
-            this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
-            createUser("'wl5602nopassword'@'%'", "identified WITH sha256_password");
-            this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
-            this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-            this.stmt.executeUpdate("SET SESSION old_passwords= 2");
-            this.stmt.executeUpdate(
-                    versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
-            this.stmt.executeUpdate("flush privileges");
+            try {
+                this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                createUser("'wl5602user'@'%'", "identified WITH sha256_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
+                createUser("'wl5602nopassword'@'%'", "identified WITH sha256_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
+                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                        : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                this.stmt.executeUpdate("flush privileges");
 
-            final Properties propsNoRetrieval = new Properties();
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl5602user");
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                final Properties propsNoRetrieval = new Properties();
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl5602user");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
 
-            final Properties propsNoRetrievalNoPassword = new Properties();
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl5602nopassword");
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                final Properties propsNoRetrievalNoPassword = new Properties();
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl5602nopassword");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
 
-            final Properties propsAllowRetrieval = new Properties();
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl5602user");
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                final Properties propsAllowRetrieval = new Properties();
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl5602user");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
 
-            final Properties propsAllowRetrievalNoPassword = new Properties();
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl5602nopassword");
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                final Properties propsAllowRetrievalNoPassword = new Properties();
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl5602nopassword");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
 
-            // 1. without SSL
-            // SQLException expected due to server doesn't recognize Public Key Retrieval packet
-            assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
-                public Void call() throws Exception {
-                    getConnectionWithProps(propsNoRetrieval);
-                    return null;
-                }
-            });
-            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    getConnectionWithProps(propsAllowRetrieval);
-                    return null;
-                }
-            });
+                // 1. without SSL
+                // SQLException expected due to server doesn't recognize Public Key Retrieval packet
+                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsAllowRetrieval);
+                        return null;
+                    }
+                });
 
-            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-            // 2. with serverRSAPublicKeyFile specified
-            // SQLException expected due to server doesn't recognize RSA encrypted payload
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                // 2. with serverRSAPublicKeyFile specified
+                // SQLException expected due to server doesn't recognize RSA encrypted payload
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
 
-            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    getConnectionWithProps(propsNoRetrieval);
-                    return null;
-                }
-            });
-            assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    getConnectionWithProps(propsAllowRetrieval);
-                    return null;
-                }
-            });
+                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsAllowRetrieval);
+                        return null;
+                    }
+                });
 
-            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-            // 3. over SSL
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                // 3. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
 
-            assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
-            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-            assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
-            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-            // over SSL with client-default Sha256PasswordPlugin
-            propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
-            propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
-            propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
-            propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
+                // over SSL with client-default Sha256PasswordPlugin
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
 
-            assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
-            assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
-            assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
-            assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
+                assertCurrentUser(null, propsAllowRetrieval, "wl5602user", true);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-        } finally {
-            this.stmt.executeUpdate("flush privileges");
-            this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            } finally {
+                this.stmt.executeUpdate("flush privileges");
+                this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            }
         }
 
         /*
@@ -4629,6 +4761,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testExpiredPassword() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 10)) {
+            return;
+        }
         Connection testConn = null;
         Statement testSt = null;
         ResultSet testRs = null;
@@ -4655,21 +4790,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
 
             // ALTER USER can be prepared as of 5.6.8 (BUG#14646014)
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-            testConn = getConnectionWithProps(props);
+            if (versionMeetsMinimum(5, 6, 8)) {
+                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+                testConn = getConnectionWithProps(props);
 
-            this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
-                    : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
-            this.pstmt.executeUpdate();
-            this.pstmt.close();
+                this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
+                        : "ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                this.pstmt.executeUpdate();
+                this.pstmt.close();
 
-            this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER ?, 'must_change2'@'%' PASSWORD EXPIRE"
-                    : "ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
-            this.pstmt.setString(1, "must_change1");
-            this.pstmt.executeUpdate();
-            this.pstmt.close();
+                this.pstmt = testConn.prepareStatement(versionMeetsMinimum(5, 7, 6) ? "ALTER USER ?, 'must_change2'@'%' PASSWORD EXPIRE"
+                        : "ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+                this.pstmt.setString(1, "must_change1");
+                this.pstmt.executeUpdate();
+                this.pstmt.close();
 
-            testConn.close();
+                testConn.close();
+            }
 
             props.setProperty(PropertyDefinitions.PNAME_user, "must_change1");
             props.setProperty(PropertyDefinitions.PNAME_password, "aha");
@@ -4784,6 +4921,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testConnectionAttributes() throws Exception {
+        if (!versionMeetsMinimum(5, 6)) {
+            return;
+        }
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "first:one,again:two");
         props.setProperty(PropertyDefinitions.PNAME_user, "root");
@@ -5601,7 +5741,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testLongAuthResponsePayload() throws Exception {
 
-        if (this.sha256Conn != null) {
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 6)) {
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
@@ -6194,7 +6334,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug18869381() throws Exception {
 
-        if (this.sha256Conn != null) {
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 6)) {
 
             if (!pluginIsActive(this.sha256Stmt, "sha256_password")) {
                 fail("sha256_password required to run this test");
@@ -6737,6 +6877,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug19354014() throws Exception {
+        if (!versionMeetsMinimum(5, 5, 7)) {
+            return;
+        }
         Connection con = null;
         createUser("'bug19354014user'@'%'", "identified WITH mysql_native_password");
         this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%'");
@@ -7441,7 +7584,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug75670() throws Exception {
-        if (this.sha256Conn != null) {
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 6)) {
 
             if (!pluginIsActive(this.sha256Stmt, "sha256_password")) {
                 fail("sha256_password required to run this test");
@@ -7784,14 +7927,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // 1. No explicit useSSL
             sslConn = getConnectionWithProps(props);
+            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
+                        .isExplicitlySet());
 
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
-                    .isExplicitlySet());
-
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
-            assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+                assertFalse(
+                        ((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
+                assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+            } else {
+                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+                assertTrue(
+                        ((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
+                assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+            }
 
             testBug21947042_PrintCipher(sslConn);
             testBug21947042_PrintVersion(sslConn);
@@ -7801,7 +7951,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String log = StandardLogger.getBuffer().toString();
             found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
             searchFrom = found + 1;
-            if (versionMeetsMinimum(5, 7)) {
+            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
                 assertTrue(found != -1);
             }
 
@@ -7979,7 +8129,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
 
-        if (this.sha256Conn != null) {
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 5, 7)) {
             testDbUrls = new String[] { BaseTestCase.dbUrl, sha256Url };
         } else {
             testDbUrls = new String[] { BaseTestCase.dbUrl };

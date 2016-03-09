@@ -1115,7 +1115,11 @@ public class StatementRegressionTest extends BaseTestCase {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3103");
 
-            this.stmt.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME(3))");
+            if (versionMeetsMinimum(5, 6, 4)) {
+                this.stmt.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME(3))");
+            } else {
+                this.stmt.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME)");
+            }
 
             PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug3103 VALUES (?)");
 
@@ -1751,11 +1755,16 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug5235() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
-        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-        String sqlMode = getMysqlVariable("sql_mode");
-        if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-            sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+        if (versionMeetsMinimum(5, 7, 4)) {
+            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+        }
+
+        if (versionMeetsMinimum(5, 7, 5)) {
+            String sqlMode = getMysqlVariable("sql_mode");
+            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            }
         }
 
         Connection convertToNullConn = getConnectionWithProps(props);
@@ -4752,7 +4761,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                 createTable("testBug30493", ddl);
                 this.stmt.executeUpdate(tablePrimeSql);
-                int expectedUpdateCount = 1; // was 2; behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3 
+                int expectedUpdateCount = versionMeetsMinimum(5, 5, 16) ? 1 : 2; // behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 
                 int rwUpdateCounts[] = testStmts[1].executeBatch();
                 ResultSet rewrittenRsKeys = testStmts[1].getGeneratedKeys();
@@ -4793,7 +4802,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             Statement stmt1 = this.conn.createStatement();
             stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
-            int expectedUpdateCount = 1; // was 2; behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3 
+            int expectedUpdateCount = versionMeetsMinimum(5, 5, 16) ? 1 : 2; // behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 
             assertEquals(expectedUpdateCount, stmt1.getUpdateCount());
             ResultSet stmtKeys = stmt1.getGeneratedKeys();
@@ -5931,6 +5940,10 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testBug40279() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return;
+        }
+
         createTable("testBug40279", "(f1 int, f2 timestamp(6))");
 
         Timestamp ts = new Timestamp(1300791248001L);
@@ -6092,21 +6105,30 @@ public class StatementRegressionTest extends BaseTestCase {
         Statement testStatement = null;
 
         try {
-            createTable("testWL4897", "(f1 INT NOT NULL PRIMARY KEY, f2 CHAR(50))");
+            if (versionMeetsMinimum(5, 6, 3)) {
+                createTable("testWL4897", "(f1 INT NOT NULL PRIMARY KEY, f2 CHAR(50))");
 
-            // when executed in the following sequence, each one of these queries take approximately 1 sec.
-            final String[] slowQueries = { "INSERT INTO testWL4897 VALUES (SLEEP(0.5) + 1, 'MySQL'), (SLEEP(0.5) + 2, 'Connector/J')",
-                    "SELECT * FROM testWL4897 WHERE f1 + SLEEP(0.5) = f1",
-                    "REPLACE INTO testWL4897 VALUES (SLEEP(0.33) + 2, 'Database'), (SLEEP(0.33) + 3, 'Connector'), (SLEEP(0.33) + 4, 'Java')",
-                    "UPDATE testWL4897 SET f1 = f1 * 10 + SLEEP(0.25)", "DELETE FROM testWL4897 WHERE f1 + SLEEP(0.25) = f1" };
+                // when executed in the following sequence, each one of these queries take approximately 1 sec.
+                final String[] slowQueries = { "INSERT INTO testWL4897 VALUES (SLEEP(0.5) + 1, 'MySQL'), (SLEEP(0.5) + 2, 'Connector/J')",
+                        "SELECT * FROM testWL4897 WHERE f1 + SLEEP(0.5) = f1",
+                        "REPLACE INTO testWL4897 VALUES (SLEEP(0.33) + 2, 'Database'), (SLEEP(0.33) + 3, 'Connector'), (SLEEP(0.33) + 4, 'Java')",
+                        "UPDATE testWL4897 SET f1 = f1 * 10 + SLEEP(0.25)", "DELETE FROM testWL4897 WHERE f1 + SLEEP(0.25) = f1" };
 
-            for (String query : slowQueries) {
+                for (String query : slowQueries) {
+                    testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
+                    testStatement.execute(query);
+                    assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.", testHandler.containsSlowQueryMsg(query));
+                    testStatement.close();
+                }
+            } else {
+                // only SELECT is qualified to log slow query explain results warning
+                final String query = "SELECT SLEEP(1)";
+
                 testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
                 testStatement.execute(query);
                 assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.", testHandler.containsSlowQueryMsg(query));
                 testStatement.close();
             }
-
         } finally {
             testHandler.releaseConnectionResources();
             testHandler.undoSystemErrDiversion();
@@ -8670,7 +8692,9 @@ public class StatementRegressionTest extends BaseTestCase {
                 testConn = getConnectionWithProps(testConnProps);
 
                 checkResultSetForTestBug50348(testConn, "2015-01-01 04:00:00.0", tz.equals("Europe/Lisbon") ? "03:00:00" : "04:00:00");
-                checkPreparedStatementForTestBug50348(testConn, timestamp, time, "2015-01-01 16:00:00.0", tz.equals("Europe/Lisbon") ? "17:00:00" : "16:00:00");
+                checkPreparedStatementForTestBug50348(testConn, timestamp, time,
+                        ((JdbcConnection) testConn).getSession().serverSupportsFracSecs() ? "2015-01-01 16:00:00.0" : "2015-01-01 16:00:00",
+                        tz.equals("Europe/Lisbon") ? "17:00:00" : "16:00:00");
 
                 testConn.close();
             }
@@ -8703,7 +8727,8 @@ public class StatementRegressionTest extends BaseTestCase {
                     cal.setTime(tsFormat.parse("2015-01-01 10:00:00"));
                     cal.add(Calendar.HOUR, diffTzOffset);
                     cal.add(Calendar.MINUTE, tzOffset < 0 ? -tzSubOffset : tzSubOffset);
-                    String expectedTimestampFromPS = tsFormat.format(cal.getTime()) + ".0";
+                    String expectedTimestampFromPS = tsFormat.format(cal.getTime())
+                            + (((JdbcConnection) testConn).getSession().serverSupportsFracSecs() ? ".0" : "");
                     cal.setTime(tFormat.parse("10:00:00"));
                     cal.add(Calendar.HOUR, diffTzOffset);
                     cal.add(Calendar.MINUTE, tzOffset < 0 ? -tzSubOffset : tzSubOffset);
@@ -8757,6 +8782,10 @@ public class StatementRegressionTest extends BaseTestCase {
      * The property actually added was 'sendFractionalSeconds' and works as the opposite of the proposed one.
      */
     public void testBug77449() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return;
+        }
+
         Timestamp originalTs = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
         Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);

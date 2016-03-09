@@ -1131,15 +1131,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection testConn = this.conn;
         Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
         try {
-            Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-            String sqlMode = getMysqlVariable("sql_mode");
-            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                Properties props = new Properties();
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
+                this.stmt = testConn.createStatement();
             }
-            testConn = getConnectionWithProps(props);
-            this.stmt = testConn.createStatement();
 
             createTable("testBug6561", "(ofield int, field1 DATE, field2 integer, field3 integer)");
             this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
@@ -1294,15 +1298,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug9236() throws Exception {
         Connection testConn = this.conn;
         try {
-            Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-            String sqlMode = getMysqlVariable("sql_mode");
-            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                Properties props = new Properties();
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
+                this.stmt = testConn.createStatement();
             }
-            testConn = getConnectionWithProps(props);
-            this.stmt = testConn.createStatement();
 
             createTable("testBug9236",
                     "(field_1 int(18) NOT NULL auto_increment, field_2 varchar(50) NOT NULL default '',"
@@ -2355,6 +2363,70 @@ public class ResultSetRegressionTest extends BaseTestCase {
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
             assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+        }
+    }
+
+    /**
+     * Tests fix for BUG#10485, SQLException thrown when retrieving YEAR(2) with ResultSet.getString().
+     * 
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug10485() throws Exception {
+
+        if (versionMeetsMinimum(5, 7, 5)) {
+            // Nothing to test, YEAR(2) is removed starting from 5.7.5
+            return;
+        }
+
+        String tableName = "testBug10485";
+
+        Calendar nydCal = Calendar.getInstance();
+
+        nydCal.set(2005, 0, 1, 0, 0, 0);
+
+        Date newYears2005 = new Date(nydCal.getTime().getTime());
+
+        createTable(tableName, "(field1 YEAR(2))");
+        this.stmt.executeUpdate("INSERT INTO " + tableName + " VALUES ('05')");
+
+        this.rs = this.stmt.executeQuery("SELECT field1 FROM " + tableName);
+        assertTrue(this.rs.next());
+
+        assertEquals(newYears2005.toString(), this.rs.getString(1));
+
+        this.rs = this.conn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
+        assertTrue(this.rs.next());
+        assertEquals(newYears2005.toString(), this.rs.getString(1));
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_yearIsDateType, "false");
+
+        Connection yearShortConn = getConnectionWithProps(props);
+        this.rs = yearShortConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
+        assertTrue(this.rs.next());
+
+        String expectedShort = versionMeetsMinimum(5, 6, 6) ? "2005" : "5"; // TODO c/J 5.1 returned "05" in this case
+
+        assertEquals(expectedShort, this.rs.getString(1));
+
+        this.rs = yearShortConn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
+        assertTrue(this.rs.next());
+        assertEquals(expectedShort, this.rs.getString(1));
+
+        if (versionMeetsMinimum(5, 0)) {
+
+            createProcedure("testBug10485", "()\nBEGIN\nSELECT field1 FROM " + tableName + ";\nEND");
+
+            this.rs = this.conn.prepareCall("{CALL testBug10485()}").executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(newYears2005.toString(), this.rs.getString(1));
+
+            this.rs = yearShortConn.prepareCall("{CALL testBug10485()}").executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(expectedShort, this.rs.getString(1));
+
         }
     }
 
@@ -3857,17 +3929,22 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testBug32525() throws Exception {
         Connection testConn = this.conn;
+        Statement st = this.stmt;
         Connection noStringSyncConn = getConnectionWithProps("noDatetimeStringSync=true");
         try {
-            Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-            String sqlMode = getMysqlVariable("sql_mode");
-            if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                Properties props = new Properties();
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
+                st = testConn.createStatement();
             }
-            testConn = getConnectionWithProps(props);
-            Statement st = testConn.createStatement();
 
             createTable("bug32525", "(field1 date, field2 timestamp)");
             st.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
@@ -3929,11 +4006,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection noBlobsConn = getConnectionWithProps("functionsNeverReturnBlobs=true");
 
-        this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
-        if (this.rs.next()) {
-            if (this.rs.getInt(2) == 2) {
-                System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
-                return;
+        if (versionMeetsMinimum(5, 6, 6)) {
+            this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
+            if (this.rs.next()) {
+                if (this.rs.getInt(2) == 2) {
+                    System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
+                    return;
+                }
             }
         }
 
