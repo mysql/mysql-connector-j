@@ -597,4 +597,9 @@ public class MysqlxSession implements Session {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public boolean serverSupportsFracSecs() {
+        return true;
+    }
 }

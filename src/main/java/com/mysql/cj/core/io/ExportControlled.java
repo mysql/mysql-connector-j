@@ -107,8 +107,8 @@ public class ExportControlled {
 
         List<String> allowedProtocols = new ArrayList<String>();
         List<String> supportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
-        for (String protocol : (Util.isEnterpriseEdition(serverVersion.toString()) ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" }
-                : new String[] { "TLSv1.1", "TLSv1" })) {
+        for (String protocol : (serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString())
+                ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1", "TLSv1" })) {
             if (supportedProtocols.contains(protocol)) {
                 allowedProtocols.add(protocol);
             }
@@ -133,6 +133,24 @@ public class ExportControlled {
 
             // if some ciphers were filtered into allowedCiphers 
             ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+        } else {
+            // If we don't override ciphers, then we check for known restrictions
+
+            // Java 8 default java.security contains jdk.tls.disabledAlgorithms=DH keySize < 768
+            // That causes handshake failures with older MySQL servers, eg 5.6.11. Thus we have to disable DH for them when running on Java 8+
+            // TODO check later for Java 9 behavior
+            if (!(serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.6"))
+                    || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.26")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.0"))
+                    || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.5.45")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")))) {
+
+                List<String> allowedCiphers = new ArrayList<String>();
+                for (String cipher : ((SSLSocket) socketConnection.getMysqlSocket()).getEnabledCipherSuites()) {
+                    if (cipher.indexOf("_DHE_") == -1 && cipher.indexOf("_DH_") == -1) {
+                        allowedCiphers.add(cipher);
+                    }
+                }
+                ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+            }
         }
 
         ((SSLSocket) socketConnection.getMysqlSocket()).startHandshake();

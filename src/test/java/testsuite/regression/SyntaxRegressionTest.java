@@ -71,6 +71,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testAlterTableAlgorithmLock() throws SQLException {
+        if (!versionMeetsMinimum(5, 6, 6)) {
+            return;
+        }
         Connection c = null;
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
@@ -128,6 +131,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testCreateTableDataDirectory() throws SQLException {
+        if (!versionMeetsMinimum(5, 6, 6)) {
+            return;
+        }
 
         try {
             String tmpdir = null;
@@ -201,6 +207,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testTransportableTablespaces() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 8)) {
+            return;
+        }
 
         String tmpdir = null;
         String uuid = null;
@@ -321,21 +330,38 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testExchangePartition() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 6)) {
+            return;
+        }
         createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(4) DEFAULT NULL,"
                 + " modified timestamp NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
         createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
         this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
-        this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        if (versionMeetsMinimum(5, 7, 4)) {
+            this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        } else {
+            this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        }
 
-        this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        if (versionMeetsMinimum(5, 7, 4)) {
+            this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        } else {
+            this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        }
         assertEquals(com.mysql.cj.jdbc.PreparedStatement.class, this.pstmt.getClass());
         this.pstmt.executeUpdate();
 
         Connection testConn = null;
         try {
             testConn = getConnectionWithProps("useServerPrepStmts=true,emulateUnsupportedPstmts=false");
-            this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+            } else {
+                this.pstmt = testConn
+                        .prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+
+            }
             assertEquals(com.mysql.cj.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
             this.pstmt.executeUpdate();
         } finally {
@@ -351,6 +377,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testExplicitPartitions() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 5)) {
+            return;
+        }
         Connection c = null;
         String datadir = null;
         Properties props = ConnectionString.parseUrl(dbUrl, null);
@@ -600,6 +629,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     public void testGISPreciseSpatialFunctions() throws Exception {
 
+        if (!versionMeetsMinimum(5, 6)) {
+            return;
+        }
+
         String[] querySamples = new String[] {
                 "SELECT AsText(ST_Intersection(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
                 "SELECT AsText(ST_Difference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
@@ -625,6 +658,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testIPv6Functions() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 11)) {
+            // MySQL 5.6.11 includes a bug fix (Bug#68454) that is required to run this test successfully.
+            return;
+        }
 
         String[][] dataSamples = new String[][] { { "127.0.0.1", "172.0.0.1" }, { "192.168.1.1", "::ffff:192.168.1.1" }, { "10.1", "::ffff:10.1" },
                 { "172.16.260.4", "172.16.260.4" }, { "::1", "::1" }, { "10AA:10bb:10CC:10dd:10EE:10FF:10aa:10BB", "10aa:10bb:10cc:10dd:10ee:10ff:10aa:10bb" },
@@ -686,6 +723,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testFULLTEXTSearchInnoDB() throws Exception {
+        if (!versionMeetsMinimum(5, 6)) {
+            return;
+        }
 
         createTable("testFULLTEXTSearchInnoDB",
                 "(id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, " + "title VARCHAR(200), body TEXT, FULLTEXT (title , body)) ENGINE=InnoDB");
@@ -721,6 +761,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testRenameIndex() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 1)) {
+            return;
+        }
 
         createTable("testRenameIndex", "(col1 INT, col2 INT, INDEX (col1)) ENGINE=InnoDB");
         this.stmt.execute("CREATE INDEX testIdx ON testRenameIndex (col2)");
@@ -754,6 +797,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testGetStackedDiagnostics() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 2)) {
+            return;
+        }
 
         // test calling GET STACKED DIAGNOSTICS outside an handler
         final Statement locallyScopedStmt = this.stmt;

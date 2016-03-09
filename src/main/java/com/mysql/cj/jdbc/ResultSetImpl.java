@@ -1056,6 +1056,10 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         Field f = this.fields[columnIndex - 1];
         ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
+        // return YEAR values as Dates if necessary
+        if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
+            vf = new YearToDateValueFactory<>(vf);
+        }
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_STRING) {

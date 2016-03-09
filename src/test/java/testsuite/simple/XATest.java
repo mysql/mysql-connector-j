@@ -166,8 +166,11 @@ public class XATest extends BaseTestCase {
      *             if test fails
      */
     public void testRecover() throws Exception {
-        // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
-        // Fixed in 5.7.5 server version
+        if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5)) {
+            // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
+            // Fixed in 5.7.5 server version
+            return;
+        }
 
         XAConnection xaConn = null, recoverConn = null;
 

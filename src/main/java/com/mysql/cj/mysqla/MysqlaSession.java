@@ -90,6 +90,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     protected ModifiableProperty<Integer> socketTimeout;
 
+    private boolean serverHasFracSecsSupport = true;
+
     public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, PropertySet propSet) {
         this.propertySet = propSet;
 
@@ -147,6 +149,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         // use protocol to create a -> session
         // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally
         this.protocol.connect(user, password, database);
+
+        this.serverHasFracSecsSupport = this.protocol.versionMeetsMinimum(5, 6, 4);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
         setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
@@ -227,7 +231,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             } catch (Throwable t) {
                 // can't do anything about it, and we're forcibly aborting
             }
-            this.protocol = null;
+            //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
         //this.isClosed = true;
     }
@@ -551,6 +555,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     @Override
     public SocketAddress getRemoteSocketAddress() {
         return this.protocol.getSocketConnection().getMysqlSocket().getRemoteSocketAddress();
+    }
+
+    @Override
+    public boolean serverSupportsFracSecs() {
+        return this.serverHasFracSecsSupport;
     }
 
 }
