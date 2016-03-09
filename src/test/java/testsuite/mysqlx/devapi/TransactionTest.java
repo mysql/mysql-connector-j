@@ -36,19 +36,25 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Before
     public void setupCollectionTest() {
-        setupTestSession();
-        dropCollection("txTest");
-        this.collection = this.schema.createCollection("txTest");
+        if (setupTestSession()) {
+            dropCollection("txTest");
+            this.collection = this.schema.createCollection("txTest");
+        }
     }
 
     @After
     public void teardownCollectionTest() {
-        dropCollection("txTest");
-        destroyTestSession();
+        if (this.isSetForMySQLxTests) {
+            dropCollection("txTest");
+            destroyTestSession();
+        }
     }
 
     @Test
     public void basicRollback() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").add("{}").execute();
 
         this.session.startTransaction();
@@ -61,6 +67,9 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicCommit() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").add("{}").execute();
 
         this.session.startTransaction();

@@ -49,16 +49,23 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
 
     @Before
     public void setupTestSession() {
-        this.session = createTestSession();
+        if (this.isSetForMySQLxTests) {
+            this.session = createTestSession();
+        }
     }
 
     @After
     public void destroyTestSession() {
-        this.session.close();
+        if (this.isSetForMySQLxTests) {
+            this.session.close();
+        }
     }
 
     @Test
     public void testCreateDropCollection() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "toBeCreatedAndDropped";
         this.session.dropCollectionIfExists(getTestDatabase(), collName);
         assertFalse(this.session.tableExists(getTestDatabase(), collName));
@@ -78,6 +85,9 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testGetObjects() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testGetObjects";
         this.session.dropCollectionIfExists(getTestDatabase(), collName);
         this.session.createCollection(getTestDatabase(), collName);
@@ -88,6 +98,9 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testInterleavedResults() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testInterleavedResults";
         this.session.dropCollectionIfExists(getTestDatabase(), collName);
         this.session.createCollection(getTestDatabase(), collName);
@@ -130,6 +143,9 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testGenericQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         List<Integer> ints = this.session.query("select 2 union select 1", r -> r.getValue(0, new IntegerValueFactory()), Collectors.toList());
         assertEquals(2, ints.size());
         assertEquals(new Integer(2), ints.get(0));

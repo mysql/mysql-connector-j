@@ -50,6 +50,9 @@ public class TableDeleteTest extends TableTest {
 
     @Test
     public void testDelete() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists testDelete");
         sqlUpdate("create table testDelete (_id varchar(32), name varchar(20), birthday date, age int)");
         sqlUpdate("insert into testDelete values ('1', 'Sakila', '2000-05-27', 14)");

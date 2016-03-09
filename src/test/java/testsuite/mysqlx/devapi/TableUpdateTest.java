@@ -54,6 +54,9 @@ public class TableUpdateTest extends TableTest {
 
     @Test
     public void testUpdates() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists updates");
         sqlUpdate("create table updates (_id varchar(32), name varchar(20), birthday date, age int)");
         sqlUpdate("insert into updates values ('1', 'Sakila', '2000-05-27', 14)");

@@ -47,6 +47,9 @@ public class CollectionRemoveTest extends CollectionTest {
 
     @Test
     public void deleteAll() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").execute();
         this.collection.add("{}").execute();
         this.collection.add("{}").execute();
@@ -58,6 +61,9 @@ public class CollectionRemoveTest extends CollectionTest {
 
     @Test
     public void deleteSome() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").execute();
         this.collection.add("{}").execute();
         this.collection.add("{\"x\":22}").execute();

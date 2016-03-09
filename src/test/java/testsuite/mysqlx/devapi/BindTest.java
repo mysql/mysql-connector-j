@@ -52,6 +52,9 @@ public class BindTest extends CollectionTest {
 
     @Test
     public void removeWithBind() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":1}").execute();
         this.collection.add("{\"x\":2}").execute();
         this.collection.add("{\"x\":3}").execute();
@@ -66,6 +69,9 @@ public class BindTest extends CollectionTest {
 
     @Test
     public void removeWithNamedBinds() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":1}").execute();
         this.collection.add("{\"x\":2}").execute();
         this.collection.add("{\"x\":3}").execute();
@@ -82,6 +88,9 @@ public class BindTest extends CollectionTest {
 
     @Test
     public void bug21798850() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Map<String, Object> params = new HashMap<>();
         params.put("thePlaceholder1", 1);
         params.put("thePlaceholder2", 2);
@@ -92,6 +101,9 @@ public class BindTest extends CollectionTest {
 
     @Test
     public void properExceptionUnboundParams() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             this.collection.find("a = :arg1 or b = :arg2").bind("arg1", 1).execute();
             fail("Should raise an exception on unbound placeholder arguments");
@@ -102,6 +114,9 @@ public class BindTest extends CollectionTest {
 
     @Test
     public void bindArgsOrder() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{'x':1,'y':2}".replaceAll("'", "\"")).execute();
         // same order as query
         assertEquals(1, this.collection.find("x = :x and y = :y").bind("x", 1).bind("y", 2).execute().count());

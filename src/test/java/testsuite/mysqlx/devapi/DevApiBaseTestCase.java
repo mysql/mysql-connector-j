@@ -42,13 +42,19 @@ public class DevApiBaseTestCase extends InternalMysqlxBaseTestCase {
     NodeSession session;
     Schema schema;
 
-    public void setupTestSession() {
-        this.session = new NodeSessionImpl(this.testProperties);
-        this.schema = this.session.getDefaultSchema();
+    public boolean setupTestSession() {
+        if (this.isSetForMySQLxTests) {
+            this.session = new NodeSessionImpl(this.testProperties);
+            this.schema = this.session.getDefaultSchema();
+            return true;
+        }
+        return false;
     }
 
     public void destroyTestSession() {
-        this.session.close();
+        if (this.session != null) {
+            this.session.close();
+        }
         this.session = null;
     }
 
@@ -57,11 +63,13 @@ public class DevApiBaseTestCase extends InternalMysqlxBaseTestCase {
     }
 
     protected void dropCollection(String name) {
-        try {
-            this.schema.getCollection(name).drop();
-        } catch (MysqlxError ex) {
-            if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
-                throw ex;
+        if (this.isSetForMySQLxTests) {
+            try {
+                this.schema.getCollection(name).drop();
+            } catch (MysqlxError ex) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                    throw ex;
+                }
             }
         }
     }

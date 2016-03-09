@@ -54,6 +54,9 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testSet() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").execute();
 
         this.collection.modify().set("x", "Value for x").execute();
@@ -65,6 +68,9 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testUnset() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
 
         this.collection.modify().unset("$.x").unset("$.y").execute();
@@ -77,6 +83,9 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testReplace() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":100}").execute();
         this.collection.modify().change("$.x", "99").execute();
 
@@ -87,6 +96,9 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testArrayAppend() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":[8,16,32]}").execute();
         this.collection.modify().arrayAppend("$.x", "64").execute();
 
@@ -103,6 +115,9 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testArrayInsert() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":[1,2]}").execute();
         this.collection.modify().arrayInsert("$.x[1]", 43).execute();
         // same as append

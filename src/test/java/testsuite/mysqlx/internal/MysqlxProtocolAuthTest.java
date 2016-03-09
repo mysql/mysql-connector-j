@@ -43,12 +43,16 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
 
     @Before
     public void setupTestProtocol() throws Exception {
-        protocol = createTestProtocol();
+        if (this.isSetForMySQLxTests) {
+            protocol = createTestProtocol();
+        }
     }
 
     @After
     public void destroyTestProtocol() throws Exception {
-        protocol.close();
+        if (this.isSetForMySQLxTests) {
+            protocol.close();
+        }
     }
 
     /**
@@ -57,6 +61,9 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testBadAuthMessage() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             protocol.sendCreateCollection(getTestDatabase(), "wont_be_Created");
             protocol.readStatementExecuteOk();
@@ -70,12 +77,18 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
     @Test
     @Ignore("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuth() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
         protocol.readAuthenticateOk();
     }
 
     @Test
     public void testBasicSaslMysql41Auth() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();
         protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
@@ -85,6 +98,9 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
     @Test
     @Ignore("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuthFailure() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
             protocol.readAuthenticateOk();
@@ -100,6 +116,9 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testEmptyDatabaseMYSQL41() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         protocol.sendSaslMysql41AuthStart();
         byte[] salt = protocol.readAuthenticateContinue();
         protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, null);
@@ -112,6 +131,9 @@ public class MysqlxProtocolAuthTest extends InternalMysqlxBaseTestCase {
     @Test
     @Ignore("PLAIN only supported over SSL")
     public void testEmptyDatabasePLAIN() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), null);
         protocol.readAuthenticateOk();
     }

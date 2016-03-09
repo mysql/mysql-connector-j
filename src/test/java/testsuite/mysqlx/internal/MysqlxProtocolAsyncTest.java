@@ -56,14 +56,18 @@ public class MysqlxProtocolAsyncTest extends InternalMysqlxBaseTestCase {
 
     @Before
     public void setupTestProtocol() {
-        this.protocol = createAuthenticatedTestProtocol();
+        if (this.isSetForMySQLxTests) {
+            this.protocol = createAuthenticatedTestProtocol();
+        }
     }
 
     @After
     public void destroyTestProtocol() throws IOException {
-        this.protocol.sendSessionClose();
-        this.protocol.readOk();
-        this.protocol.close();
+        if (this.isSetForMySQLxTests) {
+            this.protocol.sendSessionClose();
+            this.protocol.readOk();
+            this.protocol.close();
+        }
     }
 
     /**
@@ -83,6 +87,9 @@ public class MysqlxProtocolAsyncTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void simpleSuccessfulQuery() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");

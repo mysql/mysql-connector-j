@@ -67,6 +67,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testProjection() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // TODO: the "1" is coming back from the server as a string. checking with xplugin team if this is ok
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
@@ -79,6 +82,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testDocumentProjection() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // use a document as a projection
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
@@ -94,6 +100,9 @@ public class CollectionFindTest extends CollectionTest {
      */
     @Test
     public void outOfRange() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             this.collection.add("{}").execute();
             DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
@@ -106,6 +115,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void basicCollectionAsTable() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"xyz\":1}").execute();
         Table coll = this.schema.getCollectionAsTable(this.collection.getName());
         Row r = coll.select("doc").execute().next();
@@ -115,6 +127,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testLimitOffset() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{}").execute();
         this.collection.add("{}").execute();
         this.collection.add("{}").execute();
@@ -140,6 +155,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testNumericExpressions() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":1, \"y\":2}").execute();
 
         DocResult docs;
@@ -170,6 +188,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testBitwiseExpressions() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute();
 
         DocResult docs;
@@ -191,6 +212,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void testIntervalExpressions() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute();
 
         DocResult docs;
@@ -240,6 +264,9 @@ public class CollectionFindTest extends CollectionTest {
     @Test
     // these are important to test the "operator" (BETWEEN/REGEXP/etc) to function representation in the protocol
     public void testIlriExpressions() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute();
 
         DocResult docs;
@@ -265,6 +292,9 @@ public class CollectionFindTest extends CollectionTest {
 
     @Test
     public void cast() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{\"x\":100}").execute();
 
         DbDoc d = this.collection.find().fields("CAST($.x as SIGNED) as x").execute().next();

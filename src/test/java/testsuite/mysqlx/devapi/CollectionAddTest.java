@@ -55,6 +55,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testBasicAddString() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
@@ -67,6 +70,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testBasicAddDoc() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         DbDoc doc = new DbDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
@@ -82,6 +88,9 @@ public class CollectionAddTest extends CollectionTest {
     @Test
     @Ignore("needs implemented")
     public void testBasicAddMap() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Map<String, Object> doc = new HashMap<>();
         doc.put("x", 1);
         doc.put("y", "this is y");
@@ -97,6 +106,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testAddWithAssignedId() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String json = "{'_id': 'Id#1', 'name': '<unknown>'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
         assertEquals(0, res.getLastDocumentIds().size());
@@ -109,6 +121,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testChainedAdd() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String json = "{'_id': 1}".replaceAll("'", "\"");
         this.collection.add(json).add(json.replaceAll("1", "2")).execute();
 
@@ -119,6 +134,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testAddLargeDocument() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         int docSize = 255 * 1024;
         StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");
         for (int i = 0; i < docSize; ++i) {
@@ -134,6 +152,9 @@ public class CollectionAddTest extends CollectionTest {
 
     @Test
     public void testAddNoDocs() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Result res = this.collection.add(new DbDoc[] {}).execute();
         assertEquals(0, res.getAffectedItemsCount());
         assertEquals(null, res.getAutoIncrementValue());

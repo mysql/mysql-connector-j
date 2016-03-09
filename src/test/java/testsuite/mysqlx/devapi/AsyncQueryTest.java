@@ -67,6 +67,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void basicAsyncQuery() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         Result res = this.collection.add(json).execute();
         assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
@@ -80,6 +83,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void overlappedAsyncQueries() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         final int NUMBER_OF_QUERIES = 50;
 
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
@@ -101,6 +107,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void basicRowWiseAsync() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists rowwise");
         sqlUpdate("create table rowwise (age int)");
         sqlUpdate("insert into rowwise values (1), (1), (1)");
@@ -112,6 +121,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void syntaxErrorRowWise() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         CompletableFuture<Integer> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync(1, (acc, doc) -> 1);
         try {
             res.get();
@@ -125,6 +137,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void syntaxErrorEntireResult() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         CompletableFuture<DocResult> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync();
         try {
             res.get();
@@ -138,11 +153,14 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void insertDocs() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
         CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
-                    assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
-                    return this.collection.find("firstName like '%Fra%'").executeAsync();
+            assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+            return this.collection.find("firstName like '%Fra%'").executeAsync();
         });
 
         DbDoc d = docF.thenApply((DocResult docs) -> docs.next()).get(5, TimeUnit.SECONDS);
@@ -152,6 +170,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void manyModifications() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // we guarantee serial execution
         String json = "{'n':1}".replaceAll("'", "\"");
         this.collection.add(json).execute();
@@ -172,6 +193,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void sqlUpdate() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         CompletableFuture<SqlResult> resF = this.session.sql("set @cjTestVar = 1").executeAsync();
         resF.thenAccept(res -> {
             assertFalse(res.hasData());
@@ -184,6 +208,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void sqlQuery() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         CompletableFuture<SqlResult> resF = this.session.sql("select 1,2,3 from dual").executeAsync();
         resF.thenAccept(res -> {
             assertTrue(res.hasData());
@@ -200,6 +227,9 @@ public class AsyncQueryTest extends CollectionTest {
 
     @Test
     public void sqlError() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             CompletableFuture<SqlResult> resF = this.session.sql("select x from dont_create_this_table").executeAsync();
             resF.get();
@@ -214,6 +244,9 @@ public class AsyncQueryTest extends CollectionTest {
      */
     @Test
     public void manyFutures() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         int MANY = 1000;
         Collection coll = this.collection;
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();

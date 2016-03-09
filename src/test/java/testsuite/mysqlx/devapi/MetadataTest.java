@@ -23,9 +23,9 @@
 
 package testsuite.mysqlx.devapi;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,8 +44,10 @@ public class MetadataTest extends TableTest {
     @Override
     public void setupTableTest() {
         super.setupTableTest();
-        sqlUpdate("drop table if exists exampleMetadata");
-        sqlUpdate("create table exampleMetadata (_id varchar(32), name varchar(20), birthday date, age int)");
+        if (this.isSetForMySQLxTests) {
+            sqlUpdate("drop table if exists exampleMetadata");
+            sqlUpdate("create table exampleMetadata (_id varchar(32), name varchar(20), birthday date, age int)");
+        }
     }
 
     @After
@@ -56,6 +58,9 @@ public class MetadataTest extends TableTest {
 
     @Test
     public void exampleMetadata() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Table table = this.schema.getTable("exampleMetadata");
         RowResult rows = table.select("_id, name, birthday, age").execute();
         List<Column> metadata = rows.getColumns();
@@ -140,6 +145,9 @@ public class MetadataTest extends TableTest {
 
     @Test
     public void renameCol() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Table table = this.schema.getTable("exampleMetadata");
         RowResult rows = table.select("_id as TheId").execute();
         List<Column> metadata = rows.getColumns();
@@ -167,6 +175,9 @@ public class MetadataTest extends TableTest {
 
     @Test
     public void derivedCol() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Table table = this.schema.getTable("exampleMetadata");
         RowResult rows = table.select("_id + 1 as TheId").execute();
         List<Column> metadata = rows.getColumns();
@@ -194,6 +205,9 @@ public class MetadataTest extends TableTest {
 
     @Test
     public void docAsTableIsJSON() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "docAsTableIsJSON";
         dropCollection(collName);
         this.schema.createCollection(collName);
@@ -243,10 +257,13 @@ public class MetadataTest extends TableTest {
 
     @Test
     public void exhaustTypes() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String tableName = "exhaustTypes";
         sqlUpdate("drop table if exists " + tableName);
-        sqlUpdate("create table exhaustTypes (a bit, b char(20) not null, c int, d tinyint unsigned primary key, e bigint, " +
-                "f double, g decimal(20, 3), h time, i datetime, j timestamp, k date, l set('1','2'), m enum('1','2'), unique (a), key(b, c))");
+        sqlUpdate("create table exhaustTypes (a bit, b char(20) not null, c int, d tinyint unsigned primary key, e bigint, "
+                + "f double, g decimal(20, 3), h time, i datetime, j timestamp, k date, l set('1','2'), m enum('1','2'), unique (a), key(b, c))");
         Table table = this.schema.getTable(tableName);
         RowResult rows = table.select("a,b,c,d,e,f,g,h,i,j,k,l,m").execute();
         List<Column> metadata = rows.getColumns();

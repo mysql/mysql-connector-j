@@ -50,6 +50,9 @@ public class TableTest extends DevApiBaseTestCase {
 
     @Test
     public void tableBasics() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists tableBasics");
         Table table = this.schema.getTable("tableBasics");
         assertEquals(DbObjectStatus.NOT_EXISTS, table.existsInDatabase());

@@ -58,6 +58,9 @@ public class TableSelectTest extends TableTest {
 
     @Test
     public void basicQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists basicQuery");
         sqlUpdate("create table basicQuery (_id varchar(32), name varchar(20), birthday date, age int)");
         sqlUpdate("insert into basicQuery values ('some long UUID', 'Sakila', '2000-05-27', 14)");
@@ -84,6 +87,9 @@ public class TableSelectTest extends TableTest {
 
     @Test
     public void testComplexQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists complexQuery");
         sqlUpdate("create table complexQuery (name varchar(32), age int)");
         sqlUpdate("insert into complexQuery values ('Mamie', 11)");
@@ -129,6 +135,9 @@ public class TableSelectTest extends TableTest {
 
     @Test
     public void allColumns() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists allColumns");
         sqlUpdate("create table allColumns (x int, y int, z int)");
         sqlUpdate("insert into allColumns values (1,2,3)");
@@ -145,6 +154,9 @@ public class TableSelectTest extends TableTest {
 
     @Test
     public void countAllColumns() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists countAllColumns");
         sqlUpdate("create table countAllColumns(x int, y int)");
         sqlUpdate("insert into countAllColumns values (1,1), (2,2), (3,3), (4,4)");

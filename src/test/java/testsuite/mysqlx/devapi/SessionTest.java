@@ -49,14 +49,16 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @After
     public void teardownCollectionTest() {
-        this.createdTestSchemas.forEach(schemaName -> {
-            try {
-                this.session.dropSchema(schemaName);
-            } catch (MysqlxError x) {
-                // ignored
-            }
-        });
-        destroyTestSession();
+        if (this.isSetForMySQLxTests) {
+            this.createdTestSchemas.forEach(schemaName -> {
+                try {
+                    this.session.dropSchema(schemaName);
+                } catch (MysqlxError x) {
+                    // ignored
+                }
+            });
+            destroyTestSession();
+        }
     }
 
     private List<String> createdTestSchemas = new ArrayList<>();
@@ -72,6 +74,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createDropSchema() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -81,6 +86,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createDropSchema2() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -91,6 +99,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createAndReuseExistingSchema() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -100,6 +111,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void listSchemas() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         List<Schema> schemas = this.session.getSchemas();
         // we should have visibility of at least these two
         Schema infoSchema = this.session.getSchema("information_schema");
@@ -110,6 +124,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createExistingSchemaError() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -126,6 +143,9 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void errorOnPacketTooBig() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             int size = 2 * 1024 * 1024;
             StringBuilder b = new StringBuilder();

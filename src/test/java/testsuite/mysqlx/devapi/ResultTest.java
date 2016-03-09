@@ -52,6 +52,9 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void testForceBuffering() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists testx");
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");
@@ -81,6 +84,9 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void testMars() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists testx");
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");
@@ -96,6 +102,9 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void exceptionForNonExistingColumns() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop table if exists testx");
         sqlUpdate("create table testx (x int)");
         sqlUpdate("insert into testx values (1), (2), (3)");

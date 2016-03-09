@@ -56,6 +56,9 @@ public class TableInsertTest extends TableTest {
 
     @Test
     public void lastInsertId() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String tableName = "lastInsertId";
         sqlUpdate("drop table if exists lastInsertId");
         sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
@@ -68,6 +71,9 @@ public class TableInsertTest extends TableTest {
 
     @Test
     public void basicInsert() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String tableName = "basicInsert";
         sqlUpdate("drop table if exists basicInsert");
         sqlUpdate("create table basicInsert (_id varchar(32), name varchar(20) not null default 'unknown', birthday date, age int)");

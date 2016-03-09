@@ -48,6 +48,9 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSql() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         SqlStatement stmt = this.session.sql("select 1,2,3 from dual");
         SqlResult res = stmt.execute();
         assertTrue(res.hasData());
@@ -63,6 +66,9 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlUpdate() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         SqlStatement stmt = this.session.sql("set @cjTestVar = 1");
         SqlResult res = stmt.execute();
         assertFalse(res.hasData());
@@ -74,6 +80,9 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlArguments() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         SqlStatement stmt = this.session.sql("select ? as a, 40 + ? as b, ? as c");
         SqlResult res = stmt.bind(1).bind(2).bind(3).execute();
         Row r = res.next();
@@ -84,6 +93,9 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicMultipleResults() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop procedure if exists basicMultipleResults");
         sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
         SqlStatement stmt = this.session.sql("call basicMultipleResults()");
@@ -100,6 +112,9 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void smartBufferMultipleResults() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         sqlUpdate("drop procedure if exists basicMultipleResults");
         sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
         SqlStatement stmt = this.session.sql("call basicMultipleResults()");

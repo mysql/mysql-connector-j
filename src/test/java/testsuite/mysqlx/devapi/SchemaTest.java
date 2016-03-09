@@ -55,6 +55,9 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testEquals() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         Schema otherDefaultSchema = this.session.getDefaultSchema();
         assertFalse(otherDefaultSchema == this.schema);
         assertTrue(otherDefaultSchema.equals(this.schema));
@@ -71,6 +74,9 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testToString() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // this will pass as long as the test database doesn't require identifier quoting
         assertEquals("Schema(" + getTestDatabase() + ")", this.schema.toString());
         Schema needsQuoted = this.session.getSchema("terrible'schema`name");
@@ -79,6 +85,9 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testListCollections() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testListCollections";
         dropCollection(collName);
         Collection coll = this.schema.createCollection(collName);
@@ -88,6 +97,9 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testExists() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         assertEquals(DbObjectStatus.EXISTS, this.schema.existsInDatabase());
         Schema nonExistingSchema = this.session.getSchema(getTestDatabase() + "_SHOULD_NOT_EXIST_0xCAFEBABE");
         assertEquals(DbObjectStatus.NOT_EXISTS, nonExistingSchema.existsInDatabase());
@@ -95,6 +107,9 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testCreateCollection() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testCreateCollection";
         dropCollection(collName);
         Collection coll = this.schema.createCollection(collName);

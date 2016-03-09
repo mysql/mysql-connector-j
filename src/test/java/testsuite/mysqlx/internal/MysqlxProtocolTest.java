@@ -66,14 +66,18 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Before
     public void setupTestProtocol() {
-        this.protocol = createAuthenticatedTestProtocol();
+        if (this.isSetForMySQLxTests) {
+            this.protocol = createAuthenticatedTestProtocol();
+        }
     }
 
     @After
     public void destroyTestProtocol() throws IOException {
-        this.protocol.sendSessionClose();
-        this.protocol.readOk();
-        this.protocol.close();
+        if (this.isSetForMySQLxTests) {
+            this.protocol.sendSessionClose();
+            this.protocol.readOk();
+            this.protocol.close();
+        }
     }
 
     /**
@@ -81,6 +85,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testCreateAndDropCollection() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         try {
             this.protocol.sendCreateCollection(getTestDatabase(), "testCreateAndDropCollection");
             this.protocol.readStatementExecuteOk();
@@ -103,6 +110,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testTrivialSqlQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendSqlStatement("select 'x' as y");
         assertTrue(this.protocol.hasResults());
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
@@ -120,6 +130,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testAnotherBasicSqlQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendSqlStatement("select 'x' as a_string, 42 as a_long, 7.6 as a_decimal union select 'y' as a_string, 11 as a_long, .1111 as a_decimal");
         assertTrue(this.protocol.hasResults());
         ArrayList<Field> metadata = this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
@@ -161,6 +174,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testDecodingAllTypes() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // some types depend on this table
         this.protocol.sendSqlStatement("drop table if exists xprotocol_types_test");
         this.protocol.readStatementExecuteOk();
@@ -264,6 +280,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testSqlDml() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendSqlStatement("drop table if exists mysqlx_sqlDmlTest");
         assertFalse(this.protocol.hasResults());
         StatementExecuteOk response = this.protocol.readStatementExecuteOk();
@@ -287,6 +306,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testBasicCrudInsertFind() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
@@ -305,6 +327,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testMultiInsert() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = createTempTestCollection(this.protocol);
 
         List<String> stringDocs = new ArrayList<>();
@@ -332,6 +357,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testDocUpdate() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
@@ -355,6 +383,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void tableInsert() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendSqlStatement("drop table if exists tableInsert");
         this.protocol.readStatementExecuteOk();
         this.protocol.sendSqlStatement("create table tableInsert (x int, y varchar(20), z decimal(10, 2))");
@@ -390,6 +421,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testWarnings() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendSqlStatement("explain select 1");
         this.protocol.readMetadata(DEFAULT_METADATA_CHARSET);
         this.protocol.drainRows();
@@ -405,6 +439,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testEnableDisableNotices() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.sendDisableNotices("warnings");
         this.protocol.readStatementExecuteOk();
 
@@ -427,6 +464,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
      */
     @Test
     public void testResultSet() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         // begin "send" stage, change this as necessary
         //this.protocol.sendListObjects(getTestDatabase());
         this.protocol.sendListNotices();
@@ -453,6 +493,9 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
 
     @Test
     public void testCapabilities() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.protocol.getPluginVersion();
     }
 }

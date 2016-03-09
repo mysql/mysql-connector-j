@@ -44,20 +44,26 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Before
     public void setupCollectionTest() {
-        setupTestSession();
-        this.collectionName = "CollectionTest-" + new Random().nextInt(1000);
-        dropCollection(this.collectionName);
-        this.collection = this.schema.createCollection(this.collectionName);
+        if (setupTestSession()) {
+            this.collectionName = "CollectionTest-" + new Random().nextInt(1000);
+            dropCollection(this.collectionName);
+            this.collection = this.schema.createCollection(this.collectionName);
+        }
     }
 
     @After
     public void teardownCollectionTest() {
-        dropCollection(this.collectionName);
-        destroyTestSession();
+        if (this.isSetForMySQLxTests) {
+            dropCollection(this.collectionName);
+            destroyTestSession();
+        }
     }
 
     @Test
     public void testCount() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.add("{'a':'a'}".replaceAll("'", "\"")).execute();
         this.collection.add("{'b':'b'}".replaceAll("'", "\"")).execute();
         this.collection.add("{'c':'c'}".replaceAll("'", "\"")).execute();
@@ -66,6 +72,9 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test
     public void testExists() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testExists";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -77,6 +86,9 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test(expected = WrongArgumentException.class)
     public void getNonExistentCollectionWithRequireExistsShouldThrow() {
+        if (!this.isSetForMySQLxTests) {
+            throw new WrongArgumentException("Throw WrongArgumentException as expected, but test was ignored because of missed configuration.");
+        }
         String collName = "testRequireExists";
         dropCollection(collName);
         this.schema.getCollection(collName, true);
@@ -84,6 +96,9 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test
     public void getNonExistentCollectionWithoutRequireExistsShouldNotThrow() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testRequireExists";
         dropCollection(collName);
         this.schema.getCollection(collName, false);
@@ -91,6 +106,9 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test
     public void getExistentCollectionWithRequireExistsShouldNotThrow() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         String collName = "testRequireExists";
         dropCollection(collName);
         this.schema.createCollection(collName);
@@ -99,6 +117,9 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test
     public void createIndex() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
         this.collection.createIndex("x_idx", true).field(".x", "INT", true).execute();
         this.collection.add("{'x':'1'}".replaceAll("'", "\"")).execute();
         this.collection.add("{'x':'2'}".replaceAll("'", "\"")).execute();
