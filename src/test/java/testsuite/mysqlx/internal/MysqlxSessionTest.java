@@ -42,7 +42,7 @@ import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 
 /**
- * Tests for (internal) session-level APIs against a running MySQL-X server.
+ * Tests for (internal) session-level APIs against a running MySQL X server.
  */
 public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
     private MysqlxSession session;

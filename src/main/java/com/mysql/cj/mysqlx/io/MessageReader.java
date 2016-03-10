@@ -34,7 +34,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
 
 /**
- * Low-level message reader for MySQL-X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error
+ * Low-level message reader for MySQL X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error
  * messages):
  * <ul>
  * <li>The next message type is known and it's an error to read any other type of message. The caller will generally call the reader like so:

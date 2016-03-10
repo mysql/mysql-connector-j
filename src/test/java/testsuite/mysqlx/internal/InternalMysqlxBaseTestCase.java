@@ -36,7 +36,7 @@ import com.mysql.cj.mysqlx.io.MysqlxProtocolFactory;
 import com.mysql.cj.x.MysqlxSessionFactory;
 
 /**
- * Base class for tests of MySQL-X internal components.
+ * Base class for tests of MySQL X internal components.
  */
 public class InternalMysqlxBaseTestCase {
     /**

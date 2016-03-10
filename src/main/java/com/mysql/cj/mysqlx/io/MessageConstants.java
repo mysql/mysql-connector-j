@@ -58,7 +58,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk;
 
 /**
- * Constants related to MySQL-X messages.
+ * Constants related to MySQL X messages.
  */
 public class MessageConstants {
     /**

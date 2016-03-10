@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,7 +27,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 
 /**
- * An Error returned from MySQL-X.
+ * An Error returned from MySQL X.
  */
 public class MysqlxError extends CJException {
     private static final long serialVersionUID = 6991120628391138584L;

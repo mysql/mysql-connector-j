@@ -47,7 +47,7 @@ import com.mysql.cj.core.exceptions.CJPacketTooBigException;
  */
 public class AsyncMessageWriter implements CompletionHandler<Long, Void>, MessageWriter {
     /**
-     * Header length of MySQL-X packet.
+     * Header length of MySQL X packet.
      */
     private static final int HEADER_LEN = 5;
 
