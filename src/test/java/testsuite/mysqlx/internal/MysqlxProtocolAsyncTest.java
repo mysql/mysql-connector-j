@@ -48,7 +48,7 @@ import com.mysql.cj.mysqlx.io.ResultListener;
 import com.mysql.cj.mysqlx.result.MysqlxRow;
 
 /**
- * Tests for protocol-level <b>async</b> APIs against a running MySQL-X server.
+ * Tests for protocol-level <b>async</b> APIs against a running MySQL X server.
  */
 @Category(testsuite.mysqlx.AsyncTests.class)
 public class MysqlxProtocolAsyncTest extends InternalMysqlxBaseTestCase {

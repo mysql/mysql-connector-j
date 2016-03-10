@@ -1,12 +1,16 @@
 <body>
-  <h1>MySQL-X Dev API v1 Java API</h1>
+  <h1>MySQL X DevAPI: Java Implementation</h1>
   <p/>
   
-  This documentation covers the public interfaces for the Java implementation of the MySQL-X Dev API. To get started, check out some of the main classes:
+  This documentation covers the public classes and interfaces of the Java implementation of the MySQL X DevAPI. To get started, check out some of the main
+  classes:
   
   <ul>
-    <li>{@link com.mysql.cj.api.x.XSession}</li>
-    <li>{@link com.mysql.cj.api.x.Collection}</li>
+    <li>Sessions can be created with {@link com.mysql.cj.x.MysqlxSessionFactory}.</li>
+    <li>Session operations are available on an {@link com.mysql.cj.api.x.XSession}.</li>
+    <li>JSON document collections are represented by a {@link com.mysql.cj.api.x.Collection}.</li>
+    <li>Working with JSON documents is done with a {@link com.mysql.cj.api.x.DbDoc}.</li>
   </ul>
-  <h3><font color="red">NOTE:</font></h3> this documentation is in the process of being written
+
+  For an introduction to concepts, refer to the <a href="http://dev.mysql.com/doc/mysqlx-devapi-userguide/en/index.html">DevAPI User Guide</a>.
 </body>

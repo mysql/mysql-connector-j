@@ -59,7 +59,7 @@ import com.mysql.cj.mysqlx.UpdateSpec.UpdateType;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
 
 /**
- * Tests for protocol-level APIs against a running MySQL-X server.
+ * Tests for protocol-level APIs against a running MySQL X server.
  */
 public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
     private MysqlxProtocol protocol;

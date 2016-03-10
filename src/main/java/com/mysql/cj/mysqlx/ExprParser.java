@@ -70,7 +70,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 // Expr: ^
 //
 /**
- * Expression parser for MySQL-X protocol.
+ * Expression parser for MySQL X protocol.
  */
 public class ExprParser {
     /** String being parsed. */
@@ -236,7 +236,7 @@ public class ExprParser {
     }
 
     /**
-     * Lexer for MySQL-X expression language.
+     * Lexer for MySQL X expression language.
      */
     void lex() {
         for (int i = 0; i < this.string.length(); ++i) {

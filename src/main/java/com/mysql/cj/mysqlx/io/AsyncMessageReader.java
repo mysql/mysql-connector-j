@@ -49,7 +49,7 @@ import com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 
 /**
- * Asynchronous message reader for the MySQL-X protobuf-encoded messages.
+ * Asynchronous message reader for the MySQL X protobuf-encoded messages.
  */
 public class AsyncMessageReader implements CompletionHandler<Integer, Void>, MessageReader {
     /**
