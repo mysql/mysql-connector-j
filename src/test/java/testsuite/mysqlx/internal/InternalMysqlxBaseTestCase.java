@@ -46,7 +46,7 @@ public class InternalMysqlxBaseTestCase {
     protected static final String DEFAULT_METADATA_CHARSET = "latin1";
 
     protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
-    protected boolean isSetForMySQLxTests = this.baseUrl != null;
+    protected boolean isSetForMySQLxTests = this.baseUrl != null && this.baseUrl.length() > 0;
     protected XSessionFactory fact = new MysqlxSessionFactory();
 
     public Properties testProperties = new Properties();

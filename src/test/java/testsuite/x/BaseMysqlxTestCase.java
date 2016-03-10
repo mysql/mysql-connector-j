@@ -32,11 +32,9 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.x.MysqlxSessionFactory;
 
 public abstract class BaseMysqlxTestCase {
-
-    boolean isSetForMySQLxTests = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx) != null; //false; // TODO: System.getProperty(PropertyDefinitions.SYSP_mysqlx_testsuite_url) != null;
-    String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
-
-    XSessionFactory f = new MysqlxSessionFactory();
+    protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
+    protected boolean isSetForMySQLxTests = this.baseUrl != null && this.baseUrl.length() > 0;
+    protected XSessionFactory f = new MysqlxSessionFactory();
 
     public BaseMysqlxTestCase() {
         super();
