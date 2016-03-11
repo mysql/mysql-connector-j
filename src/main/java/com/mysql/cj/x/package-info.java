@@ -27,4 +27,4 @@
  * @since 6.0
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.x;
