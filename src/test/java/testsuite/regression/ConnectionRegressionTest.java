@@ -6447,11 +6447,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
          */
         try {
             Connection testConn = getConnectionWithProps("socketFactory=testsuite.regression.ConnectionRegressionTest$TestBug73053SocketFactory");
-            Statement testStmt = this.conn.createStatement();
+            Statement testStmt = testConn.createStatement();
             this.rs = testStmt.executeQuery("SELECT 1");
             testStmt.close();
             testConn.close();
         } catch (SQLException e) {
+            e.printStackTrace();
             fail("No SQLException should be thrown.");
         }
 
