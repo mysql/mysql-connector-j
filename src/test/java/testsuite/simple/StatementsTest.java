@@ -1862,7 +1862,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNCharacterStream() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
@@ -1882,7 +1882,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
@@ -1909,7 +1909,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNCharacterStreamServer() throws Exception {
-        createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
@@ -1925,7 +1925,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8)");
+        createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
@@ -1949,7 +1949,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNClob() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
@@ -1971,7 +1971,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10))");
+        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
@@ -2000,7 +2000,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNClobServer() throws Exception {
-        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
+        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
@@ -2026,7 +2026,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8)");
+        createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
@@ -2054,7 +2054,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNString() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
-        createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
+        createTable("testSetNString",
+                "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "MS932"); // ensure charset isn't utf8 here
@@ -2073,7 +2074,8 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932");
+        createTable("testSetNString",
+                "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
@@ -2099,7 +2101,7 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSetNStringServer() throws Exception {
-        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
@@ -2115,7 +2117,7 @@ public class StatementsTest extends BaseTestCase {
         pstmt1.close();
         conn1.close();
 
-        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10))");
+        createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true"); // use server-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
