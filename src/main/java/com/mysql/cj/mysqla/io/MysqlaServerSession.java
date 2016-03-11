@@ -66,6 +66,8 @@ public class MysqlaServerSession implements ServerSession {
     public static final int CLIENT_CONNECT_ATTRS = 0x00100000;
     public static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
     public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
+    public static final int CLIENT_SESSION_TRACK = 0x00800000;
+    public static final int CLIENT_DEPRECATE_EOF = 0x01000000;
 
     private PropertySet propertySet;
     private MysqlaCapabilities capabilities;
@@ -199,6 +201,10 @@ public class MysqlaServerSession implements ServerSession {
     @Override
     public boolean useMultiResults() {
         return (this.clientParam & CLIENT_MULTI_RESULTS) != 0;
+    }
+
+    public boolean isEOFDeprecated() {
+        return (this.clientParam & CLIENT_DEPRECATE_EOF) != 0;
     }
 
     @Override

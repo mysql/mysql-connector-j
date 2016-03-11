@@ -5226,7 +5226,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 + "N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY UNIQUE_KEY_TEST_DUPLICATE (ID) )");
 
         int numTests = 5000;
-        Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,dumpQueriesOnException=true");
+        Connection rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,dumpQueriesOnException=true");
 
         assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         long batchedTime = timeBatch(rewriteConn, numTests);
@@ -5239,7 +5239,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(String.valueOf(numTests), getSingleIndexedValueWithQuery(this.conn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         assertTrue(batchedTime < unbatchedTime);
 
-        rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
+        rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
         timeBatch(rewriteConn, numTests);
     }
 
@@ -9041,7 +9041,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     rewriteBatchedStatements ? "rwBatchedStmts" : "-");
 
             Connection highLevelConn = getLoadBalancedConnection(props);
-            assertTrue(testCase, highLevelConn.getClass().getName().startsWith("com.sun.proxy"));
+            assertTrue(testCase, highLevelConn.getClass().getName().startsWith("com.sun.proxy") || highLevelConn.getClass().getName().startsWith("$Proxy"));
 
             Connection lowLevelConn = getMasterSlaveReplicationConnection(props);
             // This simulates the behavior from Fabric connections that are causing the problem.
@@ -9093,7 +9093,7 @@ public class StatementRegressionTest extends BaseTestCase {
         createProcedure("testBug78961", "(IN c1 FLOAT, IN c2 FLOAT, OUT h FLOAT, INOUT t FLOAT) BEGIN SET h = SQRT(c1 * c1 + c2 * c2); SET t = t + h; END;");
 
         Connection highLevelConn = getLoadBalancedConnection(null);
-        assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy"));
+        assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy") || highLevelConn.getClass().getName().startsWith("$Proxy"));
 
         Connection lowLevelConn = getMasterSlaveReplicationConnection(null);
         // This simulates the behavior from Fabric connections that are causing the problem.

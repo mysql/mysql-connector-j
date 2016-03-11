@@ -446,17 +446,14 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
             this.readPacketSequence = multiPacketSeq;
 
             // Read data
-            byte[] buffer = new byte[packetLength + 1];
+            byte[] buffer = new byte[packetLength];
             int numBytesRead = this.socketConnection.getMysqlInput().readFully(buffer, 0, packetLength);
 
             if (numBytesRead != packetLength) {
                 throw new IOException(Messages.getString("MysqlIO.104", new Object[] { packetLength, numBytesRead }));
             }
 
-            buffer[packetLength] = 0;
-
             Buffer packet = new Buffer(buffer);
-            packet.setBufLength(packetLength + 1);
 
             if (this.traceProtocol) {
                 StringBuilder traceMessageBuf = new StringBuilder();

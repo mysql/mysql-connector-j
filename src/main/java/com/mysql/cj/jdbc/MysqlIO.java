@@ -157,9 +157,16 @@ public class MysqlIO implements ResultsHandler {
             }
         }
 
-        packet = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket());
+        // There is no EOL packet after fields when CLIENT_DEPRECATE_EOF is set
+        if (!isEOFDeprecated() ||
+                // if we asked to use cursor then there should be an OK packet here
+                (this.protocol.versionMeetsMinimum(5, 0, 2) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
+                        && isBinaryEncoded && callingStatement != null && callingStatement.getFetchSize() != 0
+                        && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY)) {
 
-        readServerStatusForResultSets(packet);
+            packet = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket());
+            readServerStatusForResultSets(packet);
+        }
 
         //
         // Handle cursor-based fetch first
@@ -368,7 +375,8 @@ public class MysqlIO implements ResultsHandler {
         }
 
         // exit early with null if there's an EOF packet
-        if (rowPacket.isLastDataPacket()) {
+        //if (rowPacket.isEOFPacket()) {
+        if (!isEOFDeprecated() && rowPacket.isEOFPacket() || isEOFDeprecated() && rowPacket.isResultSetOKPacket()) {
             readServerStatusForResultSets(rowPacket);
             return null;
         }
@@ -425,7 +433,7 @@ public class MysqlIO implements ResultsHandler {
             remaining--;
 
             if (firstTime) {
-                if (sw == 255) {
+                if (sw == Buffer.TYPE_ID_ERROR) {
                     // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                     // away with just writing the error code and message in it (for now).
                     Buffer errorPacket = new Buffer(packetLength + MysqlaConstants.HEADER_LENGTH);
@@ -440,20 +448,47 @@ public class MysqlIO implements ResultsHandler {
                     this.protocol.checkErrorPacket(errorPacket);
                 }
 
-                // EOF - end of row stream
-                if (sw == 254 && packetLength < 9) {
-                    this.protocol.setWarningCount((mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8));
-                    remaining -= 2;
+                if (sw == Buffer.TYPE_ID_EOF && packetLength < 16777215) {
+                    // Both EOF and OK packets have the same 0xfe signature in result sets.
 
-                    if (this.protocol.getWarningCount() > 0) {
-                        this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+                    // OK packet length limit restricted to MAX_PACKET_LENGTH value (256L*256L*256L-1) as any length greater
+                    // than this value will have first byte of OK packet to be 254 thus does not provide a means to identify
+                    // if this is OK or EOF packet.
+                    // Thus we need to check the packet length to distinguish between OK packet and ResultsetRow packet starting with 0xfe
+                    if (isEOFDeprecated()) {
+                        // read OK packet
+                        remaining -= mysqlInput.skipLengthEncodedInteger(); // affected_rows
+                        remaining -= mysqlInput.skipLengthEncodedInteger(); // last_insert_id
+
+                        this.protocol.getServerSession().setStatusFlags((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
+                                | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
+                        this.protocol.checkTransactionState();
+                        remaining -= 2;
+
+                        this.protocol.setWarningCount((mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8));
+                        remaining -= 2;
+
+                        if (this.protocol.getWarningCount() > 0) {
+                            this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+                        }
+
+                    } else {
+                        // read EOF packet
+                        this.protocol.setWarningCount((mysqlInput.read() & 0xff) | ((mysqlInput.read() & 0xff) << 8));
+                        remaining -= 2;
+
+                        if (this.protocol.getWarningCount() > 0) {
+                            this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+                        }
+
+                        this.protocol.getServerSession().setStatusFlags((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
+                                | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
+                        this.protocol.checkTransactionState();
+
+                        remaining -= 2;
                     }
 
-                    this.protocol.getServerSession().setStatusFlags((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff)
-                            | ((this.protocol.getSocketConnection().getMysqlInput().read() & 0xff) << 8), true);
-                    this.protocol.checkTransactionState();
-
-                    remaining -= 2;
+                    this.protocol.setServerSlowQueryFlags();
 
                     if (remaining > 0) {
                         mysqlInput.skipFully(remaining);
@@ -755,16 +790,38 @@ public class MysqlIO implements ResultsHandler {
     private final void readServerStatusForResultSets(Buffer rowPacket) throws SQLException {
         rowPacket.readByte(); // skips the 'last packet' flag
 
-        this.protocol.setWarningCount(rowPacket.readInt());
+        if (isEOFDeprecated()) {
+            // read OK packet
+            rowPacket.readLength(); // affected_rows
+            rowPacket.readLength(); // last_insert_id
 
-        if (this.protocol.getWarningCount() > 0) {
-            this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+            this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
+            this.protocol.checkTransactionState();
+
+            this.protocol.setWarningCount(rowPacket.readInt());
+            if (this.protocol.getWarningCount() > 0) {
+                this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+            }
+
+            rowPacket.readByte(); // advance pointer
+
+            if (this.connection.isReadInfoMsgEnabled()) {
+                rowPacket.readString(this.protocol.getServerSession().getErrorMessageEncoding()); // info
+            }
+
+        } else {
+            // read EOF packet
+            this.protocol.setWarningCount(rowPacket.readInt());
+            if (this.protocol.getWarningCount() > 0) {
+                this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
+            }
+
+            this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
+            this.protocol.checkTransactionState();
+
         }
-
-        this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
-        this.protocol.checkTransactionState();
-
         this.protocol.setServerSlowQueryFlags();
+
     }
 
     private RowData readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields) throws SQLException {
@@ -1184,4 +1241,7 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
+    public boolean isEOFDeprecated() {
+        return this.protocol.getServerSession().isEOFDeprecated();
+    }
 }

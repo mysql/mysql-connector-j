@@ -188,6 +188,15 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             clientParam |= MysqlaServerSession.CLIENT_INTERACTIVE;
         }
 
+        if ((capabilityFlags & MysqlaServerSession.CLIENT_SESSION_TRACK) != 0) {
+            // TODO MYSQLCONNJ-437
+            // clientParam |= MysqlaServerSession.CLIENT_SESSION_TRACK;
+        }
+
+        if ((capabilityFlags & MysqlaServerSession.CLIENT_DEPRECATE_EOF) != 0) {
+            clientParam |= MysqlaServerSession.CLIENT_DEPRECATE_EOF;
+        }
+
         //
         // switch to pluggable authentication if available
         //

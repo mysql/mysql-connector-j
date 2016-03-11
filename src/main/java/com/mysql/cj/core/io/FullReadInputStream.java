@@ -67,7 +67,7 @@ public class FullReadInputStream extends FilterInputStream {
         return n;
     }
 
-    public void skipFully(long len) throws IOException {
+    public long skipFully(long len) throws IOException {
         if (len < 0) {
             throw new IOException(Messages.getString("MysqlIO.105"));
         }
@@ -82,6 +82,26 @@ public class FullReadInputStream extends FilterInputStream {
             }
 
             n += count;
+        }
+
+        return n;
+    }
+
+    public int skipLengthEncodedInteger() throws IOException {
+        int sw = read() & 0xff;
+
+        switch (sw) {
+            case 252:
+                return (int) skipFully(2) + 1;
+
+            case 253:
+                return (int) skipFully(3) + 1;
+
+            case 254:
+                return (int) skipFully(8) + 1;
+
+            default:
+                return 1;
         }
     }
 }
