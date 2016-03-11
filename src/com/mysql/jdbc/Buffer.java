@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -44,6 +44,14 @@ public class Buffer {
     private int position = 0;
 
     protected boolean wasMultiPacket = false;
+
+    /* Type ids of response packets. */
+    public static final short TYPE_ID_ERROR = 0xFF;
+    public static final short TYPE_ID_EOF = 0xFE;
+    /** It has the same signature as EOF, but may be issued by server only during handshake phase **/
+    public static final short TYPE_ID_AUTH_SWITCH = 0xFE;
+    public static final short TYPE_ID_LOCAL_INFILE = 0xFB;
+    public static final short TYPE_ID_OK = 0;
 
     public Buffer(byte[] buf) {
         this.byteBuffer = buf;
@@ -224,16 +232,20 @@ public class Buffer {
         return this.position;
     }
 
-    final boolean isLastDataPacket() {
-        return ((getBufLength() < 9) && ((this.byteBuffer[0] & 0xff) == 254));
+    final boolean isEOFPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getBufLength() <= 5);
     }
 
     final boolean isAuthMethodSwitchRequestPacket() {
-        return ((this.byteBuffer[0] & 0xff) == 254);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_SWITCH;
     }
 
     final boolean isOKPacket() {
-        return ((this.byteBuffer[0] & 0xff) == 0);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK;
+    }
+
+    final boolean isResultSetOKPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getBufLength() < 16777215);
     }
 
     final boolean isRawPacket() {

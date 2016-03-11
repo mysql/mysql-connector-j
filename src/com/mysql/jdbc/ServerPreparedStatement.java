@@ -1526,32 +1526,34 @@ public class ServerPreparedStatement extends PreparedStatement {
                             LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
+                boolean checkEOF = !mysql.isEOFDeprecated();
+
                 if (this.parameterCount > 0) {
                     if (this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
                         this.parameterFields = new Field[this.parameterCount];
 
-                        Buffer metaDataPacket = mysql.readPacket();
-
-                        int i = 0;
-
-                        while (!metaDataPacket.isLastDataPacket() && (i < this.parameterCount)) {
-                            this.parameterFields[i++] = mysql.unpackField(metaDataPacket, false);
+                        Buffer metaDataPacket;
+                        for (int i = 0; i < this.parameterCount; i++) {
                             metaDataPacket = mysql.readPacket();
+                            if (checkEOF && metaDataPacket.isEOFPacket()) {
+                                break;
+                            }
+                            this.parameterFields[i] = mysql.unpackField(metaDataPacket, false);
                         }
                     }
                 }
 
+                // Read in the result set column information
                 if (this.fieldCount > 0) {
                     this.resultFields = new Field[this.fieldCount];
 
-                    Buffer fieldPacket = mysql.readPacket();
-
-                    int i = 0;
-
-                    // Read in the result set column information
-                    while (!fieldPacket.isLastDataPacket() && (i < this.fieldCount)) {
-                        this.resultFields[i++] = mysql.unpackField(fieldPacket, false);
+                    Buffer fieldPacket;
+                    for (int i = 0; i < this.fieldCount; i++) {
                         fieldPacket = mysql.readPacket();
+                        if (checkEOF && fieldPacket.isEOFPacket()) {
+                            break;
+                        }
+                        this.resultFields[i] = mysql.unpackField(fieldPacket, false);
                     }
                 }
             } catch (SQLException sqlEx) {

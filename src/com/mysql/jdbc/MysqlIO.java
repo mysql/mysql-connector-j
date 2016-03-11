@@ -99,6 +99,8 @@ public class MysqlIO {
     private static final int CLIENT_CONNECT_ATTRS = 0x00100000;
     private static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
     private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
+    private static final int CLIENT_SESSION_TRACK = 0x00800000;
+    private static final int CLIENT_DEPRECATE_EOF = 0x01000000;
 
     private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
@@ -421,9 +423,15 @@ public class MysqlIO {
             }
         }
 
-        packet = reuseAndReadPacket(this.reusablePacket);
+        // There is no EOL packet after fields when CLIENT_DEPRECATE_EOF is set
+        if (!isEOFDeprecated() ||
+                // if we asked to use cursor then there should be an OK packet here
+                (this.connection.versionMeetsMinimum(5, 0, 2) && this.connection.getUseCursorFetch() && isBinaryEncoded && callingStatement != null
+                        && callingStatement.getFetchSize() != 0 && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY)) {
 
-        readServerStatusForResultSets(packet);
+            packet = reuseAndReadPacket(this.reusablePacket);
+            readServerStatusForResultSets(packet);
+        }
 
         //
         // Handle cursor-based fetch first
@@ -594,17 +602,14 @@ public class MysqlIO {
             this.readPacketSequence = multiPacketSeq;
 
             // Read data
-            byte[] buffer = new byte[packetLength + 1];
+            byte[] buffer = new byte[packetLength];
             int numBytesRead = readFully(this.mysqlInput, buffer, 0, packetLength);
 
             if (numBytesRead != packetLength) {
                 throw new IOException("Short read, expected " + packetLength + " bytes, only read " + numBytesRead);
             }
 
-            buffer[packetLength] = 0;
-
             Buffer packet = new Buffer(buffer);
-            packet.setBufLength(packetLength + 1);
 
             if (this.traceProtocol) {
                 StringBuilder traceMessageBuf = new StringBuilder();
@@ -1208,6 +1213,15 @@ public class MysqlIO {
             this.clientParam |= CLIENT_INTERACTIVE;
         }
 
+        if ((this.serverCapabilities & CLIENT_SESSION_TRACK) != 0) {
+            // TODO MYSQLCONNJ-437
+            // this.clientParam |= CLIENT_SESSION_TRACK;
+        }
+
+        if ((this.serverCapabilities & CLIENT_DEPRECATE_EOF) != 0) {
+            this.clientParam |= CLIENT_DEPRECATE_EOF;
+        }
+
         //
         // switch to pluggable authentication if available
         //
@@ -1345,8 +1359,7 @@ public class MysqlIO {
         }
 
         // Check for errors, not for 4.1.1 or newer, as the new auth protocol doesn't work that way (see secureAuth411() for more details...)
-        //if (!versionMeetsMinimum(4, 1, 1)) {
-        if (!(versionMeetsMinimum(4, 1, 1) || !((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
+        if (!(versionMeetsMinimum(4, 1, 1)) || !((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0)) {
             checkErrorPacket();
         }
 
@@ -1995,7 +2008,7 @@ public class MysqlIO {
             //
             rowPacket.setPosition(rowPacket.getPosition() - 1);
 
-            if (!rowPacket.isLastDataPacket()) {
+            if (!(!isEOFDeprecated() && rowPacket.isEOFPacket() || isEOFDeprecated() && rowPacket.isResultSetOKPacket())) {
                 if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || (!useBufferRowIfPossible && !useBufferRowExplicit)) {
 
                     byte[][] rowData = new byte[columnCount][];
@@ -2023,7 +2036,7 @@ public class MysqlIO {
         //
         // Handle binary-encoded data for server-side PreparedStatements...
         //
-        if (!rowPacket.isLastDataPacket()) {
+        if (!(!isEOFDeprecated() && rowPacket.isEOFPacket() || isEOFDeprecated() && rowPacket.isResultSetOKPacket())) {
             if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || (!useBufferRowIfPossible && !useBufferRowExplicit)) {
                 return unpackBinaryResultSetRow(fields, rowPacket, resultSetConcurrency);
             }
@@ -2083,7 +2096,7 @@ public class MysqlIO {
                 remaining--;
 
                 if (firstTime) {
-                    if (sw == 255) {
+                    if (sw == Buffer.TYPE_ID_ERROR) {
                         // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                         // away with just writing the error code and message in it (for now).
                         Buffer errorPacket = new Buffer(packetLength + HEADER_LENGTH);
@@ -2098,21 +2111,49 @@ public class MysqlIO {
                         checkErrorPacket(errorPacket);
                     }
 
-                    if (sw == 254 && packetLength < 9) {
-                        if (this.use41Extensions) {
-                            this.warningCount = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
-                            remaining -= 2;
+                    if (sw == Buffer.TYPE_ID_EOF && packetLength < 16777215) {
+                        // Both EOF and OK packets have the same 0xfe signature in result sets.
 
-                            if (this.warningCount > 0) {
-                                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                        // OK packet length limit restricted to MAX_PACKET_LENGTH value (256L*256L*256L-1) as any length greater
+                        // than this value will have first byte of OK packet to be 254 thus does not provide a means to identify
+                        // if this is OK or EOF packet.
+                        // Thus we need to check the packet length to distinguish between OK packet and ResultsetRow packet starting with 0xfe
+                        if (this.use41Extensions) {
+                            if (isEOFDeprecated()) {
+                                // read OK packet
+                                remaining -= skipLengthEncodedInteger(this.mysqlInput); // affected_rows
+                                remaining -= skipLengthEncodedInteger(this.mysqlInput); // last_insert_id
+
+                                this.oldServerStatus = this.serverStatus;
+                                this.serverStatus = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                                checkTransactionState(this.oldServerStatus);
+                                remaining -= 2;
+
+                                this.warningCount = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                                remaining -= 2;
+
+                                if (this.warningCount > 0) {
+                                    this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                                }
+
+                            } else {
+                                // read EOF packet
+                                this.warningCount = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                                remaining -= 2;
+
+                                if (this.warningCount > 0) {
+                                    this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                                }
+
+                                this.oldServerStatus = this.serverStatus;
+
+                                this.serverStatus = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
+                                checkTransactionState(this.oldServerStatus);
+
+                                remaining -= 2;
                             }
 
-                            this.oldServerStatus = this.serverStatus;
-
-                            this.serverStatus = (this.mysqlInput.read() & 0xff) | ((this.mysqlInput.read() & 0xff) << 8);
-                            checkTransactionState(this.oldServerStatus);
-
-                            remaining -= 2;
+                            setServerSlowQueryFlags();
 
                             if (remaining > 0) {
                                 skipFully(this.mysqlInput, remaining);
@@ -2990,6 +3031,24 @@ public class MysqlIO {
         return n;
     }
 
+    private final int skipLengthEncodedInteger(InputStream in) throws IOException {
+        int sw = in.read() & 0xff;
+
+        switch (sw) {
+            case 252:
+                return (int) skipFully(in, 2) + 1;
+
+            case 253:
+                return (int) skipFully(in, 3) + 1;
+
+            case 254:
+                return (int) skipFully(in, 8) + 1;
+
+            default:
+                return 1;
+        }
+    }
+
     /**
      * Reads one result set off of the wire, if the result is actually an
      * update count, creates an update-count only result set.
@@ -3217,16 +3276,38 @@ public class MysqlIO {
         if (this.use41Extensions) {
             rowPacket.readByte(); // skips the 'last packet' flag
 
-            this.warningCount = rowPacket.readInt();
+            if (isEOFDeprecated()) {
+                // read OK packet
+                rowPacket.newReadLength(); // affected_rows
+                rowPacket.newReadLength(); // last_insert_id
 
-            if (this.warningCount > 0) {
-                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                this.oldServerStatus = this.serverStatus;
+                this.serverStatus = rowPacket.readInt();
+                checkTransactionState(this.oldServerStatus);
+
+                this.warningCount = rowPacket.readInt();
+                if (this.warningCount > 0) {
+                    this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                }
+
+                rowPacket.readByte(); // advance pointer
+
+                if (this.connection.isReadInfoMsgEnabled()) {
+                    rowPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor()); // info
+                }
+
+            } else {
+                // read EOF packet
+                this.warningCount = rowPacket.readInt();
+                if (this.warningCount > 0) {
+                    this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+                }
+
+                this.oldServerStatus = this.serverStatus;
+                this.serverStatus = rowPacket.readInt();
+                checkTransactionState(this.oldServerStatus);
+
             }
-
-            this.oldServerStatus = this.serverStatus;
-            this.serverStatus = rowPacket.readInt();
-            checkTransactionState(this.oldServerStatus);
-
             setServerSlowQueryFlags();
         }
     }
@@ -4169,7 +4250,7 @@ public class MysqlIO {
 
             byte[] replyAsBytes = b.getByteBuffer();
 
-            if ((replyAsBytes.length == 25) && (replyAsBytes[0] != 0)) {
+            if ((replyAsBytes.length == 24) && (replyAsBytes[0] != 0)) {
                 // Old passwords will have '*' at the first byte of hash */
                 if (replyAsBytes[0] != '*') {
                     try {
@@ -4183,9 +4264,9 @@ public class MysqlIO {
                         /* Finally hash complete password using hash we got from server */
                         passwordHash = Security.passwordHashStage2(passwordHash, replyAsBytes);
 
-                        byte[] packetDataAfterSalt = new byte[replyAsBytes.length - 5];
+                        byte[] packetDataAfterSalt = new byte[replyAsBytes.length - 4];
 
-                        System.arraycopy(replyAsBytes, 4, packetDataAfterSalt, 0, replyAsBytes.length - 5);
+                        System.arraycopy(replyAsBytes, 4, packetDataAfterSalt, 0, replyAsBytes.length - 4);
 
                         byte[] mysqlScrambleBuff = new byte[SEED_LENGTH];
 
@@ -4211,9 +4292,9 @@ public class MysqlIO {
                         byte[] passwordHash = Security.createKeyFromOldPassword(password);
 
                         /* Decypt and store scramble 4 = hash for stage2 */
-                        byte[] netReadPos4 = new byte[replyAsBytes.length - 5];
+                        byte[] netReadPos4 = new byte[replyAsBytes.length - 4];
 
-                        System.arraycopy(replyAsBytes, 4, netReadPos4, 0, replyAsBytes.length - 5);
+                        System.arraycopy(replyAsBytes, 4, netReadPos4, 0, replyAsBytes.length - 4);
 
                         byte[] mysqlScrambleBuff = new byte[SEED_LENGTH];
 
@@ -4333,7 +4414,7 @@ public class MysqlIO {
 
         Buffer reply = checkErrorPacket();
 
-        if (reply.isLastDataPacket()) {
+        if (reply.isAuthMethodSwitchRequestPacket()) {
             /*
              * By sending this very specific reply server asks us to send scrambled password in old format. The reply contains scramble_323.
              */
@@ -4947,5 +5028,9 @@ public class MysqlIO {
                     getExceptionInterceptor());
         }
         packet.writeByte((byte) charsetIndex);
+    }
+
+    public boolean isEOFDeprecated() {
+        return (this.clientParam & CLIENT_DEPRECATE_EOF) != 0;
     }
 }
