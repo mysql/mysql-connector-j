@@ -6784,6 +6784,10 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#68916 - closeOnCompletion doesn't work.
      * 
+     * This test requires help and timezone tables in mysql database to be initialized,
+     * see http://dev.mysql.com/doc/refman/5.7/en/time-zone-support.html and
+     * http://dev.mysql.com/doc/refman/5.7/en/server-side-help-support.html
+     * 
      * @throws Exception
      *             if the test fails.
      */
