@@ -4867,4 +4867,108 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testStmt.close();
         testConn.close();
     }
+
+    /**
+     * Tests fix for Bug#56479 - getTimestamp throws exception.
+     * 
+     * This bug occurs exclusively on UpdatableResultSets when retrieving previously set timestamp values.
+     */
+    public void testBug56479() throws Exception {
+        if (!versionMeetsMinimum(5, 6)) {
+            return;
+        }
+
+        String tsStr1 = "2010-09-02 03:55:10";
+        String tsStr2 = "2010-09-02 03:55:10.123456";
+        Timestamp ts1 = Timestamp.valueOf(tsStr1);
+        Timestamp ts2 = Timestamp.valueOf(tsStr2);
+
+        createTable("testBug56479", "(id INT PRIMARY KEY, ts1 TIMESTAMP NULL, ts2 TIMESTAMP(6) NULL)", "InnoDB");
+        this.stmt.executeUpdate("INSERT INTO testBug56479 VALUES (1, '" + tsStr1 + "', '" + tsStr2 + "'), (2, '" + tsStr1 + "', '" + tsStr2 + "')");
+
+        Statement testStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug56479");
+
+        // Initial verifications.
+        assertTrue(testRs.next());
+        assertEquals(1, testRs.getInt(1));
+        assertEquals(ts1, testRs.getTimestamp(2));
+        assertEquals(ts2, testRs.getTimestamp(3));
+        assertTrue(testRs.next());
+        assertEquals(2, testRs.getInt(1));
+        assertEquals(ts1, testRs.getTimestamp(2));
+        assertEquals(ts2, testRs.getTimestamp(3));
+        assertFalse(testRs.next());
+
+        // Update second row to null.
+        testRs.absolute(2);
+        testRs.updateNull(2);
+        testRs.updateNull(3);
+        testRs.updateRow();
+        assertEquals(2, testRs.getInt(1));
+        assertNull(testRs.getTimestamp(2));
+        assertNull(testRs.getTimestamp(3));
+        testRs.beforeFirst();
+
+        // Check data changes using a plain ResultSet.
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug56479");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertNull(this.rs.getTimestamp(2));
+        assertNull(this.rs.getTimestamp(3));
+        assertFalse(this.rs.next());
+
+        // Update second row to original values.
+        testRs.absolute(2);
+        testRs.updateTimestamp(2, ts1);
+        testRs.updateTimestamp(3, ts2);
+        testRs.updateRow();
+        assertEquals(2, testRs.getInt(1));
+        assertEquals(ts1, testRs.getTimestamp(2));
+        assertEquals(ts2, testRs.getTimestamp(3));
+        testRs.beforeFirst();
+
+        // Check data changes using a plain ResultSet.
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug56479");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertFalse(this.rs.next());
+
+        // Insert new row.
+        testRs.moveToInsertRow();
+        testRs.updateInt(1, 3);
+        testRs.updateTimestamp(2, ts1);
+        testRs.updateTimestamp(3, ts2);
+        testRs.insertRow();
+        assertEquals(3, testRs.getInt(1));
+        assertEquals(ts1, testRs.getTimestamp(2));
+        assertEquals(ts2, testRs.getTimestamp(3));
+        testRs.beforeFirst();
+
+        // Check final data using a plain ResultSet.
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug56479");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertTrue(this.rs.next());
+        assertEquals(3, this.rs.getInt(1));
+        assertEquals(ts1, this.rs.getTimestamp(2));
+        assertEquals(ts2, this.rs.getTimestamp(3));
+        assertFalse(this.rs.next());
+    }
 }

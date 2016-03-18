@@ -1034,6 +1034,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         this.savedCurrentRow = this.thisRow;
         byte[][] newRowData = new byte[numFields][];
         this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
+        this.thisRow.setMetadata(this.fields);
 
         for (int i = 0; i < numFields; i++) {
             if (!this.populateInserterWithDefaultValues) {
