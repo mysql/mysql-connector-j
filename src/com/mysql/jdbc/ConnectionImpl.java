@@ -1459,7 +1459,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 this.cachedPreparedStatementParams.put(nativeSql, pStmt.getParseInfo());
             } else {
-                pStmt = new com.mysql.jdbc.PreparedStatement(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
+                pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
             }
         } else {
             pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
