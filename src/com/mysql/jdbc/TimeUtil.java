@@ -523,7 +523,7 @@ public class TimeUtil {
     private static void loadTimeZoneMappings(ExceptionInterceptor exceptionInterceptor) throws SQLException {
         timeZoneMappings = new Properties();
         try {
-            timeZoneMappings.load(TimeZone.class.getResourceAsStream(TIME_ZONE_MAPPINGS_RESOURCE));
+            timeZoneMappings.load(TimeUtil.class.getResourceAsStream(TIME_ZONE_MAPPINGS_RESOURCE));
         } catch (IOException e) {
             throw SQLError.createSQLException(Messages.getString("TimeUtil.LoadTimeZoneMappingError"), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE,
                     exceptionInterceptor);
