@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.39
 
+  - Fix for Bug#77171 (21181466), On every connect getting sql_mode from server creates unnecessary exception.
+
   - Fix for Bug#79343 (22353759), NPE in TimeUtil.loadTimeZoneMappings causing server time zone value unrecognized.
 
   - Fix for Bug#80522 (22833410), Using useCursorFetch leads to data corruption in Connector/J for TIME type.
