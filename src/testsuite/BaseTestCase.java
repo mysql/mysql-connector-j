@@ -1089,6 +1089,7 @@ public abstract class BaseTestCase extends TestCase {
             String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
             defaultHost = defaultHost + ":" + port;
         }
+        removeHostRelatedProps(parsedProps);
 
         if (customHost != null && customHost.length() > 0) {
             customHost = customHost + ",";

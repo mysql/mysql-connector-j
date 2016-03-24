@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -714,21 +714,24 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)) {
                 throw SQLError.createSQLException("Cannot remove only configured host.", null);
             }
+        }
 
-            this.hostToRemove = host;
+        this.hostToRemove = host;
 
-            if (host.equals(this.currentConnection.getHost())) {
-                closeAllConnections();
-            } else {
-                this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
-                Integer idx = this.hostsToListIndexMap.remove(host);
+        if (host.equals(this.currentConnection.getHost())) {
+            closeAllConnections();
+        } else {
+            this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
+            if (this.hostsToListIndexMap.remove(host) != null) {
                 long[] newResponseTimes = new long[this.responseTimes.length - 1];
                 int newIdx = 0;
-                for (Iterator<String> i = this.hostList.iterator(); i.hasNext(); newIdx++) {
-                    String copyHost = i.next();
-                    if (idx != null && idx < this.responseTimes.length) {
-                        newResponseTimes[newIdx] = this.responseTimes[idx];
-                        this.hostsToListIndexMap.put(copyHost, newIdx);
+                for (String h : this.hostList) {
+                    if (!host.equals(h)) {
+                        Integer idx = this.hostsToListIndexMap.get(h);
+                        if (idx != null && idx < this.responseTimes.length) {
+                            newResponseTimes[newIdx] = this.responseTimes[idx];
+                        }
+                        this.hostsToListIndexMap.put(h, newIdx++);
                     }
                 }
                 this.responseTimes = newResponseTimes;
@@ -751,7 +754,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         System.arraycopy(this.responseTimes, 0, newResponseTimes, 0, this.responseTimes.length);
 
         this.responseTimes = newResponseTimes;
-        this.hostList.add(host);
+        if (!this.hostList.contains(host)) {
+            this.hostList.add(host);
+        }
         this.hostsToListIndexMap.put(host, this.responseTimes.length - 1);
 
         return true;

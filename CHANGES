@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.39
 
+  - Fix for Bug#22730682, ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().
+
   - Fix for Bug#56479 (16738378), getTimestamp throws exception.
 
   - Fix for Bug#79598 (22352812), Client side Prepared Statement caching bypasses JDBC42 Java 8 Time conversion.

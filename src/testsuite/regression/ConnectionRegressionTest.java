@@ -95,6 +95,7 @@ import com.mysql.fabric.jdbc.ErrorReportingExceptionInterceptor;
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.CharsetMapping;
+import com.mysql.jdbc.ConnectionGroupManager;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
@@ -3098,7 +3099,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assert (endConnCount > 0);
 
             if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this
-                                                      // testsuite?
+                                                          // testsuite?
                 fail("We're leaking connections even when not failed over");
             }
         } finally {
@@ -8812,6 +8813,46 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testConn = getConnectionWithProps(props);
         assertTrue(((MySQLConnection) testConn).useAnsiQuotedIdentifiers());
         assertTrue(((MySQLConnection) testConn).isNoBackslashEscapesSet());
+        testConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#22730682 - ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().
+     * 
+     * This bug was caused by an incorrect array handling when removing an host from a load balanced connection group, with the option to affect existing
+     * connections.
+     */
+    public void testBug22730682() throws Exception {
+        Properties connProps = getPropertiesFromTestsuiteUrl();
+        String host = connProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+        String port = connProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+
+        final String currentHost = host + ":" + port;
+        final String dummyHost = "bug22730682:12345";
+
+        final Properties props = new Properties();
+        Connection testConn;
+
+        final String lbConnGroup1 = "Bug22730682LB1";
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup1);
+        testConn = getLoadBalancedConnection(3, dummyHost, props);
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup1).contains(dummyHost));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup1).contains(currentHost));
+        ConnectionGroupManager.removeHost(lbConnGroup1, dummyHost);
+        assertEquals(1, ConnectionGroupManager.getActiveHostCount(lbConnGroup1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup1).contains(currentHost));
+        testConn.close();
+
+        final String lbConnGroup2 = "Bug22730682LB2";
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup2);
+        testConn = getLoadBalancedConnection(3, dummyHost, props);
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup2).contains(dummyHost));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup2).contains(currentHost));
+        ConnectionGroupManager.removeHost(lbConnGroup2, dummyHost, true);
+        assertEquals(1, ConnectionGroupManager.getActiveHostCount(lbConnGroup2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup2).contains(currentHost));
         testConn.close();
     }
 }
