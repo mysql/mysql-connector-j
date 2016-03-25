@@ -170,18 +170,21 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
         String strategy = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
         try {
-            if ("random".equals(strategy)) {
-                this.balancer = (BalanceStrategy) Util
-                        .loadExtensions(null, props, RandomBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null, this.log).get(0);
-            } else if ("bestResponseTime".equals(strategy)) {
-                this.balancer = (BalanceStrategy) Util
-                        .loadExtensions(null, props, BestResponseTimeBalanceStrategy.class.getName(), "InvalidLoadBalanceStrategy", null, this.log).get(0);
-            } else {
-                this.balancer = (BalanceStrategy) Util.loadExtensions(null, props, strategy, "InvalidLoadBalanceStrategy", null, this.log).get(0);
+            switch (strategy) {
+                case "random":
+                    this.balancer = new RandomBalanceStrategy();
+                    break;
+                case "bestResponseTime":
+                    this.balancer = new BestResponseTimeBalanceStrategy();
+                    break;
+                default:
+                    this.balancer = (BalanceStrategy) Class.forName(strategy).newInstance();
             }
-        } catch (CJException e) {
-            throw SQLExceptionsMapping.translateException(e);
+        } catch (Throwable t) {
+            throw SQLError.createSQLException(Messages.getString("InvalidLoadBalanceStrategy", new Object[] { strategy }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    t, null);
         }
+
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
         try {
             this.autoCommitSwapThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
@@ -214,8 +217,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         try {
-            this.balancer.init(null, props, this.log);
-
             String lbExceptionChecker = this.localProps.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
                     StandardLoadBalanceExceptionChecker.class.getName());
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util
@@ -396,7 +397,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         if (!this.isClosed) {
-            this.balancer.destroy();
             if (this.connectionGroup != null) {
                 this.connectionGroup.closeConnectionProxy(this);
             }
@@ -429,7 +429,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         if (!this.isClosed) {
-            this.balancer.destroy();
             if (this.connectionGroup != null) {
                 this.connectionGroup.closeConnectionProxy(this);
             }
@@ -454,7 +453,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         if (!this.isClosed) {
-            this.balancer.destroy();
             if (this.connectionGroup != null) {
                 this.connectionGroup.closeConnectionProxy(this);
             }

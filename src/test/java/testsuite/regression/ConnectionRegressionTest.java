@@ -2839,19 +2839,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
             return conn;
         }
-
-        @Override
-        public void destroy() {
-            super.destroy();
-
-        }
-
-        @Override
-        public void init(MysqlConnection conn, Properties props, Log log) {
-            super.init(conn, props, log);
-
-        }
-
     }
 
     public void testAutoCommitLB() throws Exception {
@@ -2934,17 +2921,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
 
         }
-
-        @Override
-        public void destroy() {
-            super.destroy();
-        }
-
-        @Override
-        public void init(MysqlConnection conn, Properties props, Log log) {
-            super.init(conn, props, log);
-        }
-
     }
 
     public void testBug56429() throws Exception {

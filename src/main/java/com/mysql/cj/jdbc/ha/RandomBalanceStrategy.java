@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,11 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -40,14 +37,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 public class RandomBalanceStrategy implements BalanceStrategy {
 
     public RandomBalanceStrategy() {
-    }
-
-    public void destroy() {
-        // we don't have anything to clean up
-    }
-
-    public void init(MysqlConnection conn, Properties props, Log log) {
-        // we don't have anything to initialize
     }
 
     public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
