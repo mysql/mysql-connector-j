@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,10 +24,7 @@
 package com.mysql.cj.api.authentication;
 
 import java.util.List;
-import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 
@@ -37,16 +34,23 @@ import com.mysql.cj.api.io.Protocol;
  * The driver will create one instance of a given plugin per MysqlIO instance if it's reusable (see {@link #isReusable()}) or a new instance
  * in each MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer) call.
  */
-public interface AuthenticationPlugin extends Extension {
+public interface AuthenticationPlugin {
 
     /**
      * We need direct Protocol reference because it isn't available from Connection before authentication complete.
      * 
-     * @param conn
      * @param protocol
-     * @param props
      */
-    void init(MysqlConnection conn, Protocol protocol, Properties props);
+    default void init(Protocol protocol) {
+    }
+
+    /**
+     * Called by the driver when this extension should release any resources
+     * it is holding and cleanup internally before the connection is
+     * closed.
+     */
+    default void destroy() {
+    }
 
     /**
      * Returns the name that the MySQL server uses on

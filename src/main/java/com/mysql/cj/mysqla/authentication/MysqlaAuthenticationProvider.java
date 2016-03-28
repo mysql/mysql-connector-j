@@ -26,12 +26,11 @@ package com.mysql.cj.mysqla.authentication;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.ModifiableProperty;
@@ -47,7 +46,6 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaCapabilities;
@@ -61,7 +59,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     protected String seed;
     private boolean useConnectWithDb;
 
-    private MysqlConnection connection;
     private ExceptionInterceptor exceptionInterceptor;
     private PropertySet propertySet;
 
@@ -74,8 +71,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    public void init(MysqlConnection conn, Protocol prot, PropertySet propSet, ExceptionInterceptor excInterceptor) {
-        this.connection = conn;
+    public void init(Protocol prot, PropertySet propSet, ExceptionInterceptor excInterceptor) {
         this.protocol = prot;
         this.propertySet = propSet;
         this.exceptionInterceptor = excInterceptor;
@@ -236,16 +232,13 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
     /**
      * Fill the authentication plugins map.
-     * First this method fill the map with instances of {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin} and {@link Sha256PasswordPlugin}.
-     * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
-     * {@link Util#loadExtensions(MysqlConnection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
+     * First this method fill the map with instances of {@link MysqlNativePasswordPlugin}, {@link MysqlClearPasswordPlugin}, {@link Sha256PasswordPlugin}
+     * and {@link MysqlOldPasswordPlugin}. Then it creates instances of plugins listed in "authenticationPlugins" connection property and adds them to the map
+     * too.
      * 
-     * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
-     * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
-     * "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password" from it's own getProtocolPluginName() method.
-     * 
-     * All plugin instances in the map are initialized by {@link Extension#init(MysqlConnection, Properties)} call
-     * with this.connection and this.connection.getProperties() values.
+     * The key for the map entry is got by {@link AuthenticationPlugin#getProtocolPluginName()} thus it is possible to replace built-in plugin with custom
+     * implementation. To do it custom plugin should return value "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password"
+     * from it's own getProtocolPluginName() method.
      * 
      */
     private void loadAuthenticationPlugins() {
@@ -254,7 +247,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         this.clientDefaultAuthenticationPlugin = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).getValue();
         if (this.clientDefaultAuthenticationPlugin == null || "".equals(this.clientDefaultAuthenticationPlugin.trim())) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Connection.BadDefaultAuthenticationPlugin", new Object[] { this.clientDefaultAuthenticationPlugin }),
+                    Messages.getString("AuthenticationProvider.BadDefaultAuthenticationPlugin", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -270,52 +263,44 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         }
 
         this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
-        AuthenticationPlugin plugin;
         boolean defaultIsFound = false;
 
+        List<AuthenticationPlugin> pluginsToInit = new LinkedList<AuthenticationPlugin>();
+
         // embedded plugins
-        plugin = new MysqlNativePasswordPlugin();
-        plugin.init(this.connection, this.protocol, this.connection.getProperties());
-        defaultIsFound = addAuthenticationPlugin(plugin);
-
-        plugin = new MysqlClearPasswordPlugin();
-        plugin.init(this.connection, this.protocol, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
-        }
-
-        plugin = new Sha256PasswordPlugin();
-        plugin.init(this.connection, this.protocol, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
-        }
-
-        plugin = new MysqlOldPasswordPlugin();
-        plugin.init(this.connection, this.protocol, this.connection.getProperties());
-        if (addAuthenticationPlugin(plugin)) {
-            defaultIsFound = true;
-        }
+        pluginsToInit.add(new MysqlNativePasswordPlugin());
+        pluginsToInit.add(new MysqlClearPasswordPlugin());
+        pluginsToInit.add(new Sha256PasswordPlugin());
+        pluginsToInit.add(new MysqlOldPasswordPlugin());
 
         // plugins from authenticationPluginClasses connection parameter
         String authenticationPluginClasses = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_authenticationPlugins).getValue();
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
-
-            List<Extension> plugins = Util.loadExtensions(this.connection, this.connection.getProperties(), authenticationPluginClasses,
-                    "Connection.BadAuthenticationPlugin", getExceptionInterceptor(), this.log);
-
-            for (Extension object : plugins) {
-                plugin = (AuthenticationPlugin) object;
-                if (addAuthenticationPlugin(plugin)) {
-                    defaultIsFound = true;
+            List<String> pluginsToCreate = StringUtils.split(authenticationPluginClasses, ",", true);
+            String className = null;
+            try {
+                for (int i = 0, s = pluginsToCreate.size(); i < s; i++) {
+                    className = pluginsToCreate.get(i);
+                    pluginsToInit.add((AuthenticationPlugin) Class.forName(className).newInstance());
                 }
+            } catch (Throwable t) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { className }), t, this.exceptionInterceptor);
             }
+        }
 
+        // initialize plugin instances
+        for (AuthenticationPlugin plugin : pluginsToInit) {
+            plugin.init(this.protocol);
+            if (addAuthenticationPlugin(plugin)) {
+                defaultIsFound = true;
+            }
         }
 
         // check if default plugin is listed
         if (!defaultIsFound) {
-            throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed", new Object[] { this.clientDefaultAuthenticationPlugin }),
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages
+                    .getString("AuthenticationProvider.DefaultAuthenticationPluginIsNotListed", new Object[] { this.clientDefaultAuthenticationPlugin }),
                     getExceptionInterceptor());
         }
 
@@ -341,8 +326,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         if (disabledByClassName || disabledByMechanism) {
             // if disabled then check is it default
             if (this.clientDefaultAuthenticationPlugin.equals(pluginClassName)) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.BadDisabledAuthenticationPlugin",
-                        new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }), getExceptionInterceptor());
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        Messages.getString("AuthenticationProvider.BadDisabledAuthenticationPlugin",
+                                new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName }),
+                        getExceptionInterceptor());
             }
         } else {
             this.authenticationPlugins.put(pluginProtocolName, plugin);
@@ -376,10 +363,11 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         if (plugin != null && !plugin.isReusable()) {
             try {
                 plugin = plugin.getClass().newInstance();
-                plugin.init(this.connection, this.protocol, this.connection.getProperties());
+                plugin.init(this.protocol);
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), t, getExceptionInterceptor());
+                        Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), t,
+                        getExceptionInterceptor());
             }
         }
 
@@ -394,7 +382,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     private void checkConfidentiality(AuthenticationPlugin plugin) {
         if (plugin.requiresConfidentiality() && !this.protocol.getSocketConnection().isSSLEstablished()) {
             throw ExceptionFactory.createException(
-                    Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] { plugin.getProtocolPluginName() }),
+                    Messages.getString("AuthenticationProvider.AuthenticationPluginRequiresSSL", new Object[] { plugin.getProtocolPluginName() }),
                     getExceptionInterceptor());
         }
     }
@@ -456,7 +444,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                     if (challenge.isOKPacket()) {
                         throw ExceptionFactory.createException(
-                                Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
+                                Messages.getString("AuthenticationProvider.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
                                 getExceptionInterceptor());
                     }
 
@@ -508,8 +496,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                          */
                         plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
                     } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !this.protocol.getSocketConnection().isSSLEstablished()
-                            && this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getValue() == null
-                            && !this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                            && this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getValue() == null
+                            && !this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
                         /*
                          * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
                          * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
@@ -569,7 +557,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         // if plugin is not found for pluginName throw exception
                         if (plugin == null) {
                             throw ExceptionFactory.createException(WrongArgumentException.class,
-                                    Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { pluginName }), getExceptionInterceptor());
+                                    Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { pluginName }),
+                                    getExceptionInterceptor());
                         }
                     }
 
@@ -633,7 +622,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     // connection attributes
                     if ((clientParam & MysqlaServerSession.CLIENT_CONNECT_ATTRS) != 0) {
                         appendConnectionAttributes(last_sent,
-                                this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc);
+                                this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc);
                     }
 
                     this.protocol.send(last_sent, last_sent.getPosition());
@@ -687,7 +676,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     // connection attributes
                     if (((clientParam & MysqlaServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
                         appendConnectionAttributes(last_sent,
-                                this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc);
+                                this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(), enc);
                     }
 
                     this.protocol.send(last_sent, last_sent.getPosition());

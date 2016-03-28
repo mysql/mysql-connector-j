@@ -28,17 +28,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -64,12 +60,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
     private String publicKeyString = null;
     private ReadableProperty<String> serverRSAPublicKeyFile = null;
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
-    }
-
     @Override
-    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+    public void init(Protocol prot) {
         this.protocol = prot;
         this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
 

@@ -99,7 +99,6 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
-import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
@@ -3587,9 +3586,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private String password = null;
 
-        public void init(MysqlConnection conn1, Properties props, Log log) {
-        }
-
         public void destroy() {
             this.password = null;
         }
@@ -3617,18 +3613,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return true;
         }
 
-        @Override
-        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        }
-
     }
 
     public static class TwoQuestionsPlugin implements AuthenticationPlugin {
 
         private String password = null;
-
-        public void init(MysqlConnection conn1, Properties props, Log log) {
-        }
 
         public void destroy() {
             this.password = null;
@@ -3662,20 +3651,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return true;
         }
 
-        @Override
-        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
-        }
-
     }
 
     public static class ThreeAttemptsPlugin implements AuthenticationPlugin {
 
         private String password = null;
         private int counter = 0;
-
-        public void init(MysqlConnection conn1, Properties props, Log log) {
-            this.counter = 0;
-        }
 
         public void destroy() {
             this.password = null;
@@ -3709,10 +3690,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
-        }
-
-        @Override
-        public void init(MysqlConnection conn, Protocol protocol, Properties props) {
         }
 
     }

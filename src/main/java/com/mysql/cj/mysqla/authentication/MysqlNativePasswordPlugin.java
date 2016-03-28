@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,14 +24,10 @@
 package com.mysql.cj.mysqla.authentication;
 
 import java.util.List;
-import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -43,12 +39,8 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
     private Protocol protocol;
     private String password = null;
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
-    }
-
     @Override
-    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+    public void init(Protocol prot) {
         this.protocol = prot;
     }
 

@@ -25,14 +25,10 @@ package com.mysql.cj.mysqla.authentication;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -45,12 +41,7 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
     private String password = null;
 
     @Override
-    public void init(MysqlConnection conn, Properties props, Log log) {
-        init(conn, ((JdbcConnection) conn).getSession().getProtocol(), props);
-    }
-
-    @Override
-    public void init(MysqlConnection conn, Protocol prot, Properties props) {
+    public void init(Protocol prot) {
         this.protocol = prot;
     }
 

@@ -234,7 +234,7 @@ public class MysqlaProtocol extends AbstractProtocol implements Protocol {
         }
 
         this.authProvider = new MysqlaAuthenticationProvider(this.log);
-        this.authProvider.init(conn, this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
+        this.authProvider.init(this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
         // TODO Initialize ResultsHandler properly
         this.resultsHandler = new MysqlIO(this, this.getPropertySet(), (JdbcConnection) this.connection);
