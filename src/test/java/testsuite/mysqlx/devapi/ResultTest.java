@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.junit.After;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
+import com.mysql.cj.api.x.Warning;
 import com.mysql.cj.core.exceptions.DataReadException;
 
 public class ResultTest extends DevApiBaseTestCase {
@@ -60,14 +62,12 @@ public class ResultTest extends DevApiBaseTestCase {
         sqlUpdate("insert into testx values (1), (2), (3)");
         Table table = this.schema.getTable("testx");
         RowResult rows = table.select("x/0 as bad_x").execute();
-        // TODO: 1/0 was generating an error before which now is not
-        assertEquals(0, rows.getWarningsCount());
         // get warnings IMMEDIATELY
-        // assertEquals(3, rows.getWarningsCount());
-        // Iterator<Warning> warnings = rows.getWarnings();
-        // assertEquals(1365, warnings.next().getCode());
-        // assertEquals(1365, warnings.next().getCode());
-        // assertEquals(1365, warnings.next().getCode());
+        assertEquals(3, rows.getWarningsCount());
+        Iterator<Warning> warnings = rows.getWarnings();
+        assertEquals(1365, warnings.next().getCode());
+        assertEquals(1365, warnings.next().getCode());
+        assertEquals(1365, warnings.next().getCode());
         Row r = rows.next();
         assertEquals(null, r.getString("bad_x"));
         r = rows.next();
