@@ -6,8 +6,6 @@ dd-mm-yy - Version 6.0.3
 
 04-05-16 - Version 6.0.2
 
-  - Merged version 5.1.39.
-
   - Deprecate the EOF packet.
 
   - Fix for Bug#75956, Inserting timestamps using a server PreparedStatement and useLegacyDatetimeCode=false
