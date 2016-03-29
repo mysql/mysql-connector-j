@@ -88,7 +88,7 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String collName = "testGetObjects";
+        String collName = "test_get_objects";
         this.session.dropCollectionIfExists(getTestDatabase(), collName);
         this.session.createCollection(getTestDatabase(), collName);
         List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), "COLLECTION");

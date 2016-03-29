@@ -45,8 +45,8 @@ public class MetadataTest extends TableTest {
     public void setupTableTest() {
         super.setupTableTest();
         if (this.isSetForMySQLxTests) {
-            sqlUpdate("drop table if exists exampleMetadata");
-            sqlUpdate("create table exampleMetadata (_id varchar(32), name varchar(20), birthday date, age int)");
+            sqlUpdate("drop table if exists example_metadata");
+            sqlUpdate("create table example_metadata (_id varchar(32), name varchar(20), birthday date, age int)");
         }
     }
 
@@ -57,19 +57,19 @@ public class MetadataTest extends TableTest {
     }
 
     @Test
-    public void exampleMetadata() {
+    public void example_metadata() {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        Table table = this.schema.getTable("exampleMetadata");
+        Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id, name, birthday, age").execute();
         List<Column> metadata = rows.getColumns();
         assertEquals(4, metadata.size());
         Column idCol = metadata.get(0);
 
         assertEquals(this.schema.getName(), idCol.getSchemaName());
-        assertEquals("exampleMetadata", idCol.getTableName());
-        assertEquals("exampleMetadata", idCol.getTableLabel());
+        assertEquals("example_metadata", idCol.getTableName());
+        assertEquals("example_metadata", idCol.getTableLabel());
         assertEquals("_id", idCol.getColumnName());
         assertEquals("_id", idCol.getColumnLabel());
         assertEquals(Type.STRING, idCol.getType());
@@ -87,8 +87,8 @@ public class MetadataTest extends TableTest {
 
         Column nameCol = metadata.get(1);
         assertEquals(this.schema.getName(), nameCol.getSchemaName());
-        assertEquals("exampleMetadata", nameCol.getTableName());
-        assertEquals("exampleMetadata", nameCol.getTableLabel());
+        assertEquals("example_metadata", nameCol.getTableName());
+        assertEquals("example_metadata", nameCol.getTableLabel());
         assertEquals("name", nameCol.getColumnName());
         assertEquals("name", nameCol.getColumnLabel());
         assertEquals(Type.STRING, nameCol.getType());
@@ -106,8 +106,8 @@ public class MetadataTest extends TableTest {
 
         Column birthdayCol = metadata.get(2);
         assertEquals(this.schema.getName(), birthdayCol.getSchemaName());
-        assertEquals("exampleMetadata", birthdayCol.getTableName());
-        assertEquals("exampleMetadata", birthdayCol.getTableLabel());
+        assertEquals("example_metadata", birthdayCol.getTableName());
+        assertEquals("example_metadata", birthdayCol.getTableLabel());
         assertEquals("birthday", birthdayCol.getColumnName());
         assertEquals("birthday", birthdayCol.getColumnLabel());
         assertEquals(Type.DATE, birthdayCol.getType());
@@ -125,8 +125,8 @@ public class MetadataTest extends TableTest {
 
         Column ageCol = metadata.get(3);
         assertEquals(this.schema.getName(), ageCol.getSchemaName());
-        assertEquals("exampleMetadata", ageCol.getTableName());
-        assertEquals("exampleMetadata", ageCol.getTableLabel());
+        assertEquals("example_metadata", ageCol.getTableName());
+        assertEquals("example_metadata", ageCol.getTableLabel());
         assertEquals("age", ageCol.getColumnName());
         assertEquals("age", ageCol.getColumnLabel());
         assertEquals(Type.INT, ageCol.getType());
@@ -148,15 +148,15 @@ public class MetadataTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        Table table = this.schema.getTable("exampleMetadata");
+        Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id as TheId").execute();
         List<Column> metadata = rows.getColumns();
         assertEquals(1, metadata.size());
         Column idCol = metadata.get(0);
 
         assertEquals(this.schema.getName(), idCol.getSchemaName());
-        assertEquals("exampleMetadata", idCol.getTableName());
-        assertEquals("exampleMetadata", idCol.getTableLabel());
+        assertEquals("example_metadata", idCol.getTableName());
+        assertEquals("example_metadata", idCol.getTableLabel());
         assertEquals("_id", idCol.getColumnName());
         assertEquals("TheId", idCol.getColumnLabel());
         assertEquals(Type.STRING, idCol.getType());
@@ -178,7 +178,7 @@ public class MetadataTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        Table table = this.schema.getTable("exampleMetadata");
+        Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id + 1 as TheId").execute();
         List<Column> metadata = rows.getColumns();
         assertEquals(1, metadata.size());
@@ -208,7 +208,7 @@ public class MetadataTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String collName = "docAsTableIsJSON";
+        String collName = "doc_as_table";
         dropCollection(collName);
         this.schema.createCollection(collName);
         Table table = this.schema.getCollectionAsTable(collName);
@@ -260,9 +260,9 @@ public class MetadataTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String tableName = "exhaustTypes";
+        String tableName = "exhaust_types";
         sqlUpdate("drop table if exists " + tableName);
-        sqlUpdate("create table exhaustTypes (a bit, b char(20) not null, c int, d tinyint unsigned primary key, e bigint, "
+        sqlUpdate("create table exhaust_types (a bit, b char(20) not null, c int, d tinyint unsigned primary key, e bigint, "
                 + "f double, g decimal(20, 3), h time, i datetime, j timestamp, k date, l set('1','2'), m enum('1','2'), unique (a), key(b, c))");
         Table table = this.schema.getTable(tableName);
         RowResult rows = table.select("a,b,c,d,e,f,g,h,i,j,k,l,m").execute();

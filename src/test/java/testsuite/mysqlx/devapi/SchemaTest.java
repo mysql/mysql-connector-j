@@ -88,7 +88,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String collName = "testListCollections";
+        String collName = "test_list_collections";
         dropCollection(collName);
         Collection coll = this.schema.createCollection(collName);
         List<Collection> colls = this.schema.getCollections();
