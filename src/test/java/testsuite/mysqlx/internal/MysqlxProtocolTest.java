@@ -74,9 +74,15 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
     @After
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForMySQLxTests) {
-            this.protocol.sendSessionClose();
-            this.protocol.readOk();
-            this.protocol.close();
+            try {
+                this.protocol.sendSessionClose();
+                this.protocol.readOk();
+            } catch (Exception ex) {
+                System.err.println("Exception during destroy");
+                ex.printStackTrace();
+            } finally {
+                this.protocol.close();
+            }
         }
     }
 
