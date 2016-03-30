@@ -222,7 +222,8 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
         tests.put("cos(1) as a_double", (metadata, row) -> {
             assertEquals("a_double", metadata.get(0).getColumnLabel());
             assertEquals(MysqlaConstants.FIELD_TYPE_DOUBLE, metadata.get(0).getMysqlTypeId());
-            assertEquals("0.5403023058681398", row.getValue(0, new StringValueFactory()));
+            // value is 0.5403023058681398. Test most of it
+            assertTrue(row.getValue(0, new StringValueFactory()).startsWith("0.540302305868139"));
         });
         tests.put("2142 as an_int", (metadata, row) -> {
             assertEquals("an_int", metadata.get(0).getColumnLabel());
