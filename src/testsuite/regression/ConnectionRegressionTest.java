@@ -8855,4 +8855,578 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup2).contains(currentHost));
         testConn.close();
     }
+
+    /**
+     * Tests fix for Bug#22848249 - LOADBALANCECONNECTIONGROUPMANAGER.REMOVEHOST() NOT WORKING AS EXPECTED.
+     * 
+     * Tests a sequence of additions and removals of hosts from a load-balanced connection group.
+     */
+    public void testBug22848249() throws Exception {
+        /*
+         * Remove and add hosts to the connection group, other than the one from the active underlying connection.
+         * Changes affecting active l/b connections.
+         */
+        subTestBug22848249A();
+
+        /*
+         * Remove and add hosts to the connection group, including the host from the active underlying connection.
+         * Changes affecting active l/b connections.
+         */
+        subTestBug22848249B();
+
+        /*
+         * Remove hosts from the connection group with changes not affecting active l/b connections.
+         */
+        subTestBug22848249C();
+        /*
+         * Add hosts to the connection group with changes not affecting active l/b connections.
+         */
+        subTestBug22848249D();
+    }
+
+    /*
+     * Tests removing and adding hosts (excluding the host from the underlying physical connection) to the connection group with the option to propagate
+     * changes to all active load-balanced connections.
+     */
+    private void subTestBug22848249A() throws Exception {
+        final String defaultHost = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        final String defaultPort = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        final String host1 = "first";
+        final String host2 = "second";
+        final String host3 = "third";
+        final String host4 = "fourth";
+        final String hostPort1 = host1 + ":" + defaultPort;
+        final String hostPort2 = host2 + ":" + defaultPort;
+        final String hostPort3 = host3 + ":" + defaultPort;
+        final String hostPort4 = host4 + ":" + defaultPort;
+        final String lbConnGroup = "Bug22848249A";
+
+        System.out.println("testBug22848249A:");
+        System.out.println("********************************************************************************");
+
+        Properties props = new Properties();
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
+        testConn.setAutoCommit(false);
+
+        String connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertEquals(3, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+
+        /*
+         * The l/b connection won't be able to use removed unused hosts.
+         */
+
+        // Remove a non-connected host: host2 or host3.
+        String removedHost = connectedHost.equals(host3) ? host2 : host3;
+        String removedHostPort = removedHost + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort, true);
+        assertEquals(connectedHost, ((com.mysql.jdbc.MySQLConnection) testConn).getHost()); // Still connected to the initital host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort.equals(hostPort2)); // Only one can be true.
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort.equals(hostPort3));
+
+        // Force some transaction boundaries while checking that the removed host is never used.
+        int connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(removedHost));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t1. Swapped connections " + connectionSwaps + " times out of 100, without hitting the removed host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertFalse(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(removedHost)));
+
+        /*
+         * The l/b connection will be able to use a host added back to the connection group.
+         */
+
+        // Add back the previously removed host.
+        ConnectionGroupManager.addHost(lbConnGroup, removedHostPort, true);
+        assertEquals(3, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+
+        // Force transaction boundaries until the new host is selected or a limit number of attempts is reached.
+        String newHost = removedHost;
+        connectionSwaps = 0;
+        int attemptsLeft = 100;
+        while (!(connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost()).equals(newHost)) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+            if (--attemptsLeft == 0) {
+                fail("Failed to swap to the newly added host after 100 transaction boundaries and " + connectionSwaps + " connection swaps.");
+            }
+        }
+        System.out.println("\t2. Swapped connections " + connectionSwaps + " times before hitting the new host.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertTrue(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(newHost)));
+
+        /*
+         * The l/b connection will be able to use new hosts added to the connection group.
+         */
+
+        // Add a completely new host.
+        UnreliableSocketFactory.mapHost(host4, defaultHost);
+        ConnectionGroupManager.addHost(lbConnGroup, hostPort4, true);
+        assertEquals(4, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4));
+
+        // Force transaction boundaries until the new host is selected or a limit number of attempts is reached.
+        newHost = host4;
+        connectionSwaps = 0;
+        attemptsLeft = 100;
+        while (!(connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost()).equals(newHost)) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+            if (--attemptsLeft == 0) {
+                fail("Failed to swap to the newly added host after 100 transaction boundaries and " + connectionSwaps + " connection swaps.");
+            }
+        }
+        System.out.println("\t3. Swapped connections " + connectionSwaps + " times before hitting the new host.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertTrue(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(newHost)));
+
+        /*
+         * The l/b connection won't be able to use any number of removed hosts (excluding the current active host).
+         */
+
+        // Remove any two hosts, other than the one used in the active connection.
+        String removedHost1 = connectedHost.equals(host2) ? host1 : host2;
+        String removedHostPort1 = removedHost1 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort1, true);
+        String removedHost2 = connectedHost.equals(host4) ? host3 : host4;
+        String removedHostPort2 = removedHost2 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort2, true);
+        assertEquals(connectedHost, ((com.mysql.jdbc.MySQLConnection) testConn).getHost()); // Still connected to the same host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1) ^ removedHostPort1.equals(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort1.equals(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort2.equals(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4) ^ removedHostPort2.equals(hostPort4));
+
+        // Force some transaction boundaries while checking that the removed hosts are never used.
+        connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(removedHost1));
+            assertFalse(newConnectedHost.equals(removedHost2));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t4. Swapped connections " + connectionSwaps + " times out of 100, without hitting the removed host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+    }
+
+    /*
+     * Tests removing and adding hosts (including the host from the underlying physical connection) to the connection group with the option to propagate
+     * changes to all active load-balanced connections.
+     */
+    private void subTestBug22848249B() throws Exception {
+        final String defaultHost = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        final String defaultPort = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        final String host1 = "first";
+        final String host2 = "second";
+        final String host3 = "third";
+        final String host4 = "fourth";
+        final String hostPort1 = host1 + ":" + defaultPort;
+        final String hostPort2 = host2 + ":" + defaultPort;
+        final String hostPort3 = host3 + ":" + defaultPort;
+        final String hostPort4 = host4 + ":" + defaultPort;
+        final String lbConnGroup = "Bug22848249B";
+
+        System.out.println("testBug22848249B:");
+        System.out.println("********************************************************************************");
+
+        Properties props = new Properties();
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
+        testConn.setAutoCommit(false);
+
+        String connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertEquals(3, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+
+        /*
+         * The l/b connection won't be able to use removed hosts.
+         * Undelying connection is invalidated after removing the host currently being used.
+         */
+
+        // Remove the connected host.
+        String removedHost = connectedHost;
+        String removedHostPort = removedHost + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort, true);
+        assertFalse(((com.mysql.jdbc.MySQLConnection) testConn).getHost().equals(connectedHost)); // No longer connected to the removed host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1) ^ removedHostPort.equals(hostPort1)); // Only one can be true.
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort.equals(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort.equals(hostPort3));
+
+        // Force some transaction boundaries while checking that the removed host is never used again.
+        UnreliableSocketFactory.flushConnectionAttempts();
+        int connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(removedHost));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t1. Swapped connections " + connectionSwaps + " times out of 100, without hitting the removed host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertFalse(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(removedHost)));
+
+        /*
+         * The l/b connection will be able to use a host added back to the connection group.
+         */
+
+        // Add back the previously removed host.
+        ConnectionGroupManager.addHost(lbConnGroup, removedHostPort, true);
+        assertEquals(3, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+
+        // Force transaction boundaries until the new host is selected or a limit number of attempts is reached.
+        String newHost = removedHost;
+        connectionSwaps = 0;
+        int attemptsLeft = 100;
+        while (!(connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost()).equals(newHost)) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+            if (--attemptsLeft == 0) {
+                fail("Failed to swap to the newly added host after 100 transaction boundaries and " + connectionSwaps + " connection swaps.");
+            }
+        }
+        System.out.println("\t2. Swapped connections " + connectionSwaps + " times before hitting the new host.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertTrue(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(newHost)));
+
+        /*
+         * The l/b connection will be able to use new hosts added to the connection group.
+         */
+
+        // Add a completely new host.
+        UnreliableSocketFactory.mapHost(host4, defaultHost);
+        ConnectionGroupManager.addHost(lbConnGroup, hostPort4, true);
+        assertEquals(4, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4));
+
+        // Force transaction boundaries until the new host is selected or a limit number of attempts is reached.
+        newHost = host4;
+        connectionSwaps = 0;
+        attemptsLeft = 100;
+        while (!(connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost()).equals(newHost)) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+            if (--attemptsLeft == 0) {
+                fail("Failed to swap to the newly added host after 100 transaction boundaries and " + connectionSwaps + " connection swaps.");
+            }
+        }
+        System.out.println("\t3. Swapped connections " + connectionSwaps + " times before hitting the new host.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertTrue(UnreliableSocketFactory.getHostsFromAllConnections().contains(UnreliableSocketFactory.getHostConnectedStatus(newHost)));
+
+        /*
+         * The l/b connection won't be able to use any number of removed hosts (including the current active host).
+         * Undelying connection is invalidated after removing the host currently being used.
+         */
+
+        // Remove two hosts, one of them is from the active connection.
+        String removedHost1 = connectedHost.equals(host1) ? host1 : host2;
+        String removedHostPort1 = removedHost1 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort1, true);
+        String removedHost2 = connectedHost.equals(host3) ? host3 : host4;
+        String removedHostPort2 = removedHost2 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort2, true);
+        assertFalse(((com.mysql.jdbc.MySQLConnection) testConn).getHost().equals(removedHost1)); // Not connected to the first removed host.
+        assertFalse(((com.mysql.jdbc.MySQLConnection) testConn).getHost().equals(removedHost2)); // Not connected to the second removed host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1) ^ removedHostPort1.equals(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort1.equals(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort2.equals(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4) ^ removedHostPort2.equals(hostPort4));
+
+        // Force some transaction boundaries while checking that the removed hosts are never used.
+        connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(removedHost1));
+            assertFalse(newConnectedHost.equals(removedHost2));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t4. Swapped connections " + connectionSwaps + " times out of 100, without hitting the removed host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+    }
+
+    /*
+     * Tests removing hosts from the connection group without affecting current active connections.
+     */
+    private void subTestBug22848249C() throws Exception {
+        final String defaultPort = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        final String host1 = "first";
+        final String host2 = "second";
+        final String host3 = "third";
+        final String host4 = "fourth";
+        final String hostPort1 = host1 + ":" + defaultPort;
+        final String hostPort2 = host2 + ":" + defaultPort;
+        final String hostPort3 = host3 + ":" + defaultPort;
+        final String hostPort4 = host4 + ":" + defaultPort;
+        final String lbConnGroup = "Bug22848249C";
+
+        System.out.println("testBug22848249C:");
+        System.out.println("********************************************************************************");
+
+        /*
+         * Initial connection will be able to use all hosts, even after removed from the connection group.
+         */
+        Properties props = new Properties();
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3, host4 }, props);
+        testConn.setAutoCommit(false);
+
+        String connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertEquals(4, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4));
+
+        // Remove two hosts, one of them is from the active connection.
+        String removedHost1 = connectedHost.equals(host1) ? host1 : host2;
+        String removedHostPort1 = removedHost1 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort1, false);
+        String removedHost2 = connectedHost.equals(host3) ? host3 : host4;
+        String removedHostPort2 = removedHost2 + ":" + defaultPort;
+        ConnectionGroupManager.removeHost(lbConnGroup, removedHostPort2, false);
+        assertEquals(connectedHost, ((com.mysql.jdbc.MySQLConnection) testConn).getHost()); // Still connected to the same host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1) ^ removedHostPort1.equals(hostPort1)); // Only one can be true.
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort1.equals(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort2.equals(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4) ^ removedHostPort2.equals(hostPort4));
+
+        // Force some transaction boundaries and check that all hosts are being used.
+        int connectionSwaps = 0;
+        Set<String> hostsUsed = new HashSet<String>();
+        for (int i = 0; i < 100 && hostsUsed.size() < 4; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                hostsUsed.add(newConnectedHost);
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t1. Swapped connections " + connectionSwaps + " times out of 100 or before using all hosts.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertEquals(4, hostsUsed.size());
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+
+        /*
+         * New connection wont be able to use the previously removed hosts.
+         */
+        testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3, host4 }, props);
+        testConn.setAutoCommit(false);
+
+        connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertFalse(((com.mysql.jdbc.MySQLConnection) testConn).getHost().equals(removedHost1)); // Not connected to the removed host.
+        assertFalse(((com.mysql.jdbc.MySQLConnection) testConn).getHost().equals(removedHost2)); // Not connected to the removed host.
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1) ^ removedHostPort1.equals(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2) ^ removedHostPort1.equals(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3) ^ removedHostPort2.equals(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4) ^ removedHostPort2.equals(hostPort4));
+
+        // Force some transaction boundaries while checking that the removed hosts are never used.
+        connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(removedHost1));
+            assertFalse(newConnectedHost.equals(removedHost2));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t2. Swapped connections " + connectionSwaps + " times out of 100, without hitting the removed host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+    }
+
+    /*
+     * Tests adding hosts from the connection group without affecting current active connections.
+     */
+    private void subTestBug22848249D() throws Exception {
+        final String defaultHost = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        final String defaultPort = getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+        final String host1 = "first";
+        final String host2 = "second";
+        final String host3 = "third";
+        final String host4 = "fourth";
+        final String hostPort1 = host1 + ":" + defaultPort;
+        final String hostPort2 = host2 + ":" + defaultPort;
+        final String hostPort3 = host3 + ":" + defaultPort;
+        final String hostPort4 = host4 + ":" + defaultPort;
+        final String lbConnGroup = "Bug22848249D";
+
+        System.out.println("testBug22848249D:");
+        System.out.println("********************************************************************************");
+
+        /*
+         * Initial connection will be able to use only the hosts available when it was initialized, even after adding new ones to the connection group.
+         */
+        Properties props = new Properties();
+        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2 }, props);
+        testConn.setAutoCommit(false);
+
+        String connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+
+        // Add two hosts.
+        UnreliableSocketFactory.mapHost(host3, defaultHost);
+        ConnectionGroupManager.addHost(lbConnGroup, hostPort3, false);
+        UnreliableSocketFactory.mapHost(host4, defaultHost);
+        ConnectionGroupManager.addHost(lbConnGroup, hostPort4, false);
+        assertEquals(4, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4));
+
+        // Force some transaction boundaries and check that the new hosts aren't used.
+        int connectionSwaps = 0;
+        for (int i = 0; i < 100; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            assertFalse(newConnectedHost.equals(host3));
+            assertFalse(newConnectedHost.equals(host4));
+            if (!connectedHost.equals(newConnectedHost)) {
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t1. Swapped connections " + connectionSwaps + " times out of 100, without hitting the newly added host(s).");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+
+        /*
+         * New connection will be able to use all hosts.
+         */
+        testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3, host4 }, props);
+        testConn.setAutoCommit(false);
+
+        connectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+        assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(connectedHost));
+
+        assertEquals(4, ConnectionGroupManager.getActiveHostCount(lbConnGroup));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort1));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort2));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort3));
+        assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup).contains(hostPort4));
+
+        // Force some transaction boundaries while checking that the removed hosts are never used.
+        connectionSwaps = 0;
+        Set<String> hostsUsed = new HashSet<String>();
+        for (int i = 0; i < 100 && hostsUsed.size() < 4; i++) {
+            testConn.rollback();
+            String newConnectedHost = ((com.mysql.jdbc.MySQLConnection) testConn).getHost();
+            if (!connectedHost.equals(newConnectedHost)) {
+                hostsUsed.add(newConnectedHost);
+                connectedHost = newConnectedHost;
+                connectionSwaps++;
+            }
+        }
+        System.out.println("\t2. Swapped connections " + connectionSwaps + " times out of 100 or before using all hosts.");
+        assertTrue(connectionSwaps > 0); // Non-deterministic, but something must be wrong if there are no swaps after 100 transaction boundaries.
+        assertEquals(4, hostsUsed.size());
+
+        // Make sure the connection is working fine.
+        this.rs = testConn.createStatement().executeQuery("SELECT 'testBug22848249'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug22848249", this.rs.getString(1));
+        testConn.close();
+    }
 }

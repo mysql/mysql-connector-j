@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +62,6 @@ public class ConnectionGroup {
         this.activeConnections++;
 
         return currentConnectionId;
-
     }
 
     /*
@@ -126,11 +124,8 @@ public class ConnectionGroup {
         synchronized (this.connectionProxies) {
             proxyMap.putAll(this.connectionProxies);
         }
-        Iterator<Map.Entry<Long, LoadBalancedConnectionProxy>> i = proxyMap.entrySet().iterator();
-        while (i.hasNext()) {
-            LoadBalancedConnectionProxy proxy = i.next().getValue();
+        for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             result += proxy.getActivePhysicalConnectionCount();
-
         }
         return result;
     }
@@ -146,11 +141,8 @@ public class ConnectionGroup {
         synchronized (this.connectionProxies) {
             proxyMap.putAll(this.connectionProxies);
         }
-        Iterator<Map.Entry<Long, LoadBalancedConnectionProxy>> i = proxyMap.entrySet().iterator();
-        while (i.hasNext()) {
-            LoadBalancedConnectionProxy proxy = i.next().getValue();
+        for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             allConnections += proxy.getTotalPhysicalConnectionCount();
-
         }
         return allConnections;
     }
@@ -167,11 +159,8 @@ public class ConnectionGroup {
         synchronized (this.connectionProxies) {
             proxyMap.putAll(this.connectionProxies);
         }
-        Iterator<Map.Entry<Long, LoadBalancedConnectionProxy>> i = proxyMap.entrySet().iterator();
-        while (i.hasNext()) {
-            LoadBalancedConnectionProxy proxy = i.next().getValue();
+        for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             transactions += proxy.getTransactionCount();
-
         }
         return transactions;
     }
@@ -181,67 +170,95 @@ public class ConnectionGroup {
         this.connectionProxies.remove(Long.valueOf(proxy.getConnectionGroupProxyID()));
         this.closedProxyTotalPhysicalConnections += proxy.getTotalPhysicalConnectionCount();
         this.closedProxyTotalTransactions += proxy.getTransactionCount();
-
     }
 
-    public void removeHost(String host) throws SQLException {
-        removeHost(host, false);
-    }
-
-    public void removeHost(String host, boolean killExistingConnections) throws SQLException {
-        this.removeHost(host, killExistingConnections, true);
-
-    }
-
-    /*
-     * (non-Javadoc)
+    /**
+     * Remove the given host (host:port pair) from this Connection Group.
      * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#removeHost(java.lang.String, boolean, boolean)
+     * @param hostPortPair
+     *            The host:port pair to remove.
+     * @throws SQLException
      */
-    public synchronized void removeHost(String host, boolean killExistingConnections, boolean waitForGracefulFailover) throws SQLException {
+    public void removeHost(String hostPortPair) throws SQLException {
+        removeHost(hostPortPair, false);
+    }
+
+    /**
+     * Remove the given host (host:port pair) from this Connection Group.
+     * 
+     * @param hostPortPair
+     *            The host:port pair to remove.
+     * @param removeExisting
+     *            Whether affects existing load-balanced connections or only new ones.
+     * @throws SQLException
+     */
+    public void removeHost(String hostPortPair, boolean removeExisting) throws SQLException {
+        this.removeHost(hostPortPair, removeExisting, true);
+    }
+
+    /**
+     * Remove the given host (host:port pair) from this Connection Group and, consequently, from all the load-balanced connections it holds.
+     * 
+     * @param hostPortPair
+     *            The host:port pair to remove.
+     * @param removeExisting
+     *            Whether affects existing load-balanced connections or only new ones.
+     * @param waitForGracefulFailover
+     *            If true instructs the load-balanced connections to fail-over the underlying active connection before removing this host, otherwise remove
+     *            immediately.
+     * @throws SQLException
+     */
+    public synchronized void removeHost(String hostPortPair, boolean removeExisting, boolean waitForGracefulFailover) throws SQLException {
         if (this.activeHosts == 1) {
             throw SQLError.createSQLException("Cannot remove host, only one configured host active.", null);
         }
 
-        if (this.hostList.remove(host)) {
+        if (this.hostList.remove(hostPortPair)) {
             this.activeHosts--;
         } else {
-            throw SQLError.createSQLException("Host is not configured: " + host, null);
+            throw SQLError.createSQLException("Host is not configured: " + hostPortPair, null);
         }
 
-        if (killExistingConnections) {
+        if (removeExisting) {
             // make a local copy to keep synchronization overhead to minimum
             Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<Long, LoadBalancedConnectionProxy>();
             synchronized (this.connectionProxies) {
                 proxyMap.putAll(this.connectionProxies);
             }
 
-            Iterator<Map.Entry<Long, LoadBalancedConnectionProxy>> i = proxyMap.entrySet().iterator();
-            while (i.hasNext()) {
-                LoadBalancedConnectionProxy proxy = i.next().getValue();
+            for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
                 if (waitForGracefulFailover) {
-                    proxy.removeHostWhenNotInUse(host);
+                    proxy.removeHostWhenNotInUse(hostPortPair);
                 } else {
-                    proxy.removeHost(host);
+                    proxy.removeHost(hostPortPair);
                 }
             }
         }
-        this.closedHosts.add(host);
+        this.closedHosts.add(hostPortPair);
     }
 
-    public void addHost(String host) {
-        addHost(host, false);
-    }
-
-    /*
-     * (non-Javadoc)
+    /**
+     * Add the given host (host:port pair) to this Connection Group.
      * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#addHost(java.lang.String, boolean)
+     * @param hostPortPair
+     *            The host:port pair to add.
+     * @throws SQLException
      */
-    public void addHost(String host, boolean forExisting) {
+    public void addHost(String hostPortPair) {
+        addHost(hostPortPair, false);
+    }
 
+    /**
+     * Add the given host (host:port pair) to this Connection Group and, consequently, to all the load-balanced connections it holds.
+     * 
+     * @param hostPortPair
+     *            The host:port pair to add.
+     * @param forExisting
+     *            Whether affects existing load-balanced connections or only new ones.
+     */
+    public void addHost(String hostPortPair, boolean forExisting) {
         synchronized (this) {
-            if (this.hostList.add(host)) {
+            if (this.hostList.add(hostPortPair)) {
                 this.activeHosts++;
             }
         }
@@ -256,12 +273,8 @@ public class ConnectionGroup {
             proxyMap.putAll(this.connectionProxies);
         }
 
-        Iterator<Map.Entry<Long, LoadBalancedConnectionProxy>> i = proxyMap.entrySet().iterator();
-        while (i.hasNext()) {
-            LoadBalancedConnectionProxy proxy = i.next().getValue();
-            proxy.addHost(host);
+        for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
+            proxy.addHost(hostPortPair);
         }
-
     }
-
 }

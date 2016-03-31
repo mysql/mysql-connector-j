@@ -90,6 +90,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return this.host;
     }
 
+    public String getHostPortPair() {
+        return this.hostPortPair != null ? this.hostPortPair : this.host + ":" + this.port;
+    }
+
     private MySQLConnection proxy = null;
     private InvocationHandler realProxy = null;
 

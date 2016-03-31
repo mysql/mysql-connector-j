@@ -2860,6 +2860,10 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
+    public String getHostPortPair() {
+        return null;
+    }
+
     public long getId() {
         return -1;
     }

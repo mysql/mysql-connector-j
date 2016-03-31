@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -78,15 +78,14 @@ public class ConnectionGroupManager {
 
     }
 
-    public static void addHost(String group, String host, boolean forExisting) {
+    public static void addHost(String group, String hostPortPair, boolean forExisting) {
         Collection<ConnectionGroup> s = getGroupsMatching(group);
         for (ConnectionGroup cg : s) {
-            cg.addHost(host, forExisting);
+            cg.addHost(hostPortPair, forExisting);
         }
     }
 
     public static int getActiveHostCount(String group) {
-
         Set<String> active = new HashSet<String>();
         Collection<ConnectionGroup> s = getGroupsMatching(group);
         for (ConnectionGroup cg : s) {
@@ -150,8 +149,8 @@ public class ConnectionGroupManager {
         return count;
     }
 
-    public static void removeHost(String group, String host) throws SQLException {
-        removeHost(group, host, false);
+    public static void removeHost(String group, String hostPortPair) throws SQLException {
+        removeHost(group, hostPortPair, false);
     }
 
     public static void removeHost(String group, String host, boolean removeExisting) throws SQLException {
@@ -203,7 +202,5 @@ public class ConnectionGroupManager {
             sep = ",";
         }
         return sb.toString();
-
     }
-
 }

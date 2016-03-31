@@ -69,7 +69,6 @@ public class StatementImpl implements Statement {
     class CancelTask extends TimerTask {
 
         long connectionId = 0;
-        String origHost = "";
         SQLException caughtWhileCancelling = null;
         StatementImpl toCancel;
         Properties origConnProps = null;
@@ -77,7 +76,6 @@ public class StatementImpl implements Statement {
 
         CancelTask(StatementImpl cancellee) throws SQLException {
             this.connectionId = cancellee.connectionId;
-            this.origHost = StatementImpl.this.connection.getHost();
             this.toCancel = cancellee;
             this.origConnProps = new Properties();
 

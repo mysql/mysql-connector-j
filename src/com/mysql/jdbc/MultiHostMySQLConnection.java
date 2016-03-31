@@ -1725,6 +1725,10 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         return getActiveMySQLConnection().getHost();
     }
 
+    public String getHostPortPair() {
+        return getActiveMySQLConnection().getHostPortPair();
+    }
+
     public long getId() {
         return getActiveMySQLConnection().getId();
     }

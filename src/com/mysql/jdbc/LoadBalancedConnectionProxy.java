@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     protected Map<String, ConnectionImpl> liveConnections;
     private Map<String, Integer> hostsToListIndexMap;
     private Map<ConnectionImpl, String> connectionsToHostsMap;
-    private long activePhysicalConnections = 0;
     private long totalPhysicalConnections = 0;
     private long[] responseTimes;
 
@@ -68,7 +68,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
     private int globalBlacklistTimeout = 0;
     private static Map<String, Long> globalBlacklist = new HashMap<String, Long>();
-    private String hostToRemove = null;
+    // host:port pairs to be considered as removed (definitely blacklisted) from the original hosts list.
+    private Set<String> hostsToRemove = new HashSet<String>();
 
     private boolean inTransaction = false;
     private long transactionStartTime = 0;
@@ -359,7 +360,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         this.liveConnections.put(hostPortSpec, conn);
         this.connectionsToHostsMap.put(conn, hostPortSpec);
 
-        this.activePhysicalConnections++;
         this.totalPhysicalConnections++;
 
         return conn;
@@ -372,7 +372,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         // close all underlying connections
         for (MySQLConnection c : this.liveConnections.values()) {
             try {
-                this.activePhysicalConnections--;
                 c.close();
             } catch (SQLException e) {
             }
@@ -405,7 +404,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         // abort all underlying connections
         for (MySQLConnection c : this.liveConnections.values()) {
             try {
-                this.activePhysicalConnections--;
                 c.abortInternal();
             } catch (SQLException e) {
             }
@@ -430,7 +428,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         // close all underlying connections
         for (MySQLConnection c : this.liveConnections.values()) {
             try {
-                this.activePhysicalConnections--;
                 c.abort(executor);
             } catch (SQLException e) {
             }
@@ -538,7 +535,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                 }
                 foundHost = true;
             } catch (SQLException e) {
-                this.activePhysicalConnections--;
                 // give up if it is the current connection, otherwise NPE faking resultset later.
                 if (host.equals(this.connectionsToHostsMap.get(this.currentConnection))) {
                     // clean up underlying connections, since connection pool won't do it
@@ -604,7 +600,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      */
     public void addToGlobalBlacklist(String host) {
         addToGlobalBlacklist(host, System.currentTimeMillis() + this.globalBlacklistTimeout);
-
     }
 
     /**
@@ -615,22 +610,21 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * Returns a local hosts blacklist, or a blacklist with a single host to be removed, while cleaning up expired records from the global blacklist.
+     * Returns a local hosts blacklist, while cleaning up expired records from the global blacklist, or a blacklist with the hosts to be removed.
      * 
      * @return
      *         A local hosts blacklist.
      */
     public synchronized Map<String, Long> getGlobalBlacklist() {
         if (!isGlobalBlacklistEnabled()) {
-            String localHostToRemove = this.hostToRemove;
-
-            if (this.hostToRemove != null) {
-                HashMap<String, Long> fakedBlacklist = new HashMap<String, Long>();
-                fakedBlacklist.put(localHostToRemove, System.currentTimeMillis() + 5000);
-                return fakedBlacklist;
+            if (this.hostsToRemove.isEmpty()) {
+                return new HashMap<String, Long>(1);
             }
-
-            return new HashMap<String, Long>(1);
+            HashMap<String, Long> fakedBlacklist = new HashMap<String, Long>();
+            for (String h : this.hostsToRemove) {
+                fakedBlacklist.put(h, System.currentTimeMillis() + 5000);
+            }
+            return fakedBlacklist;
         }
 
         // Make a local copy of the blacklist
@@ -670,24 +664,24 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     /**
      * Removes a host from the host list, allowing it some time to be released gracefully if needed.
      * 
-     * @param host
+     * @param hostPortPair
      *            The host to be removed.
      * @throws SQLException
      */
-    public void removeHostWhenNotInUse(String host) throws SQLException {
+    public void removeHostWhenNotInUse(String hostPortPair) throws SQLException {
         int timeBetweenChecks = 1000;
         long timeBeforeHardFail = 15000;
 
         synchronized (this) {
-            addToGlobalBlacklist(host, System.currentTimeMillis() + timeBeforeHardFail + 1000);
+            addToGlobalBlacklist(hostPortPair, System.currentTimeMillis() + timeBeforeHardFail + 1000);
 
             long cur = System.currentTimeMillis();
 
             while (System.currentTimeMillis() < cur + timeBeforeHardFail) {
-                this.hostToRemove = host;
+                this.hostsToRemove.add(hostPortPair);
 
-                if (!host.equals(this.currentConnection.getHost())) {
-                    removeHost(host);
+                if (!hostPortPair.equals(this.currentConnection.getHostPortPair())) {
+                    removeHost(hostPortPair);
                     return;
                 }
 
@@ -699,54 +693,55 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             }
         }
 
-        removeHost(host);
+        removeHost(hostPortPair);
     }
 
     /**
      * Removes a host from the host list.
      * 
-     * @param host
+     * @param hostPortPair
      *            The host to be removed.
      * @throws SQLException
      */
-    public synchronized void removeHost(String host) throws SQLException {
+    public synchronized void removeHost(String hostPortPair) throws SQLException {
         if (this.connectionGroup != null) {
-            if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)) {
+            if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(hostPortPair)) {
                 throw SQLError.createSQLException("Cannot remove only configured host.", null);
             }
         }
 
-        this.hostToRemove = host;
+        this.hostsToRemove.add(hostPortPair);
 
-        if (host.equals(this.currentConnection.getHost())) {
-            closeAllConnections();
-        } else {
-            this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
-            if (this.hostsToListIndexMap.remove(host) != null) {
-                long[] newResponseTimes = new long[this.responseTimes.length - 1];
-                int newIdx = 0;
-                for (String h : this.hostList) {
-                    if (!host.equals(h)) {
-                        Integer idx = this.hostsToListIndexMap.get(h);
-                        if (idx != null && idx < this.responseTimes.length) {
-                            newResponseTimes[newIdx] = this.responseTimes[idx];
-                        }
-                        this.hostsToListIndexMap.put(h, newIdx++);
+        this.connectionsToHostsMap.remove(this.liveConnections.remove(hostPortPair));
+        if (this.hostsToListIndexMap.remove(hostPortPair) != null) {
+            long[] newResponseTimes = new long[this.responseTimes.length - 1];
+            int newIdx = 0;
+            for (String h : this.hostList) {
+                if (!this.hostsToRemove.contains(h)) {
+                    Integer idx = this.hostsToListIndexMap.get(h);
+                    if (idx != null && idx < this.responseTimes.length) {
+                        newResponseTimes[newIdx] = this.responseTimes[idx];
                     }
+                    this.hostsToListIndexMap.put(h, newIdx++);
                 }
-                this.responseTimes = newResponseTimes;
             }
+            this.responseTimes = newResponseTimes;
+        }
+
+        if (hostPortPair.equals(this.currentConnection.getHostPortPair())) {
+            invalidateConnection(this.currentConnection);
+            pickNewConnection();
         }
     }
 
     /**
      * Adds a host to the hosts list.
      * 
-     * @param host
+     * @param hostPortPair
      *            The host to be added.
      */
-    public synchronized boolean addHost(String host) {
-        if (this.hostsToListIndexMap.containsKey(host)) {
+    public synchronized boolean addHost(String hostPortPair) {
+        if (this.hostsToListIndexMap.containsKey(hostPortPair)) {
             return false;
         }
 
@@ -754,10 +749,11 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         System.arraycopy(this.responseTimes, 0, newResponseTimes, 0, this.responseTimes.length);
 
         this.responseTimes = newResponseTimes;
-        if (!this.hostList.contains(host)) {
-            this.hostList.add(host);
+        if (!this.hostList.contains(hostPortPair)) {
+            this.hostList.add(hostPortPair);
         }
-        this.hostsToListIndexMap.put(host, this.responseTimes.length - 1);
+        this.hostsToListIndexMap.put(hostPortPair, this.responseTimes.length - 1);
+        this.hostsToRemove.remove(hostPortPair);
 
         return true;
     }
@@ -771,7 +767,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     public synchronized long getActivePhysicalConnectionCount() {
-        return this.activePhysicalConnections;
+        return this.liveConnections.size();
     }
 
     public synchronized long getTotalPhysicalConnectionCount() {
