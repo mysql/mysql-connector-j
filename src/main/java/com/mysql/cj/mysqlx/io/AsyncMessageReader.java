@@ -369,6 +369,10 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             this.future.completeExceptionally(ex);
         }
 
+        public void closed() {
+            this.future.completeExceptionally(new CJCommunicationsException("Socket closed"));
+        }
+
         public T read() {
             try {
                 return this.future.thenApply(f -> f.apply((msgClass, msg) -> {

@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 6.0.3
 
+  - Fix for Bug#22972057, X protocol CLIENT HANGS AFTER CONNECTION FAILURE
+
   - Fix for Bug#23044312, NullPointerException in X protocol AsyncMessageReader due to race condition
 
   - Returned support for MySQL 5.5 and 5.6.
