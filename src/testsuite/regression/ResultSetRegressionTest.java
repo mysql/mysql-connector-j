@@ -3374,7 +3374,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("testBug26173", "(fkey int, fdate date, fprice decimal(15, 2), fdiscount decimal(5,3))");
+        createTable("testBug26173", "(fkey int, fdate date, fprice decimal(15, 2), fdiscount decimal(5,3))", "InnoDB");
         this.stmt.executeUpdate("insert into testBug26173 values (1, '2007-02-23', 99.9, 0.02)");
 
         Connection fetchConn = null;
