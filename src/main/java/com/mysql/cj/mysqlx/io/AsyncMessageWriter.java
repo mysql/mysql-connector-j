@@ -120,7 +120,9 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
         // wait on the future to return
         try {
             f.get();
-        } catch (InterruptedException | ExecutionException ex) {
+        } catch (ExecutionException ex) {
+            throw new CJCommunicationsException("Failed to write message", ex.getCause());
+        } catch (InterruptedException ex) {
             throw new CJCommunicationsException("Failed to write message", ex);
         }
     }

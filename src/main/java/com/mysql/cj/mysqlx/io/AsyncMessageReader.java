@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -76,7 +76,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /** Dynamic buffer to store the message body. */
     private ByteBuffer messageBuf;
     /** The channel that we operate on. */
-    private AsynchronousSocketChannel channel;
+    private AsynchronousByteChannel channel;
     /**
      * The current <code>MessageListener</code>. This is set to <code>null</code> immediately following the listener's indicator that it is done reading
      * messages. It is set again when the next message is read and the next <code>MessageListener</code> is taken from the queue.
@@ -97,7 +97,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
     private ReadingState state;
 
-    public AsyncMessageReader(AsynchronousSocketChannel channel) {
+    public AsyncMessageReader(AsynchronousByteChannel channel) {
         this.channel = channel;
     }
 
@@ -140,7 +140,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 try {
                     this.currentMessageListener = this.messageListenerQueue.take();
                 } catch (InterruptedException ex) {
-                    // TODO: how to handle interrupts?
+                    throw new CJCommunicationsException(ex);
                 }
             } else {
                 this.currentMessageListener = this.messageListenerQueue.poll();
@@ -296,7 +296,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 } catch (Exception ex) {
                 }
             });
-            // if case we have a getNextMessageClass() request pending
+            // in case we have a getNextMessageClass() request pending
             synchronized (this.pendingMsgMonitor) {
                 this.pendingMsgClass = new CompletableFuture<>();
                 this.pendingMsgClass.completeExceptionally(t);
@@ -350,7 +350,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     /**
-     * Sychronously read a message and propagate any errors to the current thread.
+     * Synchronously read a single message and propagate any errors to the current thread.
      */
     private static final class SyncReader<T> implements MessageListener {
         private CompletableFuture<Function<BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, T>, T>> future = new CompletableFuture<>();
@@ -388,7 +388,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                     // wrap the other thread's exception and include this thread's context
                     throw new MysqlxError((MysqlxError) ex.getCause());
                 }
-                throw new CJCommunicationsException(ex);
+                throw new CJCommunicationsException(ex.getCause().getMessage(), ex.getCause());
             } catch (InterruptedException ex) {
                 throw new CJCommunicationsException(ex);
             }

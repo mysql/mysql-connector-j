@@ -54,7 +54,12 @@ public class CollectionTest extends DevApiBaseTestCase {
     @After
     public void teardownCollectionTest() {
         if (this.isSetForMySQLxTests) {
-            dropCollection(this.collectionName);
+            try {
+                dropCollection(this.collectionName);
+            } catch (Exception ex) {
+                System.err.println("Error during cleanup teardownCollectionTest()");
+                ex.printStackTrace();
+            }
             destroyTestSession();
         }
     }

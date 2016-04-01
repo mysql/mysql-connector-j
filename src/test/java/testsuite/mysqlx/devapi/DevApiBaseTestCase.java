@@ -53,7 +53,12 @@ public class DevApiBaseTestCase extends InternalMysqlxBaseTestCase {
 
     public void destroyTestSession() {
         if (this.session != null) {
-            this.session.close();
+            try {
+                this.session.close();
+            } catch (Exception ex) {
+                System.err.println("Error during cleanup destroyTestSession()");
+                ex.printStackTrace();
+            }
         }
         this.session = null;
     }
