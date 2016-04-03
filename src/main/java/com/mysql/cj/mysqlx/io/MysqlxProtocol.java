@@ -682,6 +682,10 @@ public class MysqlxProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildDropCollectionIndex(schemaName, collectionName, indexName));
     }
 
+    public boolean isOpen() {
+        return this.managedResource != null;
+    }
+
     public void close() throws IOException {
         if (this.managedResource == null) {
             throw new ConnectionIsClosedException();

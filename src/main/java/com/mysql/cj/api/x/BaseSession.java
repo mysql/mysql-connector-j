@@ -68,6 +68,11 @@ public interface BaseSession {
     String getUri();
 
     /**
+     * Is this session open?
+     */
+    boolean isOpen();
+
+    /**
      * Close this session.
      */
     void close();

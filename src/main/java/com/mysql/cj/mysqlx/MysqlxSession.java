@@ -407,6 +407,10 @@ public class MysqlxSession implements Session {
         return this.protocol.readStatementExecuteOk();
     }
 
+    public boolean isOpen() {
+        return this.protocol.isOpen();
+    }
+
     public void close() {
         try {
             newCommand();

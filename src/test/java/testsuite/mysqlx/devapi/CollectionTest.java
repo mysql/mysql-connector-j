@@ -53,7 +53,7 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @After
     public void teardownCollectionTest() {
-        if (this.isSetForMySQLxTests) {
+        if (this.isSetForMySQLxTests && this.session.isOpen()) {
             try {
                 dropCollection(this.collectionName);
             } catch (Exception ex) {
