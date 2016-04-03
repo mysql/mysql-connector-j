@@ -318,9 +318,15 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         this.currentMessageListener = null;
     }
 
+    /**
+     * Peek into the pending message for it's class/type. This method blocks until a message is available. A message will not become available to peek until
+     * there are no pending message listeners on this reader.
+     *
+     * @return the class of the next message to be delivered
+     */
     public Class<? extends GeneratedMessage> getNextMessageClass() {
-        // need a temporary to let the pending message be cleared before we process it
-        CompletableFuture<Class<? extends GeneratedMessage>> clazzF;
+        Class<? extends GeneratedMessage> msgClass;
+
         synchronized (this.pendingMsgMonitor) {
             while (this.pendingMsgClass == null) {
                 try {
@@ -329,18 +335,22 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                     throw new CJCommunicationsException(ex);
                 }
             }
-            clazzF = this.pendingMsgClass;
-        }
-        try {
-            Class<? extends GeneratedMessage> clazz = clazzF.get();
-            if (Error.class.equals(clazz)) {
-                // this will cause an exception to be thrown
-                read(clazz);
+
+            try {
+                // get the class before releasing the lock (when the future may be overwritten)
+                msgClass = this.pendingMsgClass.get();
+            } catch (ExecutionException ex) {
+                throw new CJCommunicationsException("Failed to peek pending message", ex.getCause());
+            } catch (InterruptedException ex) {
+                throw new CJCommunicationsException(ex);
             }
-            return clazz;
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new CJCommunicationsException(ex);
         }
+
+        if (Error.class.equals(msgClass)) {
+            // this will cause a the error to be read and thrown as an exception. this can't be called under the lock as it will block the message delivery
+            read(msgClass);
+        }
+        return msgClass;
     }
 
     public <T extends GeneratedMessage> T read(final Class<T> expectedClass) {
