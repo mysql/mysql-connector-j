@@ -283,6 +283,12 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 }
                 // it's "done" after sending a closed() or error() signal
                 this.currentMessageListener = null;
+                // in case we have a getNextMessageClass() request pending
+                synchronized (this.pendingMsgMonitor) {
+                    this.pendingMsgClass = new CompletableFuture<>();
+                    this.pendingMsgClass.completeExceptionally(new CJCommunicationsException("Socket closed"));
+                    this.pendingMsgMonitor.notify();
+                }
             }
             return;
         }
@@ -347,6 +353,10 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         Class<? extends GeneratedMessage> msgClass;
 
         synchronized (this.pendingMsgMonitor) {
+            if (!this.channel.isOpen()) {
+                throw new CJCommunicationsException("async closed");
+            }
+
             while (this.pendingMsgClass == null) {
                 try {
                     this.pendingMsgMonitor.wait();

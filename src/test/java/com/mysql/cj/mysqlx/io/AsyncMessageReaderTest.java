@@ -30,6 +30,7 @@ import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.Future;
 
+import com.google.protobuf.GeneratedMessage;
 import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -40,6 +41,9 @@ import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
  */
 public class AsyncMessageReaderTest {
 
+    /**
+     * Base implementation of a mock test channel. Provides facilities to manipulate the channel that the reader is using.
+     */
     static class BaseTestChannel implements AsynchronousByteChannel {
         public boolean open = true;
         CompletionHandler<Integer, ?> readHandler;
@@ -126,6 +130,86 @@ public class AsyncMessageReaderTest {
         } finally {
             // cancel the interrupt thread
             interruptThread.interrupt();
+        }
+    }
+
+    /**
+     * Same bug above exists for the "pending message" feature.
+     *
+     * Bug#22972057
+     */
+    @Test
+    public void testBug22972057_getNextMessageClass() {
+        BaseTestChannel channel = new BaseTestChannel();
+        AsyncMessageReader reader = new AsyncMessageReader(channel);
+        reader.start();
+
+        // close the socket after the read is pending
+        new Thread(() -> {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                    // this is what we get from the socket when it's closed/RST
+                    channel.completeRead(-1, null);
+        }).start();
+
+        // interrupt this test thread if it does happen to hang
+        Thread testThread = Thread.currentThread();
+        Thread interruptThread = new Thread(() -> {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        return;
+                    }
+                    testThread.interrupt();
+                });
+        interruptThread.start();
+
+        try {
+            // block trying to peek the pending message which should fail when the socket is later closed
+            reader.getNextMessageClass();
+        } catch (CJCommunicationsException ex) {
+            assertEquals("Failed to peek pending message", ex.getMessage());
+            assertEquals("Socket closed", ex.getCause().getMessage());
+        } finally {
+            // cancel the interrupt thread
+            interruptThread.interrupt();
+        }
+    }
+
+    /**
+     * Make sure all entry points throw an error when the reader is closed.
+     */
+    @Test
+    public void errorAfterClosed() {
+        BaseTestChannel channel = new BaseTestChannel();
+        AsyncMessageReader reader = new AsyncMessageReader(channel);
+        reader.start();
+
+        channel.close();
+
+        try {
+            reader.getNextMessageClass();
+        } catch (CJCommunicationsException ex) {
+            // expected
+        }
+
+        try {
+            reader.read(Ok.class);
+        } catch (CJCommunicationsException ex) {
+            // expected
+        }
+
+        try {
+            reader.pushMessageListener(new AsyncMessageReader.MessageListener() {
+                    public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
+                        return true;
+                    }
+                });
+        } catch (CJCommunicationsException ex) {
+            // expected
         }
     }
 }
