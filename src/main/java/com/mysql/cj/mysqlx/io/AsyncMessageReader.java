@@ -319,21 +319,20 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     }
 
     public Class<? extends GeneratedMessage> getNextMessageClass() {
-        @SuppressWarnings("unused")
-        CompletableFuture<Class<? extends GeneratedMessage>> clazzF; // TODO why is it not used?
+        // need a temporary to let the pending message be cleared before we process it
+        CompletableFuture<Class<? extends GeneratedMessage>> clazzF;
         synchronized (this.pendingMsgMonitor) {
             while (this.pendingMsgClass == null) {
                 try {
                     this.pendingMsgMonitor.wait();
                 } catch (InterruptedException ex) {
-                    // shouldn't happen
-                    ex.printStackTrace();
+                    throw new CJCommunicationsException(ex);
                 }
             }
             clazzF = this.pendingMsgClass;
         }
         try {
-            Class<? extends GeneratedMessage> clazz = this.pendingMsgClass.get();
+            Class<? extends GeneratedMessage> clazz = clazzF.get();
             if (Error.class.equals(clazz)) {
                 // this will cause an exception to be thrown
                 read(clazz);
