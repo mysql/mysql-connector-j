@@ -221,8 +221,12 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         }
     }
 
+    /**
+     * Dispatch a message to a listener or "peek-er" once it has been read and parsed.
+     */
     private void dispatchMessage(Class<? extends GeneratedMessage> messageClass, GeneratedMessage message) {
         if (messageClass == Frame.class && ((Frame) message).getScope() == Frame.Scope.GLOBAL) {
+            // we don't yet have any global notifications defined.
             throw new RuntimeException("TODO: implement me");
         }
 
@@ -235,8 +239,20 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         }
 
         getMessageListener(true);
-        // this addresses a delicate race. we must be sure that the message delivery and clearing of pending message are atomic under the pending message
-        // lock. otherwise the pending message may still be seen after the message has been delivered but before the pending message is cleared
+        // we must ensure that the message has been delivered and the pending message is cleared atomically under the pending message lock. otherwise the
+        // pending message may still be seen after the message has been delivered but before the pending message is cleared
+        //
+        // t1-nio-thread                                         | t2-user-thread
+        // ------------------------------------------------------+------------------------------------------------------
+        // pendingMsgClass exposed - no current listener         |
+        //                                                       | listener added
+        // getMessageListener(true) returns                      |
+        // dispatchMessage(), in currentMessageListener.apply()  |
+        //                                                       | getNextMessageClass(), pendingMsgClass != null
+        //                                                       | pendingMsgClass returned, but already being delivered
+        //                                                       |    in other thread
+        // pendingMsgClass = null                                |
+        //
         synchronized (this.pendingMsgMonitor) {
             // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
             boolean currentListenerDone = this.currentMessageListener.apply(messageClass, message);
@@ -252,8 +268,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      * Handler for "read completed" event. We check the state and handle the incoming data.
      */
     public void completed(Integer bytesRead, Void v) {
+        // async socket closed
         if (bytesRead < 0) {
-            // async socket closed
             try {
                 this.channel.close();
             } catch (IOException ex) {
@@ -306,6 +322,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         }
     }
 
+    /**
+     * Handler for "read failed" event.
+     */
     public void failed(Throwable exc, Void v) {
         if (getMessageListener(false) != null) {
             if (AsynchronousCloseException.class.equals(exc.getClass())) {
@@ -353,6 +372,14 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         return msgClass;
     }
 
+    /**
+     * Synchronously read a message of the given type.
+     *
+     * @param expectedClass The expected class of the message to read.
+     * @param T the expected class of the message to read.
+     * @return The message of type T
+     * @throws WrongArgumentException if the message is of a different type
+     */
     public <T extends GeneratedMessage> T read(final Class<T> expectedClass) {
         SyncReader<T> r = new SyncReader<>(this, expectedClass);
         return r.read();
@@ -383,6 +410,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             this.future.completeExceptionally(new CJCommunicationsException("Socket closed"));
         }
 
+        /**
+         * Read the message and transform any error to a MysqlxError and throw it as an exception.
+         */
         public T read() {
             try {
                 return this.future.thenApply(f -> f.apply((msgClass, msg) -> {
