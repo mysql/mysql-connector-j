@@ -64,29 +64,14 @@ public class ConnectionGroup {
         return currentConnectionId;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getGroupName()
-     */
     public String getGroupName() {
         return this.groupName;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getInitialHostList()
-     */
     public Collection<String> getInitialHosts() {
         return this.hostList;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getActiveHostCount()
-     */
     public int getActiveHostCount() {
         return this.activeHosts;
     }
@@ -95,29 +80,14 @@ public class ConnectionGroup {
         return this.closedHosts;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalLogicalConnectionCount()
-     */
     public long getTotalLogicalConnectionCount() {
         return this.connections;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getActiveLogicalConnectionCount()
-     */
     public long getActiveLogicalConnectionCount() {
         return this.activeConnections;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getActivePhysicalConnectionCount()
-     */
     public long getActivePhysicalConnectionCount() {
         long result = 0;
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<Long, LoadBalancedConnectionProxy>();
@@ -130,11 +100,6 @@ public class ConnectionGroup {
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalPhysicalConnectionCount()
-     */
     public long getTotalPhysicalConnectionCount() {
         long allConnections = this.closedProxyTotalPhysicalConnections;
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<Long, LoadBalancedConnectionProxy>();
@@ -147,11 +112,6 @@ public class ConnectionGroup {
         return allConnections;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalTransactionCount()
-     */
     public long getTotalTransactionCount() {
         // need to account for closed connection proxies
         long transactions = this.closedProxyTotalTransactions;
