@@ -22,7 +22,7 @@
  */
 
 /**
- * Java classes supporting for MySQL X DevAPI.
+ * Java classes supporting for X DevAPI.
  *
  * @since 6.0
  */

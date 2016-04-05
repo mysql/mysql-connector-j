@@ -89,7 +89,7 @@ import com.mysql.cj.mysqlx.result.MysqlxRow;
 import com.mysql.cj.mysqlx.result.MysqlxRowInputStream;
 
 /**
- * Low-level interface to communications with a MySQL X server.
+ * Low-level interface to communications with X Plugin.
  */
 public class MysqlxProtocol implements Protocol {
     /**
@@ -217,7 +217,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void negotiateSSLConnection(int packLength) {
-        throw new NullPointerException("TODO: SSL is not yet supported in this MySQL X client");
+        throw new NullPointerException("TODO: SSL is not yet supported in this X Protocol client");
     }
 
     public void rejectConnection(String message) {
@@ -237,7 +237,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void changeDatabase(String database) {
-        throw new NullPointerException("TODO: Figure out how this is relevant for MySQL X Session");
+        throw new NullPointerException("TODO: Figure out how this is relevant for X Protocol client Session");
     }
 
     public void changeUser(String user, String password, String database) {
@@ -246,19 +246,19 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public Buffer readPacket() {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. MySQL X doesn't use buffers");
+        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
     }
 
     public Buffer readNextPacket() {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. MySQL X doesn't use buffers");
+        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
     }
 
     public void send(PacketBuffer packet, int packetLen) {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. MySQL X doesn't use buffers");
+        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
     }
 
     public Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis) {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. MySQL X doesn't use buffers or command tags in the same way");
+        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers or command tags in the same way");
     }
 
     public String getPasswordCharacterEncoding() {
@@ -401,7 +401,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     /**
-     * Map a MySQL X type code from `ColumnMetaData.FieldType' to a MySQL type constant. These are the only types that will be present in {@link MysqlxRow}
+     * Map a X Protocol type code from `ColumnMetaData.FieldType' to a MySQL type constant. These are the only types that will be present in {@link MysqlxRow}
      * results.
      *
      * @param type
@@ -497,7 +497,7 @@ public class MysqlxProtocol implements Protocol {
     }
 
     /**
-     * Convert a MySQL X {@link ColumnMetaData} message to a C/J {@link Field} object.
+     * Convert a X Protocol {@link ColumnMetaData} message to a C/J {@link Field} object.
      *
      * @param propertySet
      *            needed to construct the Field

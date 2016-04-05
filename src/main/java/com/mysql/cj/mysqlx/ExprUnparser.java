@@ -39,7 +39,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator;
 
 /**
- * Serializer utility for dealing with MySQL X expression trees.
+ * Serializer utility for dealing with X Protocol expression trees.
  */
 public class ExprUnparser {
     /**

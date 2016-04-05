@@ -27,7 +27,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Error;
 
 /**
- * An Error returned from MySQL X.
+ * An Error returned from X Plugin.
  */
 public class MysqlxError extends CJException {
     private static final long serialVersionUID = 6991120628391138584L;

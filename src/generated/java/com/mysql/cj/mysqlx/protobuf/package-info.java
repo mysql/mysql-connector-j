@@ -22,7 +22,7 @@
  */
 
 /**
- * Message classes used for serialization with Google Protocol Buffers to support MySQL X protocol. Classes are generated using <i>protoc</i> like so:
+ * Message classes used for serialization with Google Protocol Buffers to support X Protocol. Classes are generated using <i>protoc</i> like so:
  * <pre>
  * protoc --java_out=src/generated/java -I/PATH/TO/MYSQL/plugin/x/protocol /PATH/TO/MYSQL/plugin/x/protocol/*.proto
  * </pre>
