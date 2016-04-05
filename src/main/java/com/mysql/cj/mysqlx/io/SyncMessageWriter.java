@@ -38,7 +38,7 @@ import com.mysql.cj.core.exceptions.CJPacketTooBigException;
  */
 public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
     /**
-     * Header length of MySQL X packet.
+     * Header length of X Protocol packet.
      */
     static final int HEADER_LEN = 5;
 

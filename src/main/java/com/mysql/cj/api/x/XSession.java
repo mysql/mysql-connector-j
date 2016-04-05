@@ -24,7 +24,7 @@
 package com.mysql.cj.api.x;
 
 /**
- * MySQL X introduces a new, high-level database session concept that is called XSession. When working with MySQL X it is important to understand this new
+ * X DevAPI introduces a new, high-level database session concept that is called XSession. When working with X DevAPI it is important to understand this new
  * XSession concept which is different from working with traditional low-level MySQL connections.
  * 
  * An application using the XSession class can be run against a single MySQL server or large number of MySQL servers forming a sharding cluster with no code

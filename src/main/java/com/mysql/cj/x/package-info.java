@@ -22,9 +22,9 @@
  */
 
 /**
- * Java classes supporting for MySQL X DevAPI.
+ * Java classes supporting for X DevAPI.
  *
  * @since 6.0
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.x;

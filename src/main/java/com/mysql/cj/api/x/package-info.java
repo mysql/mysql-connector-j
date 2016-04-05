@@ -22,7 +22,7 @@
  */
 
 /**
- * Java interfaces for MySQL X DevAPI.
+ * Java interfaces for X DevAPI.
  *
  * @since 6.0
  */

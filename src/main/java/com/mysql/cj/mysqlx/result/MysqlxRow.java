@@ -65,7 +65,7 @@ public class MysqlxRow implements com.mysql.cj.api.result.Row {
                 return result;
             }
 
-            // X-protocol uses 64-bit ints for everything
+            // X Protocol uses 64-bit ints for everything
             if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_LONGLONG) {
                 if (f.isUnsigned()) {
                     return MysqlxDecoder.instance.decodeUnsignedLong(CodedInputStream.newInstance(byteString.toByteArray()), vf);

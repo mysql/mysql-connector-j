@@ -22,7 +22,7 @@
  */
 
 /**
- * Tests for internal components of the MySQL X features.
+ * Tests for internal components of the X Protocol and X DevAPI features.
  */
 
 package testsuite.mysqlx.internal;

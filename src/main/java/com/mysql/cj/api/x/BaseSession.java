@@ -28,7 +28,7 @@ import java.util.List;
 import com.mysql.cj.mysqlx.MysqlxSession;
 
 /**
- * A client interface to the session on the MySQL X server.
+ * A client interface to the session on the X Plugin server.
  */
 public interface BaseSession {
 

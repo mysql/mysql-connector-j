@@ -24,7 +24,7 @@
 package com.mysql.cj.api.x;
 
 /**
- * In some cases access to the full SQL language is needed, e.g. to directly connect to a specific MySQL X node in a sharded environment and do operations
+ * In some cases access to the full SQL language is needed, e.g. to directly connect to a specific X Plugin node in a sharded environment and do operations
  * specifically on this node. In those cases a direct, low-level connections needs to be opened. This is performed by using the mysqlx.getNodeSession() function
  * which will return a NodeSession object.
  * <p>

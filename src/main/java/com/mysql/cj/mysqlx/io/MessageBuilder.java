@@ -297,16 +297,16 @@ public class MessageBuilder {
             }
         };
         try {
-            // now we create the client object we use which can handle PLAIN mechanism for "MySQL X" protocol to "serverName"
+            // now we create the client object we use which can handle PLAIN mechanism for "X Protocol" to "serverName"
             String[] mechanisms = new String[] { "PLAIN" };
             String authorizationId = database; // as per protocol spec
-            String protocol = "MySQL X";
+            String protocol = "X Protocol";
             Map<String, ?> props = null;
-            // TODO: >> serverName. Is this of any use in our MySQL X exchange? Should be defined to be blank or something.
+            // TODO: >> serverName. Is this of any use in our X Protocol exchange? Should be defined to be blank or something.
             String serverName = "<unknown>";
             SaslClient saslClient = Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbackHandler);
 
-            // now just pass the details to the X-protocol auth start message
+            // now just pass the details to the X Protocol auth start message
             AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
             authStartBuilder.setMechName("PLAIN");
             // saslClient will build the SASL response message
