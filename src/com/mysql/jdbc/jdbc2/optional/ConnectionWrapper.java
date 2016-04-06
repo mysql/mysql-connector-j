@@ -2641,6 +2641,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     }
 
+    public void setLoadBalanceHostRemovalGracePeriod(int loadBalanceHostRemovalGracePeriod) throws SQLException {
+        this.mc.setLoadBalanceHostRemovalGracePeriod(loadBalanceHostRemovalGracePeriod);
+    }
+
+    public int getLoadBalanceHostRemovalGracePeriod() {
+        return this.mc.getLoadBalanceHostRemovalGracePeriod();
+    }
+
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         checkClosed();
 

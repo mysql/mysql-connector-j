@@ -2223,6 +2223,14 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         getActiveMySQLConnection().setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
     }
 
+    public void setLoadBalanceHostRemovalGracePeriod(int loadBalanceHostRemovalGracePeriod) throws SQLException {
+        getActiveMySQLConnection().setLoadBalanceHostRemovalGracePeriod(loadBalanceHostRemovalGracePeriod);
+    }
+
+    public int getLoadBalanceHostRemovalGracePeriod() {
+        return getActiveMySQLConnection().getLoadBalanceHostRemovalGracePeriod();
+    }
+
     public boolean isProxySet() {
         return this.getActiveMySQLConnection().isProxySet();
     }

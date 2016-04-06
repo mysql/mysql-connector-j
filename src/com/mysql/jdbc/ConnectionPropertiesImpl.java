@@ -899,6 +899,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty loadBalanceEnableJMX = new BooleanConnectionProperty("loadBalanceEnableJMX", false,
             Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), "5.1.13", MISC_CATEGORY, Integer.MAX_VALUE);
 
+    private IntegerConnectionProperty loadBalanceHostRemovalGracePeriod = new IntegerConnectionProperty("loadBalanceHostRemovalGracePeriod", 15000, 0,
+            Integer.MAX_VALUE, Messages.getString("ConnectionProperties.loadBalanceHostRemovalGracePeriod"), "5.1.39", MISC_CATEGORY, Integer.MAX_VALUE);
+
     private StringConnectionProperty loadBalanceAutoCommitStatementRegex = new StringConnectionProperty("loadBalanceAutoCommitStatementRegex", null,
             Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementRegex"), "5.1.15", MISC_CATEGORY, Integer.MIN_VALUE);
 
@@ -4677,7 +4680,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
         this.loadBalanceValidateConnectionOnSwapServer.setValue(loadBalanceValidateConnectionOnSwapServer);
-
     }
 
     public String getLoadBalanceConnectionGroup() {
@@ -4718,6 +4720,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
         this.loadBalanceEnableJMX.setValue(loadBalanceEnableJMX);
+    }
+
+    public void setLoadBalanceHostRemovalGracePeriod(int loadBalanceHostRemovalGracePeriod) throws SQLException {
+        this.loadBalanceHostRemovalGracePeriod.setValue(loadBalanceHostRemovalGracePeriod, getExceptionInterceptor());
+    }
+
+    public int getLoadBalanceHostRemovalGracePeriod() {
+        return this.loadBalanceHostRemovalGracePeriod.getValueAsInt();
     }
 
     public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
@@ -4770,7 +4780,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin) {
         this.defaultAuthenticationPlugin.setValue(defaultAuthenticationPlugin);
-
     }
 
     public String getDefaultAuthenticationPlugin() {
@@ -4831,7 +4840,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setReplicationEnableJMX(boolean replicationEnableJMX) {
         this.replicationEnableJMX.setValue(replicationEnableJMX);
-
     }
 
     public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {

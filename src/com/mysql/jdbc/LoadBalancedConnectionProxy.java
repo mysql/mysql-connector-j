@@ -24,6 +24,7 @@
 package com.mysql.jdbc;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -68,6 +69,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
     private int globalBlacklistTimeout = 0;
     private static Map<String, Long> globalBlacklist = new HashMap<String, Long>();
+    public static final String HOST_REMOVAL_GRACE_PERIOD_PROPERTY_KEY = "loadBalanceHostRemovalGracePeriod";
+    private int hostRemovalGracePeriod = 0;
     // host:port pairs to be considered as removed (definitely blacklisted) from the original hosts list.
     private Set<String> hostsToRemove = new HashSet<String>();
 
@@ -161,8 +164,16 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { retriesAllDownAsString }),
+                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { blacklistTimeoutAsString }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+        }
+
+        String hostRemovalGracePeriodAsString = this.localProps.getProperty(HOST_REMOVAL_GRACE_PERIOD_PROPERTY_KEY, "15000");
+        try {
+            this.hostRemovalGracePeriod = Integer.parseInt(hostRemovalGracePeriodAsString);
+        } catch (NumberFormatException nfe) {
+            throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceHostRemovalGracePeriod",
+                    new Object[] { hostRemovalGracePeriodAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
@@ -463,7 +474,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             } else {
                 String reason = "No operations allowed after connection closed.";
                 if (this.closedReason != null) {
-                    reason += ("  " + this.closedReason);
+                    reason += " " + this.closedReason;
                 }
                 throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
             }
@@ -669,15 +680,19 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @throws SQLException
      */
     public void removeHostWhenNotInUse(String hostPortPair) throws SQLException {
-        int timeBetweenChecks = 1000;
-        long timeBeforeHardFail = 15000;
+        if (this.hostRemovalGracePeriod <= 0) {
+            removeHost(hostPortPair);
+            return;
+        }
+
+        int timeBetweenChecks = this.hostRemovalGracePeriod > 1000 ? 1000 : this.hostRemovalGracePeriod;
 
         synchronized (this) {
-            addToGlobalBlacklist(hostPortPair, System.currentTimeMillis() + timeBeforeHardFail + 1000);
+            addToGlobalBlacklist(hostPortPair, System.currentTimeMillis() + this.hostRemovalGracePeriod + timeBetweenChecks);
 
             long cur = System.currentTimeMillis();
 
-            while (System.currentTimeMillis() < cur + timeBeforeHardFail) {
+            while (System.currentTimeMillis() < cur + this.hostRemovalGracePeriod) {
                 this.hostsToRemove.add(hostPortPair);
 
                 if (!hostPortPair.equals(this.currentConnection.getHostPortPair())) {
@@ -794,5 +809,36 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             return System.nanoTime() - this.transactionStartTime;
         }
         return 0;
+    }
+
+    /**
+     * A LoadBalancedConnection proxy that provides null-functionality. It can be used as a replacement of the <code>null</null> keyword in the places where a
+     * LoadBalancedConnection object cannot be effectively <code>null</code> because that would be a potential source of NPEs.
+     */
+    private static class NullLoadBalancedConnectionProxy implements InvocationHandler {
+        public NullLoadBalancedConnectionProxy() {
+        }
+
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            SQLException exceptionToThrow = SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.unusableConnection"),
+                    SQLError.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION, true, null);
+            Class<?>[] declaredException = method.getExceptionTypes();
+            for (Class<?> declEx : declaredException) {
+                if (declEx.isAssignableFrom(exceptionToThrow.getClass())) {
+                    throw exceptionToThrow;
+                }
+            }
+            throw new IllegalStateException(exceptionToThrow.getMessage(), exceptionToThrow);
+        }
+    }
+
+    private static LoadBalancedConnection nullLBConnectionInstance = null;
+
+    static synchronized LoadBalancedConnection getNullLoadBalancedConnectionInstance() {
+        if (nullLBConnectionInstance == null) {
+            nullLBConnectionInstance = (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
+                    INTERFACES_TO_PROXY, new NullLoadBalancedConnectionProxy());
+        }
+        return nullLBConnectionInstance;
     }
 }

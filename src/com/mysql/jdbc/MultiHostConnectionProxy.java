@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -452,6 +452,15 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return invokeMore(proxy, method, args);
         } catch (InvocationTargetException e) {
             throw e.getCause() != null ? e.getCause() : e;
+        } catch (Exception e) {
+            // Check if the captured exception must be wrapped by an unchecked exception.
+            Class<?>[] declaredException = method.getExceptionTypes();
+            for (Class<?> declEx : declaredException) {
+                if (declEx.isAssignableFrom(e.getClass())) {
+                    throw e;
+                }
+            }
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 

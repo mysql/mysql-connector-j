@@ -2,6 +2,9 @@
 # $Id$
 mm-dd-yy - Version 5.1.39
 
+  - Fix for Bug#22678872, NPE DURING UPDATE WITH FABRIC.
+    New property 'loadBalanceHostRemovalGracePeriod' sets the grace period when removing hosts from a load-balanced connection.
+
   - Fix for Bug#71131 (18068303), Poor error message in CallableStatement.java.
 
   - Fix for Bug#59462 (16736619), ConcurrentModificationException inside ConnectionImpl.closeAllOpenStatements().

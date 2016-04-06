@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -942,6 +942,10 @@ public final class MysqlErrorNumbers {
     public final static int ER_NON_RO_SELECT_DISABLE_TIMER = 1908; //SQLSTATE: HY000 Message: Select is not a read only statement, disabling timer; was introduced in 5.7.4.
     public final static int ER_DUP_LIST_ENTRY = 1909; //SQLSTATE: HY000 Message: Duplicate entry '%s'.; was introduced in 5.7.4.
     public final static int ER_SQL_MODE_NO_EFFECT = 1910; //SQLSTATE: HY000 Message: '%s' mode no longer has any effect. Use STRICT_ALL_TABLES or STRICT_TRANS_TABLES instead.; was introduced in 5.7.4. 
+
+    // Connector/J-specific errors outside the space of server errors.
+    public static final int ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION = 1000001;
+    public static final int ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS = 1000002;
 
     private MysqlErrorNumbers() {
         // prevent instantiation
