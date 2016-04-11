@@ -65,6 +65,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.CharsetMapping;
@@ -5556,7 +5557,7 @@ public class StatementRegressionTest extends BaseTestCase {
         @Override
         public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
                 com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
-                        throws SQLException {
+                throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
             }
@@ -7706,5 +7707,20 @@ public class StatementRegressionTest extends BaseTestCase {
         this.rs.next();
         assertEquals(1, this.rs.getInt(1));
         sspsConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#71131 - Poor error message in CallableStatement.java.
+     */
+    public void testBug71131() throws Exception {
+        createProcedure("testBug71131", "(IN r DOUBLE, OUT p DOUBLE) BEGIN SET p = 2 * r * PI(); END");
+        final CallableStatement cstmt = this.conn.prepareCall("{ CALL testBug71131 (?, 5) }");
+        assertThrows(SQLException.class, "Parameter p is not registered as an output parameter", new Callable<Void>() {
+            public Void call() throws Exception {
+                cstmt.execute();
+                return null;
+            }
+        });
+        cstmt.close();
     }
 }
