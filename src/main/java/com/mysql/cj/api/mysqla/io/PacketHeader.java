@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,15 +21,20 @@
 
  */
 
-package com.mysql.cj.api.io;
-
-// TODO move this interface to com.mysql.cj.api.mysqla.io package
-
-import java.io.IOException;
+package com.mysql.cj.api.mysqla.io;
 
 /**
- * This interface provides a facility for sending packets. The destination, transmission method, etc are determined by the implementation.
+ * Represents the legacy protocol packet header, consisting of
+ * 3-bytes payload_length and 1-byte sequence_id.
+ * 
+ * see http://dev.mysql.com/doc/internals/en/mysql-packet.html
  */
-public interface PacketSender {
-    void send(byte[] packet, int packetLen, byte packetSequence) throws IOException;
+public interface PacketHeader {
+
+    byte[] getBuffer();
+
+    int getPacketLength();
+
+    byte getPacketSequence();
+
 }

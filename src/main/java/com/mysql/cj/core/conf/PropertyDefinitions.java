@@ -906,7 +906,7 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PNAME_maxAllowedPacket, -1, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxAllowedPacket"),
+                new IntegerPropertyDefinition(PNAME_maxAllowedPacket, 65535, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.maxAllowedPacket"),
                         "5.1.8", CATEGORY_NETWORK, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PNAME_authenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,

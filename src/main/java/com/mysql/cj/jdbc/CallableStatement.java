@@ -1753,7 +1753,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             paramDescriptor.desiredMysqlType = mt;
 
         } catch (FeatureNotAvailableException nae) {
-            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
                     SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
@@ -1783,7 +1783,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             // TODO why we ignore typeName?
 
         } catch (FeatureNotAvailableException nae) {
-            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(sqlType),
+            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
                     SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }

@@ -3729,7 +3729,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 } catch (SQLException ex) {
                     throw ex;
                 } catch (FeatureNotAvailableException nae) {
-                    throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("UnsupportedSQLType.0") + JDBCType.valueOf(targetSqlType),
+                    throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
                             SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 } catch (Exception ex) {
                     throw SQLError.createSQLException(

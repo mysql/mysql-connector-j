@@ -458,13 +458,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     /**
-     * Sets the buffer size to max-buf
-     */
-    public void resetMaxBuf() {
-        this.protocol.resetMaxBuf();
-    }
-
-    /**
      * Returns the packet used for sending data (used by PreparedStatement)
      * Guarded by external synchronization on a mutex.
      * 
@@ -532,7 +525,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     public final Buffer readPacket() {
-        return this.protocol.readPacket();
+        return this.protocol.readPacket(null);
     }
 
     public NetworkResources getNetworkResources() {

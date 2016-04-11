@@ -40,6 +40,7 @@ import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -62,7 +63,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
     private ExceptionInterceptor exceptionInterceptor;
     private PropertySet propertySet;
 
-    private Protocol protocol;
+    private NativeProtocol protocol;
 
     private Log log;
 
@@ -72,7 +73,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public void init(Protocol prot, PropertySet propSet, ExceptionInterceptor excInterceptor) {
-        this.protocol = prot;
+        this.protocol = (NativeProtocol) prot;
         this.propertySet = propSet;
         this.exceptionInterceptor = excInterceptor;
     }
@@ -528,7 +529,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             } else {
 
                 // read packet from server and check if it's an ERROR packet
-                challenge = this.protocol.readNextPacket();
+                challenge = this.protocol.checkErrorPacket();
                 old_raw_challenge = false;
 
                 if (plugin == null) {

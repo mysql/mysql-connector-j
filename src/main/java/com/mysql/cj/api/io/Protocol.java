@@ -27,7 +27,6 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -85,7 +84,9 @@ public interface Protocol {
 
     void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder);
 
-    long getLastPacketReceivedTimeMs();
+    PacketReceivedTimeHolder getPacketReceivedTimeHolder();
+
+    void setPacketReceivedTimeHolder(PacketReceivedTimeHolder packetReceivedTimeHolder);
 
     /**
      * Create a new session. This generally happens once at the beginning of a connection.
@@ -95,8 +96,6 @@ public interface Protocol {
     void negotiateSSLConnection(int packLength);
 
     void rejectConnection(String message);
-
-    void rejectProtocol(Buffer buf);
 
     void beforeHandshake();
 
@@ -113,25 +112,6 @@ public interface Protocol {
      * 
      */
     void changeUser(String user, String password, String database);
-
-    /**
-     * Read one packet from the MySQL server
-     * 
-     * @return the packet from the server.
-     * 
-     * @throws CJCommunicationsException
-     */
-    Buffer readPacket(); // Buffer class is specific to mysqla protocol, we need a higher abstraction here
-
-    /**
-     * Read next packet in sequence from the MySQL server,
-     * incrementing sequence counter.
-     * 
-     * @return the packet from the server.
-     * 
-     * @throws CJCommunicationsException
-     */
-    Buffer readNextPacket();
 
     /**
      * @param packet

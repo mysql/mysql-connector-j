@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,7 +29,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.SocketConnection;
@@ -47,17 +47,16 @@ public abstract class AbstractProtocol implements Protocol {
 
     protected ExceptionInterceptor exceptionInterceptor;
 
-    protected long lastPacketReceivedTimeMs = 0;
-
-    protected boolean traceProtocol = false;
-    protected boolean enablePacketDebug = false;
-    protected PacketSender packetSender;
-
     protected AuthenticationProvider authProvider;
 
     // Default until packet sender created
     private PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
         public long getLastPacketSentTime() {
+            return 0;
+        }
+    };
+    private PacketReceivedTimeHolder packetReceivedTimeHolder = new PacketReceivedTimeHolder() {
+        public long getLastPacketReceivedTime() {
             return 0;
         }
     };
@@ -84,16 +83,20 @@ public abstract class AbstractProtocol implements Protocol {
         return this.exceptionInterceptor;
     }
 
-    public long getLastPacketReceivedTimeMs() {
-        return this.lastPacketReceivedTimeMs;
-    }
-
     public PacketSentTimeHolder getPacketSentTimeHolder() {
         return this.packetSentTimeHolder;
     }
 
     public void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder) {
         this.packetSentTimeHolder = packetSentTimeHolder;
+    }
+
+    public PacketReceivedTimeHolder getPacketReceivedTimeHolder() {
+        return this.packetReceivedTimeHolder;
+    }
+
+    public void setPacketReceivedTimeHolder(PacketReceivedTimeHolder packetReceivedTimeHolder) {
+        this.packetReceivedTimeHolder = packetReceivedTimeHolder;
     }
 
     public PropertySet getPropertySet() {

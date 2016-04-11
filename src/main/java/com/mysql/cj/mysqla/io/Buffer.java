@@ -74,14 +74,6 @@ public class Buffer implements PacketBuffer {
         this.position = MysqlaConstants.HEADER_LENGTH;
     }
 
-    final void dump() {
-        dump(getBufLength());
-    }
-
-    public final String dump(int numBytes) {
-        return StringUtils.dumpAsHex(getBytes(0, numBytes > getBufLength() ? getBufLength() : numBytes), numBytes > getBufLength() ? getBufLength() : numBytes);
-    }
-
     final String dumpClampedBytes(int numBytes) {
         int numBytesToDump = numBytes < MAX_BYTES_TO_DUMP ? numBytes : MAX_BYTES_TO_DUMP;
 

@@ -2463,11 +2463,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         if (this.session.getServerVariables().containsKey("max_allowed_packet")) {
             int serverMaxAllowedPacket = this.session.getServerVariable("max_allowed_packet", -1);
+
             // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
-            if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < this.maxAllowedPacket.getValue() || this.maxAllowedPacket.getValue() <= 0)) {
+            if (serverMaxAllowedPacket != -1 && (!this.maxAllowedPacket.isExplicitlySet() || serverMaxAllowedPacket < this.maxAllowedPacket.getValue())) {
                 this.maxAllowedPacket.setValue(serverMaxAllowedPacket);
-            } else if (serverMaxAllowedPacket == -1 && this.maxAllowedPacket.getValue() == -1) {
-                this.maxAllowedPacket.setValue(65535);
             }
 
             if (this.useServerPrepStmts.getValue()) {
@@ -2536,8 +2535,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 }
             }
         }
-
-        this.session.resetMaxBuf();
 
         //
         // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names

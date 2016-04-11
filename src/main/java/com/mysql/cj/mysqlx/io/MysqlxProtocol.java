@@ -41,6 +41,7 @@ import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ResultsHandler;
@@ -187,7 +188,13 @@ public class MysqlxProtocol implements Protocol {
         throw new NullPointerException("TODO");
     }
 
-    public long getLastPacketReceivedTimeMs() {
+    @Override
+    public PacketReceivedTimeHolder getPacketReceivedTimeHolder() {
+        throw new NullPointerException("TODO");
+    }
+
+    @Override
+    public void setPacketReceivedTimeHolder(PacketReceivedTimeHolder packetReceivedTimeHolder) {
         throw new NullPointerException("TODO");
     }
 
@@ -224,10 +231,6 @@ public class MysqlxProtocol implements Protocol {
         throw new NullPointerException("TODO");
     }
 
-    public void rejectProtocol(Buffer buf) {
-        throw new NullPointerException("TODO");
-    }
-
     public void beforeHandshake() {
         throw new NullPointerException("TODO");
     }
@@ -243,14 +246,6 @@ public class MysqlxProtocol implements Protocol {
     public void changeUser(String user, String password, String database) {
         // TODO: implement change user. Do we need to Close the session first?
         throw new NullPointerException("TODO");
-    }
-
-    public Buffer readPacket() {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
-    }
-
-    public Buffer readNextPacket() {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
     }
 
     public void send(PacketBuffer packet, int packetLen) {

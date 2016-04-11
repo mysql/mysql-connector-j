@@ -37,6 +37,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -44,6 +45,7 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -146,9 +148,8 @@ public class MysqlIO implements ResultsHandler {
             fields = new Field[(int) columnCount];
 
             for (int i = 0; i < columnCount; i++) {
-                Buffer fieldPacket = null;
+                Buffer fieldPacket = this.protocol.readPacket(null);
 
-                fieldPacket = this.protocol.readPacket();
                 fields[i] = unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
             }
         } else {
@@ -164,7 +165,7 @@ public class MysqlIO implements ResultsHandler {
                         && isBinaryEncoded && callingStatement != null && callingStatement.getFetchSize() != 0
                         && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY)) {
 
-            packet = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket());
+            packet = this.protocol.readPacket(this.protocol.getReusablePacket());
             readServerStatusForResultSets(packet);
         }
 
@@ -343,15 +344,8 @@ public class MysqlIO implements ResultsHandler {
         // use nextRowFast() if necessary/possible, otherwise read the entire packet
         Buffer rowPacket = null;
         try {
-            int lengthRead = this.protocol.getSocketConnection().getMysqlInput().readFully(this.protocol.getPacketHeaderBuf(), 0, 4);
-
-            if (lengthRead < 4) {
-                this.protocol.getSocketConnection().forceClose();
-                throw new RuntimeException(Messages.getString("MysqlIO.43"));
-            }
-
-            int packetLength = (this.protocol.getPacketHeaderBuf()[0] & 0xff) + ((this.protocol.getPacketHeaderBuf()[1] & 0xff) << 8)
-                    + ((this.protocol.getPacketHeaderBuf()[2] & 0xff) << 16);
+            PacketHeader hdr = this.protocol.getPacketReader().readHeader();
+            int packetLength = hdr.getPacketLength();
 
             // use a buffer row if we're over the threshold
             useBufferRow = useBufferRow || packetLength >= this.useBufferRowSizeThreshold.getValue();
@@ -361,17 +355,17 @@ public class MysqlIO implements ResultsHandler {
                 // * we don't want a buffer row explicitly
                 // * we have a TEXT-encoded result
                 // * we don't have a multi-packet
-                return nextRowFast(packetLength, columnCount);
+                return nextRowFast(hdr, columnCount);
             }
             // else read the entire packet(s)
-            rowPacket = this.protocol.reuseAndReadPacket(this.protocol.getReusablePacket(), packetLength);
+            rowPacket = this.protocol.getPacketReader().readPayload(Optional.ofNullable(this.protocol.getReusablePacket()), packetLength);
             this.protocol.checkErrorPacket(rowPacket);
             // Didn't read an error, so re-position to beginning of packet in order to read result set data
             rowPacket.setPosition(rowPacket.getPosition() - 1);
 
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    this.protocol.getLastPacketReceivedTimeMs(), ioEx, this.protocol.getExceptionInterceptor());
+                    this.protocol.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.protocol.getExceptionInterceptor());
         }
 
         // exit early with null if there's an EOF packet
@@ -419,7 +413,8 @@ public class MysqlIO implements ResultsHandler {
      * Use the 'fast' approach to reading a row. We read everything piece-meal into the byte buffers that are used to back the ByteArrayRow. This avoids reading
      * the entire packet at once.
      */
-    private ResultSetRow nextRowFast(int packetLength, int columnCount) throws SQLException, IOException {
+    private ResultSetRow nextRowFast(PacketHeader header, int columnCount) throws SQLException, IOException {
+        int packetLength = header.getPacketLength();
         int remaining = packetLength;
 
         boolean firstTime = true;
@@ -438,9 +433,9 @@ public class MysqlIO implements ResultsHandler {
                     // away with just writing the error code and message in it (for now).
                     Buffer errorPacket = new Buffer(packetLength + MysqlaConstants.HEADER_LENGTH);
                     errorPacket.setPosition(0);
-                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[0]);
-                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[1]);
-                    errorPacket.writeByte(this.protocol.getPacketHeaderBuf()[2]);
+                    errorPacket.writeByte(header.getBuffer()[0]);
+                    errorPacket.writeByte(header.getBuffer()[1]);
+                    errorPacket.writeByte(header.getBuffer()[2]);
                     errorPacket.writeByte((byte) 1);
                     errorPacket.writeByte((byte) sw);
                     mysqlInput.readFully(errorPacket.getByteBuffer(), 5, packetLength - 1);
@@ -542,7 +537,7 @@ public class MysqlIO implements ResultsHandler {
 
                 if (bytesRead != len) {
                     throw SQLError.createCommunicationsException(this.connection, this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),
-                            this.protocol.getLastPacketReceivedTimeMs(), new IOException(Messages.getString("MysqlIO.43")),
+                            this.protocol.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), new IOException(Messages.getString("MysqlIO.43")),
                             this.protocol.getExceptionInterceptor());
                 }
 
@@ -765,8 +760,6 @@ public class MysqlIO implements ResultsHandler {
                 this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
             }
 
-            resultPacket.readByte(); // advance pointer
-
             this.protocol.setServerSlowQueryFlags();
 
             if (this.connection.isReadInfoMsgEnabled()) {
@@ -802,8 +795,6 @@ public class MysqlIO implements ResultsHandler {
             if (this.protocol.getWarningCount() > 0) {
                 this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
             }
-
-            rowPacket.readByte(); // advance pointer
 
             if (this.connection.isReadInfoMsgEnabled()) {
                 rowPacket.readString(this.protocol.getServerSession().getErrorMessageEncoding()); // info
@@ -916,8 +907,6 @@ public class MysqlIO implements ResultsHandler {
         }
 
         filePacket.setPosition(0);
-        // account for the packet file-read-request from read()
-        this.protocol.incrementPacketSequence();
 
         byte[] fileBuf = new byte[packetLength];
 
