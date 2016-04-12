@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.39
 
+  - Fix for Bug#59462 (16736619), ConcurrentModificationException inside ConnectionImpl.closeAllOpenStatements().
+
   - Fix for Bug#22848249, LOADBALANCECONNECTIONGROUPMANAGER.REMOVEHOST() NOT WORKING AS EXPECTED.
 
   - Fix for Bug#22730682, ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().

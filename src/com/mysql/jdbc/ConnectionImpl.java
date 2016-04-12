@@ -57,6 +57,7 @@ import java.util.Stack;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
@@ -574,8 +575,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private int[] oldHistCounts = null;
 
-    /** A map of currently open statements */
-    private Map<Statement, Statement> openStatements;
+    /**
+     * An array of currently open statements.
+     * Copy-on-write used here to avoid ConcurrentModificationException when statements unregister themselves while we iterate over the list.
+     */
+    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<Statement>();
 
     private LRUCache parsedCallableStatementCache;
 
@@ -738,8 +742,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         // We will reset this to the configured logger during properties initialization.
         //
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
-
-        this.openStatements = new HashMap<Statement, Statement>();
 
         if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
             Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
@@ -1538,30 +1540,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private void closeAllOpenStatements() throws SQLException {
         SQLException postponedException = null;
 
-        if (this.openStatements != null) {
-            List<Statement> currentlyOpenStatements = new ArrayList<Statement>(); // we need this to
-            // avoid ConcurrentModificationEx
-
-            for (Iterator<Statement> iter = this.openStatements.keySet().iterator(); iter.hasNext();) {
-                currentlyOpenStatements.add(iter.next());
+        for (Statement stmt : this.openStatements) {
+            try {
+                ((StatementImpl) stmt).realClose(false, true);
+            } catch (SQLException sqlEx) {
+                postponedException = sqlEx; // throw it later, cleanup all statements first
             }
+        }
 
-            int numStmts = currentlyOpenStatements.size();
-
-            for (int i = 0; i < numStmts; i++) {
-                StatementImpl stmt = (StatementImpl) currentlyOpenStatements.get(i);
-
-                try {
-                    stmt.realClose(false, true);
-                } catch (SQLException sqlEx) {
-                    postponedException = sqlEx; // throw it later, cleanup all
-                    // statements first
-                }
-            }
-
-            if (postponedException != null) {
-                throw postponedException;
-            }
+        if (postponedException != null) {
+            throw postponedException;
         }
     }
 
@@ -2189,7 +2177,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             //
             // Retrieve any 'lost' prepared statements if re-connecting
             //
-            Iterator<Statement> statementIter = this.openStatements.values().iterator();
+            Iterator<Statement> statementIter = this.openStatements.iterator();
 
             //
             // We build a list of these outside the map of open statements, because in the process of re-preparing, we might end up having to close a prepared
@@ -2658,14 +2646,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public int getActiveStatementCount() {
-        // Might not have one of these if not tracking open resources
-        if (this.openStatements != null) {
-            synchronized (this.openStatements) {
-                return this.openStatements.size();
-            }
-        }
-
-        return 0;
+        return this.openStatements.size();
     }
 
     /**
@@ -4302,7 +4283,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 this.exceptionInterceptor.destroy();
             }
         } finally {
-            this.openStatements = null;
+            this.openStatements.clear();
             if (this.io != null) {
                 this.io.releaseResources();
                 this.io = null;
@@ -4374,9 +4355,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *            the Statement instance to remove
      */
     public void registerStatement(Statement stmt) {
-        synchronized (this.openStatements) {
-            this.openStatements.put(stmt, stmt);
-        }
+        this.openStatements.addIfAbsent(stmt);
     }
 
     /**
@@ -5237,11 +5216,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      *            the Statement instance to remove
      */
     public void unregisterStatement(Statement stmt) {
-        if (this.openStatements != null) {
-            synchronized (this.openStatements) {
-                this.openStatements.remove(stmt);
-            }
-        }
+        this.openStatements.remove(stmt);
     }
 
     public boolean useAnsiQuotedIdentifiers() {
