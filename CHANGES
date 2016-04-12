@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.39
 
+  - Fix for Bug#59462 (16736619), ConcurrentModificationException inside ConnectionImpl.closeAllOpenStatements()
+
   - Fix for Bug#22730682, ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().
 
   - Fix for Bug#56479 (16738378), getTimestamp throws exception.
