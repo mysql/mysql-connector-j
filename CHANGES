@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-mm-dd-yy - Version 5.1.39
+04-29-16 - Version 5.1.39
 
   - Fix for Bug#22678872, NPE DURING UPDATE WITH FABRIC.
     New property 'loadBalanceHostRemovalGracePeriod' sets the grace period when removing hosts from a load-balanced connection.
