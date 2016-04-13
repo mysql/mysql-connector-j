@@ -131,7 +131,10 @@ public class MysqlTextValueDecoder implements ValueDecoder {
                 throw new DataReadException(
                         Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIME" }));
             }
-            nanos = 1000 * StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+            nanos = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+            // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
+            // 10. one digit is tenths, two is hundreths, etc
+            nanos = nanos * (int) Math.pow(10, 9 - segmentLen);
         }
 
         return vf.createFromTime(hours, minutes, seconds, nanos);
@@ -161,12 +164,15 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         int hours = StringUtils.getInt(bytes, offset + 11, offset + 13);
         int minutes = StringUtils.getInt(bytes, offset + 14, offset + 16);
         int seconds = StringUtils.getInt(bytes, offset + 17, offset + 19);
-        // nanos from MySQL fractional-as-micros
+        // nanos from MySQL fractional
         int nanos;
         if (length == TIMESTAMP_STR_LEN_WITH_NANOS) {
             nanos = StringUtils.getInt(bytes, offset + 20, offset + length);
         } else {
-            nanos = (length == TIMESTAMP_NOFRAC_STR_LEN) ? 0 : 1000 * StringUtils.getInt(bytes, offset + 20, offset + length);
+            nanos = (length == TIMESTAMP_NOFRAC_STR_LEN) ? 0 : StringUtils.getInt(bytes, offset + 20, offset + length);
+            // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
+            // 10. one digit is tenths, two is hundreths, etc
+            nanos = nanos * (int) Math.pow(10, 9 - (length - TIMESTAMP_NOFRAC_STR_LEN - 1));
         }
 
         return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);

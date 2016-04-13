@@ -68,7 +68,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         }
 
         if (length > MysqlaConstants.BIN_LEN_TIMESTAMP_NO_US) {
-            // MySQL uses microseconds
+            // MySQL PS protocol uses microseconds
             nanos = 1000 * ((bytes[offset + 7] & 0xff) | ((bytes[offset + 8] & 0xff) << 8) | ((bytes[offset + 9] & 0xff) << 16)
                     | ((bytes[offset + 10] & 0xff) << 24));
         }
@@ -101,7 +101,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         }
 
         if (length > MysqlaConstants.BIN_LEN_TIMESTAMP_NO_US) {
-            // MySQL uses microseconds
+            // MySQL PS protocol uses microseconds
             nanos = 1000 * (bytes[offset + 1] & 0xff) | ((bytes[offset + 2] & 0xff) << 8) | ((bytes[offset + 3] & 0xff) << 16)
                     | ((bytes[offset + 4] & 0xff) << 24);
         }

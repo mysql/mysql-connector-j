@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 6.0.3
 
+  - Fix for Bug#22932078, GETTIMESTAMP() RETURNS WRONG VALUE FOR FRACTIONAL PART
+
   - Extracted packet readers from MysqlaProtocol.
 
   - Fix for Bug#22972057, X protocol CLIENT HANGS AFTER CONNECTION FAILURE

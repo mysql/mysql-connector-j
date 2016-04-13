@@ -40,6 +40,35 @@ public class MysqlTextValueDecoderTest {
     private MysqlTextValueDecoder valueDecoder = new MysqlTextValueDecoder();
 
     @Test
+    public void testNanosecondParsing() {
+        // test value factory to extract the parsed nano-seconds
+        ValueFactory<Integer> vf = new DefaultValueFactory<Integer>() {
+                @Override
+                public Integer createFromTime(int hours, int minutes, int seconds, int nanos) {
+                    return nanos;
+                }
+
+                @Override
+                public Integer createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+                    return nanos;
+                }
+
+                public String getTargetTypeName() {
+                    return Integer.class.getName();
+                }
+            };
+
+        // the fractional second part is determined by the # of digits
+        assertEquals(new Integer(900000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.9".getBytes(), 0, 21, vf));
+        assertEquals(new Integer(950000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.95".getBytes(), 0, 22, vf));
+        assertEquals(new Integer(956000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.956".getBytes(), 0, 23, vf));
+
+        assertEquals(new Integer(900000000), this.valueDecoder.decodeTime("14:34:01.9".getBytes(), 0, 10, vf));
+        assertEquals(new Integer(950000000), this.valueDecoder.decodeTime("14:34:01.95".getBytes(), 0, 11, vf));
+        assertEquals(new Integer(956000000), this.valueDecoder.decodeTime("14:34:01.956".getBytes(), 0, 12, vf));
+    }
+
+    @Test
     public void testIntValues() {
         ValueFactory<String> vf = new StringValueFactory();
         assertEquals(String.valueOf(Integer.MIN_VALUE), this.valueDecoder.decodeInt4(String.valueOf(Integer.MIN_VALUE).getBytes(), 0, 11, vf));
