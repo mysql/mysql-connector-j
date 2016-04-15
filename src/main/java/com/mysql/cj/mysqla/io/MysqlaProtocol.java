@@ -39,7 +39,6 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
@@ -50,6 +49,7 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -106,10 +106,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     /** Track this to manually shut down. */
     protected CompressedPacketSender compressedPacketSender;
 
-    private Buffer sendPacket = null;
-    protected Buffer sharedSendPacket = null;
+    private PacketPayload sendPacket = null;
+    protected PacketPayload sharedSendPacket = null;
     /** Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway */
-    protected Buffer reusablePacket = null;
+    protected PacketPayload reusablePacket = null;
 
     protected byte packetSequence = 0;
     protected boolean useCompression = false;
@@ -252,14 +252,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         clientParam |= MysqlaServerSession.CLIENT_SSL;
         this.serverSession.setClientParam(clientParam);
 
-        Buffer packet = new Buffer(packLength);
-        packet.setPosition(0);
-
-        packet.writeLong(clientParam);
-        packet.writeLong(MysqlaConstants.MAX_PACKET_SIZE);
-        packet.writeByte(AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(),
+        PacketPayload packet = new Buffer(packLength);
+        packet.writeInteger(IntegerDataType.INT4, clientParam);
+        packet.writeInteger(IntegerDataType.INT4, MysqlaConstants.MAX_PACKET_SIZE);
+        packet.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(),
                 this.serverSession.getCapabilities().getServerVersion()));
-        packet.writeBytesNoNull(new byte[23]);  // Set of bytes reserved for future use.
+        packet.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);  // Set of bytes reserved for future use.
 
         send(packet, packet.getPosition());
 
@@ -291,7 +289,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     @Override
-    public void rejectProtocol(Buffer buf) {
+    public void rejectProtocol(PacketPayload buf) {
         try {
             this.socketConnection.getMysqlSocket().close();
         } catch (Exception e) {
@@ -300,11 +298,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
         int errno = 2000;
 
-        errno = buf.readInt();
+        errno = (int) buf.readInteger(IntegerDataType.INT2);
 
         String serverErrorMessage = "";
         try {
-            serverErrorMessage = buf.readString("ASCII");
+            serverErrorMessage = buf.readString(StringSelfDataType.STRING_TERM, "ASCII");
         } catch (Exception e) {
             //
         }
@@ -399,7 +397,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
     public MysqlaCapabilities readServerCapabilities() {
         // Read the first packet
-        Buffer buf = readPacket(null);
+        PacketPayload buf = readPacket(null);
         MysqlaCapabilities serverCapabilities = new MysqlaCapabilities();
         serverCapabilities.setInitialHandshakePacket(buf);
 
@@ -438,10 +436,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     @Override
-    public final Buffer readPacket(Buffer reuse) {
+    public final PacketPayload readPacket(PacketPayload reuse) {
         try {
             PacketHeader header = this.packetReader.readHeader();
-            Buffer buf = this.packetReader.readPayload(Optional.ofNullable(reuse), header.getPacketLength());
+            PacketPayload buf = this.packetReader.readPayload(Optional.ofNullable(reuse), header.getPacketLength());
             this.packetSequence = header.getPacketSequence();
             return buf;
 
@@ -464,7 +462,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      *            length of header + payload
      */
     @Override
-    public final void send(PacketBuffer packet, int packetLen) {
+    public final void send(PacketPayload packet, int packetLen) {
         try {
             if (this.maxAllowedPacket.getValue() > 0 && packetLen > this.maxAllowedPacket.getValue()) {
                 throw new CJPacketTooBigException(packetLen, this.maxAllowedPacket.getValue());
@@ -487,7 +485,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     @Override
-    public final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis) {
+    public final PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding,
+            int timeoutMillis) {
         this.commandCount++;
 
         this.packetReader.resetPacketSequence();
@@ -542,24 +541,21 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
                     if (this.sendPacket == null) {
                         this.sendPacket = new Buffer(packLength);
-                        this.sendPacket.setPosition(0);
                     }
 
                     this.packetSequence = -1;
-                    this.sendPacket.setPosition(0);
 
-                    this.sendPacket.writeByte((byte) command);
+                    this.sendPacket.setPosition(0);
+                    this.sendPacket.writeInteger(IntegerDataType.INT1, command);
 
                     if ((command == MysqlaConstants.COM_INIT_DB) || (command == MysqlaConstants.COM_CREATE_DB) || (command == MysqlaConstants.COM_DROP_DB)
                             || (command == MysqlaConstants.COM_QUERY) || (command == MysqlaConstants.COM_STMT_PREPARE)) {
-                        if (extraDataCharEncoding == null) {
-                            this.sendPacket.writeStringNoNull(extraData);
-                        } else {
-                            this.sendPacket.writeStringNoNull(extraData, extraDataCharEncoding);
-                        }
+
+                        this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(extraData, extraDataCharEncoding));
+
                     } else if (command == MysqlaConstants.COM_PROCESS_KILL) {
                         long id = Long.parseLong(extraData);
-                        this.sendPacket.writeLong(id);
+                        this.sendPacket.writeInteger(IntegerDataType.INT4, id);
                     }
 
                     send(this.sendPacket, this.sendPacket.getPosition());
@@ -576,7 +572,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                         getExceptionInterceptor());
             }
 
-            Buffer returnPacket = null;
+            PacketPayload returnPacket = null;
 
             if (!skipCheck) {
                 if ((command == MysqlaConstants.COM_STMT_EXECUTE) || (command == MysqlaConstants.COM_STMT_RESET)) {
@@ -616,7 +612,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         }
     }
 
-    public Buffer checkErrorPacket() {
+    public PacketPayload checkErrorPacket() {
         return checkErrorPacket(-1);
     }
 
@@ -631,9 +627,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      *             if an error packet was received
      * @throws CJCommunicationsException
      */
-    private Buffer checkErrorPacket(int command) {
-        //int statusCode = 0;
-        Buffer resultPacket = null;
+    private PacketPayload checkErrorPacket(int command) {
+
+        PacketPayload resultPacket = null;
         this.serverSession.setStatusFlags(0);
 
         try {
@@ -653,20 +649,21 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         return resultPacket;
     }
 
-    public void checkErrorPacket(Buffer resultPacket) {
+    public void checkErrorPacket(PacketPayload resultPacket) {
 
-        int statusCode = resultPacket.readByte();
+        resultPacket.setPosition(0);
+        byte statusCode = (byte) resultPacket.readInteger(IntegerDataType.INT1);
 
         // Error handling
         if (statusCode == (byte) 0xff) {
             String serverErrorMessage;
             int errno = 2000;
 
-            errno = resultPacket.readInt();
+            errno = (int) resultPacket.readInteger(IntegerDataType.INT2);
 
             String xOpen = null;
 
-            serverErrorMessage = resultPacket.readString(this.serverSession.getErrorMessageEncoding());
+            serverErrorMessage = resultPacket.readString(StringSelfDataType.STRING_TERM, this.serverSession.getErrorMessageEncoding());
 
             if (serverErrorMessage.charAt(0) == '#') {
 
@@ -774,7 +771,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      *            should we read MYSQL_FIELD info (if available)?
      * 
      */
-    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, Buffer queryPacket,
+    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
         this.statementExecutionDepth++;
 
@@ -815,26 +812,18 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 }
                 this.sendPacket.setPosition(0);
 
-                this.sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
+                this.sendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
 
                 if (commentAsBytes != null) {
-                    this.sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
-                    this.sendPacket.writeBytesNoNull(commentAsBytes);
-                    this.sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
+                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
+                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
                 }
 
-                if (characterEncoding != null) {
-                    if (this.platformDbCharsetMatches) {
-                        this.sendPacket.writeStringNoNull(query, characterEncoding);
-                    } else {
-                        if (StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
-                            this.sendPacket.writeBytesNoNull(StringUtils.getBytes(query));
-                        } else {
-                            this.sendPacket.writeStringNoNull(query, characterEncoding);
-                        }
-                    }
+                if (!this.platformDbCharsetMatches && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
+                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query));
                 } else {
-                    this.sendPacket.writeStringNoNull(query);
+                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
                 }
 
                 queryPacket = this.sendPacket;
@@ -873,7 +862,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             }
 
             // Send query command and sql query string
-            Buffer resultPacket = sendCommand(MysqlaConstants.COM_QUERY, null, queryPacket, false, null, 0);
+            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, null, queryPacket, false, null, 0);
 
             long fetchBeginTime = 0;
             long fetchEndTime = 0;
@@ -949,7 +938,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
-                        explainSlowQuery(queryPacket.getBytes(1, (oldPacketPosition - 1)), profileQueryToLog);
+                        queryPacket.setPosition(1); // skip first byte 
+                        explainSlowQuery(queryPacket.readBytes(StringLengthDataType.STRING_FIXED, oldPacketPosition - 1), profileQueryToLog);
                     } else {
                         this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
                     }
@@ -1215,10 +1205,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 this.log.logWarn("Caught while disconnecting...", ioEx);
             }
 
-            Buffer packet = new Buffer(6);
-            packet.setPosition(0);
+            PacketPayload packet = new Buffer(6);
             this.packetSequence = -1;
-            packet.writeByte((byte) MysqlaConstants.COM_QUIT);
+            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUIT);
             send(packet, packet.getPosition());
         } finally {
             this.socketConnection.forceClose();
@@ -1226,12 +1215,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     /**
-     * Returns the packet used for sending data (used by PreparedStatement)
+     * Returns the packet used for sending data (used by PreparedStatement) with position set to 0.
      * Guarded by external synchronization on a mutex.
      * 
      * @return A packet to send data with
      */
-    public Buffer getSharedSendPacket() {
+    public PacketPayload getSharedSendPacket() {
         if (this.sharedSendPacket == null) {
             this.sharedSendPacket = new Buffer(INITIAL_PACKET_SIZE);
         }
@@ -1366,11 +1355,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         return this.resultsHandler;
     }
 
-    public Buffer getReusablePacket() {
+    public PacketPayload getReusablePacket() {
         return this.reusablePacket;
     }
 
-    public void setReusablePacket(Buffer packet) {
+    public void setReusablePacket(PacketPayload packet) {
         this.reusablePacket = packet;
     }
 

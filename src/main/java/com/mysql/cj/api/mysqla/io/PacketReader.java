@@ -26,8 +26,6 @@ package com.mysql.cj.api.mysqla.io;
 import java.io.IOException;
 import java.util.Optional;
 
-import com.mysql.cj.mysqla.io.Buffer;
-
 public interface PacketReader {
 
     /**
@@ -39,16 +37,16 @@ public interface PacketReader {
     PacketHeader readHeader() throws IOException;
 
     /**
-     * Read MySQL packet payload from input stream into to the given {@link Buffer} instance or into the new one if not present.
+     * Read MySQL packet payload from input stream into to the given {@link PacketPayload} instance or into the new one if not present.
      * 
      * @param reuse
-     *            {@link Buffer} to reuse
+     *            {@link PacketPayload} to reuse
      * @param packetLength
      *            Expected length of packet
      * @return
      * @throws IOException
      */
-    Buffer readPayload(Optional<Buffer> reuse, int packetLength) throws IOException;
+    PacketPayload readPayload(Optional<PacketPayload> reuse, int packetLength) throws IOException;
 
     /**
      * Get last packet sequence number, as it was stored by {@link #readHeader(byte[], boolean)}.

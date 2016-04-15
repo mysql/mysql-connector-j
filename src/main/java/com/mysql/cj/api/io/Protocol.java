@@ -27,8 +27,6 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
@@ -112,41 +110,6 @@ public interface Protocol {
      * 
      */
     void changeUser(String user, String password, String database);
-
-    /**
-     * @param packet
-     * @param packetLen
-     *            length of header + payload
-     */
-    void send(PacketBuffer packet, int packetLen);
-
-    /**
-     * Send a command to the MySQL server If data is to be sent with command,
-     * it should be put in extraData.
-     * 
-     * Raw packets can be sent by setting queryPacket to something other
-     * than null.
-     * 
-     * @param command
-     *            the MySQL protocol 'command' from MysqlDefs
-     * @param extraData
-     *            any 'string' data for the command
-     * @param queryPacket
-     *            a packet pre-loaded with data for the protocol (i.e.
-     *            from a client-side prepared statement).
-     * @param skipCheck
-     *            do not call checkErrorPacket() if true
-     * @param extraDataCharEncoding
-     *            the character encoding of the extraData
-     *            parameter.
-     * 
-     * @return the response packet from the server
-     * 
-     * @throws CJException
-     *             if an I/O error or SQL error occurs
-     */
-
-    Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis);
 
     String getPasswordCharacterEncoding();
 

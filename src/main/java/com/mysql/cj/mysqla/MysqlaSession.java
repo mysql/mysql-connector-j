@@ -47,6 +47,8 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.HostInfo;
@@ -63,7 +65,6 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.MysqlIO;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.util.TimeUtil;
-import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
@@ -263,18 +264,18 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     public void enableMultiQueries() {
-        Buffer buf = this.protocol.getSharedSendPacket();
+        PacketPayload buf = this.protocol.getSharedSendPacket();
 
-        buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
-        buf.writeInt(0);
+        buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
+        buf.writeInteger(IntegerDataType.INT2, 0);
         sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     public void disableMultiQueries() {
-        Buffer buf = this.protocol.getSharedSendPacket();
+        PacketPayload buf = this.protocol.getSharedSendPacket();
 
-        buf.writeByte((byte) MysqlaConstants.COM_SET_OPTION);
-        buf.writeInt(1);
+        buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
+        buf.writeInteger(IntegerDataType.INT2, 1);
         sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
@@ -443,7 +444,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      *            should we read MYSQL_FIELD info (if available)?
      * 
      */
-    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, Buffer queryPacket,
+    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
 
         return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, resultSetType, resultSetConcurrency,
@@ -458,12 +459,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     /**
-     * Returns the packet used for sending data (used by PreparedStatement)
+     * Returns the packet used for sending data (used by PreparedStatement) with position set to 0.
      * Guarded by external synchronization on a mutex.
      * 
      * @return A packet to send data with
      */
-    public Buffer getSharedSendPacket() {
+    public PacketPayload getSharedSendPacket() {
         return this.protocol.getSharedSendPacket();
     }
 
@@ -488,7 +489,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.protocol.getCurrentTimeNanosOrMillis();
     }
 
-    public final Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis) {
+    public final PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding,
+            int timeoutMillis) {
         return this.protocol.sendCommand(command, extraData, queryPacket, skipCheck, extraDataCharEncoding, timeoutMillis);
     }
 
@@ -524,7 +526,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.clearInputStream();
     }
 
-    public final Buffer readPacket() {
+    public final PacketPayload readPacket() {
         return this.protocol.readPacket(null);
     }
 

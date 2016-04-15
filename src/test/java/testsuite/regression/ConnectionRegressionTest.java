@@ -96,14 +96,14 @@ import javax.transaction.xa.Xid;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
@@ -3606,9 +3606,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
             toServer.clear();
-            Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+            PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password));
             toServer.add(bresp);
             return true;
         }
@@ -3639,13 +3639,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
             toServer.clear();
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
-                Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+                PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password));
                 toServer.add(bresp);
             } else {
-                Buffer bresp = new Buffer(StringUtils.getBytes("yes, of course"));
+                PacketPayload bresp = new Buffer(StringUtils.getBytes("yes, of course"));
                 toServer.add(bresp);
             }
             return true;
@@ -3679,14 +3679,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
             toServer.clear();
             this.counter++;
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
-                Buffer bresp = new Buffer(StringUtils.getBytes(this.counter > 2 ? this.password : "wrongpassword" + this.counter));
+                PacketPayload bresp = new Buffer(StringUtils.getBytes(this.counter > 2 ? this.password : "wrongpassword" + this.counter));
                 toServer.add(bresp);
             } else {
-                Buffer bresp = new Buffer(fromServer.getByteBuffer());
+                PacketPayload bresp = new Buffer(fromServer.getByteBuffer());
                 toServer.add(bresp);
             }
             return true;

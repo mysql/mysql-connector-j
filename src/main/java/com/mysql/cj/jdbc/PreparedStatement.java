@@ -72,6 +72,9 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -90,7 +93,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
@@ -988,7 +990,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    private final void escapeblockFast(byte[] buf, Buffer packet, int size) throws SQLException {
+    private final void escapeblockFast(byte[] buf, PacketPayload packet, int size) throws SQLException {
         int lastwritten = 0;
 
         for (int i = 0; i < size; i++) {
@@ -997,22 +999,22 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             if (b == '\0') {
                 // write stuff not yet written
                 if (i > lastwritten) {
-                    packet.writeBytesNoNull(buf, lastwritten, i - lastwritten);
+                    packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, lastwritten, i - lastwritten);
                 }
 
                 // write escape
-                packet.writeByte((byte) '\\');
-                packet.writeByte((byte) '0');
+                packet.writeInteger(IntegerDataType.INT1, (byte) '\\');
+                packet.writeInteger(IntegerDataType.INT1, (byte) '0');
                 lastwritten = i + 1;
             } else {
                 if ((b == '\\') || (b == '\'') || (!this.usingAnsiMode && b == '"')) {
                     // write stuff not yet written
                     if (i > lastwritten) {
-                        packet.writeBytesNoNull(buf, lastwritten, i - lastwritten);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, lastwritten, i - lastwritten);
                     }
 
                     // write escape
-                    packet.writeByte((byte) '\\');
+                    packet.writeInteger(IntegerDataType.INT1, (byte) '\\');
                     lastwritten = i; // not i+1 as b wasn't written.
                 }
             }
@@ -1020,7 +1022,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
         // write out remaining stuff from buffer
         if (lastwritten < size) {
-            packet.writeBytesNoNull(buf, lastwritten, size - lastwritten);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, lastwritten, size - lastwritten);
         }
     }
 
@@ -1109,7 +1111,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             this.batchedGeneratedKeys = null;
 
-            Buffer sendPacket = fillSendPacket();
+            PacketPayload sendPacket = fillSendPacket();
 
             String oldCatalog = null;
 
@@ -1784,8 +1786,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if an error occurs.
      */
-    protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, Buffer sendPacket, boolean createStreamingResultSet, boolean queryIsSelectOnly,
-            Field[] metadataFromCache, boolean isBatch) throws SQLException {
+    protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket, boolean createStreamingResultSet,
+            boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
 
@@ -1891,7 +1893,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             setupStreamingTimeout(locallyScopedConn);
 
-            Buffer sendPacket = fillSendPacket();
+            PacketPayload sendPacket = fillSendPacket();
 
             implicitlyCloseAllOpenResults();
 
@@ -2009,7 +2011,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             ResultSetInternalMethods rs = null;
 
-            Buffer sendPacket = fillSendPacket(batchedParameterStrings, batchedParameterStreams, batchedIsStream, batchedStreamLengths);
+            PacketPayload sendPacket = fillSendPacket(batchedParameterStrings, batchedParameterStreams, batchedIsStream, batchedStreamLengths);
 
             String oldCatalog = null;
 
@@ -2070,7 +2072,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if an error occurs.
      */
-    protected Buffer fillSendPacket() throws SQLException {
+    protected PacketPayload fillSendPacket() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return fillSendPacket(this.parameterValues, this.parameterStreams, this.isStream, this.streamLengths);
         }
@@ -2093,12 +2095,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if an error occurs.
      */
-    protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
+    protected PacketPayload fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer sendPacket = this.session.getSharedSendPacket();
+            PacketPayload sendPacket = this.session.getSharedSendPacket();
 
-            sendPacket.writeByte((byte) MysqlaConstants.COM_QUERY);
+            sendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
 
             boolean useStreamLengths = this.useStreamLengthsInPrepStmts.getValue();
 
@@ -2129,24 +2131,24 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             }
 
             if (commentAsBytes != null) {
-                sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
-                sendPacket.writeBytesNoNull(commentAsBytes);
-                sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
             }
 
             for (int i = 0; i < batchedParameterStrings.length; i++) {
                 checkAllParametersSet(batchedParameterStrings[i], batchedParameterStreams[i], i);
 
-                sendPacket.writeBytesNoNull(this.staticSqlStrings[i]);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, this.staticSqlStrings[i]);
 
                 if (batchedIsStream[i]) {
                     streamToBytes(sendPacket, batchedParameterStreams[i], true, batchedStreamLengths[i], useStreamLengths);
                 } else {
-                    sendPacket.writeBytesNoNull(batchedParameterStrings[i]);
+                    sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, batchedParameterStrings[i]);
                 }
             }
 
-            sendPacket.writeBytesNoNull(this.staticSqlStrings[batchedParameterStrings.length]);
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, this.staticSqlStrings[batchedParameterStrings.length]);
 
             return sendPacket;
         }
@@ -2551,14 +2553,14 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @param size
      * @throws SQLException
      */
-    private final void hexEscapeBlock(byte[] buf, Buffer packet, int size) throws SQLException {
+    private final void hexEscapeBlock(byte[] buf, PacketPayload packet, int size) throws SQLException {
         for (int i = 0; i < size; i++) {
             byte b = buf[i];
             int lowBits = (b & 0xff) / 16;
             int highBits = (b & 0xff) % 16;
 
-            packet.writeByte(HEX_DIGITS[lowBits]);
-            packet.writeByte(HEX_DIGITS[highBits]);
+            packet.writeInteger(IntegerDataType.INT1, HEX_DIGITS[lowBits]);
+            packet.writeInteger(IntegerDataType.INT1, HEX_DIGITS[highBits]);
         }
     }
 
@@ -4246,7 +4248,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    private final void streamToBytes(Buffer packet, InputStream in, boolean escape, int streamLength, boolean useLength) throws SQLException {
+    private final void streamToBytes(PacketPayload packet, InputStream in, boolean escape, int streamLength, boolean useLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 if (this.streamConvertBuf == null) {
@@ -4278,13 +4280,13 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 int lengthLeftToRead = streamLength - bc;
 
                 if (hexEscape) {
-                    packet.writeStringNoNull("x");
+                    packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("x"));
                 } else {
-                    packet.writeStringNoNull("_binary");
+                    packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("_binary"));
                 }
 
                 if (escape) {
-                    packet.writeByte((byte) '\'');
+                    packet.writeInteger(IntegerDataType.INT1, (byte) '\'');
                 }
 
                 while (bc > 0) {
@@ -4293,7 +4295,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     } else if (escape) {
                         escapeblockFast(this.streamConvertBuf, packet, bc);
                     } else {
-                        packet.writeBytesNoNull(this.streamConvertBuf, 0, bc);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, this.streamConvertBuf, 0, bc);
                     }
 
                     if (useLength) {
@@ -4308,7 +4310,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
 
                 if (escape) {
-                    packet.writeByte((byte) '\'');
+                    packet.writeInteger(IntegerDataType.INT1, (byte) '\'');
                 }
             } finally {
                 if (this.autoClosePStmtStreams.getValue()) {

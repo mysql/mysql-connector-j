@@ -25,9 +25,10 @@ package com.mysql.cj.mysqla.authentication;
 
 import java.util.List;
 
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -64,18 +65,18 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+    public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
 
         toServer.clear();
 
-        Buffer bresp = null;
+        PacketPayload bresp = null;
 
         String pwd = this.password;
 
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new Buffer(new byte[0]);
         } else {
-            bresp = new Buffer(Security.scramble411(pwd, fromServer.readString(), this.protocol.getPasswordCharacterEncoding()));
+            bresp = new Buffer(Security.scramble411(pwd, fromServer.readBytes(StringSelfDataType.STRING_TERM), this.protocol.getPasswordCharacterEncoding()));
         }
         toServer.add(bresp);
 

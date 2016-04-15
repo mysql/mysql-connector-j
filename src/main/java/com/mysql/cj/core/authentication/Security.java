@@ -58,10 +58,10 @@ public class Security {
         }
     }
 
-    public static byte[] scramble411(String password, String seed, String passwordEncoding) {
+    public static byte[] scramble411(String password, byte[] seed, String passwordEncoding) {
         byte[] passwordBytes = (passwordEncoding == null || passwordEncoding.length() == 0) ? StringUtils.getBytes(password)
                 : StringUtils.getBytes(password, passwordEncoding);
-        return scramble411(passwordBytes, StringUtils.getBytes(seed, "ASCII"));
+        return scramble411(passwordBytes, seed);
     }
 
     /**

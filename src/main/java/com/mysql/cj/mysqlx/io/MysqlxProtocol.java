@@ -40,7 +40,6 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
@@ -58,7 +57,6 @@ import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqlx.CreateIndexParams;
 import com.mysql.cj.mysqlx.ExprUtil;
 import com.mysql.cj.mysqlx.FilterParams;
@@ -246,14 +244,6 @@ public class MysqlxProtocol implements Protocol {
     public void changeUser(String user, String password, String database) {
         // TODO: implement change user. Do we need to Close the session first?
         throw new NullPointerException("TODO");
-    }
-
-    public void send(PacketBuffer packet, int packetLen) {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers");
-    }
-
-    public Buffer sendCommand(int command, String extraData, Buffer queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis) {
-        throw new NullPointerException("TODO: This shouldn't be a protocol method. X Protocol client doesn't use buffers or command tags in the same way");
     }
 
     public String getPasswordCharacterEncoding() {

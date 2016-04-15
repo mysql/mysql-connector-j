@@ -21,12 +21,12 @@
 
  */
 
-package com.mysql.cj.api.authentication;
+package com.mysql.cj.api.mysqla.authentication;
 
 import java.util.List;
 
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 
 /**
  * Implementors of this interface can be installed via the "authenticationPlugins" configuration property.
@@ -125,6 +125,6 @@ public interface AuthenticationPlugin {
      * @return False if more data should be read from the server and next call
      *         to this method made, true otherwise.
      */
-    boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer);
+    boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer);
 
 }

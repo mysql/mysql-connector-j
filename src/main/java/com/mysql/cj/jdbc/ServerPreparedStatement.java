@@ -48,6 +48,10 @@ import java.util.TimeZone;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -235,19 +239,19 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     private boolean hasOnDuplicateKeyUpdate = false;
 
-    private void storeTime(Buffer intoBuf, Time tm, TimeZone tz) throws SQLException {
+    private void storeTime(PacketPayload intoBuf, Time tm, TimeZone tz) throws SQLException {
 
         intoBuf.ensureCapacity(9);
-        intoBuf.writeByte((byte) 8); // length
-        intoBuf.writeByte((byte) 0); // neg flag
-        intoBuf.writeLong(0); // tm->day, not used
+        intoBuf.writeInteger(IntegerDataType.INT1, 8); // length
+        intoBuf.writeInteger(IntegerDataType.INT1, 0); // neg flag
+        intoBuf.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
 
         Calendar cal = Calendar.getInstance(tz);
 
         cal.setTime(tm);
-        intoBuf.writeByte((byte) cal.get(Calendar.HOUR_OF_DAY));
-        intoBuf.writeByte((byte) cal.get(Calendar.MINUTE));
-        intoBuf.writeByte((byte) cal.get(Calendar.SECOND));
+        intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
+        intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
+        intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
     }
 
     /**
@@ -269,7 +273,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** If this statement has been marked invalid, what was the reason? */
     private CJException invalidationException;
 
-    private Buffer outByteBuffer;
+    private PacketPayload outByteBuffer;
 
     /** Bind values for individual fields */
     private BindValue[] parameterBindings;
@@ -682,7 +686,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected com.mysql.cj.api.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, Buffer sendPacket, boolean createStreamingResultSet,
+    protected com.mysql.cj.api.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket, boolean createStreamingResultSet,
             boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.numberOfExecutions++;
@@ -730,12 +734,12 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected Buffer fillSendPacket() throws SQLException {
+    protected PacketPayload fillSendPacket() throws SQLException {
         return null; // we don't use this type of packet
     }
 
     @Override
-    protected Buffer fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
+    protected PacketPayload fillSendPacket(byte[][] batchedParameterStrings, InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
             int[] batchedStreamLengths) throws SQLException {
         return null; // we don't use this type of packet
     }
@@ -802,7 +806,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.outByteBuffer = new Buffer(this.netBufferLength);
                 }
 
-                this.outByteBuffer.clear();
+                this.outByteBuffer.setPosition(MysqlaConstants.HEADER_LENGTH);
 
                 int originalPosition = this.outByteBuffer.getPosition();
 
@@ -891,10 +895,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            Buffer packet = this.session.getSharedSendPacket();
+                            PacketPayload packet = this.session.getSharedSendPacket();
 
-                            packet.writeByte((byte) MysqlaConstants.COM_STMT_CLOSE);
-                            packet.writeLong(this.serverStatementId);
+                            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_CLOSE);
+                            packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
                             this.session.sendCommand(MysqlaConstants.COM_STMT_CLOSE, null, packet, true, null, 0);
                         } catch (CJException sqlEx) {
@@ -1061,9 +1065,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             // store the parameter values
             //
 
-            Buffer packet = this.session.getSharedSendPacket();
-            packet.writeByte((byte) MysqlaConstants.COM_STMT_EXECUTE);
-            packet.writeLong(this.serverStatementId);
+            PacketPayload packet = this.session.getSharedSendPacket();
+            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_EXECUTE);
+            packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
             //			boolean usingCursor = false;
 
@@ -1074,13 +1078,13 @@ public class ServerPreparedStatement extends PreparedStatement {
             // d) The user has set a fetch size
             if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
                     && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
-                packet.writeByte(OPEN_CURSOR_FLAG);
+                packet.writeInteger(IntegerDataType.INT1, OPEN_CURSOR_FLAG);
                 //                  usingCursor = true;
             } else {
-                packet.writeByte((byte) 0); // placeholder for flags
+                packet.writeInteger(IntegerDataType.INT1, 0); // placeholder for flags
             }
 
-            packet.writeLong(1); // placeholder for parameter iterations
+            packet.writeInteger(IntegerDataType.INT4, 1); // placeholder for parameter iterations
 
             /* Reserve place for null-marker bytes */
             int nullCount = (this.parameterCount + 7) / 8;
@@ -1088,20 +1092,20 @@ public class ServerPreparedStatement extends PreparedStatement {
             int nullBitsPosition = packet.getPosition();
 
             for (int i = 0; i < nullCount; i++) {
-                packet.writeByte((byte) 0);
+                packet.writeInteger(IntegerDataType.INT1, 0);
             }
 
             byte[] nullBitsBuffer = new byte[nullCount];
 
             /* In case if buffers (type) altered, indicate to server */
-            packet.writeByte(this.sendTypesToServer ? (byte) 1 : (byte) 0);
+            packet.writeInteger(IntegerDataType.INT1, this.sendTypesToServer ? (byte) 1 : (byte) 0);
 
             if (this.sendTypesToServer) {
                 /*
                  * Store types of parameters in first in first package that is sent to the server.
                  */
                 for (int i = 0; i < this.parameterCount; i++) {
-                    packet.writeInt(this.parameterBindings[i].bufferType);
+                    packet.writeInteger(IntegerDataType.INT2, this.parameterBindings[i].bufferType);
                 }
             }
 
@@ -1123,7 +1127,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             //
             int endPosition = packet.getPosition();
             packet.setPosition(nullBitsPosition);
-            packet.writeBytesNoNull(nullBitsBuffer);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, nullBitsBuffer);
             packet.setPosition(endPosition);
 
             long begin = 0;
@@ -1147,7 +1151,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 statementBegins();
 
-                Buffer resultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
+                PacketPayload resultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
 
                 long queryEndTime = 0L;
 
@@ -1311,16 +1315,16 @@ public class ServerPreparedStatement extends PreparedStatement {
      */
     private void serverLongData(int parameterIndex, BindValue longData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Buffer packet = this.session.getSharedSendPacket();
+            PacketPayload packet = this.session.getSharedSendPacket();
 
             Object value = longData.value;
 
             if (value instanceof byte[]) {
-                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
-                packet.writeLong(this.serverStatementId);
-                packet.writeInt((parameterIndex));
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_SEND_LONG_DATA);
+                packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
+                packet.writeInteger(IntegerDataType.INT2, parameterIndex);
 
-                packet.writeBytesNoNull((byte[]) longData.value);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, (byte[]) longData.value);
 
                 this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
             } else if (value instanceof InputStream) {
@@ -1362,14 +1366,14 @@ public class ServerPreparedStatement extends PreparedStatement {
                     characterEncoding = connectionEncoding;
                 }
 
-                Buffer prepareResultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
+                PacketPayload prepareResultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
 
                 // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
                 prepareResultPacket.setPosition(1);
 
-                this.serverStatementId = prepareResultPacket.readLong();
-                this.fieldCount = prepareResultPacket.readInt();
-                this.parameterCount = prepareResultPacket.readInt();
+                this.serverStatementId = prepareResultPacket.readInteger(IntegerDataType.INT4);
+                this.fieldCount = (int) prepareResultPacket.readInteger(IntegerDataType.INT2);
+                this.parameterCount = (int) prepareResultPacket.readInteger(IntegerDataType.INT2);
                 this.parameterBindings = new BindValue[this.parameterCount];
 
                 for (int i = 0; i < this.parameterCount; i++) {
@@ -1389,7 +1393,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.parameterCount > 0) {
                     this.parameterFields = new Field[this.parameterCount];
 
-                    Buffer metaDataPacket;
+                    PacketPayload metaDataPacket;
                     for (int i = 0; i < this.parameterCount; i++) {
                         metaDataPacket = this.session.readPacket();
                         if (checkEOF && metaDataPacket.isEOFPacket()) {
@@ -1403,7 +1407,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.fieldCount > 0) {
                     this.resultFields = new Field[this.fieldCount];
 
-                    Buffer fieldPacket;
+                    PacketPayload fieldPacket;
                     for (int i = 0; i < this.fieldCount; i++) {
                         fieldPacket = this.session.readPacket();
                         if (checkEOF && fieldPacket.isEOFPacket()) {
@@ -1453,10 +1457,10 @@ public class ServerPreparedStatement extends PreparedStatement {
     private void serverResetStatement() {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            Buffer packet = this.session.getSharedSendPacket();
+            PacketPayload packet = this.session.getSharedSendPacket();
 
-            packet.writeByte((byte) MysqlaConstants.COM_STMT_RESET);
-            packet.writeLong(this.serverStatementId);
+            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_RESET);
+            packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
             try {
                 this.session.sendCommand(MysqlaConstants.COM_STMT_RESET, null, packet, false, null, 0);
@@ -1849,7 +1853,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private void storeBinding(Buffer packet, BindValue bindValue) throws SQLException {
+    private void storeBinding(PacketPayload packet, BindValue bindValue) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 Object value = bindValue.value;
@@ -1860,27 +1864,22 @@ public class ServerPreparedStatement extends PreparedStatement {
                 switch (bindValue.bufferType) {
 
                     case MysqlaConstants.FIELD_TYPE_TINY:
-                        packet.writeByte((byte) bindValue.longBinding);
+                        packet.writeInteger(IntegerDataType.INT1, bindValue.longBinding);
                         return;
                     case MysqlaConstants.FIELD_TYPE_SHORT:
-                        packet.ensureCapacity(2);
-                        packet.writeInt((int) bindValue.longBinding);
+                        packet.writeInteger(IntegerDataType.INT2, bindValue.longBinding);
                         return;
                     case MysqlaConstants.FIELD_TYPE_LONG:
-                        packet.ensureCapacity(4);
-                        packet.writeLong((int) bindValue.longBinding);
+                        packet.writeInteger(IntegerDataType.INT4, bindValue.longBinding);
                         return;
                     case MysqlaConstants.FIELD_TYPE_LONGLONG:
-                        packet.ensureCapacity(8);
-                        packet.writeLongLong(bindValue.longBinding);
+                        packet.writeInteger(IntegerDataType.INT8, bindValue.longBinding);
                         return;
                     case MysqlaConstants.FIELD_TYPE_FLOAT:
-                        packet.ensureCapacity(4);
-                        packet.writeFloat(bindValue.floatBinding);
+                        packet.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(bindValue.floatBinding));
                         return;
                     case MysqlaConstants.FIELD_TYPE_DOUBLE:
-                        packet.ensureCapacity(8);
-                        packet.writeDouble(bindValue.doubleBinding);
+                        packet.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(bindValue.doubleBinding));
                         return;
                     case MysqlaConstants.FIELD_TYPE_TIME:
                         storeTime(packet, (Time) value, bindValue.tz);
@@ -1896,11 +1895,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                     case MysqlaConstants.FIELD_TYPE_DECIMAL:
                     case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
                         if (value instanceof byte[]) {
-                            packet.writeLenBytes((byte[]) value);
+                            packet.writeBytes(StringSelfDataType.STRING_LENENC, (byte[]) value);
                         } else if (!this.isLoadDataQuery) {
-                            packet.writeLenString((String) value, this.charEncoding);
+                            packet.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) value, this.charEncoding));
                         } else {
-                            packet.writeLenBytes(StringUtils.getBytes((String) value));
+                            packet.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) value));
                         }
 
                         return;
@@ -1922,7 +1921,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, TimeZone tz, int bufferType) throws SQLException {
+    private void storeDateTime(PacketPayload intoBuf, java.util.Date dt, TimeZone tz, int bufferType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar cal = Calendar.getInstance(tz);
 
@@ -1942,35 +1941,35 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             intoBuf.ensureCapacity(length);
 
-            intoBuf.writeByte(length); // length
+            intoBuf.writeInteger(IntegerDataType.INT1, length); // length
 
             int year = cal.get(Calendar.YEAR);
             int month = cal.get(Calendar.MONTH) + 1;
             int date = cal.get(Calendar.DAY_OF_MONTH);
 
-            intoBuf.writeInt(year);
-            intoBuf.writeByte((byte) month);
-            intoBuf.writeByte((byte) date);
+            intoBuf.writeInteger(IntegerDataType.INT2, year);
+            intoBuf.writeInteger(IntegerDataType.INT1, month);
+            intoBuf.writeInteger(IntegerDataType.INT1, date);
 
             if (dt instanceof java.sql.Date) {
-                intoBuf.writeByte((byte) 0);
-                intoBuf.writeByte((byte) 0);
-                intoBuf.writeByte((byte) 0);
+                intoBuf.writeInteger(IntegerDataType.INT1, 0);
+                intoBuf.writeInteger(IntegerDataType.INT1, 0);
+                intoBuf.writeInteger(IntegerDataType.INT1, 0);
             } else {
-                intoBuf.writeByte((byte) cal.get(Calendar.HOUR_OF_DAY));
-                intoBuf.writeByte((byte) cal.get(Calendar.MINUTE));
-                intoBuf.writeByte((byte) cal.get(Calendar.SECOND));
+                intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
+                intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
+                intoBuf.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
             }
 
             if (length == 11) {
                 //  MySQL expects microseconds, not nanos
-                intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos() / 1000);
+                intoBuf.writeInteger(IntegerDataType.INT4, ((java.sql.Timestamp) dt).getNanos() / 1000);
             }
         }
     }
 
     // TODO: Investigate using NIO to do this faster
-    private void storeReader(int parameterIndex, Buffer packet, Reader inStream) throws SQLException {
+    private void storeReader(int parameterIndex, PacketPayload packet, Reader inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
@@ -2001,11 +2000,10 @@ public class ServerPreparedStatement extends PreparedStatement {
             int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
             try {
-                packet.clear();
                 packet.setPosition(0);
-                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
-                packet.writeLong(this.serverStatementId);
-                packet.writeInt((parameterIndex));
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_SEND_LONG_DATA);
+                packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
+                packet.writeInteger(IntegerDataType.INT2, parameterIndex);
 
                 boolean readAny = false;
 
@@ -2014,7 +2012,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     byte[] valueAsBytes = StringUtils.getBytes(buf, 0, numRead, clobEncoding);
 
-                    packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
+                    packet.writeBytes(StringSelfDataType.STRING_EOF, valueAsBytes);
 
                     bytesInPacket += valueAsBytes.length;
                     totalBytesRead += valueAsBytes.length;
@@ -2025,11 +2023,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                         this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
-                        packet.clear();
                         packet.setPosition(0);
-                        packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
-                        packet.writeLong(this.serverStatementId);
-                        packet.writeInt((parameterIndex));
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_SEND_LONG_DATA);
+                        packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
+                        packet.writeInteger(IntegerDataType.INT2, parameterIndex);
                     }
                 }
 
@@ -2060,7 +2057,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    private void storeStream(int parameterIndex, Buffer packet, InputStream inStream) throws SQLException {
+    private void storeStream(int parameterIndex, PacketPayload packet, InputStream inStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
 
@@ -2072,11 +2069,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                 int bytesReadAtLastSend = 0;
                 int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
-                packet.clear();
                 packet.setPosition(0);
-                packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
-                packet.writeLong(this.serverStatementId);
-                packet.writeInt((parameterIndex));
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_SEND_LONG_DATA);
+                packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
+                packet.writeInteger(IntegerDataType.INT2, parameterIndex);
 
                 boolean readAny = false;
 
@@ -2084,7 +2080,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     readAny = true;
 
-                    packet.writeBytesNoNull(buf, 0, numRead);
+                    packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, 0, numRead);
                     bytesInPacket += numRead;
                     totalBytesRead += numRead;
 
@@ -2094,11 +2090,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                         this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
 
                         bytesInPacket = 0;
-                        packet.clear();
                         packet.setPosition(0);
-                        packet.writeByte((byte) MysqlaConstants.COM_STMT_SEND_LONG_DATA);
-                        packet.writeLong(this.serverStatementId);
-                        packet.writeInt((parameterIndex));
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_SEND_LONG_DATA);
+                        packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
+                        packet.writeInteger(IntegerDataType.INT2, parameterIndex);
                     }
                 }
 

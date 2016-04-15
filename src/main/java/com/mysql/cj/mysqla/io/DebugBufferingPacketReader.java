@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import com.mysql.cj.api.conf.ReadableProperty;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
@@ -91,8 +92,8 @@ public class DebugBufferingPacketReader implements PacketReader {
     }
 
     @Override
-    public Buffer readPayload(Optional<Buffer> reuse, int packetLength) throws IOException {
-        Buffer buf = this.packetReader.readPayload(reuse, packetLength);
+    public PacketPayload readPayload(Optional<PacketPayload> reuse, int packetLength) throws IOException {
+        PacketPayload buf = this.packetReader.readPayload(reuse, packetLength);
 
         int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packetLength);
         String packetPayload = StringUtils.dumpAsHex(buf.getByteBuffer(), bytesToDump);

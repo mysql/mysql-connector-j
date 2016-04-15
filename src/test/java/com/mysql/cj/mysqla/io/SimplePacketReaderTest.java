@@ -46,6 +46,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -118,7 +119,7 @@ public class SimplePacketReaderTest {
         ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         SocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1, 6, 5, 4 });
         PacketReader reader = new SimplePacketReader(connection, maxAllowedPacket);
-        Buffer b = reader.readPayload(Optional.empty(), 3);
+        PacketPayload b = reader.readPayload(Optional.empty(), 3);
         assertEquals(3, b.getByteBuffer()[0]);
         assertEquals(2, b.getByteBuffer()[1]);
         assertEquals(1, b.getByteBuffer()[2]);

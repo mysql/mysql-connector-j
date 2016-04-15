@@ -31,16 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -94,7 +97,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         MysqlaCapabilities capabilities = (MysqlaCapabilities) sessState.getCapabilities();
 
-        Buffer buf = capabilities.getInitialHandshakePacket();
+        PacketPayload buf = capabilities.getInitialHandshakePacket();
 
         // read auth-plugin-data-part-1 (string[8])
         this.seed = capabilities.getSeed();
@@ -120,10 +123,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                 //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
                 //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
                 //                  }
-                seedPart2 = buf.readString("ASCII", authPluginDataLength - 8);
+                seedPart2 = buf.readString(StringLengthDataType.STRING_FIXED, "ASCII", authPluginDataLength - 8);
                 newSeed = new StringBuilder(authPluginDataLength);
             } else {
-                seedPart2 = buf.readString("ASCII");
+                seedPart2 = buf.readString(StringSelfDataType.STRING_TERM, "ASCII");
                 newSeed = new StringBuilder(MysqlaConstants.SEED_LENGTH);
             }
             newSeed.append(this.seed);
@@ -412,7 +415,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
      *            this method is used during the initial connection.
      *            Otherwise null.
      */
-    private void proceedHandshakeWithPluggableAuthentication(ServerSession sessState, String user, String password, String database, Buffer challenge) {
+    private void proceedHandshakeWithPluggableAuthentication(ServerSession sessState, String user, String password, String database, PacketPayload challenge) {
         if (this.authenticationPlugins == null) {
             loadAuthenticationPlugins();
         }
@@ -422,16 +425,16 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         int userLength = (user != null) ? user.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
 
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + MysqlaConstants.HEADER_LENGTH + AUTH_411_OVERHEAD;
+        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + AUTH_411_OVERHEAD;
 
         long clientParam = sessState.getClientParam();
         int serverCapabilities = sessState.getCapabilities().getCapabilityFlags();
 
         AuthenticationPlugin plugin = null;
-        PacketBuffer fromServer = null;
-        ArrayList<PacketBuffer> toServer = new ArrayList<PacketBuffer>();
+        PacketPayload fromServer = null;
+        ArrayList<PacketPayload> toServer = new ArrayList<PacketPayload>();
         boolean done = false;
-        Buffer last_sent = null;
+        PacketPayload last_sent = null;
 
         boolean old_raw_challenge = false;
 
@@ -484,9 +487,10 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                         // Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
                         if (!this.protocol.versionMeetsMinimum(5, 5, 10)
                                 || this.protocol.versionMeetsMinimum(5, 6, 0) && !this.protocol.versionMeetsMinimum(5, 6, 2)) {
-                            pluginName = challenge.readString("ASCII", ((MysqlaCapabilities) sessState.getCapabilities()).getAuthPluginDataLength());
+                            pluginName = challenge.readString(StringLengthDataType.STRING_FIXED, "ASCII",
+                                    ((MysqlaCapabilities) sessState.getCapabilities()).getAuthPluginDataLength());
                         } else {
-                            pluginName = challenge.readString("ASCII");
+                            pluginName = challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
                         }
                     }
 
@@ -549,7 +553,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                     // read Auth Method Switch Request Packet
                     String pluginName;
-                    pluginName = challenge.readString("ASCII");
+                    pluginName = challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
 
                     // get new plugin
                     if (!plugin.getProtocolPluginName().equals(pluginName)) {
@@ -564,16 +568,15 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     }
 
                     checkConfidentiality(plugin);
-                    fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII")));
+                    fromServer = new Buffer(StringUtils.getBytes(challenge.readString(StringSelfDataType.STRING_TERM, "ASCII")));
 
                 } else {
                     // read raw packet
-                    if (this.protocol.versionMeetsMinimum(5, 5, 16)) {
-                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength() - challenge.getPosition()));
-                    } else {
+                    if (!this.protocol.versionMeetsMinimum(5, 5, 16)) {
                         old_raw_challenge = true;
-                        fromServer = new Buffer(challenge.getBytes(challenge.getPosition() - 1, challenge.getBufLength() - challenge.getPosition() + 1));
+                        challenge.setPosition(challenge.getPosition() - 1);
                     }
+                    fromServer = new Buffer(challenge.readBytes(StringSelfDataType.STRING_EOF));
                 }
 
             }
@@ -589,35 +592,35 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                     // write COM_CHANGE_USER Packet
                     last_sent = new Buffer(packLength + 1);
-                    last_sent.setPosition(0);
-                    last_sent.writeByte((byte) MysqlaConstants.COM_CHANGE_USER);
+                    last_sent.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_CHANGE_USER);
 
                     // User/Password data
-                    last_sent.writeString(user, enc);
+                    last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
 
                     // 'auth-response-len' is limited to one Byte but, in case of success, COM_CHANGE_USER will be followed by an AuthSwitchRequest anyway
-                    if (toServer.get(0).getBufLength() < 256) {
+                    if (toServer.get(0).getPayloadLength() < 256) {
                         // non-mysql servers may use this information to authenticate without requiring another round-trip
-                        last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                        last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+                        last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
+                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer());
                     } else {
-                        last_sent.writeByte((byte) 0);
+                        last_sent.writeInteger(IntegerDataType.INT1, 0);
                     }
 
                     if (this.useConnectWithDb) {
-                        last_sent.writeString(database, enc);
+                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
                     } else {
                         /* For empty database */
-                        last_sent.writeByte((byte) 0);
+                        last_sent.writeInteger(IntegerDataType.INT1, 0);
                     }
 
-                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
+                    last_sent.writeInteger(IntegerDataType.INT1,
+                            AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
                     // two (little-endian) bytes for charset in this packet
-                    last_sent.writeByte((byte) 0);
+                    last_sent.writeInteger(IntegerDataType.INT1, 0);
 
                     // plugin name
                     if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeString(plugin.getProtocolPluginName(), enc);
+                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(plugin.getProtocolPluginName(), enc));
                     }
 
                     // connection attributes
@@ -630,12 +633,12 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                 } else if (challenge.isAuthMethodSwitchRequestPacket()) {
                     // write Auth Method Switch Response Packet
-                    this.protocol.send(toServer.get(0), toServer.get(0).getBufLength());
+                    this.protocol.send(toServer.get(0), toServer.get(0).getPayloadLength());
 
-                } else if (challenge.isRawPacket() || old_raw_challenge) {
+                } else if (challenge.isAuthMoreData() || old_raw_challenge) {
                     // write raw packet(s)
-                    for (PacketBuffer buffer : toServer) {
-                        this.protocol.send(buffer, buffer.getBufLength());
+                    for (PacketPayload buffer : toServer) {
+                        this.protocol.send(buffer, buffer.getPayloadLength());
                     }
 
                 } else {
@@ -643,35 +646,35 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     String enc = getEncodingForHandshake();
 
                     last_sent = new Buffer(packLength);
-                    last_sent.setPosition(0);
-                    last_sent.writeLong(clientParam);
-                    last_sent.writeLong(MysqlaConstants.MAX_PACKET_SIZE);
+                    last_sent.writeInteger(IntegerDataType.INT4, clientParam);
+                    last_sent.writeInteger(IntegerDataType.INT4, MysqlaConstants.MAX_PACKET_SIZE);
 
-                    last_sent.writeByte(AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
+                    last_sent.writeInteger(IntegerDataType.INT1,
+                            AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
 
-                    last_sent.writeBytesNoNull(new byte[23]);   // Set of bytes reserved for future use.
+                    last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);   // Set of bytes reserved for future use.
 
                     // User/Password data
-                    last_sent.writeString(user, enc);
+                    last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
 
                     if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
                         // send lenenc-int length of auth-response and string[n] auth-response
-                        last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
+                        last_sent.writeBytes(StringSelfDataType.STRING_LENENC, toServer.get(0).readBytes(StringSelfDataType.STRING_EOF));
                     } else {
                         // send 1 byte length of auth-response and string[n] auth-response
-                        last_sent.writeByte((byte) toServer.get(0).getBufLength());
-                        last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+                        last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
+                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer());
                     }
 
                     if (this.useConnectWithDb) {
-                        last_sent.writeString(database, enc);
+                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
                     } else {
                         /* For empty database */
-                        last_sent.writeByte((byte) 0);
+                        last_sent.writeInteger(IntegerDataType.INT1, 0);
                     }
 
                     if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeString(plugin.getProtocolPluginName(), enc);
+                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(plugin.getProtocolPluginName(), enc));
                     }
 
                     // connection attributes
@@ -726,20 +729,18 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         return props;
     }
 
-    private void appendConnectionAttributes(Buffer buf, String attributes, String enc) {
+    private void appendConnectionAttributes(PacketPayload buf, String attributes, String enc) {
 
-        Buffer lb = new Buffer(100);
-        lb.setPosition(0);
-
+        PacketPayload lb = new Buffer(100);
         Properties props = getConnectionAttributesAsProperties(attributes);
 
         for (Object key : props.keySet()) {
-            lb.writeLenString((String) key, enc);
-            lb.writeLenString(props.getProperty((String) key), enc);
+            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) key, enc));
+            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(props.getProperty((String) key), enc));
         }
 
-        buf.writeByte((byte) lb.getPosition());
-        buf.writeBytesNoNull(lb.getByteBuffer(), 0, lb.getPosition());
+        buf.writeInteger(IntegerDataType.INT_LENENC, lb.getPosition());
+        buf.writeBytes(StringLengthDataType.STRING_FIXED, lb.getByteBuffer(), 0, lb.getPosition());
     }
 
     /**

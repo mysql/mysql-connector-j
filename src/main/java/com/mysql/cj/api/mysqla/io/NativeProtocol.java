@@ -26,7 +26,6 @@ package com.mysql.cj.api.mysqla.io;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * Extends {@link Protocol} with methods specific to native MySQL protocol.
@@ -34,7 +33,7 @@ import com.mysql.cj.mysqla.io.Buffer;
  */
 public interface NativeProtocol extends Protocol {
 
-    void rejectProtocol(Buffer buf);
+    void rejectProtocol(PacketPayload buf);
 
     PacketReader getPacketReader();
 
@@ -46,7 +45,7 @@ public interface NativeProtocol extends Protocol {
      * 
      * @throws CJCommunicationsException
      */
-    Buffer readPacket(Buffer reuse);
+    PacketPayload readPacket(PacketPayload reuse);
 
     /**
      * Read one packet from the MySQL server, checks for errors in it, and if none,
@@ -57,6 +56,129 @@ public interface NativeProtocol extends Protocol {
      * @throws CJException
      *             is the packet is an error packet
      */
-    Buffer checkErrorPacket();
+    PacketPayload checkErrorPacket();
+
+    /**
+     * @param packet
+     * @param packetLen
+     *            length of header + payload
+     */
+    void send(PacketPayload packet, int packetLen);
+
+    /**
+     * Send a command to the MySQL server If data is to be sent with command,
+     * it should be put in extraData.
+     * 
+     * Raw packets can be sent by setting queryPacket to something other
+     * than null.
+     * 
+     * @param command
+     *            the MySQL protocol 'command' from MysqlDefs
+     * @param extraData
+     *            any 'string' data for the command
+     * @param queryPacket
+     *            a packet pre-loaded with data for the protocol (i.e.
+     *            from a client-side prepared statement).
+     * @param skipCheck
+     *            do not call checkErrorPacket() if true
+     * @param extraDataCharEncoding
+     *            the character encoding of the extraData
+     *            parameter.
+     * 
+     * @return the response packet from the server
+     * 
+     * @throws CJException
+     *             if an I/O error or SQL error occurs
+     */
+
+    PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis);
+
+    /**
+     * Basic protocol data types as they are defined in http://dev.mysql.com/doc/internals/en/integer.html
+     *
+     */
+    public enum IntegerDataType {
+
+        /**
+         * 1 byte Protocol::FixedLengthInteger
+         */
+        INT1,
+
+        /**
+         * 2 byte Protocol::FixedLengthInteger
+         */
+        INT2,
+
+        /**
+         * 3 byte Protocol::FixedLengthInteger
+         */
+        INT3,
+
+        /**
+         * 4 byte Protocol::FixedLengthInteger
+         */
+        INT4,
+
+        /**
+         * 6 byte Protocol::FixedLengthInteger
+         */
+        INT6,
+
+        /**
+         * 8 byte Protocol::FixedLengthInteger
+         */
+        INT8,
+
+        /**
+         * Length-Encoded Integer Type
+         */
+        INT_LENENC;
+    }
+
+    /**
+     * Basic protocol data types as they are defined in http://dev.mysql.com/doc/internals/en/string.html
+     * which require explicit length specification.
+     *
+     */
+    public static enum StringLengthDataType {
+
+        /**
+         * Protocol::FixedLengthString
+         * Fixed-length strings have a known, hardcoded length.
+         */
+        STRING_FIXED,
+
+        /**
+         * Protocol::VariableLengthString
+         * The length of the string is determined by another field or is calculated at runtime
+         */
+        STRING_VAR;
+    }
+
+    /**
+     * Basic self-describing protocol data types as they are defined in http://dev.mysql.com/doc/internals/en/string.html
+     *
+     */
+    public static enum StringSelfDataType {
+
+        /**
+         * Protocol::NulTerminatedString
+         * Strings that are terminated by a [00] byte.
+         */
+        STRING_TERM,
+
+        /**
+         * Protocol::LengthEncodedString
+         * A length encoded string is a string that is prefixed with length encoded integer describing the length of the string.
+         * It is a special case of Protocol::VariableLengthString
+         */
+        STRING_LENENC,
+
+        /**
+         * Protocol::RestOfPacketString
+         * If a string is the last component of a packet, its length can be calculated from the overall packet length minus the current position.
+         */
+        STRING_EOF;
+    }
 
 }
