@@ -60,6 +60,7 @@ import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -82,7 +83,6 @@ import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * A proxy to a set of MySQL servers managed by MySQL Fabric.
@@ -906,14 +906,14 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return getActiveConnection().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata, isBatch);
     }

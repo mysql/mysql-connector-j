@@ -28,13 +28,16 @@ import java.sql.SQLException;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * A ResultSetRow implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
@@ -43,7 +46,7 @@ import com.mysql.cj.mysqla.io.Buffer;
  * (this isn't possible when doing things like reading floating point values).
  */
 public class BufferRow extends ResultSetRow {
-    private Buffer rowFromServer;
+    private PacketPayload rowFromServer;
 
     /**
      * The beginning of the row packet
@@ -82,7 +85,7 @@ public class BufferRow extends ResultSetRow {
      */
     private boolean[] isNull;
 
-    public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder)
+    public BufferRow(PacketPayload buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder)
             throws SQLException {
         super(exceptionInterceptor);
 
@@ -130,7 +133,7 @@ public class BufferRow extends ResultSetRow {
             }
 
             for (int i = startingIndex; i < index; i++) {
-                this.rowFromServer.fastSkipLenByteArray();
+                skipLenencBytes(this.rowFromServer);
             }
 
             this.lastRequestedIndex = index;
@@ -183,7 +186,7 @@ public class BufferRow extends ResultSetRow {
             if (type != MysqlaConstants.FIELD_TYPE_NULL) {
                 int length = MysqlaUtils.getBinaryEncodedLength(this.metadata[i].getMysqlTypeId());
                 if (length == 0) {
-                    this.rowFromServer.fastSkipLenByteArray();
+                    skipLenencBytes(this.rowFromServer);
                 } else if (length == -1) {
                     throw SQLError
                             .createSQLException(
@@ -203,12 +206,19 @@ public class BufferRow extends ResultSetRow {
         return this.lastRequestedPos;
     }
 
+    private void skipLenencBytes(PacketPayload packet) {
+        long len = packet.readInteger(IntegerDataType.INT_LENENC);
+        if (len != PacketPayload.NULL_LENGTH && len != 0) {
+            packet.setPosition(packet.getPosition() + (int) len);
+        }
+    }
+
     @Override
     public byte[] getColumnValue(int index) throws SQLException {
         findAndSeekToOffset(index);
 
         if (!this.isBinaryEncoded) {
-            return this.rowFromServer.readLenByteArray(0);
+            return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
         }
 
         if (this.getNull(index)) {
@@ -222,12 +232,12 @@ public class BufferRow extends ResultSetRow {
                 return null;
 
             case MysqlaConstants.FIELD_TYPE_TINY:
-                return new byte[] { this.rowFromServer.readByte() };
+                return this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, 1);
 
             default:
                 int length = MysqlaUtils.getBinaryEncodedLength(type);
                 if (length == 0) {
-                    return this.rowFromServer.readLenByteArray(0);
+                    return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
                     throw SQLError
                             .createSQLException(
@@ -235,7 +245,7 @@ public class BufferRow extends ResultSetRow {
                                             + this.metadata.length + Messages.getString("MysqlIO.100"),
                                     SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
                 } else {
-                    return this.rowFromServer.getBytes(length);
+                    return this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, length);
                 }
         }
     }
@@ -245,7 +255,7 @@ public class BufferRow extends ResultSetRow {
         if (!this.isBinaryEncoded) {
             findAndSeekToOffset(index);
 
-            return this.rowFromServer.readFieldLength() == Buffer.NULL_LENGTH;
+            return this.rowFromServer.readInteger(IntegerDataType.INT_LENENC) == PacketPayload.NULL_LENGTH;
         }
 
         return this.isNull[index];
@@ -255,9 +265,9 @@ public class BufferRow extends ResultSetRow {
     public long length(int index) throws SQLException {
         findAndSeekToOffset(index);
 
-        long length = this.rowFromServer.readFieldLength();
+        long length = this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
 
-        if (length == Buffer.NULL_LENGTH) {
+        if (length == PacketPayload.NULL_LENGTH) {
             return 0;
         }
 
@@ -294,11 +304,7 @@ public class BufferRow extends ResultSetRow {
 
         int nullCount = (this.metadata.length + 9) / 8;
 
-        byte[] nullBitMask = new byte[nullCount];
-
-        for (int i = 0; i < nullCount; i++) {
-            nullBitMask[i] = this.rowFromServer.readByte();
-        }
+        byte[] nullBitMask = this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, nullCount);
 
         this.homePosition = this.rowFromServer.getPosition();
 
@@ -332,7 +338,7 @@ public class BufferRow extends ResultSetRow {
             int type = this.metadata[columnIndex].getMysqlTypeId();
             length = MysqlaUtils.getBinaryEncodedLength(type);
             if (length == 0) {
-                length = (int) this.rowFromServer.readFieldLength();
+                length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
             } else if (length == -1) {
                 throw SQLError
                         .createSQLException(
@@ -341,7 +347,7 @@ public class BufferRow extends ResultSetRow {
                                 SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } else {
-            length = (int) this.rowFromServer.readFieldLength();
+            length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
         }
         // MUST get offset after we read the length, i.e. don't reverse order of these two statements
         int offset = this.rowFromServer.getPosition();

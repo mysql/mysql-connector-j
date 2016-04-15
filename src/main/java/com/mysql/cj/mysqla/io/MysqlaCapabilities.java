@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,11 +24,15 @@
 package com.mysql.cj.mysqla.io;
 
 import com.mysql.cj.api.io.ServerCapabilities;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.ServerVersion;
 
 public class MysqlaCapabilities implements ServerCapabilities {
 
-    private Buffer initialHandshakePacket;
+    private PacketPayload initialHandshakePacket;
 
     private byte protocolVersion = 0;
     private ServerVersion serverVersion;
@@ -42,50 +46,50 @@ public class MysqlaCapabilities implements ServerCapabilities {
     public MysqlaCapabilities() {
     }
 
-    public Buffer getInitialHandshakePacket() {
+    public PacketPayload getInitialHandshakePacket() {
         return this.initialHandshakePacket;
     }
 
-    public void setInitialHandshakePacket(Buffer initialHandshakePacket) {
+    public void setInitialHandshakePacket(PacketPayload initialHandshakePacket) {
         this.initialHandshakePacket = initialHandshakePacket;
 
         // Get the protocol version
-        setProtocolVersion(initialHandshakePacket.readByte());
+        setProtocolVersion((byte) initialHandshakePacket.readInteger(IntegerDataType.INT1));
 
-        setServerVersion(ServerVersion.parseVersion(initialHandshakePacket.readString("ASCII")));
+        setServerVersion(ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII")));
 
         // read connection id
-        setThreadId(initialHandshakePacket.readLong());
+        setThreadId(initialHandshakePacket.readInteger(IntegerDataType.INT4));
 
         // read auth-plugin-data-part-1 (string[8])
-        setSeed(initialHandshakePacket.readString("ASCII", 8));
+        setSeed(initialHandshakePacket.readString(StringLengthDataType.STRING_FIXED, "ASCII", 8));
 
         // read filler ([00])
-        initialHandshakePacket.readByte();
+        initialHandshakePacket.readInteger(IntegerDataType.INT1);
 
         int flags = 0;
 
         // read capability flags (lower 2 bytes)
-        if (initialHandshakePacket.getPosition() < initialHandshakePacket.getBufLength()) {
-            flags = initialHandshakePacket.readInt();
+        if (initialHandshakePacket.getPosition() < initialHandshakePacket.getPayloadLength()) {
+            flags = (int) initialHandshakePacket.readInteger(IntegerDataType.INT2);
         }
 
         // read character set (1 byte)
-        setServerDefaultCollationIndex(initialHandshakePacket.readByte() & 0xff);
+        setServerDefaultCollationIndex((int) initialHandshakePacket.readInteger(IntegerDataType.INT1));
         // read status flags (2 bytes)
-        setStatusFlags(initialHandshakePacket.readInt());
+        setStatusFlags((int) initialHandshakePacket.readInteger(IntegerDataType.INT2));
 
         // read capability flags (upper 2 bytes)
-        flags |= initialHandshakePacket.readInt() << 16;
+        flags |= (int) initialHandshakePacket.readInteger(IntegerDataType.INT2) << 16;
 
         setCapabilityFlags(flags);
 
         if ((flags & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
             // read length of auth-plugin-data (1 byte)
-            this.authPluginDataLength = initialHandshakePacket.readByte() & 0xff;
+            this.authPluginDataLength = (int) initialHandshakePacket.readInteger(IntegerDataType.INT1);
         } else {
             // read filler ([00])
-            initialHandshakePacket.readByte();
+            initialHandshakePacket.readInteger(IntegerDataType.INT1);
         }
         // next 10 bytes are reserved (all [00])
         initialHandshakePacket.setPosition(initialHandshakePacket.getPosition() + 10);

@@ -26,7 +26,9 @@ package com.mysql.cj.mysqla.io;
 import java.io.IOException;
 import java.util.Optional;
 
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -50,16 +52,15 @@ public class MultiPacketReader implements PacketReader {
     }
 
     @Override
-    public Buffer readPayload(Optional<Buffer> reuse, int packetLength) throws IOException {
+    public PacketPayload readPayload(Optional<PacketPayload> reuse, int packetLength) throws IOException {
 
-        Buffer buf = this.packetReader.readPayload(reuse, packetLength);
+        PacketPayload buf = this.packetReader.readPayload(reuse, packetLength);
 
         if (packetLength == MysqlaConstants.MAX_PACKET_SIZE) { // it's a multi-packet
 
-            buf.setWasMultiPacket(true);
             buf.setPosition(MysqlaConstants.MAX_PACKET_SIZE);
 
-            Buffer multiPacket = null;
+            PacketPayload multiPacket = null;
             int multiPacketLength = -1;
             byte multiPacketSeq = getPacketSequence();
 
@@ -78,14 +79,11 @@ public class MultiPacketReader implements PacketReader {
 
                 this.packetReader.readPayload(Optional.of(multiPacket), multiPacketLength);
 
-                buf.writeBytesNoNull(multiPacket.getByteBuffer(), 0, multiPacketLength);
+                buf.writeBytes(StringLengthDataType.STRING_FIXED, multiPacket.getByteBuffer(), 0, multiPacketLength);
 
             } while (multiPacketLength == MysqlaConstants.MAX_PACKET_SIZE);
 
             buf.setPosition(0);
-
-        } else {
-            buf.setWasMultiPacket(false);
         }
 
         return buf;

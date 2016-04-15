@@ -28,6 +28,7 @@ import java.util.Optional;
 
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
@@ -79,9 +80,9 @@ public class SimplePacketReader implements PacketReader {
     }
 
     @Override
-    public Buffer readPayload(Optional<Buffer> reuse, int packetLength) throws IOException {
+    public PacketPayload readPayload(Optional<PacketPayload> reuse, int packetLength) throws IOException {
         try {
-            Buffer buf;
+            PacketPayload buf;
             if (reuse.isPresent()) {
                 buf = reuse.get();
                 // Set the Buffer to it's original state
@@ -94,7 +95,7 @@ public class SimplePacketReader implements PacketReader {
                 }
 
                 // Set the new length
-                buf.setBufLength(packetLength);
+                buf.setPayloadLength(packetLength);
             } else {
                 buf = new Buffer(new byte[packetLength]);
             }

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.mysql.cj.api.io.PacketReceivedTimeHolder;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 
@@ -48,8 +49,8 @@ public class TimeTrackingPacketReader implements PacketReader, PacketReceivedTim
     }
 
     @Override
-    public Buffer readPayload(Optional<Buffer> reuse, int packetLength) throws IOException {
-        Buffer buf = this.packetReader.readPayload(reuse, packetLength);
+    public PacketPayload readPayload(Optional<PacketPayload> reuse, int packetLength) throws IOException {
+        PacketPayload buf = this.packetReader.readPayload(reuse, packetLength);
         this.lastPacketReceivedTimeMs = System.currentTimeMillis();
         return buf;
     }

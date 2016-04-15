@@ -40,7 +40,6 @@ public class MessagesTest {
         assertEquals("Unable to load configuration template 'Test' due to underlying IOException",
                 Messages.getString("NonRegisteringDriver.40", new Object[] { "Test" }));
 
-        assertEquals("Unsupported character encoding 'Test'", Messages.getString("ByteArrayBuffer.1", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("Field.12", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("StringUtils.0", new Object[] { "Test" }));
 

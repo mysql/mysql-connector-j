@@ -23,62 +23,36 @@
 
 package com.mysql.cj.mysqla.io;
 
-import java.nio.ByteBuffer;
-
-import com.mysql.cj.api.io.PacketBuffer;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.mysqla.MysqlaConstants;
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
  */
-public class Buffer implements PacketBuffer {
-    static final int MAX_BYTES_TO_DUMP = 512;
+public class Buffer implements PacketPayload {
 
-    static final int NO_LENGTH_LIMIT = -1;
-
-    public static final long NULL_LENGTH = -1;
-
-    private int bufLength = 0;
+    private int payloadLength = 0;
 
     private byte[] byteBuffer;
 
     private int position = 0;
 
-    protected boolean wasMultiPacket = false;
+    static final int MAX_BYTES_TO_DUMP = 512;
 
-    /* Type ids of response packets. */
-    public static final short TYPE_ID_ERROR = 0xFF;
-    public static final short TYPE_ID_EOF = 0xFE;
-    /** It has the same signature as EOF, but may be issued by server only during handshake phase **/
-    public static final short TYPE_ID_AUTH_SWITCH = 0xFE;
-    public static final short TYPE_ID_LOCAL_INFILE = 0xFB;
-    public static final short TYPE_ID_OK = 0;
-
-    public Buffer(byte[] buf) {
-        this.byteBuffer = buf;
-        setBufLength(buf.length);
-    }
-
-    public Buffer(int size) {
-        this.byteBuffer = new byte[size];
-        setBufLength(this.byteBuffer.length);
-        this.position = MysqlaConstants.HEADER_LENGTH;
-    }
-
-    public final void clear() {
-        this.position = MysqlaConstants.HEADER_LENGTH;
-    }
-
-    final String dumpClampedBytes(int numBytes) {
+    @Override
+    public String toString() {
+        int numBytes = this.position <= this.payloadLength ? this.position : this.payloadLength;
         int numBytesToDump = numBytes < MAX_BYTES_TO_DUMP ? numBytes : MAX_BYTES_TO_DUMP;
 
-        String dumped = StringUtils.dumpAsHex(getBytes(0, numBytesToDump > getBufLength() ? getBufLength() : numBytesToDump),
-                numBytesToDump > getBufLength() ? getBufLength() : numBytesToDump);
+        this.position = 0;
+        String dumped = StringUtils.dumpAsHex(readBytes(StringLengthDataType.STRING_FIXED, numBytesToDump), numBytesToDump);
 
         if (numBytesToDump < numBytes) {
             return dumped + " ....(packet exceeds max. dump length)";
@@ -87,498 +61,369 @@ public class Buffer implements PacketBuffer {
         return dumped;
     }
 
-    public final void ensureCapacity(int additionalData) {
-        if ((this.position + additionalData) > getBufLength()) {
-            if ((this.position + additionalData) < this.byteBuffer.length) {
-                // byteBuffer.length is != getBufLength() all of the time due to re-using of packets (we don't shrink them)
-                //
-                // If we can, don't re-alloc, just set buffer length to size of current buffer
-                setBufLength(this.byteBuffer.length);
-            } else {
-                //
-                // Otherwise, re-size, and pad so we can avoid allocing again in the near future
-                //
-                int newLength = (int) (this.byteBuffer.length * 1.25);
-
-                if (newLength < (this.byteBuffer.length + additionalData)) {
-                    newLength = this.byteBuffer.length + (int) (additionalData * 1.25);
-                }
-
-                if (newLength < this.byteBuffer.length) {
-                    newLength = this.byteBuffer.length + additionalData;
-                }
-
-                byte[] newBytes = new byte[newLength];
-
-                System.arraycopy(this.byteBuffer, 0, newBytes, 0, this.byteBuffer.length);
-                this.byteBuffer = newBytes;
-                setBufLength(this.byteBuffer.length);
-            }
-        }
-    }
-
-    /**
-     * Skip over a length-encoded string
-     * 
-     * @return The position past the end of the string
-     */
-    public int fastSkipLenString() {
-        long len = this.readFieldLength();
-
-        this.position += len;
-
-        return (int) len;
-    }
-
-    public void fastSkipLenByteArray() {
-        long len = this.readFieldLength();
-
-        if (len == NULL_LENGTH || len == 0) {
-            return;
-        }
-
-        this.position += len;
-    }
-
-    protected final byte[] getBufferSource() {
-        return this.byteBuffer;
-    }
-
-    public int getBufLength() {
-        return this.bufLength;
-    }
-
-    public byte[] getByteBuffer() {
-        return this.byteBuffer;
-    }
-
-    public final byte[] getBytes(int len) {
-        byte[] b = new byte[len];
-        System.arraycopy(this.byteBuffer, this.position, b, 0, len);
-        this.position += len; // update cursor
-
-        return b;
-    }
-
-    public byte[] getBytes(int offset, int len) {
-        byte[] dest = new byte[len];
-        System.arraycopy(this.byteBuffer, offset, dest, 0, len);
-
-        return dest;
-    }
-
-    public int getCapacity() {
-        return this.byteBuffer.length;
-    }
-
-    public ByteBuffer getNioBuffer() {
-        throw new IllegalArgumentException(Messages.getString("ByteArrayBuffer.0"));
-    }
-
-    /**
-     * Returns the current position to write to/ read from
-     * 
-     * @return the current position to write to/ read from
-     */
-    public int getPosition() {
-        return this.position;
-    }
-
-    public final boolean isEOFPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getBufLength() <= 5);
-    }
-
-    public final boolean isAuthMethodSwitchRequestPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_SWITCH;
-    }
-
-    public final boolean isOKPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK;
-    }
-
-    public final boolean isResultSetOKPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getBufLength() < 16777215);
-    }
-
-    public final boolean isRawPacket() {
-        return ((this.byteBuffer[0] & 0xff) == 1);
-    }
-
-    public final long readLength() {
-        int sw = this.byteBuffer[this.position++] & 0xff;
-
-        switch (sw) {
-            case 251:
-                return 0;
-
-            case 252:
-                return readInt();
-
-            case 253:
-                return readLongInt();
-
-            case 254:
-                return readLongLong();
-
-            default:
-                return sw;
-        }
-    }
-
-    public final byte readByte() {
-        return this.byteBuffer[this.position++];
-    }
-
-    public final byte readByte(int readAt) {
-        return this.byteBuffer[readAt];
-    }
-
-    public final long readFieldLength() {
-        int sw = this.byteBuffer[this.position++] & 0xff;
-
-        switch (sw) {
-            case 251:
-                return NULL_LENGTH;
-
-            case 252:
-                return readInt();
-
-            case 253:
-                return readLongInt();
-
-            case 254:
-                return readLongLong();
-
-            default:
-                return sw;
-        }
-    }
-
-    public final int readInt() {
-        byte[] b = this.byteBuffer; // a little bit optimization
-
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8);
-    }
-
-    public final int readIntAsLong() {
-        byte[] b = this.byteBuffer;
-
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | ((b[this.position++] & 0xff) << 16) | ((b[this.position++] & 0xff) << 24);
-    }
-
-    public final byte[] readLenByteArray(int offset) {
-        long len = this.readFieldLength();
-
-        if (len == NULL_LENGTH) {
-            return null;
-        }
-
-        if (len == 0) {
-            return Constants.EMPTY_BYTE_ARRAY;
-        }
-
-        this.position += offset;
-
-        return getBytes((int) len);
-    }
-
-    public final long readLong() {
-        byte[] b = this.byteBuffer;
-
-        return ((long) b[this.position++] & 0xff) | (((long) b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
-                | ((long) (b[this.position++] & 0xff) << 24);
-    }
-
-    final int readLongInt() {
-        byte[] b = this.byteBuffer;
-
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | ((b[this.position++] & 0xff) << 16);
-    }
-
-    public final long readLongLong() {
-        byte[] b = this.byteBuffer;
-
-        return (b[this.position++] & 0xff) | ((long) (b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
-                | ((long) (b[this.position++] & 0xff) << 24) | ((long) (b[this.position++] & 0xff) << 32) | ((long) (b[this.position++] & 0xff) << 40)
-                | ((long) (b[this.position++] & 0xff) << 48) | ((long) (b[this.position++] & 0xff) << 56);
-    }
-
-    final int readnBytes() {
-        int sw = this.byteBuffer[this.position++] & 0xff;
-
-        switch (sw) {
-            case 1:
-                return this.byteBuffer[this.position++] & 0xff;
-
-            case 2:
-                return this.readInt();
-
-            case 3:
-                return this.readLongInt();
-
-            case 4:
-                return (int) this.readLong();
-
-            default:
-                return 255;
-        }
-    }
-
-    /**
-     * Read a null-terminated string
-     * 
-     * To avoid alloc'ing a new byte array, we do this by hand, rather than calling getNullTerminatedBytes()
-     * 
-     */
-    public final String readString() {
-        int i = this.position;
-        int len = 0;
-        int maxLen = getBufLength();
-
-        while ((i < maxLen) && (this.byteBuffer[i] != 0)) {
-            len++;
-            i++;
-        }
-
-        String s = StringUtils.toString(this.byteBuffer, this.position, len);
-        this.position += (len + 1); // update cursor
-
-        return s;
-    }
-
-    /**
-     * Read string[NUL]
-     * 
-     * @param encoding
-     * @param exceptionInterceptor
-     */
-    public final String readString(String encoding) {
-        int i = this.position;
-        int len = 0;
-        int maxLen = getBufLength();
-
-        while ((i < maxLen) && (this.byteBuffer[i] != 0)) {
-            len++;
-            i++;
-        }
-
-        try {
-            return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
-        } finally {
-            this.position += (len + 1); // update cursor
-        }
-    }
-
-    /**
-     * Read string[$len]
-     */
-    public final String readString(String encoding, int expectedLength) {
-        if (this.position + expectedLength > getBufLength()) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ByteArrayBuffer.2"));
-        }
-
-        try {
-            return StringUtils.toString(this.byteBuffer, this.position, expectedLength, encoding);
-        } finally {
-            this.position += expectedLength; // update cursor
-        }
-    }
-
-    public void setBufLength(int bufLengthToSet) {
-        this.bufLength = bufLengthToSet;
-    }
-
-    /**
-     * Sets the array of bytes to use as a buffer to read from.
-     * 
-     * @param byteBuffer
-     *            the array of bytes to use as a buffer
-     */
-    public void setByteBuffer(byte[] byteBufferToSet) {
-        this.byteBuffer = byteBufferToSet;
-    }
-
-    /**
-     * Set the current position to write to/ read from
-     * 
-     * @param position
-     *            the position (0-based index)
-     */
-    public void setPosition(int positionToSet) {
-        this.position = positionToSet;
-    }
-
-    /**
-     * Sets whether this packet was part of a multipacket
-     * 
-     * @param flag
-     *            was this packet part of a multipacket?
-     */
-    public void setWasMultiPacket(boolean flag) {
-        this.wasMultiPacket = flag;
-    }
-
-    @Override
-    public String toString() {
-        return dumpClampedBytes(getPosition());
-    }
-
     public String toSuperString() {
         return super.toString();
     }
 
-    /**
-     * Was this packet part of a multipacket?
-     * 
-     * @return was this packet part of a multipacket?
-     */
-    public boolean wasMultiPacket() {
-        return this.wasMultiPacket;
+    public Buffer(byte[] buf) {
+        this.byteBuffer = buf;
+        this.payloadLength = buf.length;
     }
 
-    public final void writeByte(byte b) {
-        ensureCapacity(1);
-
-        this.byteBuffer[this.position++] = b;
+    public Buffer(int size) {
+        this.byteBuffer = new byte[size];
+        this.payloadLength = size;
     }
 
-    // Write a byte array
-    public final void writeBytesNoNull(byte[] bytes) {
-        int len = bytes.length;
-        ensureCapacity(len);
-        System.arraycopy(bytes, 0, this.byteBuffer, this.position, len);
-        this.position += len;
+    @Override
+    public int getCapacity() {
+        return this.byteBuffer.length;
     }
 
-    // Write a byte array with the given offset and length
-    public final void writeBytesNoNull(byte[] bytes, int offset, int length) {
-        ensureCapacity(length);
-        System.arraycopy(bytes, offset, this.byteBuffer, this.position, length);
-        this.position += length;
-    }
+    @Override
+    public final void ensureCapacity(int additionalData) {
+        if ((this.position + additionalData) > this.byteBuffer.length) {
+            //
+            // Resize, and pad so we can avoid allocing again in the near future
+            //
+            int newLength = (int) (this.byteBuffer.length * 1.25);
 
-    public final void writeDouble(double d) {
-        long l = Double.doubleToLongBits(d);
-        writeLongLong(l);
-    }
+            if (newLength < (this.byteBuffer.length + additionalData)) {
+                newLength = this.byteBuffer.length + (int) (additionalData * 1.25);
+            }
 
-    final void writeFieldLength(long length) {
-        if (length < 251) {
-            writeByte((byte) length);
-        } else if (length < 65536L) {
-            ensureCapacity(3);
-            writeByte((byte) 252);
-            writeInt((int) length);
-        } else if (length < 16777216L) {
-            ensureCapacity(4);
-            writeByte((byte) 253);
-            writeLongInt((int) length);
-        } else {
-            ensureCapacity(9);
-            writeByte((byte) 254);
-            writeLongLong(length);
+            if (newLength < this.byteBuffer.length) {
+                newLength = this.byteBuffer.length + additionalData;
+            }
+
+            byte[] newBytes = new byte[newLength];
+
+            System.arraycopy(this.byteBuffer, 0, newBytes, 0, this.byteBuffer.length);
+            this.byteBuffer = newBytes;
         }
     }
 
-    public final void writeFloat(float f) {
-        ensureCapacity(4);
+    @Override
+    public byte[] getByteBuffer() {
+        return this.byteBuffer;
+    }
 
-        int i = Float.floatToIntBits(f);
+    @Override
+    public void setByteBuffer(byte[] byteBufferToSet) {
+        this.byteBuffer = byteBufferToSet;
+    }
+
+    @Override
+    public int getPayloadLength() {
+        return this.payloadLength;
+    }
+
+    @Override
+    public void setPayloadLength(int bufLengthToSet) {
+        if (bufLengthToSet > this.byteBuffer.length) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Buffer.0"));
+        }
+        this.payloadLength = bufLengthToSet;
+    }
+
+    /**
+     * To be called after write operations to ensure that payloadLength contains
+     * the real size of written data.
+     */
+    private void adjustPayloadLength() {
+        if (this.position > this.payloadLength) {
+            this.payloadLength = this.position;
+        }
+    }
+
+    @Override
+    public int getPosition() {
+        return this.position;
+    }
+
+    @Override
+    public void setPosition(int positionToSet) {
+        this.position = positionToSet;
+    }
+
+    @Override
+    public final boolean isEOFPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() <= 5);
+    }
+
+    @Override
+    public final boolean isAuthMethodSwitchRequestPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_SWITCH;
+    }
+
+    @Override
+    public final boolean isOKPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK;
+    }
+
+    @Override
+    public final boolean isResultSetOKPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() < 16777215);
+    }
+
+    @Override
+    public final boolean isAuthMoreData() {
+        return ((this.byteBuffer[0] & 0xff) == 1);
+    }
+
+    @Override
+    public void writeInteger(IntegerDataType type, long l) {
+        byte[] b;
+        switch (type) {
+            case INT1:
+                ensureCapacity(1);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                break;
+
+            case INT2:
+                ensureCapacity(2);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                b[this.position++] = (byte) (l >>> 8);
+                break;
+
+            case INT3:
+                ensureCapacity(3);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                b[this.position++] = (byte) (l >>> 8);
+                b[this.position++] = (byte) (l >>> 16);
+                break;
+
+            case INT4:
+                ensureCapacity(4);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                b[this.position++] = (byte) (l >>> 8);
+                b[this.position++] = (byte) (l >>> 16);
+                b[this.position++] = (byte) (l >>> 24);
+                break;
+
+            case INT6:
+                ensureCapacity(6);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                b[this.position++] = (byte) (l >>> 8);
+                b[this.position++] = (byte) (l >>> 16);
+                b[this.position++] = (byte) (l >>> 24);
+                b[this.position++] = (byte) (l >>> 32);
+                b[this.position++] = (byte) (l >>> 40);
+                break;
+
+            case INT8:
+                ensureCapacity(8);
+                b = this.byteBuffer;
+                b[this.position++] = (byte) (l & 0xff);
+                b[this.position++] = (byte) (l >>> 8);
+                b[this.position++] = (byte) (l >>> 16);
+                b[this.position++] = (byte) (l >>> 24);
+                b[this.position++] = (byte) (l >>> 32);
+                b[this.position++] = (byte) (l >>> 40);
+                b[this.position++] = (byte) (l >>> 48);
+                b[this.position++] = (byte) (l >>> 56);
+                break;
+
+            case INT_LENENC:
+                if (l < 251) {
+                    ensureCapacity(1);
+                    writeInteger(IntegerDataType.INT1, l);
+
+                } else if (l < 65536L) {
+                    ensureCapacity(3);
+                    writeInteger(IntegerDataType.INT1, 252);
+                    writeInteger(IntegerDataType.INT2, l);
+
+                } else if (l < 16777216L) {
+                    ensureCapacity(4);
+                    writeInteger(IntegerDataType.INT1, 253);
+                    writeInteger(IntegerDataType.INT3, l);
+
+                } else {
+                    ensureCapacity(9);
+                    writeInteger(IntegerDataType.INT1, 254);
+                    writeInteger(IntegerDataType.INT8, l);
+                }
+        }
+
+        adjustPayloadLength();
+    }
+
+    @Override
+    public final long readInteger(IntegerDataType type) {
         byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
-        b[this.position++] = (byte) (i >>> 24);
+        switch (type) {
+            case INT1:
+                return (b[this.position++] & 0xff);
+
+            case INT2:
+                return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8);
+
+            case INT3:
+                return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | ((b[this.position++] & 0xff) << 16);
+
+            case INT4:
+                return ((long) b[this.position++] & 0xff) | (((long) b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
+                        | ((long) (b[this.position++] & 0xff) << 24);
+
+            case INT6:
+                return (b[this.position++] & 0xff) | ((long) (b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
+                        | ((long) (b[this.position++] & 0xff) << 24) | ((long) (b[this.position++] & 0xff) << 32) | ((long) (b[this.position++] & 0xff) << 40);
+
+            case INT8:
+                return (b[this.position++] & 0xff) | ((long) (b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
+                        | ((long) (b[this.position++] & 0xff) << 24) | ((long) (b[this.position++] & 0xff) << 32) | ((long) (b[this.position++] & 0xff) << 40)
+                        | ((long) (b[this.position++] & 0xff) << 48) | ((long) (b[this.position++] & 0xff) << 56);
+
+            case INT_LENENC:
+                int sw = b[this.position++] & 0xff;
+                switch (sw) {
+                    case 251:
+                        return NULL_LENGTH; // represents a NULL in a ProtocolText::ResultsetRow
+                    case 252:
+                        return readInteger(IntegerDataType.INT2);
+                    case 253:
+                        return readInteger(IntegerDataType.INT3);
+                    case 254:
+                        return readInteger(IntegerDataType.INT8);
+                    default:
+                        return sw;
+                }
+
+            default:
+                return (b[this.position++] & 0xff);
+        }
     }
 
-    public final void writeInt(int i) {
-        ensureCapacity(2);
-
-        byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
+    @Override
+    public final void writeBytes(StringSelfDataType type, byte[] b) {
+        writeBytes(type, b, 0, b.length);
     }
 
-    // Write a String using the specified character encoding
-    public final void writeLenBytes(byte[] b) {
-        int len = b.length;
-        ensureCapacity(len + 9);
-        writeFieldLength(len);
-        System.arraycopy(b, 0, this.byteBuffer, this.position, len);
-        this.position += len;
+    @Override
+    public final void writeBytes(StringLengthDataType type, byte[] b) {
+        writeBytes(type, b, 0, b.length);
     }
 
-    // Write a String using the specified character encoding
-    public final void writeLenString(String s, String encoding) {
-        byte[] b = StringUtils.getBytes(s, encoding);
-        int len = b.length;
-        ensureCapacity(len + 9);
-        writeFieldLength(len);
-        System.arraycopy(b, 0, this.byteBuffer, this.position, len);
-        this.position += len;
+    @Override
+    public void writeBytes(StringSelfDataType type, byte[] b, int offset, int len) {
+        switch (type) {
+            case STRING_EOF:
+                writeBytes(StringLengthDataType.STRING_FIXED, b, offset, len);
+                break;
+
+            case STRING_TERM:
+                ensureCapacity(len + 1);
+                writeBytes(StringLengthDataType.STRING_FIXED, b, offset, len);
+                this.byteBuffer[this.position++] = 0;
+                break;
+
+            case STRING_LENENC:
+                ensureCapacity(len + 9);
+                writeInteger(IntegerDataType.INT_LENENC, len);
+                writeBytes(StringLengthDataType.STRING_FIXED, b, offset, len);
+                break;
+        }
+
+        adjustPayloadLength();
     }
 
-    public final void writeLong(long i) {
-        ensureCapacity(4);
+    @Override
+    public void writeBytes(StringLengthDataType type, byte[] b, int offset, int len) {
+        switch (type) {
+            case STRING_FIXED:
+            case STRING_VAR:
+                ensureCapacity(len);
+                System.arraycopy(b, offset, this.byteBuffer, this.position, len);
+                this.position += len;
+                break;
+        }
 
-        byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
-        b[this.position++] = (byte) (i >>> 24);
+        adjustPayloadLength();
     }
 
-    public final void writeLongInt(int i) {
-        ensureCapacity(3);
-        byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
+    @Override
+    public byte[] readBytes(StringSelfDataType type) {
+        byte[] b;
+        switch (type) {
+            case STRING_TERM:
+                int i = this.position;
+                while ((i < this.payloadLength) && (this.byteBuffer[i] != 0)) {
+                    i++;
+                }
+                b = readBytes(StringLengthDataType.STRING_FIXED, i - this.position);
+                this.position++; // skip terminating byte
+                return b;
+
+            case STRING_LENENC:
+                long l = readInteger(IntegerDataType.INT_LENENC);
+                return l == NULL_LENGTH ? null : (l == 0 ? Constants.EMPTY_BYTE_ARRAY : readBytes(StringLengthDataType.STRING_FIXED, (int) l));
+
+            case STRING_EOF:
+                return readBytes(StringLengthDataType.STRING_FIXED, this.payloadLength - this.position);
+        }
+        return null;
     }
 
-    public final void writeLongLong(long i) {
-        ensureCapacity(8);
-        byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
-        b[this.position++] = (byte) (i >>> 24);
-        b[this.position++] = (byte) (i >>> 32);
-        b[this.position++] = (byte) (i >>> 40);
-        b[this.position++] = (byte) (i >>> 48);
-        b[this.position++] = (byte) (i >>> 56);
+    @Override
+    public byte[] readBytes(StringLengthDataType type, int len) {
+        byte[] b;
+        switch (type) {
+            case STRING_FIXED:
+            case STRING_VAR:
+                b = new byte[len];
+                System.arraycopy(this.byteBuffer, this.position, b, 0, len);
+                this.position += len;
+                return b;
+        }
+        return null;
     }
 
-    // Write null-terminated string
-    final void writeString(String s) {
-        ensureCapacity((s.length() * 3) + 1);
-        writeStringNoNull(s);
-        this.byteBuffer[this.position++] = 0;
+    @Override
+    public String readString(StringSelfDataType type, String encoding) {
+        String res = null;
+        switch (type) {
+            case STRING_TERM:
+                int i = this.position;
+                while ((i < this.payloadLength) && (this.byteBuffer[i] != 0)) {
+                    i++;
+                }
+                res = readString(StringLengthDataType.STRING_FIXED, encoding, i - this.position);
+                this.position++; // skip terminating byte
+                break;
+
+            case STRING_LENENC:
+                long l = readInteger(IntegerDataType.INT_LENENC);
+                return l == NULL_LENGTH ? null : (l == 0 ? "" : readString(StringLengthDataType.STRING_FIXED, encoding, (int) l));
+
+            case STRING_EOF:
+                return readString(StringLengthDataType.STRING_FIXED, encoding, this.payloadLength - this.position);
+
+        }
+        return res;
     }
 
-    //	 Write null-terminated string in the given encoding
-    public final void writeString(String s, String encoding) {
-        ensureCapacity((s.length() * 3) + 1);
-        writeStringNoNull(s, encoding);
-        this.byteBuffer[this.position++] = 0;
-    }
+    @Override
+    public String readString(StringLengthDataType type, String encoding, int len) {
+        String res = null;
+        switch (type) {
+            case STRING_FIXED:
+            case STRING_VAR:
+                if ((this.position + len) > this.payloadLength) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Buffer.1"));
+                }
 
-    // Write string, with no termination
-    public final void writeStringNoNull(String s) {
-        int len = s.length();
-        ensureCapacity(len * 3);
-        System.arraycopy(StringUtils.getBytes(s), 0, this.byteBuffer, this.position, len);
-        this.position += len;
-    }
+                res = StringUtils.toString(this.byteBuffer, this.position, len, encoding);
+                this.position += len;
+                break;
 
-    // Write a String using the specified character encoding
-    public final void writeStringNoNull(String s, String encoding) {
-        byte[] b = StringUtils.getBytes(s, encoding);
-
-        int len = b.length;
-        ensureCapacity(len);
-        System.arraycopy(b, 0, this.byteBuffer, this.position, len);
-        this.position += len;
+        }
+        return res;
     }
 
 }

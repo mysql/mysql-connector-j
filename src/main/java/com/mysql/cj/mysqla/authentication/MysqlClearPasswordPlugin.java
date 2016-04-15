@@ -25,9 +25,10 @@ package com.mysql.cj.mysqla.authentication;
 
 import java.util.List;
 
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -64,18 +65,14 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+    public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
         toServer.clear();
 
         String encoding = this.protocol.versionMeetsMinimum(5, 7, 6) ? this.protocol.getPasswordCharacterEncoding() : "UTF-8";
-        Buffer bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
+        PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
 
-        bresp.setPosition(bresp.getBufLength());
-        int oldBufLength = bresp.getBufLength();
-
-        bresp.writeByte((byte) 0);
-
-        bresp.setBufLength(oldBufLength + 1);
+        bresp.setPosition(bresp.getPayloadLength());
+        bresp.writeInteger(IntegerDataType.INT1, 0);
         bresp.setPosition(0);
 
         toServer.add(bresp);

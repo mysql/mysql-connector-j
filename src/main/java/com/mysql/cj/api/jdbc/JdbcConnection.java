@@ -29,13 +29,13 @@ import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Connection.
@@ -350,10 +350,10 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     JdbcConnection duplicate() throws SQLException;
 
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException;
 
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException;
 
     StringBuilder generateConnectionCommentBlock(StringBuilder buf);

@@ -45,7 +45,11 @@ import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -86,7 +90,7 @@ public class MysqlIO implements ResultsHandler {
     //
     // We use a SoftReference, so that we don't penalize intermittent use of this feature
     //
-    private SoftReference<Buffer> loadFileBufRef;
+    private SoftReference<PacketPayload> loadFileBufRef;
 
     private MysqlaProtocol protocol;
     private PropertySet propertySet;
@@ -139,7 +143,7 @@ public class MysqlIO implements ResultsHandler {
      */
     protected ResultSetImpl getResultSet(StatementImpl callingStatement, long columnCount, int maxRows, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, boolean isBinaryEncoded, Field[] metadataFromCache) throws SQLException {
-        Buffer packet; // The packet from the server
+        PacketPayload packet; // The packet from the server
         Field[] fields = null;
 
         // Read in the column information
@@ -148,7 +152,7 @@ public class MysqlIO implements ResultsHandler {
             fields = new Field[(int) columnCount];
 
             for (int i = 0; i < columnCount; i++) {
-                Buffer fieldPacket = this.protocol.readPacket(null);
+                PacketPayload fieldPacket = this.protocol.readPacket(null);
 
                 fields[i] = unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
             }
@@ -223,56 +227,44 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @return the unpacked field
      */
-    protected Field unpackField(Buffer packet, String characterSetMetadata) {
-        // catalog name
-        packet.fastSkipLenString();
-
+    protected Field unpackField(PacketPayload packet, String characterSetMetadata) {
         int offset, length;
 
-        offset = packet.getPosition() + 1;
-        length = packet.fastSkipLenString();
-        offset = adjustStartForFieldLength(offset, length);
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        packet.setPosition(packet.getPosition() + length); // skip catalog name
+
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        offset = packet.getPosition();
         LazyString databaseName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        packet.setPosition(packet.getPosition() + length);
 
-        offset = packet.getPosition() + 1;
-        length = packet.fastSkipLenString();
-        offset = adjustStartForFieldLength(offset, length);
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        offset = packet.getPosition();
         LazyString tableName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        packet.setPosition(packet.getPosition() + length);
 
-        offset = packet.getPosition() + 1;
-        length = packet.fastSkipLenString();
-        offset = adjustStartForFieldLength(offset, length);
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        offset = packet.getPosition();
         LazyString originalTableName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        packet.setPosition(packet.getPosition() + length);
 
-        offset = packet.getPosition() + 1;
-        length = packet.fastSkipLenString();
-        offset = adjustStartForFieldLength(offset, length);
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        offset = packet.getPosition();
         LazyString columnName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        packet.setPosition(packet.getPosition() + length);
 
-        offset = packet.getPosition() + 1;
-        length = packet.fastSkipLenString();
-        offset = adjustStartForFieldLength(offset, length);
+        length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
+        offset = packet.getPosition();
         LazyString originalColumnName = new LazyString(packet.getByteBuffer(), offset, length, characterSetMetadata);
+        packet.setPosition(packet.getPosition() + length);
 
-        packet.readByte();
+        packet.readInteger(IntegerDataType.INT1);
 
-        short collationIndex = (short) packet.readInt();
-
-        long colLength = 0;
-
-        colLength = packet.readLong();
-
-        int colType = packet.readByte() & 0xff;
-
-        short colFlag = 0;
-
-        if (this.protocol.getServerSession().hasLongColumnInfo()) {
-            colFlag = (short) packet.readInt();
-        } else {
-            colFlag = (short) (packet.readByte() & 0xff);
-        }
-
-        int colDecimals = packet.readByte() & 0xff;
+        short collationIndex = (short) packet.readInteger(IntegerDataType.INT2);
+        long colLength = packet.readInteger(IntegerDataType.INT4);
+        int colType = (int) packet.readInteger(IntegerDataType.INT1);
+        short colFlag = (short) packet.readInteger(this.protocol.getServerSession().hasLongColumnInfo() ? IntegerDataType.INT2 : IntegerDataType.INT1);
+        int colDecimals = (int) packet.readInteger(IntegerDataType.INT1);
 
         String encoding = this.protocol.getServerSession().getEncodingForIndex(collationIndex);
 
@@ -281,22 +273,6 @@ public class MysqlIO implements ResultsHandler {
 
         return new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag, colDecimals, collationIndex,
                 encoding, mysqlType);
-    }
-
-    private static int adjustStartForFieldLength(int nameStart, int nameLength) {
-        if (nameLength < 251) {
-            return nameStart;
-        }
-
-        if (nameLength >= 251 && nameLength < 65536) {
-            return nameStart + 2;
-        }
-
-        if (nameLength >= 65536 && nameLength < 16777216) {
-            return nameStart + 3;
-        }
-
-        return nameStart + 8;
     }
 
     protected boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
@@ -342,7 +318,7 @@ public class MysqlIO implements ResultsHandler {
         boolean useBufferRow = canReuseRowPacketForBufferRow || forceBufferRow(fields);
 
         // use nextRowFast() if necessary/possible, otherwise read the entire packet
-        Buffer rowPacket = null;
+        PacketPayload rowPacket = null;
         try {
             PacketHeader hdr = this.protocol.getPacketReader().readHeader();
             int packetLength = hdr.getPacketLength();
@@ -380,14 +356,14 @@ public class MysqlIO implements ResultsHandler {
                 byte[][] rowData = new byte[columnCount][];
 
                 for (int i = 0; i < columnCount; i++) {
-                    rowData[i] = rowPacket.readLenByteArray(0);
+                    rowData[i] = rowPacket.readBytes(StringSelfDataType.STRING_LENENC);
                 }
 
                 return new ByteArrayRow(rowData, this.protocol.getExceptionInterceptor());
             }
 
             if (!canReuseRowPacketForBufferRow) {
-                this.protocol.setReusablePacket(new Buffer(rowPacket.getBufLength()));
+                this.protocol.setReusablePacket(new Buffer(rowPacket.getPayloadLength()));
             }
 
             return new BufferRow(rowPacket, fields, false, this.protocol.getExceptionInterceptor(), new MysqlTextValueDecoder());
@@ -402,7 +378,7 @@ public class MysqlIO implements ResultsHandler {
         }
 
         if (!canReuseRowPacketForBufferRow) {
-            this.protocol.setReusablePacket(new Buffer(rowPacket.getBufLength()));
+            this.protocol.setReusablePacket(new Buffer(rowPacket.getPayloadLength()));
         }
 
         return new BufferRow(rowPacket, fields, true, this.protocol.getExceptionInterceptor(), new MysqlBinaryValueDecoder());
@@ -428,22 +404,16 @@ public class MysqlIO implements ResultsHandler {
             remaining--;
 
             if (firstTime) {
-                if (sw == Buffer.TYPE_ID_ERROR) {
+                if (sw == PacketPayload.TYPE_ID_ERROR) {
                     // error packet - we assemble it whole for "fidelity" in case we ever need an entire packet in checkErrorPacket() but we could've gotten
                     // away with just writing the error code and message in it (for now).
-                    Buffer errorPacket = new Buffer(packetLength + MysqlaConstants.HEADER_LENGTH);
-                    errorPacket.setPosition(0);
-                    errorPacket.writeByte(header.getBuffer()[0]);
-                    errorPacket.writeByte(header.getBuffer()[1]);
-                    errorPacket.writeByte(header.getBuffer()[2]);
-                    errorPacket.writeByte((byte) 1);
-                    errorPacket.writeByte((byte) sw);
-                    mysqlInput.readFully(errorPacket.getByteBuffer(), 5, packetLength - 1);
-                    errorPacket.setPosition(4);
+                    PacketPayload errorPacket = new Buffer(packetLength);
+                    errorPacket.writeInteger(IntegerDataType.INT1, sw);
+                    mysqlInput.readFully(errorPacket.getByteBuffer(), 1, packetLength - 1);
                     this.protocol.checkErrorPacket(errorPacket);
                 }
 
-                if (sw == Buffer.TYPE_ID_EOF && packetLength < 16777215) {
+                if (sw == PacketPayload.TYPE_ID_EOF && packetLength < 16777215) {
                     // Both EOF and OK packets have the same 0xfe signature in result sets.
 
                     // OK packet length limit restricted to MAX_PACKET_LENGTH value (256L*256L*256L-1) as any length greater
@@ -566,7 +536,7 @@ public class MysqlIO implements ResultsHandler {
 
                 firstTime = false;
 
-                Buffer fieldPacket = this.protocol.checkErrorPacket();
+                PacketPayload fieldPacket = this.protocol.checkErrorPacket();
                 fieldPacket.setPosition(0);
 
                 java.sql.Statement owningStatement = addingTo.getStatement();
@@ -597,7 +567,7 @@ public class MysqlIO implements ResultsHandler {
     }
 
     public ResultSetImpl readAllResults(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults,
-            String catalog, Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache) throws SQLException {
+            String catalog, PacketPayload resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache) throws SQLException {
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
         ResultSetImpl topLevelResultSet = readResultsForQueryOrUpdate(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
@@ -629,7 +599,7 @@ public class MysqlIO implements ResultsHandler {
         boolean moreRowSetsExist = checkForMoreResults & serverHasMoreResults;
 
         while (moreRowSetsExist) {
-            Buffer fieldPacket = this.protocol.checkErrorPacket();
+            PacketPayload fieldPacket = this.protocol.checkErrorPacket();
             fieldPacket.setPosition(0);
 
             ResultSetImpl newResultSet = readResultsForQueryOrUpdate(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
@@ -682,24 +652,24 @@ public class MysqlIO implements ResultsHandler {
      *             if an error occurs while reading the rows
      */
     protected final ResultSetImpl readResultsForQueryOrUpdate(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache)
+            boolean streamResults, String catalog, PacketPayload resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache)
                     throws SQLException {
-        long columnCount = resultPacket.readFieldLength();
+        long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
 
         if (columnCount == 0) {
             return buildResultSetWithUpdates(callingStatement, resultPacket);
-        } else if (columnCount == Buffer.NULL_LENGTH) {
+        } else if (columnCount == PacketPayload.NULL_LENGTH) {
             String charEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
             String fileName = null;
 
             if (this.protocol.doesPlatformDbCharsetMatches()) {
                 try {
-                    fileName = ((charEncoding != null) ? resultPacket.readString(charEncoding) : resultPacket.readString());
+                    fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, charEncoding);
                 } catch (CJException e) {
                     throw SQLExceptionsMapping.translateException(e, this.protocol.getExceptionInterceptor());
                 }
             } else {
-                fileName = resultPacket.readString();
+                fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, null);
             }
 
             return sendFileToServer(callingStatement, fileName);
@@ -740,21 +710,21 @@ public class MysqlIO implements ResultsHandler {
         return rs;
     }
 
-    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithUpdates(StatementImpl callingStatement, Buffer resultPacket) throws SQLException {
+    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithUpdates(StatementImpl callingStatement, PacketPayload resultPacket) throws SQLException {
         long updateCount = -1;
         long updateID = -1;
         String info = null;
 
         try {
-            updateCount = resultPacket.readLength();
-            updateID = resultPacket.readLength();
+            updateCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
+            updateID = resultPacket.readInteger(IntegerDataType.INT_LENENC);
 
             // oldStatus set in sendCommand()
-            this.protocol.getServerSession().setStatusFlags(resultPacket.readInt());
+            this.protocol.getServerSession().setStatusFlags((int) resultPacket.readInteger(IntegerDataType.INT2));
 
             this.protocol.checkTransactionState();
 
-            this.protocol.setWarningCount(resultPacket.readInt());
+            this.protocol.setWarningCount((int) resultPacket.readInteger(IntegerDataType.INT2));
 
             if (this.protocol.getWarningCount() > 0) {
                 this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
@@ -763,7 +733,7 @@ public class MysqlIO implements ResultsHandler {
             this.protocol.setServerSlowQueryFlags();
 
             if (this.connection.isReadInfoMsgEnabled()) {
-                info = resultPacket.readString(this.protocol.getServerSession().getErrorMessageEncoding());
+                info = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.getServerSession().getErrorMessageEncoding());
             }
         } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
@@ -780,34 +750,34 @@ public class MysqlIO implements ResultsHandler {
         return (com.mysql.cj.jdbc.ResultSetImpl) updateRs;
     }
 
-    private final void readServerStatusForResultSets(Buffer rowPacket) throws SQLException {
-        rowPacket.readByte(); // skips the 'last packet' flag
+    private final void readServerStatusForResultSets(PacketPayload rowPacket) throws SQLException {
+        rowPacket.readInteger(IntegerDataType.INT1); // skips the 'last packet' flag
 
         if (isEOFDeprecated()) {
             // read OK packet
-            rowPacket.readLength(); // affected_rows
-            rowPacket.readLength(); // last_insert_id
+            rowPacket.readInteger(IntegerDataType.INT_LENENC); // affected_rows
+            rowPacket.readInteger(IntegerDataType.INT_LENENC); // last_insert_id
 
-            this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
+            this.protocol.getServerSession().setStatusFlags((int) rowPacket.readInteger(IntegerDataType.INT2), true);
             this.protocol.checkTransactionState();
 
-            this.protocol.setWarningCount(rowPacket.readInt());
+            this.protocol.setWarningCount((int) rowPacket.readInteger(IntegerDataType.INT2));
             if (this.protocol.getWarningCount() > 0) {
                 this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
             }
 
             if (this.connection.isReadInfoMsgEnabled()) {
-                rowPacket.readString(this.protocol.getServerSession().getErrorMessageEncoding()); // info
+                rowPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.getServerSession().getErrorMessageEncoding()); // info
             }
 
         } else {
             // read EOF packet
-            this.protocol.setWarningCount(rowPacket.readInt());
+            this.protocol.setWarningCount((int) rowPacket.readInteger(IntegerDataType.INT2));
             if (this.protocol.getWarningCount() > 0) {
                 this.protocol.setHadWarnings(true); // this is a 'latch', it's reset by sendCommand()
             }
 
-            this.protocol.getServerSession().setStatusFlags(rowPacket.readInt(), true);
+            this.protocol.getServerSession().setStatusFlags((int) rowPacket.readInteger(IntegerDataType.INT2), true);
             this.protocol.checkTransactionState();
 
         }
@@ -881,7 +851,7 @@ public class MysqlIO implements ResultsHandler {
      */
     private final ResultSetImpl sendFileToServer(StatementImpl callingStatement, String fileName) throws SQLException {
 
-        Buffer filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
+        PacketPayload filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
         int maxAllowedPacket = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxAllowedPacket).getValue();
         int bigPacketLength = Math.min(maxAllowedPacket - (MysqlaConstants.HEADER_LENGTH * 3),
@@ -897,8 +867,7 @@ public class MysqlIO implements ResultsHandler {
         if (filePacket == null) {
             try {
                 filePacket = new Buffer(packetLength);
-                filePacket.setPosition(0);
-                this.loadFileBufRef = new SoftReference<Buffer>(filePacket);
+                this.loadFileBufRef = new SoftReference<PacketPayload>(filePacket);
             } catch (OutOfMemoryError oom) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
                         this.protocol.getExceptionInterceptor());
@@ -947,7 +916,7 @@ public class MysqlIO implements ResultsHandler {
 
             while ((bytesRead = fileIn.read(fileBuf)) != -1) {
                 filePacket.setPosition(0);
-                filePacket.writeBytesNoNull(fileBuf, 0, bytesRead);
+                filePacket.writeBytes(StringLengthDataType.STRING_FIXED, fileBuf, 0, bytesRead);
                 this.protocol.send(filePacket, filePacket.getPosition());
             }
         } catch (IOException ioEx) {
@@ -992,7 +961,7 @@ public class MysqlIO implements ResultsHandler {
         filePacket.setPosition(0);
         this.protocol.send(filePacket, filePacket.getPosition());
 
-        Buffer resultPacket = this.protocol.checkErrorPacket();
+        PacketPayload resultPacket = this.protocol.checkErrorPacket();
 
         return buildResultSetWithUpdates(callingStatement, resultPacket);
     }
@@ -1008,7 +977,7 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @throws SQLException
      */
-    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, Buffer binaryData, int resultSetConcurrency) throws SQLException {
+    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, PacketPayload binaryData, int resultSetConcurrency) throws SQLException {
         int numFields = fields.length;
 
         byte[][] unpackedRowData = new byte[numFields][];
@@ -1022,8 +991,9 @@ public class MysqlIO implements ResultsHandler {
         binaryData.setPosition(nullMaskPos + nullCount);
         int bit = 4; // first two bits are reserved for future use
 
+        byte[] buf = binaryData.getByteBuffer();
         for (int i = 0; i < numFields; i++) {
-            if ((binaryData.readByte(nullMaskPos) & bit) != 0) {
+            if ((buf[nullMaskPos] & bit) != 0) {
                 unpackedRowData[i] = null;
             } else {
                 extractNativeEncodedColumn(binaryData, fields, i, unpackedRowData);
@@ -1047,7 +1017,7 @@ public class MysqlIO implements ResultsHandler {
      * @param unpackedRowData
      *            byte array.
      */
-    private final void extractNativeEncodedColumn(Buffer binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
+    private final void extractNativeEncodedColumn(PacketPayload binaryData, Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
         int type = fields[columnIndex].getMysqlTypeId();
 
         int len = MysqlaUtils.getBinaryEncodedLength(type);
@@ -1055,9 +1025,9 @@ public class MysqlIO implements ResultsHandler {
         if (type == MysqlaConstants.FIELD_TYPE_NULL) {
             // Do nothing
         } else if (len == 0) {
-            unpackedRowData[columnIndex] = binaryData.readLenByteArray(0);
+            unpackedRowData[columnIndex] = binaryData.readBytes(StringSelfDataType.STRING_LENENC);
         } else if (len > 0) {
-            unpackedRowData[columnIndex] = binaryData.getBytes(len);
+            unpackedRowData[columnIndex] = binaryData.readBytes(StringLengthDataType.STRING_FIXED, len);
         } else {
             throw SQLError
                     .createSQLException(
@@ -1075,12 +1045,12 @@ public class MysqlIO implements ResultsHandler {
             fetchedRows.clear();
         }
 
-        Buffer sharedSendPacket = this.protocol.getSharedSendPacket();
+        PacketPayload sharedSendPacket = this.protocol.getSharedSendPacket();
         sharedSendPacket.setPosition(0);
 
-        sharedSendPacket.writeByte((byte) MysqlaConstants.COM_STMT_FETCH);
-        sharedSendPacket.writeLong(statementId);
-        sharedSendPacket.writeLong(fetchSize);
+        sharedSendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_FETCH);
+        sharedSendPacket.writeInteger(IntegerDataType.INT4, statementId);
+        sharedSendPacket.writeInteger(IntegerDataType.INT4, fetchSize);
 
         this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
 

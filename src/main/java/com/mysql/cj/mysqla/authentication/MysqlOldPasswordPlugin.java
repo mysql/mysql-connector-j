@@ -26,9 +26,11 @@ package com.mysql.cj.mysqla.authentication;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 
@@ -66,24 +68,21 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
     }
 
     @Override
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+    public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
         toServer.clear();
 
-        Buffer bresp = null;
+        PacketPayload bresp = null;
 
         String pwd = this.password;
 
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new Buffer(new byte[0]);
         } else {
-            bresp = new Buffer(StringUtils.getBytes(newCrypt(pwd, fromServer.readString().substring(0, 8), this.protocol.getPasswordCharacterEncoding())));
+            bresp = new Buffer(StringUtils.getBytes(
+                    newCrypt(pwd, fromServer.readString(StringSelfDataType.STRING_TERM, null).substring(0, 8), this.protocol.getPasswordCharacterEncoding())));
 
-            bresp.setPosition(bresp.getBufLength());
-            int oldBufLength = bresp.getBufLength();
-
-            bresp.writeByte((byte) 0);
-
-            bresp.setBufLength(oldBufLength + 1);
+            bresp.setPosition(bresp.getPayloadLength());
+            bresp.writeInteger(IntegerDataType.INT1, 0);
             bresp.setPosition(0);
         }
         toServer.add(bresp);

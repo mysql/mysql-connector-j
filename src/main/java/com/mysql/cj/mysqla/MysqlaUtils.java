@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,9 +23,9 @@
 
 package com.mysql.cj.mysqla;
 
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.mysqla.io.Buffer;
 
 /**
  * Utilities to manipulate MySQL protocol-specific formats.
@@ -78,7 +78,7 @@ public class MysqlaUtils {
         return valueAsLong;
     }
 
-    public static String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog) {
+    public static String extractSqlFromPacket(String possibleSqlQuery, PacketPayload queryPacket, int endOfQueryPacketPosition, int maxQuerySizeToLog) {
         String extractedSql = null;
 
         if (possibleSqlQuery != null) {

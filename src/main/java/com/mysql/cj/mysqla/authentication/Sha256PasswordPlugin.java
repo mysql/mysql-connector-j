@@ -29,12 +29,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import com.mysql.cj.api.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.io.PacketBuffer;
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -93,30 +95,29 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         this.password = password;
     }
 
-    public boolean nextAuthenticationStep(PacketBuffer fromServer, List<PacketBuffer> toServer) {
+    public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
         toServer.clear();
 
         if (this.password == null || this.password.length() == 0 || fromServer == null) {
             // no password
-            Buffer bresp = new Buffer(new byte[] { 0 });
+            PacketPayload bresp = new Buffer(new byte[] { 0 });
             toServer.add(bresp);
 
         } else {
             try {
                 if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    Buffer bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
-                    bresp.setPosition(bresp.getBufLength());
-                    int oldBufLength = bresp.getBufLength();
-                    bresp.writeByte((byte) 0);
-                    bresp.setBufLength(oldBufLength + 1);
+                    PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
+                    bresp.setPosition(bresp.getPayloadLength());
+                    bresp.writeInteger(IntegerDataType.INT1, 0);
                     bresp.setPosition(0);
                     toServer.add(bresp);
 
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
-                    this.seed = fromServer.readString();
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
+                    this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
+                    PacketPayload bresp = new Buffer(
+                            encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
                     toServer.add(bresp);
 
                 } else {
@@ -127,19 +128,19 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                     }
 
                     // We must request the public key from the server to encrypt the password
-                    if (this.publicKeyRequested && fromServer.getBufLength() > MysqlaConstants.SEED_LENGTH) {
+                    if (this.publicKeyRequested && fromServer.getPayloadLength() > MysqlaConstants.SEED_LENGTH) {
                         // Servers affected by Bug#70865 could send Auth Switch instead of key after Public Key Retrieval,
                         // so we check payload length to detect that.
 
                         // read key response
-                        Buffer bresp = new Buffer(
-                                encryptPassword(this.password, this.seed, fromServer.readString(), this.protocol.getPasswordCharacterEncoding()));
+                        PacketPayload bresp = new Buffer(encryptPassword(this.password, this.seed, fromServer.readString(StringSelfDataType.STRING_TERM, null),
+                                this.protocol.getPasswordCharacterEncoding()));
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
                         // build and send Public Key Retrieval packet
-                        this.seed = fromServer.readString();
-                        Buffer bresp = new Buffer(new byte[] { 1 });
+                        this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
+                        PacketPayload bresp = new Buffer(new byte[] { 1 });
                         toServer.add(bresp);
                         this.publicKeyRequested = true;
                     }
