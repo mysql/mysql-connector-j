@@ -66,6 +66,8 @@ public class Util {
 
     private static int jvmVersion = -1;
 
+    private static int jvmUpdateNumber = -1;
+
     private static boolean isColdFusion = false;
 
     static {
@@ -98,6 +100,17 @@ public class Util {
             // use best approximate value
             jvmVersion = isJdbc42 ? 8 : isJdbc4 ? 6 : 5;
         }
+        startPos = jvmVersionString.indexOf("_");
+        endPos = startPos + 1;
+        if (startPos != -1) {
+            while (Character.isDigit(jvmVersionString.charAt(endPos)) && ++endPos < jvmVersionString.length()) {
+                // continue
+            }
+        }
+        startPos++;
+        if (endPos > startPos) {
+            jvmUpdateNumber = Integer.parseInt(jvmVersionString.substring(startPos, endPos));
+        }
 
         //
         // Detect the ColdFusion MX environment
@@ -124,6 +137,14 @@ public class Util {
 
     public static int getJVMVersion() {
         return jvmVersion;
+    }
+
+    public static boolean jvmMeetsMinimum(int version, int updateNumber) {
+        return getJVMVersion() > version || getJVMVersion() == version && getJVMUpdateNumber() >= updateNumber;
+    }
+
+    public static int getJVMUpdateNumber() {
+        return jvmUpdateNumber;
     }
 
     public static boolean isColdFusion() {

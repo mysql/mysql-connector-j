@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import com.mysql.jdbc.CharsetMapping;
+import com.mysql.jdbc.Util;
 
 import testsuite.BaseTestCase;
 
@@ -172,7 +173,8 @@ public class CharsetTest extends BaseTestCase {
             return;
         }
 
-        if (versionMeetsMinimum(4, 1, 12)) {
+        // SJIS is fully supported only in Java 1.5.0_38 and above.
+        if (versionMeetsMinimum(4, 1, 12) && Util.jvmMeetsMinimum(5, 38)) {
             Map<String, char[]> testDataMap = new HashMap<String, char[]>();
 
             List<String> charsetList = new ArrayList<String>();
