@@ -253,6 +253,7 @@ public class RowDataCursor implements RowData {
                     this.fetchedRows.clear();
                 }
 
+                // TODO this is not the right place for this code, should be in protocol
                 PacketPayload sharedSendPacket = this.protocol.getSharedSendPacket();
                 sharedSendPacket.setPosition(0);
 
