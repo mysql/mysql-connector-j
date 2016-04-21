@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
@@ -42,16 +40,9 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 public abstract class ResultSetRow {
     protected ExceptionInterceptor exceptionInterceptor;
 
-    //private StringConverter stringConverter;
-
     protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
     }
-
-    // TODO is the next method needed?
-    //public void setStringConverter(StringConverter stringConverter) {
-    //    this.stringConverter = stringConverter;
-    //}
 
     /**
      * The metadata of the fields of this result set.
@@ -70,18 +61,26 @@ public abstract class ResultSetRow {
      * @param index
      *            of the column value (starting at 0) to return.
      * @return the value for the given column (including NULL if it is)
-     * @throws SQLException
-     *             if an error occurs while retrieving the value.
      */
-    public abstract byte[] getColumnValue(int index) throws SQLException;
+    public abstract byte[] getColumnValue(int index);
 
     /**
      * Check whether a column is NULL and update the 'wasNull' status.
      */
-    public boolean getNull(int columnIndex) throws SQLException {
+    public boolean getNull(int columnIndex) {
         this.wasNull = isNull(columnIndex);
         return this.wasNull;
     }
+
+    /**
+     * Is the column value at the given index (which starts at 0) NULL?
+     * 
+     * @param index
+     *            of the column value (starting at 0) to check.
+     * 
+     * @return true if the column value is NULL, false if not.
+     */
+    public abstract boolean isNull(int index);
 
     /**
      * Retrieve a value for the given column. This is the main facility to access values from the ResultSetRow.
@@ -92,7 +91,7 @@ public abstract class ResultSetRow {
      *            value factory used to create the return value after decoding
      * @return The return value from the value factory
      */
-    public abstract <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException;
+    public abstract <T> T getValue(int columnIndex, ValueFactory<T> vf);
 
     /**
      * Decode the wire-level result bytes and call the value factory.
@@ -259,7 +258,7 @@ public abstract class ResultSetRow {
      * @param vf
      *            value factory
      */
-    protected <T> T getValueFromBytes(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) throws SQLException {
+    protected <T> T getValueFromBytes(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (isNull(columnIndex)) {
             this.wasNull = true;
             return vf.createFromNull();
@@ -272,19 +271,6 @@ public abstract class ResultSetRow {
     }
 
     /**
-     * Is the column value at the given index (which starts at 0) NULL?
-     * 
-     * @param index
-     *            of the column value (starting at 0) to check.
-     * 
-     * @return true if the column value is NULL, false if not.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
-    public abstract boolean isNull(int index) throws SQLException;
-
-    /**
      * Returns the length of the column at the given index (which starts at 0).
      * 
      * @param index
@@ -293,10 +279,8 @@ public abstract class ResultSetRow {
      * @return the length of the requested column, 0 if null (clients of this
      *         interface should use isNull() beforehand to determine status of
      *         NULL values in the column).
-     * 
-     * @throws SQLException
      */
-    public abstract long length(int index) throws SQLException;
+    public abstract long length(int index);
 
     /**
      * Sets the given column value (only works currently with
@@ -306,14 +290,10 @@ public abstract class ResultSetRow {
      *            index of the column value (starting at 0) to set.
      * @param value
      *            the (raw) value to set
-     * 
-     * @throws SQLException
-     *             if an error occurs, or the concrete RowHolder doesn't support
-     *             this operation.
      */
-    public abstract void setColumnValue(int index, byte[] value) throws SQLException;
+    public abstract void setColumnValue(int index, byte[] value);
 
-    public ResultSetRow setMetadata(Field[] f) throws SQLException {
+    public ResultSetRow setMetadata(Field[] f) {
         this.metadata = f;
 
         return this;

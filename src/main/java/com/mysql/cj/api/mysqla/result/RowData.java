@@ -23,9 +23,10 @@
 
 package com.mysql.cj.api.mysqla.result;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.result.ResultSetRow;
@@ -47,42 +48,40 @@ public interface RowData {
      * 
      * @param row
      *            the row to add
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void addRow(ResultSetRow row) throws SQLException;
+    default void addRow(ResultSetRow row) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Moves to after last.
      * 
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void afterLast() throws SQLException;
+    default void afterLast() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Moves to before first.
      * 
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void beforeFirst() throws SQLException;
+    default void beforeFirst() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Moves to before last so next el is the last el.
      * 
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void beforeLast() throws SQLException;
+    default void beforeLast() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * We're done.
      * 
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void close() throws SQLException;
+    void close();
 
     /**
      * Only works on non dynamic result sets.
@@ -90,19 +89,19 @@ public interface RowData {
      * @param index
      *            row number to get at
      * @return row data at index
-     * @throws SQLException
-     *             if a database error occurs
      */
-    ResultSetRow getAt(int index) throws SQLException;
+    default ResultSetRow getAt(int index) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Returns the current position in the result set as a row number.
      * 
      * @return the current row number
-     * @throws SQLException
-     *             if a database error occurs
      */
-    int getCurrentRowNumber() throws SQLException;
+    default int getCurrentRowNumber() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Returns the result set that 'owns' this RowData
@@ -113,28 +112,22 @@ public interface RowData {
      * Returns true if another row exsists.
      * 
      * @return true if more rows
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean hasNext() throws SQLException;
+    boolean hasNext();
 
     /**
      * Returns true if we got the last element.
      * 
      * @return true if after last row
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isAfterLast() throws SQLException;
+    boolean isAfterLast();
 
     /**
      * Returns if iteration has not occured yet.
      * 
      * @return true if before first row
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isBeforeFirst() throws SQLException;
+    boolean isBeforeFirst();
 
     /**
      * Returns true if the result set is dynamic.
@@ -143,76 +136,74 @@ public interface RowData {
      * hold on to the records.
      * 
      * @return true if this result set is streaming from the server
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isDynamic() throws SQLException;
+    default boolean isDynamic() {
+        return true;
+    }
 
     /**
      * Has no records.
      * 
      * @return true if no records
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isEmpty() throws SQLException;
+    default boolean isEmpty() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Are we on the first row of the result set?
      * 
      * @return true if on first row
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isFirst() throws SQLException;
+    default boolean isFirst() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Are we on the last row of the result set?
      * 
      * @return true if on last row
-     * @throws SQLException
-     *             if a database error occurs
      */
-    boolean isLast() throws SQLException;
+    default boolean isLast() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Moves the current position relative 'rows' from the current position.
      * 
      * @param rows
      *            the relative number of rows to move
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void moveRowRelative(int rows) throws SQLException;
+    default void moveRowRelative(int rows) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Returns the next row.
      * 
      * @return the next row value
-     * @throws SQLException
-     *             if a database error occurs
      */
-    ResultSetRow next() throws SQLException;
+    ResultSetRow next();
 
     /**
      * Removes the row at the given index.
      * 
      * @param index
      *            the row to move to
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void removeRow(int index) throws SQLException;
+    default void removeRow(int index) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Moves the current position in the result set to the given row number.
      * 
      * @param rowNumber
      *            row to move to
-     * @throws SQLException
-     *             if a database error occurs
      */
-    void setCurrentRow(int rowNumber) throws SQLException;
+    default void setCurrentRow(int rowNumber) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Set the result set that 'owns' this RowData
@@ -226,10 +217,10 @@ public interface RowData {
      * Only works on non dynamic result sets.
      * 
      * @return the size of this row data
-     * @throws SQLException
-     *             if a database error occurs
      */
-    int size() throws SQLException;
+    default int size() {
+        return RESULT_SET_SIZE_UNKNOWN;
+    }
 
     /**
      * Did this result set have no rows?

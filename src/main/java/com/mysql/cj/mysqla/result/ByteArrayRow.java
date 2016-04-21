@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
@@ -52,7 +50,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public byte[] getColumnValue(int index) throws SQLException {
+    public byte[] getColumnValue(int index) {
         // check null to set 'wasNull' status
         if (getNull(index)) {
             return null;
@@ -61,17 +59,17 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public void setColumnValue(int index, byte[] value) throws SQLException {
+    public void setColumnValue(int index, byte[] value) {
         this.internalRowData[index] = value;
     }
 
     @Override
-    public boolean isNull(int index) throws SQLException {
+    public boolean isNull(int index) {
         return this.internalRowData[index] == null;
     }
 
     @Override
-    public long length(int index) throws SQLException {
+    public long length(int index) {
         if (this.internalRowData[index] == null) {
             return 0;
         }
@@ -83,7 +81,7 @@ public class ByteArrayRow extends ResultSetRow {
      * Implementation of getValue() based on the underlying byte array. Delegate to superclass for decoding.
      */
     @Override
-    public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
+    public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
         byte[] columnData = this.internalRowData[columnIndex];
         int length = columnData == null ? 0 : columnData.length;
         return getValueFromBytes(columnIndex, columnData, 0, length, vf);

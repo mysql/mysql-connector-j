@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -36,13 +34,11 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
-import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
@@ -88,10 +84,8 @@ public class RowDataDynamic implements RowData {
      *            the metadata that describe this data
      * @param isBinaryEncoded
      *            is this data in native format?
-     * @throws SQLException
-     *             if the next record can not be found
      */
-    public RowDataDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) throws SQLException {
+    public RowDataDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) {
         this.io = io;
         this.columnCount = colCount;
         this.isBinaryEncoded = isBinaryEncoded;
@@ -99,23 +93,7 @@ public class RowDataDynamic implements RowData {
         this.exceptionInterceptor = this.io.getExceptionInterceptor();
     }
 
-    public void addRow(ResultSetRow row) throws SQLException {
-        notSupported();
-    }
-
-    public void afterLast() throws SQLException {
-        notSupported();
-    }
-
-    public void beforeFirst() throws SQLException {
-        notSupported();
-    }
-
-    public void beforeLast() throws SQLException {
-        notSupported();
-    }
-
-    public void close() throws SQLException {
+    public void close() {
         // Belt and suspenders here - if we don't have a reference to the connection it's more than likely dead/gone and we won't be able to consume rows anyway
 
         Object mutex = this;
@@ -154,31 +132,31 @@ public class RowDataDynamic implements RowData {
                     java.sql.Statement stmt = null;
 
                     try {
-                        stmt = conn.createStatement();
-                        ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery(conn, "SET net_write_timeout=" + oldValue);
-                    } finally {
-                        if (stmt != null) {
-                            stmt.close();
+                        try {
+                            stmt = conn.createStatement();
+                            ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery(conn, "SET net_write_timeout=" + oldValue);
+                        } finally {
+                            if (stmt != null) {
+                                stmt.close();
+                            }
                         }
+                    } catch (Exception ex) {
+                        throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                     }
                 }
 
                 if (conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
                     if (hadMore) {
 
-                        try {
-                            ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
+                        ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
 
-                            eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    this.owner.getOwningStatement() == null ? "N/A" : this.owner.getOwningStatement().getCurrentCatalog(),
-                                    this.owner.getConnectionId(), this.owner.getOwningStatement() == null ? -1 : this.owner.getOwningStatement().getId(), -1,
-                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
-                                    Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
-                                            + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
-                                            + Messages.getString("RowDataDynamic.6") + this.owner.getPointOfOrigin()));
-                        } catch (CJException e) {
-                            throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
-                        }
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                                this.owner.getOwningStatement() == null ? "N/A" : this.owner.getOwningStatement().getCurrentCatalog(),
+                                this.owner.getConnectionId(), this.owner.getOwningStatement() == null ? -1 : this.owner.getOwningStatement().getId(), -1,
+                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
+                                Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
+                                        + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
+                                        + Messages.getString("RowDataDynamic.6") + this.owner.getPointOfOrigin()));
                     }
                 }
             }
@@ -188,23 +166,11 @@ public class RowDataDynamic implements RowData {
         this.owner = null;
     }
 
-    public ResultSetRow getAt(int ind) throws SQLException {
-        notSupported();
-
-        return null;
-    }
-
-    public int getCurrentRowNumber() throws SQLException {
-        notSupported();
-
-        return -1;
-    }
-
     public ResultSetInternalMethods getOwner() {
         return this.owner;
     }
 
-    public boolean hasNext() throws SQLException {
+    public boolean hasNext() {
         boolean hasNext = (this.nextRow != null);
 
         if (!hasNext && !this.streamerClosed) {
@@ -215,41 +181,15 @@ public class RowDataDynamic implements RowData {
         return hasNext;
     }
 
-    public boolean isAfterLast() throws SQLException {
+    public boolean isAfterLast() {
         return this.isAfterEnd;
     }
 
-    public boolean isBeforeFirst() throws SQLException {
+    public boolean isBeforeFirst() {
         return this.index < 0;
     }
 
-    public boolean isDynamic() {
-        return true;
-    }
-
-    public boolean isEmpty() throws SQLException {
-        notSupported();
-
-        return false;
-    }
-
-    public boolean isFirst() throws SQLException {
-        notSupported();
-
-        return false;
-    }
-
-    public boolean isLast() throws SQLException {
-        notSupported();
-
-        return false;
-    }
-
-    public void moveRowRelative(int rows) throws SQLException {
-        notSupported();
-    }
-
-    public ResultSetRow next() throws SQLException {
+    public ResultSetRow next() {
 
         nextRecord();
 
@@ -267,7 +207,7 @@ public class RowDataDynamic implements RowData {
         return this.nextRow;
     }
 
-    private void nextRecord() throws SQLException {
+    private void nextRecord() {
 
         try {
             if (!this.noMoreRows) {
@@ -287,18 +227,17 @@ public class RowDataDynamic implements RowData {
                 this.nextRow = null;
                 this.isAfterEnd = true;
             }
-        } catch (SQLException | CJException sqlEx) {
-            SQLException cause = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
+        } catch (CJException sqlEx) {
 
-            if (cause instanceof StreamingNotifiable) {
-                ((StreamingNotifiable) cause).setWasStreamingResults();
+            if (sqlEx instanceof StreamingNotifiable) {
+                ((StreamingNotifiable) sqlEx).setWasStreamingResults();
             }
 
             // There won't be any more rows
             this.noMoreRows = true;
 
             // don't wrap SQLExceptions
-            throw cause;
+            throw sqlEx;
         } catch (Exception ex) {
             String exceptionType = ex.getClass().getName();
             String exceptionMessage = ex.getMessage();
@@ -306,33 +245,16 @@ public class RowDataDynamic implements RowData {
             exceptionMessage += Messages.getString("RowDataDynamic.7");
             exceptionMessage += Util.stackTraceToString(ex);
 
-            SQLException sqlEx = SQLError.createSQLException(
-                    Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9") + exceptionMessage,
-                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
-            sqlEx.initCause(ex);
+            CJException cjEx = ExceptionFactory.createException(
+                    Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9") + exceptionMessage, ex,
+                    this.exceptionInterceptor);
 
-            throw sqlEx;
+            throw cjEx;
         }
-    }
-
-    private void notSupported() throws SQLException {
-        throw new OperationNotSupportedException();
-    }
-
-    public void removeRow(int ind) throws SQLException {
-        notSupported();
-    }
-
-    public void setCurrentRow(int rowNumber) throws SQLException {
-        notSupported();
     }
 
     public void setOwner(ResultSetImpl rs) {
         this.owner = rs;
-    }
-
-    public int size() {
-        return RESULT_SET_SIZE_UNKNOWN;
     }
 
     public boolean wasEmpty() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.CJTimeoutException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
@@ -103,6 +104,9 @@ public class SQLExceptionsMapping {
 
         } else if (ex instanceof CJTimeoutException) {
             return new MySQLTimeoutException(ex.getMessage());
+
+        } else if (ex instanceof CJOperationNotSupportedException) {
+            return new OperationNotSupportedException();
 
         } else if (ex instanceof CJException) {
             return SQLError.createSQLException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode(),

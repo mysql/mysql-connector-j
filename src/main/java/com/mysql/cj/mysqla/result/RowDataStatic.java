@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
@@ -78,7 +77,7 @@ public class RowDataStatic implements RowData {
     public void close() {
     }
 
-    public ResultSetRow getAt(int atIndex) throws SQLException {
+    public ResultSetRow getAt(int atIndex) {
         if ((atIndex < 0) || (atIndex >= this.rows.size())) {
             return null;
         }
@@ -140,7 +139,7 @@ public class RowDataStatic implements RowData {
         }
     }
 
-    public ResultSetRow next() throws SQLException {
+    public ResultSetRow next() {
         this.index++;
 
         if (this.index > this.rows.size()) {

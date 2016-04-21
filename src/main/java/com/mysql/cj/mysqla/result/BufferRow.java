@@ -23,8 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
-
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
@@ -33,9 +31,9 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
@@ -85,8 +83,7 @@ public class BufferRow extends ResultSetRow {
      */
     private boolean[] isNull;
 
-    public BufferRow(PacketPayload buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder)
-            throws SQLException {
+    public BufferRow(PacketPayload buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
         super(exceptionInterceptor);
 
         this.rowFromServer = buf;
@@ -101,7 +98,7 @@ public class BufferRow extends ResultSetRow {
         }
     }
 
-    private int findAndSeekToOffset(int index) throws SQLException {
+    private int findAndSeekToOffset(int index) {
         if (!this.isBinaryEncoded) {
 
             if (index == 0) {
@@ -145,7 +142,7 @@ public class BufferRow extends ResultSetRow {
         return findAndSeekToOffsetForBinaryEncoding(index);
     }
 
-    private int findAndSeekToOffsetForBinaryEncoding(int index) throws SQLException {
+    private int findAndSeekToOffsetForBinaryEncoding(int index) {
         if (index == 0) {
             this.lastRequestedIndex = 0;
             this.lastRequestedPos = this.homePosition;
@@ -188,11 +185,8 @@ public class BufferRow extends ResultSetRow {
                 if (length == 0) {
                     skipLenencBytes(this.rowFromServer);
                 } else if (length == -1) {
-                    throw SQLError
-                            .createSQLException(
-                                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1) + Messages.getString("MysqlIO.99")
-                                            + this.metadata.length + Messages.getString("MysqlIO.100"),
-                                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1)
+                            + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
                 } else {
                     int curPosition = this.rowFromServer.getPosition();
                     this.rowFromServer.setPosition(curPosition + length);
@@ -214,7 +208,7 @@ public class BufferRow extends ResultSetRow {
     }
 
     @Override
-    public byte[] getColumnValue(int index) throws SQLException {
+    public byte[] getColumnValue(int index) {
         findAndSeekToOffset(index);
 
         if (!this.isBinaryEncoded) {
@@ -239,11 +233,8 @@ public class BufferRow extends ResultSetRow {
                 if (length == 0) {
                     return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
-                    throw SQLError
-                            .createSQLException(
-                                    Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1) + Messages.getString("MysqlIO.99")
-                                            + this.metadata.length + Messages.getString("MysqlIO.100"),
-                                    SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1)
+                            + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
                 } else {
                     return this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, length);
                 }
@@ -251,7 +242,7 @@ public class BufferRow extends ResultSetRow {
     }
 
     @Override
-    public boolean isNull(int index) throws SQLException {
+    public boolean isNull(int index) {
         if (!this.isBinaryEncoded) {
             findAndSeekToOffset(index);
 
@@ -262,7 +253,7 @@ public class BufferRow extends ResultSetRow {
     }
 
     @Override
-    public long length(int index) throws SQLException {
+    public long length(int index) {
         findAndSeekToOffset(index);
 
         long length = this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
@@ -275,12 +266,12 @@ public class BufferRow extends ResultSetRow {
     }
 
     @Override
-    public void setColumnValue(int index, byte[] value) throws SQLException {
-        throw new OperationNotSupportedException();
+    public void setColumnValue(int index, byte[] value) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
     }
 
     @Override
-    public ResultSetRow setMetadata(Field[] f) throws SQLException {
+    public ResultSetRow setMetadata(Field[] f) {
         super.setMetadata(f);
 
         if (this.isBinaryEncoded) {
@@ -295,7 +286,7 @@ public class BufferRow extends ResultSetRow {
      * columns hold null values, and sets the "home" position directly after the
      * bitmask.
      */
-    private void setupIsNullBitmask() throws SQLException {
+    private void setupIsNullBitmask() {
         if (this.isNull != null) {
             return; // we've already done this
         }
@@ -329,7 +320,7 @@ public class BufferRow extends ResultSetRow {
      * Implementation of getValue() based on the underlying Buffer object. Delegate to superclass for decoding.
      */
     @Override
-    public <T> T getValue(int columnIndex, ValueFactory<T> vf) throws SQLException {
+    public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
         findAndSeekToOffset(columnIndex);
 
         int length;
@@ -340,11 +331,8 @@ public class BufferRow extends ResultSetRow {
             if (length == 0) {
                 length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
             } else if (length == -1) {
-                throw SQLError
-                        .createSQLException(
-                                Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1)
-                                        + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"),
-                                SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1)
+                        + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
             }
         } else {
             length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);

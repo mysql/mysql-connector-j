@@ -74,6 +74,7 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BinaryStreamValueFactory;
 import com.mysql.cj.core.io.BooleanValueFactory;
@@ -102,6 +103,7 @@ import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
@@ -2084,8 +2086,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 if (this.rowData != null) {
                     try {
                         this.rowData.close();
-                    } catch (SQLException sqlEx) {
-                        exceptionDuringClose = sqlEx;
+                    } catch (CJException sqlEx) {
+                        exceptionDuringClose = SQLExceptionsMapping.translateException(sqlEx);
                     }
                 }
 

@@ -23,19 +23,21 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
-import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
@@ -84,7 +86,7 @@ public class RowDataCursor implements RowData {
     /**
      * Communications channel to the server
      */
-    private MysqlaProtocol mysql;
+    private MysqlaProtocol protocol;
 
     /**
      * Identifier for the statement that created this cursor.
@@ -119,7 +121,7 @@ public class RowDataCursor implements RowData {
         this.serverSession = serverSession;
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
-        this.mysql = ioChannel;
+        this.protocol = ioChannel;
         this.statementIdOnServer = creatingStatement.getServerStatementId();
         this.prepStmt = creatingStatement;
     }
@@ -128,63 +130,33 @@ public class RowDataCursor implements RowData {
         return this.lastRowFetched && this.currentPositionInFetchedRows > this.fetchedRows.size();
     }
 
-    public ResultSetRow getAt(int index) throws SQLException {
-        notSupported();
-
-        return null;
-    }
-
-    public boolean isBeforeFirst() throws SQLException {
+    public boolean isBeforeFirst() {
         return this.currentPositionInEntireResult < 0;
     }
 
-    public void setCurrentRow(int rowNumber) throws SQLException {
-        notSupported();
-    }
-
-    public int getCurrentRowNumber() throws SQLException {
+    public int getCurrentRowNumber() {
         return this.currentPositionInEntireResult + 1;
     }
 
-    public boolean isDynamic() {
-        return true;
-    }
-
-    public boolean isEmpty() throws SQLException {
+    public boolean isEmpty() {
         return this.isBeforeFirst() && this.isAfterLast();
     }
 
-    public boolean isFirst() throws SQLException {
+    public boolean isFirst() {
         return this.currentPositionInEntireResult == 0;
     }
 
-    public boolean isLast() throws SQLException {
+    public boolean isLast() {
         return this.lastRowFetched && this.currentPositionInFetchedRows == (this.fetchedRows.size() - 1);
     }
 
-    public void addRow(ResultSetRow row) throws SQLException {
-        notSupported();
-    }
-
-    public void afterLast() throws SQLException {
-        notSupported();
-    }
-
-    public void beforeFirst() throws SQLException {
-        notSupported();
-    }
-
-    public void beforeLast() throws SQLException {
-        notSupported();
-    }
-
-    public void close() throws SQLException {
+    public void close() {
 
         this.metadata = null;
         this.owner = null;
     }
 
-    public boolean hasNext() throws SQLException {
+    public boolean hasNext() {
 
         if (this.fetchedRows != null && this.fetchedRows.size() == 0) {
             return false;
@@ -219,14 +191,10 @@ public class RowDataCursor implements RowData {
         return this.fetchedRows.size() > 0;
     }
 
-    public void moveRowRelative(int rows) throws SQLException {
-        notSupported();
-    }
-
-    public ResultSetRow next() throws SQLException {
+    public ResultSetRow next() {
         if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
-                    SQLError.SQL_STATE_GENERAL_ERROR, this.mysql.getExceptionInterceptor());
+            throw ExceptionFactory.createException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
+                    this.protocol.getExceptionInterceptor());
         }
 
         if (!hasNext()) {
@@ -253,54 +221,67 @@ public class RowDataCursor implements RowData {
         return row;
     }
 
-    private void fetchMoreRows() throws SQLException {
+    private void fetchMoreRows() {
         if (this.lastRowFetched) {
             this.fetchedRows = new ArrayList<ResultSetRow>(0);
             return;
         }
 
         synchronized (this.owner.getConnection().getConnectionMutex()) {
-            boolean oldFirstFetchCompleted = this.firstFetchCompleted;
+            try {
+                boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 
-            if (!this.firstFetchCompleted) {
-                this.firstFetchCompleted = true;
-            }
-
-            int numRowsToFetch = this.owner.getFetchSize();
-
-            if (numRowsToFetch == 0) {
-                numRowsToFetch = this.prepStmt.getFetchSize();
-            }
-
-            if (numRowsToFetch == Integer.MIN_VALUE) {
-                // Handle the case where the user used 'old' streaming result sets
-
-                numRowsToFetch = 1;
-            }
-
-            this.fetchedRows = this.mysql.getResultsHandler().fetchRowsViaCursor(this.fetchedRows, this.statementIdOnServer, this.metadata, numRowsToFetch);
-            this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
-
-            if (this.serverSession.isLastRowSent()) {
-                this.lastRowFetched = true;
-
-                if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {
-                    this.wasEmpty = true;
+                if (!this.firstFetchCompleted) {
+                    this.firstFetchCompleted = true;
                 }
+
+                int numRowsToFetch = this.owner.getFetchSize();
+
+                if (numRowsToFetch == 0) {
+                    numRowsToFetch = this.prepStmt.getFetchSize();
+                }
+
+                if (numRowsToFetch == Integer.MIN_VALUE) {
+                    // Handle the case where the user used 'old' streaming result sets
+
+                    numRowsToFetch = 1;
+                }
+
+                if (this.fetchedRows == null) {
+                    this.fetchedRows = new ArrayList<ResultSetRow>(numRowsToFetch);
+                } else {
+                    this.fetchedRows.clear();
+                }
+
+                PacketPayload sharedSendPacket = this.protocol.getSharedSendPacket();
+                sharedSendPacket.setPosition(0);
+
+                sharedSendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_FETCH);
+                sharedSendPacket.writeInteger(IntegerDataType.INT4, this.statementIdOnServer);
+                sharedSendPacket.writeInteger(IntegerDataType.INT4, numRowsToFetch);
+
+                this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
+
+                ResultSetRow row = null;
+
+                while ((row = this.protocol.getResultsHandler().nextRow(this.metadata, this.metadata.length, true, ResultSet.CONCUR_READ_ONLY,
+                        false)) != null) {
+                    this.fetchedRows.add(row);
+                }
+
+                this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
+
+                if (this.serverSession.isLastRowSent()) {
+                    this.lastRowFetched = true;
+
+                    if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {
+                        this.wasEmpty = true;
+                    }
+                }
+            } catch (Exception ex) {
+                throw ExceptionFactory.createException(ex.getMessage(), ex);
             }
         }
-    }
-
-    public void removeRow(int ind) throws SQLException {
-        notSupported();
-    }
-
-    public int size() {
-        return RESULT_SET_SIZE_UNKNOWN;
-    }
-
-    private void notSupported() throws SQLException {
-        throw new OperationNotSupportedException();
     }
 
     public void setOwner(ResultSetImpl rs) {

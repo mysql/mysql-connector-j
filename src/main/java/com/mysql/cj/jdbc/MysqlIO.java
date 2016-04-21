@@ -1048,32 +1048,6 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
-    public List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize) throws SQLException {
-
-        if (fetchedRows == null) {
-            fetchedRows = new ArrayList<ResultSetRow>(fetchSize);
-        } else {
-            fetchedRows.clear();
-        }
-
-        PacketPayload sharedSendPacket = this.protocol.getSharedSendPacket();
-        sharedSendPacket.setPosition(0);
-
-        sharedSendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_FETCH);
-        sharedSendPacket.writeInteger(IntegerDataType.INT4, statementId);
-        sharedSendPacket.writeInteger(IntegerDataType.INT4, fetchSize);
-
-        this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
-
-        ResultSetRow row = null;
-
-        while ((row = nextRow(columnTypes, columnTypes.length, true, ResultSet.CONCUR_READ_ONLY, false)) != null) {
-            fetchedRows.add(row);
-        }
-
-        return fetchedRows;
-    }
-
     public void checkForOutstandingStreamingData() {
         try {
             if (this.streamingData != null) {
@@ -1096,15 +1070,15 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
-    public void closeStreamer(RowData streamer) throws SQLException {
+    public void closeStreamer(RowData streamer) {
         if (this.streamingData == null) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"),
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"),
                     this.protocol.getExceptionInterceptor());
         }
 
         if (streamer != this.streamingData) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20") + Messages.getString("MysqlIO.21")
-                    + Messages.getString("MysqlIO.22"), this.protocol.getExceptionInterceptor());
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20")
+                    + Messages.getString("MysqlIO.21") + Messages.getString("MysqlIO.22"), this.protocol.getExceptionInterceptor());
         }
 
         this.streamingData = null;
