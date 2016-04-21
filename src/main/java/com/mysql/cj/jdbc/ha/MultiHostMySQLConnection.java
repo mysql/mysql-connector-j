@@ -46,16 +46,16 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaSession;
 
 /**

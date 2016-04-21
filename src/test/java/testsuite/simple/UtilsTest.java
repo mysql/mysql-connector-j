@@ -35,8 +35,8 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.PreparedStatement;
-import com.mysql.cj.jdbc.ResultSetImpl;
 import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 import testsuite.BaseTestCase;
 

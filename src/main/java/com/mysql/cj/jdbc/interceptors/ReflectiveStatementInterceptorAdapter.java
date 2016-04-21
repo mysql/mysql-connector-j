@@ -30,10 +30,10 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 

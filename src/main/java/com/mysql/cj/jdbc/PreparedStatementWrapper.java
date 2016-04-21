@@ -510,7 +510,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             }
 
             rs = ((PreparedStatement) this.wrappedStmt).executeQuery();
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).setWrapperStatement(this);
 
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);

@@ -46,8 +46,8 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -68,8 +68,12 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultSetRow;
+import com.mysql.cj.mysqla.result.RowDataStatic;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -221,7 +225,7 @@ public class StatementImpl implements Statement {
     protected long connectionId = 0;
 
     /** The catalog in use */
-    protected String currentCatalog = null;
+    private String currentCatalog = null;
 
     /** Should we process escape codes? */
     protected boolean doEscapeProcessing = true;
@@ -245,7 +249,7 @@ public class StatementImpl implements Statement {
      * The maximum number of rows to return for this statement (-1 means _all_
      * rows)
      */
-    protected int maxRows = -1;
+    public int maxRows = -1;
 
     /** Set of currently-open ResultSets */
     protected Set<ResultSetInternalMethods> openResults = new HashSet<ResultSetInternalMethods>();
@@ -873,7 +877,7 @@ public class StatementImpl implements Statement {
                             cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 
                             if (cachedMetaData != null) {
-                                cachedFields = cachedMetaData.fields;
+                                cachedFields = cachedMetaData.getFields();
                             }
                         }
 
@@ -1415,7 +1419,7 @@ public class StatementImpl implements Statement {
                     cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 
                     if (cachedMetaData != null) {
-                        cachedFields = cachedMetaData.fields;
+                        cachedFields = cachedMetaData.getFields();
                     }
                 }
 
@@ -1512,7 +1516,7 @@ public class StatementImpl implements Statement {
         }
     }
 
-    protected void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
+    public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
         c.execSQL(this, nonQuery, -1, null, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog, null, false).close();
     }
 
@@ -1743,8 +1747,8 @@ public class StatementImpl implements Statement {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 20);
 
-            this.generatedKeysResults = com.mysql.cj.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(this.batchedGeneratedKeys),
-                    this.connection, this);
+            this.generatedKeysResults = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
+                    new RowDataStatic(this.batchedGeneratedKeys), this.connection, this);
 
             return this.generatedKeysResults;
         }
@@ -1805,8 +1809,8 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            com.mysql.cj.jdbc.ResultSetImpl gkRs = com.mysql.cj.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields, new RowDataStatic(rowSet),
-                    this.connection, this);
+            com.mysql.cj.jdbc.result.ResultSetImpl gkRs = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
+                    new RowDataStatic(rowSet), this.connection, this);
 
             return gkRs;
         }
@@ -2704,5 +2708,9 @@ public class StatementImpl implements Statement {
 
             this.maxRows = (int) max;
         }
+    }
+
+    public String getCurrentCatalog() {
+        return this.currentCatalog;
     }
 }

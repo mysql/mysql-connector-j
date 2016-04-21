@@ -47,7 +47,7 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
@@ -67,9 +67,11 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
+import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -368,7 +370,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             PreparedStatement pStmtForSub = null;
 
             try {
-                pStmtForSub = PreparedStatement.getInstance(this.connection, this.originalSql, this.currentCatalog);
+                pStmtForSub = PreparedStatement.getInstance(this.connection, this.originalSql, this.getCurrentCatalog());
 
                 int numParameters = pStmtForSub.parameterCount;
                 int ourNumParameters = this.parameterCount;
@@ -686,8 +688,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    protected com.mysql.cj.api.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket, boolean createStreamingResultSet,
-            boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
+    protected com.mysql.cj.api.jdbc.result.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket,
+            boolean createStreamingResultSet, boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.numberOfExecutions++;
 
@@ -852,7 +854,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     @Override
-    boolean isNull(int paramIndex) {
+    public boolean isNull(int paramIndex) {
         throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7"));
     }
 
@@ -868,7 +870,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      *             if an error occurs
      */
     @Override
-    protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
+    public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
@@ -1006,8 +1008,8 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private com.mysql.cj.api.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache)
-            throws SQLException {
+    private com.mysql.cj.api.jdbc.result.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet,
+            Field[] metadataFromCache) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1216,7 +1218,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append("\n\n with parameters bound:\n\n");
                         mesgBuf.append(asSql(true));
 
-                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(),
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.getCurrentCatalog(), this.connection.getId(),
                                 getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null,
                                 LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
@@ -1231,13 +1233,14 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId,
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.getCurrentCatalog(), this.connectionId, this.statementId,
                             -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin, this.session.getQueryTimingUnits(), null,
                             LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
-                com.mysql.cj.api.jdbc.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve, this.resultSetType,
-                        this.resultSetConcurrency, createStreamingResultSet, this.currentCatalog, resultPacket, true, this.fieldCount, metadataFromCache);
+                com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve,
+                        this.resultSetType, this.resultSetConcurrency, createStreamingResultSet, this.getCurrentCatalog(), resultPacket, true, this.fieldCount,
+                        metadataFromCache);
 
                 if (this.session.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1250,7 +1253,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = this.session.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.currentCatalog, this.connection.getId(), getId(), 0 /*
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.getCurrentCatalog(), this.connection.getId(), getId(), 0 /*
                                                                                                                                                               * FIXME
                                                                                                                                                               * rs.
                                                                                                                                                               * resultId
@@ -1383,7 +1386,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.connection.incrementNumberOfPrepares();
 
                 if (this.profileSQL) {
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.currentCatalog, this.connectionId, this.statementId,
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.getCurrentCatalog(), this.connectionId, this.statementId,
                             -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin, this.session.getQueryTimingUnits(), null,
                             LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
@@ -2142,7 +2145,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         return toStringBuf.toString();
     }
 
-    protected long getServerStatementId() {
+    public long getServerStatementId() {
         return this.serverStatementId;
     }
 
@@ -2356,7 +2359,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected PreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
-                PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog,
+                PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.getCurrentCatalog(),
                         this.resultSetConcurrency, this.resultSetType);
                 pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 

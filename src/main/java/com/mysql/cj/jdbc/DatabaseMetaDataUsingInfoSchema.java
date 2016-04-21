@@ -53,7 +53,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     protected ResultSet executeMetadataQuery(java.sql.PreparedStatement pStmt) throws SQLException {
         ResultSet rs = pStmt.executeQuery();
-        ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setOwningStatement(null);
+        ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).setOwningStatement(null);
 
         return rs;
     }
@@ -93,7 +93,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(3, columnNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs)
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs)
                     .redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", MysqlType.CHAR, 64), new Field("", "TABLE_SCHEM", MysqlType.CHAR, 1),
                             new Field("", "TABLE_NAME", MysqlType.CHAR, 64), new Field("", "COLUMN_NAME", MysqlType.CHAR, 64),
                             new Field("", "GRANTOR", MysqlType.CHAR, 77), new Field("", "GRANTEE", MysqlType.CHAR, 77),
@@ -270,7 +270,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createColumnsFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createColumnsFields());
             return rs;
         } finally {
             if (pStmt != null) {
@@ -330,7 +330,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(4, foreignTable);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
             return rs;
         } finally {
@@ -381,7 +381,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
             return rs;
         } finally {
@@ -448,7 +448,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
             return rs;
         } finally {
@@ -492,7 +492,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createIndexInfoFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createIndexInfoFields());
 
             return rs;
         } finally {
@@ -533,7 +533,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs)
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs)
                     .redefineFieldsForDBMD(new Field[] { new Field("", "TABLE_CAT", MysqlType.CHAR, 255), new Field("", "TABLE_SCHEM", MysqlType.CHAR, 0),
                             new Field("", "TABLE_NAME", MysqlType.CHAR, 255), new Field("", "COLUMN_NAME", MysqlType.CHAR, 32),
                             new Field("", "KEY_SEQ", MysqlType.SMALLINT, 5), new Field("", "PK_NAME", MysqlType.CHAR, 32) });
@@ -587,7 +587,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, procedureNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFieldMetadataForGetProcedures());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFieldMetadataForGetProcedures());
 
             return rs;
         } finally {
@@ -690,7 +690,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(3, columnNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createProcedureColumnsFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createProcedureColumnsFields());
 
             return rs;
         } finally {
@@ -813,7 +813,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createTablesFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createTablesFields());
 
             return rs;
         } finally {
@@ -864,7 +864,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs)
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs)
                     .redefineFieldsForDBMD(new Field[] { new Field("", "SCOPE", MysqlType.SMALLINT, 5), new Field("", "COLUMN_NAME", MysqlType.CHAR, 32),
                             new Field("", "DATA_TYPE", MysqlType.INT, 5), new Field("", "TYPE_NAME", MysqlType.CHAR, 16),
                             new Field("", "COLUMN_SIZE", MysqlType.INT, 16), new Field("", "BUFFER_LENGTH", MysqlType.INT, 16),
@@ -963,7 +963,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(3, columnNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFunctionColumnsFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFunctionColumnsFields());
 
             return rs;
         } finally {
@@ -1041,7 +1041,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             pStmt.setString(2, functionNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).redefineFieldsForDBMD(
                     new Field[] { new Field("", "FUNCTION_CAT", MysqlType.CHAR, 255), new Field("", "FUNCTION_SCHEM", MysqlType.CHAR, 255),
                             new Field("", "FUNCTION_NAME", MysqlType.CHAR, 255), new Field("", "REMARKS", MysqlType.CHAR, 255),
                             new Field("", "FUNCTION_TYPE", MysqlType.SMALLINT, 6), new Field("", "SPECIFIC_NAME", MysqlType.CHAR, 255) });

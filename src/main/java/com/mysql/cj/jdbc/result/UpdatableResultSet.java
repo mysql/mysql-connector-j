@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.result;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -40,7 +40,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -50,9 +50,14 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.MysqlSQLXML;
+import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * A result set that is updatable.
@@ -124,12 +129,12 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
+    public UpdatableResultSet(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
             throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
 
-        this.populateInserterWithDefaultValues = this.connection.getPropertySet()
+        this.populateInserterWithDefaultValues = this.getConnection().getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
         this.hasLongColumnInfo = hasLongColumnInfo;
     }
@@ -173,9 +178,9 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected void checkUpdatability() throws SQLException {
+    public void checkUpdatability() throws SQLException {
         try {
-            if (this.fields == null) {
+            if (this.getMetadata() == null) {
                 // we've been created to be populated with cached metadata, and we don't have the metadata yet, we'll be called again by
                 // Connection.initializeResultsMetadataFromCache() when the metadata has been made available
 
@@ -190,7 +195,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             // We can only do this if we know that there is a currently selected database, or if we're talking to a > 4.1 version of MySQL server (as it returns
             // database names in field info)
             if ((this.catalog == null) || (this.catalog.length() == 0)) {
-                this.catalog = this.fields[0].getDatabaseName();
+                this.catalog = this.getMetadata()[0].getDatabaseName();
 
                 if ((this.catalog == null) || (this.catalog.length() == 0)) {
                     throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -198,12 +203,12 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
             }
 
-            if (this.fields.length > 0) {
-                singleTableName = this.fields[0].getOriginalTableName();
-                catalogName = this.fields[0].getDatabaseName();
+            if (this.getMetadata().length > 0) {
+                singleTableName = this.getMetadata()[0].getOriginalTableName();
+                catalogName = this.getMetadata()[0].getDatabaseName();
 
                 if (singleTableName == null) {
-                    singleTableName = this.fields[0].getTableName();
+                    singleTableName = this.getMetadata()[0].getTableName();
                     catalogName = this.catalog;
                 }
 
@@ -214,19 +219,19 @@ public class UpdatableResultSet extends ResultSetImpl {
                     return;
                 }
 
-                if (this.fields[0].isPrimaryKey()) {
+                if (this.getMetadata()[0].isPrimaryKey()) {
                     primaryKeyCount++;
                 }
 
                 //
                 // References only one table?
                 //
-                for (int i = 1; i < this.fields.length; i++) {
-                    String otherTableName = this.fields[i].getOriginalTableName();
-                    String otherCatalogName = this.fields[i].getDatabaseName();
+                for (int i = 1; i < this.getMetadata().length; i++) {
+                    String otherTableName = this.getMetadata()[i].getOriginalTableName();
+                    String otherCatalogName = this.getMetadata()[i].getDatabaseName();
 
                     if (otherTableName == null) {
-                        otherTableName = this.fields[i].getTableName();
+                        otherTableName = this.getMetadata()[i].getTableName();
                         otherCatalogName = this.catalog;
                     }
 
@@ -252,7 +257,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                         return;
                     }
 
-                    if (this.fields[i].isPrimaryKey()) {
+                    if (this.getMetadata()[i].isPrimaryKey()) {
                         primaryKeyCount++;
                     }
                 }
@@ -263,8 +268,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
-                java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+            if (this.getConnection().getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
+                java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;
                 HashMap<String, String> primaryKeyNames = new HashMap<String, String>();
@@ -301,13 +306,13 @@ public class UpdatableResultSet extends ResultSetImpl {
                 //
                 // Contains all primary keys?
                 //
-                for (int i = 0; i < this.fields.length; i++) {
-                    if (this.fields[i].isPrimaryKey()) {
-                        String columnNameUC = this.fields[i].getName().toUpperCase();
+                for (int i = 0; i < this.getMetadata().length; i++) {
+                    if (this.getMetadata()[i].isPrimaryKey()) {
+                        String columnNameUC = this.getMetadata()[i].getName().toUpperCase();
 
                         if (primaryKeyNames.remove(columnNameUC) == null) {
                             // try original name
-                            String originalName = this.fields[i].getOriginalName();
+                            String originalName = this.getMetadata()[i].getOriginalName();
 
                             if (originalName != null) {
                                 if (primaryKeyNames.remove(originalName.toUpperCase()) == null) {
@@ -378,7 +383,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.deleter = (PreparedStatement) this.connection.clientPrepareStatement(this.deleteSQL);
+            this.deleter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.deleteSQL);
         }
 
         this.deleter.clearParameters();
@@ -387,11 +392,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getMysqlType());
+            this.setParamValue(this.deleter, 1, this.thisRow, index, this.getMetadata()[index].getMysqlType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int index = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getMysqlType());
+                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata()[index].getMysqlType());
 
             }
         }
@@ -475,8 +480,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     private synchronized void extractDefaultValues() throws SQLException {
-        java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-        this.defaultColumnValue = new byte[this.fields.length][];
+        java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
+        this.defaultColumnValue = new byte[this.getMetadata().length][];
 
         java.sql.ResultSet columnsResultSet = null;
 
@@ -533,7 +538,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         Map<String, String> tableNamesSoFar = null;
 
-        if (this.connection.lowerCaseTableNames()) {
+        if (this.getConnection().lowerCaseTableNames()) {
             tableNamesSoFar = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
             this.databasesUsedToTablesUsed = new TreeMap<String, Map<String, Map<String, Integer>>>(String.CASE_INSENSITIVE_ORDER);
         } else {
@@ -553,14 +558,14 @@ public class UpdatableResultSet extends ResultSetImpl {
         boolean firstTime = true;
         boolean keysFirstTime = true;
 
-        for (int i = 0; i < this.fields.length; i++) {
+        for (int i = 0; i < this.getMetadata().length; i++) {
             StringBuilder tableNameBuffer = new StringBuilder();
             Map<String, Integer> updColumnNameToIndex = null;
 
             // FIXME: What about no table?
-            if (this.fields[i].getOriginalTableName() != null) {
+            if (this.getMetadata()[i].getOriginalTableName() != null) {
 
-                String databaseName = this.fields[i].getDatabaseName();
+                String databaseName = this.getMetadata()[i].getDatabaseName();
 
                 if ((databaseName != null) && (databaseName.length() > 0)) {
                     tableNameBuffer.append(quotedId);
@@ -569,7 +574,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     tableNameBuffer.append('.');
                 }
 
-                String tableOnlyName = this.fields[i].getOriginalTableName();
+                String tableOnlyName = this.getMetadata()[i].getOriginalTableName();
 
                 tableNameBuffer.append(quotedId);
                 tableNameBuffer.append(tableOnlyName);
@@ -590,7 +595,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                 updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(databaseName, tableOnlyName);
             } else {
-                String tableOnlyName = this.fields[i].getTableName();
+                String tableOnlyName = this.getMetadata()[i].getTableName();
 
                 if (tableOnlyName != null) {
                     tableNameBuffer.append(quotedId);
@@ -614,30 +619,30 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
             }
 
-            String originalColumnName = this.fields[i].getOriginalName();
+            String originalColumnName = this.getMetadata()[i].getOriginalName();
             String columnName = null;
 
             if (this.hasLongColumnInfo && originalColumnName != null && originalColumnName.length() > 0) {
                 columnName = originalColumnName;
             } else {
-                columnName = this.fields[i].getName();
+                columnName = this.getMetadata()[i].getName();
             }
 
             if (updColumnNameToIndex != null && columnName != null) {
                 updColumnNameToIndex.put(columnName, Integer.valueOf(i));
             }
 
-            String originalTableName = this.fields[i].getOriginalTableName();
+            String originalTableName = this.getMetadata()[i].getOriginalTableName();
             String tableName = null;
 
             if (this.hasLongColumnInfo && originalTableName != null && originalTableName.length() > 0) {
                 tableName = originalTableName;
             } else {
-                tableName = this.fields[i].getTableName();
+                tableName = this.getMetadata()[i].getTableName();
             }
 
             StringBuilder fqcnBuf = new StringBuilder();
-            String databaseName = this.fields[i].getDatabaseName();
+            String databaseName = this.getMetadata()[i].getDatabaseName();
 
             if (databaseName != null && databaseName.length() > 0) {
                 fqcnBuf.append(quotedId);
@@ -656,7 +661,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             String qualifiedColumnName = fqcnBuf.toString();
 
-            if (this.fields[i].isPrimaryKey()) {
+            if (this.getMetadata()[i].isPrimaryKey()) {
                 this.primaryKeyIndicies.add(Integer.valueOf(i));
 
                 if (!keysFirstTime) {
@@ -700,7 +705,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         Map<String, Map<String, Integer>> tablesUsedToColumnsMap = this.databasesUsedToTablesUsed.get(databaseName);
 
         if (tablesUsedToColumnsMap == null) {
-            if (this.connection.lowerCaseTableNames()) {
+            if (this.getConnection().lowerCaseTableNames()) {
                 tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>(String.CASE_INSENSITIVE_ORDER);
             } else {
                 tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>();
@@ -726,7 +731,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private synchronized String getQuotedIdChar() throws SQLException {
         if (this.quotedIdChar == null) {
-            java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+            java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
             this.quotedIdChar = dbmd.getIdentifierQuoteString();
         }
 
@@ -744,7 +749,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         this.inserter.executeUpdate();
 
         long autoIncrementId = this.inserter.getLastInsertID();
-        int numFields = this.fields.length;
+        int numFields = this.getMetadata().length;
         byte[][] newRow = new byte[numFields][];
 
         for (int i = 0; i < numFields; i++) {
@@ -755,7 +760,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
-            if (this.fields[i].isAutoIncrement() && autoIncrementId > 0) {
+            if (this.getMetadata()[i].isAutoIncrement() && autoIncrementId > 0) {
                 newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
                 this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
             }
@@ -825,7 +830,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.inserter = (PreparedStatement) this.connection.clientPrepareStatement(this.insertSQL);
+            this.inserter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.insertSQL);
             if (this.populateInserterWithDefaultValues) {
                 extractDefaultValues();
             }
@@ -835,14 +840,14 @@ public class UpdatableResultSet extends ResultSetImpl {
             resetInserter();
         }
 
-        int numFields = this.fields.length;
+        int numFields = this.getMetadata().length;
 
         this.onInsertRow = true;
         this.doingUpdates = false;
         this.savedCurrentRow = this.thisRow;
         byte[][] newRowData = new byte[numFields][];
         this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
-        this.thisRow.setMetadata(this.fields);
+        this.thisRow.setMetadata(this.getMetadata());
 
         for (int i = 0; i < numFields; i++) {
             if (!this.populateInserterWithDefaultValues) {
@@ -850,7 +855,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 newRowData = null;
             } else {
                 if (this.defaultColumnValue[i] != null) {
-                    Field f = this.fields[i];
+                    Field f = this.getMetadata()[i];
 
                     switch (f.getMysqlTypeId()) {
                         case MysqlaConstants.FIELD_TYPE_DATE:
@@ -926,9 +931,9 @@ public class UpdatableResultSet extends ResultSetImpl {
                 String message = Messages.getString("UpdatableResultSet.34");
 
                 this.eventSink.consumeEvent(
-                        new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog,
-                                this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
-                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                        new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(),
+                                this.getConnectionId(), (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId,
+                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
             }
         }
 
@@ -998,7 +1003,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.refresher = (PreparedStatement) this.connection.clientPrepareStatement(this.refreshSQL);
+            this.refresher = (PreparedStatement) this.getConnection().clientPrepareStatement(this.refreshSQL);
         }
 
         this.refresher.clearParameters();
@@ -1022,7 +1027,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
             }
 
-            if (this.fields[index].getValueNeedsQuoting()) {
+            if (this.getMetadata()[index].getValueNeedsQuoting()) {
                 this.refresher.setBytesNoEscape(1, dataFrom);
             } else {
                 this.refresher.setBytesNoEscapeNoQuotes(1, dataFrom);
@@ -1089,7 +1094,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     private void resetInserter() throws SQLException {
         this.inserter.clearParameters();
 
-        for (int i = 0; i < this.fields.length; i++) {
+        for (int i = 0; i < this.getMetadata().length; i++) {
             this.inserter.setNull(i + 1, 0);
         }
     }
@@ -1110,7 +1115,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    protected void setResultSetConcurrency(int concurrencyFlag) {
+    public void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
         // TODO: FIXME: Issue warning when asked for updateable result set, but result set is not updatable
@@ -1137,17 +1142,17 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.updater = (PreparedStatement) this.connection.clientPrepareStatement(this.updateSQL);
+            this.updater = (PreparedStatement) this.getConnection().clientPrepareStatement(this.updateSQL);
         }
 
-        int numFields = this.fields.length;
+        int numFields = this.getMetadata().length;
         this.updater.clearParameters();
 
         for (int i = 0; i < numFields; i++) {
             if (this.thisRow.getColumnValue(i) != null) {
 
-                if (this.fields[i].getValueNeedsQuoting()) {
-                    this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.fields[i].isBinary(), false);
+                if (this.getMetadata()[i].getValueNeedsQuoting()) {
+                    this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.getMetadata()[i].isBinary(), false);
                 } else {
                     this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getColumnValue(i));
                 }
@@ -1160,11 +1165,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (numKeys == 1) {
             int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getMysqlType());
+            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.getMetadata()[index].getMysqlType());
         } else {
             for (int i = 0; i < numKeys; i++) {
                 int idx = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getMysqlType());
+                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.getMetadata()[idx].getMysqlType());
             }
         }
     }
@@ -1841,7 +1846,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.16"));
         }
@@ -1871,7 +1876,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.17"));
         }
@@ -1890,7 +1895,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized void updateNString(int columnIndex, String x) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.18"));
         }
@@ -1925,7 +1930,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.11"));
         }
@@ -1940,7 +1945,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public NClob getNClob(int columnIndex) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
 
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
@@ -1962,7 +1967,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public String getNString(int columnIndex) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.getMetadata()[columnIndex - 1].getEncoding();
 
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");

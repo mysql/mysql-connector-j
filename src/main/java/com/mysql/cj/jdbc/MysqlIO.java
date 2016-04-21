@@ -43,13 +43,13 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -64,11 +64,19 @@ import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.cj.mysqla.result.BufferRow;
+import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultSetRow;
+import com.mysql.cj.mysqla.result.RowDataCursor;
+import com.mysql.cj.mysqla.result.RowDataDynamic;
+import com.mysql.cj.mysqla.result.RowDataStatic;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
@@ -314,7 +322,7 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @throws SQLException
      */
-    final ResultSetRow nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow)
+    public final ResultSetRow nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow)
             throws SQLException {
 
         // use a buffer row for reusable packets (streaming results) or blobs and long strings
@@ -525,7 +533,7 @@ public class MysqlIO implements ResultsHandler {
         return new ByteArrayRow(rowData, this.protocol.getExceptionInterceptor());
     }
 
-    boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
+    public boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
         if (this.protocol.getServerSession().hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
@@ -677,8 +685,8 @@ public class MysqlIO implements ResultsHandler {
 
             return sendFileToServer(callingStatement, fileName);
         } else {
-            com.mysql.cj.jdbc.ResultSetImpl results = getResultSet(callingStatement, columnCount, maxRows, resultSetType, resultSetConcurrency, streamResults,
-                    catalog, isBinaryEncoded, metadataFromCache);
+            com.mysql.cj.jdbc.result.ResultSetImpl results = getResultSet(callingStatement, columnCount, maxRows, resultSetType, resultSetConcurrency,
+                    streamResults, catalog, isBinaryEncoded, metadataFromCache);
 
             return results;
         }
@@ -694,7 +702,7 @@ public class MysqlIO implements ResultsHandler {
 
         switch (resultSetConcurrency) {
             case java.sql.ResultSet.CONCUR_READ_ONLY:
-                rs = com.mysql.cj.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
+                rs = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
 
                 break;
 
@@ -704,7 +712,7 @@ public class MysqlIO implements ResultsHandler {
                 break;
 
             default:
-                return com.mysql.cj.jdbc.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
+                return com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(catalog, fields, rows, this.connection, callingStatement);
         }
 
         rs.setResultSetType(resultSetType);
@@ -713,7 +721,7 @@ public class MysqlIO implements ResultsHandler {
         return rs;
     }
 
-    private com.mysql.cj.jdbc.ResultSetImpl buildResultSetWithUpdates(StatementImpl callingStatement, PacketPayload resultPacket) throws SQLException {
+    private com.mysql.cj.jdbc.result.ResultSetImpl buildResultSetWithUpdates(StatementImpl callingStatement, PacketPayload resultPacket) throws SQLException {
         long updateCount = -1;
         long updateID = -1;
         String info = null;
@@ -744,13 +752,13 @@ public class MysqlIO implements ResultsHandler {
             throw sqlEx;
         }
 
-        ResultSetInternalMethods updateRs = com.mysql.cj.jdbc.ResultSetImpl.getInstance(updateCount, updateID, this.connection, callingStatement);
+        ResultSetInternalMethods updateRs = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(updateCount, updateID, this.connection, callingStatement);
 
         if (info != null) {
-            ((com.mysql.cj.jdbc.ResultSetImpl) updateRs).setServerInfo(info);
+            ((com.mysql.cj.jdbc.result.ResultSetImpl) updateRs).setServerInfo(info);
         }
 
-        return (com.mysql.cj.jdbc.ResultSetImpl) updateRs;
+        return (com.mysql.cj.jdbc.result.ResultSetImpl) updateRs;
     }
 
     private final void readServerStatusForResultSets(PacketPayload rowPacket) throws SQLException {
@@ -1040,7 +1048,7 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
-    protected List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize) throws SQLException {
+    public List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId, Field[] columnTypes, int fetchSize) throws SQLException {
 
         if (fetchedRows == null) {
             fetchedRows = new ArrayList<ResultSetRow>(fetchSize);

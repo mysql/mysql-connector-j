@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.result;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -68,8 +68,8 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -95,12 +95,20 @@ import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.Blob;
+import com.mysql.cj.jdbc.BlobFromLocator;
+import com.mysql.cj.jdbc.Clob;
+import com.mysql.cj.jdbc.MysqlSQLXML;
+import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.result.ResultSetRow;
+import com.mysql.cj.mysqla.result.RowDataStatic;
 
 public class ResultSetImpl implements ResultSetInternalMethods, WarningListener {
 
@@ -123,11 +131,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean[] columnUsed = null;
 
     /** The Connection instance that created us */
-    protected volatile JdbcConnection connection; // The connection that created us
+    private volatile JdbcConnection connection; // The connection that created us
 
     protected MysqlaSession session = null;
 
-    protected long connectionId = 0;
+    private long connectionId = 0;
 
     /** The current row #, -1 == before start of result set */
     protected int currentRow = -1; // Cursor to current row;
@@ -147,7 +155,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected int fetchSize = 0;
 
     /** The fields for this result set */
-    protected Field[] fields; // The fields
+    private Field[] fields; // The fields
 
     /**
      * First character of the query that created this result set...Used to determine whether or not to parse server info messages in certain
@@ -171,12 +179,12 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean onInsertRow = false;
 
     /** The statement that created us */
-    protected com.mysql.cj.jdbc.StatementImpl owningStatement;
+    private com.mysql.cj.jdbc.StatementImpl owningStatement;
 
     /**
      * StackTrace generated where ResultSet was created... used when profiling
      */
-    protected String pointOfOrigin;
+    private String pointOfOrigin;
 
     /** Are we tracking items for profileSQL? */
     protected boolean profileSQL = false;
@@ -246,14 +254,14 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected boolean yearIsDateType = true;
     protected String zeroDateTimeBehavior;
 
-    protected static ResultSetImpl getInstance(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    public static ResultSetImpl getInstance(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
     }
 
     /**
      * Creates a result set instance that represents a query result
      */
-    protected static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt)
+    public static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt)
             throws SQLException {
         return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
     }
@@ -2006,7 +2014,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                     if (!calledExplicitly) {
                         this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog, this.connectionId,
+                                (this.owningStatement == null) ? "N/A" : this.owningStatement.getCurrentCatalog(), this.connectionId,
                                 (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
                                 Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
                     }
@@ -2019,7 +2027,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                                 .getIntegerReadableProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold).getValue();
                         if (this.rowData.size() > resultSetSizeThreshold) {
                             this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.getCurrentCatalog(),
                                     this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
                                     System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
                                     Messages.getString("ResultSet.Too_Large_Result_Set",
@@ -2029,7 +2037,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                         if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
                             this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.currentCatalog,
+                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.getCurrentCatalog(),
                                     this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
                                     System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
                                     Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set",
@@ -2060,7 +2068,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                         if (issueWarn) {
                             this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog, this.connectionId,
+                                    (this.owningStatement == null) ? "N/A" : this.owningStatement.getCurrentCatalog(), this.connectionId,
                                     (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), 0, System.currentTimeMillis(), 0,
                                     Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
                         }
@@ -2211,7 +2219,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      *            Sets the next result set in the result set chain for multiple
      *            result sets.
      */
-    protected synchronized void setNextResultSet(ResultSetInternalMethods nextResultSet) {
+    public synchronized void setNextResultSet(ResultSetInternalMethods nextResultSet) {
         this.nextResultSet = nextResultSet;
     }
 
@@ -2231,7 +2239,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @param concurrencyFlag
      *            CONCUR_UPDATABLE or CONCUR_READONLY
      */
-    protected synchronized void setResultSetConcurrency(int concurrencyFlag) {
+    public synchronized void setResultSetConcurrency(int concurrencyFlag) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.resultSetConcurrency = concurrencyFlag;
@@ -2248,7 +2256,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      *            SCROLL_SENSITIVE or SCROLL_INSENSITIVE (we only support
      *            SCROLL_INSENSITIVE)
      */
-    protected synchronized void setResultSetType(int typeFlag) {
+    public synchronized void setResultSetType(int typeFlag) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.resultSetType = typeFlag;
@@ -2264,7 +2272,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @param info
      *            the server info message
      */
-    protected void setServerInfo(String info) {
+    public void setServerInfo(String info) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 this.serverInfo = info;
@@ -2746,6 +2754,26 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
     public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         throw SQLError.notUpdatable();
+    }
+
+    public JdbcConnection getConnection() {
+        return this.connection;
+    }
+
+    public Field[] getMetadata() {
+        return this.fields;
+    }
+
+    public com.mysql.cj.jdbc.StatementImpl getOwningStatement() {
+        return this.owningStatement;
+    }
+
+    public long getConnectionId() {
+        return this.connectionId;
+    }
+
+    public String getPointOfOrigin() {
+        return this.pointOfOrigin;
     }
 
 }

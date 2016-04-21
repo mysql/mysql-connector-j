@@ -53,7 +53,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    Clob(String charDataInit, ExceptionInterceptor exceptionInterceptor) {
+    public Clob(String charDataInit, ExceptionInterceptor exceptionInterceptor) {
         this.charData = charDataInit;
         this.exceptionInterceptor = exceptionInterceptor;
     }

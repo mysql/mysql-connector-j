@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -61,6 +61,9 @@ import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * Representation of stored procedures for JDBC
@@ -145,7 +148,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
          */
         CallableStatementParamInfo(CallableStatementParamInfo fullParamInfo) {
             this.nativeSql = CallableStatement.this.originalSql;
-            this.catalogInUse = CallableStatement.this.currentCatalog;
+            this.catalogInUse = CallableStatement.this.getCurrentCatalog();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
             @SuppressWarnings("synthetic-access")
             int[] localParameterMap = CallableStatement.this.placeholderToParameterIndexMap;
@@ -180,7 +183,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             boolean hadRows = paramTypesRs.last();
 
             this.nativeSql = CallableStatement.this.originalSql;
-            this.catalogInUse = CallableStatement.this.currentCatalog;
+            this.catalogInUse = CallableStatement.this.getCurrentCatalog();
             this.isFunctionCall = CallableStatement.this.callingStoredFunction;
 
             if (hadRows) {
@@ -732,7 +735,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     useCatalog = true;
                 }
 
-                paramTypesRs = dbmd.getProcedureColumns(useCatalog ? this.currentCatalog : tmpCatalog/* null */, null, procName, "%");
+                paramTypesRs = dbmd.getProcedureColumns(useCatalog ? this.getCurrentCatalog() : tmpCatalog/* null */, null, procName, "%");
 
                 boolean hasResults = false;
                 try {
@@ -1890,7 +1893,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     try {
                         outParameterStmt = this.connection.createStatement();
                         outParamRs = outParameterStmt.executeQuery(outParameterQuery.toString());
-                        this.outputParameterResults = ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) outParamRs).copy();
+                        this.outputParameterResults = ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) outParamRs).copy();
 
                         if (!this.outputParameterResults.next()) {
                             this.outputParameterResults.close();
@@ -2324,7 +2327,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             try {
                 String procName = extractProcedureName();
 
-                String catalog = this.currentCatalog;
+                String catalog = this.getCurrentCatalog();
 
                 if (procName.indexOf(".") != -1) {
                     catalog = procName.substring(0, procName.indexOf("."));

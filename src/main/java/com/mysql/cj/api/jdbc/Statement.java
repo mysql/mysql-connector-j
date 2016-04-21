@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,6 +28,7 @@ import java.sql.SQLException;
 
 import com.mysql.cj.api.PingTarget;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 
 /**
  * This interface contains methods that are considered the "vendor extension" to the JDBC API for MySQL's implementation of java.sql.Statement.

@@ -32,6 +32,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.ResultSetMetaData;
 
 public class MysqlParameterMetadata implements ParameterMetaData {
     boolean returnSimpleMetadata = false;
@@ -71,7 +72,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
     }
 
     private void checkAvailable() throws SQLException {
-        if (this.metadata == null || this.metadata.fields == null) {
+        if (this.metadata == null || this.metadata.getFields() == null) {
             throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
         }
     }

@@ -276,7 +276,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
                 ResultSet rs = this.wrappedStmt.getResultSet();
 
                 if (rs != null) {
-                    ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
+                    ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).setWrapperStatement(this);
                 }
                 return rs;
             }
@@ -492,7 +492,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
             }
 
             rs = this.wrappedStmt.executeQuery(sql);
-            ((com.mysql.cj.api.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).setWrapperStatement(this);
 
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);

@@ -21,19 +21,21 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.mysqla.result;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.mysql.cj.api.io.ServerSession;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.result.Field;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
@@ -188,8 +190,8 @@ public class RowDataCursor implements RowData {
             return false;
         }
 
-        if (this.owner != null && this.owner.owningStatement != null) {
-            int maxRows = this.owner.owningStatement.maxRows;
+        if (this.owner != null && this.owner.getOwningStatement() != null) {
+            int maxRows = this.owner.getOwningStatement().maxRows;
 
             if (maxRows != -1 && this.currentPositionInEntireResult + 1 > maxRows) {
                 return false;
@@ -257,7 +259,7 @@ public class RowDataCursor implements RowData {
             return;
         }
 
-        synchronized (this.owner.connection.getConnectionMutex()) {
+        synchronized (this.owner.getConnection().getConnectionMutex()) {
             boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 
             if (!this.firstFetchCompleted) {

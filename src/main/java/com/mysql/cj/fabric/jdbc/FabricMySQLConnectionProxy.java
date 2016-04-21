@@ -55,9 +55,9 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.fabric.FabricMysqlConnection;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.ConnectionString;
@@ -73,7 +73,6 @@ import com.mysql.cj.fabric.ServerGroup;
 import com.mysql.cj.fabric.ShardMapping;
 import com.mysql.cj.fabric.exceptions.FabricCommunicationException;
 import com.mysql.cj.jdbc.AbstractJdbcConnection;
-import com.mysql.cj.jdbc.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -81,6 +80,7 @@ import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
+import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaSession;
 
 /**

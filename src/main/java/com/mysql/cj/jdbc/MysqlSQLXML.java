@@ -62,7 +62,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -96,7 +96,7 @@ public class MysqlSQLXML implements SQLXML {
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    protected MysqlSQLXML(ResultSetInternalMethods owner, int index, ExceptionInterceptor exceptionInterceptor) {
+    public MysqlSQLXML(ResultSetInternalMethods owner, int index, ExceptionInterceptor exceptionInterceptor) {
         this.owningResultSet = owner;
         this.columnIndexOfXml = index;
         this.fromResultSet = true;

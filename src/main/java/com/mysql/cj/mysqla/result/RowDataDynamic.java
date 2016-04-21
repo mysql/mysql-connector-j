@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.mysqla.result;
 
 import java.sql.SQLException;
 
@@ -30,8 +30,8 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -43,6 +43,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
@@ -122,7 +123,7 @@ public class RowDataDynamic implements RowData {
         JdbcConnection conn = null;
 
         if (this.owner != null) {
-            conn = this.owner.connection;
+            conn = this.owner.getConnection();
 
             if (conn != null) {
                 mutex = conn.getConnectionMutex();
@@ -169,12 +170,12 @@ public class RowDataDynamic implements RowData {
                             ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
 
                             eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, this.owner.connectionId,
-                                    this.owner.owningStatement == null ? -1 : this.owner.owningStatement.getId(), -1, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, null,
+                                    this.owner.getOwningStatement() == null ? "N/A" : this.owner.getOwningStatement().getCurrentCatalog(),
+                                    this.owner.getConnectionId(), this.owner.getOwningStatement() == null ? -1 : this.owner.getOwningStatement().getId(), -1,
+                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
                                     Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
                                             + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
-                                            + Messages.getString("RowDataDynamic.6") + this.owner.pointOfOrigin));
+                                            + Messages.getString("RowDataDynamic.6") + this.owner.getPointOfOrigin()));
                         } catch (CJException e) {
                             throw SQLExceptionsMapping.translateException(e, conn.getExceptionInterceptor());
                         }

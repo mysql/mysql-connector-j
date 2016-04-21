@@ -71,7 +71,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -91,8 +91,14 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultSetRow;
+import com.mysql.cj.mysqla.result.RowDataStatic;
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
@@ -1115,9 +1121,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             String oldCatalog = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
+            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
                 oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.currentCatalog);
+                locallyScopedConn.setCatalog(this.getCurrentCatalog());
             }
 
             //
@@ -1132,7 +1138,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             Field[] metadataFromCache = null;
 
             if (cachedMetadata != null) {
-                metadataFromCache = cachedMetadata.fields;
+                metadataFromCache = cachedMetadata.getFields();
             }
 
             boolean oldInfoMsgState = false;
@@ -1819,7 +1825,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket, this.resultSetType, this.resultSetConcurrency,
-                            createStreamingResultSet, this.currentCatalog, metadataFromCache, isBatch);
+                            createStreamingResultSet, this.getCurrentCatalog(), metadataFromCache, isBatch);
 
                     if (timeoutTask != null) {
                         timeoutTask.cancel();
@@ -1899,9 +1905,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             String oldCatalog = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
+            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
                 oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.currentCatalog);
+                locallyScopedConn.setCatalog(this.getCurrentCatalog());
             }
 
             //
@@ -1916,7 +1922,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             Field[] metadataFromCache = null;
 
             if (cachedMetadata != null) {
-                metadataFromCache = cachedMetadata.fields;
+                metadataFromCache = cachedMetadata.getFields();
             }
 
             locallyScopedConn.setSessionMaxRows(this.maxRows);
@@ -2015,9 +2021,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             String oldCatalog = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
+            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
                 oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.currentCatalog);
+                locallyScopedConn.setCatalog(this.getCurrentCatalog());
             }
 
             //
@@ -2167,7 +2173,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      */
     protected PreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog,
+            PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.getCurrentCatalog(),
                     this.parseInfo.getParseInfoForBatch(numBatches));
             pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
             pstmt.rewrittenBatchSize = numBatches;
@@ -2455,7 +2461,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             if (this.pstmtResultMetaData == null) {
                 try {
-                    mdStmt = new PreparedStatement(this.connection, this.originalSql, this.currentCatalog, this.parseInfo);
+                    mdStmt = new PreparedStatement(this.connection, this.originalSql, this.getCurrentCatalog(), this.parseInfo);
 
                     mdStmt.setMaxRows(1);
 
@@ -2587,7 +2593,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    boolean isNull(int paramIndex) throws SQLException {
+    public boolean isNull(int paramIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.isNull[paramIndex];
         }
@@ -2627,7 +2633,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *             if an error occurs
      */
     @Override
-    protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
+    public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
@@ -2646,7 +2652,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 if (this.numberOfExecutions <= 1) {
                     String message = Messages.getString("PreparedStatement.43");
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCurrentCatalog(), this.connectionId, this.getId(), -1,
                             System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
@@ -2864,7 +2870,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    protected void setBytes(int parameterIndex, byte[] x, boolean checkForIntroducer, boolean escapeForMBChars) throws SQLException {
+    public void setBytes(int parameterIndex, byte[] x, boolean checkForIntroducer, boolean escapeForMBChars) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (x == null) {
                 setNull(parameterIndex, MysqlType.BINARY);
@@ -2993,7 +2999,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if an error occurs
      */
-    protected void setBytesNoEscape(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
+    public void setBytesNoEscape(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
         byte[] parameterWithQuotes = new byte[parameterAsBytes.length + 2];
         parameterWithQuotes[0] = '\'';
         System.arraycopy(parameterAsBytes, 0, parameterWithQuotes, 1, parameterAsBytes.length);
@@ -3313,7 +3319,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
-    protected void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException {
+    public void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException {
         setNull(parameterIndex, mysqlType.getJdbcType());
     }
 

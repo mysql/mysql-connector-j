@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,7 +33,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.OutputStreamWatcher;
 import com.mysql.cj.api.io.WatchableStream;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.io.WatchableOutputStream;
@@ -72,7 +72,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * 
      * @param data
      */
-    Blob(byte[] data, ExceptionInterceptor exceptionInterceptor) {
+    public Blob(byte[] data, ExceptionInterceptor exceptionInterceptor) {
         setBinaryData(data);
         this.exceptionInterceptor = exceptionInterceptor;
     }

@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.jdbc.result;
 
 import java.sql.SQLException;
 
@@ -50,7 +50,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     /* Session, used only for `getMaxBytesPerChar()' */
     private Session session;
 
-    Field[] fields;
+    private Field[] fields;
     boolean useOldAliasBehavior = false;
     boolean treatYearAsDate = true;
 
@@ -660,5 +660,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
+    }
+
+    public Field[] getFields() {
+        return this.fields;
     }
 }

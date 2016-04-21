@@ -98,9 +98,9 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -744,7 +744,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             String charsetToCheck = "ms932";
 
-            assertEquals(charsetToCheck, ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
+            assertEquals(charsetToCheck, ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
 
             try {
                 ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
@@ -779,7 +779,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = shiftJisConn.createStatement().executeQuery("SELECT 'abc'");
             assertTrue(this.rs.next());
 
-            String charSetUC = ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+            String charSetUC = ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
 
             props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "WINDOWS-31J");
@@ -796,7 +796,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
 
             assertEquals("windows-31j".toLowerCase(Locale.ENGLISH),
-                    ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
+                    ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
 
             props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "CP943");
@@ -811,7 +811,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = cp943Conn.createStatement().executeQuery("SELECT 'abc'");
             assertTrue(this.rs.next());
 
-            charSetUC = ((com.mysql.cj.jdbc.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
+            charSetUC = ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toUpperCase(Locale.US);
 
             assertEquals("CP943", charSetUC);
 

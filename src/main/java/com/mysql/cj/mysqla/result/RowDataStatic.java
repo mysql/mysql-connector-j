@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,14 +21,15 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.mysqla.result;
 
 import java.sql.SQLException;
 import java.util.List;
 
-import com.mysql.cj.api.jdbc.ResultSetInternalMethods;
-import com.mysql.cj.api.jdbc.RowData;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.RowData;
 import com.mysql.cj.core.result.Field;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 /**
  * Represents an in-memory result set

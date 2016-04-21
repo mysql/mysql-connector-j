@@ -35,6 +35,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 /**
  * The representation (mapping) in the JavaTM programming language of an SQL BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
@@ -67,28 +68,28 @@ public class BlobFromLocator implements java.sql.Blob {
     /**
      * Creates an updatable BLOB that can update in-place
      */
-    BlobFromLocator(ResultSetImpl creatorResultSetToSet, int blobColumnIndex, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+    public BlobFromLocator(ResultSetImpl creatorResultSetToSet, int blobColumnIndex, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         this.exceptionInterceptor = exceptionInterceptor;
         this.creatorResultSet = creatorResultSetToSet;
 
-        this.numColsInResultSet = this.creatorResultSet.fields.length;
-        this.quotedId = this.creatorResultSet.connection.getMetaData().getIdentifierQuoteString();
+        this.numColsInResultSet = this.creatorResultSet.getMetadata().length;
+        this.quotedId = this.creatorResultSet.getConnection().getMetaData().getIdentifierQuoteString();
 
         if (this.numColsInResultSet > 1) {
             this.primaryKeyColumns = new ArrayList<String>();
             this.primaryKeyValues = new ArrayList<String>();
 
             for (int i = 0; i < this.numColsInResultSet; i++) {
-                if (this.creatorResultSet.fields[i].isPrimaryKey()) {
+                if (this.creatorResultSet.getMetadata()[i].isPrimaryKey()) {
                     StringBuilder keyName = new StringBuilder();
                     keyName.append(this.quotedId);
 
-                    String originalColumnName = this.creatorResultSet.fields[i].getOriginalName();
+                    String originalColumnName = this.creatorResultSet.getMetadata()[i].getOriginalName();
 
                     if ((originalColumnName != null) && (originalColumnName.length() > 0)) {
                         keyName.append(originalColumnName);
                     } else {
-                        keyName.append(this.creatorResultSet.fields[i].getName());
+                        keyName.append(this.creatorResultSet.getMetadata()[i].getName());
                     }
 
                     keyName.append(this.quotedId);
@@ -107,10 +108,10 @@ public class BlobFromLocator implements java.sql.Blob {
             notEnoughInformationInQuery();
         }
 
-        if (this.creatorResultSet.fields[0].getOriginalTableName() != null) {
+        if (this.creatorResultSet.getMetadata()[0].getOriginalTableName() != null) {
             StringBuilder tableNameBuffer = new StringBuilder();
 
-            String databaseName = this.creatorResultSet.fields[0].getDatabaseName();
+            String databaseName = this.creatorResultSet.getMetadata()[0].getDatabaseName();
 
             if ((databaseName != null) && (databaseName.length() > 0)) {
                 tableNameBuffer.append(this.quotedId);
@@ -120,7 +121,7 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             tableNameBuffer.append(this.quotedId);
-            tableNameBuffer.append(this.creatorResultSet.fields[0].getOriginalTableName());
+            tableNameBuffer.append(this.creatorResultSet.getMetadata()[0].getOriginalTableName());
             tableNameBuffer.append(this.quotedId);
 
             this.tableName = tableNameBuffer.toString();
@@ -128,7 +129,7 @@ public class BlobFromLocator implements java.sql.Blob {
             StringBuilder tableNameBuffer = new StringBuilder();
 
             tableNameBuffer.append(this.quotedId);
-            tableNameBuffer.append(this.creatorResultSet.fields[0].getTableName());
+            tableNameBuffer.append(this.creatorResultSet.getMetadata()[0].getTableName());
             tableNameBuffer.append(this.quotedId);
 
             this.tableName = tableNameBuffer.toString();
@@ -158,8 +159,8 @@ public class BlobFromLocator implements java.sql.Blob {
      */
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
-        return new BufferedInputStream(new LocatorInputStream(),
-                this.creatorResultSet.connection.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
+        return new BufferedInputStream(new LocatorInputStream(), this.creatorResultSet.getConnection().getPropertySet()
+                .getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
     }
 
     /**
@@ -199,7 +200,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
         try {
             // FIXME: Have this passed in instead
-            pStmt = this.creatorResultSet.connection.prepareStatement(query.toString());
+            pStmt = this.creatorResultSet.getConnection().prepareStatement(query.toString());
 
             pStmt.setBytes(1, bytesToWrite);
 
@@ -300,7 +301,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
         try {
             // FIXME: Have this passed in instead
-            pStmt = this.creatorResultSet.connection.prepareStatement(query.toString());
+            pStmt = this.creatorResultSet.getConnection().prepareStatement(query.toString());
 
             for (int i = 0; i < this.numPrimaryKeys; i++) {
                 pStmt.setString(i + 1, this.primaryKeyValues.get(i));
@@ -382,7 +383,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
         try {
             // FIXME: Have this passed in instead
-            pStmt = this.creatorResultSet.connection.prepareStatement(query.toString());
+            pStmt = this.creatorResultSet.getConnection().prepareStatement(query.toString());
             pStmt.setBytes(1, pattern);
 
             for (int i = 0; i < this.numPrimaryKeys; i++) {
@@ -447,7 +448,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
         try {
             // FIXME: Have this passed in instead
-            pStmt = this.creatorResultSet.connection.prepareStatement(query.toString());
+            pStmt = this.creatorResultSet.getConnection().prepareStatement(query.toString());
 
             for (int i = 0; i < this.numPrimaryKeys; i++) {
                 pStmt.setString(i + 1, this.primaryKeyValues.get(i));
@@ -492,7 +493,7 @@ public class BlobFromLocator implements java.sql.Blob {
             query.append(" = ?");
         }
 
-        return this.creatorResultSet.connection.prepareStatement(query.toString());
+        return this.creatorResultSet.getConnection().prepareStatement(query.toString());
     }
 
     byte[] getBytesInternal(java.sql.PreparedStatement pStmt, long pos, int length) throws SQLException {
@@ -511,7 +512,7 @@ public class BlobFromLocator implements java.sql.Blob {
             blobRs = pStmt.executeQuery();
 
             if (blobRs.next()) {
-                return ((com.mysql.cj.jdbc.ResultSetImpl) blobRs).getBytes(1);
+                return ((com.mysql.cj.jdbc.result.ResultSetImpl) blobRs).getBytes(1);
             }
 
             throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
