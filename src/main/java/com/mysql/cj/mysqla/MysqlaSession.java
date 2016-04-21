@@ -36,6 +36,7 @@ import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
@@ -60,6 +61,7 @@ import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.log.LogFactory;
+import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.MysqlIO;
@@ -448,7 +450,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
 
         return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, resultSetType, resultSetConcurrency,
-                streamResults, catalog, cachedMetadata);
+                streamResults, catalog, cachedMetadata, this::getProfilerEventHandlerInstanceFunction);
     }
 
     /**
@@ -557,4 +559,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.serverHasFracSecsSupport;
     }
 
+    public ProfilerEventHandler getProfilerEventHandlerInstanceFunction() {
+        return ProfilerEventHandlerFactory.getInstance(this);
+    }
 }

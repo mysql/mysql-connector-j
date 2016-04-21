@@ -24,6 +24,7 @@
 package com.mysql.cj.api.io;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -115,4 +116,8 @@ public interface Protocol {
 
     boolean versionMeetsMinimum(int major, int minor, int subminor);
 
+    @FunctionalInterface
+    public static interface GetProfilerEventHandlerInstanceFunction {
+        ProfilerEventHandler apply();
+    }
 }

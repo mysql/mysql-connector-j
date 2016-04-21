@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,9 +23,6 @@
 
 package com.mysql.cj.core.profiler;
 
-import java.util.Properties;
-
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.log.Log;
@@ -51,7 +48,7 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
         this.logger = null;
     }
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
+    public void init(Log log) {
         this.logger = log;
     }
 

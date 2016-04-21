@@ -23,39 +23,37 @@
 
 package com.mysql.cj.core.profiler;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.Util;
 
 public class ProfilerEventHandlerFactory {
 
     /**
-     * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
-     * connection.
+     * Returns the ProfilerEventHandler that handles profiler events for the given session.
      * 
-     * @param conn
-     *            the connection to handle events for
-     * @return the ProfilerEventHandlerFactory that handles profiler events
+     * @param sess
+     *            the session to handle events for
+     * @return the {@link ProfilerEventHandler} that handles profiler events
      */
-    public static synchronized ProfilerEventHandler getInstance(MysqlConnection conn) {
-        ProfilerEventHandler handler = conn.getSession().getProfilerEventHandler();
+    public static synchronized ProfilerEventHandler getInstance(Session sess) {
+        ProfilerEventHandler handler = sess.getProfilerEventHandler();
 
         if (handler == null) {
             handler = (ProfilerEventHandler) Util.getInstance(
-                    conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
-                    new Object[0], conn.getExceptionInterceptor());
+                    sess.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
+                    new Object[0], sess.getExceptionInterceptor());
 
-            // we do it this way to not require exposing the connection properties for all who utilize it
-            conn.initializeExtension(handler);
-            conn.getSession().setProfilerEventHandler(handler);
+            handler.init(sess.getLog());
+            sess.setProfilerEventHandler(handler);
         }
 
         return handler;
     }
 
-    public static synchronized void removeInstance(MysqlConnection conn) {
-        ProfilerEventHandler handler = conn.getSession().getProfilerEventHandler();
+    public static synchronized void removeInstance(Session sess) {
+        ProfilerEventHandler handler = sess.getProfilerEventHandler();
 
         if (handler != null) {
             handler.destroy();

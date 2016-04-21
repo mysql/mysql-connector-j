@@ -1229,7 +1229,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.connection.incrementNumberOfPreparedExecutes();
 
                 if (this.profileSQL) {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
 
                     this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId,
                             -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin, this.session.getQueryTimingUnits(), null,

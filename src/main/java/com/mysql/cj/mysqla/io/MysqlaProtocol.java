@@ -73,7 +73,6 @@ import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
-import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
@@ -772,7 +771,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * 
      */
     public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
+            int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata,
+            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction) {
         this.statementExecutionDepth++;
 
         try {
@@ -929,7 +929,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                                 Long.valueOf(queryEndTime - queryStartTime) }));
                 mesgBuf.append(profileQueryToLog);
 
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
@@ -948,7 +948,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
             if (this.logSlowQueries) {
 
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 if (this.queryBadIndexUsed && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
@@ -975,7 +975,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             if (this.profileSQL) {
                 fetchEndTime = getCurrentTimeNanosOrMillis();
 
-                ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),

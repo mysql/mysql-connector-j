@@ -921,7 +921,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (this.useUsageAdvisor) {
             if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
 
                 String message = Messages.getString("UpdatableResultSet.34");
 

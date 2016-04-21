@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,7 +23,13 @@
 
 package com.mysql.cj.api;
 
-public interface ProfilerEventHandler extends Extension {
+import com.mysql.cj.api.log.Log;
+
+public interface ProfilerEventHandler {
+
+    void init(Log log);
+
+    void destroy();
 
     void consumeEvent(ProfilerEvent evt);
 }

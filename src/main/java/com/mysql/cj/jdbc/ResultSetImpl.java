@@ -389,7 +389,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
                 this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
             }
 
             if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).getValue()) {

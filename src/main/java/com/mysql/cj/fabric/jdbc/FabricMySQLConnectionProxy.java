@@ -49,7 +49,6 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -1120,9 +1119,6 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
 
     public boolean isAbonormallyLongQuery(long millisOrNanos) {
         return false;
-    }
-
-    public void initializeExtension(Extension ex) {
     }
 
     public int getAutoIncrementIncrement() {

@@ -2384,8 +2384,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 Log.LOGGER_INSTANCE_NAME, getExceptionInterceptor()));
 
         if (this.profileSQL.getValue() || this.useUsageAdvisor.getValue()) {
-            // ProfilerEventHandlerFactory itself registers ProfilerEventHandler into proper container
-            ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
+            ProfilerEventHandlerFactory.getInstance(this.session);
         }
 
         if (this.cachePrepStmts.getValue()) {
@@ -3346,7 +3345,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.exceptionInterceptor.destroy();
             }
         } finally {
-            ProfilerEventHandlerFactory.removeInstance(this);
+            ProfilerEventHandlerFactory.removeInstance(this.session);
 
             this.openStatements = null;
             this.statementInterceptors = null;
@@ -4320,10 +4319,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             return millisOrNanos > (this.queryTimeMean + 5 * stddev);
         }
-    }
-
-    public void initializeExtension(Extension ex) {
-        ex.init(this, this.props, this.session.getLog());
     }
 
     public void transactionBegun() throws SQLException {

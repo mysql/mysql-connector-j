@@ -391,7 +391,7 @@ public class StatementImpl implements Statement {
         if (profiling) {
             this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
             try {
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
             } catch (CJException e) {
                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }

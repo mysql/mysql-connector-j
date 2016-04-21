@@ -42,7 +42,6 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -307,10 +306,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public void incrementNumberOfResultSetsCreated() {
         getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
-    }
-
-    public void initializeExtension(Extension ex) {
-        getActiveMySQLConnection().initializeExtension(ex);
     }
 
     public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {

@@ -65,6 +65,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -92,6 +93,7 @@ public class MysqlIO implements ResultsHandler {
     //
     private SoftReference<PacketPayload> loadFileBufRef;
 
+    private MysqlaSession session;
     private MysqlaProtocol protocol;
     private PropertySet propertySet;
     private JdbcConnection connection;
@@ -103,6 +105,7 @@ public class MysqlIO implements ResultsHandler {
     protected ReadableProperty<Boolean> useDirectRowUnpack;
 
     public MysqlIO(MysqlaProtocol protocol, PropertySet propertySet, JdbcConnection connection) {
+        this.session = connection.getSession();
         this.protocol = protocol;
         this.propertySet = propertySet;
         this.connection = connection;
@@ -1114,7 +1117,8 @@ public class MysqlIO implements ResultsHandler {
             try {
                 rs = this.protocol.sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
                         this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1,
-                        ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null);
+                        ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null,
+                        this.session::getProfilerEventHandlerInstanceFunction);
 
                 if (rs.next()) {
                     errorBuf.append("\n\n");

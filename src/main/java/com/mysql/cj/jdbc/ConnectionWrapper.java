@@ -41,7 +41,6 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.Executor;
 
-import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
@@ -740,10 +739,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             checkAndFireConnectionError(sqlException);
         }
 
-    }
-
-    public void initializeExtension(Extension ex) {
-        this.mc.initializeExtension(ex);
     }
 
     public int getAutoIncrementIncrement() {

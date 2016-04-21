@@ -166,7 +166,7 @@ public class RowDataDynamic implements RowData {
                     if (hadMore) {
 
                         try {
-                            ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn);
+                            ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
 
                             eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
                                     this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, this.owner.connectionId,
