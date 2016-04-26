@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqlx.io;
 
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.GeneratedMessage;
@@ -43,8 +44,6 @@ public class SqlResultMessageListener implements MessageListener {
         UPDATE, DATA
     }
 
-    private static ResultCtor<SqlResult> RESULT_CTOR = metadata -> (rows, task) -> new SqlDataResult(metadata, rows, task);
-
     private ResultType resultType;
 
     private CompletableFuture<SqlResult> resultF;
@@ -60,10 +59,11 @@ public class SqlResultMessageListener implements MessageListener {
     private ResultMessageListener resultListener;
     private ResultCreatingResultListener<SqlResult> resultCreator;
 
-    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ColToFieldTransformer colToField) {
+    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ColToFieldTransformer colToField, TimeZone defaultTimeZone) {
         // compose with non-data future
         this.resultF = resultF;
-        this.resultCreator = new ResultCreatingResultListener<>(RESULT_CTOR, resultF);
+        ResultCtor<SqlResult> resultCtor = metadata -> (rows, task) -> new SqlDataResult(metadata, defaultTimeZone, rows, task);
+        this.resultCreator = new ResultCreatingResultListener<>(resultCtor, resultF);
         this.resultListener = new ResultMessageListener(colToField, this.resultCreator);
         // Propagate the ok packet (or exception) to the result promise
         CompletableFuture<StatementExecuteOk> okF = new CompletableFuture<>();

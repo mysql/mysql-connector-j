@@ -24,6 +24,9 @@
 package com.mysql.cj.api.x;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import com.mysql.cj.x.json.DbDoc;
 
@@ -60,6 +63,16 @@ public interface Row {
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
      */
     byte getByte(int pos);
+
+    /**
+     * Retrieve the value for column `fieldName' as a {@link Date} value.
+     */
+    Date getDate(String fieldName);
+
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
+     */
+    Date getDate(int pos);
 
     /**
      * Retrieve the value for column `fieldName' as a DbDoc value.
@@ -110,4 +123,24 @@ public interface Row {
      * Retrieve the value for column at position `pos' (starting at 0) as a string value.
      */
     String getString(int pos);
+
+    /**
+     * Retrieve the value for column `fieldName' as a {@link Time} value.
+     */
+    Time getTime(String fieldName);
+
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
+     */
+    Time getTime(int pos);
+
+    /**
+     * Retrieve the value for column `fieldName' as a {@link Timestamp} value.
+     */
+    Timestamp getTimestamp(String fieldName);
+
+    /**
+     * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
+     */
+    Timestamp getTimestamp(int pos);
 }

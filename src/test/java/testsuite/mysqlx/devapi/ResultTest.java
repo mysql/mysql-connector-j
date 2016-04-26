@@ -27,6 +27,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -126,12 +130,29 @@ public class ResultTest extends DevApiBaseTestCase {
     }
 
     @Test
-    @Ignore("TODO: write this. we can't easily verify that it doesn't consume huge amounts of memory, but we can try it")
-    public void testLargeResult() {
-    }
-
-    @Test
-    public void testTypes() {
-        // TODO: !
+    public void testDateTimeTypes() throws Exception {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        sqlUpdate("drop table if exists testx");
+        sqlUpdate("create table testx (w date, x datetime(6), y timestamp(6), z time)");
+        Table table = this.schema.getTable("testx");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+        java.util.Date theDate = df.parse("2015-09-22T12:31:16.136");
+        Date w = new Date(theDate.getTime());
+        Timestamp y = new Timestamp(theDate.getTime());
+        Time z = new Time(theDate.getTime());
+        table.insert().values(w, theDate, y, z).execute();
+        RowResult rows = table.select("w, x, y, z").execute();
+        Row r = rows.next();
+        assertEquals("2015-09-22", r.getString("w"));
+        // use string comparison for java.sql.Date objects
+        assertEquals(w.toString(), r.getDate("w").toString());
+        assertEquals("2015-09-22 12:31:16.136000000", r.getString("x"));
+        assertEquals(theDate, r.getTimestamp("x"));
+        assertEquals("2015-09-22 12:31:16.136000000", r.getString("y"));
+        assertEquals(y.toString(), r.getTimestamp("y").toString());
+        assertEquals("12:31:16", r.getString("z"));
+        assertEquals(z.toString(), r.getTime("z").toString());
     }
 }

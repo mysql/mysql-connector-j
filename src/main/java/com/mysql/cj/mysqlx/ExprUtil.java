@@ -23,6 +23,11 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+
 import com.google.protobuf.ByteString;
 import com.mysql.cj.api.x.Expression;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
@@ -41,6 +46,12 @@ import com.mysql.cj.x.json.JsonArray;
  * @todo rename to ProtobufUtil(s)
  */
 public class ExprUtil {
+    // Date formats for sending dates and times to the server as strings.
+    private static SimpleDateFormat javaSqlDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private static SimpleDateFormat javaSqlTimestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+    private static SimpleDateFormat javaSqlTimeFormat = new SimpleDateFormat("HH:mm:ss.S");
+    private static SimpleDateFormat javaUtilDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar NULL type.
      */
@@ -168,7 +179,15 @@ public class ExprUtil {
             // TODO: check how xplugin handles this
         } else if (value.getClass() == JsonArray.class) {
             // TODO: check how xplugin handles this
+        } else if (value.getClass() == Date.class) {
+            return buildLiteralScalar(javaSqlDateFormat.format((java.util.Date) value));
+        } else if (value.getClass() == Time.class) {
+            return buildLiteralScalar(javaSqlTimeFormat.format((java.util.Date) value));
+        } else if (value.getClass() == Timestamp.class) {
+            return buildLiteralScalar(javaSqlTimestampFormat.format((java.util.Date) value));
+        } else if (value.getClass() == java.util.Date.class) {
+            return buildLiteralScalar(javaUtilDateFormat.format((java.util.Date) value));
         }
-        throw new FeatureNotAvailableException("TODO: other types: BigDecimal, Date, Timestamp, Time");
+        throw new FeatureNotAvailableException("TODO: other types: BigDecimal");
     }
 }

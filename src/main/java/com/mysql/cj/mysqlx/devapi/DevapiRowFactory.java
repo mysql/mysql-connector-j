@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx.devapi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.stream.IntStream;
 
 import com.mysql.cj.core.result.Field;
@@ -37,9 +38,11 @@ import com.mysql.cj.mysqlx.result.RowToElement;
 public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.x.Row> {
     private Map<String, Integer> fieldNameToIndex;
     private ArrayList<Field> metadata;
+    private TimeZone defaultTimeZone;
 
-    public DevapiRowFactory(ArrayList<Field> metadata) {
+    public DevapiRowFactory(ArrayList<Field> metadata, TimeZone defaultTimeZone) {
         this.metadata = metadata;
+        this.defaultTimeZone = defaultTimeZone;
     }
 
     private Map<String, Integer> getFieldNameToIndexMap() {
@@ -51,6 +54,6 @@ public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.x.Row> {
     }
 
     public com.mysql.cj.api.x.Row apply(com.mysql.cj.api.result.Row internalRow) {
-        return new RowImpl(internalRow, this::getFieldNameToIndexMap);
+        return new RowImpl(internalRow, this::getFieldNameToIndexMap, defaultTimeZone);
     }
 }

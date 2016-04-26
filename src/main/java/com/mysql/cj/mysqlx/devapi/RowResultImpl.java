@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -37,10 +38,12 @@ import com.mysql.cj.core.result.Field;
 
 public class RowResultImpl extends AbstractDataResult<Row> implements RowResult {
     private ArrayList<Field> metadata;
+    private TimeZone defaultTimeZone;
 
-    public RowResultImpl(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new DevapiRowFactory(metadata));
+    public RowResultImpl(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
+        super(rows, completer, new DevapiRowFactory(metadata, defaultTimeZone));
         this.metadata = metadata;
+        this.defaultTimeZone = defaultTimeZone;
     }
 
     public int getColumnCount() {

@@ -94,6 +94,8 @@ public class MysqlxSession implements Session {
     private ResultStreamer currentResult;
     private String host;
     private int port;
+    /* TODO: Need to expand options here. Force user to specify, given possible heterogenous configuration in sharded env? */
+    private TimeZone defaultTimeZone = TimeZone.getDefault();
 
     public MysqlxSession(Properties properties) {
 
@@ -261,7 +263,7 @@ public class MysqlxSession implements Session {
     }
 
     public RowResultImpl selectRows(FindParams findParams) {
-        return findInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, rows, task));
+        return findInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, this.defaultTimeZone, rows, task));
     }
 
     public void createCollection(String schemaName, String collectionName) {
@@ -384,7 +386,7 @@ public class MysqlxSession implements Session {
             } else if (this.protocol.isSqlResultPending()) {
                 // TODO: put characterSetMetadata somewhere useful
                 ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
-                return new SqlDataResult(metadata, this.protocol.getRowInputStream(metadata), okReader);
+                return new SqlDataResult(metadata, this.defaultTimeZone, this.protocol.getRowInputStream(metadata), okReader);
             } else {
                 readLastResult[0] = true;
                 return new SqlUpdateResult(this.protocol.readStatementExecuteOk());
@@ -398,7 +400,7 @@ public class MysqlxSession implements Session {
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args) {
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
-        return this.protocol.asyncExecuteSql(sql, args, "latin1");
+        return this.protocol.asyncExecuteSql(sql, args, "latin1", this.defaultTimeZone);
     }
 
     public StatementExecuteOk update(String sql) {
@@ -439,7 +441,7 @@ public class MysqlxSession implements Session {
     }
 
     public CompletableFuture<RowResult> asyncSelectRows(FindParams findParams) {
-        return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, rows, task));
+        return asyncFindInternal(findParams, metadata -> (rows, task) -> new RowResultImpl(metadata, this.defaultTimeZone, rows, task));
     }
 
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
@@ -454,7 +456,8 @@ public class MysqlxSession implements Session {
 
     public <R> CompletableFuture<R> asyncSelectRowsReduce(FindParams findParams, R id, Reducer<com.mysql.cj.api.x.Row, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
-        ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, DevapiRowFactory::new);
+        RowWiseReducingResultListener.MetadataToRowToElement<com.mysql.cj.api.x.Row> rowFactory = metadata -> new DevapiRowFactory(metadata, this.defaultTimeZone);
+        ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, rowFactory);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);

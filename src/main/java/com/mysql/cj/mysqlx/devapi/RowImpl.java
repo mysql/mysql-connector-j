@@ -24,7 +24,11 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.Row;
@@ -37,15 +41,23 @@ import com.mysql.cj.core.io.DoubleValueFactory;
 import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
+import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
+import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
+import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.x.json.DbDoc;
 
 public class RowImpl implements com.mysql.cj.api.x.Row {
     private Row row;
     private Supplier<Map<String, Integer>> lazyFieldNameToIndex;
+    /**
+     * Default time zone used to create date/time result values.
+     */
+    private TimeZone defaultTimeZone;
 
-    public RowImpl(Row row, Supplier<Map<String, Integer>> lazyFieldNameToIndex) {
+    public RowImpl(Row row, Supplier<Map<String, Integer>> lazyFieldNameToIndex, TimeZone defaultTimeZone) {
         this.row = row;
         this.lazyFieldNameToIndex = lazyFieldNameToIndex;
+        this.defaultTimeZone = defaultTimeZone;
     }
 
     /**
@@ -84,6 +96,14 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
 
     public byte getByte(int pos) {
         return this.row.getValue(pos, new ByteValueFactory());
+    }
+
+    public Date getDate(String fieldName) {
+        return getDate(fieldNameToIndex(fieldName));
+    }
+
+    public Date getDate(int pos) {
+        return this.row.getValue(pos, new JdbcDateValueFactory(defaultTimeZone));
     }
 
     public DbDoc getDbDoc(String fieldName) {
@@ -125,5 +145,21 @@ public class RowImpl implements com.mysql.cj.api.x.Row {
     public String getString(int pos) {
         // TODO: charset
         return this.row.getValue(pos, new StringValueFactory());
+    }
+
+    public Time getTime(String fieldName) {
+        return getTime(fieldNameToIndex(fieldName));
+    }
+
+    public Time getTime(int pos) {
+        return this.row.getValue(pos, new JdbcTimeValueFactory(this.defaultTimeZone));
+    }
+
+    public Timestamp getTimestamp(String fieldName) {
+        return getTimestamp(fieldNameToIndex(fieldName));
+    }
+
+    public Timestamp getTimestamp(int pos) {
+        return this.row.getValue(pos, new JdbcTimestampValueFactory(this.defaultTimeZone));
     }
 }

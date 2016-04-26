@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.MessageLite;
@@ -569,9 +570,9 @@ public class MysqlxProtocol implements Protocol {
     }
 
     @SuppressWarnings("unchecked")
-    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, final String metadataCharacterSet) {
+    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, String metadataCharacterSet, TimeZone defaultTimeZone) {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet));
+        MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), defaultTimeZone);
         SentListener resultHandler = new ErrorToFutureSentListener(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;

@@ -25,6 +25,7 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.result.RowList;
@@ -37,8 +38,8 @@ import com.mysql.cj.core.result.Field;
  * SQL result with data. Implemented as a thin layer over {@link RowResultImpl}.
  */
 public class SqlDataResult extends RowResultImpl implements SqlResult {
-    public SqlDataResult(ArrayList<Field> metadata, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(metadata, rows, completer);
+    public SqlDataResult(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
+        super(metadata, defaultTimeZone, rows, completer);
     }
 
     public boolean nextResult() {
