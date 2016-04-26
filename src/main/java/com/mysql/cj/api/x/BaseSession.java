@@ -63,6 +63,16 @@ public interface BaseSession {
     void dropSchema(String schemaName);
 
     /**
+     * Drop the collection in given schema.
+     */
+    void dropCollection(String schemaName, String collectionName);
+
+    /**
+     * Drop the table in given schema.
+     */
+    void dropTable(String schemaName, String tableName);
+
+    /**
      * Get the URL used to create this session.
      */
     String getUri();

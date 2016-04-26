@@ -2,6 +2,9 @@
 # $Id$
 dd-mm-yy - Version 6.0.3
 
+  - Remove Schema.drop(), Collection.drop() and replaced with X DevAPI's session.dropSchema() and session.dropCollection().
+    Also added session.dropTable().
+
   - Fix for Bug#22932078, GETTIMESTAMP() RETURNS WRONG VALUE FOR FRACTIONAL PART
 
   - Extracted packet readers from MysqlaProtocol.

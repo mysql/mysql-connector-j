@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -81,11 +81,6 @@ public interface Collection extends DatabaseObject {
      * Create a new removal statement affecting documents matching the given search condition.
      */
     RemoveStatement remove(String searchCondition);
-
-    /**
-     * Drop this collection.
-     */
-    void drop();
 
     /**
      * Create a new statement defining the creation of an index on this collection.

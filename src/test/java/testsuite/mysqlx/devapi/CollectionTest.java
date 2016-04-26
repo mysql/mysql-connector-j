@@ -86,7 +86,7 @@ public class CollectionTest extends DevApiBaseTestCase {
         assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
         coll = this.schema.createCollection(collName);
         assertEquals(DbObjectStatus.EXISTS, coll.existsInDatabase());
-        this.schema.getCollection(collName).drop();
+        this.session.dropCollection(this.schema.getName(), collName);
     }
 
     @Test(expected = WrongArgumentException.class)

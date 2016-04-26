@@ -67,10 +67,10 @@ public class DevApiBaseTestCase extends InternalMysqlxBaseTestCase {
         this.session.getMysqlxSession().update(sql);
     }
 
-    protected void dropCollection(String name) {
+    protected void dropCollection(String collectionName) {
         if (this.isSetForMySQLxTests) {
             try {
-                this.schema.getCollection(name).drop();
+                this.session.dropCollection(schema.getName(), collectionName);
             } catch (MysqlxError ex) {
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
                     throw ex;

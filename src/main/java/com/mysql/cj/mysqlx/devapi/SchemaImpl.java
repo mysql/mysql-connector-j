@@ -99,10 +99,6 @@ public class SchemaImpl implements Schema {
         return table;
     }
 
-    public void drop() {
-        this.session.dropSchema(this.name);
-    }
-
     public Collection createCollection(String collectionName) {
         this.session.getMysqlxSession().createCollection(this.name, collectionName);
         return new CollectionImpl(this, collectionName);

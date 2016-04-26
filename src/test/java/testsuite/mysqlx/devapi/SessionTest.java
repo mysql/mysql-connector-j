@@ -85,19 +85,6 @@ public class SessionTest extends DevApiBaseTestCase {
     }
 
     @Test
-    public void createDropSchema2() {
-        if (!this.isSetForMySQLxTests) {
-            return;
-        }
-        String testSchemaName = getRandomTestSchemaName();
-        Schema newSchema = this.session.createSchema(testSchemaName);
-        assertTrue(this.session.getSchemas().contains(newSchema));
-        // use Schema.drop() instead
-        newSchema.drop();
-        assertFalse(this.session.getSchemas().contains(newSchema));
-    }
-
-    @Test
     public void createAndReuseExistingSchema() {
         if (!this.isSetForMySQLxTests) {
             return;

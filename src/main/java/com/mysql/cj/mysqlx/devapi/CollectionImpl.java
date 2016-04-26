@@ -115,10 +115,6 @@ public class CollectionImpl implements Collection {
         return new RemoveStatementImpl(this, searchCondition);
     }
 
-    public void drop() {
-        this.schema.getSession().getMysqlxSession().dropCollection(this.schema.getName(), this.name);
-    }
-
     public CreateCollectionIndexStatement createIndex(String indexName, boolean isUnique) {
         return new CreateCollectionIndexStatementImpl(this, indexName, isUnique);
     }

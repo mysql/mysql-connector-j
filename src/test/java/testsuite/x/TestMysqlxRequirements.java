@@ -223,9 +223,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
         // Schema - DDL create [55]
         schema.createCollection(""); // TODO set name
 
-        // Schema.drop [53]
-        schema.drop();
-
         // inherited
         schema.getSchema(); // "this" ???
         schema.getSession(); // ???
@@ -290,9 +287,6 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
 
         // Collection - am I real? [52]
         collection.existsInDatabase();
-
-        // Collection.drop [53]
-        collection.drop();
 
         // inherited
         collection.getSchema();

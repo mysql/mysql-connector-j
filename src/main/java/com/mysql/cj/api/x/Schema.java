@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -68,11 +68,6 @@ public interface Schema extends DatabaseObject {
      * Retrieve a reference to the named table hinting that an exception should be thrown if the collection is not known to the server.
      */
     Table getTable(String tableName, boolean requireExists);
-
-    /**
-     * Drop the this schema on the server.
-     */
-    void drop();
 
     /* Create functions */
 
