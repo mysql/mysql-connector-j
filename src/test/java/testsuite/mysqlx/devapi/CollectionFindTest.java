@@ -113,6 +113,28 @@ public class CollectionFindTest extends CollectionTest {
         }
     }
 
+    /**
+     * Test that {@link DocResult} implements {@link java.lang.Iterable}.
+     */
+    @Test
+    public void testIterable() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        this.collection.add("{}").execute();
+        this.collection.add("{}").execute();
+        this.collection.add("{}").execute();
+        DocResult docs = this.collection.find().execute();
+        int numDocs = 0;
+        for (DbDoc d : docs) {
+            if (d != null) {
+                numDocs++;
+            }
+        }
+        assertEquals(3, numDocs);
+    }
+
     @Test
     public void basicCollectionAsTable() {
         if (!this.isSetForMySQLxTests) {
