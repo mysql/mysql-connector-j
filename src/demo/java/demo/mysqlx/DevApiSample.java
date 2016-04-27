@@ -73,6 +73,6 @@ public class DevApiSample {
         coll.remove().execute();
         System.err.println("Number of books in collection: " + coll.count());
 
-        coll.drop();
+        schema.getSession().dropCollection(schema.getName(), coll.getName());
     }
 }
