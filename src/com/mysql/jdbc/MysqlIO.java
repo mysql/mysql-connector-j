@@ -423,11 +423,10 @@ public class MysqlIO {
             }
         }
 
-        // There is no EOL packet after fields when CLIENT_DEPRECATE_EOF is set
+        // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set
         if (!isEOFDeprecated() ||
-                // if we asked to use cursor then there should be an OK packet here
-                (this.connection.versionMeetsMinimum(5, 0, 2) && this.connection.getUseCursorFetch() && isBinaryEncoded && callingStatement != null
-                        && callingStatement.getFetchSize() != 0 && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY)) {
+        // if we asked to use cursor then there should be an OK packet here
+                (this.connection.versionMeetsMinimum(5, 0, 2) && callingStatement != null && isBinaryEncoded && callingStatement.isCursorRequired())) {
 
             packet = reuseAndReadPacket(this.reusablePacket);
             readServerStatusForResultSets(packet);
@@ -3081,7 +3080,7 @@ public class MysqlIO {
      */
     protected final ResultSetImpl readResultsForQueryOrUpdate(StatementImpl callingStatement, int maxRows, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount, Field[] metadataFromCache)
-                    throws SQLException {
+            throws SQLException {
         long columnCount = resultPacket.readFieldLength();
 
         if (columnCount == 0) {

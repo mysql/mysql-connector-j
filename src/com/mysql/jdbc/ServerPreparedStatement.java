@@ -1090,6 +1090,17 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
+    @Override
+    boolean isCursorRequired() throws SQLException {
+        // we only create cursor-backed result sets if
+        // a) The query is a SELECT
+        // b) The server supports it
+        // c) We know it is forward-only (note this doesn't preclude updatable result sets)
+        // d) The user has set a fetch size
+        return this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+                && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
+    }
+
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
@@ -1186,18 +1197,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
-            //			boolean usingCursor = false;
-
             if (this.connection.versionMeetsMinimum(4, 1, 2)) {
-                // we only create cursor-backed result sets if
-                // a) The query is a SELECT
-                // b) The server supports it
-                // c) We know it is forward-only (note this doesn't preclude updatable result sets)
-                // d) The user has set a fetch size
-                if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
-                        && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
+                if (isCursorRequired()) {
                     packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
-                    //					usingCursor = true;
                 } else {
                     packet.writeByte((byte) 0); // placeholder for flags
                 }

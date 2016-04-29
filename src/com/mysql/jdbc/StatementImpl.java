@@ -2664,4 +2664,8 @@ public class StatementImpl implements Statement {
             this.maxRows = (int) max;
         }
     }
+
+    boolean isCursorRequired() throws SQLException {
+        return false;
+    }
 }
