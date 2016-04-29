@@ -2,6 +2,8 @@
 # $Id$
 04-29-16 - Version 5.1.39
 
+  - Fix for Bug#23188498, CLIENT HANG WHILE USING SERVERPREPSTMT WHEN PROFILESQL=TRUE AND USEIS=TRUE.
+
   - Fix for Bug#22678872, NPE DURING UPDATE WITH FABRIC.
     New property 'loadBalanceHostRemovalGracePeriod' sets the grace period when removing hosts from a load-balanced connection.
 

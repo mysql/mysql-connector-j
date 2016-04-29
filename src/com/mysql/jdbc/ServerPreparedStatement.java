@@ -1266,6 +1266,12 @@ public class ServerPreparedStatement extends PreparedStatement {
             CancelTask timeoutTask = null;
 
             try {
+                // Get this before executing to avoid a shared packet pollution in the case some other query is issued internally, such as when using I_S.
+                String queryAsString = "";
+                if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
+                    queryAsString = asSql(true);
+                }
+
                 if (this.connection.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && this.connection.versionMeetsMinimum(5, 0, 0)) {
                     timeoutTask = new CancelTask(this);
                     this.connection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
@@ -1336,7 +1342,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append("as prepared: ");
                         mesgBuf.append(this.originalSql);
                         mesgBuf.append("\n\n with parameters bound:\n\n");
-                        mesgBuf.append(asSql(true));
+                        mesgBuf.append(queryAsString);
 
                         this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), getId(),
                                 0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null,
@@ -1355,7 +1361,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
                             System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
+                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(queryAsString)));
                 }
 
                 com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
@@ -1382,8 +1388,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (queryWasSlow && this.connection.getExplainSlowQueries()) {
-                    String queryAsString = asSql(true);
-
                     mysql.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
                 }
 
