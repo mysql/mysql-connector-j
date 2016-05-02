@@ -1534,18 +1534,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 boolean checkEOF = !mysql.isEOFDeprecated();
 
-                if (this.parameterCount > 0) {
-                    if (this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
-                        this.parameterFields = new Field[this.parameterCount];
+                if (this.parameterCount > 0 && this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
+                    this.parameterFields = new Field[this.parameterCount];
 
-                        Buffer metaDataPacket;
-                        for (int i = 0; i < this.parameterCount; i++) {
-                            metaDataPacket = mysql.readPacket();
-                            if (checkEOF && metaDataPacket.isEOFPacket()) {
-                                break;
-                            }
-                            this.parameterFields[i] = mysql.unpackField(metaDataPacket, false);
-                        }
+                    Buffer metaDataPacket;
+                    for (int i = 0; i < this.parameterCount; i++) {
+                        metaDataPacket = mysql.readPacket();
+                        this.parameterFields[i] = mysql.unpackField(metaDataPacket, false);
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        mysql.readPacket();
                     }
                 }
 
@@ -1556,10 +1554,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                     Buffer fieldPacket;
                     for (int i = 0; i < this.fieldCount; i++) {
                         fieldPacket = mysql.readPacket();
-                        if (checkEOF && fieldPacket.isEOFPacket()) {
-                            break;
-                        }
                         this.resultFields[i] = mysql.unpackField(fieldPacket, false);
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        mysql.readPacket();
                     }
                 }
             } catch (SQLException sqlEx) {
