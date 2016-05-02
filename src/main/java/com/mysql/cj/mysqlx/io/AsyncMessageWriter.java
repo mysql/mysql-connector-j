@@ -27,15 +27,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.MessageLite;
@@ -45,69 +38,21 @@ import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 /**
  * Asynchronous message writer.
  */
-public class AsyncMessageWriter implements CompletionHandler<Long, Void>, MessageWriter {
+public class AsyncMessageWriter implements MessageWriter {
     /**
      * Header length of X Protocol packet.
      */
     private static final int HEADER_LEN = 5;
 
-    private AsynchronousSocketChannel channel;
     private int maxAllowedPacket = -1;
+
     /**
-     * Maintain a queue of pending writes.
+     * Channel wrapper is the destination to which we write marshalled messages.
      */
-    private Queue<ByteBuffer> pendingWrites = new LinkedList<ByteBuffer>();
-    /**
-     * Map the byte buffer identity (System.identityHashCode(ByteBuffer)) to the completion listener for each buffer's write. Identity is used as ByteBuffer's
-     * hashCode() method changes when the position within the buffer changes.
-     */
-    private Map<Integer, SentListener> bufToListener = new ConcurrentHashMap<>();
+    private SerializingBufferWriter bufferWriter;
 
     public AsyncMessageWriter(AsynchronousSocketChannel channel) {
-        this.channel = channel;
-    }
-
-    /**
-     * Interface used to notify a listener of completion of an async message write.
-     */
-    @FunctionalInterface
-    public static interface SentListener {
-        void completed();
-
-        default void error(Throwable ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Initiate a write of the current pending buffers. This method can only be called when no other writes are in progress. This method should be called under
-     * a mutex for this.pendingWrites.
-     */
-    private void initiateWrite() {
-        try {
-            ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]);
-            this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this);
-        } catch (Throwable t) {
-            failed(t, null);
-        }
-    }
-
-    /**
-     * Queue a message to be written to the socket. This method uses a mutex on the buffer list to synchronize for the following cases:
-     * <li>The buffer list becomes empty after we check and miss writing to the socket.</li>
-     * <li>LinkedList is not thread-safe.</li>
-     */
-    private void queueMessage(ByteBuffer messageBuf, SentListener callback) {
-        if (callback != null) {
-            this.bufToListener.put(System.identityHashCode(messageBuf), callback);
-        }
-        synchronized (this.pendingWrites) {
-            this.pendingWrites.add(messageBuf);
-            // if there's no write in progress, we need to initiate a write of this message. otherwise the completion of the current write will do it
-            if (this.pendingWrites.size() == 1) {
-                initiateWrite();
-            }
-        }
+        this.bufferWriter = new SerializingBufferWriter(channel);
     }
 
     /**
@@ -143,71 +88,30 @@ public class AsyncMessageWriter implements CompletionHandler<Long, Void>, Messag
             throw new CJPacketTooBigException(size, this.maxAllowedPacket);
         }
         // for debugging
-        // System.err.println("Initiating write of message (size=" + payloadSize + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
+        //System.err.println("Initiating write of message (size=" + payloadSize + ", tag=" + com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages.Type.valueOf(type) + ")");
         ByteBuffer messageBuf = ByteBuffer.allocate(HEADER_LEN + size).order(ByteOrder.LITTLE_ENDIAN).putInt(payloadSize);
         messageBuf.put((byte) type);
         try {
             // directly access the ByteBuffer's backing array as protobuf's CodedOutputStream.newInstance(ByteBuffer) is giving a stream that doesn't actually
             // write any data
             msg.writeTo(CodedOutputStream.newInstance(messageBuf.array(), HEADER_LEN, size + HEADER_LEN));
+            messageBuf.position(messageBuf.limit());
         } catch (IOException ex) {
             throw new CJCommunicationsException("Unable to write message", ex);
         }
-        messageBuf.rewind();
-        queueMessage(messageBuf, callback);
-    }
-
-    /**
-     * Completion handler for channel writes.
-     */
-    public void completed(Long bytesWritten, Void v) {
-        if (bytesWritten == 0) {
-            throw new IllegalArgumentException("Shouldn't be 0");
-        }
-        // collect completed writes to notify after initiating the next write
-        LinkedList<ByteBuffer> completedWrites = new LinkedList<>();
-        synchronized (this.pendingWrites) {
-            while (this.pendingWrites.peek() != null && !this.pendingWrites.peek().hasRemaining()) {
-                completedWrites.add(this.pendingWrites.remove());
-            }
-            // notify listener(s) before initiating write to satisfy ordering guarantees
-            completedWrites.stream().map(System::identityHashCode).map(this.bufToListener::remove).filter(Objects::nonNull).forEach(l -> {
-                // prevent exceptions in listener from blocking other notifications
-                try {
-                    l.completed();
-                } catch (Throwable ex) {
-                    // presumably unexpected, notify so futures don't block
-                    try {
-                        l.error(ex);
-                    } catch (Throwable ex2) {
-                        // nothing we can do here
-                        ex2.printStackTrace();
-                    }
-                }
-            });
-            if (this.pendingWrites.size() > 0) {
-                initiateWrite();
-            }
-        }
-    }
-
-    public void failed(Throwable t, Void v) {
-        // error writing, can't continue
-        try {
-            this.channel.close();
-        } catch (Exception ex) {
-        }
-        this.bufToListener.values().forEach((SentListener l) -> {
-            try {
-                l.error(t);
-            } catch (Exception ex) {
-            }
-        });
-        this.bufToListener.clear();
-        this.pendingWrites.clear();
+        messageBuf.flip();
+        this.bufferWriter.queueBuffer(messageBuf, callback);
     }
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {
         this.maxAllowedPacket = maxAllowedPacket;
+    }
+
+    /**
+     * Allow overwriting the channel once the writer has been established. Required for SSL/TLS connections when the encryption doesn't start until we send the
+     * capability flag to X Plugin.
+     */
+    public void setChannel(AsynchronousSocketChannel channel) {
+        this.bufferWriter.setChannel(channel);
     }
 }

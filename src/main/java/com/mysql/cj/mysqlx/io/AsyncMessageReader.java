@@ -86,7 +86,10 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<MessageListener>();
 
     private CompletableFuture<Class<? extends GeneratedMessage>> pendingMsgClass;
+    /** Lock to protect the pending message. */
     private Object pendingMsgMonitor = new Object();
+    /** Have we been signaled to stop after the next message? */
+    private boolean stopAfterNextMessage = false;
 
     /** Possible state of reading messages. */
     private static enum ReadingState {
@@ -106,6 +109,13 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      */
     public void start() {
         readHeader();
+    }
+
+    /**
+     * Signal to the reader that it should stop reading messages after delivering the next message.
+     */
+    public void stopAfterNextMessage() {
+        this.stopAfterNextMessage = true;
     }
 
     /**
@@ -164,19 +174,24 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         }
 
         // process the completed header and initiate message reading
-        this.headerBuf.clear();
+        this.headerBuf.flip();
         this.messageSize = this.headerBuf.getInt() - 1;
         this.messageType = this.headerBuf.get();
-        // for debugging
-        // System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
         this.headerBuf.clear(); // clear for next message
         this.state = ReadingState.READING_MESSAGE;
         // TODO: re-use buffers if possible. Note that synchronization will be necessary to prevent overwriting re-used buffers while still being parsed by
         // previous read. Also the buffer will have to be managed accordingly so that "remaining" isn't longer than the message otherwise it may consume
         // data from the next header+message
         this.messageBuf = ByteBuffer.allocate(this.messageSize);
-        synchronized (this) {
-            this.channel.read(this.messageBuf, null, this);
+        if (this.messageSize > 0) {
+            // for debugging
+            //System.err.println("Initiating read of message (size=" + this.messageSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
+            synchronized (this) {
+                this.channel.read(this.messageBuf, null, this);
+            }
+        } else {
+            // skip the read process for zero-length messages (fully defined by header tag)
+            readMessage();
         }
     }
 
@@ -204,7 +219,16 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         }
 
         // dispatch the message to the listener before starting next read to ensure in-order delivery
+        buf.flip();
         dispatchMessage(messageClass, parseMessage(messageClass, buf));
+
+        // As this is where the read loop begins, we can escape it here if requested
+        if (this.stopAfterNextMessage) {
+            this.stopAfterNextMessage = false;
+            this.headerBuf.clear();
+            return;
+        }
+
         readHeader();
     }
 
@@ -214,7 +238,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private GeneratedMessage parseMessage(Class<? extends GeneratedMessage> messageClass, ByteBuffer buf) {
         try {
             Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
-            buf.clear(); // reset position
             return parser.parseFrom(CodedInputStream.newInstance(buf));
         } catch (InvalidProtocolBufferException ex) {
             throw AssertionFailedException.shouldNotHappen(ex);
@@ -333,6 +356,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      */
     public void failed(Throwable exc, Void v) {
         if (getMessageListener(false) != null) {
+            // force any error to unblock pending message listener
+            this.pendingMsgMonitor.notify();
             if (AsynchronousCloseException.class.equals(exc.getClass())) {
                 this.currentMessageListener.closed();
             } else {
@@ -446,5 +471,13 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                 throw new CJCommunicationsException(ex);
             }
         }
+    }
+
+    /**
+     * Allow overwriting the channel once the reader has been established. Required for SSL/TLS connections when the encryption doesn't start until we send the
+     * capability flag to X Plugin.
+     */
+    public void setChannel(AsynchronousByteChannel channel) {
+        this.channel = channel;
     }
 }

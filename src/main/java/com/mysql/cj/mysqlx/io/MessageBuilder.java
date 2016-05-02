@@ -47,6 +47,10 @@ import com.mysql.cj.mysqlx.FindParams;
 import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesSet;
+import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.DataModel;
@@ -86,6 +90,13 @@ public class MessageBuilder {
     }
 
     public MessageBuilder() {
+    }
+
+    public CapabilitiesSet buildCapabilitiesSet(String name, Object value) {
+        Any v = ExprUtil.argObjectToScalarAny(value);
+        Capability cap = Capability.newBuilder().setName(name).setValue(v).build();
+        Capabilities caps = Capabilities.newBuilder().addCapabilities(cap).build();
+        return CapabilitiesSet.newBuilder().setCapabilities(caps).build();
     }
 
     public StmtExecute buildCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {

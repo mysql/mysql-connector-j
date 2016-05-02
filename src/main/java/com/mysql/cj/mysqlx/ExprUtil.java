@@ -60,35 +60,35 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type (wrapped in Any).
+     * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type.
      */
     public static Expr buildLiteralScalar(double d) {
         return buildLiteralExpr(scalarOf(d));
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type (wrapped in Any).
+     * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type.
      */
     public static Expr buildLiteralScalar(long l) {
         return buildLiteralExpr(scalarOf(l));
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type (wrapped in Any).
+     * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type.
      */
     public static Expr buildLiteralScalar(String str) {
         return buildLiteralExpr(scalarOf(str));
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type (wrapped in Any).
+     * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type.
      */
     public static Expr buildLiteralScalar(byte[] bytes) {
         return buildLiteralExpr(scalarOf(bytes));
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type (wrapped in Any).
+     * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type.
      */
     public static Expr buildLiteralScalar(boolean b) {
         return buildLiteralExpr(scalarOf(b));
@@ -152,6 +152,11 @@ public class ExprUtil {
             throw new WrongArgumentException("No literal interpretation of argument: " + value);
         }
         return e.getLiteral();
+    }
+
+    public static Any argObjectToScalarAny(Object value) {
+        Scalar s = argObjectToScalar(value);
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
     }
 
     public static Expr argObjectToExpr(Object value, boolean allowRelationalColumns) {

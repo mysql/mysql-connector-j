@@ -59,7 +59,7 @@ public class SqlStatementImpl implements SqlStatement {
     }
 
     public SqlStatement bind(List<Object> values) {
-        values.stream().map(ExprUtil::argObjectToScalar).map(s -> Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build())
+        values.stream().map(ExprUtil::argObjectToScalarAny)
                 .forEach(a -> this.args.add(a));
         return this;
     }

@@ -211,17 +211,27 @@ public class ExportControlled {
             throws SSLParamsException {
         String clientCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
         String trustCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
-        String clientCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
-        String clientCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
-                .getValue();
-        String trustCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
-        String trustCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
 
         if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) && StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
             if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()) {
                 return (SSLSocketFactory) SSLSocketFactory.getDefault();
             }
         }
+
+        return getSSLContext(propertySet, exceptionInterceptor).getSocketFactory();
+    }
+
+    /**
+     * Configure the {@link SSLContext} based on the supplier property set.
+     */
+    public static SSLContext getSSLContext(PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
+        String clientCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
+        String trustCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
+        String clientCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
+        String clientCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
+                .getValue();
+        String trustCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
+        String trustCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
 
         TrustManagerFactory tmf = null;
         KeyManagerFactory kmf = null;
@@ -335,7 +345,7 @@ public class ExportControlled {
                             } },
                     null);
 
-            return sslContext.getSocketFactory();
+            return sslContext;
         } catch (NoSuchAlgorithmException nsae) {
             throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
         } catch (KeyManagementException kme) {

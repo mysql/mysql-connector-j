@@ -66,8 +66,8 @@ import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
-import com.mysql.cj.mysqlx.io.AsyncMessageWriter.SentListener;
 import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
+import com.mysql.cj.mysqlx.io.SentListener;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
@@ -207,6 +207,14 @@ public class MysqlxProtocol implements Protocol {
     private Map<String, Any> getCapabilities() {
         this.writer.write(CapabilitiesGet.getDefaultInstance());
         return this.reader.read(Capabilities.class).getCapabilitiesList().stream().collect(toMap(Capability::getName, Capability::getValue));
+    }
+
+    /**
+     * Set a capability of current session. Must be done before authentication ({@link changeUser(String, String, String)}).
+     */
+    public void setCapability(String name, Object value) {
+        this.writer.write(this.msgBuilder.buildCapabilitiesSet(name, value));
+        readOk();
     }
 
     public void sendSaslMysql41AuthStart() {

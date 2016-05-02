@@ -125,6 +125,9 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: You are not allowed to have my protocol");
     }
 
+    /**
+     * Change user as given by parameters. This implementation only supports calling this during the initial handshake.
+     */
     public void changeUser(String user, String password, String database) {
         this.protocol.sendSaslMysql41AuthStart();
         byte[] salt = this.protocol.readAuthenticateContinue();
@@ -197,12 +200,8 @@ public class MysqlxSession implements Session {
     }
 
     /**
-     * @todo
-     * @todo
-     * @todo
-     * @todo
-     * @todo
-     * @todo
+     * Signal the intent to start processing a new command. A session supports processing a single command at a time. Results are reading lazily from the
+     * wire. It is necessary to flush any pending result before starting a new command. This method performs the flush if necessary.
      */
     private void newCommand() {
         if (this.currentResult != null) {
