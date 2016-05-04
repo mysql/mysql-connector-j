@@ -4603,19 +4603,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals("2031-01-15", this.rs.getDate(1, cal).toString());
         assertEquals("03:14:07", this.rs.getTime(1).toString());
         assertEquals("03:14:07", this.rs.getTime(1, cal).toString());
-        assertEquals("2031-01-15 03:14:07.000034", this.rs.getTimestamp(1).toString());
-        assertEquals("2031-01-15 03:14:07.000034", this.rs.getTimestamp(1, cal).toString());
+        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1).toString());
+        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, cal).toString());
 
         assertEquals("12:59:00", this.rs.getTime(2).toString());
         assertEquals("12:59:00", this.rs.getTime(2, cal).toString());
-        assertEquals("1970-01-01 12:59:00.000989", this.rs.getTimestamp(2).toString());
-        assertEquals("1970-01-01 12:59:00.000989", this.rs.getTimestamp(2, cal).toString());
+        assertEquals("1970-01-01 12:59:00.989", this.rs.getTimestamp(2).toString());
+        assertEquals("1970-01-01 12:59:00.989", this.rs.getTimestamp(2, cal).toString());
 
         assertEquals("2031-01-15", this.rs.getDate(3).toString());
         assertEquals("2031-01-15", this.rs.getDate(3, cal).toString());
         assertEquals("03:14:07", this.rs.getTime(3).toString());
         assertEquals("03:14:07", this.rs.getTime(3, cal).toString());
-        assertEquals("2031-01-15 03:14:07.003334", this.rs.getTimestamp(3).toString());
-        assertEquals("2031-01-15 03:14:07.003334", this.rs.getTimestamp(3, cal).toString());
+        assertEquals("2031-01-15 03:14:07.3334", this.rs.getTimestamp(3).toString());
+        assertEquals("2031-01-15 03:14:07.3334", this.rs.getTimestamp(3, cal).toString());
     }
 }
