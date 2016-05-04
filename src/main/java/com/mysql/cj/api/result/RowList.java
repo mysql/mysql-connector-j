@@ -25,29 +25,55 @@ package com.mysql.cj.api.result;
 
 import java.util.Iterator;
 
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+
 /**
  * A list of {@link Row}s.
  */
 public interface RowList extends Iterator<Row> {
+
+    /**
+     * What's returned for the size of a row list when its size can not be
+     * determined.
+     */
+    public static final int RESULT_SET_SIZE_UNKNOWN = -1;
+
     /**
      * Optionally iterate backwards on the list.
      */
     default Row previous() {
-        throw new UnsupportedOperationException();
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
     }
 
     /**
      * Optionally retrieve Row at index <i>n</i>.
      * 
+     * Only works on non dynamic row lists.
+     * 
      * @param n
      * @return
      */
     default Row get(int n) {
-        throw new UnsupportedOperationException();
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
     }
 
     /**
-     * Current position.
+     * Returns the current position.
+     * 
+     * @return the current row number
      */
-    int getPosition();
+    default int getPosition() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
+
+    /**
+     * Only works on non dynamic row lists.
+     * 
+     * @return the size of this row list
+     */
+    default int size() {
+        return RESULT_SET_SIZE_UNKNOWN;
+    }
 }

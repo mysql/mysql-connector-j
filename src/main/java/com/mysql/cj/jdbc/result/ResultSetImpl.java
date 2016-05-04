@@ -69,7 +69,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.result.RowData;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -110,7 +110,7 @@ import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ResultSetRow;
-import com.mysql.cj.mysqla.result.RowDataStatic;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 public class ResultSetImpl implements ResultSetInternalMethods, WarningListener {
 
@@ -206,7 +206,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     protected int resultSetType = 0;
 
     /** The actual rows */
-    protected RowData rowData; // The results
+    protected ResultsetRows rowData; // The results
 
     /**
      * Any info message from the server that was created while generating this result set (if 'info parsing' is enabled for the connection).
@@ -263,7 +263,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     /**
      * Creates a result set instance that represents a query result
      */
-    public static ResultSetImpl getInstance(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt)
+    public static ResultSetImpl getInstance(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt)
             throws SQLException {
         return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
     }
@@ -311,7 +311,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * @throws SQLException
      *             if an error occurs
      */
-    public ResultSetImpl(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    public ResultSetImpl(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         this.connection = conn;
         this.session = conn.getSession();
 
@@ -471,7 +471,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                     } else {
                         row--; // adjust for index difference
                         this.rowData.setCurrentRow(row);
-                        this.thisRow = this.rowData.getAt(row);
+                        this.thisRow = (ResultSetRow) this.rowData.get(row);
                         b = true;
                     }
                 }
@@ -782,7 +782,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 }
 
                 this.rowData.beforeFirst();
-                this.thisRow = this.rowData.next();
+                this.thisRow = (ResultSetRow) this.rowData.next();
             }
 
             setRowPositionValidity();
@@ -1720,7 +1720,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public int getRow() throws SQLException {
         checkClosed();
 
-        int currentRowNumber = this.rowData.getCurrentRowNumber();
+        int currentRowNumber = this.rowData.getPosition();
         int row = 0;
 
         // Non-dynamic result sets can be interrogated for this information
@@ -1872,7 +1872,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 }
 
                 this.rowData.beforeLast();
-                this.thisRow = this.rowData.next();
+                this.thisRow = (ResultSetRow) this.rowData.next();
             }
 
             setRowPositionValidity();
@@ -1910,7 +1910,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if (this.rowData.size() == 0) {
                 b = false;
             } else {
-                this.thisRow = this.rowData.next();
+                this.thisRow = (ResultSetRow) this.rowData.next();
 
                 if (this.thisRow == null) {
                     b = false;
@@ -1944,14 +1944,14 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public boolean prev() throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            int rowIndex = this.rowData.getCurrentRowNumber();
+            int rowIndex = this.rowData.getPosition();
 
             boolean b = true;
 
             if ((rowIndex - 1) >= 0) {
                 rowIndex--;
                 this.rowData.setCurrentRow(rowIndex);
-                this.thisRow = this.rowData.getAt(rowIndex);
+                this.thisRow = (ResultSetRow) this.rowData.get(rowIndex);
 
                 b = true;
             } else if ((rowIndex - 1) == -1) {
@@ -2021,7 +2021,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                                 Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
                     }
 
-                    if (this.rowData instanceof RowDataStatic) {
+                    if (this.rowData instanceof ResultsetRowsStatic) {
 
                         // Report on possibly too-large result sets
 
@@ -2157,7 +2157,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             }
 
             this.rowData.moveRowRelative(rows);
-            this.thisRow = this.rowData.getAt(this.rowData.getCurrentRowNumber());
+            this.thisRow = (ResultSetRow) this.rowData.get(this.rowData.getPosition());
 
             setRowPositionValidity();
 

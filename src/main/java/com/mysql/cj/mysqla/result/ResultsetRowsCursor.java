@@ -28,24 +28,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mysql.cj.api.io.ServerSession;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.RowData;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * Model for result set data backed by a cursor. Only works for forward-only result sets (but still works with updatable concurrency).
  */
-public class RowDataCursor implements RowData {
-
-    private final static int BEFORE_START_OF_ROWS = -1;
+public class ResultsetRowsCursor extends AbstractResultsetRows implements ResultsetRows {
 
     /**
      * The cache of rows we have retrieved from the server.
@@ -59,27 +55,9 @@ public class RowDataCursor implements RowData {
     private int currentPositionInEntireResult = BEFORE_START_OF_ROWS;
 
     /**
-     * Position in cache of rows, used to determine if we need to fetch more
-     * rows from the server to satisfy a request for the next row.
-     */
-    private int currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
-
-    /**
-     * The result set that we 'belong' to.
-     */
-    private ResultSetImpl owner;
-
-    /**
      * Have we been told from the server that we have seen the last row?
      */
     private boolean lastRowFetched = false;
-
-    /**
-     * Field-level metadata from the server. We need this, because it is not
-     * sent for each batch of rows, but we need the metadata to unpack the
-     * results for each field.
-     */
-    private Field[] metadata;
 
     private ServerSession serverSession;
 
@@ -103,8 +81,6 @@ public class RowDataCursor implements RowData {
      */
     private boolean firstFetchCompleted = false;
 
-    private boolean wasEmpty = false;
-
     /**
      * Creates a new cursor-backed row provider.
      * 
@@ -117,7 +93,7 @@ public class RowDataCursor implements RowData {
      * @param metadata
      *            field-level metadata for the results that this cursor covers.
      */
-    public RowDataCursor(ServerSession serverSession, MysqlaProtocol ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
+    public ResultsetRowsCursor(ServerSession serverSession, MysqlaProtocol ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
         this.serverSession = serverSession;
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
@@ -126,36 +102,44 @@ public class RowDataCursor implements RowData {
         this.prepStmt = creatingStatement;
     }
 
+    @Override
     public boolean isAfterLast() {
         return this.lastRowFetched && this.currentPositionInFetchedRows > this.fetchedRows.size();
     }
 
+    @Override
     public boolean isBeforeFirst() {
         return this.currentPositionInEntireResult < 0;
     }
 
-    public int getCurrentRowNumber() {
+    @Override
+    public int getPosition() {
         return this.currentPositionInEntireResult + 1;
     }
 
+    @Override
     public boolean isEmpty() {
         return this.isBeforeFirst() && this.isAfterLast();
     }
 
+    @Override
     public boolean isFirst() {
         return this.currentPositionInEntireResult == 0;
     }
 
+    @Override
     public boolean isLast() {
         return this.lastRowFetched && this.currentPositionInFetchedRows == (this.fetchedRows.size() - 1);
     }
 
+    @Override
     public void close() {
 
         this.metadata = null;
         this.owner = null;
     }
 
+    @Override
     public boolean hasNext() {
 
         if (this.fetchedRows != null && this.fetchedRows.size() == 0) {
@@ -191,6 +175,7 @@ public class RowDataCursor implements RowData {
         return this.fetchedRows.size() > 0;
     }
 
+    @Override
     public ResultSetRow next() {
         if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
             throw ExceptionFactory.createException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
@@ -283,22 +268,6 @@ public class RowDataCursor implements RowData {
                 throw ExceptionFactory.createException(ex.getMessage(), ex);
             }
         }
-    }
-
-    public void setOwner(ResultSetImpl rs) {
-        this.owner = rs;
-    }
-
-    public ResultSetInternalMethods getOwner() {
-        return this.owner;
-    }
-
-    public boolean wasEmpty() {
-        return this.wasEmpty;
-    }
-
-    public void setMetadata(Field[] metadata) {
-        this.metadata = metadata;
     }
 
 }

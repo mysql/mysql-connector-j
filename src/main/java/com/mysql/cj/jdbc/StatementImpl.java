@@ -73,7 +73,7 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.ResultSetRow;
-import com.mysql.cj.mysqla.result.RowDataStatic;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -1748,7 +1748,7 @@ public class StatementImpl implements Statement {
             fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 20);
 
             this.generatedKeysResults = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
-                    new RowDataStatic(this.batchedGeneratedKeys), this.connection, this);
+                    new ResultsetRowsStatic(this.batchedGeneratedKeys), this.connection, this);
 
             return this.generatedKeysResults;
         }
@@ -1810,7 +1810,7 @@ public class StatementImpl implements Statement {
             }
 
             com.mysql.cj.jdbc.result.ResultSetImpl gkRs = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
-                    new RowDataStatic(rowSet), this.connection, this);
+                    new ResultsetRowsStatic(rowSet), this.connection, this);
 
             return gkRs;
         }

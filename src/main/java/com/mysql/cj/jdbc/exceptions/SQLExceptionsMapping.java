@@ -106,7 +106,10 @@ public class SQLExceptionsMapping {
             return new MySQLTimeoutException(ex.getMessage());
 
         } else if (ex instanceof CJOperationNotSupportedException) {
-            return new OperationNotSupportedException();
+            return new OperationNotSupportedException(ex.getMessage());
+
+        } else if (ex instanceof UnsupportedOperationException) {
+            return new OperationNotSupportedException(ex.getMessage());
 
         } else if (ex instanceof CJException) {
             return SQLError.createSQLException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode(),

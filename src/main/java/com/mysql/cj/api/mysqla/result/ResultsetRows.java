@@ -24,6 +24,7 @@
 package com.mysql.cj.api.mysqla.result;
 
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -35,13 +36,7 @@ import com.mysql.cj.mysqla.result.ResultSetRow;
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
  * one.
  */
-public interface RowData {
-
-    /**
-     * What's returned for the size of a result set when its size can not be
-     * determined.
-     */
-    public static final int RESULT_SET_SIZE_UNKNOWN = -1;
+public interface ResultsetRows extends RowList {
 
     /**
      * Adds a row to this row data.
@@ -81,39 +76,13 @@ public interface RowData {
      * We're done.
      * 
      */
-    void close();
-
-    /**
-     * Only works on non dynamic result sets.
-     * 
-     * @param index
-     *            row number to get at
-     * @return row data at index
-     */
-    default ResultSetRow getAt(int index) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
-    }
-
-    /**
-     * Returns the current position in the result set as a row number.
-     * 
-     * @return the current row number
-     */
-    default int getCurrentRowNumber() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    default void close() {
     }
 
     /**
      * Returns the result set that 'owns' this RowData
      */
     ResultSetInternalMethods getOwner();
-
-    /**
-     * Returns true if another row exsists.
-     * 
-     * @return true if more rows
-     */
-    boolean hasNext();
 
     /**
      * Returns true if we got the last element.
@@ -179,23 +148,6 @@ public interface RowData {
     }
 
     /**
-     * Returns the next row.
-     * 
-     * @return the next row value
-     */
-    ResultSetRow next();
-
-    /**
-     * Removes the row at the given index.
-     * 
-     * @param index
-     *            the row to move to
-     */
-    default void removeRow(int index) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
-    }
-
-    /**
      * Moves the current position in the result set to the given row number.
      * 
      * @param rowNumber
@@ -212,15 +164,6 @@ public interface RowData {
      *            the result set that 'owns' this RowData
      */
     void setOwner(ResultSetImpl rs);
-
-    /**
-     * Only works on non dynamic result sets.
-     * 
-     * @return the size of this row data
-     */
-    default int size() {
-        return RESULT_SET_SIZE_UNKNOWN;
-    }
 
     /**
      * Did this result set have no rows?

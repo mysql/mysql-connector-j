@@ -23,13 +23,13 @@
 
 package com.mysql.cj.mysqla.result;
 
+import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.result.RowData;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -39,19 +39,14 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * Allows streaming of MySQL data.
  */
-public class RowDataDynamic implements RowData {
+public class ResultsetRowsDynamic extends AbstractResultsetRows implements ResultsetRows {
 
     private int columnCount;
-
-    private Field[] metadata;
-
-    private int index = -1;
 
     private MysqlaProtocol io;
 
@@ -63,11 +58,7 @@ public class RowDataDynamic implements RowData {
 
     private ResultSetRow nextRow;
 
-    private ResultSetImpl owner;
-
     private boolean streamerClosed = false;
-
-    private boolean wasEmpty = false; // we don't know until we attempt to traverse
 
     private boolean moreResultsExisted;
 
@@ -85,7 +76,7 @@ public class RowDataDynamic implements RowData {
      * @param isBinaryEncoded
      *            is this data in native format?
      */
-    public RowDataDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) {
+    public ResultsetRowsDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) {
         this.io = io;
         this.columnCount = colCount;
         this.isBinaryEncoded = isBinaryEncoded;
@@ -93,12 +84,13 @@ public class RowDataDynamic implements RowData {
         this.exceptionInterceptor = this.io.getExceptionInterceptor();
     }
 
+    @Override
     public void close() {
         // Belt and suspenders here - if we don't have a reference to the connection it's more than likely dead/gone and we won't be able to consume rows anyway
 
         Object mutex = this;
 
-        JdbcConnection conn = null;
+        MysqlConnection conn = null;
 
         if (this.owner != null) {
             conn = this.owner.getConnection();
@@ -133,8 +125,8 @@ public class RowDataDynamic implements RowData {
 
                     try {
                         try {
-                            stmt = conn.createStatement();
-                            ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery(conn, "SET net_write_timeout=" + oldValue);
+                            stmt = ((JdbcConnection) conn).createStatement();
+                            ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery((JdbcConnection) conn, "SET net_write_timeout=" + oldValue);
                         } finally {
                             if (stmt != null) {
                                 stmt.close();
@@ -166,10 +158,7 @@ public class RowDataDynamic implements RowData {
         this.owner = null;
     }
 
-    public ResultSetInternalMethods getOwner() {
-        return this.owner;
-    }
-
+    @Override
     public boolean hasNext() {
         boolean hasNext = (this.nextRow != null);
 
@@ -181,14 +170,17 @@ public class RowDataDynamic implements RowData {
         return hasNext;
     }
 
+    @Override
     public boolean isAfterLast() {
         return this.isAfterEnd;
     }
 
+    @Override
     public boolean isBeforeFirst() {
-        return this.index < 0;
+        return this.currentPositionInFetchedRows < 0;
     }
 
+    @Override
     public ResultSetRow next() {
 
         nextRecord();
@@ -199,8 +191,8 @@ public class RowDataDynamic implements RowData {
         }
 
         if (this.nextRow != null) {
-            if (this.index != Integer.MAX_VALUE) {
-                this.index++;
+            if (this.currentPositionInFetchedRows != Integer.MAX_VALUE) {
+                this.currentPositionInFetchedRows++;
             }
         }
 
@@ -219,7 +211,7 @@ public class RowDataDynamic implements RowData {
                     this.isAfterEnd = true;
                     this.moreResultsExisted = this.io.getResultsHandler().tackOnMoreStreamingResults(this.owner, this.isBinaryEncoded);
 
-                    if (this.index == -1) {
+                    if (this.currentPositionInFetchedRows == -1) {
                         this.wasEmpty = true;
                     }
                 }
@@ -251,17 +243,5 @@ public class RowDataDynamic implements RowData {
 
             throw cjEx;
         }
-    }
-
-    public void setOwner(ResultSetImpl rs) {
-        this.owner = rs;
-    }
-
-    public boolean wasEmpty() {
-        return this.wasEmpty;
-    }
-
-    public void setMetadata(Field[] metadata) {
-        this.metadata = metadata;
     }
 }

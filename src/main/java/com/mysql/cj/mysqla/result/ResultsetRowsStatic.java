@@ -26,19 +26,12 @@ package com.mysql.cj.mysqla.result;
 import java.util.List;
 
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.result.RowData;
-import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 
 /**
  * Represents an in-memory result set
  */
-public class RowDataStatic implements RowData {
-    private Field[] metadata;
-
-    private int index;
-
-    ResultSetImpl owner;
+public class ResultsetRowsStatic extends AbstractResultsetRows implements ResultsetRows {
 
     private List<ResultSetRow> rows;
 
@@ -47,37 +40,39 @@ public class RowDataStatic implements RowData {
      * 
      * @param rows
      */
-    public RowDataStatic(List<ResultSetRow> rows) {
-        this.index = -1;
+    public ResultsetRowsStatic(List<ResultSetRow> rows) {
+        this.currentPositionInFetchedRows = -1;
         this.rows = rows;
     }
 
+    @Override
     public void addRow(ResultSetRow row) {
         this.rows.add(row);
     }
 
+    @Override
     public void afterLast() {
         if (this.rows.size() > 0) {
-            this.index = this.rows.size();
+            this.currentPositionInFetchedRows = this.rows.size();
         }
     }
 
+    @Override
     public void beforeFirst() {
         if (this.rows.size() > 0) {
-            this.index = -1;
+            this.currentPositionInFetchedRows = -1;
         }
     }
 
+    @Override
     public void beforeLast() {
         if (this.rows.size() > 0) {
-            this.index = this.rows.size() - 2;
+            this.currentPositionInFetchedRows = this.rows.size() - 2;
         }
     }
 
-    public void close() {
-    }
-
-    public ResultSetRow getAt(int atIndex) {
+    @Override
+    public ResultSetRow get(int atIndex) {
         if ((atIndex < 0) || (atIndex >= this.rows.size())) {
             return null;
         }
@@ -85,67 +80,78 @@ public class RowDataStatic implements RowData {
         return (this.rows.get(atIndex)).setMetadata(this.metadata);
     }
 
-    public int getCurrentRowNumber() {
-        return this.index;
+    @Override
+    public int getPosition() {
+        return this.currentPositionInFetchedRows;
     }
 
+    @Override
     public ResultSetInternalMethods getOwner() {
         return this.owner;
     }
 
+    @Override
     public boolean hasNext() {
-        boolean hasMore = (this.index + 1) < this.rows.size();
+        boolean hasMore = (this.currentPositionInFetchedRows + 1) < this.rows.size();
 
         return hasMore;
     }
 
+    @Override
     public boolean isAfterLast() {
-        return this.index >= this.rows.size() && this.rows.size() != 0;
+        return this.currentPositionInFetchedRows >= this.rows.size() && this.rows.size() != 0;
     }
 
+    @Override
     public boolean isBeforeFirst() {
-        return this.index == -1 && this.rows.size() != 0;
+        return this.currentPositionInFetchedRows == -1 && this.rows.size() != 0;
     }
 
+    @Override
     public boolean isDynamic() {
         return false;
     }
 
+    @Override
     public boolean isEmpty() {
         return this.rows.size() == 0;
     }
 
+    @Override
     public boolean isFirst() {
-        return this.index == 0;
+        return this.currentPositionInFetchedRows == 0;
     }
 
+    @Override
     public boolean isLast() {
         // You can never be on the 'last' row of an empty result set
         if (this.rows.size() == 0) {
             return false;
         }
 
-        return (this.index == (this.rows.size() - 1));
+        return (this.currentPositionInFetchedRows == (this.rows.size() - 1));
     }
 
+    @Override
     public void moveRowRelative(int rowsToMove) {
         if (this.rows.size() > 0) {
-            this.index += rowsToMove;
-            if (this.index < -1) {
+            this.currentPositionInFetchedRows += rowsToMove;
+            if (this.currentPositionInFetchedRows < -1) {
                 beforeFirst();
-            } else if (this.index > this.rows.size()) {
+            } else if (this.currentPositionInFetchedRows > this.rows.size()) {
                 afterLast();
             }
         }
     }
 
+    @Override
     public ResultSetRow next() {
-        this.index++;
+        this.currentPositionInFetchedRows++;
 
-        if (this.index > this.rows.size()) {
+        if (this.currentPositionInFetchedRows > this.rows.size()) {
             afterLast();
-        } else if (this.index < this.rows.size()) {
-            ResultSetRow row = this.rows.get(this.index);
+        } else if (this.currentPositionInFetchedRows < this.rows.size()) {
+            ResultSetRow row = this.rows.get(this.currentPositionInFetchedRows);
 
             return row.setMetadata(this.metadata);
         }
@@ -153,27 +159,23 @@ public class RowDataStatic implements RowData {
         return null;
     }
 
-    public void removeRow(int atIndex) {
-        this.rows.remove(atIndex);
+    @Override
+    public void remove() {
+        this.rows.remove(getPosition());
     }
 
+    @Override
     public void setCurrentRow(int newIndex) {
-        this.index = newIndex;
+        this.currentPositionInFetchedRows = newIndex;
     }
 
-    public void setOwner(ResultSetImpl rs) {
-        this.owner = rs;
-    }
-
+    @Override
     public int size() {
         return this.rows.size();
     }
 
+    @Override
     public boolean wasEmpty() {
         return (this.rows != null && this.rows.size() == 0);
-    }
-
-    public void setMetadata(Field[] metadata) {
-        this.metadata = metadata;
     }
 }

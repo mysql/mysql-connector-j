@@ -40,7 +40,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.mysqla.result.RowData;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -129,7 +129,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    public UpdatableResultSet(String catalog, Field[] fields, RowData tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
+    public UpdatableResultSet(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
             throws SQLException {
         super(catalog, fields, tuples, conn, creatorStmt);
         checkUpdatability();
@@ -402,7 +402,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
 
         this.deleter.executeUpdate();
-        this.rowData.removeRow(this.rowData.getCurrentRowNumber());
+        this.rowData.remove();
 
         // position on previous row - Bug#27431
         previous();
@@ -930,10 +930,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                 String message = Messages.getString("UpdatableResultSet.34");
 
-                this.eventSink.consumeEvent(
-                        new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(),
-                                this.getConnectionId(), (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId,
-                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
+                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                        (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(), this.getConnectionId(),
+                        (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId, System.currentTimeMillis(), 0,
+                        Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
             }
         }
 

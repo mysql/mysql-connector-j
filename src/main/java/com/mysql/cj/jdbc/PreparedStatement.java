@@ -98,7 +98,7 @@ import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.ResultSetRow;
-import com.mysql.cj.mysqla.result.RowDataStatic;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
@@ -4733,7 +4733,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             rows.add(new ByteArrayRow(rowData, getExceptionInterceptor()));
 
-            this.bindingsAsRs = new ResultSetImpl(PreparedStatement.this.connection.getCatalog(), typeMetadata, new RowDataStatic(rows),
+            this.bindingsAsRs = new ResultSetImpl(PreparedStatement.this.connection.getCatalog(), typeMetadata, new ResultsetRowsStatic(rows),
                     PreparedStatement.this.connection, null);
             this.bindingsAsRs.next();
         }

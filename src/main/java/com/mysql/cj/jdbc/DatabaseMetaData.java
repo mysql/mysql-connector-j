@@ -60,7 +60,7 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.ResultSetRow;
-import com.mysql.cj.mysqla.result.RowDataStatic;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
  * JDBC Interface to Mysql functions
@@ -775,7 +775,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        return com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(c.getCatalog(), fields, new RowDataStatic(rows), c, null);
+        return com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(c.getCatalog(), fields, new ResultsetRowsStatic(rows), c, null);
     }
 
     protected void convertToJdbcFunctionList(String catalog, ResultSet proceduresRs, boolean needsClientFiltering, String db,

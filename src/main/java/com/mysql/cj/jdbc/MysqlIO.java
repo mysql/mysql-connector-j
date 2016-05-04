@@ -49,7 +49,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.RowData;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -75,9 +75,9 @@ import com.mysql.cj.mysqla.result.BinaryBufferRow;
 import com.mysql.cj.mysqla.result.TextBufferRow;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.ResultSetRow;
-import com.mysql.cj.mysqla.result.RowDataCursor;
-import com.mysql.cj.mysqla.result.RowDataDynamic;
-import com.mysql.cj.mysqla.result.RowDataStatic;
+import com.mysql.cj.mysqla.result.ResultsetRowsCursor;
+import com.mysql.cj.mysqla.result.ResultsetRowsDynamic;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
@@ -108,7 +108,7 @@ public class MysqlIO implements ResultsHandler {
     private JdbcConnection connection;
 
     /** Data to the server */
-    protected RowData streamingData = null;
+    protected ResultsetRows streamingData = null;
 
     protected ReadableProperty<Integer> useBufferRowSizeThreshold;
     protected ReadableProperty<Boolean> useDirectRowUnpack;
@@ -202,7 +202,7 @@ public class MysqlIO implements ResultsHandler {
             usingCursor = this.protocol.getServerSession().cursorExists();
 
             if (usingCursor) {
-                RowData rows = new RowDataCursor(this.protocol.getServerSession(), this.protocol, prepStmt, fields);
+                ResultsetRows rows = new ResultsetRowsCursor(this.protocol.getServerSession(), this.protocol, prepStmt, fields);
 
                 ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency);
 
@@ -214,12 +214,12 @@ public class MysqlIO implements ResultsHandler {
             }
         }
 
-        RowData rowData = null;
+        ResultsetRows rowData = null;
 
         if (!streamResults) {
             rowData = readSingleRowSet(columnCount, maxRows, resultSetConcurrency, isBinaryEncoded, (metadataFromCache == null) ? fields : metadataFromCache);
         } else {
-            rowData = new RowDataDynamic(this.protocol, (int) columnCount, (metadataFromCache == null) ? fields : metadataFromCache, isBinaryEncoded);
+            rowData = new ResultsetRowsDynamic(this.protocol, (int) columnCount, (metadataFromCache == null) ? fields : metadataFromCache, isBinaryEncoded);
             this.streamingData = rowData;
         }
 
@@ -697,7 +697,7 @@ public class MysqlIO implements ResultsHandler {
         return ((((a) + (l)) - 1) & ~((l) - 1));
     }
 
-    private ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, Field[] fields, RowData rows, int resultSetType,
+    private ResultSetImpl buildResultSetWithRows(StatementImpl callingStatement, String catalog, Field[] fields, ResultsetRows rows, int resultSetType,
             int resultSetConcurrency) throws SQLException {
         ResultSetImpl rs = null;
 
@@ -797,8 +797,8 @@ public class MysqlIO implements ResultsHandler {
 
     }
 
-    private RowData readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields) throws SQLException {
-        RowData rowData;
+    private ResultsetRows readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields) throws SQLException {
+        ResultsetRows rowData;
         ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
         // Now read the data
@@ -822,7 +822,7 @@ public class MysqlIO implements ResultsHandler {
             }
         }
 
-        rowData = new RowDataStatic(rows);
+        rowData = new ResultsetRowsStatic(rows);
 
         return rowData;
     }
@@ -1071,7 +1071,7 @@ public class MysqlIO implements ResultsHandler {
         }
     }
 
-    public void closeStreamer(RowData streamer) {
+    public void closeStreamer(ResultsetRows streamer) {
         if (this.streamingData == null) {
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"),
                     this.protocol.getExceptionInterceptor());
