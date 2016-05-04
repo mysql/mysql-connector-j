@@ -51,7 +51,6 @@ public class ByteArrayRow extends ResultSetRow {
 
     @Override
     public byte[] getColumnValue(int index) {
-        // check null to set 'wasNull' status
         if (getNull(index)) {
             return null;
         }
@@ -64,17 +63,9 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public boolean isNull(int index) {
-        return this.internalRowData[index] == null;
-    }
-
-    @Override
-    public long length(int index) {
-        if (this.internalRowData[index] == null) {
-            return 0;
-        }
-
-        return this.internalRowData[index].length;
+    public boolean getNull(int columnIndex) {
+        this.wasNull = this.internalRowData[columnIndex] == null;
+        return this.wasNull;
     }
 
     /**

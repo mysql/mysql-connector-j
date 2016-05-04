@@ -26,8 +26,11 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.DataReadException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -37,7 +40,7 @@ import com.mysql.cj.mysqla.MysqlaConstants;
  * 
  * Notice that <strong>no</strong> bounds checking is expected for implementors of this interface, it happens in ResultSetImpl.
  */
-public abstract class ResultSetRow {
+public abstract class ResultSetRow implements Row {
     protected ExceptionInterceptor exceptionInterceptor;
 
     protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {
@@ -52,7 +55,7 @@ public abstract class ResultSetRow {
     protected ValueDecoder valueDecoder;
 
     /** Did the previous value retrieval find a NULL? */
-    private boolean wasNull;
+    protected boolean wasNull;
 
     /**
      * Returns the value at the given column (index starts at 0) "raw" (i.e.
@@ -63,35 +66,6 @@ public abstract class ResultSetRow {
      * @return the value for the given column (including NULL if it is)
      */
     public abstract byte[] getColumnValue(int index);
-
-    /**
-     * Check whether a column is NULL and update the 'wasNull' status.
-     */
-    public boolean getNull(int columnIndex) {
-        this.wasNull = isNull(columnIndex);
-        return this.wasNull;
-    }
-
-    /**
-     * Is the column value at the given index (which starts at 0) NULL?
-     * 
-     * @param index
-     *            of the column value (starting at 0) to check.
-     * 
-     * @return true if the column value is NULL, false if not.
-     */
-    public abstract boolean isNull(int index);
-
-    /**
-     * Retrieve a value for the given column. This is the main facility to access values from the ResultSetRow.
-     *
-     * @param columnIndex
-     *            index of column to retrieve value from (0-indexed, not JDBC 1-indexed)
-     * @param vf
-     *            value factory used to create the return value after decoding
-     * @return The return value from the value factory
-     */
-    public abstract <T> T getValue(int columnIndex, ValueFactory<T> vf);
 
     /**
      * Decode the wire-level result bytes and call the value factory.
@@ -259,8 +233,7 @@ public abstract class ResultSetRow {
      *            value factory
      */
     protected <T> T getValueFromBytes(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (isNull(columnIndex)) {
-            this.wasNull = true;
+        if (getNull(columnIndex)) {
             return vf.createFromNull();
         }
 
@@ -271,18 +244,6 @@ public abstract class ResultSetRow {
     }
 
     /**
-     * Returns the length of the column at the given index (which starts at 0).
-     * 
-     * @param index
-     *            of the column value (starting at 0) for which to return the
-     *            length.
-     * @return the length of the requested column, 0 if null (clients of this
-     *         interface should use isNull() beforehand to determine status of
-     *         NULL values in the column).
-     */
-    public abstract long length(int index);
-
-    /**
      * Sets the given column value (only works currently with
      * ByteArrayRowHolder).
      * 
@@ -291,7 +252,9 @@ public abstract class ResultSetRow {
      * @param value
      *            the (raw) value to set
      */
-    public abstract void setColumnValue(int index, byte[] value);
+    public void setColumnValue(int index, byte[] value) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     public ResultSetRow setMetadata(Field[] f) {
         this.metadata = f;

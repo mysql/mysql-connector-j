@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,6 +42,11 @@ public interface Row {
 
     /**
      * Check whether a column is NULL and update the 'wasNull' status.
+     * 
+     * @param columnIndex
+     *            of the column value (starting at 0) to check.
+     * 
+     * @return true if the column value is NULL, false if not.
      */
     boolean getNull(int columnIndex);
 

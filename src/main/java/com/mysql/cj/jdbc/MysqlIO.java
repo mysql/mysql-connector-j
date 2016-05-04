@@ -71,7 +71,8 @@ import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
-import com.mysql.cj.mysqla.result.BufferRow;
+import com.mysql.cj.mysqla.result.BinaryBufferRow;
+import com.mysql.cj.mysqla.result.TextBufferRow;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.RowDataCursor;
@@ -377,7 +378,7 @@ public class MysqlIO implements ResultsHandler {
                 this.protocol.setReusablePacket(new Buffer(rowPacket.getPayloadLength()));
             }
 
-            return new BufferRow(rowPacket, fields, false, this.protocol.getExceptionInterceptor(), new MysqlTextValueDecoder());
+            return new TextBufferRow(rowPacket, fields, this.protocol.getExceptionInterceptor(), new MysqlTextValueDecoder());
         }
         // Handle binary-encoded data for server-side PreparedStatements
 
@@ -392,7 +393,7 @@ public class MysqlIO implements ResultsHandler {
             this.protocol.setReusablePacket(new Buffer(rowPacket.getPayloadLength()));
         }
 
-        return new BufferRow(rowPacket, fields, true, this.protocol.getExceptionInterceptor(), new MysqlBinaryValueDecoder());
+        return new BinaryBufferRow(rowPacket, fields, this.protocol.getExceptionInterceptor(), new MysqlBinaryValueDecoder());
 
     }
 

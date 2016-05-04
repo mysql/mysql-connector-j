@@ -224,6 +224,14 @@ public interface PacketPayload {
     byte[] readBytes(StringSelfDataType type);
 
     /**
+     * Set position to next value in internal buffer skipping the current value according to {@link StringSelfDataType}.
+     * 
+     * @param type
+     * @return
+     */
+    void skipBytes(StringSelfDataType type);
+
+    /**
      * Read len bytes from internal buffer starting from current position into the new byte array.
      * 
      * @param type

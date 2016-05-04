@@ -371,6 +371,29 @@ public class Buffer implements PacketPayload {
     }
 
     @Override
+    public void skipBytes(StringSelfDataType type) {
+        switch (type) {
+            case STRING_TERM:
+                while ((this.position < this.payloadLength) && (this.byteBuffer[this.position] != 0)) {
+                    this.position++;
+                }
+                this.position++; // skip terminating byte
+                break;
+
+            case STRING_LENENC:
+                long len = readInteger(IntegerDataType.INT_LENENC);
+                if (len != PacketPayload.NULL_LENGTH && len != 0) {
+                    this.position += (int) len;
+                }
+                break;
+
+            case STRING_EOF:
+                this.position = this.payloadLength;
+                break;
+        }
+    }
+
+    @Override
     public byte[] readBytes(StringLengthDataType type, int len) {
         byte[] b;
         switch (type) {
