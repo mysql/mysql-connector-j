@@ -52,6 +52,7 @@ import java.util.Map;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -63,7 +64,6 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * Representation of stored procedures for JDBC
@@ -670,7 +670,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
 
-            ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
+            ArrayList<Row> resultRows = new ArrayList<Row>();
 
             for (int i = 0; i < this.parameterCount; i++) {
                 byte[][] row = new byte[13][];

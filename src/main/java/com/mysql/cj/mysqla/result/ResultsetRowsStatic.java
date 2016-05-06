@@ -27,26 +27,27 @@ import java.util.List;
 
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 
 /**
  * Represents an in-memory result set
  */
 public class ResultsetRowsStatic extends AbstractResultsetRows implements ResultsetRows {
 
-    private List<ResultSetRow> rows;
+    private List<Row> rows;
 
     /**
      * Creates a new RowDataStatic object.
      * 
      * @param rows
      */
-    public ResultsetRowsStatic(List<ResultSetRow> rows) {
+    public ResultsetRowsStatic(List<Row> rows) {
         this.currentPositionInFetchedRows = -1;
         this.rows = rows;
     }
 
     @Override
-    public void addRow(ResultSetRow row) {
+    public void addRow(Row row) {
         this.rows.add(row);
     }
 
@@ -72,12 +73,12 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
     }
 
     @Override
-    public ResultSetRow get(int atIndex) {
+    public Row get(int atIndex) {
         if ((atIndex < 0) || (atIndex >= this.rows.size())) {
             return null;
         }
 
-        return (this.rows.get(atIndex)).setMetadata(this.metadata);
+        return this.rows.get(atIndex).setMetadata(this.metadata);
     }
 
     @Override
@@ -145,13 +146,13 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
     }
 
     @Override
-    public ResultSetRow next() {
+    public Row next() {
         this.currentPositionInFetchedRows++;
 
         if (this.currentPositionInFetchedRows > this.rows.size()) {
             afterLast();
         } else if (this.currentPositionInFetchedRows < this.rows.size()) {
-            ResultSetRow row = this.rows.get(this.currentPositionInFetchedRows);
+            Row row = this.rows.get(this.currentPositionInFetchedRows);
 
             return row.setMetadata(this.metadata);
         }

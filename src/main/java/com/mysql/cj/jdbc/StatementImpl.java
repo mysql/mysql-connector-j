@@ -48,6 +48,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -72,7 +73,6 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
@@ -301,7 +301,7 @@ public class StatementImpl implements Statement {
      */
     protected boolean holdResultsOpenOverClose = false;
 
-    protected ArrayList<ResultSetRow> batchedGeneratedKeys = null;
+    protected ArrayList<Row> batchedGeneratedKeys = null;
 
     protected boolean retrieveGeneratedKeys = false;
 
@@ -1044,7 +1044,7 @@ public class StatementImpl implements Statement {
                     if (this.batchedArgs != null) {
                         int nbrCommands = this.batchedArgs.size();
 
-                        this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(this.batchedArgs.size());
+                        this.batchedGeneratedKeys = new ArrayList<Row>(this.batchedArgs.size());
 
                         boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries)
                                 .getValue();
@@ -1507,7 +1507,7 @@ public class StatementImpl implements Statement {
     protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Field[] fields = { new Field(null, "1", MysqlType.BIGINT, 1) };
-            ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
+            ArrayList<Row> rows = new ArrayList<Row>();
             byte[] colVal = new byte[] { (byte) '1' };
 
             rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
@@ -1769,7 +1769,7 @@ public class StatementImpl implements Statement {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 20);
 
-            ArrayList<ResultSetRow> rowSet = new ArrayList<ResultSetRow>();
+            ArrayList<Row> rowSet = new ArrayList<Row>();
 
             long beginAt = getLastInsertID();
 

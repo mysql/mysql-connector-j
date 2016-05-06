@@ -28,9 +28,7 @@ import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -56,16 +54,6 @@ public abstract class ResultSetRow implements Row {
 
     /** Did the previous value retrieval find a NULL? */
     protected boolean wasNull;
-
-    /**
-     * Returns the value at the given column (index starts at 0) "raw" (i.e.
-     * as-returned by the server).
-     * 
-     * @param index
-     *            of the column value (starting at 0) to return.
-     * @return the value for the given column (including NULL if it is)
-     */
-    public abstract byte[] getColumnValue(int index);
 
     /**
      * Decode the wire-level result bytes and call the value factory.
@@ -243,20 +231,8 @@ public abstract class ResultSetRow implements Row {
         return retVal;
     }
 
-    /**
-     * Sets the given column value (only works currently with
-     * ByteArrayRowHolder).
-     * 
-     * @param index
-     *            index of the column value (starting at 0) to set.
-     * @param value
-     *            the (raw) value to set
-     */
-    public void setColumnValue(int index, byte[] value) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
-    }
-
-    public ResultSetRow setMetadata(Field[] f) {
+    @Override
+    public Row setMetadata(Field[] f) {
         this.metadata = f;
 
         return this;

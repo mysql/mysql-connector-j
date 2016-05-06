@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -57,7 +58,6 @@ import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * A result set that is updatable.
@@ -100,7 +100,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     private String refreshSQL = null;
 
     /** The binary data for the 'current' row */
-    private ResultSetRow savedCurrentRow;
+    private Row savedCurrentRow;
 
     /** PreparedStatement used to delete data */
     protected com.mysql.cj.jdbc.PreparedStatement updater = null;
@@ -409,9 +409,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     }
 
-    private synchronized void setParamValue(PreparedStatement ps, int psIdx, ResultSetRow row, int rsIdx, MysqlType mysqlType) throws SQLException {
+    private synchronized void setParamValue(PreparedStatement ps, int psIdx, Row row, int rsIdx, MysqlType mysqlType) throws SQLException {
 
-        byte[] val = row.getColumnValue(rsIdx);
+        byte[] val = row.getBytes(rsIdx);
         if (val == null) {
             ps.setNull(psIdx, MysqlType.NULL);
             return;
@@ -766,7 +766,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
         }
 
-        ResultSetRow resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
+        Row resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
 
         refreshRow(this.inserter, resultSetRow);
 
@@ -997,7 +997,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         refreshRow(this.updater, this.thisRow);
     }
 
-    private synchronized void refreshRow(PreparedStatement updateInsertStmt, ResultSetRow rowToRefresh) throws SQLException {
+    private synchronized void refreshRow(PreparedStatement updateInsertStmt, Row rowToRefresh) throws SQLException {
         if (this.refresher == null) {
             if (this.refreshSQL == null) {
                 generateStatements();
@@ -1015,13 +1015,13 @@ public class UpdatableResultSet extends ResultSetImpl {
             int index = this.primaryKeyIndicies.get(0).intValue();
 
             if (!this.doingUpdates && !this.onInsertRow) {
-                dataFrom = rowToRefresh.getColumnValue(index);
+                dataFrom = rowToRefresh.getBytes(index);
             } else {
                 dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
                 // Primary keys not set?
                 if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-                    dataFrom = rowToRefresh.getColumnValue(index);
+                    dataFrom = rowToRefresh.getBytes(index);
                 } else {
                     dataFrom = stripBinaryPrefix(dataFrom);
                 }
@@ -1039,13 +1039,13 @@ public class UpdatableResultSet extends ResultSetImpl {
                 int index = this.primaryKeyIndicies.get(i).intValue();
 
                 if (!this.doingUpdates && !this.onInsertRow) {
-                    dataFrom = rowToRefresh.getColumnValue(index);
+                    dataFrom = rowToRefresh.getBytes(index);
                 } else {
                     dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
                     // Primary keys not set?
                     if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-                        dataFrom = rowToRefresh.getColumnValue(index);
+                        dataFrom = rowToRefresh.getBytes(index);
                     } else {
                         dataFrom = stripBinaryPrefix(dataFrom);
                     }
@@ -1067,9 +1067,9 @@ public class UpdatableResultSet extends ResultSetImpl {
                     byte[] val = rs.getBytes(i + 1);
 
                     if ((val == null) || rs.wasNull()) {
-                        rowToRefresh.setColumnValue(i, null);
+                        rowToRefresh.setBytes(i, null);
                     } else {
-                        rowToRefresh.setColumnValue(i, rs.getBytes(i + 1));
+                        rowToRefresh.setBytes(i, rs.getBytes(i + 1));
                     }
                 }
             } else {
@@ -1149,12 +1149,12 @@ public class UpdatableResultSet extends ResultSetImpl {
         this.updater.clearParameters();
 
         for (int i = 0; i < numFields; i++) {
-            if (this.thisRow.getColumnValue(i) != null) {
+            if (this.thisRow.getBytes(i) != null) {
 
                 if (this.getMetadata()[i].getValueNeedsQuoting()) {
-                    this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.getMetadata()[i].isBinary(), false);
+                    this.updater.setBytes(i + 1, this.thisRow.getBytes(i), this.getMetadata()[i].isBinary(), false);
                 } else {
-                    this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getColumnValue(i));
+                    this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getBytes(i));
                 }
             } else {
                 this.updater.setNull(i + 1, 0);
@@ -1185,7 +1185,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.updater.setAsciiStream(columnIndex, x, length);
         } else {
             this.inserter.setAsciiStream(columnIndex, x, length);
-            this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+            this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
         }
     }
 
@@ -1207,9 +1207,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setBigDecimal(columnIndex, x);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x.toString()));
+                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x.toString()));
             }
         }
     }
@@ -1232,9 +1232,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setBinaryStream(columnIndex, x, length);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
     }
@@ -1257,9 +1257,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setBlob(columnIndex, blob);
 
             if (blob == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
     }
@@ -1281,7 +1281,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setBoolean(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1302,7 +1302,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setByte(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1323,7 +1323,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setBytes(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, x);
+            this.thisRow.setBytes(columnIndex - 1, x);
         }
     }
 
@@ -1345,9 +1345,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setCharacterStream(columnIndex, x, length);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
     }
@@ -1378,7 +1378,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setDate(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1399,7 +1399,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setDouble(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1420,7 +1420,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setFloat(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1441,7 +1441,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setInt(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1462,7 +1462,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setLong(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1483,7 +1483,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setNull(columnIndex, 0);
 
-            this.thisRow.setColumnValue(columnIndex - 1, null);
+            this.thisRow.setBytes(columnIndex - 1, null);
         }
     }
 
@@ -1531,7 +1531,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setObject(columnIndex, x, targetType);
             }
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1595,7 +1595,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setShort(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1619,9 +1619,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setString(columnIndex, x);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charEncoding));
+                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, this.charEncoding));
             }
         }
     }
@@ -1643,7 +1643,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setTime(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1664,7 +1664,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         } else {
             this.inserter.setTimestamp(columnIndex, x);
 
-            this.thisRow.setColumnValue(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
@@ -1862,9 +1862,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setNCharacterStream(columnIndex, x, length);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
     }
@@ -1911,9 +1911,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setNString(columnIndex, x);
 
             if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                this.thisRow.setBytes(columnIndex - 1, null);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, fieldEncoding));
+                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, fieldEncoding));
             }
         }
     }

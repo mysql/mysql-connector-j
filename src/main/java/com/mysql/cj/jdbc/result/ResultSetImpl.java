@@ -70,6 +70,7 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -109,7 +110,6 @@ import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 public class ResultSetImpl implements ResultSetInternalMethods, WarningListener {
@@ -216,7 +216,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     PreparedStatement statementUsedForFetchingRows;
 
     /** Pointer to current row data */
-    protected ResultSetRow thisRow = null; // Values for current row
+    protected Row thisRow = null; // Values for current row
 
     /** How many rows were affected by UPDATE/INSERT/DELETE? */
     protected long updateCount;
@@ -471,7 +471,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                     } else {
                         row--; // adjust for index difference
                         this.rowData.setCurrentRow(row);
-                        this.thisRow = (ResultSetRow) this.rowData.get(row);
+                        this.thisRow = this.rowData.get(row);
                         b = true;
                     }
                 }
@@ -782,7 +782,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 }
 
                 this.rowData.beforeFirst();
-                this.thisRow = (ResultSetRow) this.rowData.next();
+                this.thisRow = this.rowData.next();
             }
 
             setRowPositionValidity();
@@ -898,7 +898,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         }
 
         if (!this.emulateLocators.getValue()) {
-            return new Blob(this.thisRow.getColumnValue(columnIndex - 1), getExceptionInterceptor());
+            return new Blob(this.thisRow.getBytes(columnIndex - 1), getExceptionInterceptor());
         }
 
         return new BlobFromLocator(this, columnIndex, getExceptionInterceptor());
@@ -931,7 +931,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public byte[] getBytes(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return this.thisRow.getColumnValue(columnIndex - 1);
+        return this.thisRow.getBytes(columnIndex - 1);
     }
 
     public byte[] getBytes(String columnName) throws SQLException {
@@ -1584,7 +1584,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        Object value = this.thisRow.getColumnValue(columnIndex - 1);
+        Object value = this.thisRow.getBytes(columnIndex - 1);
 
         if (value == null) {
             return null;
@@ -1872,7 +1872,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 }
 
                 this.rowData.beforeLast();
-                this.thisRow = (ResultSetRow) this.rowData.next();
+                this.thisRow = this.rowData.next();
             }
 
             setRowPositionValidity();
@@ -1910,7 +1910,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if (this.rowData.size() == 0) {
                 b = false;
             } else {
-                this.thisRow = (ResultSetRow) this.rowData.next();
+                this.thisRow = this.rowData.next();
 
                 if (this.thisRow == null) {
                     b = false;
@@ -1951,7 +1951,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if ((rowIndex - 1) >= 0) {
                 rowIndex--;
                 this.rowData.setCurrentRow(rowIndex);
-                this.thisRow = (ResultSetRow) this.rowData.get(rowIndex);
+                this.thisRow = this.rowData.get(rowIndex);
 
                 b = true;
             } else if ((rowIndex - 1) == -1) {
@@ -2157,7 +2157,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             }
 
             this.rowData.moveRowRelative(rows);
-            this.thisRow = (ResultSetRow) this.rowData.get(this.rowData.getPosition());
+            this.thisRow = this.rowData.get(this.rowData.getPosition());
 
             setRowPositionValidity();
 

@@ -23,14 +23,22 @@
 
 package com.mysql.cj.api.result;
 
+import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.result.Field;
 
 /**
  * @todo
  */
 public interface Row {
     /**
-     * Retrieve a value for the given column. This is the main facility to access values from the Row.
+     * Retrieve a value for the given column. This is the main facility to access values from the Row
+     * involving {@link ValueDecoder} and {@link ValueFactory} chain. Metadata <i>must</i> be set via
+     * Row constructor or {@link #setMetadata(Field[])} call before calling this method to allow
+     * correct columnIndex boundaries check and data type recognition.
      *
      * @param columnIndex
      *            index of column to retrieve value from (0-indexed, not JDBC 1-indexed)
@@ -39,6 +47,41 @@ public interface Row {
      * @return The return value from the value factory
      */
     <T> T getValue(int columnIndex, ValueFactory<T> vf);
+
+    /**
+     * Set metadata to enable getValue functionality.
+     * 
+     * @param f
+     * @return
+     */
+    default Row setMetadata(Field[] f) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
+
+    /**
+     * Returns the value at the given column as a byte array.
+     * The bytes represent the raw values returned by the server.
+     * 
+     * @param columnIndex
+     *            index of column (starting at 0) to return from.
+     * @return the value for the given column; if the value is SQL <code>NULL</code>, the value returned is <code>null</code>
+     */
+    default byte[] getBytes(int columnIndex) {
+        // TODO check that "if the value is SQL NULL, the value returned is null" is correctly implemented
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
+
+    /**
+     * Sets the given byte array as a raw column value (only works currently with ByteArrayRow).
+     * 
+     * @param columnIndex
+     *            index of the column (starting at 0) to set to.
+     * @param value
+     *            the (raw) value to set
+     */
+    default void setBytes(int columnIndex, byte[] value) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
+    }
 
     /**
      * Check whether a column is NULL and update the 'wasNull' status.

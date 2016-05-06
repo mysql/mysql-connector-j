@@ -52,6 +52,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -71,7 +72,6 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -593,7 +593,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     updateCounts = new long[nbrCommands];
 
                     if (this.retrieveGeneratedKeys) {
-                        this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(nbrCommands);
+                        this.batchedGeneratedKeys = new ArrayList<Row>(nbrCommands);
                     }
 
                     for (int i = 0; i < nbrCommands; i++) {
@@ -1233,9 +1233,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.getCurrentCatalog(), this.connectionId, this.statementId,
-                            -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin, this.session.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", this.getCurrentCatalog(), this.connectionId,
+                            this.statementId, -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin,
+                            this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
                 }
 
                 com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve,
@@ -1253,12 +1253,12 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = this.session.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.getCurrentCatalog(), this.connection.getId(), getId(), 0 /*
-                                                                                                                                                              * FIXME
-                                                                                                                                                              * rs.
-                                                                                                                                                              * resultId
-                                                                                                                                                              */,
-                            System.currentTimeMillis(), (fetchEndTime - queryEndTime), this.session.getQueryTimingUnits(), null,
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.getCurrentCatalog(), this.connection.getId(), getId(),
+                            0 /*
+                               * FIXME
+                               * rs.
+                               * resultId
+                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), this.session.getQueryTimingUnits(), null,
                             LogUtils.findCallingClassAndMethod(new Throwable()), null));
                 }
 
@@ -1386,9 +1386,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.connection.incrementNumberOfPrepares();
 
                 if (this.profileSQL) {
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.getCurrentCatalog(), this.connectionId, this.statementId,
-                            -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin, this.session.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.getCurrentCatalog(), this.connectionId,
+                            this.statementId, -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin,
+                            this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
                 boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();

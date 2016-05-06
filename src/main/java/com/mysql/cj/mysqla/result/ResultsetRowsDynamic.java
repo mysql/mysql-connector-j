@@ -30,6 +30,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -42,7 +43,10 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
- * Allows streaming of MySQL data.
+ * Provides streaming of Resultset rows. Each next row is consumed from the
+ * input stream only on {@link #next()} call. Consumed rows are not cached thus
+ * we only stream result sets when they are forward-only, read-only, and the
+ * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
  */
 public class ResultsetRowsDynamic extends AbstractResultsetRows implements ResultsetRows {
 
@@ -56,7 +60,7 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
 
     private boolean isBinaryEncoded = false;
 
-    private ResultSetRow nextRow;
+    private Row nextRow;
 
     private boolean streamerClosed = false;
 
@@ -86,7 +90,6 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
 
     @Override
     public void close() {
-        // Belt and suspenders here - if we don't have a reference to the connection it's more than likely dead/gone and we won't be able to consume rows anyway
 
         Object mutex = this;
 
@@ -181,7 +184,7 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
     }
 
     @Override
-    public ResultSetRow next() {
+    public Row next() {
 
         nextRecord();
 

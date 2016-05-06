@@ -31,6 +31,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
@@ -39,14 +40,16 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
- * Model for result set data backed by a cursor. Only works for forward-only result sets (but still works with updatable concurrency).
+ * Model for result set data backed by a cursor (see http://dev.mysql.com/doc/refman/5.7/en/cursors.html and
+ * SERVER_STATUS_CURSOR_EXISTS flag description on http://dev.mysql.com/doc/internals/en/status-flags.html).
+ * Only works for forward-only result sets (but still works with updatable concurrency).
  */
 public class ResultsetRowsCursor extends AbstractResultsetRows implements ResultsetRows {
 
     /**
      * The cache of rows we have retrieved from the server.
      */
-    private List<ResultSetRow> fetchedRows;
+    private List<Row> fetchedRows;
 
     /**
      * Where we are positionaly in the entire result set, used mostly to
@@ -176,7 +179,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
     }
 
     @Override
-    public ResultSetRow next() {
+    public Row next() {
         if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
             throw ExceptionFactory.createException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
                     this.protocol.getExceptionInterceptor());
@@ -199,7 +202,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             this.currentPositionInFetchedRows = 0;
         }
 
-        ResultSetRow row = this.fetchedRows.get(this.currentPositionInFetchedRows);
+        Row row = this.fetchedRows.get(this.currentPositionInFetchedRows);
 
         row.setMetadata(this.metadata);
 
@@ -208,7 +211,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     private void fetchMoreRows() {
         if (this.lastRowFetched) {
-            this.fetchedRows = new ArrayList<ResultSetRow>(0);
+            this.fetchedRows = new ArrayList<Row>(0);
             return;
         }
 
@@ -233,7 +236,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                 }
 
                 if (this.fetchedRows == null) {
-                    this.fetchedRows = new ArrayList<ResultSetRow>(numRowsToFetch);
+                    this.fetchedRows = new ArrayList<Row>(numRowsToFetch);
                 } else {
                     this.fetchedRows.clear();
                 }
@@ -248,7 +251,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
                 this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
 
-                ResultSetRow row = null;
+                Row row = null;
 
                 while ((row = this.protocol.getResultsHandler().nextRow(this.metadata, this.metadata.length, true, ResultSet.CONCUR_READ_ONLY,
                         false)) != null) {

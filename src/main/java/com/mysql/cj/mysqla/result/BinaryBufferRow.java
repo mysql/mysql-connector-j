@@ -30,6 +30,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
@@ -129,7 +130,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public byte[] getColumnValue(int index) {
+    public byte[] getBytes(int index) {
         findAndSeekToOffset(index);
 
         if (this.getNull(index)) {
@@ -168,7 +169,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public ResultSetRow setMetadata(Field[] f) {
+    public Row setMetadata(Field[] f) {
         super.setMetadata(f);
         setupIsNullBitmask();
         return this;

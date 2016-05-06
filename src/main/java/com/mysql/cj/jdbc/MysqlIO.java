@@ -50,6 +50,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -72,12 +73,11 @@ import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.io.Buffer;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.result.BinaryBufferRow;
-import com.mysql.cj.mysqla.result.TextBufferRow;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsCursor;
 import com.mysql.cj.mysqla.result.ResultsetRowsDynamic;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
+import com.mysql.cj.mysqla.result.TextBufferRow;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
@@ -323,7 +323,7 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @throws SQLException
      */
-    public final ResultSetRow nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow)
+    public final Row nextRow(Field[] fields, int columnCount, boolean isBinaryEncoded, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow)
             throws SQLException {
 
         // use a buffer row for reusable packets (streaming results) or blobs and long strings
@@ -401,7 +401,7 @@ public class MysqlIO implements ResultsHandler {
      * Use the 'fast' approach to reading a row. We read everything piece-meal into the byte buffers that are used to back the ByteArrayRow. This avoids reading
      * the entire packet at once.
      */
-    private ResultSetRow nextRowFast(PacketHeader header, int columnCount) throws SQLException, IOException {
+    private Row nextRowFast(PacketHeader header, int columnCount) throws SQLException, IOException {
         int packetLength = header.getPacketLength();
         int remaining = packetLength;
 
@@ -797,12 +797,13 @@ public class MysqlIO implements ResultsHandler {
 
     }
 
-    private ResultsetRows readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields) throws SQLException {
+    private ResultsetRows readSingleRowSet(long columnCount, int maxRows, int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields)
+            throws SQLException {
         ResultsetRows rowData;
-        ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
+        ArrayList<Row> rows = new ArrayList<Row>();
 
         // Now read the data
-        ResultSetRow row = nextRow(fields, (int) columnCount, isBinaryEncoded, resultSetConcurrency, false);
+        Row row = nextRow(fields, (int) columnCount, isBinaryEncoded, resultSetConcurrency, false);
 
         int rowCount = 0;
 
@@ -989,7 +990,7 @@ public class MysqlIO implements ResultsHandler {
      * 
      * @throws SQLException
      */
-    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, PacketPayload binaryData, int resultSetConcurrency) throws SQLException {
+    private final Row unpackBinaryResultSetRow(Field[] fields, PacketPayload binaryData, int resultSetConcurrency) throws SQLException {
         int numFields = fields.length;
 
         byte[][] unpackedRowData = new byte[numFields][];

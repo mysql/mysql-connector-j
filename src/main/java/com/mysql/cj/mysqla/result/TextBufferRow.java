@@ -29,6 +29,7 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.result.Field;
 
 /**
@@ -93,7 +94,7 @@ public class TextBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public byte[] getColumnValue(int index) {
+    public byte[] getBytes(int index) {
         findAndSeekToOffset(index);
         return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
     }
@@ -106,7 +107,7 @@ public class TextBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public ResultSetRow setMetadata(Field[] f) {
+    public Row setMetadata(Field[] f) {
         super.setMetadata(f);
         return this;
     }

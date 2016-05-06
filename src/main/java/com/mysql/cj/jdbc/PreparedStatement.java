@@ -75,6 +75,7 @@ import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -97,7 +98,6 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
@@ -1262,7 +1262,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 int numBatchedArgs = this.batchedArgs.size();
 
                 if (this.retrieveGeneratedKeys) {
-                    this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(numBatchedArgs);
+                    this.batchedGeneratedKeys = new ArrayList<Row>(numBatchedArgs);
                 }
 
                 int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1448,7 +1448,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             int numBatchedArgs = this.batchedArgs.size();
 
             if (this.retrieveGeneratedKeys) {
-                this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(numBatchedArgs);
+                this.batchedGeneratedKeys = new ArrayList<Row>(numBatchedArgs);
             }
 
             int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1698,7 +1698,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (this.retrieveGeneratedKeys) {
-                        this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(nbrCommands);
+                        this.batchedGeneratedKeys = new ArrayList<Row>(nbrCommands);
                     }
 
                     for (this.batchCommandIndex = 0; this.batchCommandIndex < nbrCommands; this.batchCommandIndex++) {
@@ -2652,8 +2652,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 if (this.numberOfExecutions <= 1) {
                     String message = Messages.getString("PreparedStatement.43");
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCurrentCatalog(), this.connectionId, this.getId(), -1,
-                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCurrentCatalog(), this.connectionId, this.getId(),
+                            -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
                 }
             }
 
@@ -4687,7 +4687,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         private boolean[] parameterIsNull;
 
         EmulatedPreparedStatementBindings() throws SQLException {
-            List<ResultSetRow> rows = new ArrayList<ResultSetRow>();
+            List<Row> rows = new ArrayList<Row>();
             this.parameterIsNull = new boolean[PreparedStatement.this.parameterCount];
             System.arraycopy(PreparedStatement.this.isNull, 0, this.parameterIsNull, 0, PreparedStatement.this.parameterCount);
             byte[][] rowData = new byte[PreparedStatement.this.parameterCount][];

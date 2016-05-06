@@ -50,7 +50,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public byte[] getColumnValue(int index) {
+    public byte[] getBytes(int index) {
         if (getNull(index)) {
             return null;
         }
@@ -58,7 +58,7 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public void setColumnValue(int index, byte[] value) {
+    public void setBytes(int index, byte[] value) {
         this.internalRowData[index] = value;
     }
 

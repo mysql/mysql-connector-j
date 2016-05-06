@@ -24,27 +24,27 @@
 package com.mysql.cj.api.mysqla.result;
 
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
- * one.
+ * one. It extends the {@link RowList} functionality by providing row positioning, updatability and ownership.
  */
 public interface ResultsetRows extends RowList {
 
     /**
-     * Adds a row to this row data.
+     * Adds a row.
      * 
      * @param row
      *            the row to add
      */
-    default void addRow(ResultSetRow row) {
+    default void addRow(Row row) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
     }
 
@@ -65,7 +65,7 @@ public interface ResultsetRows extends RowList {
     }
 
     /**
-     * Moves to before last so next el is the last el.
+     * Moves to before last.
      * 
      */
     default void beforeLast() {
