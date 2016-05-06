@@ -26,6 +26,7 @@ package com.mysql.cj.api.jdbc.result;
 import java.math.BigInteger;
 import java.sql.SQLException;
 
+import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
@@ -37,7 +38,7 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
  * 
  * This interface, although public is <strong>not</strong> designed to be consumed publicly other than for the statement interceptor use case.
  */
-public interface ResultSetInternalMethods extends java.sql.ResultSet {
+public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetRowsOwner {
 
     /**
      * Returns a new instance of this result set, that shares the
@@ -107,11 +108,6 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
      *            driver?
      */
     void realClose(boolean calledExplicitly) throws SQLException;
-
-    /**
-     * Returns true if this ResultSet is closed
-     */
-    boolean isClosed() throws SQLException;
 
     /**
      * Sets the first character of the query that was issued to create

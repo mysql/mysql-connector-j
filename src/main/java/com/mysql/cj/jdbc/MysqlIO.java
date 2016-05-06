@@ -50,6 +50,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -191,7 +192,6 @@ public class MysqlIO implements ResultsHandler {
 
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue() && isBinaryEncoded && callingStatement != null
                 && callingStatement.getFetchSize() != 0 && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY) {
-            ServerPreparedStatement prepStmt = (com.mysql.cj.jdbc.ServerPreparedStatement) callingStatement;
 
             boolean usingCursor = true;
 
@@ -202,7 +202,7 @@ public class MysqlIO implements ResultsHandler {
             usingCursor = this.protocol.getServerSession().cursorExists();
 
             if (usingCursor) {
-                ResultsetRows rows = new ResultsetRowsCursor(this.protocol.getServerSession(), this.protocol, prepStmt, fields);
+                ResultsetRows rows = new ResultsetRowsCursor(this.protocol, fields);
 
                 ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields, rows, resultSetType, resultSetConcurrency);
 
@@ -534,11 +534,11 @@ public class MysqlIO implements ResultsHandler {
         return new ByteArrayRow(rowData, this.protocol.getExceptionInterceptor());
     }
 
-    public boolean tackOnMoreStreamingResults(ResultSetImpl addingTo, boolean isBinaryEncoded) throws SQLException {
+    public boolean tackOnMoreStreamingResults(ResultsetRowsOwner addingTo, boolean isBinaryEncoded) throws SQLException {
         if (this.protocol.getServerSession().hasMoreResults()) {
 
             boolean moreRowSetsExist = true;
-            ResultSetImpl currentResultSet = addingTo;
+            ResultSetImpl currentResultSet = (ResultSetImpl) addingTo;
             boolean firstTime = true;
 
             while (moreRowSetsExist) {
@@ -551,9 +551,9 @@ public class MysqlIO implements ResultsHandler {
                 PacketPayload fieldPacket = this.protocol.checkErrorPacket();
                 fieldPacket.setPosition(0);
 
-                java.sql.Statement owningStatement = addingTo.getStatement();
+                java.sql.Statement owningStatement = ((ResultSetImpl) addingTo).getStatement();
 
-                int maxRows = owningStatement.getMaxRows();
+                int maxRows = addingTo.getOwningStatementMaxRows();
 
                 // fixme for catalog, isBinary
 
@@ -1062,7 +1062,7 @@ public class MysqlIO implements ResultsHandler {
                 }
 
                 // Close the result set
-                this.streamingData.getOwner().realClose(false);
+                this.streamingData.getOwner().closeOwner(false);
 
                 // clear any pending data....
                 this.protocol.clearInputStream();

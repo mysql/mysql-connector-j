@@ -145,10 +145,8 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
 
                         ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
 
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                this.owner.getOwningStatement() == null ? "N/A" : this.owner.getOwningStatement().getCurrentCatalog(),
-                                this.owner.getConnectionId(), this.owner.getOwningStatement() == null ? -1 : this.owner.getOwningStatement().getId(), -1,
-                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.getCurrentCatalog(), this.owner.getConnectionId(),
+                                this.owner.getOwningStatementId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
                                 Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
                                         + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
                                         + Messages.getString("RowDataDynamic.6") + this.owner.getPointOfOrigin()));

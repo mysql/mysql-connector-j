@@ -23,14 +23,12 @@
 
 package com.mysql.cj.api.mysqla.result;
 
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 /**
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
@@ -82,7 +80,7 @@ public interface ResultsetRows extends RowList {
     /**
      * Returns the result set that 'owns' this RowData
      */
-    ResultSetInternalMethods getOwner();
+    ResultsetRowsOwner getOwner();
 
     /**
      * Returns true if we got the last element.
@@ -163,7 +161,7 @@ public interface ResultsetRows extends RowList {
      * @param rs
      *            the result set that 'owns' this RowData
      */
-    void setOwner(ResultSetImpl rs);
+    void setOwner(ResultsetRowsOwner rs);
 
     /**
      * Did this result set have no rows?

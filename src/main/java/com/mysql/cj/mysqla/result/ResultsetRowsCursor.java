@@ -27,7 +27,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
@@ -35,7 +34,6 @@ import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
@@ -62,22 +60,10 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
      */
     private boolean lastRowFetched = false;
 
-    private ServerSession serverSession;
-
     /**
      * Communications channel to the server
      */
     private MysqlaProtocol protocol;
-
-    /**
-     * Identifier for the statement that created this cursor.
-     */
-    private long statementIdOnServer;
-
-    /**
-     * The prepared statement that created this cursor.
-     */
-    private ServerPreparedStatement prepStmt;
 
     /**
      * Have we attempted to fetch any rows yet?
@@ -87,22 +73,15 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
     /**
      * Creates a new cursor-backed row provider.
      * 
-     * @param serverSession
-     *            session state
      * @param ioChannel
      *            connection to the server.
-     * @param creatingStatement
-     *            statement that opened the cursor.
      * @param metadata
      *            field-level metadata for the results that this cursor covers.
      */
-    public ResultsetRowsCursor(ServerSession serverSession, MysqlaProtocol ioChannel, ServerPreparedStatement creatingStatement, Field[] metadata) {
-        this.serverSession = serverSession;
+    public ResultsetRowsCursor(MysqlaProtocol ioChannel, Field[] metadata) {
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
         this.metadata = metadata;
         this.protocol = ioChannel;
-        this.statementIdOnServer = creatingStatement.getServerStatementId();
-        this.prepStmt = creatingStatement;
     }
 
     @Override
@@ -149,8 +128,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             return false;
         }
 
-        if (this.owner != null && this.owner.getOwningStatement() != null) {
-            int maxRows = this.owner.getOwningStatement().maxRows;
+        if (this.owner != null) {
+            int maxRows = this.owner.getOwningStatementMaxRows();
 
             if (maxRows != -1 && this.currentPositionInEntireResult + 1 > maxRows) {
                 return false;
@@ -223,10 +202,10 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                     this.firstFetchCompleted = true;
                 }
 
-                int numRowsToFetch = this.owner.getFetchSize();
+                int numRowsToFetch = this.owner.getOwnerFetchSize();
 
                 if (numRowsToFetch == 0) {
-                    numRowsToFetch = this.prepStmt.getFetchSize();
+                    numRowsToFetch = this.owner.getOwningStatementFetchSize();
                 }
 
                 if (numRowsToFetch == Integer.MIN_VALUE) {
@@ -246,7 +225,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                 sharedSendPacket.setPosition(0);
 
                 sharedSendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_FETCH);
-                sharedSendPacket.writeInteger(IntegerDataType.INT4, this.statementIdOnServer);
+                sharedSendPacket.writeInteger(IntegerDataType.INT4, this.owner.getOwningStatementServerId());
                 sharedSendPacket.writeInteger(IntegerDataType.INT4, numRowsToFetch);
 
                 this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
@@ -260,7 +239,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
                 this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
-                if (this.serverSession.isLastRowSent()) {
+                if (this.protocol.getServerSession().isLastRowSent()) {
                     this.lastRowFetched = true;
 
                     if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {

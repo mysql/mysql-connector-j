@@ -4695,6 +4695,55 @@ public class StatementRegressionTest extends BaseTestCase {
             public BigInteger getBigInteger(int columnIndex) throws SQLException {
                 return null;
             }
+
+            @Override
+            public void closeOwner(boolean calledExplicitly) {
+            }
+
+            @Override
+            public MysqlConnection getConnection() {
+                return null;
+            }
+
+            @Override
+            public long getConnectionId() {
+                return 0;
+            }
+
+            @Override
+            public String getPointOfOrigin() {
+                return null;
+            }
+
+            @Override
+            public int getOwnerFetchSize() {
+                return 0;
+            }
+
+            @Override
+            public String getCurrentCatalog() {
+                return null;
+            }
+
+            @Override
+            public int getOwningStatementId() {
+                return 0;
+            }
+
+            @Override
+            public int getOwningStatementMaxRows() {
+                return 0;
+            }
+
+            @Override
+            public int getOwningStatementFetchSize() {
+                return 0;
+            }
+
+            @Override
+            public long getOwningStatementServerId() {
+                return 0;
+            }
         };
 
         resultSetInternalMethods.close();

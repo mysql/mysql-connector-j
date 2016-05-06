@@ -76,6 +76,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BinaryStreamValueFactory;
 import com.mysql.cj.core.io.BooleanValueFactory;
@@ -2758,10 +2759,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         throw SQLError.notUpdatable();
     }
 
-    public JdbcConnection getConnection() {
-        return this.connection;
-    }
-
     public Field[] getMetadata() {
         return this.fields;
     }
@@ -2770,12 +2767,66 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         return this.owningStatement;
     }
 
+    @Override
+    public void closeOwner(boolean calledExplicitly) {
+        try {
+            realClose(calledExplicitly);
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public JdbcConnection getConnection() {
+        return this.connection;
+    }
+
+    @Override
     public long getConnectionId() {
         return this.connectionId;
     }
 
+    @Override
     public String getPointOfOrigin() {
         return this.pointOfOrigin;
+    }
+
+    @Override
+    public int getOwnerFetchSize() {
+        try {
+            return getFetchSize();
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String getCurrentCatalog() {
+        return this.owningStatement == null ? "N/A" : this.owningStatement.getCurrentCatalog();
+    }
+
+    @Override
+    public int getOwningStatementId() {
+        return this.owningStatement == null ? -1 : this.owningStatement.getId();
+    }
+
+    @Override
+    public int getOwningStatementMaxRows() {
+        return this.owningStatement == null ? -1 : this.owningStatement.maxRows;
+    }
+
+    @Override
+    public int getOwningStatementFetchSize() {
+        try {
+            return this.owningStatement == null ? 0 : this.owningStatement.getFetchSize();
+        } catch (SQLException e) {
+            throw ExceptionFactory.createException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public long getOwningStatementServerId() {
+        return this.owningStatement == null ? 0 : this.owningStatement.getServerStatementId();
     }
 
 }

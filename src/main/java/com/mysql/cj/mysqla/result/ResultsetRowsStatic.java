@@ -25,7 +25,6 @@ package com.mysql.cj.mysqla.result;
 
 import java.util.List;
 
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 
@@ -84,11 +83,6 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
     @Override
     public int getPosition() {
         return this.currentPositionInFetchedRows;
-    }
-
-    @Override
-    public ResultSetInternalMethods getOwner() {
-        return this.owner;
     }
 
     @Override

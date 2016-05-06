@@ -56,6 +56,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.StatementIsClosedException;
@@ -2712,5 +2713,9 @@ public class StatementImpl implements Statement {
 
     public String getCurrentCatalog() {
         return this.currentCatalog;
+    }
+
+    public long getServerStatementId() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("Statement.65"));
     }
 }

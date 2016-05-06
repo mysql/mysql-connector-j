@@ -23,10 +23,9 @@
 
 package com.mysql.cj.mysqla.result;
 
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 public abstract class AbstractResultsetRows implements ResultsetRows {
 
@@ -50,15 +49,15 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
     /**
      * The result set that we 'belong' to.
      */
-    protected ResultSetImpl owner;
+    protected ResultsetRowsOwner owner;
 
     @Override
-    public void setOwner(ResultSetImpl rs) {
+    public void setOwner(ResultsetRowsOwner rs) {
         this.owner = rs;
     }
 
     @Override
-    public ResultSetInternalMethods getOwner() {
+    public ResultsetRowsOwner getOwner() {
         return this.owner;
     }
 
