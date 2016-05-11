@@ -1090,6 +1090,17 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
+    @Override
+    boolean isCursorRequired() throws SQLException {
+        // we only create cursor-backed result sets if
+        // a) The query is a SELECT
+        // b) The server supports it
+        // c) We know it is forward-only (note this doesn't preclude updatable result sets)
+        // d) The user has set a fetch size
+        return this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+                && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
+    }
+
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
@@ -1186,18 +1197,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
             packet.writeLong(this.serverStatementId);
 
-            //			boolean usingCursor = false;
-
             if (this.connection.versionMeetsMinimum(4, 1, 2)) {
-                // we only create cursor-backed result sets if
-                // a) The query is a SELECT
-                // b) The server supports it
-                // c) We know it is forward-only (note this doesn't preclude updatable result sets)
-                // d) The user has set a fetch size
-                if (this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
-                        && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
+                if (isCursorRequired()) {
                     packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
-                    //					usingCursor = true;
                 } else {
                     packet.writeByte((byte) 0); // placeholder for flags
                 }
@@ -1266,6 +1268,12 @@ public class ServerPreparedStatement extends PreparedStatement {
             CancelTask timeoutTask = null;
 
             try {
+                // Get this before executing to avoid a shared packet pollution in the case some other query is issued internally, such as when using I_S.
+                String queryAsString = "";
+                if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
+                    queryAsString = asSql(true);
+                }
+
                 if (this.connection.getEnableQueryTimeouts() && this.timeoutInMillis != 0 && this.connection.versionMeetsMinimum(5, 0, 0)) {
                     timeoutTask = new CancelTask(this);
                     this.connection.getCancelTimer().schedule(timeoutTask, this.timeoutInMillis);
@@ -1336,7 +1344,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append("as prepared: ");
                         mesgBuf.append(this.originalSql);
                         mesgBuf.append("\n\n with parameters bound:\n\n");
-                        mesgBuf.append(asSql(true));
+                        mesgBuf.append(queryAsString);
 
                         this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY, "", this.currentCatalog, this.connection.getId(), getId(),
                                 0, System.currentTimeMillis(), elapsedTime, mysql.getQueryTimingUnits(), null,
@@ -1355,7 +1363,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                     this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, this.connectionId, this.statementId, -1,
                             System.currentTimeMillis(), mysql.getCurrentTimeNanosOrMillis() - begin, mysql.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(asSql(true))));
+                            LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(queryAsString)));
                 }
 
                 com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this, maxRowsToRetrieve, this.resultSetType, this.resultSetConcurrency,
@@ -1382,8 +1390,6 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (queryWasSlow && this.connection.getExplainSlowQueries()) {
-                    String queryAsString = asSql(true);
-
                     mysql.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
                 }
 
@@ -1528,18 +1534,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 boolean checkEOF = !mysql.isEOFDeprecated();
 
-                if (this.parameterCount > 0) {
-                    if (this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
-                        this.parameterFields = new Field[this.parameterCount];
+                if (this.parameterCount > 0 && this.connection.versionMeetsMinimum(4, 1, 2) && !mysql.isVersion(5, 0, 0)) {
+                    this.parameterFields = new Field[this.parameterCount];
 
-                        Buffer metaDataPacket;
-                        for (int i = 0; i < this.parameterCount; i++) {
-                            metaDataPacket = mysql.readPacket();
-                            if (checkEOF && metaDataPacket.isEOFPacket()) {
-                                break;
-                            }
-                            this.parameterFields[i] = mysql.unpackField(metaDataPacket, false);
-                        }
+                    Buffer metaDataPacket;
+                    for (int i = 0; i < this.parameterCount; i++) {
+                        metaDataPacket = mysql.readPacket();
+                        this.parameterFields[i] = mysql.unpackField(metaDataPacket, false);
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        mysql.readPacket();
                     }
                 }
 
@@ -1550,10 +1554,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                     Buffer fieldPacket;
                     for (int i = 0; i < this.fieldCount; i++) {
                         fieldPacket = mysql.readPacket();
-                        if (checkEOF && fieldPacket.isEOFPacket()) {
-                            break;
-                        }
                         this.resultFields[i] = mysql.unpackField(fieldPacket, false);
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        mysql.readPacket();
                     }
                 }
             } catch (SQLException sqlEx) {

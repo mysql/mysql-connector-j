@@ -59,6 +59,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +67,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.CharsetMapping;
@@ -7722,5 +7728,137 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         });
         cstmt.close();
+    }
+
+    /**
+     * Tests fix for Bug#23188498 - CLIENT HANG WHILE USING SERVERPREPSTMT WHEN PROFILESQL=TRUE AND USEIS=TRUE.
+     */
+    public void testBug23188498() throws Exception {
+        createTable("testBug23188498", "(id INT)");
+
+        MySQLConnection testConn = (com.mysql.jdbc.MySQLConnection) getConnectionWithProps("useServerPrepStmts=true,useInformationSchema=true,profileSQL=true");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        // Insert data:
+        this.pstmt = testConn.prepareStatement("INSERT INTO testBug23188498 (id) VALUES (?)");
+        this.pstmt.setInt(1, 10);
+        final PreparedStatement localPStmt1 = this.pstmt;
+        Future<Void> future1 = executor.submit(new Callable<Void>() {
+            public Void call() throws Exception {
+                localPStmt1.executeUpdate();
+                return null;
+            }
+        });
+        try {
+            future1.get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // The connection hung, forcibly closing it releases resources.
+            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            fail("Connection hung after executeUpdate().");
+        }
+        this.pstmt.close();
+
+        // Fetch data:
+        this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23188498 WHERE id > ?");
+        this.pstmt.setInt(1, 1);
+        final PreparedStatement localPStmt2 = this.pstmt;
+        Future<ResultSet> future2 = executor.submit(new Callable<ResultSet>() {
+            public ResultSet call() throws Exception {
+                return localPStmt2.executeQuery();
+            }
+        });
+        try {
+            this.rs = future2.get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // The connection hung, forcibly closing it releases resources.
+            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            fail("Connection hung after executeQuery().");
+        }
+        assertTrue(this.rs.next());
+        assertEquals(10, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+        this.pstmt.close();
+
+        executor.shutdownNow();
+        testConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#23201930 - CLIENT HANG WHEN RSLT CUNCURRENCY=CONCUR_UPDATABLE AND RSLTSET TYPE=FORWARD_ONLY.
+     */
+    public void testBug23201930() throws Exception {
+        boolean useSSL = false;
+        boolean useSPS = false;
+        boolean useCursor = false;
+        boolean useCompr = false;
+
+        final char[] chars = new char[32 * 1024];
+        Arrays.fill(chars, 'x');
+        final String longData = String.valueOf(chars); // Using large data makes SSL connections hang sometimes.
+
+        do {
+            final String testCase = String.format("Case [SSL: %s, SPS: %s, Cursor: %s, Compr: %s]", useSSL ? "Y" : "N", useSPS ? "Y" : "N",
+                    useCursor ? "Y" : "N", useCompr ? "Y" : "N");
+
+            createTable("testBug23201930", "(id TINYINT AUTO_INCREMENT PRIMARY KEY, f1 INT DEFAULT 1, f2 INT DEFAULT 1, f3 INT DEFAULT 1, "
+                    + "f4 INT DEFAULT 1, f5 INT DEFAULT 1, fl LONGBLOB)");
+
+            final Properties props = new Properties();
+            props.setProperty("useSSL", Boolean.toString(useSSL));
+            if (useSSL) {
+                props.setProperty("requireSSL", "true");
+                props.setProperty("verifyServerCertificate", "false");
+            }
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            props.setProperty("useCursorFetch", Boolean.toString(useCursor));
+            if (useCursor) {
+                props.setProperty("defaultFetchSize", "1");
+            }
+            props.setProperty("useCompression", Boolean.toString(useCompr));
+
+            final MySQLConnection testConn = (MySQLConnection) getConnectionWithProps(props);
+
+            final ExecutorService executor = Executors.newSingleThreadExecutor();
+            final Future<Void> future = executor.submit(new Callable<Void>() {
+                public Void call() throws Exception {
+                    final Statement testStmt = testConn.createStatement();
+                    testStmt.execute("INSERT INTO testBug23201930 (id) VALUES (100)");
+
+                    PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug23201930 (id, fl) VALUES (?, ?)", ResultSet.TYPE_FORWARD_ONLY,
+                            ResultSet.CONCUR_UPDATABLE);
+                    testPstmt.setObject(1, 101, java.sql.Types.INTEGER);
+                    testPstmt.setObject(2, longData, java.sql.Types.VARCHAR);
+                    testPstmt.execute();
+                    testPstmt.setObject(1, 102, java.sql.Types.INTEGER);
+                    testPstmt.execute();
+                    testPstmt.close();
+
+                    testPstmt = testConn.prepareStatement("SELECT * FROM testBug23201930 WHERE id >= ? ORDER BY id ASC", ResultSet.TYPE_FORWARD_ONLY,
+                            ResultSet.CONCUR_UPDATABLE);
+                    testPstmt.setObject(1, 100, java.sql.Types.INTEGER);
+                    final ResultSet testRs = testPstmt.executeQuery();
+                    assertTrue(testRs.next());
+                    assertEquals(100, testRs.getInt(1));
+                    assertTrue(testRs.next());
+                    assertEquals(101, testRs.getInt(1));
+                    assertTrue(testRs.next());
+                    assertEquals(102, testRs.getInt(1));
+                    assertFalse(testRs.next());
+                    testPstmt.close();
+                    return null;
+                }
+            });
+
+            try {
+                future.get(10, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                // The connection hung, forcibly closing it releases resources.
+                this.stmt.executeQuery("KILL CONNECTION " + testConn.getId());
+                fail(testCase + ": Connection hung!");
+            }
+            executor.shutdownNow();
+
+            testConn.close();
+        } while ((useSSL = !useSSL) || (useSPS = !useSPS) || (useCursor = !useCursor) || (useCompr = !useCompr)); // Cycle through all possible combinations.
     }
 }
