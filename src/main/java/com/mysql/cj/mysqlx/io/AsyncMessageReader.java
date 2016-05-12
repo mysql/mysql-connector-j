@@ -357,7 +357,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     public void failed(Throwable exc, Void v) {
         if (getMessageListener(false) != null) {
             // force any error to unblock pending message listener
-            this.pendingMsgMonitor.notify();
+            synchronized (this.pendingMsgMonitor) {
+                this.pendingMsgMonitor.notify();
+            }
             if (AsynchronousCloseException.class.equals(exc.getClass())) {
                 this.currentMessageListener.closed();
             } else {

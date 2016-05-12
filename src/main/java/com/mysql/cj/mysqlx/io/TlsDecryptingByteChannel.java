@@ -33,6 +33,8 @@ import java.util.concurrent.Future;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 
+import com.mysql.cj.core.exceptions.AssertionFailedException;
+
 /**
  * FilterInputStream-esque byte channel that decrypts incoming packets. We proxy calls to the read method from the caller. We replace the provided completion
  * handler with our own handler that decrypts the incoming message and an then delegates to the original handler.
@@ -80,6 +82,10 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
         decryptAndDispatch();
     }
 
+    public void failed(Throwable exc, Void attachment) {
+        this.handler.failed(exc, null);
+    }
+
     /**
      * Handle the read callback from the underlying stream. Modulo error handling, we do the following:
      * <ul>
@@ -88,7 +94,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
      * <li>If not successful, we will need to read more data to accumulate enough to decrypt. Issue a new read request.</li>
      * </ul>
      */
-    private void decryptAndDispatch() {
+    private synchronized void decryptAndDispatch() {
         try {
             this.clearTextBuffer.clear();
             SSLEngineResult res = sslEngine.unwrap(this.cipherTextBuffer, this.clearTextBuffer);
@@ -111,10 +117,6 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
         } catch (Exception ex) {
             failed(ex, null);
         }
-    }
-
-    public void failed(Throwable exc, Void attachment) {
-        this.handler.failed(exc, null);
     }
 
     /**
@@ -145,7 +147,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
      * Dispatch data to the caller's buffer and signal the completion handler. This represents the end of one completed read operation. The handler and
      * destination will be reset for the next request.
      */
-    private void dispatchData() {
+    private synchronized void dispatchData() {
         int transferred = Math.min(this.dst.remaining(), this.clearTextBuffer.remaining());
         if (this.clearTextBuffer.remaining() > this.dst.remaining()) {
             // the ByteBuffer bulk copy only works if the src has <= remaining of the dst. narrow the view of src here to make use of i

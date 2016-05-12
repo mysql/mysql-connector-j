@@ -47,10 +47,10 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
     private Queue<ByteBuffer> pendingWrites = new LinkedList<ByteBuffer>();
 
     /**
-     * Map the byte buffer identity (System.identityHashCode(ByteBuffer)) to the completion listener for each buffer's write. Identity is used as ByteBuffer's
+     * Map the byte buffer identity (System.identityHashCode(ByteBuffer)) to the completion handler for each buffer's write. Identity is used as ByteBuffer's
      * hashCode() method changes when the position within the buffer changes.
      */
-    private Map<Integer, SentListener> bufToListener = new ConcurrentHashMap<>();
+    private Map<Integer, CompletionHandler<Long, Void>> bufToHandler = new ConcurrentHashMap<>();
 
     public SerializingBufferWriter(AsynchronousSocketChannel channel) {
         this.channel = channel;
@@ -58,7 +58,7 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
 
     /**
      * Initiate a write of the current pending buffers. This method can only be called when no other writes are in progress. This method should be called under
-     * a mutex for this.pendingWrites.
+     * a mutex for this.pendingWrites to prevent concurrent writes to the channel.
      */
     private void initiateWrite() {
         try {
@@ -76,9 +76,9 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
      * <li>LinkedList is not thread-safe.</li>
      * </ul>
      */
-    public void queueBuffer(ByteBuffer buf, SentListener callback) {
+    public void queueBuffer(ByteBuffer buf, CompletionHandler<Long, Void> callback) {
         if (callback != null) {
-            this.bufToListener.put(System.identityHashCode(buf), callback);
+            this.bufToHandler.put(System.identityHashCode(buf), callback);
         }
         synchronized (this.pendingWrites) {
             this.pendingWrites.add(buf);
@@ -102,15 +102,15 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
             while (this.pendingWrites.peek() != null && !this.pendingWrites.peek().hasRemaining()) {
                 completedWrites.add(this.pendingWrites.remove());
             }
-            // notify listener(s) before initiating write to satisfy ordering guarantees
-            completedWrites.stream().map(System::identityHashCode).map(this.bufToListener::remove).filter(Objects::nonNull).forEach(l -> {
-                // prevent exceptions in listener from blocking other notifications
+            // notify handler(s) before initiating write to satisfy ordering guarantees
+            completedWrites.stream().map(System::identityHashCode).map(this.bufToHandler::remove).filter(Objects::nonNull).forEach(l -> {
+                // prevent exceptions in handler from blocking other notifications
                 try {
-                    l.completed();
+                    l.completed(0L, null);
                 } catch (Throwable ex) {
                     // presumably unexpected, notify so futures don't block
                     try {
-                        l.error(ex);
+                        l.failed(ex, null);
                     } catch (Throwable ex2) {
                         // nothing we can do here
                         ex2.printStackTrace();
@@ -129,14 +129,16 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
             this.channel.close();
         } catch (Exception ex) {
         }
-        this.bufToListener.values().forEach((SentListener l) -> {
+        this.bufToHandler.values().forEach((CompletionHandler<Long, Void> l) -> {
             try {
-                l.error(t);
+                l.failed(t, null);
             } catch (Exception ex) {
             }
         });
-        this.bufToListener.clear();
-        this.pendingWrites.clear();
+        this.bufToHandler.clear();
+        synchronized (this.pendingWrites) {
+            this.pendingWrites.clear();
+        }
     }
 
     /**

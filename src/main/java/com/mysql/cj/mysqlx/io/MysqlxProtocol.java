@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.toMap;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -67,7 +68,6 @@ import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.io.AsyncMessageReader.MessageListener;
 import com.mysql.cj.mysqlx.io.MessageBuilder.XpluginStatementCommand;
-import com.mysql.cj.mysqlx.io.SentListener;
 import com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
@@ -581,7 +581,7 @@ public class MysqlxProtocol implements Protocol {
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, String metadataCharacterSet, TimeZone defaultTimeZone) {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), defaultTimeZone);
-        SentListener resultHandler = new ErrorToFutureSentListener(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;
     }
@@ -596,14 +596,14 @@ public class MysqlxProtocol implements Protocol {
      */
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
-        SentListener resultHandler = new ErrorToFutureSentListener(errorFuture, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(errorFuture, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), resultHandler);
     }
 
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
         final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
-        SentListener resultHandler = new ErrorToFutureSentListener(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
         return f;
     }

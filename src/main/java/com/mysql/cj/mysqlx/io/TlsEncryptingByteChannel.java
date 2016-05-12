@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
 
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
@@ -55,20 +56,20 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     /**
      * Internal class used for easy propagation of error to the {@link CompletionHandler}.
      */
-    private static class ErrorPropagatingSentListener implements SentListener {
+    private static class ErrorPropagatingCompletionHandler<V> implements CompletionHandler<V, Void> {
         private CompletionHandler<Long, ?> target;
         private Runnable success;
 
-        public ErrorPropagatingSentListener(CompletionHandler<Long, ?> target, Runnable success) {
+        public ErrorPropagatingCompletionHandler(CompletionHandler<Long, ?> target, Runnable success) {
             this.target = target;
             this.success = success;
         }
 
-        public void completed() {
+        public void completed(V result, Void attachment) {
             this.success.run();
         }
 
-        public void error(Throwable ex) {
+        public void failed(Throwable ex, Void attachment) {
             this.target.failed(ex, null);
         }
     }
@@ -128,16 +129,16 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
                         handler.completed(finalTotal, null);
                         putCipherTextBuffer(cipherText);
                     };
-                    this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingSentListener(handler, successHandler));
+                    this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingCompletionHandler<Long>(handler, successHandler));
                     break;
                 } else {
                     // otherwise, only propagate errors
-                    this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingSentListener(handler, () -> putCipherTextBuffer(cipherText)));
+                    this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingCompletionHandler<Long>(handler, () -> putCipherTextBuffer(cipherText)));
                     continue;
                 }
             }
-        } catch (Exception ex) {
-            handler.failed(ex, null);
+        } catch (SSLException ex) {
+            throw new CJCommunicationsException(ex);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,11 +23,26 @@
 
 package com.mysql.cj.mysqlx.io;
 
-/**
- * Interface used to notify a listener of completion of an async message write. Simplified version of {@link java.nio.channels.CompletionHandler}.
- */
-public interface SentListener {
-    void completed();
+import java.util.concurrent.CompletableFuture;
+import java.nio.channels.CompletionHandler;
 
-    void error(Throwable ex);
+/**
+ * Base class that propagates any error to the given future allowing only implementation of the success callback.
+ */
+public class ErrorToFutureCompletionHandler<T> implements CompletionHandler<T, Void> {
+    private CompletableFuture<?> future;
+    private Runnable successCallback;
+
+    public ErrorToFutureCompletionHandler(CompletableFuture<?> future, Runnable successCallback) {
+        this.future = future;
+        this.successCallback = successCallback;
+    }
+
+    public void completed(T result, Void attachment) {
+        this.successCallback.run();
+    }
+
+    public void failed(Throwable ex, Void attachment) {
+        this.future.completeExceptionally(ex);
+    }
 }

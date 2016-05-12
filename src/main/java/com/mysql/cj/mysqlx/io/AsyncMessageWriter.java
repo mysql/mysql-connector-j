@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -61,7 +62,7 @@ public class AsyncMessageWriter implements MessageWriter {
     public void write(MessageLite msg) {
         CompletableFuture<Void> f = new CompletableFuture<>();
         // write a message asynchronously that will notify the future when complete
-        writeAsync(msg, new ErrorToFutureSentListener(f, () -> f.complete(null)));
+        writeAsync(msg, new ErrorToFutureCompletionHandler<Long>(f, () -> f.complete(null)));
         // wait on the future to return
         try {
             f.get();
@@ -79,7 +80,7 @@ public class AsyncMessageWriter implements MessageWriter {
      * @param callback
      *            an optional callback to receive notification of when the message is completely written
      */
-    public void writeAsync(MessageLite msg, SentListener callback) {
+    public void writeAsync(MessageLite msg, CompletionHandler<Long, Void> callback) {
         int type = MessageWriter.getTypeForMessageClass(msg.getClass());
         int size = msg.getSerializedSize();
         int payloadSize = size + 1;
