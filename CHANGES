@@ -2,6 +2,8 @@
 # $Id$
 dd-mm-yy - Version 6.0.3
 
+  - Fix for Bug#22038729, X DevAPI: Any API call after a failed CALL PROC() results in hang
+
   - Remove Schema.drop(), Collection.drop() and replaced with X DevAPI's session.dropSchema() and session.dropCollection().
     Also added session.dropTable().
 

@@ -205,8 +205,12 @@ public class MysqlxSession implements Session {
      */
     private void newCommand() {
         if (this.currentResult != null) {
-            this.currentResult.finishStreaming();
-            this.currentResult = null;
+            try {
+                this.currentResult.finishStreaming();
+            } finally {
+                // so we don't call finishStreaming() again if there's an exception
+                this.currentResult = null;
+            }
         }
     }
 
