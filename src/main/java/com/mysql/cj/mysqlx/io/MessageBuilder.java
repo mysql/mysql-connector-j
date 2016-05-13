@@ -48,7 +48,6 @@ import com.mysql.cj.mysqlx.InsertParams;
 import com.mysql.cj.mysqlx.UpdateParams;
 import com.mysql.cj.mysqlx.UpdateSpec;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
-import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesSet;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Collection;

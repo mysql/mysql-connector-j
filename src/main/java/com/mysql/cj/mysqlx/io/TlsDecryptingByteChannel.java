@@ -30,6 +30,7 @@ import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.ReadPendingException;
 import java.util.concurrent.Future;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 
@@ -39,7 +40,8 @@ import com.mysql.cj.core.exceptions.AssertionFailedException;
  * FilterInputStream-esque byte channel that decrypts incoming packets. We proxy calls to the read method from the caller. We replace the provided completion
  * handler with our own handler that decrypts the incoming message and an then delegates to the original handler.
  *
- * <p/>Note: This implementation does not support attachments for reads. They are not used in {@link AsyncMessageReader} which this class is in direct support
+ * <p/>
+ * Note: This implementation does not support attachments for reads. They are not used in {@link AsyncMessageReader} which this class is in direct support
  * of.
  */
 public class TlsDecryptingByteChannel implements AsynchronousByteChannel, CompletionHandler<Integer, Void> {
@@ -59,8 +61,10 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     /**
      * Create a new decrypting input stream.
      *
-     * @param in The underlying inputstream to read encrypted data from.
-     * @param sslEngine A configured {@link SSLEngine} which has already completed the handshake.
+     * @param in
+     *            The underlying inputstream to read encrypted data from.
+     * @param sslEngine
+     *            A configured {@link SSLEngine} which has already completed the handshake.
      */
     public TlsDecryptingByteChannel(AsynchronousByteChannel in, SSLEngine sslEngine) {
         this.in = in;
@@ -98,7 +102,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     private synchronized void decryptAndDispatch() {
         try {
             this.clearTextBuffer.clear();
-            SSLEngineResult res = sslEngine.unwrap(this.cipherTextBuffer, this.clearTextBuffer);
+            SSLEngineResult res = this.sslEngine.unwrap(this.cipherTextBuffer, this.clearTextBuffer);
             switch (res.getStatus()) {
                 case BUFFER_UNDERFLOW:
                     // continue reading, not enough to decrypt yet
@@ -123,14 +127,12 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     /**
      * Main entry point from caller.
      */
-    public <A> void read(ByteBuffer dst,
-            A attachment,
-            CompletionHandler<Integer,? super A> handler) {
+    public <A> void read(ByteBuffer dest, A attachment, CompletionHandler<Integer, ? super A> hdlr) {
         if (this.handler != null) {
             throw new ReadPendingException();
         }
-        this.handler = handler;
-        this.dst = dst;
+        this.handler = hdlr;
+        this.dst = dest;
         if (this.clearTextBuffer.hasRemaining()) {
             // copy any remaining data directly to client
             dispatchData();
@@ -167,16 +169,16 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
         // caller only reads small portions of the buffer and issues a new read request. The Invoker will dispatch the call on the thread pool for the
         // AsynchronousSocketChannel
         this.in.read(TlsDecryptingByteChannel.emptyBuffer, null, new CompletionHandler<Integer, Void>() {
-                public void completed(Integer result, Void attachment) {
-                    h.completed(transferred, null);
-                }
+            public void completed(Integer result, Void attachment) {
+                h.completed(transferred, null);
+            }
 
-                public void failed(Throwable t, Void attachment) {
-                    // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
-                    t.printStackTrace();
-                    throw AssertionFailedException.shouldNotHappen(new Exception(t));
-                }
-            });
+            public void failed(Throwable t, Void attachment) {
+                // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
+                t.printStackTrace();
+                throw AssertionFailedException.shouldNotHappen(new Exception(t));
+            }
+        });
     }
 
     public void close() throws IOException {
@@ -190,16 +192,14 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     /**
      * Unused. Should not be called.
      */
-    public Future<Integer> read(ByteBuffer dst) {
+    public Future<Integer> read(ByteBuffer dest) {
         throw new UnsupportedOperationException("This channel does not support direct reads");
     }
 
     /**
      * Unused. Should not be called.
      */
-    public <A> void write(ByteBuffer src,
-            A attachment,
-            CompletionHandler<Integer,? super A> handler) {
+    public <A> void write(ByteBuffer src, A attachment, CompletionHandler<Integer, ? super A> hdlr) {
         throw new UnsupportedOperationException("This channel does not support writes");
     }
 

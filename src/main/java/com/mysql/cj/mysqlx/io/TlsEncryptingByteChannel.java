@@ -24,8 +24,8 @@
 package com.mysql.cj.mysqlx.io;
 
 import java.io.IOException;
-import java.net.SocketOption;
 import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.Status;
@@ -96,27 +97,28 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     /**
      * Handle a request to write an array of buffers to the channel. We build one or more encrypted packets and write them to the server.
      *
-     * @param srcs source buffers to write
-     * @param offset offset into buffer array
-     * @param length number of buffers
-     * @param timeout ignored
-     * @param unit ignored
-     * @param attachment ignored
-     * @param handler completion handler to be called when all buffers have been written
+     * @param srcs
+     *            source buffers to write
+     * @param offset
+     *            offset into buffer array
+     * @param length
+     *            number of buffers
+     * @param timeout
+     *            ignored
+     * @param unit
+     *            ignored
+     * @param attachment
+     *            ignored
+     * @param handler
+     *            completion handler to be called when all buffers have been written
      */
     @Override
-    public <A> void write(ByteBuffer[] srcs,
-            int offset,
-            int length,
-            long timeout,
-            TimeUnit unit,
-            A attachment,
-            CompletionHandler<Long, ? super A> handler) {
+    public <A> void write(ByteBuffer[] srcs, int offset, int length, long timeout, TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
         try {
             long totalWriteSize = 0;
             while (true) {
                 ByteBuffer cipherText = getCipherTextBuffer();
-                SSLEngineResult res = sslEngine.wrap(srcs, offset, length, cipherText);
+                SSLEngineResult res = this.sslEngine.wrap(srcs, offset, length, cipherText);
                 if (res.getStatus() != Status.OK) {
                     throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
                 }
@@ -131,11 +133,10 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
                     };
                     this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingCompletionHandler<Long>(handler, successHandler));
                     break;
-                } else {
-                    // otherwise, only propagate errors
-                    this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingCompletionHandler<Long>(handler, () -> putCipherTextBuffer(cipherText)));
-                    continue;
                 }
+                // otherwise, only propagate errors
+                this.bufferWriter.queueBuffer(cipherText, new ErrorPropagatingCompletionHandler<Long>(handler, () -> putCipherTextBuffer(cipherText)));
+                continue;
             }
         } catch (SSLException ex) {
             throw new CJCommunicationsException(ex);
@@ -149,10 +150,9 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
         ByteBuffer buf = this.cipherTextBuffers.poll();
         if (buf == null) {
             return ByteBuffer.allocate(this.sslEngine.getSession().getPacketBufferSize());
-        } else {
-            buf.clear();
-            return buf;
         }
+        buf.clear();
+        return buf;
     }
 
     /**
@@ -166,8 +166,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     }
 
     @Override
-    public AsynchronousSocketChannel bind(SocketAddress local)
-            throws IOException {
+    public AsynchronousSocketChannel bind(SocketAddress local) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -180,8 +179,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     }
 
     @Override
-    public <T> AsynchronousSocketChannel setOption(SocketOption<T> name, T value)
-            throws IOException {
+    public <T> AsynchronousSocketChannel setOption(SocketOption<T> name, T value) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -201,9 +199,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     }
 
     @Override
-    public <A> void connect(SocketAddress remote,
-            A attachment,
-            CompletionHandler<Void,? super A> handler) {
+    public <A> void connect(SocketAddress remote, A attachment, CompletionHandler<Void, ? super A> handler) {
         throw new UnsupportedOperationException();
     }
 
@@ -213,11 +209,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     }
 
     @Override
-    public <A> void read(ByteBuffer dst,
-            long timeout,
-            TimeUnit unit,
-            A attachment,
-            CompletionHandler<Integer,? super A> handler) {
+    public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment, CompletionHandler<Integer, ? super A> handler) {
         throw new UnsupportedOperationException();
     }
 
@@ -227,22 +219,12 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
     }
 
     @Override
-    public <A> void read(ByteBuffer[] dsts,
-            int offset,
-            int length,
-            long timeout,
-            TimeUnit unit,
-            A attachment,
-            CompletionHandler<Long,? super A> handler) {
+    public <A> void read(ByteBuffer[] dsts, int offset, int length, long timeout, TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <A> void write(ByteBuffer src,
-            long timeout,
-            TimeUnit unit,
-            A attachment,
-            CompletionHandler<Integer,? super A> handler) {
+    public <A> void write(ByteBuffer src, long timeout, TimeUnit unit, A attachment, CompletionHandler<Integer, ? super A> handler) {
         throw new UnsupportedOperationException();
     }
 
