@@ -31,8 +31,8 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.Resultset;
 
 public class V1toV2StatementInterceptorAdapter implements StatementInterceptorV2 {
     private final StatementInterceptor toProxy;
@@ -41,8 +41,8 @@ public class V1toV2StatementInterceptorAdapter implements StatementInterceptorV2
         this.toProxy = toProxy;
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
+            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         return this.toProxy.postProcess(sql, interceptedStatement, originalResultSet, connection);
     }
 
@@ -58,7 +58,7 @@ public class V1toV2StatementInterceptorAdapter implements StatementInterceptorV2
         this.toProxy.init(conn, props, log);
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         return this.toProxy.preProcess(sql, interceptedStatement, connection);
     }
 

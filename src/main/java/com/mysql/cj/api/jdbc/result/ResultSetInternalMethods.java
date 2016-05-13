@@ -26,8 +26,8 @@ package com.mysql.cj.api.jdbc.result;
 import java.math.BigInteger;
 import java.sql.SQLException;
 
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 
@@ -38,19 +38,13 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
  * 
  * This interface, although public is <strong>not</strong> designed to be consumed publicly other than for the statement interceptor use case.
  */
-public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetRowsOwner {
+public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetRowsOwner, Resultset {
 
     /**
      * Returns a new instance of this result set, that shares the
      * underlying row data.
      */
     ResultSetInternalMethods copy() throws SQLException;
-
-    /**
-     * Does the result set contain rows, or is it the result of a DDL or DML
-     * statement?
-     */
-    boolean reallyResult();
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
@@ -148,30 +142,9 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetR
      */
     void setWrapperStatement(java.sql.Statement wrapperStatement);
 
-    /**
-     * Builds a hash between column names and their indices for fast retrieval.
-     * This is done lazily to support findColumn() and get*(String), as it
-     * can be more expensive than just retrieving result set values by ordinal
-     * index.
-     */
-    void buildIndexMapping() throws SQLException;
-
     void initializeWithMetadata() throws SQLException;
 
-    /**
-     * Used by DatabaseMetadata implementations to coerce the metadata returned
-     * by metadata queries into that required by the JDBC specification.
-     * 
-     * @param metadataFields
-     *            the coerced metadata to be applied to result sets
-     *            returned by "SHOW ..." or SELECTs on INFORMATION_SCHEMA performed on behalf
-     *            of methods in DatabaseMetadata.
-     */
-    void redefineFieldsForDBMD(Field[] metadataFields);
-
     void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException;
-
-    void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData);
 
     BigInteger getBigInteger(int columnIndex) throws SQLException;
 }

@@ -4258,7 +4258,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             cachedMetaData = new CachedResultSetMetaData();
 
             // assume that users will use named-based lookups
-            resultSet.buildIndexMapping();
+            resultSet.getColumnDefinition().buildIndexMapping();
             resultSet.initializeWithMetadata();
 
             if (resultSet instanceof UpdatableResultSet) {
@@ -4269,7 +4269,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             this.resultSetMetadataCache.put(sql, cachedMetaData);
         } else {
-            resultSet.initializeFromCachedMetaData(cachedMetaData);
+            resultSet.getColumnDefinition().initializeFrom(cachedMetaData);
             resultSet.initializeWithMetadata();
 
             if (resultSet instanceof UpdatableResultSet) {

@@ -81,11 +81,12 @@ import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
@@ -3939,9 +3940,6 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug33823() throws Exception {
         ResultSetInternalMethods resultSetInternalMethods = new ResultSetInternalMethods() {
 
-            public void buildIndexMapping() throws SQLException {
-            }
-
             public void clearNextResult() {
             }
 
@@ -3985,10 +3983,6 @@ public class StatementRegressionTest extends BaseTestCase {
                 return 0;
             }
 
-            public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData) {
-                cachedMetaData.getFields();
-            }
-
             public void initializeWithMetadata() throws SQLException {
             }
 
@@ -4002,11 +3996,8 @@ public class StatementRegressionTest extends BaseTestCase {
                 return false;
             }
 
-            public boolean reallyResult() {
+            public boolean hasRows() {
                 return false;
-            }
-
-            public void redefineFieldsForDBMD(Field[] metadataFields) {
             }
 
             public void setFirstCharOfQuery(char firstCharUpperCase) {
@@ -4743,6 +4734,24 @@ public class StatementRegressionTest extends BaseTestCase {
             @Override
             public long getOwningStatementServerId() {
                 return 0;
+            }
+
+            @Override
+            public int getResultId() {
+                return 0;
+            }
+
+            @Override
+            public void initRowsWithMetadata() {
+            }
+
+            @Override
+            public ColumnDefinition getColumnDefinition() {
+                return null;
+            }
+
+            @Override
+            public void setColumnDefinition(ColumnDefinition metadata) {
             }
         };
 
@@ -5490,7 +5499,7 @@ public class StatementRegressionTest extends BaseTestCase {
         String prevSql;
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
 
             if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
@@ -5698,11 +5707,12 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug51666StatementInterceptor extends BaseStatementInterceptor {
+        @SuppressWarnings("unchecked")
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
             if (sql.equals("SELECT 1")) {
                 java.sql.Statement test = conn.createStatement();
-                return (ResultSetInternalMethods) test.executeQuery("/* execute this, not the original */ SELECT 1");
+                return (T) test.executeQuery("/* execute this, not the original */ SELECT 1");
             }
             return null;
         }
@@ -5729,9 +5739,8 @@ public class StatementRegressionTest extends BaseTestCase {
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public ResultSetInternalMethods postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement,
-                ResultSetInternalMethods originalResultSet, JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed,
-                Exception statementException) throws SQLException {
+        public <T extends Resultset> T postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, T originalResultSet,
+                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
             }
@@ -8946,7 +8955,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             String query = sql;
             if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
@@ -9055,7 +9064,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             String query = sql;
             if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {

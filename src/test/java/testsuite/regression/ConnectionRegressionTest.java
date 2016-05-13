@@ -100,10 +100,10 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
@@ -744,7 +744,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             String charsetToCheck = "ms932";
 
-            assertEquals(charsetToCheck, ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
+            assertEquals(charsetToCheck,
+                    ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1).toLowerCase(Locale.ENGLISH));
 
             try {
                 ms932Conn.createStatement().executeUpdate("drop table if exists testBug7607");
@@ -5982,7 +5983,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int cnt = 0;
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             if (sql.contains("SHOW COLLATION")) {
                 this.cnt++;
@@ -6214,7 +6215,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug72712StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
                 throw new SQLException("Wrongt statement issued: " + sql);
@@ -6930,7 +6931,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             if (sql == null) {
                 sql = "";
@@ -7160,7 +7161,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug75592StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             if (sql.contains("SHOW VARIABLES WHERE")) {
                 throw new SQLException("'SHOW VARIABLES WHERE' statement issued: " + sql);
@@ -8051,11 +8052,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug56100StatementInterceptor extends BaseStatementInterceptor {
+        @SuppressWarnings("unchecked")
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
                 throws SQLException {
             if (sql.contains("<HOST_NAME>")) {
-                return (ResultSetInternalMethods) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", connection.getHost()));
+                return (T) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", connection.getHost()));
             }
             return super.preProcess(sql, interceptedStatement, connection);
         }

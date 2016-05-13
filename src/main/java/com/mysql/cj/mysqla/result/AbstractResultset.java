@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,37 +21,47 @@
 
  */
 
-package testsuite;
+package com.mysql.cj.mysqla.result;
 
-import java.sql.SQLException;
-import java.util.Properties;
+import java.util.HashMap;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 
-public class BaseStatementInterceptor implements StatementInterceptorV2 {
+public class AbstractResultset implements Resultset {
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
+    /** The metadata for this result set */
+    protected ColumnDefinition columnDefinition;
+
+    /** The actual rows */
+    protected ResultsetRows rowData;
+
+    /** The id (used when profiling) to identify us */
+    protected int resultId;
+
+    @Override
+    public void setColumnDefinition(ColumnDefinition metadata) {
+        this.columnDefinition = metadata;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
-        return null;
+    @Override
+    public ColumnDefinition getColumnDefinition() {
+        return this.columnDefinition;
     }
 
-    public boolean executeTopLevelOnly() {
-        return false;
+    public boolean hasRows() {
+        return this.rowData != null;
     }
 
-    public void destroy() {
+    @Override
+    public int getResultId() {
+        return this.resultId;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
-            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
-        return originalResultSet;
+    public void initRowsWithMetadata() {
+        this.rowData.setMetadata(this.columnDefinition.getFields());
+        this.columnDefinition.setColumnToIndexCache(new HashMap<String, Integer>());
     }
 
 }

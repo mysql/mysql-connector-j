@@ -1008,8 +1008,7 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private com.mysql.cj.api.jdbc.result.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet,
-            Field[] metadataFromCache) throws SQLException {
+    private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPre(this.originalSql, this, true);

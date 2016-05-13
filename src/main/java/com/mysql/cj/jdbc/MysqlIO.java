@@ -542,7 +542,7 @@ public class MysqlIO implements ResultsHandler {
             boolean firstTime = true;
 
             while (moreRowSetsExist) {
-                if (!firstTime && currentResultSet.reallyResult()) {
+                if (!firstTime && currentResultSet.hasRows()) {
                     break;
                 }
 
@@ -566,7 +566,7 @@ public class MysqlIO implements ResultsHandler {
 
                 moreRowSetsExist = this.protocol.getServerSession().hasMoreResults();
 
-                if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
+                if (!currentResultSet.hasRows() && !moreRowSetsExist) {
                     // special case, we can stop "streaming"
                     return false;
                 }
@@ -1099,7 +1099,7 @@ public class MysqlIO implements ResultsHandler {
             ResultSet rs = null;
 
             try {
-                rs = this.protocol.sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
+                rs = (ResultSet) this.protocol.sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
                         this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1,
                         ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.connection.getCatalog(), null,
                         this.session::getProfilerEventHandlerInstanceFunction);

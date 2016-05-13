@@ -1158,7 +1158,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, rs);
             } else {
-                if (rs.reallyResult() && cacheResultSetMetadata) {
+                if (rs.hasRows() && cacheResultSetMetadata) {
                     locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, null /* will be created */, rs);
                 }
             }
@@ -1178,7 +1178,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 this.results = rs;
             }
 
-            return ((rs != null) && rs.reallyResult());
+            return ((rs != null) && rs.hasRows());
         }
     }
 

@@ -57,7 +57,7 @@ import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -1917,7 +1917,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public static class TestEnableEscapeProcessingStatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public ResultSetInternalMethods preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement,
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement,
                 com.mysql.cj.api.jdbc.JdbcConnection connection) throws SQLException {
             if (sql == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();

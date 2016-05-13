@@ -30,8 +30,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.ConnectionImpl;
 
@@ -69,8 +69,8 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
     }
 
     @SuppressWarnings("resource")
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
+            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
 
         // don't care if auto-commit is not enabled
         if (!this.conn.getAutoCommit()) {
@@ -113,7 +113,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return originalResultSet;
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         // we do nothing before execution, it's unsafe to swap servers at this point.
         return null;
     }
