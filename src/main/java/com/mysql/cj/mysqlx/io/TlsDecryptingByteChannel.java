@@ -43,6 +43,7 @@ import com.mysql.cj.core.exceptions.AssertionFailedException;
  * of.
  */
 public class TlsDecryptingByteChannel implements AsynchronousByteChannel, CompletionHandler<Integer, Void> {
+    private static final ByteBuffer emptyBuffer = ByteBuffer.allocate(0);
     /** The underlying input stream. */
     private AsynchronousByteChannel in;
     /** Encryption facility. */
@@ -162,7 +163,20 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
         // use a temporary to allow caller to initiate a new read in the callback
         CompletionHandler<Integer, ?> h = this.handler;
         this.handler = null;
-        h.completed(transferred, null);
+        // force the call through sun.nio.ch.Invoker to avoid deep levels of recursion. If we directly call the handler, we may grow a huge stack when the
+        // caller only reads small portions of the buffer and issues a new read request. The Invoker will dispatch the call on the thread pool for the
+        // AsynchronousSocketChannel
+        this.in.read(TlsDecryptingByteChannel.emptyBuffer, null, new CompletionHandler<Integer, Void>() {
+                public void completed(Integer result, Void attachment) {
+                    h.completed(transferred, null);
+                }
+
+                public void failed(Throwable t, Void attachment) {
+                    // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
+                    t.printStackTrace();
+                    throw AssertionFailedException.shouldNotHappen(new Exception(t));
+                }
+            });
     }
 
     public void close() throws IOException {
