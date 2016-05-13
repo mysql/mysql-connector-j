@@ -45,12 +45,12 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -83,7 +83,6 @@ import com.mysql.cj.jdbc.MysqlIO;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -770,14 +769,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      *            should we read MYSQL_FIELD info (if available)?
      * 
      */
-    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
+    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata,
             GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction) {
         this.statementExecutionDepth++;
 
         try {
             if (this.statementInterceptors != null) {
-                ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPre(query, callingStatement, false);
+                T interceptedResults = invokeStatementInterceptorsPre(query, callingStatement, false);
 
                 if (interceptedResults != null) {
                     return interceptedResults;
@@ -918,8 +917,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 fetchBeginTime = queryEndTime;
             }
 
-            ResultSetInternalMethods rs = this.resultsHandler.readAllResults(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults,
-                    catalog, resultPacket, false, -1L, cachedMetadata);
+            @SuppressWarnings("unchecked")
+            T rs = (T) this.resultsHandler.readAllResults(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog, resultPacket,
+                    false, -1L, cachedMetadata);
 
             if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
                 StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
@@ -932,7 +932,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                         (int) (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
                         mesgBuf.toString()));
 
@@ -952,21 +952,21 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
                 if (this.queryBadIndexUsed && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
                             Messages.getString("Protocol.4") + profileQueryToLog));
                 }
 
                 if (this.queryNoIndexUsed && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
                             Messages.getString("Protocol.5") + profileQueryToLog));
                 }
 
                 if (this.serverQueryWasSlow && this.profileSQL) {
                     eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                             (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
                             Messages.getString("Protocol.ServerSlowQuery") + profileQueryToLog));
                 }
@@ -978,11 +978,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                         (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
 
                 eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, ((ResultSetImpl) rs).resultId, System.currentTimeMillis(),
+                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
                         (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
             }
 
@@ -991,7 +991,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             }
 
             if (this.statementInterceptors != null) {
-                ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPost(query, callingStatement, rs, false, null);
+                T interceptedResults = invokeStatementInterceptorsPost(query, callingStatement, rs, false, null);
 
                 if (interceptedResults != null) {
                     rs = interceptedResults;
@@ -1036,8 +1036,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         }
     }
 
-    public ResultSetInternalMethods invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
-        ResultSetInternalMethods previousResultSet = null;
+    public <T extends Resultset> T invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
+        T previousResultSet = null;
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
             StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
@@ -1054,8 +1054,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 //}
 
                 try {
-                    ResultSetInternalMethods interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement,
-                            (JdbcConnection) this.connection);
+                    T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement, (JdbcConnection) this.connection);
 
                     if (interceptedResultSet != null) {
                         previousResultSet = interceptedResultSet;
@@ -1069,8 +1068,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         return previousResultSet;
     }
 
-    public ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            boolean forceExecute, Exception statementException) {
+    public <T extends Resultset> T invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, T originalResultSet, boolean forceExecute,
+            Exception statementException) {
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
             StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
@@ -1082,7 +1081,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 String sqlToInterceptor = sql;
 
                 try {
-                    ResultSetInternalMethods interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet,
+                    T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet,
                             (JdbcConnection) this.connection, this.getWarningCount(), this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
 
                     if (interceptedResultSet != null) {

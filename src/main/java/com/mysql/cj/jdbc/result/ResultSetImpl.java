@@ -54,12 +54,9 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.format.DateTimeParseException;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -111,24 +108,17 @@ import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.result.AbstractResultset;
+import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
-public class ResultSetImpl implements ResultSetInternalMethods, WarningListener {
+public class ResultSetImpl extends AbstractResultset implements ResultSetInternalMethods, WarningListener {
 
     /** Counter used to generate IDs for profiling. */
     static int resultCounter = 1;
 
     /** The catalog that was in use when we were created */
     protected String catalog = null;
-
-    /** Map column names (and all of their permutations) to column indices */
-    protected Map<String, Integer> columnLabelToIndex = null;
-
-    /**
-     * The above map is a case-insensitive tree-map, it can be slow, this caches lookups into that map, because the other alternative is to create new
-     * object instances for every call to findColumn()....
-     */
-    protected Map<String, Integer> columnToIndexCache = null;
 
     /** Keep track of columns accessed */
     protected boolean[] columnUsed = null;
@@ -157,21 +147,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     /** The number of rows to fetch in one go... */
     protected int fetchSize = 0;
 
-    /** The fields for this result set */
-    private Field[] fields; // The fields
-
     /**
      * First character of the query that created this result set...Used to determine whether or not to parse server info messages in certain
      * circumstances.
      */
     protected char firstCharOfQuery;
-
-    /** Map of fully-specified column names to column indices */
-    protected Map<String, Integer> fullColumnNameToIndex = null;
-
-    protected Map<String, Integer> columnNameToIndex = null;
-
-    protected boolean hasBuiltIndexMapping = false;
 
     /** Has this result set been closed? */
     protected boolean isClosed = false;
@@ -192,22 +172,11 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     /** Are we tracking items for profileSQL? */
     protected boolean profileSQL = false;
 
-    /**
-     * Do we actually contain rows, or just information about UPDATE/INSERT/DELETE?
-     */
-    protected boolean reallyResult = false;
-
-    /** The id (used when profiling) to identify us */
-    public int resultId;
-
     /** Are we read-only or updatable? */
     protected int resultSetConcurrency = 0;
 
     /** Are we scroll-sensitive/insensitive? */
     protected int resultSetType = 0;
-
-    /** The actual rows */
-    protected ResultsetRows rowData; // The results
 
     /**
      * Any info message from the server that was created while generating this result set (if 'info parsing' is enabled for the connection).
@@ -282,8 +251,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public ResultSetImpl(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) {
         this.updateCount = updateCount;
         this.updateId = updateID;
-        this.reallyResult = false;
-        this.fields = new Field[0];
+        this.columnDefinition = new MysqlaColumnDefinition(new Field[0]);
 
         this.connection = conn;
         this.owningStatement = creatorStmt;
@@ -359,11 +327,9 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         this.catalog = catalog;
 
-        this.fields = fields;
+        this.columnDefinition = new MysqlaColumnDefinition(fields);
         this.rowData = tuples;
         this.updateCount = this.rowData.size();
-
-        this.reallyResult = true;
 
         // Check for no results
         if (this.rowData.size() > 0) {
@@ -379,7 +345,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
         this.rowData.setOwner(this);
 
-        if (this.fields != null) {
+        if (this.columnDefinition.getFields() != null) {
             initializeWithMetadata();
         } // else called by Connection.initializeResultsMetadataFromCache() when cached
 
@@ -389,14 +355,13 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         setRowPositionValidity();
     }
 
+    @Override
     public void initializeWithMetadata() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            this.rowData.setMetadata(this.fields);
-
-            this.columnToIndexCache = new HashMap<String, Integer>();
+            initRowsWithMetadata();
 
             if (this.profileSQL || this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
-                this.columnUsed = new boolean[this.fields.length];
+                this.columnUsed = new boolean[this.columnDefinition.getFields().length];
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
                 this.useUsageAdvisor = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
@@ -408,8 +373,8 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
                 Set<String> tableNamesSet = new HashSet<String>();
 
-                for (int i = 0; i < this.fields.length; i++) {
-                    Field f = this.fields[i];
+                for (int i = 0; i < this.columnDefinition.getFields().length; i++) {
+                    Field f = this.columnDefinition.getFields()[i];
 
                     String tableName = f.getOriginalTableName();
 
@@ -526,45 +491,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         }
     }
 
-    /**
-     * Builds a hash between column names and their indices for fast retrieval.
-     */
-    public void buildIndexMapping() throws SQLException {
-        int numFields = this.fields.length;
-        this.columnLabelToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
-        this.fullColumnNameToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
-        this.columnNameToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
-
-        // We do this in reverse order, so that the 'first' column with a given name ends up as the final mapping in the hashtable...
-        //
-        // Quoting the JDBC Spec:
-        //
-        // "Column names used as input to getter methods are case insensitive. When a getter method is called with a column name and several columns have the
-        // same name, the value of the first matching column will be returned. "
-        //
-        for (int i = numFields - 1; i >= 0; i--) {
-            Integer index = Integer.valueOf(i);
-            String columnName = this.fields[i].getOriginalName();
-            String columnLabel = this.fields[i].getName();
-            String fullColumnName = this.fields[i].getFullName();
-
-            if (columnLabel != null) {
-                this.columnLabelToIndex.put(columnLabel, index);
-            }
-
-            if (fullColumnName != null) {
-                this.fullColumnNameToIndex.put(fullColumnName, index);
-            }
-
-            if (columnName != null) {
-                this.columnNameToIndex.put(columnName, index);
-            }
-        }
-
-        // set the flag to prevent rebuilding...
-        this.hasBuiltIndexMapping = true;
-    }
-
     public void cancelRowUpdates() throws SQLException {
         throw SQLError.notUpdatable();
     }
@@ -600,12 +526,12 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             if ((columnIndex < 1)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            } else if ((columnIndex > this.fields.length)) {
+            } else if ((columnIndex > this.columnDefinition.getFields().length)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_high",
-                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.fields.length) }),
+                                new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
@@ -677,31 +603,16 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     // Note, row data is linked between these two result sets
     public ResultSetInternalMethods copy() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData, this.connection, this.owningStatement); // note, doesn't work for updatable result sets
+            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.columnDefinition.getFields(), this.rowData, this.connection,
+                    this.owningStatement); // note, doesn't work for updatable result sets
 
             return rs;
         }
     }
 
-    /**
-     * Overwrite the metadata for a query that returns results for DBMD but the metadata must reflect something different to comply with JDBC specification.
-     */
-    public void redefineFieldsForDBMD(Field[] f) {
-        this.fields = f;
-    }
-
     public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException {
-        cachedMetaData.fields = this.fields;
-        cachedMetaData.columnNameToIndex = this.columnLabelToIndex;
-        cachedMetaData.fullColumnNameToIndex = this.fullColumnNameToIndex;
+        this.columnDefinition.exportTo(cachedMetaData);
         cachedMetaData.metadata = getMetaData();
-    }
-
-    public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData) {
-        this.fields = cachedMetaData.fields;
-        this.columnLabelToIndex = cachedMetaData.columnNameToIndex;
-        this.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
-        this.hasBuiltIndexMapping = true;
     }
 
     public void deleteRow() throws SQLException {
@@ -722,46 +633,15 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
     public int findColumn(String columnName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Integer index;
+            Integer index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn);
 
-            if (!this.hasBuiltIndexMapping) {
-                buildIndexMapping();
+            if (index == -1) {
+                throw SQLError.createSQLException(
+                        Messages.getString("ResultSet.Column____112") + columnName + Messages.getString("ResultSet.___not_found._113"),
+                        SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
             }
 
-            index = this.columnToIndexCache.get(columnName);
-
-            if (index != null) {
-                return index.intValue() + 1;
-            }
-
-            index = this.columnLabelToIndex.get(columnName);
-
-            if (index == null && this.useColumnNamesInFindColumn) {
-                index = this.columnNameToIndex.get(columnName);
-            }
-
-            if (index == null) {
-                index = this.fullColumnNameToIndex.get(columnName);
-            }
-
-            if (index != null) {
-                this.columnToIndexCache.put(columnName, index);
-
-                return index.intValue() + 1;
-            }
-
-            // Try this inefficient way, now
-
-            for (int i = 0; i < this.fields.length; i++) {
-                if (this.fields[i].getName().equalsIgnoreCase(columnName)) {
-                    return i + 1;
-                } else if (this.fields[i].getFullName().equalsIgnoreCase(columnName)) {
-                    return i + 1;
-                }
-            }
-
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Column____112") + columnName + Messages.getString("ResultSet.___not_found._113"),
-                    SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
+            return index;
         }
     }
 
@@ -814,7 +694,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * given character set and converting it to an ASCII string which can then be parsed as a numeric/date value.
      */
     private <T> T getNonStringValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
-        Field f = this.fields[columnIndex - 1];
+        Field f = this.columnDefinition.getFields()[columnIndex - 1];
 
         // interpret the string as necessary to create the a value of the requested type
         String encoding = f.getEncoding();
@@ -828,7 +708,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      * Get a Date of Timestamp value from a row. This implements the "yearIsDateType=true" behavior.
      */
     private <T> T getDateOrTimestampValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
-        Field f = this.fields[columnIndex - 1];
+        Field f = this.columnDefinition.getFields()[columnIndex - 1];
 
         // return YEAR values as Dates if necessary
         if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
@@ -948,7 +828,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return null;
         }
 
-        Field f = this.fields[columnIndex - 1];
+        Field f = this.columnDefinition.getFields()[columnIndex - 1];
         try {
             return new InputStreamReader(stream, f.getEncoding());
         } catch (UnsupportedEncodingException e) {
@@ -1065,7 +945,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        Field f = this.fields[columnIndex - 1];
+        Field f = this.columnDefinition.getFields()[columnIndex - 1];
         ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
         // return YEAR values as Dates if necessary
         if (f.getMysqlTypeId() == MysqlaConstants.FIELD_TYPE_YEAR && this.yearIsDateType) {
@@ -1164,7 +1044,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
         }
@@ -1179,7 +1059,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
         }
@@ -1220,7 +1100,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+        String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");
         }
@@ -1271,7 +1151,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         checkClosed();
 
-        return new ResultSetMetaData(this.session, this.fields,
+        return new ResultSetMetaData(this.session, this.columnDefinition.getFields(),
                 this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType,
                 getExceptionInterceptor());
     }
@@ -1294,7 +1174,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return null;
         }
 
-        Field field = this.fields[columnIndexMinusOne];
+        Field field = this.columnDefinition.getFields()[columnIndexMinusOne];
         switch (field.getMysqlType()) {
             case BIT:
                 // TODO Field sets binary and blob flags if the length of BIT field is > 1; is it needed at all?
@@ -1591,7 +1471,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
             return null;
         }
 
-        Field field = this.fields[columnIndex - 1];
+        Field field = this.columnDefinition.getFields()[columnIndex - 1];
 
         MysqlType desiredMysqlType = MysqlType.getByJdbcType(desiredSqlType);
 
@@ -1903,7 +1783,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
             boolean b;
 
-            if (!reallyResult()) {
+            if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"), SQLError.SQL_STATE_GENERAL_ERROR,
                         getExceptionInterceptor());
             }
@@ -2065,7 +1945,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                                     buf.append(", ");
                                 }
 
-                                buf.append(this.fields[i].getFullName());
+                                buf.append(this.columnDefinition.getFields()[i].getFullName());
                             }
                         }
 
@@ -2105,10 +1985,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
                 }
 
                 this.rowData = null;
-                this.fields = null;
-                this.columnLabelToIndex = null;
-                this.fullColumnNameToIndex = null;
-                this.columnToIndexCache = null;
+                this.columnDefinition = null;
                 this.eventSink = null;
                 this.warningChain = null;
                 this.owningStatement = null;
@@ -2134,14 +2011,6 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
      */
     public boolean isClosed() throws SQLException {
         return this.isClosed;
-    }
-
-    public boolean reallyResult() {
-        if (this.rowData != null) {
-            return true;
-        }
-
-        return this.reallyResult;
     }
 
     public void refreshRow() throws SQLException {
@@ -2311,11 +2180,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
 
     @Override
     public String toString() {
-        if (this.reallyResult) {
-            return super.toString();
-        }
-
-        return "Result set representing update count of " + this.updateCount;
+        return hasRows() ? super.toString() : "Result set representing update count of " + this.updateCount;
     }
 
     public void updateArray(int arg0, Array arg1) throws SQLException {
@@ -2760,7 +2625,7 @@ public class ResultSetImpl implements ResultSetInternalMethods, WarningListener 
     }
 
     public Field[] getMetadata() {
-        return this.fields;
+        return this.columnDefinition.getFields();
     }
 
     public com.mysql.cj.jdbc.StatementImpl getOwningStatement() {

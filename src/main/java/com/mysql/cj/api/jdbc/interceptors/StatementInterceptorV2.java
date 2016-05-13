@@ -30,8 +30,8 @@ import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.Resultset;
 
 public interface StatementInterceptorV2 extends Extension {
 
@@ -62,7 +62,7 @@ public interface StatementInterceptorV2 extends Extension {
      * server for processing.
      * 
      * Interceptors are free to return a result set (which must implement the
-     * interface {@link ResultSetInternalMethods}), and if so,
+     * interface {@link Resultset}), and if so,
      * the server will not execute the query, and the given result set will be
      * returned to the application instead.
      * 
@@ -84,10 +84,10 @@ public interface StatementInterceptorV2 extends Extension {
      * @throws SQLException
      *             if an error occurs during execution
      * 
-     * @see {@link ResultSetInternalMethods}
+     * @see {@link Resultset}
      */
 
-    ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
+    <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
 
     /**
      * Should the driver execute this interceptor only for the
@@ -118,7 +118,7 @@ public interface StatementInterceptorV2 extends Extension {
      * Interceptors are free to inspect the "original" result set, and if a
      * different result set is returned by the interceptor, it is used in place
      * of the "original" result set. (the result set returned by the interceptor
-     * must implement the interface {@link ResultSetInternalMethods}).
+     * must implement the interface {@link Resultset}).
      * 
      * This method will be called while the connection-level mutex is held, so
      * it will only be called from one thread at a time.
@@ -138,8 +138,8 @@ public interface StatementInterceptorV2 extends Extension {
      * @throws SQLException
      *             if an error occurs during execution
      * 
-     * @see {@link ResultSetInternalMethods}
+     * @see {@link Resultset}
      */
-    ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, JdbcConnection connection,
-            int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
+    <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
+            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
 }

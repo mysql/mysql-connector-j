@@ -46,10 +46,10 @@ import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.HostInfo;
@@ -446,7 +446,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      *            should we read MYSQL_FIELD info (if available)?
      * 
      */
-    public final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
+    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
 
         return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, resultSetType, resultSetConcurrency,
@@ -474,12 +474,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.dumpPacketRingBuffer();
     }
 
-    public ResultSetInternalMethods invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
+    public <T extends Resultset> T invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
         return this.protocol.invokeStatementInterceptorsPre(sql, interceptedStatement, forceExecute);
     }
 
-    public ResultSetInternalMethods invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            boolean forceExecute, Exception statementException) {
+    public <T extends Resultset> T invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, T originalResultSet, boolean forceExecute,
+            Exception statementException) {
         return this.protocol.invokeStatementInterceptorsPost(sql, interceptedStatement, originalResultSet, forceExecute, statementException);
     }
 

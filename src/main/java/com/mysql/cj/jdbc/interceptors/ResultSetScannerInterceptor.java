@@ -35,8 +35,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -61,37 +61,36 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     }
 
-    public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
-            JdbcConnection connection) throws SQLException {
+    @SuppressWarnings("unchecked")
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection) throws SQLException {
 
         // requirement of anonymous class
-        final ResultSetInternalMethods finalResultSet = originalResultSet;
+        final T finalResultSet = originalResultSet;
 
-        return (ResultSetInternalMethods) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(),
-                new Class<?>[] { ResultSetInternalMethods.class }, new InvocationHandler() {
+        return (T) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class<?>[] { Resultset.class }, new InvocationHandler() {
 
-                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-                        Object invocationResult = method.invoke(finalResultSet, args);
+                Object invocationResult = method.invoke(finalResultSet, args);
 
-                        String methodName = method.getName();
+                String methodName = method.getName();
 
-                        if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
-                                || "getObjectStoredProc".equals(methodName)) {
-                            Matcher matcher = ResultSetScannerInterceptor.this.regexP.matcher(invocationResult.toString());
+                if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
+                        || "getObjectStoredProc".equals(methodName)) {
+                    Matcher matcher = ResultSetScannerInterceptor.this.regexP.matcher(invocationResult.toString());
 
-                            if (matcher.matches()) {
-                                throw new SQLException(Messages.getString("ResultSetScannerInterceptor.2"));
-                            }
-                        }
-
-                        return invocationResult;
+                    if (matcher.matches()) {
+                        throw new SQLException(Messages.getString("ResultSetScannerInterceptor.2"));
                     }
-                });
+                }
+
+                return invocationResult;
+            }
+        });
 
     }
 
-    public ResultSetInternalMethods preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
         // we don't care about this event
 
         return null;

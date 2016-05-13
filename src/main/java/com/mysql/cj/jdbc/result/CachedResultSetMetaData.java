@@ -23,34 +23,13 @@
 
 package com.mysql.cj.jdbc.result;
 
-import java.util.Map;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 
-import com.mysql.cj.core.result.Field;
-
-public class CachedResultSetMetaData {
-    /** Map column names (and all of their permutations) to column indices */
-    Map<String, Integer> columnNameToIndex = null;
-
-    /** Cached Field info */
-    Field[] fields;
-
-    /** Map of fully-specified column names to column indices */
-    Map<String, Integer> fullColumnNameToIndex = null;
+public class CachedResultSetMetaData extends MysqlaColumnDefinition implements ColumnDefinition {
 
     /** Cached ResultSetMetaData */
     java.sql.ResultSetMetaData metadata;
-
-    public Map<String, Integer> getColumnNameToIndex() {
-        return this.columnNameToIndex;
-    }
-
-    public Field[] getFields() {
-        return this.fields;
-    }
-
-    public Map<String, Integer> getFullColumnNameToIndex() {
-        return this.fullColumnNameToIndex;
-    }
 
     public java.sql.ResultSetMetaData getMetadata() {
         return this.metadata;

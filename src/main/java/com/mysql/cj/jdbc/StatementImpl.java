@@ -683,8 +683,8 @@ public class StatementImpl implements Statement {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 if (isCloseOnCompletion() && !this.dontTrackOpenResources.getValue() && getOpenResultSetCount() == 0
-                        && (this.results == null || !this.results.reallyResult() || this.results.isClosed())
-                        && (this.generatedKeysResults == null || !this.generatedKeysResults.reallyResult() || this.generatedKeysResults.isClosed())) {
+                        && (this.results == null || !this.results.hasRows() || this.results.isClosed())
+                        && (this.generatedKeysResults == null || !this.generatedKeysResults.hasRows() || this.generatedKeysResults.isClosed())) {
                     realClose(false, false);
                 }
             }
@@ -935,7 +935,7 @@ public class StatementImpl implements Statement {
 
                     rs.setFirstCharOfQuery(firstNonWsChar);
 
-                    if (rs.reallyResult()) {
+                    if (rs.hasRows()) {
                         if (cachedMetaData != null) {
                             locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
                         } else {
@@ -946,7 +946,7 @@ public class StatementImpl implements Statement {
                     }
                 }
 
-                return ((rs != null) && rs.reallyResult());
+                return ((rs != null) && rs.hasRows());
             } finally {
                 locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 
@@ -1860,7 +1860,7 @@ public class StatementImpl implements Statement {
                 return -1;
             }
 
-            if (this.results.reallyResult()) {
+            if (this.results.hasRows()) {
                 return -1;
             }
 
@@ -1930,7 +1930,7 @@ public class StatementImpl implements Statement {
             boolean streamingMode = createStreamingResultSet();
 
             if (streamingMode) {
-                if (this.results.reallyResult()) {
+                if (this.results.hasRows()) {
                     while (this.results.next()) {
                         // need to drain remaining rows to get to server status which tells us whether more results actually exist or not
                     }
@@ -1984,7 +1984,7 @@ public class StatementImpl implements Statement {
             if (this.results == null) {
                 this.updateCount = -1;
                 this.lastInsertId = -1;
-            } else if (this.results.reallyResult()) {
+            } else if (this.results.hasRows()) {
                 this.updateCount = -1;
                 this.lastInsertId = -1;
             } else {
@@ -1992,7 +1992,7 @@ public class StatementImpl implements Statement {
                 this.lastInsertId = this.results.getUpdateID();
             }
 
-            boolean moreResults = (this.results != null) && this.results.reallyResult();
+            boolean moreResults = (this.results != null) && this.results.hasRows();
             if (!moreResults) {
                 checkAndPerformCloseOnCompletionAction();
             }
@@ -2093,7 +2093,7 @@ public class StatementImpl implements Statement {
      */
     public java.sql.ResultSet getResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return ((this.results != null) && this.results.reallyResult()) ? (java.sql.ResultSet) this.results : null;
+            return ((this.results != null) && this.results.hasRows()) ? (java.sql.ResultSet) this.results : null;
         }
     }
 
@@ -2684,7 +2684,7 @@ public class StatementImpl implements Statement {
                 return -1;
             }
 
-            if (this.results.reallyResult()) {
+            if (this.results.hasRows()) {
                 return -1;
             }
 
