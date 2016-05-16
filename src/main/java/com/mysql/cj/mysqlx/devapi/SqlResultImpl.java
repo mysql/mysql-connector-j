@@ -57,8 +57,13 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         if (this.currentResult == null) {
             return false;
         }
-        if (ResultStreamer.class.isAssignableFrom(this.currentResult.getClass())) {
-            ((ResultStreamer) this.currentResult).finishStreaming();
+        try {
+            if (ResultStreamer.class.isAssignableFrom(this.currentResult.getClass())) {
+                ((ResultStreamer) this.currentResult).finishStreaming();
+            }
+        } finally {
+            // propagate any exception but clear the current result so we don't try to read any more results
+            this.currentResult = null;
         }
         this.currentResult = this.resultStream.get();
         return this.currentResult != null;
