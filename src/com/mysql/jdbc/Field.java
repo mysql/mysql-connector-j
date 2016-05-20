@@ -190,6 +190,12 @@ public class Field {
                 this.encoding = "UTF-16";
             }
 
+            // Fix chinese(or other non-ascii encoding) garbled in [mysql 5.7 JSON type]
+            // Use UTF-8 encoding , because mysql use utf8mb4 for JSON type store ;
+            if (this.mysqlType == MysqlDefs.FIELD_TYPE_JSON) {
+                this.encoding = "UTF-8";
+            }
+
             // Handle VARBINARY/BINARY (server doesn't have a different type for this
 
             boolean isBinary = isBinary();
@@ -330,8 +336,8 @@ public class Field {
     /**
      * Constructor used when communicating with pre 4.1 servers
      */
-    Field(MySQLConnection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, int tableNameLength, int length, int mysqlType, short colFlag,
-            int colDecimals) throws SQLException {
+    Field(MySQLConnection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, int tableNameLength, int length, int mysqlType,
+            short colFlag, int colDecimals) throws SQLException {
         this(conn, buffer, -1, -1, tableNameStart, tableNameLength, -1, -1, nameStart, nameLength, -1, -1, length, mysqlType, colFlag, colDecimals, -1, -1,
                 NO_CHARSET_INFO);
     }
@@ -781,8 +787,8 @@ public class Field {
     }
 
     private boolean isNativeDateTimeType() {
-        return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME
-                || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
+        return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE
+                || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
     }
 
     public void setConnection(MySQLConnection conn) {
