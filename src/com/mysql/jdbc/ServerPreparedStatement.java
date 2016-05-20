@@ -564,12 +564,9 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
-
-            if (this.isCached && !this.isClosed) {
+            if (this.isCached && isPoolable() && !this.isClosed) {
                 clearParameters();
-
                 this.isClosed = true;
-
                 this.connection.recachePreparedStatement(this);
                 return;
             }
@@ -2783,8 +2780,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
-                PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog,
-                        this.resultSetConcurrency, this.resultSetType);
+                PreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(this.parseInfo.getSqlForBatch(numBatches), this.resultSetConcurrency,
+                        this.resultSetType)).unwrap(PreparedStatement.class);
                 pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 
                 return pstmt;
@@ -2796,5 +2793,13 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw sqlEx;
             }
         }
+    }
+
+    @Override
+    public void setPoolable(boolean poolable) throws SQLException {
+        if (!poolable) {
+            this.connection.decachePreparedStatement(this);
+        }
+        super.setPoolable(poolable);
     }
 }

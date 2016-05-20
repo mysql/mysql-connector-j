@@ -7861,4 +7861,171 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn.close();
         } while ((useSSL = !useSSL) || (useSPS = !useSPS) || (useCursor = !useCursor) || (useCompr = !useCompr)); // Cycle through all possible combinations.
     }
+
+    /**
+     * Tests fix for Bug#80615 - prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
+     * 
+     * There are two bugs here:
+     * 1. A server prepared statement leakage by not actually closing the statement on server when .close() is called in the client side. This occurs when
+     * setting 'cachePrepStmts=true&useServerPrepStmts=true' and a prepared statement is set as non-poolable ('setPoolable(false)'). By itself this doesn't
+     * cause any visible issue because the connector has a fail-safe mechanism that uses client-side prepared statements when server-side prepared statements
+     * fail to be prepared. So, the connector ends up using client-side prepared statements after the number of open prepared statements on server hits the
+     * value of 'max_prepared_stmt_count'.
+     * 2. A prepared statement fails to be prepared when there are too many open prepared statements on server. By setting the options
+     * 'rewriteBatchedStatements=true&useServerPrepStmts=true' when a query happens to be rewritten a new (server-side) prepared statement is required but the
+     * fail-safe mechanism isn't implemented in this spot, so, since the leakage described above already consumed all available prepared statements on server,
+     * this ends up throwing the exception.
+     * 
+     * This test combines three elements:
+     * 1. Call .close() on a server prepared statement. This promotes a prepared statement for caching if prepared statements cache is enabled.
+     * 2. cachePrepStmts=true|false. Turns on/off the prepared statements cache.
+     * 3. Call .setPoolable(true|false) on the prepared statement. This allows canceling the prepared statement caching, on a per statement basis. It has no
+     * effect if the prepared statements cache if turned off for the current connection.
+     * 
+     * Expected behavior:
+     * - If .close() is not called on server prepared statements then they also can't be promoted for caching. This causes a server prepared statements leak in
+     * all remaining combinations.
+     * - If .close() is called on server prepared statements and the prepared statements cache is disabled by any form (either per connection or per statement),
+     * then the statements is immediately closed on server side too.
+     * - If .close() is called on server prepared statements and the prepared statements cache is enabled (both in the connection and in the statement) then the
+     * statement is cached and only effectivelly closed in the server side if and when removed from the cache.
+     */
+    public void testBug80615() throws Exception {
+        final int prepStmtCacheSize = 5;
+        final int maxPrepStmtCount = 10;
+
+        boolean closeStmt = false;
+        boolean useCache = false;
+        boolean poolable = false;
+
+        do {
+            final String testCase = String.format("Case: [Close STMTs: %s, Use cache: %s, Poolable: %s ]", closeStmt ? "Y" : "N", useCache ? "Y" : "N",
+                    poolable ? "Y" : "N");
+
+            System.out.println();
+            System.out.println(testCase);
+            System.out.println("********************************************************************************");
+
+            createTable("testBug80615", "(id INT)");
+
+            final Properties props = new Properties();
+            props.setProperty("rewriteBatchedStatements", "true");
+            props.setProperty("useServerPrepStmts", "true");
+            if (useCache) {
+                props.setProperty("cachePrepStmts", "true");
+                props.setProperty("prepStmtCacheSize", String.valueOf(prepStmtCacheSize));
+            }
+
+            final Connection testConn = getConnectionWithProps(props);
+            final Statement testStmt = testConn.createStatement();
+            int maxPrepStmtCountOri = -1;
+            try {
+                this.rs = testStmt.executeQuery("SELECT @@GLOBAL.max_prepared_stmt_count");
+                this.rs.next();
+                maxPrepStmtCountOri = this.rs.getInt(1);
+
+                testStmt.execute("SET GLOBAL max_prepared_stmt_count = " + maxPrepStmtCount);
+                testStmt.execute("FLUSH STATUS");
+
+                // Prepare a statement to be executed later. This is prepare #1.
+                PreparedStatement testPstmt1 = testConn.prepareStatement("INSERT INTO testBug80615 VALUES (?)");
+                ((StatementImpl) testPstmt1).setPoolable(poolable);
+                testPstmt1.setInt(1, 100);
+                testPstmt1.addBatch();
+                testPstmt1.setInt(1, 200);
+                testPstmt1.addBatch();
+
+                int expectedPrepCount = 1; // One server-side prepared statement already prepared.
+                int expectedExecCount = 0;
+                int expectedCloseCount = 0;
+
+                System.out.print("0. [SPS] ");
+                testBug80615CheckComStmtStatus(testStmt, testCase, 1, 0, 0);
+
+                // Prepare a number of statements higher than the limit set on server. There are still (maxPrepStmtCount - 1) prepares available.
+                // This may exhaust the number of allwed prepared statements, forcing it to use client-side prepared statements instead, from that point forward.
+                // There where some unexpected server prepared statements leaks (1st bug).
+                boolean isSPS = true;
+                int execCount;
+                for (execCount = 1; execCount <= 15 && isSPS; execCount++) {
+                    PreparedStatement testPstmt2 = testConn.prepareStatement("INSERT INTO testBug80615 VALUES (" + execCount + " + ?)");
+
+                    isSPS = testPstmt2 instanceof ServerPreparedStatement;
+                    if (!closeStmt && execCount == maxPrepStmtCount) {
+                        // Not closing statements causes a server prepared statements leak on server.
+                        // This iteration should have failed-over to a client-side prepared statement.
+                        assertFalse(testCase, isSPS);
+                    } else {
+                        // There is enough room to prepare server-side prepared statements.
+                        // Or statments are being correctly closed.
+                        assertTrue(testCase, isSPS);
+                    }
+
+                    ((StatementImpl) testPstmt2).setPoolable(poolable); // Need to cast, this is a JDBC 4.0 feature.
+                    testPstmt2.setInt(1, 0);
+                    testPstmt2.execute();
+                    if (closeStmt) {
+                        testPstmt2.close();
+                        if (isSPS) {
+                            if (useCache && poolable && execCount > prepStmtCacheSize) {
+                                // A statement (the eldest one in cache) is effectivelly closed on server side only after local statements cache is full.
+                                expectedCloseCount++;
+                            } else if (!useCache || !poolable) {
+                                // The statement is closed immediately on server side.
+                                expectedCloseCount++;
+                            }
+                        }
+                    }
+
+                    if (isSPS) {
+                        expectedPrepCount++;
+                        expectedExecCount++;
+                    }
+
+                    System.out.print(execCount + ". ");
+                    if (isSPS) {
+                        System.out.print("[SPS]");
+                    } else {
+                        System.out.print("[CPS]");
+                    }
+                    testBug80615CheckComStmtStatus(testStmt, testCase + "\nIteration: " + execCount, expectedPrepCount, expectedExecCount, expectedCloseCount);
+                }
+
+                assertEquals(testCase, closeStmt ? 15 : 10, --execCount);
+
+                // Batched statements are being rewritten so this will prepare another statement underneath.
+                // It was failing before if the the number of stmt prepares on server was exhausted at this point (2nd Bug).
+                testPstmt1.executeBatch();
+                testPstmt1.close();
+            } finally {
+                if (maxPrepStmtCountOri >= 0) {
+                    testStmt.execute("SET GLOBAL max_prepared_stmt_count = " + maxPrepStmtCountOri);
+                }
+                testConn.close();
+            }
+        } while ((closeStmt = !closeStmt) || (useCache = !useCache) || (poolable = !poolable));
+    }
+
+    private void testBug80615CheckComStmtStatus(Statement testStmt, String testCase, int expectedPrepCount, int expectedExecCount, int expectedCloseCount)
+            throws Exception {
+        int actualPrepCount = 0;
+        int actualExecCount = 0;
+        int actualCloseCount = 0;
+        this.rs = testStmt.executeQuery("SHOW STATUS WHERE Variable_name IN ('Com_stmt_prepare', 'Com_stmt_execute', 'Com_stmt_close')");
+        while (this.rs.next()) {
+            System.out.print(" (" + this.rs.getString(1).replace("Com_stmt_", "") + " " + this.rs.getInt(2) + ")");
+            if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_prepare")) {
+                actualPrepCount = this.rs.getInt(2);
+            } else if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_execute")) {
+                actualExecCount = this.rs.getInt(2);
+            } else if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_close")) {
+                actualCloseCount = this.rs.getInt(2);
+            }
+        }
+        System.out.println();
+
+        assertEquals(testCase, expectedPrepCount, actualPrepCount);
+        assertEquals(testCase, expectedExecCount, actualExecCount);
+        assertEquals(testCase, expectedCloseCount, actualCloseCount);
+    }
 }

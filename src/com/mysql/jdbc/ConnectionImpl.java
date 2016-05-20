@@ -4309,7 +4309,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
-            if (pstmt.isPoolable()) {
+            if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
                 }
@@ -4319,7 +4319,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
-            if (pstmt.isPoolable()) {
+            if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     this.serverSideStatementCache.remove(pstmt.originalSql);
                 }
