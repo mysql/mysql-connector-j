@@ -515,7 +515,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Copy README-commercial info (Package). -->
     <target name="-copy-readme-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
-        <copy file="${com.mysql.cj.extra.libs}/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
+        <copy file="${com.mysql.cj.extra.libs}/6.0/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
         </copy>
@@ -535,7 +535,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Copy LICENSE.mysql and replace license commercial headers (Package). -->
     <target name="-replace-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
         <delete file="${com.mysql.cj.dist.dir.package}/COPYING" />
-        <copy file="${com.mysql.cj.extra.libs}/LICENSE.mysql" toDir="${com.mysql.cj.dist.dir.package}" />
+        <copy file="${com.mysql.cj.extra.libs}/6.0/LICENSE.mysql" toDir="${com.mysql.cj.dist.dir.package}" />
 
         <!-- For safety. -->
         <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
