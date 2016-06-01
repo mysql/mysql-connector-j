@@ -961,7 +961,7 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_MYSQLX, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "5.1.37", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
+                        Messages.getString("ConnectionProperties.enableEscapeProcessing"), "5.1.37", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
 
         HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
         for (PropertyDefinition<?> pdef : pdefs) {
