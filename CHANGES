@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#78685 (21938551), Wrong results when retrieving the value of a BIT column as an integer.
+
   - Fix for Bug#80615 (22954007), prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
 
 04-29-16 - Version 5.1.39

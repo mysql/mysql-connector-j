@@ -27,6 +27,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -4970,5 +4971,75 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(ts1, this.rs.getTimestamp(2));
         assertEquals(ts2, this.rs.getTimestamp(3));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for Bug#78685 - Wrong results when retrieving the value of a BIT column as an integer.
+     */
+    public void testBug78685() throws Exception {
+        createTable("testBug78685", "(b BIT(24))", "InnoDB");
+        this.stmt.executeUpdate("INSERT INTO testBug78685 VALUES (b'101110'), (47), ('0'), (49), ('2')");
+
+        boolean useFastIntParsing = false;
+        boolean useServerPrepStmts = false;
+        do {
+            // Test result set from plain statements.
+            String testCase = String.format("Case [fstIntPrs: %s, useSPS: %s, StmtType: %s]", useFastIntParsing ? "Y" : "N", useServerPrepStmts ? "Y" : "N",
+                    "Plain");
+
+            final Properties props = new Properties();
+            props.setProperty("useFastIntParsing", Boolean.toString(useFastIntParsing));
+            Connection testConn = getConnectionWithProps(props);
+            this.rs = testConn.createStatement().executeQuery("SELECT b, b + 0, BIN(b) FROM testBug78685");
+            testBug78685CheckData(testCase);
+            testConn.close();
+
+            // Test result ser from prepared statements
+            testCase = String.format("Case [fstIntPrs: %s, useSPS: %s, StmtType: %s]", useFastIntParsing ? "Y" : "N", useServerPrepStmts ? "Y" : "N",
+                    "PrepStmt");
+
+            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
+            testConn = getConnectionWithProps(props);
+            this.pstmt = testConn.prepareStatement("SELECT b, b + 0, BIN(b) FROM testBug78685");
+            this.rs = this.pstmt.executeQuery();
+            testBug78685CheckData("");
+            testConn.close();
+        } while ((useFastIntParsing = !useFastIntParsing) || (useServerPrepStmts = !useServerPrepStmts));
+    }
+
+    private void testBug78685CheckData(String testCase) throws Exception {
+        int rowCount = 0;
+        while (this.rs.next()) {
+            final int expectedNum = 46 + rowCount;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(1));
+            assertEquals(testCase, expectedNum, this.rs.getInt(1));
+            assertEquals(testCase, expectedNum, this.rs.getLong(1));
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(1));
+            assertTrue(this.rs.getObject(1) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { 0, 0, (byte) (expectedNum) }, (byte[]) this.rs.getObject(1));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(2));
+            assertEquals(testCase, expectedNum, this.rs.getInt(2));
+            assertEquals(testCase, expectedNum, this.rs.getLong(2));
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(2));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(2));
+
+            final ResultSet testRs = this.rs;
+            assertThrows(SQLException.class, "'[01\\.]+' in column '3' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs.getShort(3);
+                    return null;
+                }
+            });
+            final String expectedString = Integer.toBinaryString(expectedNum);
+            assertEquals(testCase, Integer.parseInt(expectedString), this.rs.getInt(3));
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(3));
+            assertEquals(testCase, expectedString, this.rs.getString(3));
+            assertEquals(testCase, expectedString, this.rs.getObject(3));
+
+            rowCount++;
+        }
+        assertEquals(testCase, 5, rowCount);
     }
 }

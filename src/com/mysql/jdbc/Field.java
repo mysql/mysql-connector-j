@@ -217,19 +217,12 @@ public class Field {
             }
 
             if (this.mysqlType == MysqlDefs.FIELD_TYPE_BIT) {
-                this.isSingleBit = (this.length == 0);
+                this.isSingleBit = this.length == 0
+                        || this.length == 1 && (this.connection.versionMeetsMinimum(5, 0, 21) || this.connection.versionMeetsMinimum(5, 1, 10));
 
-                if (this.connection != null && (this.connection.versionMeetsMinimum(5, 0, 21) || this.connection.versionMeetsMinimum(5, 1, 10))
-                        && this.length == 1) {
-                    this.isSingleBit = true;
-                }
-
-                if (this.isSingleBit) {
-                    this.sqlType = Types.BIT;
-                } else {
-                    this.sqlType = Types.VARBINARY;
-                    this.colFlag |= 128; // we need to pretend this is a full
-                    this.colFlag |= 16; // binary blob
+                if (!this.isSingleBit) {
+                    this.colFlag |= 128; // Pretend this is a full binary(128) and blob(16) so that this field is de-serializable.
+                    this.colFlag |= 16;
                     isBinary = true;
                 }
             }

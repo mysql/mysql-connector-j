@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -424,6 +424,9 @@ public final class MysqlDefs {
 
             case MysqlDefs.FIELD_TYPE_INT24:
                 return "FIELD_TYPE_INT24";
+
+            case MysqlDefs.FIELD_TYPE_BIT:
+                return "FIELD_TYPE_BIT";
 
             case MysqlDefs.FIELD_TYPE_DATE:
                 return "FIELD_TYPE_DATE";
