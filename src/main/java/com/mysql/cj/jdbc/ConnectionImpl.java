@@ -1103,7 +1103,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 this.cachedPreparedStatementParams.put(nativeSql, pStmt.getParseInfo());
             } else {
-                pStmt = new com.mysql.cj.jdbc.PreparedStatement(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
+                pStmt = com.mysql.cj.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
             }
         } else {
             pStmt = com.mysql.cj.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
