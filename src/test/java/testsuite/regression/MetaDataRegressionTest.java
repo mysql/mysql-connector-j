@@ -4408,4 +4408,39 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
     }
+
+    /**
+     * Tests fix for Bug#23212347, ALL API CALLS ON RESULTSET METADATA RESULTS IN NPE WHEN USESERVERPREPSTMTS=TRUE.
+     */
+    public void testBug23212347() throws Exception {
+        boolean useSPS = false;
+        do {
+            String testCase = String.format("Case [SPS: %s]", useSPS ? "Y" : "N");
+            createTable("testBug23212347", "(id INT)");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+
+            Connection testConn = getConnectionWithProps(props);
+            Statement testStmt = testConn.createStatement();
+            testStmt.execute("INSERT INTO testBug23212347 VALUES (1)");
+
+            this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23212347 WHERE id = 1");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+            assertFalse(testCase, this.rs.next());
+            ResultSetMetaData rsmd = this.pstmt.getMetaData();
+            assertEquals(testCase, "id", rsmd.getColumnName(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23212347 WHERE id = ?");
+            this.pstmt.setInt(1, 1);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+            assertFalse(this.rs.next());
+            rsmd = this.pstmt.getMetaData();
+            assertEquals(testCase, "id", rsmd.getColumnName(1));
+        } while (useSPS = !useSPS);
+    }
 }

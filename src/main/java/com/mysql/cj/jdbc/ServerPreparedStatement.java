@@ -1415,10 +1415,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                     PacketPayload metaDataPacket;
                     for (int i = 0; i < this.parameterCount; i++) {
                         metaDataPacket = this.session.readPacket();
-                        if (checkEOF && metaDataPacket.isEOFPacket()) {
-                            break;
-                        }
                         this.parameterFields[i] = this.session.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        this.session.readPacket();
                     }
                 }
 
@@ -1429,10 +1429,10 @@ public class ServerPreparedStatement extends PreparedStatement {
                     PacketPayload fieldPacket;
                     for (int i = 0; i < this.fieldCount; i++) {
                         fieldPacket = this.session.readPacket();
-                        if (checkEOF && fieldPacket.isEOFPacket()) {
-                            break;
-                        }
                         this.resultFields[i] = this.session.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
+                    }
+                    if (checkEOF) { // Skip the following EOF packet.
+                        this.session.readPacket();
                     }
                 }
             } catch (SQLException | CJException sqlEx) {
