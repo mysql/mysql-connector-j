@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -981,6 +981,10 @@ public final class MysqlErrorNumbers {
     public static final int ER_X_INVALID_NAMESPACE = 5162;
     public static final int ER_X_BAD_NOTICE = 5163;
     public static final int ER_X_CANNOT_DISABLE_NOTICE = 5164;
+
+    // Connector/J-specific errors outside the space of server errors.
+    public static final int ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION = 1000001;
+    public static final int ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS = 1000002;
 
     private MysqlErrorNumbers() {
         // prevent instantiation

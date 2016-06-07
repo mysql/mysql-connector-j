@@ -304,6 +304,7 @@ public class PropertyDefinitions {
     public static final String PNAME_selfDestructOnPingSecondsLifetime = "selfDestructOnPingSecondsLifetime";
     public static final String PNAME_selfDestructOnPingMaxOperations = "selfDestructOnPingMaxOperations";
     public static final String PNAME_ha_enableJMX = "ha.enableJMX";
+    public static final String PNAME_loadBalanceHostRemovalGracePeriod = "loadBalanceHostRemovalGracePeriod";
     public static final String PNAME_serverTimezone = "serverTimezone";
     public static final String PNAME_sessionVariables = "sessionVariables";
     public static final String PNAME_slowQueryThresholdMillis = "slowQueryThresholdMillis";
@@ -777,6 +778,10 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_ha_enableJMX, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ha.enableJMX"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
 
+                new IntegerPropertyDefinition(PNAME_loadBalanceHostRemovalGracePeriod, 15000, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.loadBalanceHostRemovalGracePeriod"), "5.1.39", CATEGORY_HA, Integer.MAX_VALUE, 0,
+                        Integer.MAX_VALUE),
+
                 new StringPropertyDefinition(PNAME_serverTimezone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.serverTimezone"), "3.0.2", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
@@ -1100,6 +1105,7 @@ public class PropertyDefinitions {
                 put(PNAME_selfDestructOnPingSecondsLifetime, "selfDestructOnPingSecondsLifetime");
                 put(PNAME_selfDestructOnPingMaxOperations, "selfDestructOnPingMaxOperations");
                 put(PNAME_ha_enableJMX, "replicationEnableJMX");
+                put(PNAME_loadBalanceHostRemovalGracePeriod, "loadBalanceHostRemovalGracePeriod");
                 put(PNAME_serverTimezone, "serverTimezone");
                 put(PNAME_sessionVariables, "sessionVariables");
                 put(PNAME_slowQueryThresholdMillis, "slowQueryThresholdMillis");

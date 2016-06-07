@@ -42,6 +42,11 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
         return (ReplicationConnectionProxy) super.getThisAsProxy();
     }
 
+    @Override
+    protected JdbcConnection getActiveMySQLConnection() {
+        return getCurrentConnection();
+    }
+
     public synchronized JdbcConnection getCurrentConnection() {
         return getThisAsProxy().getCurrentConnection();
     }
@@ -52,6 +57,15 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
 
     public synchronized JdbcConnection getMasterConnection() {
         return getThisAsProxy().getMasterConnection();
+    }
+
+    private JdbcConnection getValidatedMasterConnection() {
+        JdbcConnection conn = getThisAsProxy().masterConnection;
+        try {
+            return conn == null || conn.isClosed() ? null : conn;
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     public void promoteSlaveToMaster(String host) throws SQLException {
@@ -72,6 +86,15 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
 
     public synchronized JdbcConnection getSlavesConnection() {
         return getThisAsProxy().getSlavesConnection();
+    }
+
+    private JdbcConnection getValidatedSlavesConnection() {
+        JdbcConnection conn = getThisAsProxy().slavesConnection;
+        try {
+            return conn == null || conn.isClosed() ? null : conn;
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     public void addSlaveHost(String host) throws SQLException {
@@ -102,15 +125,20 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
 
     @Override
     public synchronized void ping() throws SQLException {
+        JdbcConnection conn;
         try {
-            getThisAsProxy().masterConnection.ping();
+            if ((conn = getValidatedMasterConnection()) != null) {
+                conn.ping();
+            }
         } catch (SQLException e) {
             if (isMasterConnection()) {
                 throw e;
             }
         }
         try {
-            getThisAsProxy().slavesConnection.ping();
+            if ((conn = getValidatedSlavesConnection()) != null) {
+                conn.ping();
+            }
         } catch (SQLException e) {
             if (!isMasterConnection()) {
                 throw e;
@@ -120,26 +148,46 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
 
     @Override
     public synchronized void changeUser(String userName, String newPassword) throws SQLException {
-        getThisAsProxy().masterConnection.changeUser(userName, newPassword);
-        getThisAsProxy().slavesConnection.changeUser(userName, newPassword);
+        JdbcConnection conn;
+        if ((conn = getValidatedMasterConnection()) != null) {
+            conn.changeUser(userName, newPassword);
+        }
+        if ((conn = getValidatedSlavesConnection()) != null) {
+            conn.changeUser(userName, newPassword);
+        }
     }
 
     @Override
     public synchronized void setStatementComment(String comment) {
-        getThisAsProxy().masterConnection.setStatementComment(comment);
-        getThisAsProxy().slavesConnection.setStatementComment(comment);
+        JdbcConnection conn;
+        if ((conn = getValidatedMasterConnection()) != null) {
+            conn.setStatementComment(comment);
+        }
+        if ((conn = getValidatedSlavesConnection()) != null) {
+            conn.setStatementComment(comment);
+        }
     }
 
     @Override
     public boolean hasSameProperties(JdbcConnection c) {
-        return getThisAsProxy().masterConnection.hasSameProperties(c) && getThisAsProxy().slavesConnection.hasSameProperties(c);
+        JdbcConnection connM = getValidatedMasterConnection();
+        JdbcConnection connS = getValidatedSlavesConnection();
+        if (connM == null && connS == null) {
+            return false;
+        }
+        return (connM == null || connM.hasSameProperties(c)) && (connS == null || connS.hasSameProperties(c));
     }
 
     @Override
     public Properties getProperties() {
         Properties props = new Properties();
-        props.putAll(getThisAsProxy().masterConnection.getProperties());
-        props.putAll(getThisAsProxy().slavesConnection.getProperties());
+        JdbcConnection conn;
+        if ((conn = getValidatedMasterConnection()) != null) {
+            props.putAll(conn.getProperties());
+        }
+        if ((conn = getValidatedSlavesConnection()) != null) {
+            props.putAll(conn.getProperties());
+        }
 
         return props;
     }

@@ -55,6 +55,8 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 public class Util {
     private static int jvmVersion = 8; // use default base version supported
 
+    private static int jvmUpdateNumber = -1;
+
     private static boolean isColdFusion = false;
 
     static {
@@ -68,6 +70,17 @@ public class Util {
         startPos++;
         if (endPos > startPos) {
             jvmVersion = Integer.parseInt(Constants.JVM_VERSION.substring(startPos, endPos));
+        }
+        startPos = Constants.JVM_VERSION.indexOf("_");
+        endPos = startPos + 1;
+        if (startPos != -1) {
+            while (Character.isDigit(Constants.JVM_VERSION.charAt(endPos)) && ++endPos < Constants.JVM_VERSION.length()) {
+                // continue
+            }
+        }
+        startPos++;
+        if (endPos > startPos) {
+            jvmUpdateNumber = Integer.parseInt(Constants.JVM_VERSION.substring(startPos, endPos));
         }
 
         //
@@ -87,6 +100,14 @@ public class Util {
 
     public static int getJVMVersion() {
         return jvmVersion;
+    }
+
+    public static boolean jvmMeetsMinimum(int version, int updateNumber) {
+        return getJVMVersion() > version || getJVMVersion() == version && getJVMUpdateNumber() >= updateNumber;
+    }
+
+    public static int getJVMUpdateNumber() {
+        return jvmUpdateNumber;
     }
 
     public static boolean isColdFusion() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,7 +37,6 @@ import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
  * and for exposing metrics around replication-aware connections.
  */
 public class ReplicationConnectionGroup {
-
     private String groupName;
     private long connections = 0;
     private long slavesAdded = 0;
@@ -76,7 +75,6 @@ public class ReplicationConnectionGroup {
         this.activeConnections++;
 
         return currentConnectionId;
-
     }
 
     public String getGroupName() {
@@ -101,17 +99,17 @@ public class ReplicationConnectionGroup {
      * 
      * This is a no-op if the group already has this host in a slave role.
      * 
-     * @param host
+     * @param hostPortPair
      * @throws SQLException
      */
-    public void addSlaveHost(String host) throws SQLException {
+    public void addSlaveHost(String hostPortPair) throws SQLException {
         // only add if it's not already a slave host
-        if (this.slaveHostList.add(host)) {
+        if (this.slaveHostList.add(hostPortPair)) {
             this.slavesAdded++;
 
             // add the slave to all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.addSlaveHost(host);
+                c.addSlaveHost(hostPortPair);
             }
         }
     }
@@ -131,17 +129,17 @@ public class ReplicationConnectionGroup {
      * 
      * This is a no-op if the group doesn't have this host in a slave role.
      * 
-     * @param host
+     * @param hostPortPair
      * @param closeGently
      * @throws SQLException
      */
-    public void removeSlaveHost(String host, boolean closeGently) throws SQLException {
-        if (this.slaveHostList.remove(host)) {
+    public void removeSlaveHost(String hostPortPair, boolean closeGently) throws SQLException {
+        if (this.slaveHostList.remove(hostPortPair)) {
             this.slavesRemoved++;
 
             // remove the slave from all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.removeSlave(host, closeGently);
+                c.removeSlave(hostPortPair, closeGently);
             }
         }
     }
@@ -156,16 +154,16 @@ public class ReplicationConnectionGroup {
      * 
      * This is a no-op if the group already has this host in a master role and not in slave role.
      * 
-     * @param host
+     * @param hostPortPair
      * @throws SQLException
      */
-    public void promoteSlaveToMaster(String host) throws SQLException {
+    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
         // remove host from slaves AND add host to masters, note that both operands need to be evaluated.
-        if (this.slaveHostList.remove(host) | this.masterHostList.add(host)) {
+        if (this.slaveHostList.remove(hostPortPair) | this.masterHostList.add(hostPortPair)) {
             this.slavesPromoted++;
 
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.promoteSlaveToMaster(host);
+                c.promoteSlaveToMaster(hostPortPair);
             }
         }
     }
@@ -175,8 +173,8 @@ public class ReplicationConnectionGroup {
      * 
      * @see #removeMasterHost(String, boolean)
      */
-    public void removeMasterHost(String host) throws SQLException {
-        this.removeMasterHost(host, true);
+    public void removeMasterHost(String hostPortPair) throws SQLException {
+        this.removeMasterHost(hostPortPair, true);
     }
 
     /**
@@ -189,35 +187,35 @@ public class ReplicationConnectionGroup {
      * 
      * This is a no-op if the group doesn't have this host in a master role.
      * 
-     * @param host
+     * @param hostPortPair
      * @param closeGently
      * @throws SQLException
      */
-    public void removeMasterHost(String host, boolean closeGently) throws SQLException {
-        if (this.masterHostList.remove(host)) {
+    public void removeMasterHost(String hostPortPair, boolean closeGently) throws SQLException {
+        if (this.masterHostList.remove(hostPortPair)) {
             // remove the master from all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.removeMasterHost(host, closeGently);
+                c.removeMasterHost(hostPortPair, closeGently);
             }
         }
     }
 
-    public int getConnectionCountWithHostAsSlave(String host) {
+    public int getConnectionCountWithHostAsSlave(String hostPortPair) {
         int matched = 0;
 
         for (ReplicationConnection c : this.replicationConnections.values()) {
-            if (c.isHostSlave(host)) {
+            if (c.isHostSlave(hostPortPair)) {
                 matched++;
             }
         }
         return matched;
     }
 
-    public int getConnectionCountWithHostAsMaster(String host) {
+    public int getConnectionCountWithHostAsMaster(String hostPortPair) {
         int matched = 0;
 
         for (ReplicationConnection c : this.replicationConnections.values()) {
-            if (c.isHostMaster(host)) {
+            if (c.isHostMaster(hostPortPair)) {
                 matched++;
             }
         }

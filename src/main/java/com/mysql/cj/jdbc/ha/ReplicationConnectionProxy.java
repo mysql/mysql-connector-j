@@ -23,6 +23,7 @@
 
 package com.mysql.cj.jdbc.ha;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -162,7 +164,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
 
         String group = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
-
         if (group != null) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
             if (this.enableJMX) {
@@ -188,22 +189,36 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             initializeSlavesConnection();
         } catch (SQLException e) {
             if (!this.allowSlaveDownConnections) {
+                if (this.connectionGroup != null) {
+                    this.connectionGroup.handleCloseConnection(this.thisAsReplicationConnection);
+                }
                 throw e;
             } // Else swallow this exception.
         }
 
+        SQLException exCaught = null;
         try {
             this.currentConnection = initializeMasterConnection();
         } catch (SQLException e) {
+            exCaught = e;
+        }
+
+        if (this.currentConnection == null) {
             if (this.allowMasterDownConnections && this.slavesConnection != null) {
                 // Set read-only and fail over to the slaves connection.
                 this.readOnly = true;
                 this.currentConnection = this.slavesConnection;
             } else {
-                throw e;
+                if (this.connectionGroup != null) {
+                    this.connectionGroup.handleCloseConnection(this.thisAsReplicationConnection);
+                }
+                if (exCaught != null) {
+                    throw exCaught;
+                }
+                throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.initializationWithEmptyHostsLists"),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
             }
         }
-
     }
 
     /**
@@ -266,16 +281,12 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     @Override
     void doClose() throws SQLException {
-        JdbcConnection prevConnection = this.currentConnection;
         if (this.masterConnection != null) {
-            this.currentConnection = this.masterConnection;
             this.masterConnection.close();
         }
         if (this.slavesConnection != null) {
-            this.currentConnection = this.slavesConnection;
             this.slavesConnection.close();
         }
-        this.currentConnection = prevConnection;
 
         if (this.connectionGroup != null) {
             this.connectionGroup.handleCloseConnection(this.thisAsReplicationConnection);
@@ -306,11 +317,47 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      */
     @Override
     Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
-        Object result = method.invoke(this.thisAsConnection, args);
-        if (result != null && result instanceof Statement) {
-            ((Statement) result).setPingTarget(this);
+        checkConnectionCapabilityForMethod(method);
+
+        boolean invokeAgain = false;
+        while (true) {
+            try {
+                Object result = method.invoke(this.thisAsConnection, args);
+                if (result != null && result instanceof Statement) {
+                    ((Statement) result).setPingTarget(this);
+                }
+                return result;
+            } catch (InvocationTargetException e) {
+                if (invokeAgain) {
+                    invokeAgain = false;
+                } else if (e.getCause() != null && e.getCause() instanceof SQLException
+                        && ((SQLException) e.getCause()).getSQLState() == SQLError.SQL_STATE_INVALID_TRANSACTION_STATE
+                        && ((SQLException) e.getCause()).getErrorCode() == MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION) {
+                    try {
+                        // Try to re-establish the connection with the last known read-only state.
+                        setReadOnly(this.readOnly);
+                        invokeAgain = true;
+                    } catch (SQLException sqlEx) {
+                        // Still not good. Swallow this exception.
+                    }
+                }
+                if (!invokeAgain) {
+                    throw e;
+                }
+            }
         }
-        return result;
+    }
+
+    /**
+     * Checks if this connection is in a state capable to invoke the provided method. If the connection is in an inconsistent state, i.e. it has no hosts for
+     * both sub-connections, then throw an invalid transaction state exception. Nevertheless, the methods defined in the ReplicationConnection interface will be
+     * allowed as they are the only way to leave from an empty hosts lists situation.
+     */
+    private void checkConnectionCapabilityForMethod(Method method) throws Throwable {
+        if (this.masterHosts.isEmpty() && this.slaveHosts.isEmpty() && !ReplicationConnection.class.isAssignableFrom(method.getDeclaringClass())) {
+            throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.noHostsInconsistentState"),
+                    SQLError.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS, true, null);
+        }
     }
 
     /**
@@ -345,7 +392,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     isMasterConn = false;
                 }
             } catch (SQLException e) {
-                if (!this.readFromMasterWhenNoSlaves) {
+                if (this.masterConnection == null || !this.readFromMasterWhenNoSlaves) {
                     throw e;
                 } // Else swallow this exception.
             }
@@ -362,7 +409,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
         } else if (!isMasterConn && (slavesPingException != null || this.slavesConnection == null)) {
             // Switch to masters connection, setting read-only state, if 'readFromMasterWhenNoSlaves=true'.
-            if (this.readFromMasterWhenNoSlaves && mastersPingException == null) {
+            if (this.masterConnection != null && this.readFromMasterWhenNoSlaves && mastersPingException == null) {
                 this.slavesConnection = null;
                 this.currentConnection = this.masterConnection;
                 this.readOnly = true;
@@ -372,7 +419,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                 throw slavesPingException;
             }
         }
-
     }
 
     private JdbcConnection initializeMasterConnection() throws SQLException {
@@ -426,10 +472,12 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return url.toString();
     }
 
-    private synchronized void switchToMasterConnection() throws SQLException {
+    private synchronized boolean switchToMasterConnection() throws SQLException {
         if (this.masterConnection == null || this.masterConnection.isClosed()) {
             try {
-                initializeMasterConnection();
+                if (initializeMasterConnection() == null) {
+                    return false;
+                }
             } catch (SQLException e) {
                 this.currentConnection = null;
                 throw e;
@@ -439,12 +487,15 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             syncSessionState(this.currentConnection, this.masterConnection, false);
             this.currentConnection = this.masterConnection;
         }
+        return true;
     }
 
-    private synchronized void switchToSlavesConnection() throws SQLException {
+    private synchronized boolean switchToSlavesConnection() throws SQLException {
         if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
             try {
-                initializeSlavesConnection();
+                if (initializeSlavesConnection() == null) {
+                    return false;
+                }
             } catch (SQLException e) {
                 this.currentConnection = null;
                 throw e;
@@ -454,19 +505,24 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             syncSessionState(this.currentConnection, this.slavesConnection, true);
             this.currentConnection = this.slavesConnection;
         }
+        return true;
     }
 
     private boolean switchToSlavesConnectionIfNecessary() throws SQLException {
-        // Switch to slaves connection if we're in read-only mode and currently on the master. This means we didn't have any slaves to use until now.
-        if (isMasterConnection() && this.readOnly) {
-            switchToSlavesConnection();
-            return true;
+        // Switch to slaves connection:
+        // - If the current connection is null. Or,
+        // - If we're currently on the master and in read-only mode - we didn't have any slaves to use until now. Or,
+        // - If we're currently on a closed master connection and there are no masters to connect to. Or,
+        // - If we're currently not on a master connection that is closed - means that we were on a closed slaves connection before it was re-initialized.
+        if (this.currentConnection == null || isMasterConnection() && (this.readOnly || this.masterHosts.isEmpty() && this.currentConnection.isClosed())
+                || !isMasterConnection() && this.currentConnection.isClosed()) {
+            return switchToSlavesConnection();
         }
         return false;
     }
 
     public synchronized JdbcConnection getCurrentConnection() {
-        return this.currentConnection;
+        return this.currentConnection == null ? LoadBalancedConnectionProxy.getNullLoadBalancedConnectionInstance() : this.currentConnection;
     }
 
     public long getConnectionGroupId() {
@@ -477,49 +533,57 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return this.masterConnection;
     }
 
-    public synchronized void promoteSlaveToMaster(String host) throws SQLException {
-        this.masterHosts.add(host);
-        this.removeSlave(host);
+    public synchronized void promoteSlaveToMaster(String hostPortPair) throws SQLException {
+        this.masterHosts.add(hostPortPair);
+        removeSlave(hostPortPair);
         if (this.masterConnection != null) {
-            this.masterConnection.addHost(host);
+            this.masterConnection.addHost(hostPortPair);
         }
     }
 
-    public synchronized void removeMasterHost(String host) throws SQLException {
-        this.removeMasterHost(host, true);
+    public synchronized void removeMasterHost(String hostPortPair) throws SQLException {
+        this.removeMasterHost(hostPortPair, true);
     }
 
-    public synchronized void removeMasterHost(String host, boolean waitUntilNotInUse) throws SQLException {
-        this.removeMasterHost(host, waitUntilNotInUse, false);
+    public synchronized void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
+        this.removeMasterHost(hostPortPair, waitUntilNotInUse, false);
     }
 
-    public synchronized void removeMasterHost(String host, boolean waitUntilNotInUse, boolean isNowSlave) throws SQLException {
+    public synchronized void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowSlave) throws SQLException {
         if (isNowSlave) {
-            this.slaveHosts.add(host);
+            this.slaveHosts.add(hostPortPair);
             resetReadFromMasterWhenNoSlaves();
-
         }
-        this.masterHosts.remove(host);
+        this.masterHosts.remove(hostPortPair);
 
-        // the master connection may have been implicitly closed by a previous op. don't let it stop us
+        // The master connection may have been implicitly closed by a previous op., don't let it stop us.
         if (this.masterConnection == null || this.masterConnection.isClosed()) {
             this.masterConnection = null;
             return;
         }
 
         if (waitUntilNotInUse) {
-            this.masterConnection.removeHostWhenNotInUse(host);
+            this.masterConnection.removeHostWhenNotInUse(hostPortPair);
         } else {
-            this.masterConnection.removeHost(host);
+            this.masterConnection.removeHost(hostPortPair);
+        }
+
+        // Close the connection if that was the last master.
+        if (this.masterHosts.isEmpty()) {
+            this.masterConnection.close();
+            this.masterConnection = null;
+
+            // Default behavior, no need to check this.readFromMasterWhenNoSlaves.
+            switchToSlavesConnectionIfNecessary();
         }
     }
 
-    public boolean isHostMaster(String host) {
-        if (host == null) {
+    public boolean isHostMaster(String hostPortPair) {
+        if (hostPortPair == null) {
             return false;
         }
         for (String masterHost : this.masterHosts) {
-            if (masterHost.equalsIgnoreCase(host)) {
+            if (masterHost.equalsIgnoreCase(hostPortPair)) {
                 return true;
             }
         }
@@ -530,27 +594,26 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return this.slavesConnection;
     }
 
-    public synchronized void addSlaveHost(String host) throws SQLException {
-        if (this.isHostSlave(host)) {
-            // throw new SQLException("Cannot add existing host!");
+    public synchronized void addSlaveHost(String hostPortPair) throws SQLException {
+        if (this.isHostSlave(hostPortPair)) {
             return;
         }
-        this.slaveHosts.add(host);
+        this.slaveHosts.add(hostPortPair);
         resetReadFromMasterWhenNoSlaves();
         if (this.slavesConnection == null) {
             initializeSlavesConnection();
             switchToSlavesConnectionIfNecessary();
         } else {
-            this.slavesConnection.addHost(host);
+            this.slavesConnection.addHost(hostPortPair);
         }
     }
 
-    public synchronized void removeSlave(String host) throws SQLException {
-        removeSlave(host, true);
+    public synchronized void removeSlave(String hostPortPair) throws SQLException {
+        removeSlave(hostPortPair, true);
     }
 
-    public synchronized void removeSlave(String host, boolean closeGently) throws SQLException {
-        this.slaveHosts.remove(host);
+    public synchronized void removeSlave(String hostPortPair, boolean closeGently) throws SQLException {
+        this.slaveHosts.remove(hostPortPair);
         resetReadFromMasterWhenNoSlaves();
 
         if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
@@ -559,28 +622,30 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
 
         if (closeGently) {
-            this.slavesConnection.removeHostWhenNotInUse(host);
+            this.slavesConnection.removeHostWhenNotInUse(hostPortPair);
         } else {
-            this.slavesConnection.removeHost(host);
+            this.slavesConnection.removeHost(hostPortPair);
         }
 
-        // close the connection if it's the last slave
+        // Close the connection if that was the last slave.
         if (this.slaveHosts.isEmpty()) {
             this.slavesConnection.close();
             this.slavesConnection = null;
 
-            // Default behavior, no need to check this.readFromMasterWhenNoSlaves
+            // Default behavior, no need to check this.readFromMasterWhenNoSlaves.
             switchToMasterConnection();
-            this.currentConnection.setReadOnly(this.readOnly); // maintain
+            if (isMasterConnection()) {
+                this.currentConnection.setReadOnly(this.readOnly); // Maintain.
+            }
         }
     }
 
-    public boolean isHostSlave(String host) {
-        if (host == null) {
+    public boolean isHostSlave(String hostPortPair) {
+        if (hostPortPair == null) {
             return false;
         }
         for (String test : this.slaveHosts) {
-            if (test.equalsIgnoreCase(host)) {
+            if (test.equalsIgnoreCase(hostPortPair)) {
                 return true;
             }
         }
@@ -591,19 +656,37 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     public synchronized void setReadOnly(boolean readOnly) throws SQLException {
         if (readOnly) {
             if (!isSlavesConnection() || this.currentConnection.isClosed()) {
+                boolean switched = true;
+                SQLException exceptionCaught = null;
                 try {
-                    switchToSlavesConnection();
+                    switched = switchToSlavesConnection();
                 } catch (SQLException e) {
-                    if (this.readFromMasterWhenNoSlaves) {
-                        switchToMasterConnection();
-                    } else {
-                        throw e;
-                    }
+                    switched = false;
+                    exceptionCaught = e;
+                }
+                if (!switched && this.readFromMasterWhenNoSlaves && switchToMasterConnection()) {
+                    exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
+                }
+                if (exceptionCaught != null) {
+                    throw exceptionCaught;
                 }
             }
         } else {
             if (!isMasterConnection() || this.currentConnection.isClosed()) {
-                switchToMasterConnection();
+                boolean switched = true;
+                SQLException exceptionCaught = null;
+                try {
+                    switched = switchToMasterConnection();
+                } catch (SQLException e) {
+                    switched = false;
+                    exceptionCaught = e;
+                }
+                if (!switched && switchToSlavesConnectionIfNecessary()) {
+                    exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
+                }
+                if (exceptionCaught != null) {
+                    throw exceptionCaught;
+                }
             }
         }
         this.readOnly = readOnly;
@@ -624,5 +707,4 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     private void resetReadFromMasterWhenNoSlaves() {
         this.readFromMasterWhenNoSlaves = this.slaveHosts.isEmpty() || this.readFromMasterWhenNoSlavesOriginal;
     }
-
 }

@@ -9136,4 +9136,340 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals("testBug22848249", this.rs.getString(1));
         testConn.close();
     }
+
+    /**
+     * Tests fix for Bug#22678872 - NPE DURING UPDATE WITH FABRIC.
+     * 
+     * Although the bug was reported against a Fabric connection, it can't be systematically reproduced there. A deep analysis revealed that the bug occurs due
+     * to a defect in the dynamic hosts management of replication connections, specifically when one or both of the internal hosts lists (masters and/or slaves)
+     * becomes empty. As such, the bug is reproducible and tested resorting to replication connections and dynamic hosts management of replication connections
+     * only.
+     * This test reproduces the relevant steps involved in the original stack trace, originated in the FabricMySQLConnectionProxy.getActiveConnection() code:
+     * - The replication connections are initialized with the same properties as in a Fabric connection.
+     * - Hosts are removed using the same options as in a Fabric connection.
+     * - The method tested after any host change is Connection.setAutoCommit(), which is the method that triggered the original NPE.
+     */
+    public void testBug22678872() throws Exception {
+        final Properties connProps = getPropertiesFromTestsuiteUrl();
+        final String host = connProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        final String port = connProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
+        final String hostPortPair = host + ":" + port;
+        final String database = connProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        final String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
+        final String password = connProps.getProperty(PropertyDefinitions.PNAME_password, "");
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_user, username);
+        props.setProperty(PropertyDefinitions.PNAME_password, password);
+        props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
+        props.setProperty("useSSL", "false");
+        props.setProperty("loadBalanceHostRemovalGracePeriod", "0"); // Speed up the test execution.
+        // Replicate the properties used in FabricMySQLConnectionProxy.getActiveConnection().
+        props.setProperty("retriesAllDown", "1");
+        props.setProperty("allowMasterDownConnections", "true");
+        props.setProperty("allowSlaveDownConnections", "true");
+        props.setProperty("readFromMasterWhenNoSlaves", "true");
+
+        String replConnGroup = "";
+        final List<String> emptyHostsList = Collections.emptyList();
+        final List<String> singleHostList = Collections.singletonList(hostPortPair);
+
+        /*
+         * Case A:
+         * - Initialize a replication connection with masters and slaves lists empty.
+         */
+        replConnGroup = "Bug22678872A";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        assertThrows(SQLException.class, "A replication connection cannot be initialized without master hosts and slave hosts, simultaneously\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), emptyHostsList, props, emptyHostsList, props);
+                        return null;
+                    }
+                });
+
+        /*
+         * Case B:
+         * - Initialize a replication connection with one master and no slaves.
+         * - Then remove the master and add it back as a slave, followed by a promotion to master.
+         */
+        replConnGroup = "Bug22678872B";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnB = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
+                emptyHostsList, props);
+        assertTrue(testConnB.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnB.isReadOnly());
+        testConnB.setAutoCommit(false); // This was the method that triggered the original NPE. 
+        ReplicationConnectionGroupManager.removeMasterHost(replConnGroup, hostPortPair, false);
+        assertThrows(SQLException.class, "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnB.setAutoCommit(false); // JDBC interface method throws SQLException.
+                        return null;
+                    }
+                });
+        assertThrows(IllegalStateException.class,
+                "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnB.isMasterConnection(); // Some Connector/J internal methods don't throw compatible exceptions. They have to be wrapped.
+                        return null;
+                    }
+                });
+
+        ReplicationConnectionGroupManager.addSlaveHost(replConnGroup, hostPortPair);
+        assertFalse(testConnB.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnB.isReadOnly());
+        testConnB.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replConnGroup, hostPortPair);
+        assertTrue(testConnB.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnB.isReadOnly());
+        testConnB.setAutoCommit(false);
+        testConnB.close();
+
+        /*
+         * Case C:
+         * - Initialize a replication connection with no masters and one slave.
+         * - Then remove the slave and add it back, followed by a promotion to master.
+         */
+        replConnGroup = "Bug22678872C";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnC = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), emptyHostsList, props,
+                singleHostList, props);
+        assertFalse(testConnC.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnC.isReadOnly());
+        testConnC.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeSlaveHost(replConnGroup, hostPortPair, true);
+        assertThrows(SQLException.class, "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnC.setAutoCommit(false);
+                        return null;
+                    }
+                });
+
+        ReplicationConnectionGroupManager.addSlaveHost(replConnGroup, hostPortPair);
+        assertFalse(testConnC.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnC.isReadOnly());
+        testConnC.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replConnGroup, hostPortPair);
+        assertTrue(testConnC.isMasterConnection()); // Connected to a master host ...
+        assertTrue(testConnC.isReadOnly()); // ... but the connection is read-only because it was initialized with no masters.
+        testConnC.setAutoCommit(false);
+        testConnC.close();
+
+        /*
+         * Case D:
+         * - Initialize a replication connection with one master and one slave.
+         * - Then remove the master host, followed by removing the slave host.
+         * - Finally add the slave host back and promote it to master.
+         */
+        replConnGroup = "Bug22678872D";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnD = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
+                singleHostList, props);
+        assertTrue(testConnD.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnD.isReadOnly());
+        testConnD.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeMasterHost(replConnGroup, hostPortPair, false);
+        assertFalse(testConnD.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnD.isReadOnly());
+        testConnD.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeSlaveHost(replConnGroup, hostPortPair, true);
+        assertThrows(SQLException.class, "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnD.setAutoCommit(false);
+                        return null;
+                    }
+                });
+
+        ReplicationConnectionGroupManager.addSlaveHost(replConnGroup, hostPortPair);
+        assertFalse(testConnD.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnD.isReadOnly());
+        testConnD.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replConnGroup, hostPortPair);
+        assertTrue(testConnD.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnD.isReadOnly());
+        testConnD.setAutoCommit(false);
+        testConnD.close();
+
+        /*
+         * Case E:
+         * - Initialize a replication connection with one master and one slave.
+         * - Set read-only.
+         * - Then remove the slave host, followed by removing the master host.
+         * - Finally add the slave host back and promote it to master.
+         */
+        replConnGroup = "Bug22678872E";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnE = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
+                singleHostList, props);
+        assertTrue(testConnE.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnE.isReadOnly());
+        testConnE.setAutoCommit(false);
+
+        testConnE.setReadOnly(true);
+        assertFalse(testConnE.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnE.isReadOnly());
+        testConnE.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeSlaveHost(replConnGroup, hostPortPair, true);
+        assertTrue(testConnE.isMasterConnection());  // Connected to a master host...
+        assertTrue(testConnE.isReadOnly()); // ... but the connection is read-only because that's how it was previously set.
+        testConnE.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeMasterHost(replConnGroup, hostPortPair, false);
+        assertThrows(SQLException.class, "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnE.setAutoCommit(false);
+                        return null;
+                    }
+                });
+
+        ReplicationConnectionGroupManager.addSlaveHost(replConnGroup, hostPortPair);
+        assertFalse(testConnE.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnE.isReadOnly());
+        testConnE.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replConnGroup, hostPortPair);
+        assertTrue(testConnE.isMasterConnection());  // Connected to a master host...
+        assertTrue(testConnE.isReadOnly()); // ... but the connection is read-only because that's how it was previously set.
+        testConnE.setAutoCommit(false);
+        testConnE.close();
+
+        /*
+         * Case F:
+         * - Initialize a replication connection with one master and one slave.
+         * - Then remove the slave host, followed by removing the master host.
+         * - Finally add the slave host back and promote it to master.
+         */
+        replConnGroup = "Bug22678872F";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnF = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
+                singleHostList, props);
+        assertTrue(testConnF.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnF.isReadOnly());
+        testConnF.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeSlaveHost(replConnGroup, hostPortPair, true);
+        assertTrue(testConnF.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnF.isReadOnly());
+        testConnF.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeMasterHost(replConnGroup, hostPortPair, false);
+        assertThrows(SQLException.class, "The replication connection is an inconsistent state due to non existing hosts in both its internal hosts lists\\.",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnF.setAutoCommit(false);
+                        return null;
+                    }
+                });
+
+        ReplicationConnectionGroupManager.addSlaveHost(replConnGroup, hostPortPair);
+        assertFalse(testConnF.isMasterConnection());  // Connected to a slave host.
+        assertTrue(testConnF.isReadOnly());
+        testConnF.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replConnGroup, hostPortPair);
+        assertTrue(testConnF.isMasterConnection());  // Connected to a master host.
+        assertFalse(testConnF.isReadOnly());
+        testConnF.setAutoCommit(false);
+        testConnF.close();
+
+        /*
+         * Case G:
+         * This covers one corner case where the attribute ReplicationConnectionProxy.currentConnection can still be null even when there are known hosts. It
+         * results from a combination of empty hosts lists with downed hosts:
+         * - Start with one host in each list.
+         * - Switch to the slaves connection (set read-only).
+         * - Remove the master host.
+         * - Make the slave only unavailable.
+         * - Promote the slave host to master.
+         * - (At this point the active connection is "null")
+         * - Finally bring up the host again and check the connection status.
+         */
+        // Use the UnreliableSocketFactory to control when the host must be downed.
+        final String newHost = "bug22678872";
+        final String newHostPortPair = newHost + ":" + port;
+        final String hostConnected = UnreliableSocketFactory.getHostConnectedStatus(newHost);
+        final String hostNotConnected = UnreliableSocketFactory.getHostFailedStatus(newHost);
+        final List<String> newSingleHostList = Collections.singletonList(newHostPortPair);
+        UnreliableSocketFactory.flushAllStaticData();
+        UnreliableSocketFactory.mapHost(newHost, host);
+        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+        replConnGroup = "Bug22678872G";
+        props.setProperty("replicationConnectionGroup", replConnGroup);
+        final ReplicationConnection testConnG = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), newSingleHostList, props,
+                newSingleHostList, props);
+        assertTrue(testConnG.isMasterConnection()); // Connected to a master host.
+        assertFalse(testConnG.isReadOnly());
+        testConnG.setAutoCommit(false);
+
+        testBug22678872CheckConnectionsHistory(hostConnected, hostConnected); // Two successful connections.
+
+        testConnG.setReadOnly(true);
+        assertFalse(testConnG.isMasterConnection()); // Connected to a slave host.
+        assertTrue(testConnG.isReadOnly());
+        testConnG.setAutoCommit(false);
+
+        ReplicationConnectionGroupManager.removeMasterHost(replConnGroup, newHostPortPair, false);
+        assertFalse(testConnG.isMasterConnection()); // Connected to a slave host.
+        assertTrue(testConnG.isReadOnly());
+        testConnG.setAutoCommit(false);
+
+        UnreliableSocketFactory.downHost(newHost); // The host (currently a slave) goes down before being promoted to master.
+        assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                testConnG.promoteSlaveToMaster(newHostPortPair);
+                return null;
+            }
+        });
+
+        testBug22678872CheckConnectionsHistory(hostNotConnected); // One failed connection attempt.
+
+        assertFalse(testConnG.isMasterConnection()); // Actually not connected, but the promotion to master succeeded. 
+        assertThrows(SQLException.class, "The connection is unusable at the current state\\. There may be no hosts to connect to or all hosts this "
+                + "connection knows may be down at the moment\\.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        testConnG.setAutoCommit(false);
+                        return null;
+                    }
+                });
+
+        testBug22678872CheckConnectionsHistory(hostNotConnected); // Another failed connection attempt.
+
+        assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                testConnG.setReadOnly(false); // Triggers a reconnection that fails. The read-only state change is canceled by the exception.
+                return null;
+            }
+        }); // This throws a comm failure because it tried to connect to the existing server and failed. The internal read-only state didn't change.
+
+        testBug22678872CheckConnectionsHistory(hostNotConnected); // Another failed connection attempt.
+
+        UnreliableSocketFactory.dontDownHost(newHost); // The host (currently a master) is up again.
+        testConnG.setAutoCommit(false); // Triggers a reconnection that succeeds.
+
+        testBug22678872CheckConnectionsHistory(hostConnected); // One successful connection.
+
+        assertTrue(testConnG.isMasterConnection()); // Connected to a master host...
+        assertTrue(testConnG.isReadOnly()); // ... but the connection is read-only because that's how it was previously set.
+        testConnG.setAutoCommit(false);
+
+        testConnG.close();
+    }
+
+    private void testBug22678872CheckConnectionsHistory(String... expectedConnectionsHistory) {
+        assertConnectionsHistory(expectedConnectionsHistory);
+        assertEquals(UnreliableSocketFactory.getHostsFromAllConnections().size(), expectedConnectionsHistory.length);
+        UnreliableSocketFactory.flushConnectionAttempts();
+    }
 }

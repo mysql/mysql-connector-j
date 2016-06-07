@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,7 +47,6 @@ public class ReplicationConnectionGroupManager {
     }
 
     public static void registerJmx() throws SQLException {
-
         if (hasRegisteredJmx) {
             return;
         }
@@ -73,33 +72,31 @@ public class ReplicationConnectionGroupManager {
             s.add(o);
         }
         return s;
-
     }
 
-    public static void addSlaveHost(String group, String host) throws SQLException {
+    public static void addSlaveHost(String group, String hostPortPair) throws SQLException {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
         for (ReplicationConnectionGroup cg : s) {
-            cg.addSlaveHost(host);
+            cg.addSlaveHost(hostPortPair);
         }
     }
 
-    public static void removeSlaveHost(String group, String host) throws SQLException {
-        removeSlaveHost(group, host, true);
+    public static void removeSlaveHost(String group, String hostPortPair) throws SQLException {
+        removeSlaveHost(group, hostPortPair, true);
     }
 
-    public static void removeSlaveHost(String group, String host, boolean closeGently) throws SQLException {
+    public static void removeSlaveHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
         for (ReplicationConnectionGroup cg : s) {
-            cg.removeSlaveHost(host, closeGently);
+            cg.removeSlaveHost(hostPortPair, closeGently);
         }
     }
 
-    public static void promoteSlaveToMaster(String group, String newMasterHost) throws SQLException {
+    public static void promoteSlaveToMaster(String group, String hostPortPair) throws SQLException {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
         for (ReplicationConnectionGroup cg : s) {
-            cg.promoteSlaveToMaster(newMasterHost);
+            cg.promoteSlaveToMaster(hostPortPair);
         }
-
     }
 
     public static long getSlavePromotionCount(String group) throws SQLException {
@@ -112,17 +109,16 @@ public class ReplicationConnectionGroupManager {
             }
         }
         return promoted;
-
     }
 
-    public static void removeMasterHost(String group, String host) throws SQLException {
-        removeMasterHost(group, host, true);
+    public static void removeMasterHost(String group, String hostPortPair) throws SQLException {
+        removeMasterHost(group, hostPortPair, true);
     }
 
-    public static void removeMasterHost(String group, String host, boolean closeGently) throws SQLException {
+    public static void removeMasterHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
         for (ReplicationConnectionGroup cg : s) {
-            cg.removeMasterHost(host, closeGently);
+            cg.removeMasterHost(hostPortPair, closeGently);
         }
     }
 
@@ -137,7 +133,6 @@ public class ReplicationConnectionGroupManager {
             sep = ",";
         }
         return sb.toString();
-
     }
 
     public static int getNumberOfMasterPromotion(String groupFilter) {
@@ -149,20 +144,20 @@ public class ReplicationConnectionGroupManager {
         return total;
     }
 
-    public static int getConnectionCountWithHostAsSlave(String groupFilter, String host) {
+    public static int getConnectionCountWithHostAsSlave(String groupFilter, String hostPortPair) {
         int total = 0;
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
         for (ReplicationConnectionGroup cg : s) {
-            total += cg.getConnectionCountWithHostAsSlave(host);
+            total += cg.getConnectionCountWithHostAsSlave(hostPortPair);
         }
         return total;
     }
 
-    public static int getConnectionCountWithHostAsMaster(String groupFilter, String host) {
+    public static int getConnectionCountWithHostAsMaster(String groupFilter, String hostPortPair) {
         int total = 0;
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
         for (ReplicationConnectionGroup cg : s) {
-            total += cg.getConnectionCountWithHostAsMaster(host);
+            total += cg.getConnectionCountWithHostAsMaster(hostPortPair);
         }
         return total;
     }
@@ -201,7 +196,5 @@ public class ReplicationConnectionGroupManager {
             connections += cg.getActiveConnectionCount();
         }
         return connections;
-
     }
-
 }

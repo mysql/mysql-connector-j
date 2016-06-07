@@ -623,6 +623,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
         info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
         info.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
+        info.setProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
         info.setProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
         info.setProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
         this.currentConnection = ReplicationConnectionProxy.createProxyInstance(this.connectionString, masterHost, info, slaveHosts, info);
