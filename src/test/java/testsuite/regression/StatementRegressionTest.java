@@ -74,6 +74,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -9211,5 +9214,58 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         });
         cstmt.close();
+    }
+
+    /**
+     * Tests fix for Bug#23188498 - CLIENT HANG WHILE USING SERVERPREPSTMT WHEN PROFILESQL=TRUE AND USEIS=TRUE.
+     */
+    public void testBug23188498() throws Exception {
+        createTable("testBug23188498", "(id INT)");
+
+        JdbcConnection testConn = (JdbcConnection) getConnectionWithProps("useServerPrepStmts=true,useInformationSchema=true,profileSQL=true");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        // Insert data:
+        this.pstmt = testConn.prepareStatement("INSERT INTO testBug23188498 (id) VALUES (?)");
+        this.pstmt.setInt(1, 10);
+        final PreparedStatement localPStmt1 = this.pstmt;
+        Future<Void> future1 = executor.submit(new Callable<Void>() {
+            public Void call() throws Exception {
+                localPStmt1.executeUpdate();
+                return null;
+            }
+        });
+        try {
+            future1.get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // The connection hung, forcibly closing it releases resources.
+            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            fail("Connection hung after executeUpdate().");
+        }
+        this.pstmt.close();
+
+        // Fetch data:
+        this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23188498 WHERE id > ?");
+        this.pstmt.setInt(1, 1);
+        final PreparedStatement localPStmt2 = this.pstmt;
+        Future<ResultSet> future2 = executor.submit(new Callable<ResultSet>() {
+            public ResultSet call() throws Exception {
+                return localPStmt2.executeQuery();
+            }
+        });
+        try {
+            this.rs = future2.get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // The connection hung, forcibly closing it releases resources.
+            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            fail("Connection hung after executeQuery().");
+        }
+        assertTrue(this.rs.next());
+        assertEquals(10, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+        this.pstmt.close();
+
+        executor.shutdownNow();
+        testConn.close();
     }
 }
