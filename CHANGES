@@ -2,6 +2,8 @@
 # $Id$
 06-17-16 - Version 6.0.3
 
+  - Fix for Bug#22730682, ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().
+
   - Fix for Bug#77171 (21181466), On every connect getting sql_mode from server creates unnecessary exception.
 
   - Fix for Bug#79343 (22353759), NPE in TimeUtil.loadTimeZoneMappings causing server time zone value unrecognized.
