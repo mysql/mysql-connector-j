@@ -2,6 +2,8 @@
 # $Id$
 06-17-16 - Version 6.0.3
 
+  - Fix for Bug#79343 (22353759), NPE in TimeUtil.loadTimeZoneMappings causing server time zone value unrecognized.
+
   - Fix for Bug#22038729, X DevAPI: Any API call after a failed CALL PROC() results in hang
 
   - Remove Schema.drop(), Collection.drop() and replaced with X DevAPI's session.dropSchema() and session.dropCollection().
