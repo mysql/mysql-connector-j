@@ -1841,4 +1841,24 @@ public class StringUtils {
             return 0;
         }
     }
+
+    /**
+     * Checks is the CharSequence contains digits only. No leading sign and thousands or decimal separators are allowed.
+     * 
+     * @param cs
+     *            The CharSequence to check.
+     * @return
+     *         {@code true} if the CharSequence not empty and contains only digits, {@code false} otherwise.
+     */
+    public static boolean isStrictlyNumeric(CharSequence cs) {
+        if (cs == null || cs.length() == 0) {
+            return false;
+        }
+        for (int i = 0; i < cs.length(); i++) {
+            if (!Character.isDigit(cs.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

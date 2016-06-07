@@ -2492,30 +2492,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.session.checkForCharsetMismatch();
 
         if (this.session.getServerVariables().containsKey("sql_mode")) {
-            int sqlMode = 0;
-
             String sqlModeAsString = this.session.getServerVariable("sql_mode");
-            try {
-                sqlMode = Integer.parseInt(sqlModeAsString);
-            } catch (NumberFormatException nfe) {
-                // newer versions of the server has this as a string-y list...
-                sqlMode = 0;
-
-                if (sqlModeAsString != null) {
-                    if (sqlModeAsString.indexOf("ANSI_QUOTES") != -1) {
-                        sqlMode |= 4;
-                    }
-
-                    if (sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1) {
-                        this.noBackslashEscapes = true;
-                    }
-                }
-            }
-
-            if ((sqlMode & 4) > 0) {
-                this.useAnsiQuotes = true;
-            } else {
-                this.useAnsiQuotes = false;
+            if (StringUtils.isStrictlyNumeric(sqlModeAsString)) {
+                // Old MySQL servers used to have sql_mode as a numeric value.
+                this.useAnsiQuotes = (Integer.parseInt(sqlModeAsString) & 4) > 0;
+            } else if (sqlModeAsString != null) {
+                this.useAnsiQuotes = sqlModeAsString.indexOf("ANSI_QUOTES") != -1;
+                this.noBackslashEscapes = sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1;
             }
         }
 

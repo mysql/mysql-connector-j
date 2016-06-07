@@ -8474,4 +8474,51 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(expectedHost, ((JdbcConnection) testConn).getHost());
         assertEquals(expectedReadOnly, testConn.isReadOnly());
     }
+
+    /**
+     * Tests fix for Bug#77171 - On every connect getting sql_mode from server creates unnecessary exception.
+     * 
+     * This fix is a refactoring on ConnectorImpl.initializePropsFromServer() to improve performance when processing the SQL_MODE value. No behavior was
+     * changed. This test guarantees that nothing was broken in these matters, for the relevant MySQL versions, after this fix.
+     */
+    public void testBug77171() throws Exception {
+        String sqlMode = getMysqlVariable("sql_mode");
+        sqlMode = removeSqlMode("ANSI_QUOTES", sqlMode);
+        sqlMode = removeSqlMode("NO_BACKSLASH_ESCAPES", sqlMode);
+        String newSqlMode = sqlMode;
+        if (sqlMode.length() > 0) {
+            sqlMode += ",";
+        }
+
+        Properties props = new Properties();
+        props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
+        Connection testConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
+        assertFalse(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        testConn.close();
+
+        props.clear();
+        newSqlMode = sqlMode + "ANSI_QUOTES";
+        props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
+        testConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
+        assertFalse(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        testConn.close();
+
+        props.clear();
+        newSqlMode = sqlMode + "NO_BACKSLASH_ESCAPES";
+        props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
+        testConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
+        assertTrue(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        testConn.close();
+
+        props.clear();
+        newSqlMode = sqlMode + "ANSI_QUOTES,NO_BACKSLASH_ESCAPES";
+        props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
+        testConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
+        assertTrue(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        testConn.close();
+    }
 }
