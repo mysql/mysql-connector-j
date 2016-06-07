@@ -175,12 +175,10 @@ public class MysqlIO implements ResultsHandler {
             }
         }
 
-        // There is no EOL packet after fields when CLIENT_DEPRECATE_EOF is set
+        // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set
         if (!isEOFDeprecated() ||
                 // if we asked to use cursor then there should be an OK packet here
-                (this.protocol.versionMeetsMinimum(5, 0, 2) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
-                        && isBinaryEncoded && callingStatement != null && callingStatement.getFetchSize() != 0
-                        && callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY)) {
+                (this.protocol.versionMeetsMinimum(5, 0, 2) && callingStatement != null && isBinaryEncoded && callingStatement.isCursorRequired())) {
 
             packet = this.protocol.readPacket(this.protocol.getReusablePacket());
             readServerStatusForResultSets(packet);

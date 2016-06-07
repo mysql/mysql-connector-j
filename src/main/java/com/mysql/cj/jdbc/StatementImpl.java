@@ -2707,4 +2707,8 @@ public class StatementImpl implements Statement {
     public long getServerStatementId() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("Statement.65"));
     }
+
+    boolean isCursorRequired() throws SQLException {
+        return false;
+    }
 }

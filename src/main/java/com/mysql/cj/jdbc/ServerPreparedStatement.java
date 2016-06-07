@@ -982,6 +982,19 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
+    @Override
+    boolean isCursorRequired() throws SQLException {
+        // we only create cursor-backed result sets if
+        // a) The query is a SELECT
+        // b) The server supports it
+        // c) We know it is forward-only (note this doesn't preclude updatable result sets)
+        // d) The user has set a fetch size
+        //return this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+        //        && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
+        return this.resultFields != null && this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
+                && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
+    }
+
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
