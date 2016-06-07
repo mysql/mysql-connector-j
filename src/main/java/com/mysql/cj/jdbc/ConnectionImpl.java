@@ -53,6 +53,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.Timer;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.CacheAdapter;
@@ -465,8 +466,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private int[] oldHistCounts = null;
 
-    /** A map of currently open statements */
-    private Map<Statement, Statement> openStatements = new HashMap<Statement, Statement>();
+    /**
+     * An array of currently open statements.
+     * Copy-on-write used here to avoid ConcurrentModificationException when statements unregister themselves while we iterate over the list.
+     */
+    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<Statement>();
 
     private LRUCache parsedCallableStatementCache;
 
@@ -1172,30 +1176,16 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private void closeAllOpenStatements() throws SQLException {
         SQLException postponedException = null;
 
-        if (this.openStatements != null) {
-            List<Statement> currentlyOpenStatements = new ArrayList<Statement>(); // we need this to
-            // avoid ConcurrentModificationEx
-
-            for (Iterator<Statement> iter = this.openStatements.keySet().iterator(); iter.hasNext();) {
-                currentlyOpenStatements.add(iter.next());
+        for (Statement stmt : this.openStatements) {
+            try {
+                ((StatementImpl) stmt).realClose(false, true);
+            } catch (SQLException sqlEx) {
+                postponedException = sqlEx; // throw it later, cleanup all statements first
             }
+        }
 
-            int numStmts = currentlyOpenStatements.size();
-
-            for (int i = 0; i < numStmts; i++) {
-                StatementImpl stmt = (StatementImpl) currentlyOpenStatements.get(i);
-
-                try {
-                    stmt.realClose(false, true);
-                } catch (SQLException sqlEx) {
-                    postponedException = sqlEx; // throw it later, cleanup all
-                    // statements first
-                }
-            }
-
-            if (postponedException != null) {
-                throw postponedException;
-            }
+        if (postponedException != null) {
+            throw postponedException;
         }
     }
 
@@ -1757,7 +1747,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             //
             // Retrieve any 'lost' prepared statements if re-connecting
             //
-            Iterator<Statement> statementIter = this.openStatements.values().iterator();
+            Iterator<Statement> statementIter = this.openStatements.iterator();
 
             //
             // We build a list of these outside the map of open statements, because in the process of re-preparing, we might end up having to close a prepared
@@ -2109,14 +2099,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public int getActiveStatementCount() {
-        // Might not have one of these if not tracking open resources
-        if (this.openStatements != null) {
-            synchronized (this.openStatements) {
-                return this.openStatements.size();
-            }
-        }
-
-        return 0;
+        return this.openStatements.size();
     }
 
     /**
@@ -3332,7 +3315,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         } finally {
             ProfilerEventHandlerFactory.removeInstance(this.session);
 
-            this.openStatements = null;
+            this.openStatements.clear();
             this.statementInterceptors = null;
             this.exceptionInterceptor = null;
 
@@ -3399,9 +3382,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *            the Statement instance to remove
      */
     public void registerStatement(Statement stmt) {
-        synchronized (this.openStatements) {
-            this.openStatements.put(stmt, stmt);
-        }
+        this.openStatements.addIfAbsent(stmt);
     }
 
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
@@ -4174,11 +4155,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *            the Statement instance to remove
      */
     public void unregisterStatement(Statement stmt) {
-        if (this.openStatements != null) {
-            synchronized (this.openStatements) {
-                this.openStatements.remove(stmt);
-            }
-        }
+        this.openStatements.remove(stmt);
     }
 
     public boolean useAnsiQuotedIdentifiers() {

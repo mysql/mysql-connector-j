@@ -2150,8 +2150,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                             }
 
                             if (!found) {
-                                throw SQLError.createSQLException(Messages.getString("CallableStatement.24"), SQLError.SQL_STATE_GENERAL_ERROR,
-                                        this.session.getExceptionInterceptor());
+                                throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[] { outParamInfo.paramName }),
+                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                             }
                         }
 

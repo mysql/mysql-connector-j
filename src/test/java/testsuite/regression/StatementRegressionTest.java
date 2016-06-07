@@ -9197,4 +9197,19 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(1, this.rs.getInt(1));
         sspsConn.close();
     }
+
+    /**
+     * Tests fix for Bug#71131 - Poor error message in CallableStatement.java.
+     */
+    public void testBug71131() throws Exception {
+        createProcedure("testBug71131", "(IN r DOUBLE, OUT p DOUBLE) BEGIN SET p = 2 * r * PI(); END");
+        final CallableStatement cstmt = this.conn.prepareCall("{ CALL testBug71131 (?, 5) }");
+        assertThrows(SQLException.class, "Parameter p is not registered as an output parameter", new Callable<Void>() {
+            public Void call() throws Exception {
+                cstmt.execute();
+                return null;
+            }
+        });
+        cstmt.close();
+    }
 }

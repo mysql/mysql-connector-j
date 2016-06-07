@@ -2204,68 +2204,59 @@ public class StatementImpl implements Statement {
     protected void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
 
-        if (locallyScopedConn == null) {
+        if (locallyScopedConn == null || this.isClosed) {
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
-
-            // additional check in case Statement was closed while current thread was waiting for lock
-            if (this.isClosed) {
-                return;
-            }
-
-            if (this.useUsageAdvisor) {
-                if (!calledExplicitly) {
-                    String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
-
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
-                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
-                }
-            }
-
-            if (closeOpenResults) {
-                closeOpenResults = !(this.holdResultsOpenOverClose || this.dontTrackOpenResources.getValue());
-            }
-
-            if (closeOpenResults) {
-                if (this.results != null) {
-
-                    try {
-                        this.results.close();
-                    } catch (Exception ex) {
-                    }
-                }
-
-                if (this.generatedKeysResults != null) {
-
-                    try {
-                        this.generatedKeysResults.close();
-                    } catch (Exception ex) {
-                    }
-                }
-
-                closeAllOpenResults();
-            }
-
-            if (this.connection != null) {
-                if (!this.dontTrackOpenResources.getValue()) {
-                    this.connection.unregisterStatement(this);
-                }
-            }
-
-            this.isClosed = true;
-
-            this.results = null;
-            this.generatedKeysResults = null;
-            this.connection = null;
-            this.session = null;
-            this.warningChain = null;
-            this.openResults = null;
-            this.batchedGeneratedKeys = null;
-            this.localInfileInputStream = null;
-            this.pingTarget = null;
+        // do it ASAP to reduce the chance of calling this method concurrently from ConnectionImpl.closeAllOpenStatements()
+        if (!this.dontTrackOpenResources.getValue()) {
+            locallyScopedConn.unregisterStatement(this);
         }
+
+        if (this.useUsageAdvisor) {
+            if (!calledExplicitly) {
+                String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
+
+                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
+                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+            }
+        }
+
+        if (closeOpenResults) {
+            closeOpenResults = !(this.holdResultsOpenOverClose || this.dontTrackOpenResources.getValue());
+        }
+
+        if (closeOpenResults) {
+            if (this.results != null) {
+
+                try {
+                    this.results.close();
+                } catch (Exception ex) {
+                }
+            }
+
+            if (this.generatedKeysResults != null) {
+
+                try {
+                    this.generatedKeysResults.close();
+                } catch (Exception ex) {
+                }
+            }
+
+            closeAllOpenResults();
+        }
+
+        this.isClosed = true;
+
+        this.results = null;
+        this.generatedKeysResults = null;
+        this.connection = null;
+        this.session = null;
+        this.warningChain = null;
+        this.openResults = null;
+        this.batchedGeneratedKeys = null;
+        this.localInfileInputStream = null;
+        this.pingTarget = null;
     }
 
     /**
