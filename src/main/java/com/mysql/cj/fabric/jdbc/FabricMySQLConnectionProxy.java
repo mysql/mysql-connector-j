@@ -1479,4 +1479,9 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return getActiveConnection().getClientInfoProviderImpl();
     }
 
+    @Override
+    public String getHostPortPair() {
+        return null;
+    }
+
 }

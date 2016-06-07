@@ -4726,4 +4726,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.session;
     }
 
+    @Override
+    public String getHostPortPair() {
+        return this.origHostToConnectTo + ":" + this.origPortToConnectTo;
+    }
+
 }

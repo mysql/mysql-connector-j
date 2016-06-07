@@ -685,4 +685,9 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     public JdbcPropertySet getPropertySet() {
         return getActiveMySQLConnection().getPropertySet();
     }
+
+    @Override
+    public String getHostPortPair() {
+        return getActiveMySQLConnection().getHostPortPair();
+    }
 }

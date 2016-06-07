@@ -325,6 +325,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     String getHost();
 
+    String getHostPortPair();
+
     void setProxy(JdbcConnection proxy);
 
     /**

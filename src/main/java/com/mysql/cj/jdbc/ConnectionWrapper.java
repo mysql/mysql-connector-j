@@ -1197,4 +1197,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.getClientInfoProviderImpl();
     }
 
+    @Override
+    public String getHostPortPair() {
+        return this.mc.getHostPortPair();
+    }
+
 }
