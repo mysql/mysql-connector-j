@@ -8368,7 +8368,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         /*
          * Run-time case 3a: Running with Slaves down (readFromMasterWhenNoSlaves=false).
          */
-        props.setProperty("readFromMasterWhenNoSlaves", "false");
+        props.setProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "false");
         downedHosts.clear();
         UnreliableSocketFactory.flushAllStaticData();
 
@@ -8541,7 +8541,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection testConn;
 
         final String lbConnGroup1 = "Bug22730682LB1";
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup1);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup1);
         testConn = getLoadBalancedConnection(3, dummyHost, props);
         assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup1));
         assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup1).contains(dummyHost));
@@ -8552,7 +8552,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testConn.close();
 
         final String lbConnGroup2 = "Bug22730682LB2";
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup2);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup2);
         testConn = getLoadBalancedConnection(3, dummyHost, props);
         assertEquals(2, ConnectionGroupManager.getActiveHostCount(lbConnGroup2));
         assertTrue(ConnectionGroupManager.getActiveHostLists(lbConnGroup2).contains(dummyHost));
@@ -8612,7 +8612,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("********************************************************************************");
 
         Properties props = new Properties();
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
         testConn.setAutoCommit(false);
 
@@ -8776,7 +8776,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("********************************************************************************");
 
         Properties props = new Properties();
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
         testConn.setAutoCommit(false);
 
@@ -8945,7 +8945,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * Initial connection will be able to use all hosts, even after removed from the connection group.
          */
         Properties props = new Properties();
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3, host4 }, props);
         testConn.setAutoCommit(false);
 
@@ -9056,7 +9056,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * Initial connection will be able to use only the hosts available when it was initialized, even after adding new ones to the connection group.
          */
         Properties props = new Properties();
-        props.setProperty("loadBalanceConnectionGroup", lbConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2 }, props);
         testConn.setAutoCommit(false);
 
@@ -9162,13 +9162,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_user, username);
         props.setProperty(PropertyDefinitions.PNAME_password, password);
         props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
-        props.setProperty("useSSL", "false");
-        props.setProperty("loadBalanceHostRemovalGracePeriod", "0"); // Speed up the test execution.
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0"); // Speed up the test execution.
         // Replicate the properties used in FabricMySQLConnectionProxy.getActiveConnection().
-        props.setProperty("retriesAllDown", "1");
-        props.setProperty("allowMasterDownConnections", "true");
-        props.setProperty("allowSlaveDownConnections", "true");
-        props.setProperty("readFromMasterWhenNoSlaves", "true");
+        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
+        props.setProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
+        props.setProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
+        props.setProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
 
         String replConnGroup = "";
         final List<String> emptyHostsList = Collections.emptyList();
@@ -9179,7 +9179,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Initialize a replication connection with masters and slaves lists empty.
          */
         replConnGroup = "Bug22678872A";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         assertThrows(SQLException.class, "A replication connection cannot be initialized without master hosts and slave hosts, simultaneously\\.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
@@ -9194,7 +9194,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Then remove the master and add it back as a slave, followed by a promotion to master.
          */
         replConnGroup = "Bug22678872B";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnB = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
                 emptyHostsList, props);
         assertTrue(testConnB.isMasterConnection());  // Connected to a master host.
@@ -9233,7 +9233,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Then remove the slave and add it back, followed by a promotion to master.
          */
         replConnGroup = "Bug22678872C";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnC = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), emptyHostsList, props,
                 singleHostList, props);
         assertFalse(testConnC.isMasterConnection());  // Connected to a slave host.
@@ -9267,7 +9267,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872D";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnD = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
                 singleHostList, props);
         assertTrue(testConnD.isMasterConnection());  // Connected to a master host.
@@ -9307,7 +9307,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872E";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnE = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
                 singleHostList, props);
         assertTrue(testConnE.isMasterConnection());  // Connected to a master host.
@@ -9351,7 +9351,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872F";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnF = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
                 singleHostList, props);
         assertTrue(testConnF.isMasterConnection());  // Connected to a master host.
@@ -9403,10 +9403,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final List<String> newSingleHostList = Collections.singletonList(newHostPortPair);
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost(newHost, host);
-        props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         replConnGroup = "Bug22678872G";
-        props.setProperty("replicationConnectionGroup", replConnGroup);
+        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         final ReplicationConnection testConnG = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), newSingleHostList, props,
                 newSingleHostList, props);
         assertTrue(testConnG.isMasterConnection()); // Connected to a master host.

@@ -8736,8 +8736,8 @@ public class StatementRegressionTest extends BaseTestCase {
         final TimeZone defaultTZ = TimeZone.getDefault();
 
         final Properties testConnProps = new Properties();
-        testConnProps.setProperty("useTimezone", "true"); // TODO property was removed in 6.0
-        testConnProps.setProperty("cacheDefaultTimezone", "false"); // TODO property isn't defined
+        //testConnProps.setProperty("useTimezone", "true"); // TODO property was removed in 6.0
+        //testConnProps.setProperty("cacheDefaultTimezone", "false"); // TODO property isn't defined
 
         Connection testConn = null;
 
@@ -9291,17 +9291,17 @@ public class StatementRegressionTest extends BaseTestCase {
                     + "f4 INT DEFAULT 1, f5 INT DEFAULT 1, fl LONGBLOB)");
 
             final Properties props = new Properties();
-            props.setProperty("useSSL", Boolean.toString(useSSL));
+            props.setProperty(PropertyDefinitions.PNAME_useSSL, Boolean.toString(useSSL));
             if (useSSL) {
-                props.setProperty("requireSSL", "true");
-                props.setProperty("verifyServerCertificate", "false");
+                props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
+                props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
             }
-            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
-            props.setProperty("useCursorFetch", Boolean.toString(useCursor));
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, Boolean.toString(useCursor));
             if (useCursor) {
-                props.setProperty("defaultFetchSize", "1");
+                props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "1");
             }
-            props.setProperty("useCompression", Boolean.toString(useCompr));
+            props.setProperty(PropertyDefinitions.PNAME_useCompression, Boolean.toString(useCompr));
 
             final JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
 

@@ -4632,9 +4632,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
             sqlMode = removeSqlMode("NO_ZERO_DATE", sqlMode);
             props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
         }
-        props.setProperty("traceProtocol", "false");
-        props.setProperty("defaultFetchSize", "5");
-        props.setProperty("useCursorFetch", "true");
+        props.setProperty(PropertyDefinitions.PNAME_traceProtocol, "false");
+        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "5");
+        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
         Connection testConn = getConnectionWithProps(props);
         Statement testStmt = testConn.createStatement();
 
