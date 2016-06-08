@@ -24,13 +24,12 @@
 package com.mysql.cj.mysqla.io;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.StringUtils;
@@ -101,7 +100,7 @@ public class DebugBufferingPacketReader implements PacketReader {
         StringBuilder packetDump = new StringBuilder(DEBUG_MSG_LEN + MysqlaConstants.HEADER_LENGTH + packetPayload.length());
         packetDump.append("Server ");
         packetDump.append(reuse.isPresent() ? "(re-used) " : "(new) ");
-        packetDump.append(Arrays.toString(buf.getByteBuffer()));
+        packetDump.append(buf.toString());
         packetDump.append(" --------------------> Client\n");
         packetDump.append("\nPacket payload:\n\n");
         packetDump.append(this.lastHeaderPayload);

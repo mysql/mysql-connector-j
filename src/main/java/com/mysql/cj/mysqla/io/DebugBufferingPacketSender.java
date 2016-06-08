@@ -24,23 +24,25 @@
 package com.mysql.cj.mysqla.io;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedList;
 
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.PacketSender;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
 public class DebugBufferingPacketSender implements PacketSender {
     private PacketSender packetSender;
-    private List<StringBuilder> packetDebugBuffer;
+    private LinkedList<StringBuilder> packetDebugBuffer;
+    private ReadableProperty<Integer> packetDebugBufferSize;
     private int maxPacketDumpLength = 1024;
 
     private static final int DEBUG_MSG_LEN = 64;
 
-    public DebugBufferingPacketSender(PacketSender packetSender, List<StringBuilder> packetDebugBuffer) {
+    public DebugBufferingPacketSender(PacketSender packetSender, LinkedList<StringBuilder> packetDebugBuffer, ReadableProperty<Integer> packetDebugBufferSize) {
         this.packetSender = packetSender;
         this.packetDebugBuffer = packetDebugBuffer;
+        this.packetDebugBufferSize = packetDebugBufferSize;
     }
 
     public void setMaxPacketDumpLength(int maxPacketDumpLength) {
@@ -58,7 +60,7 @@ public class DebugBufferingPacketSender implements PacketSender {
         StringBuilder packetDump = new StringBuilder(DEBUG_MSG_LEN + MysqlaConstants.HEADER_LENGTH + packetPayload.length());
 
         packetDump.append("Client ");
-        packetDump.append(Arrays.toString(packet));
+        packetDump.append(packet.toString());
         packetDump.append("--------------------> Server\n");
         packetDump.append("\nPacket payload:\n\n");
         packetDump.append(packetPayload);
@@ -67,7 +69,11 @@ public class DebugBufferingPacketSender implements PacketSender {
             packetDump.append("\nNote: Packet of " + packetLen + " bytes truncated to " + this.maxPacketDumpLength + " bytes.\n");
         }
 
-        this.packetDebugBuffer.add(packetDump);
+        if ((this.packetDebugBuffer.size() + 1) > this.packetDebugBufferSize.getValue()) {
+            this.packetDebugBuffer.removeFirst();
+        }
+
+        this.packetDebugBuffer.addLast(packetDump);
     }
 
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {

@@ -383,7 +383,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
             this.packetDebugRingBuffer = new LinkedList<StringBuilder>();
 
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer);
+            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer,
+                    this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
             this.packetReader = new DebugBufferingPacketReader(this.packetReader, this.packetDebugRingBuffer,
                     this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
         }

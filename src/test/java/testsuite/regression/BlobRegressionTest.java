@@ -403,4 +403,34 @@ public class BlobRegressionTest extends BaseTestCase {
         c1.setString(2, s1, 7, 4);
         assertEquals("CDataata", c1.getSubString(1L, (int) c1.length()));
     }
+
+    /**
+     * Tests fix for Bug#23535571 - EXCESSIVE MEMORY USAGE WHEN ENABLEPACKETDEBUG=TRUE
+     * 
+     * @throws Exception
+     */
+    public void testBug23535571() throws Exception {
+
+        createTable("testBug23535571", "(blobField LONGBLOB)");
+        this.stmt.executeUpdate("INSERT INTO testBug23535571 (blobField) VALUES (NULL)");
+
+        // Insert 1 record with 18M data
+        byte[] blobData = new byte[18 * 1024 * 1024];
+        this.pstmt = this.conn.prepareStatement("UPDATE testBug23535571 SET blobField=?");
+        this.pstmt.setBytes(1, blobData);
+        this.pstmt.executeUpdate();
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
+        Connection con = getConnectionWithProps(props);
+
+        for (int i = 0; i < 100; i++) {
+            this.pstmt = con.prepareStatement("select * from testBug23535571");
+            this.rs = this.pstmt.executeQuery();
+            this.rs.close();
+            this.pstmt.close();
+            Thread.sleep(100);
+        }
+
+    }
 }

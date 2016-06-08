@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,7 +32,7 @@ public class ReadableIntegerProperty extends AbstractReadableProperty<Integer> i
 
     private static final long serialVersionUID = 9208223182595760858L;
 
-    protected ReadableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
+    public ReadableIntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 

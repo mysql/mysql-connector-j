@@ -26,11 +26,15 @@ package com.mysql.cj.mysqla.io;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
+
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.IntegerPropertyDefinition;
+import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.ReadableIntegerProperty;
 
 /**
  * Tests for {@link DebugBufferingPacketSender}.
@@ -38,8 +42,11 @@ import org.junit.Test;
 public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
     @Test
     public void packetPushedToDebugBufferTest() throws IOException {
-        List<StringBuilder> debugBuffer = new ArrayList<StringBuilder>();
-        DebugBufferingPacketSender sender = new DebugBufferingPacketSender(getNoopPacketSender(), debugBuffer);
+        LinkedList<StringBuilder> debugBuffer = new LinkedList<StringBuilder>();
+        DebugBufferingPacketSender sender = new DebugBufferingPacketSender(getNoopPacketSender(), debugBuffer,
+                new ReadableIntegerProperty(new IntegerPropertyDefinition(PropertyDefinitions.PNAME_packetDebugBufferSize, 20,
+                        PropertyDefinitions.RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3",
+                        PropertyDefinitions.CATEGORY_DEBUGING_PROFILING, 7, 0, Integer.MAX_VALUE)));
         byte packet[] = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 };
         sender.send(packet, 8, (byte) 0);
 
