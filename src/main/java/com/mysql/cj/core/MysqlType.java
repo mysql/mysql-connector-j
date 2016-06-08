@@ -38,8 +38,8 @@ public enum MysqlType implements SQLType {
 
     /**
      * DECIMAL[(M[,D])] [UNSIGNED] [ZEROFILL]
-     * A packed “exact” fixed-point number. M is the total number of digits (the precision) and D is the number of digits
-     * after the decimal point (the scale). The decimal point and (for negative numbers) the “-” sign are not counted in M.
+     * A packed "exact" fixed-point number. M is the total number of digits (the precision) and D is the number of digits
+     * after the decimal point (the scale). The decimal point and (for negative numbers) the "-" sign are not counted in M.
      * If D is 0, values have no decimal point or fractional part. The maximum number of digits (M) for DECIMAL is 65.
      * The maximum number of supported decimals (D) is 30. If D is omitted, the default is 0. If M is omitted, the default is 10.
      * 
@@ -173,7 +173,7 @@ public enum MysqlType implements SQLType {
      * A timestamp. The range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC.
      * TIMESTAMP values are stored as the number of seconds since the epoch ('1970-01-01 00:00:00' UTC).
      * A TIMESTAMP cannot represent the value '1970-01-01 00:00:00' because that is equivalent to 0 seconds
-     * from the epoch and the value 0 is reserved for representing '0000-00-00 00:00:00', the “zero” TIMESTAMP value.
+     * from the epoch and the value 0 is reserved for representing '0000-00-00 00:00:00', the "zero" TIMESTAMP value.
      * An optional fsp value in the range from 0 to 6 may be given to specify fractional seconds precision. A value
      * of 0 signifies that there is no fractional part. If omitted, the default precision is 0.
      * 
