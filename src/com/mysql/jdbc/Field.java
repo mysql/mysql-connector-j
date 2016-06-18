@@ -190,6 +190,13 @@ public class Field {
                 this.encoding = "UTF-16";
             }
 
+
+            // Fix chinese(or other non-ascii encoding) garbled in [mysql 5.7 JSON type]
+            // Use UTF-8 encoding , because mysql use utf8mb4 for storing JSON type  ;
+            if (this.mysqlType == MysqlDefs.FIELD_TYPE_JSON) {
+                this.encoding = "UTF-8";
+            }
+
             // Handle VARBINARY/BINARY (server doesn't have a different type for this
 
             boolean isBinary = isBinary();

@@ -1,4 +1,4 @@
-/*
+﻿/*
   Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -4970,5 +4970,33 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(ts1, this.rs.getTimestamp(2));
         assertEquals(ts2, this.rs.getTimestamp(3));
         assertFalse(this.rs.next());
+    }
+
+
+    /**
+     * Tests fix for Bug#80631 - ResultSet.getString return garbled result with json type data
+     */
+    public void testBug80631() throws Exception {
+        //MySQL 5.7.9 (2015-10-21, General Availability)
+        if (!versionMeetsMinimum(5, 7, 9)) {
+            return;
+        }
+
+        createTable("testBug80631", "(row_id int, json_field json)");
+        String chinese = "{\"chinese\": \"\u4e2d\u6587\"}";
+        String japanese = "{\"japanese\": \"\u685c\"}";
+        String emoji = "{\"emoji\": \"\ue415\"}";
+
+        System.out.println("INSERT INTO testBug80631 VALUES (1, '" + chinese + "'), (2, '" + japanese + "'), (3, '" + emoji + "')");
+        this.stmt.executeUpdate("INSERT INTO testBug80631 VALUES (1, '" + chinese + "'), (2, '" + japanese + "'), (3, '" + emoji + "')");
+
+        this.rs = this.stmt.executeQuery("SELECT json_field FROM testBug80631 ORDER BY row_id ASC");
+
+        assertTrue(this.rs.next());
+        assertEquals(chinese, this.rs.getString(1));
+        assertTrue(this.rs.next());
+        assertEquals(japanese, this.rs.getString(1));
+        assertTrue(this.rs.next());
+        assertEquals(emoji, this.rs.getString(1));
     }
 }
