@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+mm-dd-yy - Version 6.0.4
+
 06-17-16 - Version 6.0.3
 
   - Fix for Bug#23535571, EXCESSIVE MEMORY USAGE WHEN ENABLEPACKETDEBUG=TRUE.
