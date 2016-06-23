@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package com.mysql.cj.core.io;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 /**
  * A value factory for creating {@link java.math.BigDecimal} values.
@@ -75,6 +76,11 @@ public class BigDecimalValueFactory extends DefaultValueFactory<BigDecimal> {
     @Override
     public BigDecimal createFromDouble(double d) {
         return adjustResult(BigDecimal.valueOf(d));
+    }
+
+    @Override
+    public BigDecimal createFromBit(byte[] bytes, int offset, int length) {
+        return new BigDecimal(new BigInteger(ByteBuffer.allocate(length + 1).put((byte) 0).put(bytes, offset, length).array()));
     }
 
     public String getTargetTypeName() {

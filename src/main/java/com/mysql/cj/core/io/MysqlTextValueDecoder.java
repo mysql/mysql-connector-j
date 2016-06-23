@@ -31,7 +31,6 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * Implementation of {@link com.mysql.cj.api.io.ValueDecoder} for the MySQL text protocol. All values will be received as <i>LengthEncodedString</i> values.
@@ -234,6 +233,6 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(MysqlaUtils.bitToLong(bytes, offset, length));
+        return vf.createFromBit(bytes, offset, length);
     }
 }

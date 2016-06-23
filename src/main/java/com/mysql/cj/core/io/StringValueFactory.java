@@ -92,6 +92,16 @@ public class StringValueFactory implements ValueFactory<String> {
         return StringUtils.toString(bytes, offset, length, this.encoding);
     }
 
+    @Override
+    public String createFromBit(byte[] bytes, int offset, int length) {
+        // truncate leading zeroes to provide correct conversion to string
+        while (length > 1 && bytes[offset] == 0) {
+            length--;
+            offset++;
+        }
+        return StringUtils.toString(bytes, offset, length, this.encoding);
+    }
+
     public String createFromNull() {
         return null;
     }

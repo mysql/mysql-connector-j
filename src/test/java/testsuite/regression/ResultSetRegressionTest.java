@@ -27,6 +27,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -4757,5 +4758,192 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(ts1, this.rs.getTimestamp(2));
         assertEquals(ts2, this.rs.getTimestamp(3));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug22931433() throws Exception {
+        createTable("testBug22931433",
+                "(c1 bit(8), c2 bit(16), c3 bit(24), c4 bit(32), c5 bit(40), c6 bit(48), c7 bit(56), c8 bit(64), cb1 bit(1), cb2 bit(64))");
+        this.stmt.executeUpdate(
+                "INSERT INTO testBug22931433 (c1, c2, c3, c4, c5, c6, c7, c8, cb1, cb2) values('a', 'ba', 'cba', 'dcba', 'edcba', 'fedcba', 'gfedcba', 'hgfedcba', b'00000001', -1)");
+        this.stmt.executeUpdate(
+                "INSERT INTO testBug22931433 (c1, c2, c3, c4, c5, c6, c7, c8, cb1, cb2) values(b'11001100', b'1100110011001100', b'110011001100110011001100', b'11001100110011001100110011001100',"
+                        + " b'1100110011001100110011001100110011001100', b'110011001100110011001100110011001100110011001100', b'11001100110011001100110011001100110011001100110011001100',"
+                        + " b'1100110011001100110011001100110011001100110011001100110011001100', 0x00, -2)");
+
+        ResultSet rs1 = this.stmt.executeQuery("SELECT * FROM testBug22931433");
+        rs1.next();
+
+        assertEquals('a', rs1.getByte("c1"));
+        assertEquals('a', rs1.getByte("c2"));
+        assertEquals('a', rs1.getByte("c3"));
+        assertEquals('a', rs1.getByte("c4"));
+        assertEquals('a', rs1.getByte("c5"));
+        assertEquals('a', rs1.getByte("c6"));
+        assertEquals('a', rs1.getByte("c7"));
+        assertEquals('a', rs1.getByte("c8"));
+
+        assertEquals(97, rs1.getShort("c1"));
+        assertEquals(25185, rs1.getShort("c2"));
+        assertEquals(25185, rs1.getShort("c3")); // truncated to 2 bytes
+        assertEquals(25185, rs1.getShort("c4")); // truncated to 2 bytes
+        assertEquals(25185, rs1.getShort("c5")); // truncated to 2 bytes
+        assertEquals(25185, rs1.getShort("c6")); // truncated to 2 bytes
+        assertEquals(25185, rs1.getShort("c7")); // truncated to 2 bytes
+        assertEquals(25185, rs1.getShort("c8")); // truncated to 2 bytes
+
+        assertEquals(97, rs1.getInt("c1"));
+        assertEquals(25185, rs1.getInt("c2"));
+        assertEquals(6513249, rs1.getInt("c3"));
+        assertEquals(1684234849, rs1.getInt("c4"));
+        assertEquals(1684234849, rs1.getInt("c5")); // truncated to 4 bytes
+        assertEquals(1684234849, rs1.getInt("c6")); // truncated to 4 bytes
+        assertEquals(1684234849, rs1.getInt("c7")); // truncated to 4 bytes
+        assertEquals(1684234849, rs1.getInt("c8")); // truncated to 4 bytes
+
+        assertEquals(97, rs1.getLong("c1"));
+        assertEquals(25185, rs1.getLong("c2"));
+        assertEquals(6513249, rs1.getLong("c3"));
+        assertEquals(1684234849, rs1.getLong("c4"));
+        assertEquals(435475931745L, rs1.getLong("c5"));
+        assertEquals(112585661964897L, rs1.getLong("c6"));
+        assertEquals(29104508263162465L, rs1.getLong("c7"));
+        assertEquals(7523094288207667809L, rs1.getLong("c8"));
+
+        assertEquals(BigDecimal.valueOf(97), rs1.getBigDecimal("c1"));
+        assertEquals(BigDecimal.valueOf(25185), rs1.getBigDecimal("c2"));
+        assertEquals(BigDecimal.valueOf(6513249), rs1.getBigDecimal("c3"));
+        assertEquals(BigDecimal.valueOf(1684234849), rs1.getBigDecimal("c4"));
+        assertEquals(BigDecimal.valueOf(435475931745L), rs1.getBigDecimal("c5"));
+        assertEquals(BigDecimal.valueOf(112585661964897L), rs1.getBigDecimal("c6"));
+        assertEquals(BigDecimal.valueOf(29104508263162465L), rs1.getBigDecimal("c7"));
+        assertEquals(BigDecimal.valueOf(7523094288207667809L), rs1.getBigDecimal("c8"));
+
+        assertEquals(97f, rs1.getFloat("c1"));
+        assertEquals(25185f, rs1.getFloat("c2"));
+        assertEquals(6513249f, rs1.getFloat("c3"));
+        assertEquals(1684234849f, rs1.getFloat("c4"));
+        assertEquals(435475931745f, rs1.getFloat("c5"));
+        assertEquals(112585661964897f, rs1.getFloat("c6"));
+        assertEquals(29104508263162465f, rs1.getFloat("c7"));
+        assertEquals(7523094288207667809f, rs1.getFloat("c8"));
+
+        assertEquals(Double.valueOf(97), Double.valueOf(rs1.getDouble("c1")));
+        assertEquals(Double.valueOf(25185), Double.valueOf(rs1.getDouble("c2")));
+        assertEquals(Double.valueOf(6513249), Double.valueOf(rs1.getDouble("c3")));
+        assertEquals(Double.valueOf(1684234849), Double.valueOf(rs1.getDouble("c4")));
+        assertEquals(Double.valueOf(435475931745L), Double.valueOf(rs1.getDouble("c5")));
+        assertEquals(Double.valueOf(112585661964897L), Double.valueOf(rs1.getDouble("c6")));
+        assertEquals(Double.valueOf(29104508263162465L), Double.valueOf(rs1.getDouble("c7")));
+        assertEquals(Double.valueOf(7523094288207667809L), Double.valueOf(rs1.getDouble("c8")));
+
+        assertEquals(true, rs1.getBoolean("c1"));
+        assertEquals(true, rs1.getBoolean("cb1"));
+        assertEquals(true, rs1.getBoolean("cb2"));
+
+        assertEquals("a", rs1.getString("c1"));
+        assertEquals("ba", rs1.getString("c2"));
+        assertEquals("cba", rs1.getString("c3"));
+        assertEquals("dcba", rs1.getString("c4"));
+        assertEquals("edcba", rs1.getString("c5"));
+        assertEquals("fedcba", rs1.getString("c6"));
+        assertEquals("gfedcba", rs1.getString("c7"));
+        assertEquals("hgfedcba", rs1.getString("c8"));
+
+        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.getDate("c1");
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.getTime("c1");
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Timestamp", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.getTimestamp("c1");
+                return null;
+            }
+        });
+
+        // test negative values
+        rs1.next();
+
+        assertEquals(-52, rs1.getByte("c1"));
+        assertEquals(-52, rs1.getByte("c2"));
+        assertEquals(-52, rs1.getByte("c3"));
+        assertEquals(-52, rs1.getByte("c4"));
+        assertEquals(-52, rs1.getByte("c5"));
+        assertEquals(-52, rs1.getByte("c6"));
+        assertEquals(-52, rs1.getByte("c7"));
+        assertEquals(-52, rs1.getByte("c8"));
+
+        assertEquals(204, rs1.getShort("c1"));
+        assertEquals(-13108, rs1.getShort("c2"));
+        assertEquals(-13108, rs1.getShort("c3")); // truncated to 2 bytes
+        assertEquals(-13108, rs1.getShort("c4")); // truncated to 2 bytes
+        assertEquals(-13108, rs1.getShort("c5")); // truncated to 2 bytes
+        assertEquals(-13108, rs1.getShort("c6")); // truncated to 2 bytes
+        assertEquals(-13108, rs1.getShort("c7")); // truncated to 2 bytes
+        assertEquals(-13108, rs1.getShort("c8")); // truncated to 2 bytes
+
+        assertEquals(204, rs1.getInt("c1"));
+        assertEquals(52428, rs1.getInt("c2"));
+        assertEquals(13421772, rs1.getInt("c3"));
+        assertEquals(-858993460, rs1.getInt("c4"));
+        assertEquals(-858993460, rs1.getInt("c5")); // truncated to 4 bytes
+        assertEquals(-858993460, rs1.getInt("c6")); // truncated to 4 bytes
+        assertEquals(-858993460, rs1.getInt("c7")); // truncated to 4 bytes
+        assertEquals(-858993460, rs1.getInt("c8")); // truncated to 4 bytes
+
+        assertEquals(204, rs1.getLong("c1"));
+        assertEquals(52428, rs1.getLong("c2"));
+        assertEquals(13421772, rs1.getLong("c3"));
+        assertEquals(3435973836L, rs1.getLong("c4"));
+        assertEquals(879609302220L, rs1.getLong("c5"));
+        assertEquals(225179981368524L, rs1.getLong("c6"));
+        assertEquals(57646075230342348L, rs1.getLong("c7"));
+        assertEquals(-3689348814741910324L, rs1.getLong("c8"));
+
+        assertEquals(BigDecimal.valueOf(204), rs1.getBigDecimal("c1"));
+        assertEquals(BigDecimal.valueOf(52428), rs1.getBigDecimal("c2"));
+        assertEquals(BigDecimal.valueOf(13421772), rs1.getBigDecimal("c3"));
+        assertEquals(BigDecimal.valueOf(3435973836L), rs1.getBigDecimal("c4"));
+        assertEquals(BigDecimal.valueOf(879609302220L), rs1.getBigDecimal("c5"));
+        assertEquals(BigDecimal.valueOf(225179981368524L), rs1.getBigDecimal("c6"));
+        assertEquals(BigDecimal.valueOf(57646075230342348L), rs1.getBigDecimal("c7"));
+        assertEquals(new BigDecimal(new BigInteger("14757395258967641292")), rs1.getBigDecimal("c8"));
+
+        assertEquals(204f, rs1.getFloat("c1"));
+        assertEquals(52428f, rs1.getFloat("c2"));
+        assertEquals(13421772f, rs1.getFloat("c3"));
+        assertEquals(3435973836f, rs1.getFloat("c4"));
+        assertEquals(879609302220f, rs1.getFloat("c5"));
+        assertEquals(225179981368524f, rs1.getFloat("c6"));
+        assertEquals(57646075230342348f, rs1.getFloat("c7"));
+        assertEquals(14757395258967641292f, rs1.getFloat("c8"));
+
+        assertEquals(Double.valueOf(204), Double.valueOf(rs1.getDouble("c1")));
+        assertEquals(Double.valueOf(52428), Double.valueOf(rs1.getDouble("c2")));
+        assertEquals(Double.valueOf(13421772), Double.valueOf(rs1.getDouble("c3")));
+        assertEquals(Double.valueOf(3435973836L), Double.valueOf(rs1.getDouble("c4")));
+        assertEquals(Double.valueOf(879609302220L), Double.valueOf(rs1.getDouble("c5")));
+        assertEquals(Double.valueOf(225179981368524L), Double.valueOf(rs1.getDouble("c6")));
+        assertEquals(Double.valueOf(57646075230342348L), Double.valueOf(rs1.getDouble("c7")));
+        assertEquals(Double.valueOf(new BigInteger("14757395258967641292").doubleValue()), Double.valueOf(rs1.getDouble("c8")));
+
+        assertEquals(false, rs1.getBoolean("c8"));
+        assertEquals(false, rs1.getBoolean("cb1"));
+        assertEquals(false, rs1.getBoolean("cb2"));
     }
 }

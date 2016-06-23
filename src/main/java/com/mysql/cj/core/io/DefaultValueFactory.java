@@ -71,6 +71,10 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         return unsupported("VARCHAR/TEXT/BLOB");
     }
 
+    public T createFromBit(byte[] bytes, int offset, int length) {
+        return unsupported("BIT");
+    }
+
     public T createFromNull() {
         return null;
     }

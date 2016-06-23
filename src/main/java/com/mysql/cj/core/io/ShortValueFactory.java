@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,26 +26,38 @@ package com.mysql.cj.core.io;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.mysqla.MysqlaUtils;
+
 /**
  * A value factory for creating short values.
  */
 public class ShortValueFactory extends DefaultValueFactory<Short> {
+    @Override
     public Short createFromBigInteger(BigInteger i) {
         return (short) i.intValue();
     }
 
+    @Override
     public Short createFromLong(long l) {
         return (short) l;
     }
 
+    @Override
     public Short createFromBigDecimal(BigDecimal d) {
         return (short) d.longValue();
     }
 
+    @Override
     public Short createFromDouble(double d) {
         return (short) d;
     }
 
+    @Override
+    public Short createFromBit(byte[] bytes, int offset, int length) {
+        return createFromLong(MysqlaUtils.bitToLong(bytes, offset, length));
+    }
+
+    @Override
     public Short createFromNull() {
         return (short) 0;
     }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,8 @@ package com.mysql.cj.core.io;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.mysqla.MysqlaUtils;
+
 /**
  * A value factory for creating {@link java.lang.Boolean} values.
  */
@@ -38,20 +40,25 @@ public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
 
     @Override
     public Boolean createFromBigInteger(BigInteger i) {
-        return i.compareTo(BigInteger.valueOf(0)) > 0;
+        return i.compareTo(BigInteger.valueOf(0)) > 0 || i.compareTo(BigInteger.valueOf(-1)) == 0;
     }
 
     @Override
     // getBoolean() from DOUBLE, DECIMAL are required by JDBC spec....
     public Boolean createFromDouble(double d) {
-        // this means that 0.1 will be TRUE
-        return d > 0;
+        // this means that 0.1 or -1 will be TRUE
+        return d > 0 || d == -1.0d;
     }
 
     @Override
     public Boolean createFromBigDecimal(BigDecimal d) {
-        // this means that 0.1 will be TRUE
-        return d.compareTo(BigDecimal.valueOf(0)) > 0;
+        // this means that 0.1 or -1 will be TRUE
+        return d.compareTo(BigDecimal.valueOf(0)) > 0 || d.compareTo(BigDecimal.valueOf(-1)) == 0;
+    }
+
+    @Override
+    public Boolean createFromBit(byte[] bytes, int offset, int length) {
+        return createFromLong(MysqlaUtils.bitToLong(bytes, offset, length));
     }
 
     @Override

@@ -57,24 +57,13 @@ public class MysqlaUtils {
     }
 
     /**
-     * Interpret a BIT value as an integer.
+     * Interpret a BIT value as a long.
      */
     public static long bitToLong(byte[] bytes, int offset, int length) {
-        int shift = 0;
-
-        long[] steps = new long[length];
-
-        for (int i = offset + length - 1; i >= offset; i--) {
-            steps[i] = (long) (bytes[i] & 0xff) << shift;
-            shift += 8;
-        }
-
         long valueAsLong = 0;
-
         for (int i = 0; i < length; i++) {
-            valueAsLong |= steps[i];
+            valueAsLong = valueAsLong << 8 | bytes[offset + i] & 0xff;
         }
-
         return valueAsLong;
     }
 

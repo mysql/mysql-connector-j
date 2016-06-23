@@ -64,7 +64,7 @@ public class MysqlxDecoder {
         Map<Integer, DecoderFunction> mysqlTypeToDecoderFunction = new HashMap<>();
 
         // TODO: implement remaining types when server is ready
-        //mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_BIT, instance::decodeBit);
+        mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_BIT, instance::decodeBit);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DATETIME, instance::decodeDateOrTimestamp);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_DOUBLE, instance::decodeDouble);
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_ENUM, instance::decodeString);
@@ -80,6 +80,13 @@ public class MysqlxDecoder {
         mysqlTypeToDecoderFunction.put(MysqlaConstants.FIELD_TYPE_VAR_STRING, instance::decodeString);
 
         MYSQL_TYPE_TO_DECODER_FUNCTION = Collections.unmodifiableMap(mysqlTypeToDecoderFunction);
+    }
+
+    public <T> T decodeBit(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
+        // protobuf stores an unsigned 64bit int into a java long with the highest bit as the sign, we re-interpret it using ByteBuffer (with a prepended
+        // 0-byte to avoid negative)
+        byte[] bytes = ByteBuffer.allocate(Long.BYTES + 1).put((byte) 0).putLong(inputStream.readUInt64()).array();
+        return vf.createFromBit(bytes, 0, Long.BYTES + 1);
     }
 
     // TODO: vf should have the createFromString()? ARGH I can't decide which side should know the character set
@@ -173,7 +180,7 @@ public class MysqlxDecoder {
     }
 
     public <T> T decodeUnsignedLong(CodedInputStream inputStream, ValueFactory<T> vf) throws IOException {
-        // protobuf stores an unsigned 64bit int into a java long with the highest bit as the sign, we re-interpret it using ByteBuffer (with a pre-pended
+        // protobuf stores an unsigned 64bit int into a java long with the highest bit as the sign, we re-interpret it using ByteBuffer (with a prepended
         // 0-byte to avoid negative)
         BigInteger v = new BigInteger(ByteBuffer.allocate(9).put((byte) 0).putLong(inputStream.readUInt64()).array());
         return vf.createFromBigInteger(v);
