@@ -120,4 +120,11 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
         }
         throw new DataConversionException(Messages.getString("ResultSet.UnableToInterpretString", new Object[] { s }));
     }
+
+    @Override
+    public T createFromBit(byte[] bytes, int offset, int length) {
+        MysqlTextValueDecoder stringInterpreter = new MysqlTextValueDecoder();
+        ValueFactory<T> vf = this.targetVf;
+        return stringInterpreter.decodeBit(bytes, offset, length, vf);
+    }
 }

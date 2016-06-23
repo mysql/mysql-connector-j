@@ -23,7 +23,10 @@
 
 package testsuite.mysqlx.internal;
 
+import static org.junit.Assert.fail;
+
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.x.XSessionFactory;
 import com.mysql.cj.core.ConnectionString;
@@ -128,5 +131,25 @@ public class InternalMysqlxBaseTestCase {
         protocol.readStatementExecuteOk();
 
         return collName;
+    }
+
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+        try {
+            testRoutine.call();
+        } catch (Throwable t) {
+            if (!throwable.isAssignableFrom(t.getClass())) {
+                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            }
+
+            if (!t.getMessage().matches(msgMatchesRegex)) {
+                fail("The error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
+            }
+
+            return throwable.cast(t);
+        }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
+
+        // never reaches here
+        return null;
     }
 }

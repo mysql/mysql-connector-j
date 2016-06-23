@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,22 +30,32 @@ import java.math.BigInteger;
  * A value factory for creating byte values.
  */
 public class ByteValueFactory extends DefaultValueFactory<Byte> {
+    @Override
     public Byte createFromBigInteger(BigInteger i) {
         return (byte) i.intValue();
     }
 
+    @Override
     public Byte createFromLong(long l) {
         return (byte) l;
     }
 
+    @Override
     public Byte createFromBigDecimal(BigDecimal d) {
         return (byte) d.longValue();
     }
 
+    @Override
     public Byte createFromDouble(double d) {
         return (byte) d;
     }
 
+    @Override
+    public Byte createFromBit(byte[] bytes, int offset, int length) {
+        return bytes[offset + length - 1];
+    }
+
+    @Override
     public Byte createFromNull() {
         return 0;
     }

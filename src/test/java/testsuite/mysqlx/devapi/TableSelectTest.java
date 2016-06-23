@@ -27,9 +27,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,6 +41,7 @@ import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SelectStatement;
 import com.mysql.cj.api.x.Table;
+import com.mysql.cj.core.exceptions.DataConversionException;
 
 /**
  * @todo
@@ -164,4 +167,171 @@ public class TableSelectTest extends TableTest {
         Row row = table.select("count(*) + 10").execute().next();
         assertEquals(14, row.getInt(0));
     }
+
+    /**
+     * Tests fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    @Test
+    public void testBug22931433() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        sqlUpdate("drop table if exists testBug22931433");
+        sqlUpdate(
+                "create table testBug22931433(c1 bit(8), c2 bit(16), c3 bit(24), c4 bit(32), c5 bit(40), c6 bit(48), c7 bit(56), c8 bit(64), cb1 bit(1), cb2 bit(64))");
+
+        Table table = this.schema.getTable("testBug22931433");
+        table.insert("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "cb1", "cb2")
+                .values("a", "ba", "cba", "dcba", "edcba", "fedcba", "gfedcba", "hgfedcba", 0x01, -1).execute();
+        table.insert("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "cb1", "cb2")
+                .values(0xcc, 0xcccc, 0xcccccc, 0xccccccccL, 0xccccccccccL, 0xccccccccccccL, 0xccccccccccccccL, 0xccccccccccccccccL, 0x00, -2).execute();
+
+        RowResult rows = table.select("c1, c2, c3, c4, c5, c6, c7, c8, cb1, cb2").execute();
+
+        Row row = rows.next();
+
+        assertEquals('a', row.getByte("c1"));
+        assertEquals('a', row.getByte("c2"));
+        assertEquals('a', row.getByte("c3"));
+        assertEquals('a', row.getByte("c4"));
+        assertEquals('a', row.getByte("c5"));
+        assertEquals('a', row.getByte("c6"));
+        assertEquals('a', row.getByte("c7"));
+        assertEquals('a', row.getByte("c8"));
+
+        assertEquals(97, row.getInt("c1"));
+        assertEquals(25185, row.getInt("c2"));
+        assertEquals(6513249, row.getInt("c3"));
+        assertEquals(1684234849, row.getInt("c4"));
+        assertEquals(1684234849, row.getInt("c5")); // truncated to 4 bytes
+        assertEquals(1684234849, row.getInt("c6")); // truncated to 4 bytes
+        assertEquals(1684234849, row.getInt("c7")); // truncated to 4 bytes
+        assertEquals(1684234849, row.getInt("c8")); // truncated to 4 bytes
+
+        assertEquals(97, row.getLong("c1"));
+        assertEquals(25185, row.getLong("c2"));
+        assertEquals(6513249, row.getLong("c3"));
+        assertEquals(1684234849, row.getLong("c4"));
+        assertEquals(435475931745L, row.getLong("c5"));
+        assertEquals(112585661964897L, row.getLong("c6"));
+        assertEquals(29104508263162465L, row.getLong("c7"));
+        assertEquals(7523094288207667809L, row.getLong("c8"));
+
+        assertEquals(BigDecimal.valueOf(97), row.getBigDecimal("c1"));
+        assertEquals(BigDecimal.valueOf(25185), row.getBigDecimal("c2"));
+        assertEquals(BigDecimal.valueOf(6513249), row.getBigDecimal("c3"));
+        assertEquals(BigDecimal.valueOf(1684234849), row.getBigDecimal("c4"));
+        assertEquals(BigDecimal.valueOf(435475931745L), row.getBigDecimal("c5"));
+        assertEquals(BigDecimal.valueOf(112585661964897L), row.getBigDecimal("c6"));
+        assertEquals(BigDecimal.valueOf(29104508263162465L), row.getBigDecimal("c7"));
+        assertEquals(BigDecimal.valueOf(7523094288207667809L), row.getBigDecimal("c8"));
+
+        assertEquals(Double.valueOf(97), Double.valueOf(row.getDouble("c1")));
+        assertEquals(Double.valueOf(25185), Double.valueOf(row.getDouble("c2")));
+        assertEquals(Double.valueOf(6513249), Double.valueOf(row.getDouble("c3")));
+        assertEquals(Double.valueOf(1684234849), Double.valueOf(row.getDouble("c4")));
+        assertEquals(Double.valueOf(435475931745L), Double.valueOf(row.getDouble("c5")));
+        assertEquals(Double.valueOf(112585661964897L), Double.valueOf(row.getDouble("c6")));
+        assertEquals(Double.valueOf(29104508263162465L), Double.valueOf(row.getDouble("c7")));
+        assertEquals(Double.valueOf(7523094288207667809L), Double.valueOf(row.getDouble("c8")));
+
+        assertEquals(true, row.getBoolean("c1"));
+        assertEquals(true, row.getBoolean("cb1"));
+        assertEquals(true, row.getBoolean("cb2"));
+
+        assertEquals("a", row.getString("c1"));
+        assertEquals("ba", row.getString("c2"));
+        assertEquals("cba", row.getString("c3"));
+        assertEquals("dcba", row.getString("c4"));
+        assertEquals("edcba", row.getString("c5"));
+        assertEquals("fedcba", row.getString("c6"));
+        assertEquals("gfedcba", row.getString("c7"));
+        assertEquals("hgfedcba", row.getString("c8"));
+
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
+            public Void call() throws Exception {
+                row.getDate("c1");
+                return null;
+            }
+        });
+
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to com.mysql.cj.x.json.DbDoc", new Callable<Void>() {
+            public Void call() throws Exception {
+                row.getDbDoc("c1");
+                return null;
+            }
+        });
+
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
+            public Void call() throws Exception {
+                row.getTime("c1");
+                return null;
+            }
+        });
+
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Timestamp", new Callable<Void>() {
+            public Void call() throws Exception {
+                row.getTimestamp("c1");
+                return null;
+            }
+        });
+
+        // test negative values
+        Row row2 = rows.next();
+
+        assertEquals(-52, row2.getByte("c1"));
+        assertEquals(-52, row2.getByte("c2"));
+        assertEquals(-52, row2.getByte("c3"));
+        assertEquals(-52, row2.getByte("c4"));
+        assertEquals(-52, row2.getByte("c5"));
+        assertEquals(-52, row2.getByte("c6"));
+        assertEquals(-52, row2.getByte("c7"));
+        assertEquals(-52, row2.getByte("c8"));
+
+        assertEquals(204, row2.getInt("c1"));
+        assertEquals(52428, row2.getInt("c2"));
+        assertEquals(13421772, row2.getInt("c3"));
+        assertEquals(-858993460, row2.getInt("c4"));
+        assertEquals(-858993460, row2.getInt("c5")); // truncated to 4 bytes
+        assertEquals(-858993460, row2.getInt("c6")); // truncated to 4 bytes
+        assertEquals(-858993460, row2.getInt("c7")); // truncated to 4 bytes
+        assertEquals(-858993460, row2.getInt("c8")); // truncated to 4 bytes
+
+        assertEquals(204, row2.getLong("c1"));
+        assertEquals(52428, row2.getLong("c2"));
+        assertEquals(13421772, row2.getLong("c3"));
+        assertEquals(3435973836L, row2.getLong("c4"));
+        assertEquals(879609302220L, row2.getLong("c5"));
+        assertEquals(225179981368524L, row2.getLong("c6"));
+        assertEquals(57646075230342348L, row2.getLong("c7"));
+        assertEquals(-3689348814741910324L, row2.getLong("c8"));
+
+        assertEquals(BigDecimal.valueOf(204), row2.getBigDecimal("c1"));
+        assertEquals(BigDecimal.valueOf(52428), row2.getBigDecimal("c2"));
+        assertEquals(BigDecimal.valueOf(13421772), row2.getBigDecimal("c3"));
+        assertEquals(BigDecimal.valueOf(3435973836L), row2.getBigDecimal("c4"));
+        assertEquals(BigDecimal.valueOf(879609302220L), row2.getBigDecimal("c5"));
+        assertEquals(BigDecimal.valueOf(225179981368524L), row2.getBigDecimal("c6"));
+        assertEquals(BigDecimal.valueOf(57646075230342348L), row2.getBigDecimal("c7"));
+        assertEquals(new BigDecimal(new BigInteger("14757395258967641292")), row2.getBigDecimal("c8"));
+
+        assertEquals(Double.valueOf(204), Double.valueOf(row2.getDouble("c1")));
+        assertEquals(Double.valueOf(52428), Double.valueOf(row2.getDouble("c2")));
+        assertEquals(Double.valueOf(13421772), Double.valueOf(row2.getDouble("c3")));
+        assertEquals(Double.valueOf(3435973836L), Double.valueOf(row2.getDouble("c4")));
+        assertEquals(Double.valueOf(879609302220L), Double.valueOf(row2.getDouble("c5")));
+        assertEquals(Double.valueOf(225179981368524L), Double.valueOf(row2.getDouble("c6")));
+        assertEquals(Double.valueOf(57646075230342348L), Double.valueOf(row2.getDouble("c7")));
+        assertEquals(Double.valueOf(new BigInteger("14757395258967641292").doubleValue()), Double.valueOf(row2.getDouble("c8")));
+
+        assertEquals(false, row2.getBoolean("c8"));
+        assertEquals(false, row2.getBoolean("cb1"));
+        assertEquals(false, row2.getBoolean("cb2"));
+
+        sqlUpdate("drop table if exists testBug22931433");
+    }
+
 }
