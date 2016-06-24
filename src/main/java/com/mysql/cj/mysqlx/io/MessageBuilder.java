@@ -260,11 +260,11 @@ public class MessageBuilder {
         // TODO: encoding for all this?
         String encoding = "UTF8";
         byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
-        byte[] passwordBytes = password == null ? new byte[] {} : StringUtils.getBytes(password, encoding);
+        byte[] passwordBytes = password == null || password.length() == 0 ? new byte[] {} : StringUtils.getBytes(password, encoding);
         byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
 
         byte[] hashedPassword = passwordBytes;
-        if (password != null) {
+        if (password != null && password.length() > 0) {
             hashedPassword = Security.scramble411(passwordBytes, salt);
             // protocol dictates *-prefixed hex string as hashed password
             hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();

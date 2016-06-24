@@ -30,6 +30,7 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 
 import org.junit.After;
@@ -40,6 +41,7 @@ import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.x.MysqlxSessionFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
     @Before
@@ -144,6 +146,33 @@ public class SessionTest extends DevApiBaseTestCase {
             fail("Large packet should cause an exception");
         } catch (CJPacketTooBigException ex) {
             // expected
+        }
+    }
+
+    /**
+     * Tests fix for Bug#21690043, CONNECT FAILS WHEN PASSWORD IS BLANK.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    @Test
+    public void testBug21690043() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        try {
+            this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED BY ''").execute();
+
+            Properties props = new Properties();
+            props.putAll(this.testProperties);
+            props.setProperty("user", "bug21690043user1");
+            props.setProperty("password", "");
+            new MysqlxSessionFactory().getSession(props);
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            this.session.sql("DROP USER 'bug21690043user1'@'%'").execute();
         }
     }
 }

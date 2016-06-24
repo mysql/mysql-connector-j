@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.4
 
+  - Fix for Bug#21690043, CONNECT FAILS WHEN PASSWORD IS BLANK.
+
   - Fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.
 
 06-17-16 - Version 6.0.3
