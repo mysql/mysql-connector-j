@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.MessageLite;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 
@@ -86,7 +87,7 @@ public class AsyncMessageWriter implements MessageWriter {
         int payloadSize = size + 1;
         // we check maxAllowedPacket against payloadSize as that's considered the "packet size" (not including 4 byte size header)
         if (this.maxAllowedPacket > 0 && payloadSize > this.maxAllowedPacket) {
-            throw new CJPacketTooBigException(size, this.maxAllowedPacket);
+            throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { size, this.maxAllowedPacket }));
         }
         // for debugging
         //System.err.println("Initiating write of message (size=" + payloadSize + ", tag=" + com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages.Type.valueOf(type) + ")");

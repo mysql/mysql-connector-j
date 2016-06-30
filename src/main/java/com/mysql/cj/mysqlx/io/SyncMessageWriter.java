@@ -30,6 +30,7 @@ import java.nio.ByteOrder;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 
@@ -63,7 +64,7 @@ public class SyncMessageWriter implements MessageWriter, PacketSentTimeHolder {
             int type = MessageWriter.getTypeForMessageClass(msg.getClass());
             int size = 1 + msg.getSerializedSize();
             if (this.maxAllowedPacket > 0 && size > this.maxAllowedPacket) {
-                throw new CJPacketTooBigException(size, this.maxAllowedPacket);
+                throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { size, this.maxAllowedPacket }));
             }
             // for debugging
             // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
