@@ -30,6 +30,8 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
+import com.mysql.fabric.FabricConnection;
+import com.mysql.fabric.Server;
 import com.mysql.fabric.jdbc.FabricMySQLConnection;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
@@ -202,6 +204,55 @@ public class TestRegressions extends BaseFabricTestCase {
             fail("Server ID should change to reflect new topology");
         }
 
+        this.conn.close();
+    }
+
+    /**
+     * Test Bug#82094 - ConcurrentModificationException on Fabric connections after topology changes.
+     * 
+     * This test requires a Fabric instance running with a HA group (ha_config1_group) containing three servers, one promoted to master and failure detection
+     * turned on.
+     * Note that removing one or the other secondary server is a distinct case and only one of them causes the reported failure. This is so because of the order
+     * the elements on the slave servers HashSet, from the ReplicationConnectionGroup object, are iterated. So, we remove one at a time in this test to make
+     * sure we cover both cases.
+     */
+    public void testBug82094() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
+
+        FabricMySQLDataSource ds = getNewDefaultDataSource();
+        ds.setFabricServerGroup("ha_config1_group");
+        this.conn = (FabricMySQLConnection) ds.getConnection(this.username, this.password);
+        this.conn.createStatement().close(); // Make sure there is an internal ReplicationConnection.
+
+        FabricConnection fabricConn = new FabricConnection(this.fabricUrl, this.fabricUsername, this.fabricPassword);
+
+        for (Server server : fabricConn.getServerGroup("ha_config1_group").getServers()) {
+            if (server.isSlave()) {
+                try {
+                    this.conn.transactionCompleted();
+
+                    // Remove Secondary server.
+                    fabricConn.getClient().removeServerFromGroup(server.getGroupName(), server.getHostname(), server.getPort());
+                    // Make sure the TTL expires before moving on.
+                    fabricConn.refreshState();
+                    while (!fabricConn.isStateExpired()) {
+                        Thread.sleep(1000);
+                    }
+
+                    this.conn.transactionCompleted();
+                } finally {
+                    // Add Secondary server back.
+                    fabricConn.getClient().addServerToGroup(server.getGroupName(), server.getHostname(), server.getPort());
+                    // Make sure the TTL expires before moving on.
+                    fabricConn.refreshState();
+                    while (!fabricConn.isStateExpired()) {
+                        Thread.sleep(1000);
+                    }
+                }
+            }
+        }
         this.conn.close();
     }
 }

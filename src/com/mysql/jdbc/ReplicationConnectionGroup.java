@@ -26,9 +26,9 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Group of connection objects which can be configured as a group. This is used for promotion/demotion of slaves and masters in a replication configuration,
@@ -42,9 +42,9 @@ public class ReplicationConnectionGroup {
     private long slavesPromoted = 0;
     private long activeConnections = 0;
     private HashMap<Long, ReplicationConnection> replicationConnections = new HashMap<Long, ReplicationConnection>();
-    private Set<String> slaveHostList = new HashSet<String>();
+    private Set<String> slaveHostList = new CopyOnWriteArraySet<String>();
     private boolean isInitialized = false;
-    private Set<String> masterHostList = new HashSet<String>();
+    private Set<String> masterHostList = new CopyOnWriteArraySet<String>();
 
     ReplicationConnectionGroup(String groupName) {
         this.groupName = groupName;

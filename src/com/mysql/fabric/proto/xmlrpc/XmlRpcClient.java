@@ -62,6 +62,7 @@ public class XmlRpcClient {
     private static final String METHOD_GROUP_LOOKUP_GROUPS = "group.lookup_groups";
     private static final String METHOD_GROUP_CREATE = "group.create";
     private static final String METHOD_GROUP_ADD = "group.add";
+    private static final String METHOD_GROUP_REMOVE = "group.remove";
     private static final String METHOD_GROUP_PROMOTE = "group.promote";
     private static final String METHOD_GROUP_DESTROY = "group.destroy";
     private static final String METHOD_THREAT_REPORT_ERROR = "threat.report_error";
@@ -339,6 +340,10 @@ public class XmlRpcClient {
 
     public void addServerToGroup(String groupName, String hostname, int port) throws FabricCommunicationException {
         errorSafeCallMethod(METHOD_GROUP_ADD, new Object[] { groupName, hostname + ":" + port });
+    }
+
+    public void removeServerFromGroup(String groupName, String hostname, int port) throws FabricCommunicationException {
+        errorSafeCallMethod(METHOD_GROUP_REMOVE, new Object[] { groupName, hostname + ":" + port });
     }
 
     public void promoteServerInGroup(String groupName, String hostname, int port) throws FabricCommunicationException {
