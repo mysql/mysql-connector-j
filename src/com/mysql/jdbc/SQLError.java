@@ -874,10 +874,11 @@ public class SQLError {
     }
 
     public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, Connection conn) {
-        SQLException sqlEx = createSQLException(message, sqlState, interceptor);
-
-        sqlEx.initCause(cause);
-
+        SQLException sqlEx = createSQLException(message, sqlState, null);
+        if (sqlEx.getCause() == null) {
+            sqlEx.initCause(cause);
+        }
+        // Run through the exception interceptor after setting the init cause.
         return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
     }
 

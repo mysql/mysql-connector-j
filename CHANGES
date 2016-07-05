@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#82115 (23743956), Some exceptions are intercepted twice or fail to set the init cause.
+
   - Fix for Bug#78685 (21938551), Wrong results when retrieving the value of a BIT column as an integer.
 
   - Fix for Bug#80615 (22954007), prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
