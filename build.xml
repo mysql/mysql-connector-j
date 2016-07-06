@@ -607,7 +607,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <property name="com.mysql.cj.build.meta-inf.profiling-exports" value="com.mysql.cj.jdbc.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.util-exports" value="com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log&quot;" />
         <property name="com.mysql.cj.build.meta-inf.exceptions-exports" value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.fabric-exports" value="com.mysql.cj.fabric.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.fabric-exports" value="com.mysql.cj.fabric.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
 
         <property name="com.mysql.cj.build.meta-inf.interceptors-exports" value="com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.integration-exports" value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
