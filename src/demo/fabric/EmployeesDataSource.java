@@ -81,12 +81,12 @@ public class EmployeesDataSource {
         // The 2-nd way is to get implicitly connected to global group when the shard key isn't provided, ie. set "fabricShardTable" connection property but 
         // don't set "fabricShardKey"
         ds.setFabricServerGroup(null); // clear the setting in the datasource for previous connections
-        ds.setFabricShardTable("employee.employees");
+        ds.setFabricShardTable("employees.employees");
         rawConnection = ds.getConnection(user, password);
         // At this point, we have a connection to the global group for  the `employees.employees' shard mapping.
         statement = rawConnection.createStatement();
-        statement.executeUpdate("drop table if exists employees");
-        statement.executeUpdate("create table employees (emp_no int not null, first_name varchar(50), last_name varchar(50), primary key (emp_no))");
+        statement.executeUpdate("drop table if exists employees.employees");
+        statement.executeUpdate("create table employees.employees (emp_no int not null, first_name varchar(50), last_name varchar(50), primary key (emp_no))");
 
         // 2. Insert data
 
@@ -115,7 +115,7 @@ public class EmployeesDataSource {
         System.out.println("Querying employees");
         System.out.format("%7s | %-30s | %-30s%n", "emp_no", "first_name", "last_name");
         System.out.println("--------+--------------------------------+-------------------------------");
-        ps = connection.prepareStatement("select emp_no, first_name, last_name from employees where emp_no = ?");
+        ps = connection.prepareStatement("select emp_no, first_name, last_name from employees.employees where emp_no = ?");
         for (int i = 0; i < 4; ++i) {
 
             // we need to specify the shard key before accessing the data
@@ -131,7 +131,7 @@ public class EmployeesDataSource {
 
         // 4. Connect to the global group and clean up
         connection.setServerGroupName("fabric_test1_global");
-        statement.executeUpdate("drop table if exists employees");
+        statement.executeUpdate("drop table if exists employees.employees");
         statement.close();
         connection.close();
     }

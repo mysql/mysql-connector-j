@@ -26,7 +26,9 @@ package testsuite.fabric.jdbc;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 import com.mysql.fabric.jdbc.FabricMySQLConnection;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;
@@ -154,5 +156,52 @@ public class TestRegressions extends BaseFabricTestCase {
         ps.addBatch();
         // this would throw a ClassCastException
         ps.executeBatch();
+    }
+
+    /**
+     * Test Bug#21296840 - CONNECTION DATA IS NOT UPDATED DURING FAILOVER.
+     * Test Bug#17910835 - SERVER INFORMATION FROM FABRIC NOT REFRESHED WITH SHORTER TTL.
+     * 
+     * Test that the local cache is refreshed after expired TTL. This test connects to the master of "ha_config1_group" and requires the master to be changed
+     * manually during the wait period. The Fabric must also be setup to communicate a TTL of less than 10s to the client.
+     */
+    public void manualTestRefreshFabricStateCache() throws Exception {
+        if (!this.isSetForFabricTest) {
+            return;
+        }
+
+        this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
+        this.conn.setServerGroupName("ha_config1_group");
+        this.conn.setReadOnly(false);
+        this.conn.setAutoCommit(false);
+
+        Statement stmt = this.conn.createStatement();
+
+        ResultSet rs = stmt.executeQuery("show variables like 'server_uuid'");
+        rs.next();
+        String firstServerUuid = rs.getString(2);
+        rs.close();
+        this.conn.commit();
+
+        // sleep for TTL+1 secs
+        int seconds = 10;
+        System.err.println("Waiting " + seconds + " seconds for new master to be chosen");
+        Thread.sleep(TimeUnit.SECONDS.toMillis(1 + seconds));
+
+        // force the LB proxy to pick a new connection
+        this.conn.rollback();
+
+        // verify change is seen by client
+        rs = stmt.executeQuery("show variables like 'server_uuid'");
+        rs.next();
+        String secondServerUuid = rs.getString(2);
+        rs.close();
+
+        System.err.println("firstServerUuid=" + firstServerUuid + "\nsecondServerUuid=" + secondServerUuid);
+        if (firstServerUuid.equals(secondServerUuid)) {
+            fail("Server ID should change to reflect new topology");
+        }
+
+        this.conn.close();
     }
 }

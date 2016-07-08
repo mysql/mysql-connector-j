@@ -1663,7 +1663,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
 
             <classpath>
-                <fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
                 </fileset>
                 <fileset dir="${buildDir}/${fullProdName}/lib">
@@ -1750,7 +1750,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
 
             <classpath>
-                <fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
                 </fileset>
                 <fileset dir="src/lib">

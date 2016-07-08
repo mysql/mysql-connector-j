@@ -26,9 +26,7 @@ package testsuite.fabric.jdbc;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.Statement;
 
-import com.mysql.fabric.jdbc.FabricMySQLConnection;
 import com.mysql.fabric.jdbc.FabricMySQLDataSource;
 
 import testsuite.fabric.BaseFabricTestCase;
@@ -73,49 +71,5 @@ public class TestBasicConnection extends BaseFabricTestCase {
         assertEquals(this.username, userFromDb);
         rs.close();
         c.close();
-    }
-
-    /**
-     * Test that the local cache is refreshed after expired TTL. Bug#21296840 / Bug#17910835. This test connects to the master of "ha_config1_group" and
-     * requires the master to be changed during the wait period. The Fabric must also be setup to communicate a TTL of less than 10s to the client.
-     */
-    public void manualTestRefreshFabricStateCache() throws Exception {
-        if (!this.isSetForFabricTest) {
-            return;
-        }
-
-        FabricMySQLConnection conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
-        conn.setServerGroupName("ha_config1_group");
-        conn.setReadOnly(false);
-        conn.setAutoCommit(false);
-
-        Statement stmt = conn.createStatement();
-
-        ResultSet rs = stmt.executeQuery("show variables like 'server_uuid'");
-        rs.next();
-        String firstServerUuid = rs.getString(2);
-        rs.close();
-        conn.commit();
-
-        // sleep for TTL+1 secs
-        int seconds = 10;
-        System.err.println("Waiting " + seconds + " seconds for new master to be chosen");
-        Thread.sleep((1 + seconds) * 1000);
-
-        // force the LB proxy to pick a new connection
-        conn.rollback();
-
-        // verify change is seen by client
-        rs = stmt.executeQuery("show variables like 'server_uuid'");
-        rs.next();
-        String secondServerUuid = rs.getString(2);
-        rs.close();
-
-        System.err.println("firstServerUuid=" + firstServerUuid + "\nsecondServerUuid=" + secondServerUuid);
-        if (firstServerUuid.equals(secondServerUuid)) {
-            fail("Server ID should change to reflect new topology");
-        }
-
-        conn.close();
     }
 }
