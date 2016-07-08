@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,7 @@ package com.mysql.fabric;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.mysql.fabric.proto.xmlrpc.XmlRpcClient;
 
@@ -36,7 +37,9 @@ public class FabricConnection {
     private Map<String, ShardMapping> shardMappingsByTableName = new HashMap<String, ShardMapping>();
     private Map<String, ServerGroup> serverGroupsByName = new HashMap<String, ServerGroup>();
     private long shardMappingsExpiration;
+    private int shardMappingsTtl;
     private long serverGroupsExpiration;
+    private int serverGroupsTtl;
 
     public FabricConnection(String url, String username, String password) throws FabricCommunicationException {
         this.client = new XmlRpcClient(url, username, password);
@@ -67,13 +70,15 @@ public class FabricConnection {
     public int refreshState() throws FabricCommunicationException {
         FabricStateResponse<Set<ServerGroup>> serverGroups = this.client.getServerGroups();
         FabricStateResponse<Set<ShardMapping>> shardMappings = this.client.getShardMappings();
-        this.serverGroupsExpiration = serverGroups.getExpireTimeMillis();
-        this.shardMappingsExpiration = shardMappings.getExpireTimeMillis();
 
+        this.serverGroupsExpiration = serverGroups.getExpireTimeMillis();
+        this.serverGroupsTtl = serverGroups.getTtl();
         for (ServerGroup g : serverGroups.getData()) {
             this.serverGroupsByName.put(g.getName(), g);
         }
 
+        this.shardMappingsExpiration = shardMappings.getExpireTimeMillis();
+        this.shardMappingsTtl = shardMappings.getTtl();
         for (ShardMapping m : shardMappings.getData()) {
             // a shard mapping may be associated with more than one table
             for (ShardTable t : m.getShardTables()) {
@@ -84,16 +89,28 @@ public class FabricConnection {
         return 0;
     }
 
-    public ServerGroup getServerGroup(String serverGroupName) throws FabricCommunicationException {
+    public int refreshStatePassive() {
+        try {
+            return refreshState();
+        } catch (FabricCommunicationException e) {
+            // Fabric node is down but we can operate on previous setup. Just reset the TTL timers.
+            this.serverGroupsExpiration = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(this.serverGroupsTtl);
+            this.shardMappingsExpiration = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(this.shardMappingsTtl);
+        }
+
+        return 0;
+    }
+
+    public ServerGroup getServerGroup(String serverGroupName) {
         if (isStateExpired()) {
-            refreshState();
+            refreshStatePassive();
         }
         return this.serverGroupsByName.get(serverGroupName);
     }
 
-    public ShardMapping getShardMapping(String database, String table) throws FabricCommunicationException {
+    public ShardMapping getShardMapping(String database, String table) {
         if (isStateExpired()) {
-            refreshState();
+            refreshStatePassive();
         }
         return this.shardMappingsByTableName.get(database + "." + table);
     }

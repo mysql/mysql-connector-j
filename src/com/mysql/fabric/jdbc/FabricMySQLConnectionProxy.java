@@ -70,6 +70,8 @@ import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.SingleByteCharsetConverter;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptorV2;
+import com.mysql.jdbc.Util;
+import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
@@ -134,6 +136,19 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     // Synchronized Set that holds temporary "locks" on ReplicationConnectionGroups being synced.
     // These locks are used to prevent simultaneous syncing of the state of the current group's servers.
     private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
+
+    private static final Class<?> JDBC4_NON_TRANSIENT_CONN_EXCEPTION;
+    static {
+        Class<?> clazz = null;
+        try {
+            if (Util.isJdbc4()) {
+                clazz = Class.forName("com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException");
+            }
+        } catch (ClassNotFoundException e) {
+            // no-op
+        }
+        JDBC4_NON_TRANSIENT_CONN_EXCEPTION = clazz;
+    }
 
     public FabricMySQLConnectionProxy(Properties props) throws SQLException {
         // first, handle and remove Fabric-specific properties.  once fabricShardKey et al are ConnectionProperty instances this will be unnecessary
@@ -212,9 +227,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      */
     synchronized SQLException interceptException(SQLException sqlEx, Connection conn, String groupName, String hostname, String portNumber)
             throws FabricCommunicationException {
-        // we are only concerned with connection failures, skip anything else
-        if (sqlEx.getSQLState() != null && !(sqlEx.getSQLState().startsWith("08")
-                || com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass()))) {
+        // we are only concerned with connection failures to MySQL servers, skip anything else including connection failures to Fabric
+        if ((sqlEx.getSQLState() == null || !sqlEx.getSQLState().startsWith("08"))
+                && !MySQLNonTransientConnectionException.class.isAssignableFrom(sqlEx.getClass())
+                && (JDBC4_NON_TRANSIENT_CONN_EXCEPTION == null || !JDBC4_NON_TRANSIENT_CONN_EXCEPTION.isAssignableFrom(sqlEx.getClass()))
+                || sqlEx.getCause() != null && FabricCommunicationException.class.isAssignableFrom(sqlEx.getCause().getClass())) {
             return null;
         }
 
@@ -236,7 +253,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             try {
                 // refresh group status. (after reporting the error. error reporting may trigger a failover)
                 try {
-                    this.fabricConnection.refreshState();
+                    this.fabricConnection.refreshStatePassive();
                     setCurrentServerGroup(this.serverGroup.getName());
                 } catch (SQLException ex) {
                     return SQLError.createSQLException("Unable to refresh Fabric state. Failover impossible", SQLError.SQL_STATE_CONNECTION_FAILURE, ex, null);
@@ -263,12 +280,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      */
     private void refreshStateIfNecessary() throws SQLException {
         if (this.fabricConnection.isStateExpired()) {
-            try {
-                this.fabricConnection.refreshState();
-            } catch (FabricCommunicationException ex) {
-                throw SQLError.createSQLException("Unable to establish connection to the Fabric server", SQLError.SQL_STATE_CONNECTION_REJECTED, ex,
-                        getExceptionInterceptor(), this);
-            }
+            this.fabricConnection.refreshStatePassive();
             if (this.serverGroup != null) {
                 setCurrentServerGroup(this.serverGroup.getName());
             }
@@ -328,19 +340,13 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
                 table = pair[0];
                 db = pair[1];
             }
-            try {
-                this.shardMapping = this.fabricConnection.getShardMapping(db, table);
-                if (this.shardMapping == null) {
-                    throw SQLError.createSQLException("Shard mapping not found for table `" + shardTable + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
-                            getExceptionInterceptor(), this);
-                }
-                // default to global group
-                setCurrentServerGroup(this.shardMapping.getGlobalGroupName());
-
-            } catch (FabricCommunicationException ex) {
-                throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor(),
-                        this);
+            this.shardMapping = this.fabricConnection.getShardMapping(db, table);
+            if (this.shardMapping == null) {
+                throw SQLError.createSQLException("Shard mapping not found for table `" + shardTable + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
+                        getExceptionInterceptor(), this);
             }
+            // default to global group
+            setCurrentServerGroup(this.shardMapping.getGlobalGroupName());
         }
     }
 
@@ -401,24 +407,18 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
 
         this.currentConnection = null;
 
-        try {
-            // choose shard mapping if necessary
-            if (this.shardMapping == null) {
-                if (this.fabricConnection.getShardMapping(this.database, tableName) != null) {
-                    setShardTable(tableName);
-                }
-            } else { // make sure we aren't in conflict with the chosen shard mapping
-                ShardMapping mappingForTableName = this.fabricConnection.getShardMapping(this.database, tableName);
-                if (mappingForTableName != null && !mappingForTableName.equals(this.shardMapping)) {
-                    throw SQLError.createSQLException("Cross-shard query not allowed", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null, getExceptionInterceptor(),
-                            this);
-                }
+        // choose shard mapping if necessary
+        if (this.shardMapping == null) {
+            if (this.fabricConnection.getShardMapping(this.database, tableName) != null) {
+                setShardTable(tableName);
             }
-            this.queryTables.add(tableName);
-        } catch (FabricCommunicationException ex) {
-            throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor(),
-                    this);
+        } else { // make sure we aren't in conflict with the chosen shard mapping
+            ShardMapping mappingForTableName = this.fabricConnection.getShardMapping(this.database, tableName);
+            if (mappingForTableName != null && !mappingForTableName.equals(this.shardMapping)) {
+                throw SQLError.createSQLException("Cross-shard query not allowed", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null, getExceptionInterceptor(), this);
+            }
         }
+        this.queryTables.add(tableName);
     }
 
     /**
@@ -432,14 +432,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * Change the server group to the given named group.
      */
     protected void setCurrentServerGroup(String serverGroupName) throws SQLException {
-        this.serverGroup = null;
-
-        try {
-            this.serverGroup = this.fabricConnection.getServerGroup(serverGroupName);
-        } catch (FabricCommunicationException ex) {
-            throw SQLError.createSQLException("Fabric communication failure.", SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor(),
-                    this);
-        }
+        this.serverGroup = this.fabricConnection.getServerGroup(serverGroupName);
 
         if (this.serverGroup == null) {
             throw SQLError.createSQLException("Cannot find server group: `" + serverGroupName + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null,
@@ -2854,7 +2847,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
             return null;
         }
 
-        return getActiveConnectionPassive().getExceptionInterceptor();
+        return this.currentConnection.getExceptionInterceptor();
     }
 
     public String getHost() {
@@ -2862,7 +2855,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public String getHostPortPair() {
-        return null;
+        if (this.currentConnection == null) {
+            return null;
+        }
+
+        return this.currentConnection.getHostPortPair();
     }
 
     public long getId() {

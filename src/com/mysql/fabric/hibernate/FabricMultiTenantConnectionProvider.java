@@ -100,12 +100,8 @@ public class FabricMultiTenantConnectionProvider implements MultiTenantConnectio
      */
     public Connection getConnection(String tenantIdentifier) throws SQLException {
         String serverGroupName = this.shardMapping.getGroupNameForKey(tenantIdentifier);
-        try {
-            ServerGroup serverGroup = this.fabricConnection.getServerGroup(serverGroupName);
-            return getReadWriteConnectionFromServerGroup(serverGroup);
-        } catch (FabricCommunicationException ex) {
-            throw new RuntimeException(ex);
-        }
+        ServerGroup serverGroup = this.fabricConnection.getServerGroup(serverGroupName);
+        return getReadWriteConnectionFromServerGroup(serverGroup);
     }
 
     /**

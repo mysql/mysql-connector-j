@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.mysql.fabric.FabricCommunicationException;
 import com.mysql.fabric.FabricStateResponse;
@@ -264,7 +265,8 @@ public class XmlRpcClient {
         Object args[] = new Object[] { version, shardMappingIdPattern }; // common to all calls
         Response mapsResponse = errorSafeCallMethod(METHOD_DUMP_SHARD_MAPS, args);
         // use the lowest ttl of all the calls
-        long minExpireTimeMillis = System.currentTimeMillis() + (1000 * mapsResponse.getTtl());
+        long minExpireTimeMillis = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(mapsResponse.getTtl());
+        int baseTtl = mapsResponse.getTtl();
 
         // construct the maps
         Set<ShardMapping> mappings = new HashSet<ShardMapping>();
@@ -287,7 +289,7 @@ public class XmlRpcClient {
             mappings.add(m);
         }
 
-        return new FabricStateResponse<Set<ShardMapping>>(mappings, minExpireTimeMillis);
+        return new FabricStateResponse<Set<ShardMapping>>(mappings, baseTtl, minExpireTimeMillis);
     }
 
     public FabricStateResponse<Set<ShardMapping>> getShardMappings() throws FabricCommunicationException {

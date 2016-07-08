@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,22 +23,31 @@
 
 package com.mysql.fabric;
 
+import java.util.concurrent.TimeUnit;
+
 public class FabricStateResponse<T> {
     private T data;
+    private int secsTtl;
     private long expireTimeMillis;
 
     public FabricStateResponse(T data, int secsTtl) {
         this.data = data;
-        this.expireTimeMillis = System.currentTimeMillis() + (1000 * secsTtl);
+        this.secsTtl = secsTtl;
+        this.expireTimeMillis = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(secsTtl);
     }
 
-    public FabricStateResponse(T data, long expireTimeMillis) {
+    public FabricStateResponse(T data, int secsTtl, long presetExpireTimeMillis) {
         this.data = data;
-        this.expireTimeMillis = expireTimeMillis;
+        this.secsTtl = secsTtl;
+        this.expireTimeMillis = presetExpireTimeMillis;
     }
 
     public T getData() {
         return this.data;
+    }
+
+    public int getTtl() {
+        return this.secsTtl;
     }
 
     /**

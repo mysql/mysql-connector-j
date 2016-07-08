@@ -24,8 +24,10 @@
 package testsuite.fabric.jdbc;
 
 import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
@@ -254,5 +256,74 @@ public class TestRegressions extends BaseFabricTestCase {
             }
         }
         this.conn.close();
+    }
+
+    /**
+     * Test Bug#22750465 - CONNECTOR/J HANGS WHEN FABRIC NODE IS DOWN.
+     * 
+     * This test connects to the master of "ha_config1_group" and requires the master to be changed manually during the first wait period. The fabric node must
+     * be shut down during the second wait period. The Fabric must also be setup to communicate a TTL of less than 10s to the client.
+     */
+    public void manualTestBug22750465() throws Exception {
+        this.conn = (FabricMySQLConnection) getNewDefaultDataSource().getConnection(this.username, this.password);
+        this.conn.setServerGroupName("ha_config1_group");
+
+        String initialMasterUuid = this.conn.getCurrentServerGroup().getMaster().getUuid();
+
+        Statement stmt = this.conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SHOW VARIABLES LIKE 'server_uuid'");
+        rs.next();
+        String firstServerUuid = rs.getString(2);
+        rs.close();
+
+        assertEquals(initialMasterUuid, firstServerUuid);
+        manualTestBug22750465SomeReadWriteOperations(this.conn);
+
+        // Promote new primary server.
+        int seconds = 10;
+        System.err.println("Waiting " + seconds + " seconds for new master to be chosen (execute: 'mysqlfabric group promote ha_config1_group')");
+        Thread.sleep(TimeUnit.SECONDS.toMillis(1 + seconds));
+
+        rs = stmt.executeQuery("SHOW VARIABLES LIKE 'server_uuid'");
+        rs.next();
+        String secondServerUuid = rs.getString(2);
+        rs.close();
+
+        assertFalse(initialMasterUuid.equals(secondServerUuid));
+        manualTestBug22750465SomeReadWriteOperations(this.conn);
+
+        // Shutdown the Fabric node.
+        System.err.println("Waiting " + seconds + " seconds for Fabric node shutdown (execute: 'mysqlfabric group manage stop')");
+        Thread.sleep(TimeUnit.SECONDS.toMillis(1 + seconds));
+
+        rs = stmt.executeQuery("SHOW VARIABLES LIKE 'server_uuid'");
+        rs.next();
+        String thirdServerUuid = rs.getString(2);
+        rs.close();
+
+        assertEquals(secondServerUuid, thirdServerUuid);
+        manualTestBug22750465SomeReadWriteOperations(this.conn);
+
+        this.conn.close();
+
+        try {
+            getNewDefaultDataSource().getConnection(this.username, this.password);
+            fail("Exception was expected when trying to connect to a non-running Fabric node.");
+        } catch (SQLException e) {
+            assertEquals("Unable to establish connection to the Fabric server", e.getMessage());
+        }
+    }
+
+    private void manualTestBug22750465SomeReadWriteOperations(Connection testConn) throws Exception {
+        Statement stmt = testConn.createStatement();
+        try {
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS testBug22750465 (id INT)");
+            stmt.executeUpdate("INSERT INTO testBug22750465 VALUES (1)");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM testBug22750465");
+            assertTrue(rs.next());
+        } finally {
+            stmt.executeUpdate("DROP TABLE IF EXISTS testBug22750465");
+            stmt.close();
+        }
     }
 }
