@@ -162,7 +162,7 @@ public class SessionTest extends DevApiBaseTestCase {
         }
 
         try {
-            this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED BY ''").execute();
+            this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED WITH mysql_native_password").execute();
 
             Properties props = new Properties();
             props.putAll(this.testProperties);
