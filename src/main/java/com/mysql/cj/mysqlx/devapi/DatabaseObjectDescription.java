@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,18 +21,24 @@
 
  */
 
-package com.mysql.cj.api.x;
+package com.mysql.cj.mysqlx.devapi;
 
-public interface View extends DatabaseObject {
+import com.mysql.cj.api.x.DatabaseObject;
 
-    SelectStatement select(String searchFields);
+public class DatabaseObjectDescription {
+    private String objectName;
+    private DatabaseObject.DbObjectType objectType;
 
-    /**
-     * View.count [43]
-     * 
-     * @return
-     */
-    // TODO what's that? we have a requirement but without a specification
-    int count();
+    public DatabaseObjectDescription(String name, String type) {
+        this.objectName = name;
+        this.objectType = DatabaseObject.DbObjectType.valueOf(type);
+    }
 
+    public String getObjectName() {
+        return this.objectName;
+    }
+
+    public DatabaseObject.DbObjectType getObjectType() {
+        return this.objectType;
+    }
 }

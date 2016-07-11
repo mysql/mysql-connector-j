@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +72,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet;
 import com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.ObjectField;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData;
@@ -298,16 +298,24 @@ public class MysqlxProtocol implements Protocol {
 
     // TODO: the following methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
-        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION, ExprUtil.buildAny(schemaName),
-                ExprUtil.buildAny(collectionName)));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(collectionName)))
+                                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName))))
+                        .build()));
     }
 
     /**
      * @todo this works for tables too
      */
     public void sendDropCollection(String schemaName, String collectionName) {
-        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION, ExprUtil.buildAny(schemaName),
-                ExprUtil.buildAny(collectionName)));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(collectionName)))
+                                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName))))
+                        .build()));
     }
 
     /**
@@ -321,8 +329,19 @@ public class MysqlxProtocol implements Protocol {
      * | xprotocol_test_test | TABLE      |
      * </pre>
      */
+    public void sendListObjects(String schemaName, String pattern) {
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))
+                                .addFld(ObjectField.newBuilder().setKey("pattern").setValue(ExprUtil.buildAny(pattern))))
+                        .build()));
+    }
+
     public void sendListObjects(String schemaName) {
-        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS, ExprUtil.buildAny(schemaName)));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS,
+                Any.newBuilder().setType(Any.Type.OBJECT).setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                        .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))).build()));
     }
 
     /**
@@ -339,13 +358,31 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public void sendEnableNotices(String... notices) {
-        Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
-        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES, args));
+        com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.Builder abuilder = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.newBuilder();
+        for (String notice : notices) {
+            abuilder.addValue(ExprUtil.buildAny(notice));
+        }
+        this.writer
+                .write(this.msgBuilder
+                        .buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES,
+                                Any.newBuilder()
+                                        .setType(Any.Type.OBJECT).setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder().addFld(ObjectField
+                                                .newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
+                .build()));
     }
 
     public void sendDisableNotices(String... notices) {
-        Any[] args = Arrays.stream(notices).map(ExprUtil::buildAny).toArray(s -> new Any[notices.length]);
-        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES, args));
+        com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.Builder abuilder = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.newBuilder();
+        for (String notice : notices) {
+            abuilder.addValue(ExprUtil.buildAny(notice));
+        }
+        this.writer
+                .write(this.msgBuilder
+                        .buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES,
+                                Any.newBuilder()
+                                        .setType(Any.Type.OBJECT).setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder().addFld(ObjectField
+                                                .newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
+                .build()));
     }
 
     public boolean hasMoreResults() {
@@ -555,6 +592,10 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public ArrayList<Field> readMetadata(String characterSet) {
+        while (this.reader.getNextMessageClass() == Frame.class) {
+            // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
+            this.reader.read(Frame.class);
+        }
         List<ColumnMetaData> fromServer = new LinkedList<>();
         do { // use this construct to read at least one
             fromServer.add(this.reader.read(ColumnMetaData.class));
@@ -581,7 +622,8 @@ public class MysqlxProtocol implements Protocol {
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, String metadataCharacterSet, TimeZone defaultTimeZone) {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), defaultTimeZone);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f,
+                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;
     }
@@ -596,14 +638,16 @@ public class MysqlxProtocol implements Protocol {
      */
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(errorFuture, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(errorFuture,
+                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), resultHandler);
     }
 
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
         final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f,
+                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
         return f;
     }

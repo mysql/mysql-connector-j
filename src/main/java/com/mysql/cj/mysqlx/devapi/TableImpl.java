@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
+import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.x.BaseSession;
@@ -38,10 +39,17 @@ public class TableImpl implements Table {
 
     private SchemaImpl schema;
     private String name;
+    private Boolean isView = null;
 
     /* package private */ TableImpl(SchemaImpl schema, String name) {
         this.schema = schema;
         this.name = name;
+    }
+
+    /* package private */ TableImpl(SchemaImpl schema, DatabaseObjectDescription descr) {
+        this.schema = schema;
+        this.name = descr.getObjectName();
+        this.isView = descr.getObjectType() == DbObjectType.VIEW;
     }
 
     public BaseSession getSession() {
@@ -117,5 +125,24 @@ public class TableImpl implements Table {
         sb.append(ExprUnparser.quoteIdentifier(this.name));
         sb.append(")");
         return sb.toString();
+    }
+
+    @Override
+    public boolean isView() {
+        // if this.isView isn't set (was unknown on the table construction time) then query database
+        if (this.isView == null) {
+            List<DatabaseObjectDescription> objects = getSession().getMysqlxSession().listObjects(this.schema.getName(), this.name);
+            if (objects.isEmpty()) {
+                // object not found, means it doesn't exist in database
+                return false;
+            }
+            // objects should contain exactly one element with matching this.name
+            this.isView = objects.get(0).getObjectType() == DbObjectType.VIEW;
+        }
+        return this.isView;
+    }
+
+    public void setView(boolean isView) {
+        this.isView = isView;
     }
 }

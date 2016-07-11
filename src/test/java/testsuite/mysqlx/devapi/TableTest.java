@@ -64,4 +64,59 @@ public class TableTest extends DevApiBaseTestCase {
         assertFalse(table == table2);
         assertTrue(table.equals(table2));
     }
+
+    @Test
+    public void viewBasics() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        try {
+            sqlUpdate("drop table if exists tableBasics");
+            sqlUpdate("drop view if exists viewBasics");
+
+            Table table = this.schema.getTable("tableBasics");
+            assertEquals(DbObjectStatus.NOT_EXISTS, table.existsInDatabase());
+
+            Table view = this.schema.getTable("viewBasics");
+            assertEquals(DbObjectStatus.NOT_EXISTS, view.existsInDatabase());
+
+            // all objects return false for isView() if they don't exist in database 
+            assertFalse(table.isView());
+            assertFalse(view.isView());
+
+            sqlUpdate("create table tableBasics (name varchar(32), age int, role int)");
+            sqlUpdate("create view viewBasics as select name, age from tableBasics");
+
+            assertEquals(DbObjectStatus.EXISTS, table.existsInDatabase());
+            assertEquals(DbObjectStatus.EXISTS, view.existsInDatabase());
+
+            assertEquals("Table(" + getTestDatabase() + ".tableBasics)", table.toString());
+            assertEquals("Table(" + getTestDatabase() + ".viewBasics)", view.toString());
+
+            assertEquals(this.session, table.getSession());
+            assertEquals(this.session, view.getSession());
+
+            assertFalse(table.isView());
+            assertTrue(view.isView());
+
+            Table table2 = this.schema.getTable("tableBasics", true);
+            assertFalse(table == table2);
+            assertTrue(table.equals(table2));
+
+            Table view2 = this.schema.getTable("viewBasics", true);
+            assertFalse(view == view2);
+            assertTrue(view.equals(view2));
+
+            assertFalse(table2.isView());
+            assertTrue(view2.isView());
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            sqlUpdate("drop table if exists tableBasics");
+            sqlUpdate("drop view if exists viewBasics");
+        }
+    }
 }

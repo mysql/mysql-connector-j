@@ -38,34 +38,60 @@ public interface Schema extends DatabaseObject {
     List<Collection> getCollections();
 
     /**
+     * Retrieve the set of collections existing in this schema and matching the given pattern.
+     * 
+     * @param pattern
+     */
+    List<Collection> getCollections(String pattern);
+
+    /**
      * Retrieve the set of tables existing in this schema.
      */
     List<Table> getTables();
+
+    /**
+     * Retrieve the set of tables existing in this schema and matching the given pattern.
+     * 
+     * @param pattern
+     */
+    List<Table> getTables(String pattern);
 
     /* Other functions */
 
     /**
      * Retrieve a reference to the named collection.
+     * 
+     * @param name
      */
     Collection getCollection(String name);
 
     /**
      * Retrieve a reference to the named collection hinting that an exception should be thrown if the collection is not known to the server.
+     * 
+     * @param name
+     * @param requireExists
      */
     Collection getCollection(String name, boolean requireExists);
 
     /**
      * Retrieve a reference to the named collection using the table API.
+     * 
+     * @param name
      */
     Table getCollectionAsTable(String name);
 
     /**
      * Retrieve a reference to the named table.
+     * 
+     * @param name
      */
     Table getTable(String name);
 
     /**
      * Retrieve a reference to the named table hinting that an exception should be thrown if the collection is not known to the server.
+     * 
+     * @param name
+     * @param requireExists
      */
     Table getTable(String tableName, boolean requireExists);
 
@@ -73,11 +99,16 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Create a new collection.
+     * 
+     * @param name
      */
     Collection createCollection(String name);
 
     /**
      * Create a new collection if it does not already exist on the server.
+     * 
+     * @param name
+     * @param reuseExistingObject
      */
     Collection createCollection(String name, boolean reuseExistingObject);
 

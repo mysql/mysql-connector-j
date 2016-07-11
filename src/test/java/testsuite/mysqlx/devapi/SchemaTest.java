@@ -37,6 +37,7 @@ import org.junit.Test;
 import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.api.x.Schema;
+import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.mysqlx.MysqlxError;
@@ -88,11 +89,20 @@ public class SchemaTest extends DevApiBaseTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String collName = "test_list_collections";
-        dropCollection(collName);
-        Collection coll = this.schema.createCollection(collName);
+        String collName1 = "test_list_collections1";
+        String collName2 = "test_list_collections2";
+        dropCollection(collName1);
+        dropCollection(collName2);
+        Collection coll1 = this.schema.createCollection(collName1);
+        Collection coll2 = this.schema.createCollection(collName2);
+
         List<Collection> colls = this.schema.getCollections();
-        assertTrue(colls.contains(coll));
+        assertTrue(colls.contains(coll1));
+        assertTrue(colls.contains(coll2));
+
+        colls = this.schema.getCollections("%ions2");
+        assertFalse(colls.contains(coll1));
+        assertTrue(colls.contains(coll2));
     }
 
     @Test
@@ -122,5 +132,44 @@ public class SchemaTest extends DevApiBaseTestCase {
         }
         Collection coll2 = this.schema.createCollection(collName, true);
         assertEquals(coll, coll2);
+    }
+
+    @Test
+    public void testListTables() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        String collName = "test_list_tables_collection";
+        String tableName = "test_list_tables_table";
+        String viewName = "test_list_tables_view";
+        try {
+            dropCollection(collName);
+            sqlUpdate("drop view if exists " + viewName);
+            sqlUpdate("drop table if exists " + tableName);
+
+            Collection coll = this.schema.createCollection(collName);
+
+            sqlUpdate("create table " + tableName + "(name varchar(32), age int, role int)");
+            sqlUpdate("create view " + viewName + " as select name, age from " + tableName);
+
+            Table table = this.schema.getTable(tableName);
+            Table view = this.schema.getTable(viewName);
+
+            List<Table> tables = this.schema.getTables();
+            assertFalse(tables.contains(coll));
+            assertTrue(tables.contains(table));
+            assertTrue(tables.contains(view));
+
+            tables = this.schema.getTables("%tables_t%");
+            assertFalse(tables.contains(coll));
+            assertTrue(tables.contains(table));
+            assertFalse(tables.contains(view));
+
+        } finally {
+            dropCollection(collName);
+            sqlUpdate("drop view if exists " + viewName);
+            sqlUpdate("drop table if exists " + tableName);
+        }
+
     }
 }

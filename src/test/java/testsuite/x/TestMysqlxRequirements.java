@@ -37,7 +37,6 @@ import com.mysql.cj.api.x.Collection;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Table;
-import com.mysql.cj.api.x.View;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -373,9 +372,11 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
             return;
         }
 
-        // TODO fill in the next pattern
+        // TODO fill in the next pattern, Views are treated as Tables
 
-        View view = (View) getSession("").getDefaultSchema().getTable("name");  // getView("name"); // TODO set URL and collection name
+        Table view = getSession("").getDefaultSchema().getTable("name");  // getView("name"); // TODO set URL and collection name
+
+        view.isView();
 
         // View.select [54]
         view.select("searchFields"); // TODO set correct parameter, expand statements
