@@ -334,4 +334,47 @@ public class TableSelectTest extends TableTest {
         sqlUpdate("drop table if exists testBug22931433");
     }
 
+    @Test
+    public void basicViewQuery() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        try {
+            sqlUpdate("drop table if exists basicTable1");
+            sqlUpdate("drop table if exists basicTable2");
+            sqlUpdate("drop view if exists basicView");
+
+            sqlUpdate("create table basicTable1 (_id varchar(32), name varchar(20))");
+            sqlUpdate("create table basicTable2 (_id varchar(32), birthday date, age int)");
+            sqlUpdate(
+                    "create view basicView as select basicTable1._id, name, birthday, age from basicTable1 join basicTable2 on basicTable1._id=basicTable2._id");
+
+            sqlUpdate("insert into basicTable1 values ('some long UUID', 'Sakila')");
+            sqlUpdate("insert into basicTable2 values ('some long UUID', '2000-05-27', 14)");
+
+            Table view = this.schema.getTable("basicView");
+            Map<String, Object> params = new HashMap<>();
+            params.put("name", "Saki%");
+            params.put("age", 20);
+            RowResult rows = view.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
+
+            // verify metadata
+            List<String> columnNames = rows.getColumnNames();
+            assertEquals("birthday", columnNames.get(0));
+            assertEquals("_id", columnNames.get(1));
+            assertEquals("name", columnNames.get(2));
+
+            Row row = rows.next();
+            assertEquals("2000-05-27", row.getString(0));
+            assertEquals("2000-05-27", row.getString("birthday"));
+            assertEquals("Sakila", row.getString(2));
+            assertEquals("Sakila", row.getString("name"));
+            assertEquals("some long UUID", row.getString(1));
+            assertEquals("some long UUID", row.getString("_id"));
+        } finally {
+            sqlUpdate("drop table if exists basicTable1");
+            sqlUpdate("drop table if exists basicTable2");
+            sqlUpdate("drop view if exists basicView");
+        }
+    }
 }

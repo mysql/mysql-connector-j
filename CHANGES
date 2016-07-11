@@ -2,6 +2,13 @@
 # $Id$
 mm-dd-yy - Version 6.0.4
 
+  - The X DevAPI Table object now represents both database tables and views.
+
+  - Added support for matching against pattern for X DevAPI list_objects calls.
+    Added Schema.getCollections(String pattern) and Schema.getTables(String pattern) interface methods.
+
+  - Switched to "mysqlx" namespace for X DevAPI StmtExecute messages. This change is incompatible to MySQL server versions < 5.7.14.
+
   - Fix for Bug#21690043, CONNECT FAILS WHEN PASSWORD IS BLANK.
 
   - Fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.

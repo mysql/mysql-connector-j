@@ -449,7 +449,7 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        this.protocol.sendDisableNotices("warnings");
+        this.protocol.sendDisableNotices("warnings"); // TODO currently only "warnings" are allowed to be disabled
         this.protocol.readStatementExecuteOk();
 
         this.protocol.sendSqlStatement("select CAST('abc' as CHAR(1))");
@@ -457,7 +457,8 @@ public class MysqlxProtocolTest extends InternalMysqlxBaseTestCase {
         StatementExecuteOk ok = this.protocol.readStatementExecuteOk();
         assertEquals(0, ok.getWarnings().size());
 
-        this.protocol.sendEnableNotices("warnings");
+        // "produced_message" are already enabled, they're used here to check that multiple parameters are sent correctly
+        this.protocol.sendEnableNotices("produced_message", "warnings");
         this.protocol.readStatementExecuteOk();
 
         this.protocol.sendSqlStatement("select CAST('abc' as CHAR(1))");

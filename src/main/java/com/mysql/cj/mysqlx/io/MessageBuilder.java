@@ -64,6 +64,7 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Update;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any;
+import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.ObjectField;
 import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -72,14 +73,15 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute;
 
 public class MessageBuilder {
-    // "xplugin" namespace for StmtExecute messages
-    private static final String XPLUGIN_NAMESPACE = "xplugin";
+    // "mysqlx" namespace for StmtExecute messages is supported starting from MySQL 5.7.14
+    // the previous "xplugin" namespace isn't compatible with c/J 6.0.4+
+    private static final String XPLUGIN_NAMESPACE = "mysqlx";
 
     public static enum XpluginStatementCommand {
         XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
         XPLUGIN_STMT_DROP_COLLECTION("drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"),
         XPLUGIN_STMT_LIST_OBJECTS("list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"),
-        XPLUGIN_STMT_LIST_NOTICES("list_notices");
+        XPLUGIN_STMT_LIST_NOTICES("list_notices"); // TODO add support for "ping", "list_clients", "kill_client" and "ensure_collection" commands
 
         public String commandName;
 
@@ -99,27 +101,35 @@ public class MessageBuilder {
     }
 
     public StmtExecute buildCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {
-        // TODO: check for 0-field params?
-        Any[] args = new Any[4 + (3 * params.getDocPaths().size())];
-        args[0] = ExprUtil.buildAny(schemaName);
-        args[1] = ExprUtil.buildAny(collectionName);
-        args[2] = ExprUtil.buildAny(params.getIndexName());
-        args[3] = ExprUtil.buildAny(params.isUnique());
-        int argPos = 4;
+        com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.Builder builder = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder();
+        builder.addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(params.getIndexName())))
+                .addFld(ObjectField.newBuilder().setKey("collection").setValue(ExprUtil.buildAny(collectionName)))
+                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))
+                .addFld(ObjectField.newBuilder().setKey("unique").setValue(ExprUtil.buildAny(params.isUnique())));
+
+        com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.Builder abuilder = com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.newBuilder();
         for (int i = 0; i < params.getDocPaths().size(); ++i) {
-            args[argPos++] = ExprUtil.buildAny("$" + params.getDocPaths().get(i));
-            args[argPos++] = ExprUtil.buildAny(params.getTypes().get(i));
-            args[argPos++] = ExprUtil.buildAny(params.getNotNulls().get(i));
+            abuilder.addValue(Any.newBuilder().setType(Any.Type.OBJECT)
+                    .setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                            .addFld(ObjectField.newBuilder().setKey("member").setValue(ExprUtil.buildAny("$" + params.getDocPaths().get(i))))
+                            .addFld(ObjectField.newBuilder().setKey("required").setValue(ExprUtil.buildAny(params.getNotNulls().get(i))))
+                            .addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(params.getTypes().get(i))))));
         }
-        return buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION_INDEX, args);
+
+        builder.addFld(ObjectField.newBuilder().setKey("constraint").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder)));
+        return buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION_INDEX,
+                Any.newBuilder().setType(Any.Type.OBJECT).setObj(builder).build());
     }
 
     public StmtExecute buildDropCollectionIndex(String schemaName, String collectionName, String indexName) {
-        Any[] args = new Any[3];
-        args[0] = ExprUtil.buildAny(schemaName);
-        args[1] = ExprUtil.buildAny(collectionName);
-        args[2] = ExprUtil.buildAny(indexName);
-        return buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION_INDEX, args);
+        return buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION_INDEX,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(indexName)))
+                                .addFld(ObjectField.newBuilder().setKey("collection").setValue(ExprUtil.buildAny(collectionName)))
+                                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))
+
+        ).build());
     }
 
     /**

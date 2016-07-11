@@ -53,19 +53,34 @@ public class TableDeleteTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        sqlUpdate("drop table if exists testDelete");
-        sqlUpdate("create table testDelete (_id varchar(32), name varchar(20), birthday date, age int)");
-        sqlUpdate("insert into testDelete values ('1', 'Sakila', '2000-05-27', 14)");
-        sqlUpdate("insert into testDelete values ('2', 'Shakila', '2001-06-26', 13)");
+        try {
+            sqlUpdate("drop table if exists testDelete");
+            sqlUpdate("drop view if exists testDeleteView");
+            sqlUpdate("create table testDelete (_id varchar(32), name varchar(20), birthday date, age int)");
+            sqlUpdate("create view testDeleteView as select _id, age from testDelete");
 
-        Table table = this.schema.getTable("testDelete");
-        assertEquals(2, table.count());
-        Result res = table.delete().where("age == 13").execute();
-        assertEquals(null, res.getAutoIncrementValue());
-        assertEquals(1, table.count());
+            sqlUpdate("insert into testDelete values ('1', 'Sakila', '2000-05-27', 14)");
+            sqlUpdate("insert into testDelete values ('2', 'Shakila', '2001-06-26', 13)");
+            sqlUpdate("insert into testDelete values ('3', 'Shakila', '2002-06-26', 12)");
 
-        table.delete().where("age = :age").bind("age", 14).execute();
-        assertEquals(0, table.count());
+            Table table = this.schema.getTable("testDelete");
+            assertEquals(3, table.count());
+            Result res = table.delete().where("age == 13").execute();
+            assertEquals(null, res.getAutoIncrementValue());
+            assertEquals(2, table.count());
+
+            Table view = this.schema.getTable("testDeleteView");
+            assertEquals(2, view.count());
+            res = view.delete().where("age == 12").execute();
+            assertEquals(null, res.getAutoIncrementValue());
+            assertEquals(1, view.count());
+
+            table.delete().where("age = :age").bind("age", 14).execute();
+            assertEquals(0, table.count());
+        } finally {
+            sqlUpdate("drop table if exists testDelete");
+            sqlUpdate("drop view if exists testDeleteView");
+        }
     }
 
     // TODO: there could be more tests, incl limit?

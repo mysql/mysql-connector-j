@@ -57,19 +57,38 @@ public class TableUpdateTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        sqlUpdate("drop table if exists updates");
-        sqlUpdate("create table updates (_id varchar(32), name varchar(20), birthday date, age int)");
-        sqlUpdate("insert into updates values ('1', 'Sakila', '2000-05-27', 14)");
-        sqlUpdate("insert into updates values ('2', 'Shakila', '2001-06-26', 13)");
+        try {
+            sqlUpdate("drop table if exists updates");
+            sqlUpdate("drop view if exists updatesView");
+            sqlUpdate("create table updates (_id varchar(32), name varchar(20), birthday date, age int)");
+            sqlUpdate("create view updatesView as select _id, name, age from updates");
 
-        Table table = this.schema.getTable("updates");
-        Result res = table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
-        assertEquals(null, res.getAutoIncrementValue());
-        RowResult rows = table.select("name, age").where("_id == :theId").bind("theId", 1).execute();
-        Row r = rows.next();
-        assertEquals("Sakila-updated", r.getString(0));
-        assertEquals(15, r.getInt(1));
-        assertFalse(rows.hasNext());
+            sqlUpdate("insert into updates values ('1', 'Sakila', '2000-05-27', 14)");
+            sqlUpdate("insert into updates values ('2', 'Shakila', '2001-06-26', 13)");
+
+            Table table = this.schema.getTable("updates");
+            Result res = table.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 1")).where("name == 'Sakila'").execute();
+            assertEquals(null, res.getAutoIncrementValue());
+
+            Table view = this.schema.getTable("updatesView");
+            res = view.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 3")).where("name == 'Shakila'").execute();
+            assertEquals(null, res.getAutoIncrementValue());
+
+            RowResult rows = table.select("name, age").where("_id == :theId").bind("theId", 1).execute();
+            Row r = rows.next();
+            assertEquals("Sakila-updated", r.getString(0));
+            assertEquals(15, r.getInt(1));
+            assertFalse(rows.hasNext());
+
+            rows = table.select("name, age").where("_id == :theId").bind("theId", 2).execute();
+            r = rows.next();
+            assertEquals("Shakila-updated", r.getString(0));
+            assertEquals(16, r.getInt(1));
+            assertFalse(rows.hasNext());
+        } finally {
+            sqlUpdate("drop table if exists updates");
+            sqlUpdate("drop view if exists updatesView");
+        }
     }
 
     // TODO: there could be more tests, but I expect this API and implementation to change to better accommodate some "normal" use cases

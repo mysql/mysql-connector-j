@@ -29,6 +29,13 @@ package com.mysql.cj.api.x;
 public interface DatabaseObject {
 
     /**
+     * Type of database objects.
+     */
+    enum DbObjectType {
+        COLLECTION, TABLE, VIEW
+    };
+
+    /**
      * Existence states of database objects.
      */
     enum DbObjectStatus {

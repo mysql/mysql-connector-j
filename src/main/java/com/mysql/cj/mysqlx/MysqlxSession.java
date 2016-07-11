@@ -50,6 +50,7 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.DataStatement.Reducer;
+import com.mysql.cj.api.x.DatabaseObject;
 import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SqlResult;
@@ -63,6 +64,7 @@ import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
+import com.mysql.cj.mysqlx.devapi.DatabaseObjectDescription;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
 import com.mysql.cj.mysqlx.devapi.DocResultImpl;
 import com.mysql.cj.mysqlx.devapi.RowResultImpl;
@@ -344,17 +346,57 @@ public class MysqlxSession implements Session {
      *            type of objects to return
      * @return object names
      */
-    public List<String> getObjectNamesOfType(String schemaName, String type) {
+    public List<String> getObjectNamesOfType(String schemaName, DatabaseObject.DbObjectType type) {
+        return getObjectNamesOfType(schemaName, type, null);
+    }
+
+    /**
+     * Retrieve the list of objects in the given schema of the specified type. The type may be one of {COLLECTION, TABLE, VIEW}.
+     *
+     * @param schemaName
+     *            schema to return object names from
+     * @param type
+     *            type of objects to return
+     * @param pattern
+     *            object name pattern
+     * @return object names
+     */
+    public List<String> getObjectNamesOfType(String schemaName, DatabaseObject.DbObjectType type, String pattern) {
         newCommand();
-        this.protocol.sendListObjects(schemaName);
+        if (pattern == null) {
+            this.protocol.sendListObjects(schemaName);
+        } else {
+            this.protocol.sendListObjects(schemaName, pattern);
+        }
         // TODO: charactersetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type)).map(r -> r.getValue(0, new StringValueFactory()))
+                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type.toString())).map(r -> r.getValue(0, new StringValueFactory()))
                 .collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objectNames;
+    }
+
+    public List<DatabaseObjectDescription> listObjects(String schemaName) {
+        return listObjects(schemaName, null);
+    }
+
+    public List<DatabaseObjectDescription> listObjects(String schemaName, String pattern) {
+        newCommand();
+        if (pattern == null) {
+            this.protocol.sendListObjects(schemaName);
+        } else {
+            this.protocol.sendListObjects(schemaName, pattern);
+        }
+        // TODO: charactersetMetadata
+        ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
+        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+        List<DatabaseObjectDescription> objects = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
+                .map(r -> new DatabaseObjectDescription(r.getValue(0, new StringValueFactory()), r.getValue(1, new StringValueFactory())))
+                .collect(Collectors.toList());
+        this.protocol.readStatementExecuteOk();
+        return objects;
     }
 
     public <RES_T, R> RES_T query(String sql, Function<Row, R> eachRow, Collector<R, ?, RES_T> collector) {
@@ -459,7 +501,8 @@ public class MysqlxSession implements Session {
 
     public <R> CompletableFuture<R> asyncSelectRowsReduce(FindParams findParams, R id, Reducer<com.mysql.cj.api.x.Row, R> reducer) {
         CompletableFuture<R> f = new CompletableFuture<R>();
-        RowWiseReducingResultListener.MetadataToRowToElement<com.mysql.cj.api.x.Row> rowFactory = metadata -> new DevapiRowFactory(metadata, this.defaultTimeZone);
+        RowWiseReducingResultListener.MetadataToRowToElement<com.mysql.cj.api.x.Row> rowFactory = metadata -> new DevapiRowFactory(metadata,
+                this.defaultTimeZone);
         ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.x.Row, R>(id, reducer, f, rowFactory);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful

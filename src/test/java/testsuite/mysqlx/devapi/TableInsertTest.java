@@ -74,36 +74,69 @@ public class TableInsertTest extends TableTest {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String tableName = "basicInsert";
-        sqlUpdate("drop table if exists basicInsert");
-        sqlUpdate("create table basicInsert (_id varchar(32), name varchar(20) not null default 'unknown', birthday date, age int)");
-        Table table = this.schema.getTable(tableName);
-        // insert with fields and values separately
-        table.insert("_id", "birthday", "age").values(1, "2015-01-01", 1).execute();
-        // insert all fields with values
-        table.insert().values(2, "Orlando", "2014-01-01", 2).execute();
-        Map<String, Object> row = new HashMap<>();
-        row.put("_id", 3);
-        row.put("age", 3);
-        // insert a row in k/v pair form
-        table.insert(row).execute();
+        try {
+            sqlUpdate("drop table if exists basicInsert");
+            sqlUpdate("drop view if exists basicInsertView");
+            sqlUpdate("create table basicInsert (_id varchar(32), name varchar(20) not null default 'unknown', birthday date, age int)");
+            sqlUpdate("create view basicInsertView as select * from basicInsert");
 
-        RowResult rows = table.select("_id, name, birthday, age").orderBy("_id").execute();
-        Row r = rows.next();
-        assertEquals("1", r.getString("_id"));
-        assertEquals("unknown", r.getString("name"));
-        assertEquals("2015-01-01", r.getString("birthday"));
-        assertEquals(1, r.getInt("age"));
-        r = rows.next();
-        assertEquals("2", r.getString("_id"));
-        assertEquals("Orlando", r.getString("name"));
-        assertEquals("2014-01-01", r.getString("birthday"));
-        assertEquals(2, r.getInt("age"));
-        r = rows.next();
-        assertEquals("3", r.getString("_id"));
-        assertEquals("unknown", r.getString("name"));
-        assertEquals(null, r.getString("birthday"));
-        assertEquals(3, r.getInt("age"));
-        assertFalse(rows.hasNext());
+            Table table = this.schema.getTable("basicInsert");
+            // insert with fields and values separately
+            table.insert("_id", "birthday", "age").values(1, "2015-01-01", 1).execute();
+            // insert all fields with values
+            table.insert().values(2, "Orlando", "2014-01-01", 2).execute();
+            Map<String, Object> row = new HashMap<>();
+            row.put("_id", 3);
+            row.put("age", 3);
+            // insert a row in k/v pair form
+            table.insert(row).execute();
+
+            Table view = this.schema.getTable("basicInsertView");
+            // insert with fields and values separately
+            view.insert("_id", "birthday", "age").values(4, "2015-01-01", 1).execute();
+            // insert all fields with values
+            view.insert().values(5, "Orlando", "2014-01-01", 2).execute();
+            row = new HashMap<>();
+            row.put("_id", 6);
+            row.put("age", 3);
+            // insert a row in k/v pair form
+            view.insert(row).execute();
+
+            RowResult rows = table.select("_id, name, birthday, age").orderBy("_id").execute();
+            Row r = rows.next();
+            assertEquals("1", r.getString("_id"));
+            assertEquals("unknown", r.getString("name"));
+            assertEquals("2015-01-01", r.getString("birthday"));
+            assertEquals(1, r.getInt("age"));
+            r = rows.next();
+            assertEquals("2", r.getString("_id"));
+            assertEquals("Orlando", r.getString("name"));
+            assertEquals("2014-01-01", r.getString("birthday"));
+            assertEquals(2, r.getInt("age"));
+            r = rows.next();
+            assertEquals("3", r.getString("_id"));
+            assertEquals("unknown", r.getString("name"));
+            assertEquals(null, r.getString("birthday"));
+            assertEquals(3, r.getInt("age"));
+            r = rows.next();
+            assertEquals("4", r.getString("_id"));
+            assertEquals("unknown", r.getString("name"));
+            assertEquals("2015-01-01", r.getString("birthday"));
+            assertEquals(1, r.getInt("age"));
+            r = rows.next();
+            assertEquals("5", r.getString("_id"));
+            assertEquals("Orlando", r.getString("name"));
+            assertEquals("2014-01-01", r.getString("birthday"));
+            assertEquals(2, r.getInt("age"));
+            r = rows.next();
+            assertEquals("6", r.getString("_id"));
+            assertEquals("unknown", r.getString("name"));
+            assertEquals(null, r.getString("birthday"));
+            assertEquals(3, r.getInt("age"));
+            assertFalse(rows.hasNext());
+        } finally {
+            sqlUpdate("drop table if exists basicInsert");
+            sqlUpdate("drop view if exists basicInsertView");
+        }
     }
 }

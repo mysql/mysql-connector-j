@@ -64,11 +64,25 @@ public class SchemaImpl implements Schema {
     }
 
     public List<Collection> getCollections() {
-        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "COLLECTION").stream().map(this::getCollection).collect(Collectors.toList());
+        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, DbObjectType.COLLECTION).stream().map(this::getCollection)
+                .collect(Collectors.toList());
+    }
+
+    public List<Collection> getCollections(String pattern) {
+        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, DbObjectType.COLLECTION, pattern).stream().map(this::getCollection)
+                .collect(Collectors.toList());
     }
 
     public List<Table> getTables() {
-        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, "TABLE").stream().map(this::getTable).collect(Collectors.toList());
+        return this.session.getMysqlxSession().listObjects(this.name).stream()
+                .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
+                .collect(Collectors.toList());
+    }
+
+    public List<Table> getTables(String pattern) {
+        return this.session.getMysqlxSession().listObjects(this.name, pattern).stream()
+                .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
+                .collect(Collectors.toList());
     }
 
     public Collection getCollection(String collectionName) {
@@ -89,6 +103,10 @@ public class SchemaImpl implements Schema {
 
     public Table getTable(String tableName) {
         return new TableImpl(this, tableName);
+    }
+
+    /* package private */ Table getTable(DatabaseObjectDescription descr) {
+        return new TableImpl(this, descr);
     }
 
     public Table getTable(String tableName, boolean requireExists) {

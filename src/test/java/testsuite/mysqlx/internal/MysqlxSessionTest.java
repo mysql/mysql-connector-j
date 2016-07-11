@@ -35,6 +35,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.DatabaseObject.DbObjectType;
 import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.mysqlx.DocFindParams;
 import com.mysql.cj.mysqlx.FindParams;
@@ -91,7 +92,11 @@ public class MysqlxSessionTest extends InternalMysqlxBaseTestCase {
         String collName = "test_get_objects";
         this.session.dropCollectionIfExists(getTestDatabase(), collName);
         this.session.createCollection(getTestDatabase(), collName);
-        List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), "COLLECTION");
+        List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION);
+        assertTrue(collNames.contains(collName));
+        collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION, "none%");
+        assertFalse(collNames.contains(collName));
+        collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION, "%get_obj%");
         assertTrue(collNames.contains(collName));
         this.session.dropCollection(getTestDatabase(), collName);
     }
