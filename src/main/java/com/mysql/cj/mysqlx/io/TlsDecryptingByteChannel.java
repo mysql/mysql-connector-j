@@ -28,7 +28,6 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.ReadPendingException;
 import java.util.concurrent.Future;
 
 import javax.net.ssl.SSLEngine;
@@ -80,7 +79,9 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
      */
     public void completed(Integer result, Void attachment) {
         if (result < 0) {
-            this.handler.completed(result, null);
+            CompletionHandler<Integer, ?> h = this.handler;
+            this.handler = null;
+            h.completed(result, null);
             return;
         }
         this.cipherTextBuffer.flip();
@@ -88,7 +89,9 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     }
 
     public void failed(Throwable exc, Void attachment) {
-        this.handler.failed(exc, null);
+        CompletionHandler<Integer, ?> h = this.handler;
+        this.handler = null;
+        h.failed(exc, null);
     }
 
     /**
@@ -119,7 +122,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
                 case CLOSED:
                     this.handler.completed(-1, null);
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             failed(ex, null);
         }
     }
@@ -128,21 +131,25 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
      * Main entry point from caller.
      */
     public <A> void read(ByteBuffer dest, A attachment, CompletionHandler<Integer, ? super A> hdlr) {
-        if (this.handler != null) {
-            throw new ReadPendingException();
-        }
-        this.handler = hdlr;
-        this.dst = dest;
-        if (this.clearTextBuffer.hasRemaining()) {
-            // copy any remaining data directly to client
-            dispatchData();
-        } else if (this.cipherTextBuffer.hasRemaining()) {
-            // otherwise, decrypt ciphertext data remaining from last time
-            decryptAndDispatch();
-        } else {
-            // otherwise, issue a new read request
-            this.cipherTextBuffer.clear();
-            this.in.read(this.cipherTextBuffer, null, this);
+        try {
+            if (this.handler != null) {
+                hdlr.completed(0, null);
+            }
+            this.handler = hdlr;
+            this.dst = dest;
+            if (this.clearTextBuffer.hasRemaining()) {
+                // copy any remaining data directly to client
+                dispatchData();
+            } else if (this.cipherTextBuffer.hasRemaining()) {
+                // otherwise, decrypt ciphertext data remaining from last time
+                decryptAndDispatch();
+            } else {
+                // otherwise, issue a new read request
+                this.cipherTextBuffer.clear();
+                this.in.read(this.cipherTextBuffer, null, this);
+            }
+        } catch (Throwable ex) {
+            hdlr.failed(ex, null);
         }
     }
 
@@ -165,20 +172,24 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
         // use a temporary to allow caller to initiate a new read in the callback
         CompletionHandler<Integer, ?> h = this.handler;
         this.handler = null;
-        // force the call through sun.nio.ch.Invoker to avoid deep levels of recursion. If we directly call the handler, we may grow a huge stack when the
-        // caller only reads small portions of the buffer and issues a new read request. The Invoker will dispatch the call on the thread pool for the
-        // AsynchronousSocketChannel
-        this.in.read(TlsDecryptingByteChannel.emptyBuffer, null, new CompletionHandler<Integer, Void>() {
-            public void completed(Integer result, Void attachment) {
-                h.completed(transferred, null);
-            }
+        if (this.in.isOpen()) {
+            // If channel is still open then force the call through sun.nio.ch.Invoker to avoid deep levels of recursion.
+            // If we directly call the handler, we may grow a huge stack when the caller only reads small portions of the buffer and issues a new read request.
+            // The Invoker will dispatch the call on the thread pool for the AsynchronousSocketChannel
+            this.in.read(TlsDecryptingByteChannel.emptyBuffer, null, new CompletionHandler<Integer, Void>() {
+                public void completed(Integer result, Void attachment) {
+                    h.completed(transferred, null);
+                }
 
-            public void failed(Throwable t, Void attachment) {
-                // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
-                t.printStackTrace();
-                throw AssertionFailedException.shouldNotHappen(new Exception(t));
-            }
-        });
+                public void failed(Throwable t, Void attachment) {
+                    // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
+                    t.printStackTrace();
+                    h.failed(AssertionFailedException.shouldNotHappen(new Exception(t)), null);
+                }
+            });
+        } else {
+            h.completed(transferred, null);
+        }
     }
 
     public void close() throws IOException {
@@ -200,7 +211,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
      * Unused. Should not be called.
      */
     public <A> void write(ByteBuffer src, A attachment, CompletionHandler<Integer, ? super A> hdlr) {
-        throw new UnsupportedOperationException("This channel does not support writes");
+        hdlr.failed(new UnsupportedOperationException("This channel does not support writes"), null);
     }
 
     /**

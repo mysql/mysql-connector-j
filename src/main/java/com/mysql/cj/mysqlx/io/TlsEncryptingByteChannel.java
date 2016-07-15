@@ -120,7 +120,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
                 ByteBuffer cipherText = getCipherTextBuffer();
                 SSLEngineResult res = this.sslEngine.wrap(srcs, offset, length, cipherText);
                 if (res.getStatus() != Status.OK) {
-                    throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
+                    handler.failed(new CJCommunicationsException("Unacceptable SSLEngine result: " + res), null);
                 }
                 totalWriteSize += res.bytesConsumed();
                 cipherText.flip();
@@ -139,7 +139,9 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
                 continue;
             }
         } catch (SSLException ex) {
-            throw new CJCommunicationsException(ex);
+            handler.failed(new CJCommunicationsException(ex), null);
+        } catch (Throwable ex) {
+            handler.failed(ex, null);
         }
     }
 
@@ -200,7 +202,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     @Override
     public <A> void connect(SocketAddress remote, A attachment, CompletionHandler<Void, ? super A> handler) {
-        throw new UnsupportedOperationException();
+        handler.failed(new UnsupportedOperationException(), null);
     }
 
     @Override
@@ -210,7 +212,7 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     @Override
     public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment, CompletionHandler<Integer, ? super A> handler) {
-        throw new UnsupportedOperationException();
+        handler.failed(new UnsupportedOperationException(), null);
     }
 
     @Override
@@ -220,12 +222,12 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     @Override
     public <A> void read(ByteBuffer[] dsts, int offset, int length, long timeout, TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
-        throw new UnsupportedOperationException();
+        handler.failed(new UnsupportedOperationException(), null);
     }
 
     @Override
     public <A> void write(ByteBuffer src, long timeout, TimeUnit unit, A attachment, CompletionHandler<Integer, ? super A> handler) {
-        throw new UnsupportedOperationException();
+        handler.failed(new UnsupportedOperationException(), null);
     }
 
     @Override

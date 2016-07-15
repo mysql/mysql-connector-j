@@ -26,6 +26,8 @@ package com.mysql.cj.mysqlx.io;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.ReadPendingException;
+import java.nio.channels.WritePendingException;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
@@ -64,6 +66,8 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
         try {
             ByteBuffer bufs[] = this.pendingWrites.toArray(new ByteBuffer[this.pendingWrites.size()]);
             this.channel.write(bufs, 0, this.pendingWrites.size(), 0L, TimeUnit.MILLISECONDS, null, this);
+        } catch (ReadPendingException | WritePendingException t) {
+            return;
         } catch (Throwable t) {
             failed(t, null);
         }
@@ -93,9 +97,6 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
      * Completion handler for channel writes.
      */
     public void completed(Long bytesWritten, Void v) {
-        if (bytesWritten == 0) {
-            throw new IllegalArgumentException("Shouldn't be 0");
-        }
         // collect completed writes to notify after initiating the next write
         LinkedList<ByteBuffer> completedWrites = new LinkedList<>();
         synchronized (this.pendingWrites) {
