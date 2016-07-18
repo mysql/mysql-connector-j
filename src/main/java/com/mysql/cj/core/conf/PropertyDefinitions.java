@@ -329,7 +329,6 @@ public class PropertyDefinitions {
     public static final String PNAME_useColumnNamesInFindColumn = "useColumnNamesInFindColumn";
     public static final String PNAME_useConfigs = "useConfigs";
     public static final String PNAME_useCursorFetch = "useCursorFetch";
-    public static final String PNAME_useDirectRowUnpack = "useDirectRowUnpack";
     public static final String PNAME_useHostsInPrivileges = "useHostsInPrivileges";
     public static final String PNAME_useInformationSchema = "useInformationSchema";
     public static final String PNAME_useLocalSessionState = "useLocalSessionState";
@@ -854,9 +853,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useCursorFetch, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useCursorFetch"), "5.0.0", CATEGORY_PERFORMANCE, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useDirectRowUnpack, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useDirectRowUnpack"), "5.1.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PNAME_useHostsInPrivileges, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useHostsInPrivileges"), "3.0.2", CATEGORY_METADATA, Integer.MIN_VALUE),
 
@@ -1130,7 +1126,6 @@ public class PropertyDefinitions {
                 put(PNAME_useColumnNamesInFindColumn, "useColumnNamesInFindColumn");
                 put(PNAME_useConfigs, "useConfigs");
                 put(PNAME_useCursorFetch, "useCursorFetch");
-                put(PNAME_useDirectRowUnpack, "useDirectRowUnpack");
                 put(PNAME_useHostsInPrivileges, "useHostsInPrivileges");
                 put(PNAME_useInformationSchema, "useInformationSchema");
                 put(PNAME_useLocalSessionState, "useLocalSessionState");

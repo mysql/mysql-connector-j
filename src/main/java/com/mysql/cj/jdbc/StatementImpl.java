@@ -70,7 +70,10 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
@@ -242,7 +245,7 @@ public class StatementImpl implements Statement {
     protected long lastInsertId = -1;
 
     /** The max field size for this statement */
-    protected int maxFieldSize = MysqlIO.getMaxBuf();
+    protected int maxFieldSize = (Integer) PropertyDefinitions.getPropertyDefinition(PropertyDefinitions.PNAME_maxAllowedPacket).getDefaultValue();
 
     /**
      * The maximum number of rows to return for this statement (-1 means _all_
@@ -332,6 +335,8 @@ public class StatementImpl implements Statement {
     protected boolean dontCheckOnDuplicateKeyUpdateInSQL;
     protected ReadableProperty<Boolean> sendFractionalSeconds;
 
+    protected ResultSetFactory resultSetFactory;
+
     /**
      * Constructor for a Statement.
      * 
@@ -409,6 +414,7 @@ public class StatementImpl implements Statement {
         this.holdResultsOpenOverClose = this.connection.getPropertySet()
                 .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
 
+        this.resultSetFactory = new ResultSetFactory(this.connection, this);
     }
 
     /**
@@ -635,7 +641,7 @@ public class StatementImpl implements Statement {
                     this.openResults.remove(rs);
                 }
 
-                boolean hasMoreResults = rs.getNextResultSet() != null;
+                boolean hasMoreResults = rs.getNextResultset() != null;
 
                 // clear the current results or GGK results
                 if (this.results == rs && !hasMoreResults) {
@@ -870,14 +876,8 @@ public class StatementImpl implements Statement {
                         // Check if we have cached metadata for this query...
                         //
 
-                        Field[] cachedFields = null;
-
                         if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                             cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
-
-                            if (cachedMetaData != null) {
-                                cachedFields = cachedMetaData.getFields();
-                            }
                         }
 
                         //
@@ -887,8 +887,7 @@ public class StatementImpl implements Statement {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency, createStreamingResultSet(),
-                                this.currentCatalog, cachedFields);
+                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1411,23 +1410,15 @@ public class StatementImpl implements Statement {
                 //
                 // Check if we have cached metadata for this query...
                 //
-
-                Field[] cachedFields = null;
-
                 if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
                     cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
-
-                    if (cachedMetaData != null) {
-                        cachedFields = cachedMetaData.getFields();
-                    }
                 }
 
                 locallyScopedConn.setSessionMaxRows(this.maxRows);
 
                 statementBegins();
 
-                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, this.resultSetType, this.resultSetConcurrency,
-                        createStreamingResultSet(), this.currentCatalog, cachedFields);
+                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
@@ -1505,18 +1496,20 @@ public class StatementImpl implements Statement {
 
     protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Field[] fields = { new Field(null, "1", MysqlType.BIGINT, 1) };
+            String encoding = this.session.getServerSession().getCharacterSetMetadata();
+            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
+            Field[] fields = { new Field(null, "1", collationIndex, encoding, MysqlType.BIGINT, 1) };
             ArrayList<Row> rows = new ArrayList<Row>();
             byte[] colVal = new byte[] { (byte) '1' };
 
             rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
 
-            return (ResultSetInternalMethods) DatabaseMetaData.buildResultSet(fields, rows, this.connection);
+            return this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, new ResultsetRowsStatic(rows, fields));
         }
     }
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
-        c.execSQL(this, nonQuery, -1, null, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog, null, false).close();
+        c.execSQL(this, nonQuery, -1, null, false, this.currentCatalog, null, false).close();
     }
 
     /**
@@ -1605,8 +1598,7 @@ public class StatementImpl implements Statement {
                 statementBegins();
 
                 // null catalog: force read of field info on DML
-                rs = locallyScopedConn.execSQL(this, sql, -1, null, java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY, false,
-                        this.currentCatalog, null, isBatch);
+                rs = locallyScopedConn.execSQL(this, sql, -1, null, false, this.currentCatalog, null, isBatch);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
@@ -1743,11 +1735,13 @@ public class StatementImpl implements Statement {
                 return this.generatedKeysResults = getGeneratedKeysInternal();
             }
 
+            String encoding = this.session.getServerSession().getCharacterSetMetadata();
+            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 20);
+            fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 
-            this.generatedKeysResults = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
-                    new ResultsetRowsStatic(this.batchedGeneratedKeys), this.connection, this);
+            this.generatedKeysResults = this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(this.batchedGeneratedKeys, fields));
 
             return this.generatedKeysResults;
         }
@@ -1765,8 +1759,10 @@ public class StatementImpl implements Statement {
 
     protected ResultSetInternalMethods getGeneratedKeysInternal(long numKeys) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            String encoding = this.session.getServerSession().getCharacterSetMetadata();
+            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "GENERATED_KEY", MysqlType.BIGINT_UNSIGNED, 20);
+            fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 
             ArrayList<Row> rowSet = new ArrayList<Row>();
 
@@ -1808,8 +1804,8 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            com.mysql.cj.jdbc.result.ResultSetImpl gkRs = com.mysql.cj.jdbc.result.ResultSetImpl.getInstance(this.currentCatalog, fields,
-                    new ResultsetRowsStatic(rowSet), this.connection, this);
+            ResultSetImpl gkRs = this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(rowSet, fields));
 
             return gkRs;
         }
@@ -1935,7 +1931,7 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            ResultSetInternalMethods nextResultSet = this.results.getNextResultSet();
+            ResultSetInternalMethods nextResultSet = (ResultSetInternalMethods) this.results.getNextResultset();
 
             switch (current) {
                 case java.sql.Statement.CLOSE_CURRENT_RESULT:
@@ -1945,7 +1941,7 @@ public class StatementImpl implements Statement {
                             this.results.realClose(false);
                         }
 
-                        this.results.clearNextResult();
+                        this.results.clearNextResultset();
                     }
 
                     break;
@@ -1957,7 +1953,7 @@ public class StatementImpl implements Statement {
                             this.results.realClose(false);
                         }
 
-                        this.results.clearNextResult();
+                        this.results.clearNextResultset();
                     }
 
                     closeAllOpenResults();
@@ -1969,7 +1965,7 @@ public class StatementImpl implements Statement {
                         this.openResults.add(this.results);
                     }
 
-                    this.results.clearNextResult(); // nobody besides us should
+                    this.results.clearNextResultset(); // nobody besides us should
                     // ever need this value...
                     break;
 
@@ -2129,7 +2125,7 @@ public class StatementImpl implements Statement {
     /**
      * JDBC 2.0 Determine the result set type.
      * 
-     * @return the ResultSet type (SCROLL_SENSITIVE or SCROLL_INSENSITIVE)
+     * @return the ResultSet type (TYPE_FORWARD_ONLY, SCROLL_SENSITIVE or SCROLL_INSENSITIVE)
      * 
      * @throws SQLException
      *             if an error occurs.
@@ -2180,7 +2176,7 @@ public class StatementImpl implements Statement {
                 return null;
             }
 
-            SQLWarning pendingWarningsFromServer = SQLError.convertShowWarningsToSQLWarnings(this.connection);
+            SQLWarning pendingWarningsFromServer = ResultSetUtil.convertShowWarningsToSQLWarnings(this.connection);
 
             if (this.warningChain != null) {
                 this.warningChain.setNextWarning(pendingWarningsFromServer);
@@ -2255,8 +2251,8 @@ public class StatementImpl implements Statement {
         this.warningChain = null;
         this.openResults = null;
         this.batchedGeneratedKeys = null;
-        this.localInfileInputStream = null;
         this.pingTarget = null;
+        this.resultSetFactory = null;
     }
 
     /**
@@ -2370,7 +2366,7 @@ public class StatementImpl implements Statement {
                 throw SQLError.createSQLException(Messages.getString("Statement.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            int maxBuf = (this.connection != null) ? this.maxAllowedPacket.getValue() : MysqlIO.getMaxBuf();
+            int maxBuf = this.maxAllowedPacket.getValue();
 
             if (max > maxBuf) {
                 throw SQLError.createSQLException(Messages.getString("Statement.13", new Object[] { Long.valueOf(maxBuf) }),
@@ -2571,14 +2567,12 @@ public class StatementImpl implements Statement {
         return statementStartPos;
     }
 
-    private InputStream localInfileInputStream;
-
     public InputStream getLocalInfileInputStream() {
-        return this.localInfileInputStream;
+        return this.session.getLocalInfileInputStream();
     }
 
     public void setLocalInfileInputStream(InputStream stream) {
-        this.localInfileInputStream = stream;
+        this.session.setLocalInfileInputStream(stream);
     }
 
     public void setPingTarget(PingTarget pingTarget) {
@@ -2710,5 +2704,9 @@ public class StatementImpl implements Statement {
 
     boolean isCursorRequired() throws SQLException {
         return false;
+    }
+
+    public ResultSetFactory getResultSetFactory() {
+        return this.resultSetFactory;
     }
 }

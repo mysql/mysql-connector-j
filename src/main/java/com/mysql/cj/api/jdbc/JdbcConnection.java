@@ -31,8 +31,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
@@ -353,11 +353,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     JdbcConnection duplicate() throws SQLException;
 
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException;
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
+            ColumnDefinition cachedMetadata) throws SQLException;
 
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType, int resultSetConcurrency,
-            boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException;
+    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
+            ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException;
 
     StringBuilder generateConnectionCommentBlock(StringBuilder buf);
 

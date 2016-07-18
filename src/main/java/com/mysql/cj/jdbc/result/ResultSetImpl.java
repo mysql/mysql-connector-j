@@ -106,10 +106,12 @@ import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.AbstractResultset;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
+import com.mysql.cj.mysqla.result.OkPacket;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 public class ResultSetImpl extends AbstractResultset implements ResultSetInternalMethods, WarningListener {
@@ -155,8 +157,6 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
 
     /** Has this result set been closed? */
     protected boolean isClosed = false;
-
-    protected ResultSetInternalMethods nextResultSet = null;
 
     /** Are we on the insert row? */
     protected boolean onInsertRow = false;
@@ -226,31 +226,17 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
     protected boolean yearIsDateType = true;
     protected String zeroDateTimeBehavior;
 
-    public static ResultSetImpl getInstance(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
-        return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
-    }
-
-    /**
-     * Creates a result set instance that represents a query result
-     */
-    public static ResultSetImpl getInstance(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt)
-            throws SQLException {
-        return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
-    }
-
     /**
      * Create a result set for an executeUpdate statement.
      * 
-     * @param updateCount
-     *            the number of rows affected by the update
-     * @param updateID
-     *            the autoincrement value (if any)
+     * @param ok
      * @param conn
      * @param creatorStmt
      */
-    public ResultSetImpl(long updateCount, long updateID, JdbcConnection conn, StatementImpl creatorStmt) {
-        this.updateCount = updateCount;
-        this.updateId = updateID;
+    public ResultSetImpl(OkPacket ok, JdbcConnection conn, StatementImpl creatorStmt) {
+        this.updateCount = ok.getUpdateCount();
+        this.updateId = ok.getUpdateID();
+        this.serverInfo = ok.getInfo();
         this.columnDefinition = new MysqlaColumnDefinition(new Field[0]);
 
         this.connection = conn;
@@ -267,10 +253,6 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
     /**
      * Creates a new ResultSet object.
      * 
-     * @param catalog
-     *            the database in use when we were created
-     * @param fields
-     *            an array of Field objects (basically, the ResultSet MetaData)
      * @param tuples
      *            actual row data
      * @param conn
@@ -280,9 +262,12 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
      * @throws SQLException
      *             if an error occurs
      */
-    public ResultSetImpl(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+    public ResultSetImpl(ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         this.connection = conn;
         this.session = conn.getSession();
+        // TODO which catalog to use, from connection or from statement?
+        this.catalog = creatorStmt != null ? creatorStmt.getCurrentCatalog() : conn.getCatalog();
+        this.owningStatement = creatorStmt;
 
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
@@ -323,11 +308,7 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
             this.doubleValueFactory = new FloatingPointBoundsEnforcer<>(this.doubleValueFactory, -Double.MAX_VALUE, Double.MAX_VALUE);
         }
 
-        this.owningStatement = creatorStmt;
-
-        this.catalog = catalog;
-
-        this.columnDefinition = new MysqlaColumnDefinition(fields);
+        this.columnDefinition = new MysqlaColumnDefinition(tuples.getMetadata());
         this.rowData = tuples;
         this.updateCount = this.rowData.size();
 
@@ -576,14 +557,6 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
     }
 
     /**
-     * We can't do this ourselves, otherwise the contract for
-     * Statement.getMoreResults() won't work correctly.
-     */
-    public synchronized void clearNextResult() {
-        this.nextResultSet = null;
-    }
-
-    /**
      * After this call, getWarnings returns null until a new warning is reported
      * for this ResultSet
      * 
@@ -601,10 +574,9 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
     }
 
     // Note, row data is linked between these two result sets
-    public ResultSetInternalMethods copy() throws SQLException {
+    public ResultSetInternalMethods copy(ResultSetFactory resultSetFactory) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.columnDefinition.getFields(), this.rowData, this.connection,
-                    this.owningStatement); // note, doesn't work for updatable result sets
+            ResultSetInternalMethods rs = resultSetFactory.getInstance(getConcurrency(), getType(), this.rowData); // note, doesn't work for updatable result sets
 
             return rs;
         }
@@ -1154,13 +1126,6 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
         return new ResultSetMetaData(this.session, this.columnDefinition.getFields(),
                 this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType,
                 getExceptionInterceptor());
-    }
-
-    /**
-     * @return the nextResultSet, if any, null if none exists.
-     */
-    public synchronized ResultSetInternalMethods getNextResultSet() {
-        return this.nextResultSet;
     }
 
     public Object getObject(int columnIndex) throws SQLException {
@@ -2084,15 +2049,6 @@ public class ResultSetImpl extends AbstractResultset implements ResultSetInterna
         } catch (SQLException e) {
             throw new RuntimeException(e); // FIXME: Need to evolve public interface
         }
-    }
-
-    /**
-     * @param nextResultSet
-     *            Sets the next result set in the result set chain for multiple
-     *            result sets.
-     */
-    public synchronized void setNextResultSet(ResultSetInternalMethods nextResultSet) {
-        this.nextResultSet = nextResultSet;
     }
 
     public void setOwningStatement(com.mysql.cj.jdbc.StatementImpl owningStatement) {

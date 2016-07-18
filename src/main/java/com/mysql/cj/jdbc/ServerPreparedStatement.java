@@ -52,6 +52,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -72,6 +73,7 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
+import com.mysql.cj.mysqla.io.ColumnDefinitionFactory;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
@@ -689,7 +691,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     @Override
     protected com.mysql.cj.api.jdbc.result.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket,
-            boolean createStreamingResultSet, boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
+            boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadataFromCache, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.numberOfExecutions++;
 
@@ -1021,7 +1023,8 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @throws SQLException
      */
-    private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, Field[] metadataFromCache) throws SQLException {
+    private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadataFromCache)
+            throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1256,9 +1259,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                             this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(queryAsString)));
                 }
 
-                com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getResultsHandler().readAllResults(this, maxRowsToRetrieve,
-                        this.resultSetType, this.resultSetConcurrency, createStreamingResultSet, this.getCurrentCatalog(), resultPacket, true, this.fieldCount,
-                        metadataFromCache);
+                com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getProtocol().readAllResults(maxRowsToRetrieve,
+                        createStreamingResultSet, resultPacket, true, metadataFromCache, this.resultSetFactory);
 
                 if (this.session.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1288,7 +1290,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 this.results = rs;
 
                 if (this.session.hadWarnings()) {
-                    this.session.getResultsHandler().scanForAndThrowDataTruncation();
+                    this.session.getProtocol().scanForAndThrowDataTruncation();
                 }
 
                 return rs;
@@ -1407,34 +1409,43 @@ public class ServerPreparedStatement extends PreparedStatement {
                             this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
-                boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
+                //boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
 
                 if (this.parameterCount > 0) {
-                    this.parameterFields = new Field[this.parameterCount];
+                    //this.parameterFields = new Field[this.parameterCount];
 
-                    PacketPayload metaDataPacket;
-                    for (int i = 0; i < this.parameterCount; i++) {
-                        metaDataPacket = this.session.readPacket();
-                        this.parameterFields[i] = this.session.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
-                    }
-                    if (checkEOF) { // Skip the following EOF packet.
-                        this.session.readPacket();
-                    }
+                    //PacketPayload metaDataPacket;
+                    //for (int i = 0; i < this.parameterCount; i++) {
+                    //    metaDataPacket = this.session.readPacket();
+                    //    this.parameterFields[i] = this.session.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
+                    //}
+                    //if (checkEOF) { // Skip the following EOF packet.
+                    //    this.session.readPacket();
+                    //}
+
+                    this.parameterFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.parameterCount, null))
+                            .getFields();
+
                 }
 
                 // Read in the result set column information
                 if (this.fieldCount > 0) {
-                    this.resultFields = new Field[this.fieldCount];
+                    //this.resultFields = new Field[this.fieldCount];
 
-                    PacketPayload fieldPacket;
-                    for (int i = 0; i < this.fieldCount; i++) {
-                        fieldPacket = this.session.readPacket();
-                        this.resultFields[i] = this.session.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
-                    }
-                    if (checkEOF) { // Skip the following EOF packet.
-                        this.session.readPacket();
-                    }
+                    //PacketPayload fieldPacket;
+                    //for (int i = 0; i < this.fieldCount; i++) {
+                    //    fieldPacket = this.session.readPacket();
+                    //    this.resultFields[i] = this.session.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
+                    //}
+                    //if (checkEOF) { // Skip the following EOF packet.
+                    //    this.session.readPacket();
+                    //}
+                    this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.fieldCount, null)).getFields();
                 }
+            } catch (IOException ioEx) {
+                throw SQLError.createCommunicationsException(this.session.getProtocol().getConnection(),
+                        this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
+                        this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.session.getExceptionInterceptor());
             } catch (SQLException | CJException sqlEx) {
                 SQLException ex = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);
 

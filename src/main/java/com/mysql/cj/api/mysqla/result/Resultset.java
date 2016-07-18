@@ -31,7 +31,7 @@ package com.mysql.cj.api.mysqla.result;
  * http://dev.mysql.com/doc/internals/en/binary-protocol-resultset.html
  *
  */
-public interface Resultset {
+public interface Resultset extends ProtocolStructure {
 
     /**
      * Sometimes the driver doesn't have metadata before consuming the result set rows (because it's cached),
@@ -60,4 +60,23 @@ public interface Resultset {
      * The id (used when profiling) to identify us
      */
     int getResultId();
+
+    /**
+     * @param nextResultset
+     *            Sets the next result set in the result set chain for multiple result sets.
+     */
+    void setNextResultset(Resultset nextResultset);
+
+    /**
+     * Returns the next ResultSet in a multi-resultset "chain", if any,
+     * null if none exists.
+     */
+    Resultset getNextResultset();
+
+    /**
+     * Clears the reference to the next result set in a multi-result set
+     * "chain".
+     */
+    void clearNextResultset();
+
 }

@@ -46,6 +46,7 @@ import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -75,6 +76,7 @@ import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -92,6 +94,7 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
@@ -735,6 +738,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     protected ReadableProperty<Boolean> autoClosePStmtStreams;
     protected ReadableProperty<Boolean> treatUtilDateAsTimestamp;
 
+    protected ResultSetFactory noStatementResultSetFactory;
+
     /**
      * Creates a prepared statement instance
      */
@@ -1135,12 +1140,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
 
-            Field[] metadataFromCache = null;
-
-            if (cachedMetadata != null) {
-                metadataFromCache = cachedMetadata.getFields();
-            }
-
             boolean oldInfoMsgState = false;
 
             if (this.retrieveGeneratedKeys) {
@@ -1153,7 +1152,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             locallyScopedConn.setSessionMaxRows(this.firstCharOfStmt == 'S' ? this.maxRows : -1);
 
-            rs = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), (this.firstCharOfStmt == 'S'), metadataFromCache, false);
+            rs = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), (this.firstCharOfStmt == 'S'), cachedMetadata, false);
 
             if (cachedMetadata != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql, cachedMetadata, rs);
@@ -1793,7 +1792,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *             if an error occurs.
      */
     protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket, boolean createStreamingResultSet,
-            boolean queryIsSelectOnly, Field[] metadataFromCache, boolean isBatch) throws SQLException {
+            boolean queryIsSelectOnly, ColumnDefinition metadataFromCache, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
 
@@ -1824,8 +1823,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         statementBegins();
                     }
 
-                    rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket, this.resultSetType, this.resultSetConcurrency,
-                            createStreamingResultSet, this.getCurrentCatalog(), metadataFromCache, isBatch);
+                    rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket, createStreamingResultSet, this.getCurrentCatalog(),
+                            metadataFromCache, isBatch);
 
                     if (timeoutTask != null) {
                         timeoutTask.cancel();
@@ -1919,15 +1918,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
 
-            Field[] metadataFromCache = null;
-
-            if (cachedMetadata != null) {
-                metadataFromCache = cachedMetadata.getFields();
-            }
-
             locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-            this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, metadataFromCache, false);
+            this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, cachedMetadata, false);
 
             if (oldCatalog != null) {
                 locallyScopedConn.setCatalog(oldCatalog);
@@ -4733,8 +4726,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             rows.add(new ByteArrayRow(rowData, getExceptionInterceptor()));
 
-            this.bindingsAsRs = new ResultSetImpl(PreparedStatement.this.connection.getCatalog(), typeMetadata, new ResultsetRowsStatic(rows),
-                    PreparedStatement.this.connection, null);
+            this.bindingsAsRs = PreparedStatement.this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(rows, typeMetadata));
             this.bindingsAsRs.next();
         }
 

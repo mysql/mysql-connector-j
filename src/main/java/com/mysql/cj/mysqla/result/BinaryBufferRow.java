@@ -30,6 +30,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -57,7 +58,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
      */
     private boolean[] isNull;
 
-    public BinaryBufferRow(PacketPayload buf, Field[] fields, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
+    public BinaryBufferRow(PacketPayload buf, ColumnDefinition cd, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
         super(exceptionInterceptor);
 
         this.rowFromServer = buf;
@@ -65,8 +66,8 @@ public class BinaryBufferRow extends AbstractBufferRow {
         this.preNullBitmaskHomePosition = this.homePosition;
         this.valueDecoder = valueDecoder;
 
-        if (fields != null) {
-            setMetadata(fields);
+        if (cd.getFields() != null) {
+            setMetadata(cd.getFields());
         }
     }
 

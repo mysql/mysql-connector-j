@@ -44,7 +44,6 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.io.ResultsHandler;
 import com.mysql.cj.api.io.ServerCapabilities;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
@@ -172,10 +171,6 @@ public class MysqlxProtocol implements Protocol {
     }
 
     public ExceptionInterceptor getExceptionInterceptor() {
-        throw new NullPointerException("TODO");
-    }
-
-    public ResultsHandler getResultsHandler() {
         throw new NullPointerException("TODO");
     }
 

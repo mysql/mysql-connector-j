@@ -41,8 +41,8 @@ import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 import com.mysql.cj.jdbc.Blob;
@@ -103,7 +103,9 @@ public class TranslateExceptions {
         CtClass ctBoolArray = pool.get(boolean[].class.getName());
         CtClass ctByteArray = pool.get(byte[].class.getName());
         CtClass ctByteArray2 = pool.get(byte[][].class.getName());
-        CtClass ctFieldArray = pool.get(Field[].class.getName());
+        //CtClass ctFieldArray = pool.get(Field[].class.getName());
+        CtClass ctColumnDefinition = pool.get(ColumnDefinition.class.getName());
+
         CtClass ctIntArray = pool.get(int[].class.getName());
         CtClass ctLongArray = pool.get(long[].class.getName());
         CtClass ctInputStream = pool.get(InputStream.class.getName());
@@ -312,7 +314,7 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchSerially", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
-                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctFieldArray, CtClass.booleanType }),
+                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executePreparedBatchAsMultiStatement", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
@@ -361,12 +363,12 @@ public class TranslateExceptions {
         // non-JDBC
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
-                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctFieldArray, CtClass.booleanType }),
+                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytes", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("realClose", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverExecute", new CtClass[] { CtClass.intType, CtClass.booleanType, ctFieldArray }),
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverExecute", new CtClass[] { CtClass.intType, CtClass.booleanType, ctColumnDefinition }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctBindValue }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverPrepare", new CtClass[] { ctString }), EXCEPTION_INTERCEPTOR_GETTER);

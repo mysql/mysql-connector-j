@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
 import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 
 /**
@@ -44,7 +45,7 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetR
      * Returns a new instance of this result set, that shares the
      * underlying row data.
      */
-    ResultSetInternalMethods copy() throws SQLException;
+    ResultSetInternalMethods copy(ResultSetFactory resultSetFactory) throws SQLException;
 
     /**
      * Functions like ResultSet.getObject(), but using the given SQL type
@@ -121,18 +122,6 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetR
      * result set, upper-cased.
      */
     char getFirstCharOfQuery();
-
-    /**
-     * Clears the reference to the next result set in a multi-result set
-     * "chain".
-     */
-    void clearNextResult();
-
-    /**
-     * Returns the next ResultSet in a multi-resultset "chain", if any,
-     * null if none exists.
-     */
-    ResultSetInternalMethods getNextResultSet();
 
     void setStatementUsedForFetchingRows(PreparedStatement stmt);
 

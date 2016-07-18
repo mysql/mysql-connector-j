@@ -64,6 +64,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
  * Representation of stored procedures for JDBC
@@ -648,21 +649,23 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            String encoding = this.connection.getSession().getServerSession().getCharacterSetMetadata();
+            int collationIndex = this.connection.getSession().getServerSession().getMetadataCollationIndex();
             Field[] fields = new Field[13];
 
-            fields[0] = new Field("", "PROCEDURE_CAT", MysqlType.CHAR, 0);
-            fields[1] = new Field("", "PROCEDURE_SCHEM", MysqlType.CHAR, 0);
-            fields[2] = new Field("", "PROCEDURE_NAME", MysqlType.CHAR, 0);
-            fields[3] = new Field("", "COLUMN_NAME", MysqlType.CHAR, 0);
-            fields[4] = new Field("", "COLUMN_TYPE", MysqlType.CHAR, 0);
-            fields[5] = new Field("", "DATA_TYPE", MysqlType.SMALLINT, 0);
-            fields[6] = new Field("", "TYPE_NAME", MysqlType.CHAR, 0);
-            fields[7] = new Field("", "PRECISION", MysqlType.INT, 0);
-            fields[8] = new Field("", "LENGTH", MysqlType.INT, 0);
-            fields[9] = new Field("", "SCALE", MysqlType.SMALLINT, 0);
-            fields[10] = new Field("", "RADIX", MysqlType.SMALLINT, 0);
-            fields[11] = new Field("", "NULLABLE", MysqlType.SMALLINT, 0);
-            fields[12] = new Field("", "REMARKS", MysqlType.CHAR, 0);
+            fields[0] = new Field("", "PROCEDURE_CAT", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[1] = new Field("", "PROCEDURE_SCHEM", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[2] = new Field("", "PROCEDURE_NAME", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[3] = new Field("", "COLUMN_NAME", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[4] = new Field("", "COLUMN_TYPE", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[5] = new Field("", "DATA_TYPE", collationIndex, encoding, MysqlType.SMALLINT, 0);
+            fields[6] = new Field("", "TYPE_NAME", collationIndex, encoding, MysqlType.CHAR, 0);
+            fields[7] = new Field("", "PRECISION", collationIndex, encoding, MysqlType.INT, 0);
+            fields[8] = new Field("", "LENGTH", collationIndex, encoding, MysqlType.INT, 0);
+            fields[9] = new Field("", "SCALE", collationIndex, encoding, MysqlType.SMALLINT, 0);
+            fields[10] = new Field("", "RADIX", collationIndex, encoding, MysqlType.SMALLINT, 0);
+            fields[11] = new Field("", "NULLABLE", collationIndex, encoding, MysqlType.SMALLINT, 0);
+            fields[12] = new Field("", "REMARKS", collationIndex, encoding, MysqlType.CHAR, 0);
 
             String procName = isReallyProcedure ? extractProcedureName() : null;
 
@@ -695,7 +698,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
             }
 
-            java.sql.ResultSet paramTypesRs = DatabaseMetaData.buildResultSet(fields, resultRows, this.connection);
+            java.sql.ResultSet paramTypesRs = this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(resultRows, fields));
 
             convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
         }
@@ -1893,7 +1897,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     try {
                         outParameterStmt = this.connection.createStatement();
                         outParamRs = outParameterStmt.executeQuery(outParameterQuery.toString());
-                        this.outputParameterResults = ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) outParamRs).copy();
+                        this.outputParameterResults = ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) outParamRs).copy(this.resultSetFactory);
 
                         if (!this.outputParameterResults.next()) {
                             this.outputParameterResults.close();

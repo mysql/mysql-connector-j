@@ -77,8 +77,6 @@ public interface Protocol {
 
     ExceptionInterceptor getExceptionInterceptor();
 
-    ResultsHandler getResultsHandler();
-
     PacketSentTimeHolder getPacketSentTimeHolder();
 
     void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder);

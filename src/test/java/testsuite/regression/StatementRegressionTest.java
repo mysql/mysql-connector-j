@@ -97,6 +97,7 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 
@@ -3944,10 +3945,10 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug33823() throws Exception {
         ResultSetInternalMethods resultSetInternalMethods = new ResultSetInternalMethods() {
 
-            public void clearNextResult() {
+            public void clearNextResultset() {
             }
 
-            public ResultSetInternalMethods copy() throws SQLException {
+            public ResultSetInternalMethods copy(ResultSetFactory resultSetFactory) throws SQLException {
                 return null;
             }
 
@@ -3955,7 +3956,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 return 0;
             }
 
-            public ResultSetInternalMethods getNextResultSet() {
+            public ResultSetInternalMethods getNextResultset() {
                 return null;
             }
 
@@ -4756,6 +4757,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
             @Override
             public void setColumnDefinition(ColumnDefinition metadata) {
+            }
+
+            @Override
+            public void setNextResultset(Resultset nextResultset) {
             }
         };
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -54,6 +54,8 @@ public interface ServerSession {
      */
     public static int TRANSACTION_COMPLETED = 3;
 
+    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+
     ServerCapabilities getCapabilities();
 
     void setCapabilities(ServerCapabilities capabilities);
@@ -100,6 +102,11 @@ public interface ServerSession {
 
     boolean inTransactionOnServer();
 
+    /**
+     * Server versions 5.0.5 or newer will only open a cursor and set this flag if they can, otherwise they punt and go back to mysql_store_results() behavior.
+     * 
+     * @return SERVER_STATUS_CURSOR_EXISTS
+     */
     boolean cursorExists();
 
     boolean isAutocommit();
@@ -176,4 +183,19 @@ public interface ServerSession {
      *         charset index
      */
     String getEncodingForIndex(int collationIndex);
+
+    void configureCharacterSets();
+
+    String getCharacterSetMetadata();
+
+    void setCharacterSetMetadata(String characterSetMetadata);
+
+    int getMetadataCollationIndex();
+
+    void setMetadataCollationIndex(int metadataCollationIndex);
+
+    String getCharacterSetResultsOnServer();
+
+    void setCharacterSetResultsOnServer(String characterSetResultsOnServer);
+
 }

@@ -24,6 +24,7 @@
 package com.mysql.cj.mysqla;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.SocketAddress;
 import java.sql.SQLException;
@@ -49,6 +50,8 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.AbstractSession;
 import com.mysql.cj.core.ConnectionString;
@@ -62,9 +65,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.jdbc.MysqlIO;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -447,10 +448,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) {
+            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, StructureFactory<T> resultSetFactory) {
 
-        return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, resultSetType, resultSetConcurrency,
-                streamResults, catalog, cachedMetadata, this::getProfilerEventHandlerInstanceFunction);
+        return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
+                this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
     }
 
     /**
@@ -502,11 +503,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public String getQueryTimingUnits() {
         return this.protocol.getQueryTimingUnits();
-    }
-
-    // TODO: should return the proper type after developing interface
-    public MysqlIO getResultsHandler() {
-        return this.protocol.getResultsHandler();
     }
 
     /**
@@ -562,4 +558,13 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     public ProfilerEventHandler getProfilerEventHandlerInstanceFunction() {
         return ProfilerEventHandlerFactory.getInstance(this);
     }
+
+    public InputStream getLocalInfileInputStream() {
+        return this.protocol.getLocalInfileInputStream();
+    }
+
+    public void setLocalInfileInputStream(InputStream stream) {
+        this.protocol.setLocalInfileInputStream(stream);
+    }
+
 }

@@ -23,7 +23,14 @@
 
 package com.mysql.cj.api.mysqla.io;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+
 import com.mysql.cj.api.io.Protocol;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 
@@ -181,4 +188,35 @@ public interface NativeProtocol extends Protocol {
         STRING_EOF;
     }
 
+    <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> sf) throws IOException;
+
+    <T extends ProtocolStructure> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
+            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException;
+
+    /**
+     * Sets an InputStream instance that will be used to send data
+     * to the MySQL server for a "LOAD DATA LOCAL INFILE" statement
+     * rather than a FileInputStream or URLInputStream that represents
+     * the path given as an argument to the statement.
+     * 
+     * This stream will be read to completion upon execution of a
+     * "LOAD DATA LOCAL INFILE" statement, and will automatically
+     * be closed by the driver, so it needs to be reset
+     * before each call to execute*() that would cause the MySQL
+     * server to request data to fulfill the request for
+     * "LOAD DATA LOCAL INFILE".
+     * 
+     * If this value is set to NULL, the driver will revert to using
+     * a FileInputStream or URLInputStream as required.
+     */
+    void setLocalInfileInputStream(InputStream stream);
+
+    /**
+     * Returns the InputStream instance that will be used to send
+     * data in response to a "LOAD DATA LOCAL INFILE" statement.
+     * 
+     * This method returns NULL if no such stream has been set
+     * via setLocalInfileInputStream().
+     */
+    InputStream getLocalInfileInputStream();
 }

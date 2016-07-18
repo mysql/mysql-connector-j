@@ -29,6 +29,7 @@ import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.result.Field;
 
@@ -40,15 +41,15 @@ import com.mysql.cj.core.result.Field;
  */
 public class TextBufferRow extends AbstractBufferRow {
 
-    public TextBufferRow(PacketPayload buf, Field[] fields, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
+    public TextBufferRow(PacketPayload buf, ColumnDefinition cd, ExceptionInterceptor exceptionInterceptor, ValueDecoder valueDecoder) {
         super(exceptionInterceptor);
 
         this.rowFromServer = buf;
         this.homePosition = this.rowFromServer.getPosition();
         this.valueDecoder = valueDecoder;
 
-        if (fields != null) {
-            setMetadata(fields);
+        if (cd.getFields() != null) {
+            setMetadata(cd.getFields());
         }
     }
 

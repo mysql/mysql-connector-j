@@ -110,23 +110,6 @@ public class Field {
     }
 
     /**
-     * Constructor used by DatabaseMetaData methods.
-     */
-    public Field(String tableName, String columnName, MysqlType mysqlType, int length) {
-        this.databaseName = new LazyString(null);
-        this.tableName = new LazyString(tableName);
-        this.originalTableName = new LazyString(null);
-        this.columnName = new LazyString(columnName);
-        this.originalColumnName = new LazyString(null);
-        this.length = length;
-        this.mysqlType = mysqlType;
-        this.colFlag = 0;
-        this.colDecimals = 0;
-
-        adjustFlagsByMysqlType();
-    }
-
-    /**
      * Used by prepared statements to re-use result set data conversion methods
      * when generating bound parameter retrieval instance for statement interceptors.
      *
@@ -157,10 +140,25 @@ public class Field {
 
         adjustFlagsByMysqlType();
 
-        this.collationIndex = collationIndex;
+        switch (mysqlType) {
+            case CHAR:
+            case VARCHAR:
+            case TINYTEXT:
+            case TEXT:
+            case MEDIUMTEXT:
+            case LONGTEXT:
+            case JSON:
+                // TODO: this becomes moot when DBMD results aren't built from ByteArrayRow
+                // it possibly overrides correct encoding already existing in the Field instance
+                this.collationIndex = collationIndex;
 
-        // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as utf16
-        this.encoding = "UnicodeBig".equals(encoding) ? "UTF-16" : encoding;
+                // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as utf16
+                this.encoding = "UnicodeBig".equals(encoding) ? "UTF-16" : encoding;
+
+                break;
+            default:
+                // ignoring charsets for non-string types
+        }
     }
 
     /**

@@ -64,6 +64,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
@@ -73,6 +74,7 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
@@ -92,7 +94,6 @@ import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
@@ -105,6 +106,7 @@ import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
 import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
 import com.mysql.cj.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
+import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
@@ -127,8 +129,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private static final SQLPermission SET_NETWORK_TIMEOUT_PERM = new SQLPermission("setNetworkTimeout");
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
-
-    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
     public String getHost() {
         return this.session.getHostInfo().getHost();
@@ -386,17 +386,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** A cache of SQL to parsed prepared statement parameters. */
     private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
 
-    /**
-     * What character set is the metadata returned in?
-     */
-    private String characterSetMetadata = null;
-
-    /**
-     * The character set we want results and result metadata returned in (null ==
-     * results in any charset, metadata in UTF-8).
-     */
-    private String characterSetResultsOnServer = null;
-
     /** The point in time when this connection was created */
     private long connectionCreationTimeMillis = 0;
 
@@ -573,6 +562,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private ReadableProperty<Boolean> disconnectOnExpiredPasswords;
     private ReadableProperty<Boolean> readOnlyPropagatesToServer;
 
+    protected ResultSetFactory nullStatementResultSetFactory;
+
     /**
      * '
      * For the delegate only
@@ -606,6 +597,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.origPortToConnectTo = portToConnectTo;
 
             // We need Session ASAP to get access to central driver functionality
+            this.nullStatementResultSetFactory = new ResultSetFactory(this, null);
             this.session = new MysqlaSession(this.origConnectionString, hostToConnectTo, portToConnectTo, info, getPropertySet());
 
             // we can't cache fixed values here because properties are still not initialized with user provided values
@@ -1246,7 +1238,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 }
 
-                execSQL(null, "commit", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                execSQL(null, "commit", -1, null, false, this.database, null, false);
             } catch (SQLException sqlException) {
                 if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
                     throw SQLError.createSQLException(Messages.getString("Connection.4"), SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
@@ -1386,13 +1378,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                     if (!this.useOldUTF8Behavior.getValue()) {
                         if (dontCheckServerMatch || !this.session.characterSetNamesMatches("utf8") || (!this.session.characterSetNamesMatches("utf8mb4"))) {
-                            execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
-                                    false, this.database, null, false);
+                            execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, false, this.database, null, false);
                             this.session.getServerVariables().put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
                             this.session.getServerVariables().put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
                         }
                     } else {
-                        execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        execSQL(null, "SET NAMES latin1", -1, null, false, this.database, null, false);
                         this.session.getServerVariables().put("character_set_client", "latin1");
                         this.session.getServerVariables().put("character_set_connection", "latin1");
                     }
@@ -1404,8 +1395,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     if (mysqlCharsetName != null) {
 
                         if (dontCheckServerMatch || !this.session.characterSetNamesMatches(mysqlCharsetName)) {
-                            execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                    this.database, null, false);
+                            execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, false, this.database, null, false);
                             this.session.getServerVariables().put("character_set_client", mysqlCharsetName);
                             this.session.getServerVariables().put("character_set_connection", mysqlCharsetName);
                         }
@@ -1435,8 +1425,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (dontCheckServerMatch || !this.session.characterSetNamesMatches(mysqlCharsetName) || ucs2) {
                     try {
-                        execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database,
-                                null, false);
+                        execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, false, this.database, null, false);
                         this.session.getServerVariables().put("character_set_client", mysqlCharsetName);
                         this.session.getServerVariables().put("character_set_connection", mysqlCharsetName);
                     } catch (PasswordExpiredException ex) {
@@ -1474,8 +1463,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 //
                 if (!isNullOnServer) {
                     try {
-                        execSQL(null, "SET character_set_results = NULL", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                this.database, null, false);
+                        execSQL(null, "SET character_set_results = NULL", -1, null, false, this.database, null, false);
                     } catch (PasswordExpiredException ex) {
                         if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
@@ -1485,15 +1473,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             throw ex;
                         }
                     }
-                    this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
+                    this.session.getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
                 } else {
-                    this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                    this.session.getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
                 }
             } else {
 
                 if (this.useOldUTF8Behavior.getValue()) {
                     try {
-                        execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        execSQL(null, "SET NAMES latin1", -1, null, false, this.database, null, false);
                         this.session.getServerVariables().put("character_set_client", "latin1");
                         this.session.getServerVariables().put("character_set_connection", "latin1");
                     } catch (PasswordExpiredException ex) {
@@ -1531,7 +1519,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
 
                     try {
-                        execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        execSQL(null, setBuf.toString(), -1, null, false, this.database, null, false);
                     } catch (PasswordExpiredException ex) {
                         if (this.disconnectOnExpiredPasswords.getValue()) {
                             throw ex;
@@ -1542,13 +1530,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                         }
                     }
 
-                    this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
+                    this.session.getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
 
                     // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
                     this.session.setErrorMessageEncoding(charsetResults);
 
                 } else {
-                    this.session.getServerVariables().put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                    this.session.getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
                 }
             }
 
@@ -1558,7 +1546,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 setBuf.append("SET collation_connection = ").append(connectionCollation);
 
                 try {
-                    execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                    execSQL(null, setBuf.toString(), -1, null, false, this.database, null, false);
                 } catch (PasswordExpiredException ex) {
                     if (this.disconnectOnExpiredPasswords.getValue()) {
                         throw ex;
@@ -1989,13 +1977,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     // resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
     // unpackFields);
     // }
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
-        return execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata, false);
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
+            String catalog, ColumnDefinition cachedMetadata) throws SQLException {
+        return execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, false);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, int resultSetType,
-            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
+            String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
         synchronized (getConnectionMutex()) {
             //
             // Fall-back if the master is back online if we've issued queriesBeforeRetryMaster queries since we failed over
@@ -2029,12 +2017,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 if (packet == null) {
                     String encoding = this.characterEncoding.getValue();
 
-                    return this.session.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency, streamResults,
-                            catalog, cachedMetadata);
+                    return this.session.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, streamResults, catalog, cachedMetadata,
+                            callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
                 }
 
-                return this.session.sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
-                        cachedMetadata);
+                return this.session.sqlQueryDirect(callingStatement, null, null, packet, maxRows, streamResults, catalog, cachedMetadata,
+                        callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
             } catch (CJException sqlE) {
                 // don't clobber SQL exceptions
 
@@ -2138,7 +2126,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public String getCharacterSetMetadata() {
         synchronized (getConnectionMutex()) {
-            return this.characterSetMetadata;
+            return this.session.getServerSession().getCharacterSetMetadata();
         }
     }
 
@@ -2190,7 +2178,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             checkClosed();
         }
 
-        return com.mysql.cj.jdbc.DatabaseMetaData.getInstance(getMultiHostSafeProxy(), this.database, checkForInfoSchema);
+        return com.mysql.cj.jdbc.DatabaseMetaData.getInstance(getMultiHostSafeProxy(), this.database, checkForInfoSchema, this.nullStatementResultSetFactory);
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
@@ -2507,26 +2495,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
         //
         // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
-        String characterSetResultsOnServerMysql = this.session.getServerVariable(JDBC_LOCAL_CHARACTER_SET_RESULTS);
+        this.session.getServerSession().configureCharacterSets();
 
-        if (characterSetResultsOnServerMysql == null || StringUtils.startsWithIgnoreCaseAndWs(characterSetResultsOnServerMysql, "NULL")
-                || characterSetResultsOnServerMysql.length() == 0) {
-            String defaultMetadataCharsetMysql = this.session.getServerVariable("character_set_system");
-            String defaultMetadataCharset = null;
-
-            if (defaultMetadataCharsetMysql != null) {
-                defaultMetadataCharset = CharsetMapping.getJavaEncodingForMysqlCharset(defaultMetadataCharsetMysql);
-            } else {
-                defaultMetadataCharset = "UTF-8";
-            }
-
-            this.characterSetMetadata = defaultMetadataCharset;
-            this.session.setErrorMessageEncoding("UTF-8");
-        } else {
-            this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
-            this.characterSetMetadata = this.characterSetResultsOnServer;
-            this.session.setErrorMessageEncoding(this.characterSetResultsOnServer);
-        }
+        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd).setMetadataEncoding(getSession().getServerSession().getCharacterSetMetadata());
+        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd).setMetadataCollationIndex(getSession().getServerSession().getMetadataCollationIndex());
 
         //
         // Server can do this more efficiently for us
@@ -3318,6 +3290,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.openStatements.clear();
             this.statementInterceptors = null;
             this.exceptionInterceptor = null;
+            this.nullStatementResultSetFactory = null;
 
             synchronized (getConnectionMutex()) {
                 if (this.cancelTimer != null) {
@@ -3709,7 +3682,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        execSQL(null, "rollback", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+        execSQL(null, "rollback", -1, null, false, this.database, null, false);
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
@@ -3828,8 +3801,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.autoCommit = autoCommitFlag;
 
                 if (needsSetOnServer) {
-                    execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
-                            false, this.database, null, false);
+                    execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.database, null, false);
                 }
             } finally {
                 if (this.autoReconnectForPools.getValue()) {
@@ -3901,7 +3873,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             StringBuilder query = new StringBuilder("USE ");
             query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic.getValue()));
 
-            execSQL(null, query.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+            execSQL(null, query.toString(), -1, null, false, this.database, null, false);
 
             this.database = catalog;
         }
@@ -3947,8 +3919,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         // note this this is safe even inside a transaction
         if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
             if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
-                execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, DEFAULT_RESULT_SET_TYPE,
-                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false, this.database, null, false);
             }
         }
 
@@ -4079,7 +4050,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                                 getExceptionInterceptor());
                 }
 
-                execSQL(null, sql, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                execSQL(null, sql, -1, null, false, this.database, null, false);
 
                 this.isolationLevel = level;
             }
@@ -4119,7 +4090,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 commandBuf.append("STRICT_TRANS_TABLES'");
 
-                execSQL(null, commandBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                execSQL(null, commandBuf.toString(), -1, null, false, this.database, null, false);
 
                 jdbcCompliantTruncation.setValue(false); // server's handling this for us now
             } else if (strictTransTablesIsSet) {
@@ -4361,7 +4332,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             if (this.session.getSessionMaxRows() != max) {
                 this.session.setSessionMaxRows(max);
                 execSQL(null, "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()), -1, null,
-                        DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+                        false, this.database, null, false);
             }
         }
     }

@@ -26,6 +26,7 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
@@ -38,7 +39,7 @@ import com.mysql.cj.mysqla.MysqlaConstants;
  * 
  * Notice that <strong>no</strong> bounds checking is expected for implementors of this interface, it happens in ResultSetImpl.
  */
-public abstract class ResultSetRow implements Row {
+public abstract class ResultSetRow implements Row, ProtocolStructure {
     protected ExceptionInterceptor exceptionInterceptor;
 
     protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {

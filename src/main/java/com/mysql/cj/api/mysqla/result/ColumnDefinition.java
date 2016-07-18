@@ -31,7 +31,7 @@ import com.mysql.cj.core.result.Field;
  * Represents Protocol::ColumnDefinition41 structure
  *
  */
-public interface ColumnDefinition {
+public interface ColumnDefinition extends ProtocolStructure {
 
     Field[] getFields();
 
@@ -68,4 +68,12 @@ public interface ColumnDefinition {
     void exportTo(ColumnDefinition columnDefinition);
 
     int findColumn(String columnName, boolean useColumnNamesInFindColumn);
+
+    /**
+     * Check if fields with type BLOB, MEDIUMBLOB, LONGBLOB, TEXT, MEDIUMTEXT or LONGTEXT
+     * exist in this ColumnDefinition.
+     * This check is used for making a decision about whether we want to force a
+     * buffer row (better for rows with large fields).
+     */
+    boolean hasLargeFields();
 }

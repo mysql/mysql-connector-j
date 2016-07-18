@@ -202,4 +202,24 @@ public class MysqlaColumnDefinition implements ColumnDefinition {
         return -1;
     }
 
+    public boolean hasLargeFields() {
+        if (this.fields != null) {
+            for (int i = 0; i < this.fields.length; i++) {
+                switch (this.fields[i].getMysqlType()) {
+                    case BLOB:
+                    case MEDIUMBLOB:
+                    case LONGBLOB:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                    case JSON:
+                        return true;
+                    default:
+                        break;
+                }
+            }
+        }
+        return false;
+    }
+
 }

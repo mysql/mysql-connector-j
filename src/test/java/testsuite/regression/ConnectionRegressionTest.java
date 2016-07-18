@@ -97,6 +97,7 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
@@ -7123,10 +7124,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("character_set_connection"), session.getServerVariable("character_set_connection"));
 
             // we override character_set_results sometimes when configuring client charsets, thus need to check against actual value
-            if (session.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS) == null) {
+            if (session.getServerVariable(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS) == null) {
                 assertEquals("", serverVariables.get("character_set_results"));
             } else {
-                assertEquals(serverVariables.get("character_set_results"), session.getServerVariable(ConnectionImpl.JDBC_LOCAL_CHARACTER_SET_RESULTS));
+                assertEquals(serverVariables.get("character_set_results"), session.getServerVariable(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS));
             }
 
             assertEquals(serverVariables.get("character_set_server"), session.getServerVariable("character_set_server"));

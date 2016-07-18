@@ -37,6 +37,8 @@ public class AbstractResultset implements Resultset {
     /** The actual rows */
     protected ResultsetRows rowData;
 
+    protected Resultset nextResultset = null;
+
     /** The id (used when profiling) to identify us */
     protected int resultId;
 
@@ -62,6 +64,27 @@ public class AbstractResultset implements Resultset {
     public void initRowsWithMetadata() {
         this.rowData.setMetadata(this.columnDefinition.getFields());
         this.columnDefinition.setColumnToIndexCache(new HashMap<String, Integer>());
+    }
+
+    public synchronized void setNextResultset(Resultset nextResultset) {
+        this.nextResultset = nextResultset;
+    }
+
+    /**
+     * @return the nextResultSet, if any, null if none exists.
+     */
+    public synchronized Resultset getNextResultset() {
+        // read next RS from streamer ?
+        return this.nextResultset;
+    }
+
+    /**
+     * We can't do this ourselves, otherwise the contract for
+     * Statement.getMoreResults() won't work correctly.
+     */
+    public synchronized void clearNextResultset() {
+        // TODO release resources of nextResultset, close streamer
+        this.nextResultset = null;
     }
 
 }

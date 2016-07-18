@@ -35,6 +35,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.io.BinaryRowFactory;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
@@ -232,8 +233,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
                 Row row = null;
 
-                while ((row = this.protocol.getResultsHandler().nextRow(this.metadata, this.metadata.length, true, ResultSet.CONCUR_READ_ONLY,
-                        false)) != null) {
+                while ((row = this.protocol.read(ResultSetRow.class,
+                        new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, false))) != null) {
                     this.fetchedRows.add(row);
                 }
 

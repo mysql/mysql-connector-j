@@ -66,6 +66,10 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
         this.metadata = metadata;
     }
 
+    public Field[] getMetadata() {
+        return this.metadata;
+    }
+
     @Override
     public boolean wasEmpty() {
         return this.wasEmpty;

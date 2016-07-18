@@ -34,7 +34,7 @@ import com.mysql.cj.core.result.Field;
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
  * one. It extends the {@link RowList} functionality by providing row positioning, updatability and ownership.
  */
-public interface ResultsetRows extends RowList {
+public interface ResultsetRows extends RowList, ProtocolStructure {
 
     /**
      * Adds a row.
@@ -177,4 +177,6 @@ public interface ResultsetRows extends RowList {
      *            field-level metadata for the result set
      */
     void setMetadata(Field[] metadata);
+
+    Field[] getMetadata();
 }

@@ -23,14 +23,23 @@
 
 package com.mysql.cj.mysqla.io;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.lang.ref.SoftReference;
+import java.net.MalformedURLException;
 import java.net.SocketException;
+import java.net.URL;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -50,7 +59,12 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
+import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.StructureReader;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -74,12 +88,11 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
-import com.mysql.cj.jdbc.MysqlIO;
+import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -87,6 +100,8 @@ import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
+import com.mysql.cj.mysqla.result.OkPacket;
+import com.mysql.cj.mysqla.result.ResultSetRow;
 
 public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
@@ -108,6 +123,13 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     protected PacketPayload sharedSendPacket = null;
     /** Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway */
     protected PacketPayload reusablePacket = null;
+
+    /**
+     * Packet used for 'LOAD DATA LOCAL INFILE'
+     * 
+     * We use a SoftReference, so that we don't penalize intermittent use of this feature
+     */
+    private SoftReference<PacketPayload> loadFileBufRef;
 
     protected byte packetSequence = 0;
     protected boolean useCompression = false;
@@ -134,8 +156,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     private boolean queryNoIndexUsed = false;
     private boolean serverQueryWasSlow = false;
 
-    // TODO inject ResultsHandler instead of hardcoded class
-    protected MysqlIO resultsHandler = null;
+    protected Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> STRUCTURE_CLASS_TO_TEXT_READER;
+    protected Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> STRUCTURE_CLASS_TO_BINARY_READER;
 
     /**
      * Does the character set of this connection match the character set of the
@@ -148,6 +170,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
     private ReadableProperty<Boolean> maintainTimeStats;
     private ReadableProperty<Integer> maxQuerySizeToLog;
+
+    private InputStream localInfileInputStream;
 
     /**
      * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
@@ -189,7 +213,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
 
         this.connection = conn;
-        this.setPropertySet(propSet);
+        this.propertySet = propSet;
 
         this.socketConnection = phConnection;
         this.exceptionInterceptor = this.socketConnection.getExceptionInterceptor();
@@ -225,8 +249,17 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         this.authProvider = new MysqlaAuthenticationProvider(this.log);
         this.authProvider.init(this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
-        // TODO Initialize ResultsHandler properly
-        this.resultsHandler = new MysqlIO(this, this.getPropertySet(), (JdbcConnection) this.connection);
+        Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> structureClassToReader = new HashMap<>();
+        structureClassToReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
+        structureClassToReader.put(ResultSetRow.class, new ResultsetRowReader(this));
+        structureClassToReader.put(Resultset.class, new TextResultsetReader(this));
+        this.STRUCTURE_CLASS_TO_TEXT_READER = Collections.unmodifiableMap(structureClassToReader);
+
+        Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> structureClassToBinaryReader = new HashMap<>();
+        structureClassToBinaryReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
+        structureClassToBinaryReader.put(Resultset.class, new BinaryResultsetReader(this));
+        this.STRUCTURE_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(structureClassToBinaryReader);
+
     }
 
     public PacketReader getPacketReader() {
@@ -505,7 +538,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
         try {
 
-            this.resultsHandler.checkForOutstandingStreamingData();
+            checkForOutstandingStreamingData();
 
             // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
             this.serverSession.setStatusFlags(0, true);
@@ -703,7 +736,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 }
             }
 
-            this.resultsHandler.appendDeadlockStatusInformation(xOpen, errorBuf);
+            ResultSetUtil.appendDeadlockStatusInformation(this.connection, xOpen, errorBuf);
 
             if (xOpen != null) {
                 if (xOpen.startsWith("22")) {
@@ -762,8 +795,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * @param queryPacket
      * @param maxRows
      * @param conn
-     * @param resultSetType
-     * @param resultSetConcurrency
      * @param streamResults
      * @param catalog
      * @param unpackFieldInfo
@@ -771,8 +802,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * 
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, int resultSetType, int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata,
-            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction) {
+            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
+            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, StructureFactory<T> resultSetFactory) {
         this.statementExecutionDepth++;
 
         try {
@@ -918,9 +949,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 fetchBeginTime = queryEndTime;
             }
 
-            @SuppressWarnings("unchecked")
-            T rs = (T) this.resultsHandler.readAllResults(callingStatement, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog, resultPacket,
-                    false, -1L, cachedMetadata);
+            T rs = readAllResults(maxRows, streamResults, resultPacket, false, cachedMetadata, resultSetFactory);
 
             if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
                 StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
@@ -988,7 +1017,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             }
 
             if (this.hadWarnings) {
-                this.resultsHandler.scanForAndThrowDataTruncation();
+                scanForAndThrowDataTruncation();
             }
 
             if (this.statementInterceptors != null) {
@@ -1211,6 +1240,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             send(packet, packet.getPosition());
         } finally {
             this.socketConnection.forceClose();
+            this.localInfileInputStream = null;
         }
     }
 
@@ -1349,18 +1379,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         }
     }
 
-    // TODO: should return the proper type after developing interface
-    @Override
-    public MysqlIO getResultsHandler() {
-        return this.resultsHandler;
-    }
-
     public PacketPayload getReusablePacket() {
         return this.reusablePacket;
-    }
-
-    public void setReusablePacket(PacketPayload packet) {
-        this.reusablePacket = packet;
     }
 
     public int getWarningCount() {
@@ -1570,4 +1590,302 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         }
     }
 
+    /*
+     * Reading results
+     */
+
+    @Override
+    public <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> sf) throws IOException {
+        @SuppressWarnings("unchecked")
+        StructureReader<T> sr = (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
+        if (sr == null) {
+            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
+        }
+        return sr.read(sf);
+    }
+
+    @Override
+    public <T extends ProtocolStructure> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
+            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException {
+        @SuppressWarnings("unchecked")
+        StructureReader<T> sr = isBinaryEncoded ? (StructureReader<T>) this.STRUCTURE_CLASS_TO_BINARY_READER.get(requiredClass)
+                : (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
+        if (sr == null) {
+            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
+        }
+        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, resultSetFactory);
+    }
+
+    /**
+     * Read next result set from multi-result chain.
+     * 
+     * @param currentStructure
+     * @param maxRows
+     * @param streamResults
+     * @param isBinaryEncoded
+     * @param resultSetFactory
+     * @return
+     * @throws SQLException
+     */
+    public <T extends ProtocolStructure> T readNextResultset(T currentStructure, int maxRows, boolean streamResults, boolean isBinaryEncoded,
+            StructureFactory<T> resultSetFactory) throws SQLException {
+
+        T result = null;
+        if (Resultset.class.isAssignableFrom(currentStructure.getClass()) && this.serverSession.useMultiResults()) {
+            if (this.serverSession.hasMoreResults()) {
+
+                T currentResultSet = currentStructure;
+                T newResultSet;
+                do {
+                    PacketPayload fieldPacket = checkErrorPacket();
+                    fieldPacket.setPosition(0);
+                    newResultSet = read(Resultset.class, maxRows, streamResults, fieldPacket, isBinaryEncoded, null, resultSetFactory);
+                    ((Resultset) currentResultSet).setNextResultset((Resultset) newResultSet);
+                    currentResultSet = newResultSet;
+
+                    if (result == null) {
+                        // we should return the first result set in chain
+                        result = currentResultSet;
+                    }
+                } while (streamResults && this.serverSession.hasMoreResults() // we need to consume all result sets which don't contain rows from streamer right now,
+                        && !((Resultset) currentResultSet).hasRows()); // because next data portion from streamer is available only via ResultsetRows.next() 
+
+            }
+        }
+        return result;
+    }
+
+    public <T extends Resultset> T readAllResults(int maxRows, boolean streamResults, PacketPayload resultPacket, boolean isBinaryEncoded,
+            ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException {
+
+        resultPacket.setPosition(0);
+        T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadataFromCache, resultSetFactory);
+
+        if (this.serverSession.hasMoreResults()) {
+            T currentResultSet = topLevelResultSet;
+            if (streamResults) {
+                currentResultSet = readNextResultset(currentResultSet, maxRows, true, isBinaryEncoded, resultSetFactory);
+            } else {
+                while (this.serverSession.hasMoreResults()) {
+                    currentResultSet = readNextResultset(currentResultSet, maxRows, false, isBinaryEncoded, resultSetFactory);
+                }
+                clearInputStream();
+            }
+        }
+        reclaimLargeReusablePacket();
+        return topLevelResultSet;
+    }
+
+    @SuppressWarnings("unchecked")
+    public final <T> T readServerStatusForResultSets(PacketPayload rowPacket, boolean saveOldStatus) {
+        T result = null;
+        if (rowPacket.isEOFPacket()) {
+            // read EOF packet
+            rowPacket.readInteger(IntegerDataType.INT1); // skips the 'last packet' flag (packet signature)
+            this.warningCount = (int) rowPacket.readInteger(IntegerDataType.INT2);
+            if (this.warningCount > 0) {
+                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+            }
+
+            this.serverSession.setStatusFlags((int) rowPacket.readInteger(IntegerDataType.INT2), saveOldStatus);
+            checkTransactionState();
+        } else {
+            // read OK packet
+            OkPacket ok = OkPacket.parse(rowPacket, ((JdbcConnection) this.connection).isReadInfoMsgEnabled(), this.serverSession.getErrorMessageEncoding());
+            result = (T) ok;
+
+            this.serverSession.setStatusFlags(ok.getStatusFlags(), saveOldStatus);
+            checkTransactionState();
+
+            this.warningCount = ok.getWarningCount();
+            if (this.warningCount > 0) {
+                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+            }
+        }
+        setServerSlowQueryFlags();
+        return result;
+    }
+
+    public InputStream getLocalInfileInputStream() {
+        return this.localInfileInputStream;
+    }
+
+    public void setLocalInfileInputStream(InputStream stream) {
+        this.localInfileInputStream = stream;
+    }
+
+    /**
+     * Reads and sends a file to the server for LOAD DATA LOCAL INFILE
+     * 
+     * @param fileName
+     *            the file name to send.
+     * 
+     * @throws SQLException
+     */
+    public final PacketPayload sendFileToServer(String fileName) throws SQLException {
+
+        PacketPayload filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
+
+        int bigPacketLength = Math.min(this.maxAllowedPacket.getValue() - (MysqlaConstants.HEADER_LENGTH * 3),
+                alignPacketSize(this.maxAllowedPacket.getValue() - 16, 4096) - (MysqlaConstants.HEADER_LENGTH * 3));
+
+        int oneMeg = 1024 * 1024;
+
+        int smallerPacketSizeAligned = Math.min(oneMeg - (MysqlaConstants.HEADER_LENGTH * 3),
+                alignPacketSize(oneMeg - 16, 4096) - (MysqlaConstants.HEADER_LENGTH * 3));
+
+        int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
+
+        if (filePacket == null) {
+            try {
+                filePacket = new Buffer(packetLength);
+                this.loadFileBufRef = new SoftReference<PacketPayload>(filePacket);
+            } catch (OutOfMemoryError oom) {
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
+                        this.exceptionInterceptor);
+
+            }
+        }
+
+        filePacket.setPosition(0);
+
+        byte[] fileBuf = new byte[packetLength];
+
+        BufferedInputStream fileIn = null;
+
+        try {
+            if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
+                throw SQLError.createSQLException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), SQLError.SQL_STATE_GENERAL_ERROR,
+                        this.exceptionInterceptor);
+            }
+
+            InputStream hookedStream = null;
+
+            hookedStream = getLocalInfileInputStream();
+
+            if (hookedStream != null) {
+                fileIn = new BufferedInputStream(hookedStream);
+            } else if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).getValue()) {
+                fileIn = new BufferedInputStream(new FileInputStream(fileName));
+            } else {
+                // First look for ':'
+                if (fileName.indexOf(':') != -1) {
+                    try {
+                        URL urlFromFileName = new URL(fileName);
+                        fileIn = new BufferedInputStream(urlFromFileName.openStream());
+                    } catch (MalformedURLException badUrlEx) {
+                        // we fall back to trying this as a file input stream
+                        fileIn = new BufferedInputStream(new FileInputStream(fileName));
+                    }
+                } else {
+                    fileIn = new BufferedInputStream(new FileInputStream(fileName));
+                }
+            }
+
+            int bytesRead = 0;
+
+            while ((bytesRead = fileIn.read(fileBuf)) != -1) {
+                filePacket.setPosition(0);
+                filePacket.writeBytes(StringLengthDataType.STRING_FIXED, fileBuf, 0, bytesRead);
+                send(filePacket, filePacket.getPosition());
+            }
+        } catch (IOException ioEx) {
+            StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.60"));
+
+            boolean isParanoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue();
+            if (fileName != null && !isParanoid) {
+                messageBuf.append("'");
+                messageBuf.append(fileName);
+                messageBuf.append("'");
+            }
+
+            messageBuf.append(Messages.getString("MysqlIO.63"));
+
+            if (!isParanoid) {
+                messageBuf.append(Messages.getString("MysqlIO.64"));
+                messageBuf.append(Util.stackTraceToString(ioEx));
+            }
+
+            throw SQLError.createSQLException(messageBuf.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            if (fileIn != null) {
+                try {
+                    fileIn.close();
+                } catch (Exception ex) {
+                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), SQLError.SQL_STATE_GENERAL_ERROR, ex,
+                            this.exceptionInterceptor);
+
+                    throw sqlEx;
+                }
+
+                fileIn = null;
+            } else {
+                // file open failed, but server needs one packet
+                filePacket.setPosition(0);
+                send(filePacket, filePacket.getPosition());
+                checkErrorPacket(); // to clear response off of queue
+            }
+        }
+
+        // send empty packet to mark EOF
+        filePacket.setPosition(0);
+        send(filePacket, filePacket.getPosition());
+
+        return checkErrorPacket();
+    }
+
+    private int alignPacketSize(int a, int l) {
+        return ((((a) + (l)) - 1) & ~((l) - 1));
+    }
+
+    private ResultsetRows streamingData = null;
+
+    public ResultsetRows getStreamingData() {
+        return this.streamingData;
+    }
+
+    public void setStreamingData(ResultsetRows streamingData) {
+        this.streamingData = streamingData;
+    }
+
+    public void checkForOutstandingStreamingData() {
+        try {
+            if (this.streamingData != null) {
+                boolean shouldClobber = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
+
+                if (!shouldClobber) {
+                    throw SQLError.createSQLException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
+                            + Messages.getString("MysqlIO.41") + Messages.getString("MysqlIO.42"), this.exceptionInterceptor);
+                }
+
+                // Close the result set
+                this.streamingData.getOwner().closeOwner(false);
+
+                // clear any pending data....
+                clearInputStream();
+            }
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
+    }
+
+    public void closeStreamer(ResultsetRows streamer) {
+        if (this.streamingData == null) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"), this.exceptionInterceptor);
+        }
+
+        if (streamer != this.streamingData) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20")
+                    + Messages.getString("MysqlIO.21") + Messages.getString("MysqlIO.22"), this.exceptionInterceptor);
+        }
+
+        this.streamingData = null;
+    }
+
+    public void scanForAndThrowDataTruncation() throws SQLException {
+        if ((this.streamingData == null) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
+                && getWarningCount() > 0) {
+            ResultSetUtil.convertShowWarningsToSQLWarnings(this.connection, getWarningCount(), true);
+        }
+    }
 }

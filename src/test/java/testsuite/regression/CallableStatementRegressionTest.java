@@ -1059,65 +1059,71 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug32246() throws Exception {
-        dropTable("test_table_2");
-        dropTable("test_table_1");
-        doBug32246(this.conn);
-        dropTable("test_table_2");
-        dropTable("test_table_1");
-        doBug32246(getConnectionWithProps("useDirectRowUnpack=false"));
+        /*
+         * TODO useDirectRowUnpack property was removed
+         * 
+         * dropTable("test_table_2");
+         * dropTable("test_table_1");
+         * doBug32246(this.conn);
+         * dropTable("test_table_2");
+         * dropTable("test_table_1");
+         * doBug32246(getConnectionWithProps("useDirectRowUnpack=false"));
+         */
     }
 
-    private void doBug32246(Connection aConn) throws SQLException {
-        createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-        this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
-        createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-        this.stmt.executeUpdate("DROP FUNCTION IF EXISTS test_function");
-        createFunction("test_function", "() RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN DECLARE max_value BIGINT; "
-                + "SELECT MAX(value_1) INTO max_value FROM test_table_2; RETURN max_value; END;");
-
-        CallableStatement callable = null;
-
-        try {
-            callable = aConn.prepareCall("{? = call test_function()}");
-
-            callable.registerOutParameter(1, Types.BIGINT);
-
-            try {
-                callable.executeUpdate();
-                fail("impossible; we should never get here.");
-            } catch (SQLException sqlEx) {
-                assertEquals("42S22", sqlEx.getSQLState());
-            }
-
-            callable.close();
-
-            createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-            this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
-            createTable("test_table_2",
-                    "(value_2 BIGINT PRIMARY KEY, " + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
-            createFunction("test_function",
-                    "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN " + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
-
-            callable = aConn.prepareCall("{? = call test_function(?)}");
-            callable.registerOutParameter(1, Types.BIGINT);
-
-            callable.setLong(2, 1);
-            callable.executeUpdate();
-
-            callable.setLong(2, 2);
-
-            try {
-                callable.executeUpdate();
-                fail("impossible; we should never get here.");
-            } catch (SQLException sqlEx) {
-                assertEquals("23000", sqlEx.getSQLState());
-            }
-        } finally {
-            if (callable != null) {
-                callable.close();
-            }
-        }
-    }
+    /*
+     * private void doBug32246(Connection aConn) throws SQLException {
+     * createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
+     * this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
+     * createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY) ENGINE=InnoDB");
+     * this.stmt.executeUpdate("DROP FUNCTION IF EXISTS test_function");
+     * createFunction("test_function", "() RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN DECLARE max_value BIGINT; "
+     * + "SELECT MAX(value_1) INTO max_value FROM test_table_2; RETURN max_value; END;");
+     * 
+     * CallableStatement callable = null;
+     * 
+     * try {
+     * callable = aConn.prepareCall("{? = call test_function()}");
+     * 
+     * callable.registerOutParameter(1, Types.BIGINT);
+     * 
+     * try {
+     * callable.executeUpdate();
+     * fail("impossible; we should never get here.");
+     * } catch (SQLException sqlEx) {
+     * assertEquals("42S22", sqlEx.getSQLState());
+     * }
+     * 
+     * callable.close();
+     * 
+     * createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
+     * this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
+     * createTable("test_table_2",
+     * "(value_2 BIGINT PRIMARY KEY, " + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
+     * createFunction("test_function",
+     * "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN " + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
+     * 
+     * callable = aConn.prepareCall("{? = call test_function(?)}");
+     * callable.registerOutParameter(1, Types.BIGINT);
+     * 
+     * callable.setLong(2, 1);
+     * callable.executeUpdate();
+     * 
+     * callable.setLong(2, 2);
+     * 
+     * try {
+     * callable.executeUpdate();
+     * fail("impossible; we should never get here.");
+     * } catch (SQLException sqlEx) {
+     * assertEquals("23000", sqlEx.getSQLState());
+     * }
+     * } finally {
+     * if (callable != null) {
+     * callable.close();
+     * }
+     * }
+     * }
+     */
 
     public void testBitSp() throws Exception {
 

@@ -117,10 +117,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Creates a new ResultSet object.
      * 
-     * @param catalog
-     *            the database in use when we were created
-     * @param fields
-     *            an array of Field objects (basically, the ResultSet MetaData)
      * @param tuples
      *            actual row data
      * @param conn
@@ -129,14 +125,13 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    public UpdatableResultSet(String catalog, Field[] fields, ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt, boolean hasLongColumnInfo)
-            throws SQLException {
-        super(catalog, fields, tuples, conn, creatorStmt);
+    public UpdatableResultSet(ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
+        super(tuples, conn, creatorStmt);
         checkUpdatability();
 
         this.populateInserterWithDefaultValues = this.getConnection().getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
-        this.hasLongColumnInfo = hasLongColumnInfo;
+        this.hasLongColumnInfo = this.getConnection().getSession().getServerSession().hasLongColumnInfo();
     }
 
     @Override

@@ -170,7 +170,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         }
 
         if ((capabilityFlags & MysqlaServerSession.CLIENT_LONG_FLAG) != 0) {
-            // We understand other column flags, as well
             clientParam |= MysqlaServerSession.CLIENT_LONG_FLAG;
             sessState.setHasLongColumnInfo(true);
         }
@@ -457,6 +456,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                     clientParam |= MysqlaServerSession.CLIENT_PLUGIN_AUTH | MysqlaServerSession.CLIENT_LONG_PASSWORD | MysqlaServerSession.CLIENT_PROTOCOL_41
                             | MysqlaServerSession.CLIENT_TRANSACTIONS // Need this to get server status values
                             | MysqlaServerSession.CLIENT_MULTI_RESULTS // We always allow multiple result sets
+                            | MysqlaServerSession.CLIENT_PS_MULTI_RESULTS  // We always allow multiple result sets for SSPS
                             | MysqlaServerSession.CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
 
                     // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).

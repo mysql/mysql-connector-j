@@ -35,6 +35,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
 public class MysqlaServerSession implements ServerSession {
@@ -62,6 +63,7 @@ public class MysqlaServerSession implements ServerSession {
     public static final int CLIENT_SECURE_CONNECTION = 0x00008000;
     public static final int CLIENT_MULTI_STATEMENTS = 0x00010000; // Enable/disable multiquery support
     public static final int CLIENT_MULTI_RESULTS = 0x00020000; // Enable/disable multi-results
+    public static final int CLIENT_PS_MULTI_RESULTS = 0x00040000; // Enable/disable multi-results for server prepared statements
     public static final int CLIENT_PLUGIN_AUTH = 0x00080000;
     public static final int CLIENT_CONNECT_ATTRS = 0x00100000;
     public static final int CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA = 0x00200000;
@@ -85,6 +87,18 @@ public class MysqlaServerSession implements ServerSession {
     public Map<Integer, String> indexToCustomMysqlCharset = null;
 
     public Map<String, Integer> mysqlCharsetToCustomMblen = null;
+
+    /**
+     * What character set is the metadata returned in?
+     */
+    private String characterSetMetadata = null;
+    private int metadataCollationIndex;
+
+    /**
+     * The character set we want results and result metadata returned in (null ==
+     * results in any charset, metadata in UTF-8).
+     */
+    private String characterSetResultsOnServer = null;
 
     /**
      * The (Java) encoding used to interpret error messages received from the server.
@@ -200,7 +214,7 @@ public class MysqlaServerSession implements ServerSession {
 
     @Override
     public boolean useMultiResults() {
-        return (this.clientParam & CLIENT_MULTI_RESULTS) != 0;
+        return (this.clientParam & CLIENT_MULTI_RESULTS) != 0 || (this.clientParam & CLIENT_PS_MULTI_RESULTS) != 0;
     }
 
     public boolean isEOFDeprecated() {
@@ -374,4 +388,58 @@ public class MysqlaServerSession implements ServerSession {
 
         return javaEncoding;
     }
+
+    public void configureCharacterSets() {
+        //
+        // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
+        //
+        // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
+        String characterSetResultsOnServerMysql = getServerVariable(JDBC_LOCAL_CHARACTER_SET_RESULTS);
+
+        if (characterSetResultsOnServerMysql == null || StringUtils.startsWithIgnoreCaseAndWs(characterSetResultsOnServerMysql, "NULL")
+                || characterSetResultsOnServerMysql.length() == 0) {
+            String defaultMetadataCharsetMysql = getServerVariable("character_set_system");
+            String defaultMetadataCharset = null;
+
+            if (defaultMetadataCharsetMysql != null) {
+                defaultMetadataCharset = CharsetMapping.getJavaEncodingForMysqlCharset(defaultMetadataCharsetMysql);
+            } else {
+                defaultMetadataCharset = "UTF-8";
+            }
+
+            this.characterSetMetadata = defaultMetadataCharset;
+            setErrorMessageEncoding("UTF-8");
+        } else {
+            this.characterSetResultsOnServer = CharsetMapping.getJavaEncodingForMysqlCharset(characterSetResultsOnServerMysql);
+            this.characterSetMetadata = this.characterSetResultsOnServer;
+            setErrorMessageEncoding(this.characterSetResultsOnServer);
+        }
+
+        this.metadataCollationIndex = CharsetMapping.getCollationIndexForJavaEncoding(this.characterSetMetadata, getServerVersion());
+    }
+
+    public String getCharacterSetMetadata() {
+        return this.characterSetMetadata;
+    }
+
+    public void setCharacterSetMetadata(String characterSetMetadata) {
+        this.characterSetMetadata = characterSetMetadata;
+    }
+
+    public int getMetadataCollationIndex() {
+        return this.metadataCollationIndex;
+    }
+
+    public void setMetadataCollationIndex(int metadataCollationIndex) {
+        this.metadataCollationIndex = metadataCollationIndex;
+    }
+
+    public String getCharacterSetResultsOnServer() {
+        return this.characterSetResultsOnServer;
+    }
+
+    public void setCharacterSetResultsOnServer(String characterSetResultsOnServer) {
+        this.characterSetResultsOnServer = characterSetResultsOnServer;
+    }
+
 }

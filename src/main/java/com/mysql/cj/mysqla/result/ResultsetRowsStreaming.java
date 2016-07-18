@@ -23,12 +23,16 @@
 
 package com.mysql.cj.mysqla.result;
 
+import java.sql.ResultSet;
+
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
@@ -40,7 +44,9 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.mysqla.io.BinaryRowFactory;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.cj.mysqla.io.TextRowFactory;
 
 /**
  * Provides streaming of Resultset rows. Each next row is consumed from the
@@ -48,11 +54,9 @@ import com.mysql.cj.mysqla.io.MysqlaProtocol;
  * we only stream result sets when they are forward-only, read-only, and the
  * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
  */
-public class ResultsetRowsDynamic extends AbstractResultsetRows implements ResultsetRows {
+public class ResultsetRowsStreaming<T extends ProtocolStructure> extends AbstractResultsetRows implements ResultsetRows {
 
-    private int columnCount;
-
-    private MysqlaProtocol io;
+    private MysqlaProtocol protocol;
 
     private boolean isAfterEnd = false;
 
@@ -64,28 +68,27 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
 
     private boolean streamerClosed = false;
 
-    private boolean moreResultsExisted;
-
     private ExceptionInterceptor exceptionInterceptor;
+
+    private StructureFactory<T> resultSetFactory;
 
     /**
      * Creates a new RowDataDynamic object.
      * 
      * @param io
      *            the connection to MySQL that this data is coming from
-     * @param colCount
-     *            the number of columns
      * @param fields
      *            the metadata that describe this data
      * @param isBinaryEncoded
      *            is this data in native format?
+     * @param resultSetFactory
      */
-    public ResultsetRowsDynamic(MysqlaProtocol io, int colCount, Field[] fields, boolean isBinaryEncoded) {
-        this.io = io;
-        this.columnCount = colCount;
+    public ResultsetRowsStreaming(MysqlaProtocol io, Field[] fields, boolean isBinaryEncoded, StructureFactory<T> resultSetFactory) {
+        this.protocol = io;
         this.isBinaryEncoded = isBinaryEncoded;
         this.metadata = fields;
-        this.exceptionInterceptor = this.io.getExceptionInterceptor();
+        this.exceptionInterceptor = this.protocol.getExceptionInterceptor();
+        this.resultSetFactory = resultSetFactory;
     }
 
     @Override
@@ -122,7 +125,7 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
                         && conn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
                     int oldValue = conn.getSession().getServerVariable("net_write_timeout", 60);
 
-                    this.io.clearInputStream();
+                    this.protocol.clearInputStream();
 
                     java.sql.Statement stmt = null;
 
@@ -164,7 +167,7 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
         boolean hasNext = (this.nextRow != null);
 
         if (!hasNext && !this.streamerClosed) {
-            this.io.getResultsHandler().closeStreamer(this);
+            this.protocol.closeStreamer(this);
             this.streamerClosed = true;
         }
 
@@ -181,36 +184,18 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
         return this.currentPositionInFetchedRows < 0;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Row next() {
-
-        nextRecord();
-
-        if (this.nextRow == null && !this.streamerClosed && !this.moreResultsExisted) {
-            this.io.getResultsHandler().closeStreamer(this);
-            this.streamerClosed = true;
-        }
-
-        if (this.nextRow != null) {
-            if (this.currentPositionInFetchedRows != Integer.MAX_VALUE) {
-                this.currentPositionInFetchedRows++;
-            }
-        }
-
-        return this.nextRow;
-    }
-
-    private void nextRecord() {
-
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.io.getResultsHandler().nextRow(this.metadata, this.columnCount, this.isBinaryEncoded, java.sql.ResultSet.CONCUR_READ_ONLY,
-                        true);
+                this.nextRow = this.protocol.read(ResultSetRow.class,
+                        this.isBinaryEncoded ? new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true)
+                                : new TextRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true));
 
                 if (this.nextRow == null) {
                     this.noMoreRows = true;
                     this.isAfterEnd = true;
-                    this.moreResultsExisted = this.io.getResultsHandler().tackOnMoreStreamingResults(this.owner, this.isBinaryEncoded);
 
                     if (this.currentPositionInFetchedRows == -1) {
                         this.wasEmpty = true;
@@ -220,6 +205,25 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
                 this.nextRow = null;
                 this.isAfterEnd = true;
             }
+
+            if (this.nextRow == null && !this.streamerClosed) {
+                if (this.protocol.getServerSession().hasMoreResults()) {
+                    this.protocol.readNextResultset((T) this.owner, this.owner.getOwningStatementMaxRows(), true, this.isBinaryEncoded, this.resultSetFactory);
+
+                } else {
+                    this.protocol.closeStreamer(this);
+                    this.streamerClosed = true;
+                }
+            }
+
+            if (this.nextRow != null) {
+                if (this.currentPositionInFetchedRows != Integer.MAX_VALUE) {
+                    this.currentPositionInFetchedRows++;
+                }
+            }
+
+            return this.nextRow;
+
         } catch (CJException sqlEx) {
 
             if (sqlEx instanceof StreamingNotifiable) {
@@ -245,4 +249,5 @@ public class ResultsetRowsDynamic extends AbstractResultsetRows implements Resul
             throw cjEx;
         }
     }
+
 }
