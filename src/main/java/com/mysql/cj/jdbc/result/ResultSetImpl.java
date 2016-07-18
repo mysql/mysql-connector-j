@@ -66,8 +66,8 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
-import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -110,7 +110,6 @@ import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.MysqlaResultset;
-import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.OkPacket;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
@@ -178,21 +177,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     /** Are we scroll-sensitive/insensitive? */
     protected int resultSetType = 0;
 
-    /**
-     * Any info message from the server that was created while generating this result set (if 'info parsing' is enabled for the connection).
-     */
-    protected String serverInfo = null;
-
     PreparedStatement statementUsedForFetchingRows;
-
-    /** Pointer to current row data */
-    protected Row thisRow = null; // Values for current row
-
-    /** How many rows were affected by UPDATE/INSERT/DELETE? */
-    protected long updateCount;
-
-    /** Value generated for AUTO_INCREMENT columns */
-    protected long updateId = -1;
 
     protected boolean useUsageAdvisor = false;
 
@@ -234,10 +219,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
      * @param creatorStmt
      */
     public ResultSetImpl(OkPacket ok, JdbcConnection conn, StatementImpl creatorStmt) {
-        this.updateCount = ok.getUpdateCount();
-        this.updateId = ok.getUpdateID();
-        this.serverInfo = ok.getInfo();
-        this.columnDefinition = new MysqlaColumnDefinition(new Field[0]);
+        super(ok);
 
         this.connection = conn;
         this.owningStatement = creatorStmt;
@@ -308,7 +290,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             this.doubleValueFactory = new FloatingPointBoundsEnforcer<>(this.doubleValueFactory, -Double.MAX_VALUE, Double.MAX_VALUE);
         }
 
-        this.columnDefinition = new MysqlaColumnDefinition(tuples.getMetadata());
+        this.columnDefinition = tuples.getMetadata();
         this.rowData = tuples;
         this.updateCount = this.rowData.size();
 
@@ -576,7 +558,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     // Note, row data is linked between these two result sets
     public ResultSetInternalMethods copy(ResultSetFactory resultSetFactory) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = resultSetFactory.getInstance(getConcurrency(), getType(), this.rowData); // note, doesn't work for updatable result sets
+            ResultSetInternalMethods rs = resultSetFactory.createJdbcResultSet(getConcurrency(), getType(), this.rowData); // note, doesn't work for updatable result sets
 
             return rs;
         }
@@ -1584,16 +1566,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         return row;
     }
 
-    public String getServerInfo() {
-        try {
-            synchronized (checkClosed().getConnectionMutex()) {
-                return this.serverInfo;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e); // FIXME: Need to evolve public interface
-        }
-    }
-
     public java.sql.Statement getStatement() throws SQLException {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
@@ -1624,14 +1596,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     @Deprecated
     public InputStream getUnicodeStream(String columnName) throws SQLException {
         return getUnicodeStream(findColumn(columnName));
-    }
-
-    public long getUpdateCount() {
-        return this.updateCount;
-    }
-
-    public long getUpdateID() {
-        return this.updateId;
     }
 
     public URL getURL(int colIndex) throws SQLException {
@@ -2580,8 +2544,8 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         throw SQLError.notUpdatable();
     }
 
-    public Field[] getMetadata() {
-        return this.columnDefinition.getFields();
+    public ColumnDefinition getMetadata() {
+        return this.columnDefinition;
     }
 
     public com.mysql.cj.jdbc.StatementImpl getOwningStatement() {

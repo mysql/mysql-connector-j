@@ -21,38 +21,27 @@
 
  */
 
-package com.mysql.cj.api.mysqla.io;
+package com.mysql.cj.mysqla.io;
 
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.conf.ReadableProperty;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.io.ValueDecoder;
+import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
-import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 
-public interface StructureFactory<T> {
+public abstract class AbstractRowFactory implements StructureFactory<ResultsetRow> {
 
-    /**
-     * 
-     * @param packetPayload
-     * @return
-     */
-    default T createFromPacketPayload(PacketPayload packetPayload) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
+    protected ColumnDefinition columnDefinition;
+    protected Resultset.Concurrency resultSetConcurrency;
+    protected boolean canReuseRowPacketForBufferRow;
+    protected ReadableProperty<Integer> useBufferRowSizeThreshold;
+    protected ExceptionInterceptor exceptionInterceptor;
+    protected ValueDecoder valueDecoder;
+
+    public boolean canReuseRowPacketForBufferRow() {
+        return this.canReuseRowPacketForBufferRow;
     }
 
-    default Resultset.Type getResultSetType() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
-    }
-
-    default Resultset.Concurrency getResultSetConcurrency() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
-    }
-
-    /**
-     * 
-     * @param protocolStructure
-     * @return
-     */
-    default T createFromProtocolStructure(ProtocolStructure protocolStructure) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
-    }
 }

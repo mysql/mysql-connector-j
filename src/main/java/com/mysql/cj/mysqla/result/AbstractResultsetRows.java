@@ -23,9 +23,11 @@
 
 package com.mysql.cj.mysqla.result;
 
+import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.mysqla.result.ResultsetRowsOwner;
-import com.mysql.cj.core.result.Field;
 
 public abstract class AbstractResultsetRows implements ResultsetRows {
 
@@ -36,7 +38,7 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
      * sent for each batch of rows, but we need the metadata to unpack the
      * results for each field.
      */
-    protected Field[] metadata;
+    protected ColumnDefinition metadata;
 
     /**
      * Position in cache of rows, used to determine if we need to fetch more
@@ -51,6 +53,8 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
      */
     protected ResultsetRowsOwner owner;
 
+    protected StructureFactory<ResultsetRow> rowFactory;
+
     @Override
     public void setOwner(ResultsetRowsOwner rs) {
         this.owner = rs;
@@ -62,11 +66,11 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
     }
 
     @Override
-    public void setMetadata(Field[] metadata) {
-        this.metadata = metadata;
+    public void setMetadata(ColumnDefinition columnDefinition) {
+        this.metadata = columnDefinition;
     }
 
-    public Field[] getMetadata() {
+    public ColumnDefinition getMetadata() {
         return this.metadata;
     }
 

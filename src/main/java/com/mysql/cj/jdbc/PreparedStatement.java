@@ -101,6 +101,7 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
@@ -4726,8 +4727,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             rows.add(new ByteArrayRow(rowData, getExceptionInterceptor()));
 
-            this.bindingsAsRs = PreparedStatement.this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    new ResultsetRowsStatic(rows, typeMetadata));
+            this.bindingsAsRs = PreparedStatement.this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(typeMetadata)));
             this.bindingsAsRs.next();
         }
 

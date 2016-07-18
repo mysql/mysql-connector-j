@@ -799,11 +799,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * @param catalog
      * @param unpackFieldInfo
      *            should we read MYSQL_FIELD info (if available)?
+     * @throws IOException
      * 
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
-            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, StructureFactory<T> resultSetFactory) {
+            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, StructureFactory<T> resultSetFactory) throws IOException {
         this.statementExecutionDepth++;
 
         try {
@@ -1595,25 +1596,25 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      */
 
     @Override
-    public <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> sf) throws IOException {
+    public <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> structureFactory) throws IOException {
         @SuppressWarnings("unchecked")
         StructureReader<T> sr = (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
         if (sr == null) {
             throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
         }
-        return sr.read(sf);
+        return sr.read(structureFactory);
     }
 
     @Override
     public <T extends ProtocolStructure> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
-            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException {
+            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> structureFactory) throws IOException {
         @SuppressWarnings("unchecked")
         StructureReader<T> sr = isBinaryEncoded ? (StructureReader<T>) this.STRUCTURE_CLASS_TO_BINARY_READER.get(requiredClass)
                 : (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
         if (sr == null) {
             throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
         }
-        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, resultSetFactory);
+        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, structureFactory);
     }
 
     /**
@@ -1628,7 +1629,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * @throws SQLException
      */
     public <T extends ProtocolStructure> T readNextResultset(T currentStructure, int maxRows, boolean streamResults, boolean isBinaryEncoded,
-            StructureFactory<T> resultSetFactory) throws SQLException {
+            StructureFactory<T> resultSetFactory) throws IOException {
 
         T result = null;
         if (Resultset.class.isAssignableFrom(currentStructure.getClass()) && this.serverSession.useMultiResults()) {
@@ -1656,7 +1657,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     public <T extends Resultset> T readAllResults(int maxRows, boolean streamResults, PacketPayload resultPacket, boolean isBinaryEncoded,
-            ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException {
+            ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws IOException {
 
         resultPacket.setPosition(0);
         T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadataFromCache, resultSetFactory);
@@ -1720,9 +1721,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * @param fileName
      *            the file name to send.
      * 
-     * @throws SQLException
      */
-    public final PacketPayload sendFileToServer(String fileName) throws SQLException {
+    public final PacketPayload sendFileToServer(String fileName) {
 
         PacketPayload filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
@@ -1741,9 +1741,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 filePacket = new Buffer(packetLength);
                 this.loadFileBufRef = new SoftReference<PacketPayload>(filePacket);
             } catch (OutOfMemoryError oom) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.111", new Object[] { packetLength }), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR,
-                        this.exceptionInterceptor);
-
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.111", new Object[] { packetLength }),
+                        SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
             }
         }
 
@@ -1755,8 +1754,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
         try {
             if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
-                throw SQLError.createSQLException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        this.exceptionInterceptor);
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), this.exceptionInterceptor);
             }
 
             InputStream hookedStream = null;
@@ -1806,16 +1804,13 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 messageBuf.append(Util.stackTraceToString(ioEx));
             }
 
-            throw SQLError.createSQLException(messageBuf.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw ExceptionFactory.createException(messageBuf.toString(), ioEx, this.exceptionInterceptor);
         } finally {
             if (fileIn != null) {
                 try {
                     fileIn.close();
                 } catch (Exception ex) {
-                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), SQLError.SQL_STATE_GENERAL_ERROR, ex,
-                            this.exceptionInterceptor);
-
-                    throw sqlEx;
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.65"), ex, this.exceptionInterceptor);
                 }
 
                 fileIn = null;

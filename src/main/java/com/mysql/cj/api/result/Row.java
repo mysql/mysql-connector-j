@@ -25,6 +25,7 @@ package com.mysql.cj.api.result;
 
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -51,10 +52,10 @@ public interface Row {
     /**
      * Set metadata to enable getValue functionality.
      * 
-     * @param f
+     * @param columnDefinition
      * @return
      */
-    default Row setMetadata(Field[] f) {
+    default Row setMetadata(ColumnDefinition columnDefinition) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
     }
 

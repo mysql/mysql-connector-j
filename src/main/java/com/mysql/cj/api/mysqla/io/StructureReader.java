@@ -64,7 +64,7 @@ public interface StructureReader<T extends ProtocolStructure> {
      *             if an error occurs while reading the rows
      */
     default T read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory)
-            throws SQLException {
+            throws IOException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 

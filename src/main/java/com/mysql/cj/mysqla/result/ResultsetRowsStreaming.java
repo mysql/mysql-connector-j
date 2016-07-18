@@ -23,16 +23,16 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.ResultSet;
-
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
@@ -43,7 +43,6 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.mysqla.io.BinaryRowFactory;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -78,20 +77,23 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
      * 
      * @param io
      *            the connection to MySQL that this data is coming from
-     * @param fields
+     * @param columnDefinition
      *            the metadata that describe this data
      * @param isBinaryEncoded
      *            is this data in native format?
      * @param resultSetFactory
      */
-    public ResultsetRowsStreaming(MysqlaProtocol io, Field[] fields, boolean isBinaryEncoded, StructureFactory<T> resultSetFactory) {
+    public ResultsetRowsStreaming(MysqlaProtocol io, ColumnDefinition columnDefinition, boolean isBinaryEncoded, StructureFactory<T> resultSetFactory) {
         this.protocol = io;
         this.isBinaryEncoded = isBinaryEncoded;
-        this.metadata = fields;
+        this.metadata = columnDefinition;
         this.exceptionInterceptor = this.protocol.getExceptionInterceptor();
         this.resultSetFactory = resultSetFactory;
+        this.rowFactory = this.isBinaryEncoded ? new BinaryRowFactory(this.protocol, this.metadata, Concurrency.READ_ONLY, true)
+                : new TextRowFactory(this.protocol, this.metadata, Concurrency.READ_ONLY, true);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void close() {
 
@@ -122,29 +124,23 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
             }
 
             if (conn != null) {
-                if (!conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
-                        && conn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
-                    int oldValue = conn.getSession().getServerVariable("net_write_timeout", 60);
+                if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
+                        && this.protocol.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
+                    int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
 
                     this.protocol.clearInputStream();
 
-                    java.sql.Statement stmt = null;
-
                     try {
-                        try {
-                            stmt = ((JdbcConnection) conn).createStatement();
-                            ((com.mysql.cj.jdbc.StatementImpl) stmt).executeSimpleNonQuery((JdbcConnection) conn, "SET net_write_timeout=" + oldValue);
-                        } finally {
-                            if (stmt != null) {
-                                stmt.close();
-                            }
-                        }
+                        this.protocol.sqlQueryDirect(null, "SET net_write_timeout=" + oldValue,
+                                this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1,
+                                false, null, null, null, (StructureFactory<Resultset>) this.resultSetFactory);
+
                     } catch (Exception ex) {
                         throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                     }
                 }
 
-                if (conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+                if (this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
                     if (hadMore) {
 
                         ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
@@ -190,9 +186,7 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
     public Row next() {
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.protocol.read(ResultsetRow.class,
-                        this.isBinaryEncoded ? new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true)
-                                : new TextRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true));
+                this.nextRow = this.protocol.read(ResultsetRow.class, this.rowFactory);
 
                 if (this.nextRow == null) {
                     this.noMoreRows = true;

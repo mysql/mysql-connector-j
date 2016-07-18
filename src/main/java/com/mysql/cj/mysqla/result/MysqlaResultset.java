@@ -28,6 +28,8 @@ import java.util.HashMap;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
+import com.mysql.cj.core.result.Field;
 
 public class MysqlaResultset implements Resultset {
 
@@ -41,6 +43,55 @@ public class MysqlaResultset implements Resultset {
 
     /** The id (used when profiling) to identify us */
     protected int resultId;
+
+    /** How many rows were affected by UPDATE/INSERT/DELETE? */
+    protected long updateCount;
+
+    /** Value generated for AUTO_INCREMENT columns */
+    protected long updateId = -1;
+
+    /**
+     * Any info message from the server that was created while generating this result set (if 'info parsing' is enabled for the connection).
+     */
+    protected String serverInfo = null;
+
+    /** Pointer to current row data */
+    protected Row thisRow = null; // Values for current row
+
+    public MysqlaResultset() {
+        // TODO Auto-generated constructor stub
+    }
+
+    /**
+     * Create a result set for an executeUpdate statement.
+     * 
+     * @param ok
+     */
+    public MysqlaResultset(OkPacket ok) {
+        this.updateCount = ok.getUpdateCount();
+        this.updateId = ok.getUpdateID();
+        this.serverInfo = ok.getInfo();
+        this.columnDefinition = new MysqlaColumnDefinition(new Field[0]);
+    }
+
+    public MysqlaResultset(ResultsetRows rows) {
+        this.columnDefinition = rows.getMetadata();
+        this.rowData = rows;
+        this.updateCount = this.rowData.size();
+
+        // Check for no results
+        if (this.rowData.size() > 0) {
+            if (this.updateCount == 1) {
+                if (this.thisRow == null) {
+                    this.rowData.close(); // empty result set
+                    this.updateCount = -1;
+                }
+            }
+        } else {
+            this.thisRow = null;
+        }
+
+    }
 
     @Override
     public void setColumnDefinition(ColumnDefinition metadata) {
@@ -62,7 +113,7 @@ public class MysqlaResultset implements Resultset {
     }
 
     public void initRowsWithMetadata() {
-        this.rowData.setMetadata(this.columnDefinition.getFields());
+        this.rowData.setMetadata(this.columnDefinition);
         this.columnDefinition.setColumnToIndexCache(new HashMap<String, Integer>());
     }
 
@@ -87,4 +138,15 @@ public class MysqlaResultset implements Resultset {
         this.nextResultset = null;
     }
 
+    public long getUpdateCount() {
+        return this.updateCount;
+    }
+
+    public long getUpdateID() {
+        return this.updateId;
+    }
+
+    public String getServerInfo() {
+        return this.serverInfo;
+    }
 }

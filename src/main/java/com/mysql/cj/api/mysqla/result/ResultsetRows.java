@@ -28,7 +28,6 @@ import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.result.Field;
 
 /**
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
@@ -173,10 +172,10 @@ public interface ResultsetRows extends RowList, ProtocolStructure {
      * the statement has the result set in-hand (because it's cached),
      * so it can call this to set it after the fact.
      * 
-     * @param metadata
+     * @param columnDefinition
      *            field-level metadata for the result set
      */
-    void setMetadata(Field[] metadata);
+    void setMetadata(ColumnDefinition columnDefinition);
 
-    Field[] getMetadata();
+    ColumnDefinition getMetadata();
 }

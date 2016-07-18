@@ -72,30 +72,6 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetR
     Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
 
     /**
-     * Returns the server informational message returned from a DDL or DML
-     * statement (if any), or null if none.
-     */
-    String getServerInfo();
-
-    /**
-     * Returns the update count for this result set (if one exists), otherwise
-     * -1.
-     * 
-     * @ return the update count for this result set (if one exists), otherwise
-     * -1.
-     */
-    long getUpdateCount();
-
-    /**
-     * Returns the AUTO_INCREMENT value for the DDL/DML statement which created
-     * this result set.
-     * 
-     * @return the AUTO_INCREMENT value for the DDL/DML statement which created
-     *         this result set.
-     */
-    long getUpdateID();
-
-    /**
      * Closes this ResultSet and releases resources.
      * 
      * @param calledExplicitly

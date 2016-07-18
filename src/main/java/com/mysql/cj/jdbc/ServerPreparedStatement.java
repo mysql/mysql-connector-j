@@ -1294,6 +1294,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 return rs;
+            } catch (IOException ioEx) {
+                throw SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
+                        this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
             } catch (SQLException | CJException sqlEx) {
                 if (this.session.shouldIntercept()) {
                     this.session.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);

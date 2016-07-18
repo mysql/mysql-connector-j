@@ -23,18 +23,18 @@
 
 package com.mysql.cj.mysqla.result;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.BinaryRowFactory;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
@@ -77,13 +77,14 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
      * 
      * @param ioChannel
      *            connection to the server.
-     * @param metadata
+     * @param columnDefinition
      *            field-level metadata for the results that this cursor covers.
      */
-    public ResultsetRowsCursor(MysqlaProtocol ioChannel, Field[] metadata) {
+    public ResultsetRowsCursor(MysqlaProtocol ioChannel, ColumnDefinition columnDefinition) {
         this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
-        this.metadata = metadata;
+        this.metadata = columnDefinition;
         this.protocol = ioChannel;
+        this.rowFactory = new BinaryRowFactory(this.protocol, this.metadata, Concurrency.READ_ONLY, false);
     }
 
     @Override
@@ -234,8 +235,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
                 Row row = null;
 
-                while ((row = this.protocol.read(ResultsetRow.class,
-                        new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, false))) != null) {
+                while ((row = this.protocol.read(ResultsetRow.class, this.rowFactory)) != null) {
                     this.fetchedRows.add(row);
                 }
 

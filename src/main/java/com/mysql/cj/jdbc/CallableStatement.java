@@ -64,6 +64,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
+import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
@@ -698,8 +699,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
             }
 
-            java.sql.ResultSet paramTypesRs = this.resultSetFactory.getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    new ResultsetRowsStatic(resultRows, fields));
+            java.sql.ResultSet paramTypesRs = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    new ResultsetRowsStatic(resultRows, new MysqlaColumnDefinition(fields)));
 
             convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
         }

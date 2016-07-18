@@ -23,6 +23,7 @@
 
 package com.mysql.cj.mysqla.result;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -44,7 +45,7 @@ public class MysqlaColumnDefinition implements ColumnDefinition {
      * The above map is a case-insensitive tree-map, it can be slow, this caches lookups into that map, because the other alternative is to create new
      * object instances for every call to findColumn()....
      */
-    private Map<String, Integer> columnToIndexCache = null;
+    private Map<String, Integer> columnToIndexCache = new HashMap<String, Integer>();
 
     /** Map of fully-specified column names to column indices */
     private Map<String, Integer> fullColumnNameToIndex = null;

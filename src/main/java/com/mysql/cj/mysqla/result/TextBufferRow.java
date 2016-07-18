@@ -31,7 +31,6 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.core.result.Field;
 
 /**
  * A ResultSetRow implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
@@ -49,7 +48,7 @@ public class TextBufferRow extends AbstractBufferRow {
         this.valueDecoder = valueDecoder;
 
         if (cd.getFields() != null) {
-            setMetadata(cd.getFields());
+            setMetadata(cd);
         }
     }
 
@@ -108,7 +107,7 @@ public class TextBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public Row setMetadata(Field[] f) {
+    public Row setMetadata(ColumnDefinition f) {
         super.setMetadata(f);
         return this;
     }

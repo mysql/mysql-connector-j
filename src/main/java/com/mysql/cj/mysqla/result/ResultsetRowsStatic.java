@@ -25,9 +25,9 @@ package com.mysql.cj.mysqla.result;
 
 import java.util.List;
 
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.core.result.Field;
 
 /**
  * Represents an in-memory result set
@@ -42,10 +42,10 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
      * @param rows
      */
     @SuppressWarnings("unchecked")
-    public <T extends Row> ResultsetRowsStatic(List<T> rows, Field[] fields) {
+    public <T extends Row> ResultsetRowsStatic(List<T> rows, ColumnDefinition columnDefinition) {
         this.currentPositionInFetchedRows = -1;
         this.rows = (List<Row>) rows;
-        this.metadata = fields;
+        this.metadata = columnDefinition;
     }
 
     @Override

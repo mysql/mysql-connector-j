@@ -445,10 +445,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * @param catalog
      * @param unpackFieldInfo
      *            should we read MYSQL_FIELD info (if available)?
+     * @throws IOException
      * 
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, StructureFactory<T> resultSetFactory) {
+            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, StructureFactory<T> resultSetFactory) throws IOException {
 
         return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
                 this::getProfilerEventHandlerInstanceFunction, resultSetFactory);

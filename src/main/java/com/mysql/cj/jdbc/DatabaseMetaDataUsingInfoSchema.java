@@ -821,7 +821,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
-            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition().setFields(createTablesFields());
+            ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).setColumnDefinition(createTablesFields());
 
             return rs;
         } finally {

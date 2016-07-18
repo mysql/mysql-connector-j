@@ -34,7 +34,6 @@ import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
@@ -67,7 +66,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
         this.valueDecoder = valueDecoder;
 
         if (cd.getFields() != null) {
-            setMetadata(cd.getFields());
+            setMetadata(cd);
         }
     }
 
@@ -108,15 +107,16 @@ public class BinaryBufferRow extends AbstractBufferRow {
                 continue;
             }
 
-            int type = this.metadata[i].getMysqlTypeId();
+            int type = this.metadata.getFields()[i].getMysqlTypeId();
 
             if (type != MysqlaConstants.FIELD_TYPE_NULL) {
-                int length = MysqlaUtils.getBinaryEncodedLength(this.metadata[i].getMysqlTypeId());
+                int length = MysqlaUtils.getBinaryEncodedLength(this.metadata.getFields()[i].getMysqlTypeId());
                 if (length == 0) {
                     this.rowFromServer.skipBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
                     throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1)
-                            + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
+                            + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"),
+                            this.exceptionInterceptor);
                 } else {
                     int curPosition = this.rowFromServer.getPosition();
                     this.rowFromServer.setPosition(curPosition + length);
@@ -138,7 +138,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
             return null;
         }
 
-        int type = this.metadata[index].getMysqlTypeId();
+        int type = this.metadata.getFields()[index].getMysqlTypeId();
 
         switch (type) {
             case MysqlaConstants.FIELD_TYPE_NULL:
@@ -153,7 +153,8 @@ public class BinaryBufferRow extends AbstractBufferRow {
                     return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
                     throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1)
-                            + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
+                            + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"),
+                            this.exceptionInterceptor);
                 } else {
                     return this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, length);
                 }
@@ -170,7 +171,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
     }
 
     @Override
-    public Row setMetadata(Field[] f) {
+    public Row setMetadata(ColumnDefinition f) {
         super.setMetadata(f);
         setupIsNullBitmask();
         return this;
@@ -188,18 +189,19 @@ public class BinaryBufferRow extends AbstractBufferRow {
 
         this.rowFromServer.setPosition(this.preNullBitmaskHomePosition);
 
-        int nullCount = (this.metadata.length + 9) / 8;
+        int len = this.metadata.getFields().length;
+        int nullCount = (len + 9) / 8;
 
         byte[] nullBitMask = this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, nullCount);
 
         this.homePosition = this.rowFromServer.getPosition();
 
-        this.isNull = new boolean[this.metadata.length];
+        this.isNull = new boolean[len];
 
         int nullMaskPos = 0;
         int bit = 4; // first two bits are reserved for future use
 
-        for (int i = 0; i < this.metadata.length; i++) {
+        for (int i = 0; i < len; i++) {
 
             this.isNull[i] = ((nullBitMask[nullMaskPos] & bit) != 0);
 
@@ -219,13 +221,13 @@ public class BinaryBufferRow extends AbstractBufferRow {
         findAndSeekToOffset(columnIndex);
 
         // field length is type-specific in binary-encoded results
-        int type = this.metadata[columnIndex].getMysqlTypeId();
+        int type = this.metadata.getFields()[columnIndex].getMysqlTypeId();
         int length = MysqlaUtils.getBinaryEncodedLength(type);
         if (length == 0) {
             length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
         } else if (length == -1) {
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1)
-                    + Messages.getString("MysqlIO.99") + this.metadata.length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
+                    + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
         }
 
         return getValueFromBytes(columnIndex, this.rowFromServer.getByteBuffer(), this.rowFromServer.getPosition(), length, vf);

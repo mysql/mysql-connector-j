@@ -23,34 +23,36 @@
 
 package com.mysql.cj.mysqla.io;
 
-import java.sql.ResultSet;
-
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.TextBufferRow;
 
-public class TextRowFactory implements StructureFactory<ResultsetRow> {
+public class TextRowFactory extends AbstractRowFactory implements StructureFactory<ResultsetRow> {
 
     protected ColumnDefinition columnDefinition;
-    protected int resultSetConcurrency;
+    protected Resultset.Concurrency resultSetConcurrency;
     protected boolean canReuseRowPacketForBufferRow;
     protected ReadableProperty<Integer> useBufferRowSizeThreshold;
     protected ExceptionInterceptor exceptionInterceptor;
 
-    public TextRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow) {
+    public TextRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, Resultset.Concurrency resultSetConcurrency,
+            boolean canReuseRowPacketForBufferRow) {
         this.columnDefinition = columnDefinition;
         this.resultSetConcurrency = resultSetConcurrency;
         this.canReuseRowPacketForBufferRow = canReuseRowPacketForBufferRow;
         this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
         this.exceptionInterceptor = protocol.getExceptionInterceptor();
+        this.valueDecoder = new MysqlTextValueDecoder();
     }
 
     @Override
@@ -61,7 +63,7 @@ public class TextRowFactory implements StructureFactory<ResultsetRow> {
         boolean useBufferRow = this.canReuseRowPacketForBufferRow || this.columnDefinition.hasLargeFields()
                 || rowPacket.getPayloadLength() >= this.useBufferRowSizeThreshold.getValue();
 
-        if (this.resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || !useBufferRow) {
+        if (this.resultSetConcurrency == Concurrency.UPDATABLE || !useBufferRow) {
             byte[][] rowBytes = new byte[this.columnDefinition.getFields().length][];
 
             for (int i = 0; i < this.columnDefinition.getFields().length; i++) {
@@ -71,9 +73,10 @@ public class TextRowFactory implements StructureFactory<ResultsetRow> {
             return new ByteArrayRow(rowBytes, this.exceptionInterceptor);
         }
 
-        return new TextBufferRow(rowPacket, this.columnDefinition, this.exceptionInterceptor, new MysqlTextValueDecoder());
+        return new TextBufferRow(rowPacket, this.columnDefinition, this.exceptionInterceptor, this.valueDecoder);
     }
 
+    @Override
     public boolean canReuseRowPacketForBufferRow() {
         return this.canReuseRowPacketForBufferRow;
     }

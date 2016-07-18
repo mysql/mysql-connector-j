@@ -61,14 +61,14 @@ public class ResultsetRowReader implements StructureReader<ResultsetRow> {
      */
     @Override
     public ResultsetRow read(StructureFactory<ResultsetRow> sf) throws IOException {
-        TextRowFactory trf = (TextRowFactory) sf;
+        AbstractRowFactory rf = (AbstractRowFactory) sf;
         PacketPayload rowPacket = null;
         PacketHeader hdr = this.protocol.getPacketReader().readHeader();
         int packetLength = hdr.getPacketLength();
 
         // read the entire packet(s)
         rowPacket = this.protocol.getPacketReader()
-                .readPayload(trf.canReuseRowPacketForBufferRow() ? Optional.ofNullable(this.protocol.getReusablePacket()) : Optional.empty(), packetLength);
+                .readPayload(rf.canReuseRowPacketForBufferRow() ? Optional.ofNullable(this.protocol.getReusablePacket()) : Optional.empty(), packetLength);
         this.protocol.checkErrorPacket(rowPacket);
         // Didn't read an error, so re-position to beginning of packet in order to read result set data
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -80,7 +80,7 @@ public class ResultsetRowReader implements StructureReader<ResultsetRow> {
             return null;
         }
 
-        return trf.createFromPacketPayload(rowPacket);
+        return sf.createFromPacketPayload(rowPacket);
     }
 
 }

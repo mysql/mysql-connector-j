@@ -252,6 +252,17 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     @Override
+    public int getServerVariable(String variableName, int fallbackValue) {
+        try {
+            return Integer.valueOf(getServerVariable(variableName));
+        } catch (NumberFormatException nfe) {
+            //getLog().logWarn(
+            //        Messages.getString("Connection.BadValueInServerVariables", new Object[] { variableName, getServerVariable(variableName), fallbackValue }));
+        }
+        return fallbackValue;
+    }
+
+    @Override
     public void setServerVariables(Map<String, String> serverVariables) {
         this.serverVariables = serverVariables;
     }

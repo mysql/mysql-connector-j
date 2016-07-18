@@ -288,7 +288,7 @@ public class ResultSetUtil {
                     errorBuf.append("\n\n");
                     errorBuf.append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
                 }
-            } catch (SQLException | CJException ex) {
+            } catch (IOException | SQLException | CJException ex) {
                 errorBuf.append("\n\n");
                 errorBuf.append(Messages.getString("MysqlIO.InnoDBStatusFailed"));
                 errorBuf.append("\n\n");

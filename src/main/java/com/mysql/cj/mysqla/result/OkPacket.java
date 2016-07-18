@@ -26,8 +26,9 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 
-public class OkPacket {
+public class OkPacket implements ProtocolStructure {
 
     private long updateCount = -1;
     private long updateID = -1;

@@ -33,6 +33,41 @@ package com.mysql.cj.api.mysqla.result;
  */
 public interface Resultset extends ProtocolStructure {
 
+    public enum Concurrency {
+        /**
+         * The constant indicating the concurrency mode for a
+         * <code>Resultset</code> object that may NOT be updated.
+         */
+        READ_ONLY, // map to java.sql.ResultSet.CONCUR_READ_ONLY
+        /**
+         * The constant indicating the concurrency mode for a
+         * <code>Resultset</code> object that may be updated.
+         */
+        UPDATABLE // map to java.sql.ResultSet.CONCUR_UPDATABLE
+    }
+
+    public enum Type {
+        /**
+         * The constant indicating the type for a <code>Resultset</code> object
+         * whose cursor may move only forward.
+         */
+        FORWARD_ONLY, // map to java.sql.ResultSet.TYPE_FORWARD_ONLY
+
+        /**
+         * The constant indicating the type for a <code>Resultset</code> object
+         * that is scrollable but generally not sensitive to changes to the data
+         * that underlies the <code>Resultset</code>.
+         */
+        SCROLL_INSENSITIVE, // map to java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE
+
+        /**
+         * The constant indicating the type for a <code>Resultset</code> object
+         * that is scrollable and generally sensitive to changes to the data
+         * that underlies the <code>Resultset</code>.
+         */
+        SCROLL_SENSITIVE // map to java.sql.ResultSet.TYPE_SCROLL_SENSITIVE
+    }
+
     /**
      * Sometimes the driver doesn't have metadata before consuming the result set rows (because it's cached),
      * or need to coerce the metadata returned by queries into that required by the particular specification
@@ -78,5 +113,29 @@ public interface Resultset extends ProtocolStructure {
      * "chain".
      */
     void clearNextResultset();
+
+    /**
+     * Returns the update count for this result set (if one exists), otherwise
+     * -1.
+     * 
+     * @ return the update count for this result set (if one exists), otherwise
+     * -1.
+     */
+    long getUpdateCount();
+
+    /**
+     * Returns the AUTO_INCREMENT value for the DDL/DML statement which created
+     * this result set.
+     * 
+     * @return the AUTO_INCREMENT value for the DDL/DML statement which created
+     *         this result set.
+     */
+    long getUpdateID();
+
+    /**
+     * Returns the server informational message returned from a DDL or DML
+     * statement (if any), or null if none.
+     */
+    String getServerInfo();
 
 }

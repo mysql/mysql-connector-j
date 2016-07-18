@@ -26,6 +26,7 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
@@ -43,7 +44,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
     /**
      * The metadata of the fields of this result set.
      */
-    protected Field[] metadata;
+    protected ColumnDefinition metadata;
 
     protected ValueDecoder valueDecoder;
 
@@ -54,7 +55,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
      * Decode the wire-level result bytes and call the value factory.
      */
     private <T> T decodeAndCreateReturnValue(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        Field f = this.metadata[columnIndex];
+        Field f = this.metadata.getFields()[columnIndex];
 
         // First, figure out which decoder method to call basing on the protocol value type from metadata;
         // it's the best way to find the appropriate decoder, we can't rely completely on MysqlType here
@@ -227,7 +228,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
     }
 
     @Override
-    public Row setMetadata(Field[] f) {
+    public Row setMetadata(ColumnDefinition f) {
         this.metadata = f;
 
         return this;

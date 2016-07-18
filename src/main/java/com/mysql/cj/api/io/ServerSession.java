@@ -140,6 +140,8 @@ public interface ServerSession {
 
     String getServerVariable(String name);
 
+    int getServerVariable(String variableName, int fallbackValue);
+
     void setServerVariables(Map<String, String> serverVariables);
 
     /**

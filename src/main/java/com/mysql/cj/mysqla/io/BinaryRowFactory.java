@@ -23,15 +23,16 @@
 
 package com.mysql.cj.mysqla.io;
 
-import java.sql.ResultSet;
-
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.result.Field;
@@ -44,10 +45,16 @@ import com.mysql.cj.mysqla.result.ByteArrayRow;
  * Handle binary-encoded data for server-side PreparedStatements
  *
  */
-public class BinaryRowFactory extends TextRowFactory implements StructureFactory<ResultsetRow> {
+public class BinaryRowFactory extends AbstractRowFactory implements StructureFactory<ResultsetRow> {
 
-    public BinaryRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow) {
-        super(protocol, columnDefinition, resultSetConcurrency, canReuseRowPacketForBufferRow);
+    public BinaryRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, Resultset.Concurrency resultSetConcurrency,
+            boolean canReuseRowPacketForBufferRow) {
+        this.columnDefinition = columnDefinition;
+        this.resultSetConcurrency = resultSetConcurrency;
+        this.canReuseRowPacketForBufferRow = canReuseRowPacketForBufferRow;
+        this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
+        this.exceptionInterceptor = protocol.getExceptionInterceptor();
+        this.valueDecoder = new MysqlBinaryValueDecoder();
     }
 
     @Override
@@ -61,11 +68,11 @@ public class BinaryRowFactory extends TextRowFactory implements StructureFactory
         // bump past ProtocolBinary::ResultsetRow packet header
         rowPacket.setPosition(rowPacket.getPosition() + 1);
 
-        if (this.resultSetConcurrency == ResultSet.CONCUR_UPDATABLE || !useBufferRow) {
+        if (this.resultSetConcurrency == Concurrency.UPDATABLE || !useBufferRow) {
             return unpackBinaryResultSetRow(this.columnDefinition.getFields(), rowPacket);
         }
 
-        return new BinaryBufferRow(rowPacket, this.columnDefinition, this.exceptionInterceptor, new MysqlBinaryValueDecoder());
+        return new BinaryBufferRow(rowPacket, this.columnDefinition, this.exceptionInterceptor, this.valueDecoder);
     }
 
     @Override

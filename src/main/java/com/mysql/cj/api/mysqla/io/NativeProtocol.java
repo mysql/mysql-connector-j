@@ -25,7 +25,6 @@ package com.mysql.cj.api.mysqla.io;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -188,10 +187,10 @@ public interface NativeProtocol extends Protocol {
         STRING_EOF;
     }
 
-    <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> sf) throws IOException;
+    <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> structureFactory) throws IOException;
 
     <T extends ProtocolStructure> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
-            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException;
+            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> structureFactory) throws IOException;
 
     /**
      * Sets an InputStream instance that will be used to send data

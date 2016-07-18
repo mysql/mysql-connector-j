@@ -24,8 +24,6 @@
 package com.mysql.cj.mysqla.io;
 
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
@@ -35,13 +33,10 @@ import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.io.StructureReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Type;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.result.Field;
-import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.result.OkPacket;
 import com.mysql.cj.mysqla.result.ResultsetRowsCursor;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
@@ -57,93 +52,76 @@ public class BinaryResultsetReader implements StructureReader<Resultset> {
 
     @Override
     public Resultset read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
-            StructureFactory<Resultset> resultSetFactory) throws SQLException {
+            StructureFactory<Resultset> resultSetFactory) throws IOException {
 
         Resultset rs = null;
-        try {
-            long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
+        //try {
+        long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
 
-            if (columnCount > 0) {
-                // Build a result set with rows.
+        if (columnCount > 0) {
+            // Build a result set with rows.
 
-                // Read in the column information
-                ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadataFromCache));
-                Field[] fields = cdef.getFields();
+            // Read in the column information
+            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadataFromCache));
 
-                boolean isCursorPosible = this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
-                        && resultSetFactory.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY;
+            boolean isCursorPosible = this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
+                    && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY;
 
-                // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set;
-                // if we asked to use cursor then there should be an OK packet here
-                if (!this.protocol.getServerSession().isEOFDeprecated() || isCursorPosible) {
-                    this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
+            // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set;
+            // if we asked to use cursor then there should be an OK packet here
+            if (!this.protocol.getServerSession().isEOFDeprecated() || isCursorPosible) {
+                this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
+            }
+
+            ResultsetRows rows = null;
+
+            if (isCursorPosible) {
+                if (this.protocol.getServerSession().cursorExists()) {
+                    rows = new ResultsetRowsCursor(this.protocol, cdef);
                 }
 
-                ResultsetRows rows = null;
+            } else if (!streamResults) {
+                BinaryRowFactory brf = new BinaryRowFactory(this.protocol, cdef, resultSetFactory.getResultSetConcurrency(), false);
 
-                if (isCursorPosible) {
-                    if (this.protocol.getServerSession().cursorExists()) {
-                        rows = new ResultsetRowsCursor(this.protocol, fields);
+                ArrayList<ResultsetRow> rowList = new ArrayList<ResultsetRow>();
+                ResultsetRow row = this.protocol.read(ResultsetRow.class, brf);
+                while (row != null) {
+                    if ((maxRows == -1) || (rowList.size() < maxRows)) {
+                        rowList.add(row);
                     }
-
-                } else if (!streamResults) {
-                    BinaryRowFactory brf = new BinaryRowFactory(this.protocol, cdef, resultSetFactory.getResultSetConcurrency(), false);
-
-                    ArrayList<ResultsetRow> rowList = new ArrayList<ResultsetRow>();
-                    ResultsetRow row = this.protocol.read(ResultsetRow.class, brf);
-                    while (row != null) {
-                        if ((maxRows == -1) || (rowList.size() < maxRows)) {
-                            rowList.add(row);
-                        }
-                        row = this.protocol.read(ResultsetRow.class, brf);
-                    }
-
-                    rows = new ResultsetRowsStatic(rowList, fields);
-
-                } else {
-                    rows = new ResultsetRowsStreaming<Resultset>(this.protocol, fields, true, resultSetFactory);
-                    this.protocol.setStreamingData(rows);
+                    row = this.protocol.read(ResultsetRow.class, brf);
                 }
 
-                /*
-                 * Build ResultSet from ResultsetRows
-                 */
-                rs = resultSetFactory.getInstance(resultSetFactory.getResultSetConcurrency(), resultSetFactory.getResultSetType(), rows);
+                rows = new ResultsetRowsStatic(rowList, cdef);
 
             } else {
-                // check for file request
-                if (columnCount == PacketPayload.NULL_LENGTH) {
-                    String charEncoding = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-                    String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM,
-                            this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
-                    resultPacket = this.protocol.sendFileToServer(fileName);
-                }
-
-                /*
-                 * Build ResultSet with no ResultsetRows
-                 */
-
-                OkPacket ok;
-
-                try {
-                    // read and parse OK packet
-                    ok = this.protocol.readServerStatusForResultSets(resultPacket, false); // oldStatus set in sendCommand()
-                } catch (CJException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(SQLError.get(SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, ex,
-                            this.protocol.getExceptionInterceptor());
-                    throw sqlEx;
-                }
-
-                rs = resultSetFactory.getInstance(ok);
+                rows = new ResultsetRowsStreaming<Resultset>(this.protocol, cdef, true, resultSetFactory);
+                this.protocol.setStreamingData(rows);
             }
-            return rs;
 
-        } catch (IOException ioEx) {
-            throw SQLError.createCommunicationsException(this.protocol.getConnection(), this.protocol.getPacketSentTimeHolder().getLastPacketSentTime(),
-                    this.protocol.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.protocol.getExceptionInterceptor());
-        } catch (CJException e) {
-            throw SQLExceptionsMapping.translateException(e, this.protocol.getExceptionInterceptor());
+            /*
+             * Build ResultSet from ResultsetRows
+             */
+            rs = resultSetFactory.createFromProtocolStructure(rows);
+
+        } else {
+            // check for file request
+            if (columnCount == PacketPayload.NULL_LENGTH) {
+                String charEncoding = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
+                resultPacket = this.protocol.sendFileToServer(fileName);
+            }
+
+            /*
+             * Build ResultSet with no ResultsetRows
+             */
+
+            // read and parse OK packet
+            OkPacket ok = this.protocol.readServerStatusForResultSets(resultPacket, false); // oldStatus set in sendCommand()
+
+            rs = resultSetFactory.createFromProtocolStructure(ok);
         }
+        return rs;
 
     }
 }

@@ -34,6 +34,7 @@ import java.util.List;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 
@@ -72,7 +73,8 @@ public class BlobFromLocator implements java.sql.Blob {
         this.exceptionInterceptor = exceptionInterceptor;
         this.creatorResultSet = creatorResultSetToSet;
 
-        this.numColsInResultSet = this.creatorResultSet.getMetadata().length;
+        Field[] fields = this.creatorResultSet.getMetadata().getFields();
+        this.numColsInResultSet = fields.length;
         this.quotedId = this.creatorResultSet.getConnection().getMetaData().getIdentifierQuoteString();
 
         if (this.numColsInResultSet > 1) {
@@ -80,16 +82,16 @@ public class BlobFromLocator implements java.sql.Blob {
             this.primaryKeyValues = new ArrayList<String>();
 
             for (int i = 0; i < this.numColsInResultSet; i++) {
-                if (this.creatorResultSet.getMetadata()[i].isPrimaryKey()) {
+                if (fields[i].isPrimaryKey()) {
                     StringBuilder keyName = new StringBuilder();
                     keyName.append(this.quotedId);
 
-                    String originalColumnName = this.creatorResultSet.getMetadata()[i].getOriginalName();
+                    String originalColumnName = fields[i].getOriginalName();
 
                     if ((originalColumnName != null) && (originalColumnName.length() > 0)) {
                         keyName.append(originalColumnName);
                     } else {
-                        keyName.append(this.creatorResultSet.getMetadata()[i].getName());
+                        keyName.append(fields[i].getName());
                     }
 
                     keyName.append(this.quotedId);
@@ -108,10 +110,10 @@ public class BlobFromLocator implements java.sql.Blob {
             notEnoughInformationInQuery();
         }
 
-        if (this.creatorResultSet.getMetadata()[0].getOriginalTableName() != null) {
+        if (fields[0].getOriginalTableName() != null) {
             StringBuilder tableNameBuffer = new StringBuilder();
 
-            String databaseName = this.creatorResultSet.getMetadata()[0].getDatabaseName();
+            String databaseName = fields[0].getDatabaseName();
 
             if ((databaseName != null) && (databaseName.length() > 0)) {
                 tableNameBuffer.append(this.quotedId);
@@ -121,7 +123,7 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             tableNameBuffer.append(this.quotedId);
-            tableNameBuffer.append(this.creatorResultSet.getMetadata()[0].getOriginalTableName());
+            tableNameBuffer.append(fields[0].getOriginalTableName());
             tableNameBuffer.append(this.quotedId);
 
             this.tableName = tableNameBuffer.toString();
@@ -129,7 +131,7 @@ public class BlobFromLocator implements java.sql.Blob {
             StringBuilder tableNameBuffer = new StringBuilder();
 
             tableNameBuffer.append(this.quotedId);
-            tableNameBuffer.append(this.creatorResultSet.getMetadata()[0].getTableName());
+            tableNameBuffer.append(fields[0].getTableName());
             tableNameBuffer.append(this.quotedId);
 
             this.tableName = tableNameBuffer.toString();
