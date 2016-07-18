@@ -32,7 +32,7 @@ import com.mysql.cj.api.mysqla.io.PacketPayload;
  * 
  * (this isn't possible when doing things like reading floating point values).
  */
-public abstract class AbstractBufferRow extends ResultSetRow {
+public abstract class AbstractBufferRow extends AbstractResultsetRow {
 
     protected PacketPayload rowFromServer;
 

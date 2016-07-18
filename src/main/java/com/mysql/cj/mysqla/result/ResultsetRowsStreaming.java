@@ -33,6 +33,7 @@ import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
@@ -189,7 +190,7 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
     public Row next() {
         try {
             if (!this.noMoreRows) {
-                this.nextRow = this.protocol.read(ResultSetRow.class,
+                this.nextRow = this.protocol.read(ResultsetRow.class,
                         this.isBinaryEncoded ? new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true)
                                 : new TextRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, true));
 

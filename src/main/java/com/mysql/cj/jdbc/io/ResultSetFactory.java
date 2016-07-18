@@ -45,13 +45,6 @@ public class ResultSetFactory implements StructureFactory<ResultSetImpl> {
         this.stmt = creatorStmt;
     }
 
-    public int getFetchSize() throws SQLException {
-        if (this.stmt != null) {
-            return this.stmt.getFetchSize();
-        }
-        return 0;
-    }
-
     public int getResultSetType() throws SQLException {
         if (this.stmt != null) {
             return this.stmt.getResultSetType();

@@ -41,10 +41,6 @@ public interface StructureFactory<T> {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 
-    default int getFetchSize() throws SQLException {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
-    }
-
     default int getResultSetType() throws SQLException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }

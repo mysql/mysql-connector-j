@@ -26,23 +26,17 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
-/**
- * Classes that implement this interface represent one row of data from the MySQL server that might be stored in different ways depending on whether the result
- * set was streaming (so they wrap a reusable packet), or whether the result set was cached or via a server-side cursor (so they represent a byte[][]).
- * 
- * Notice that <strong>no</strong> bounds checking is expected for implementors of this interface, it happens in ResultSetImpl.
- */
-public abstract class ResultSetRow implements Row, ProtocolStructure {
+public abstract class AbstractResultsetRow implements ResultsetRow {
     protected ExceptionInterceptor exceptionInterceptor;
 
-    protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {
+    protected AbstractResultsetRow(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 

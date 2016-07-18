@@ -29,7 +29,7 @@ import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 
-public class AbstractResultset implements Resultset {
+public class MysqlaResultset implements Resultset {
 
     /** The metadata for this result set */
     protected ColumnDefinition columnDefinition;

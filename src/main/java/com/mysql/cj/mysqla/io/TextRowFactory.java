@@ -31,13 +31,13 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.TextBufferRow;
 
-public class TextRowFactory implements StructureFactory<ResultSetRow> {
+public class TextRowFactory implements StructureFactory<ResultsetRow> {
 
     protected ColumnDefinition columnDefinition;
     protected int resultSetConcurrency;
@@ -54,7 +54,7 @@ public class TextRowFactory implements StructureFactory<ResultSetRow> {
     }
 
     @Override
-    public ResultSetRow createFromPacketPayload(PacketPayload rowPacket) {
+    public ResultsetRow createFromPacketPayload(PacketPayload rowPacket) {
 
         // use a buffer row for reusable packets (streaming results), blobs and long strings
         // or if we're over the threshold

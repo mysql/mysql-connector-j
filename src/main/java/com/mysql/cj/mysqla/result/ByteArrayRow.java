@@ -31,7 +31,7 @@ import com.mysql.cj.core.io.MysqlTextValueDecoder;
 /**
  * A RowHolder implementation that is for cached results (a-la mysql_store_result()).
  */
-public class ByteArrayRow extends ResultSetRow {
+public class ByteArrayRow extends AbstractResultsetRow {
 
     byte[][] internalRowData;
 

@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
@@ -233,7 +234,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
                 Row row = null;
 
-                while ((row = this.protocol.read(ResultSetRow.class,
+                while ((row = this.protocol.read(ResultsetRow.class,
                         new BinaryRowFactory(this.protocol, new MysqlaColumnDefinition(this.metadata), ResultSet.CONCUR_READ_ONLY, false))) != null) {
                     this.fetchedRows.add(row);
                 }

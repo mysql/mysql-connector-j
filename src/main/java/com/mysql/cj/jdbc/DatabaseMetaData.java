@@ -48,6 +48,7 @@ import java.util.TreeSet;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -62,7 +63,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
 /**
@@ -1291,7 +1291,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[20] = new Field("", "SOURCE_DATA_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 32);
 
         return this.resultSetFactory.get().getInstance(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(new ArrayList<ResultSetRow>(), fields));
+                new ResultsetRowsStatic(new ArrayList<ResultsetRow>(), fields));
     }
 
     public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, final String table, int scope, boolean nullable) throws SQLException {

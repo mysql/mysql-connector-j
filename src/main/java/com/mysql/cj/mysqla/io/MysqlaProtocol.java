@@ -64,6 +64,7 @@ import com.mysql.cj.api.mysqla.io.StructureReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -101,7 +102,6 @@ import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.cj.mysqla.result.OkPacket;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
@@ -251,7 +251,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
         Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> structureClassToReader = new HashMap<>();
         structureClassToReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
-        structureClassToReader.put(ResultSetRow.class, new ResultsetRowReader(this));
+        structureClassToReader.put(ResultsetRow.class, new ResultsetRowReader(this));
         structureClassToReader.put(Resultset.class, new TextResultsetReader(this));
         this.STRUCTURE_CLASS_TO_TEXT_READER = Collections.unmodifiableMap(structureClassToReader);
 

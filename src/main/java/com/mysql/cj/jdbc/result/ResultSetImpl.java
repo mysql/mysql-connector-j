@@ -109,12 +109,12 @@ import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.result.AbstractResultset;
+import com.mysql.cj.mysqla.result.MysqlaResultset;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.OkPacket;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 
-public class ResultSetImpl extends AbstractResultset implements ResultSetInternalMethods, WarningListener {
+public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalMethods, WarningListener {
 
     /** Counter used to generate IDs for profiling. */
     static int resultCounter = 1;

@@ -30,6 +30,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
@@ -38,20 +39,19 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 import com.mysql.cj.mysqla.result.BinaryBufferRow;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 
 /**
  * Handle binary-encoded data for server-side PreparedStatements
  *
  */
-public class BinaryRowFactory extends TextRowFactory implements StructureFactory<ResultSetRow> {
+public class BinaryRowFactory extends TextRowFactory implements StructureFactory<ResultsetRow> {
 
     public BinaryRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, int resultSetConcurrency, boolean canReuseRowPacketForBufferRow) {
         super(protocol, columnDefinition, resultSetConcurrency, canReuseRowPacketForBufferRow);
     }
 
     @Override
-    public ResultSetRow createFromPacketPayload(PacketPayload rowPacket) {
+    public ResultsetRow createFromPacketPayload(PacketPayload rowPacket) {
 
         // use a buffer row for reusable packets (streaming results), blobs and long strings
         // or if we're over the threshold
@@ -81,7 +81,7 @@ public class BinaryRowFactory extends TextRowFactory implements StructureFactory
      * 
      * @return byte[][]
      */
-    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields, PacketPayload binaryData) {
+    private final ResultsetRow unpackBinaryResultSetRow(Field[] fields, PacketPayload binaryData) {
         int numFields = fields.length;
 
         byte[][] unpackedRowBytes = new byte[numFields][];

@@ -27,15 +27,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.StructureFactory;
 import com.mysql.cj.api.mysqla.io.StructureReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
@@ -43,7 +42,6 @@ import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.mysqla.result.OkPacket;
-import com.mysql.cj.mysqla.result.ResultSetRow;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 import com.mysql.cj.mysqla.result.ResultsetRowsStreaming;
 
@@ -51,101 +49,48 @@ public class TextResultsetReader implements StructureReader<Resultset> {
 
     protected MysqlaProtocol protocol;
 
-    protected PropertySet propertySet;
-
     public TextResultsetReader(MysqlaProtocol prot) {
         this.protocol = prot;
-        this.propertySet = this.protocol.getPropertySet();
     }
 
     @Override
     public Resultset read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
             StructureFactory<Resultset> resultSetFactory) throws SQLException {
-        return readResultsForQueryOrUpdate(maxRows, streamResults, resultPacket, metadataFromCache, resultSetFactory);
-    }
 
-    /**
-     * Reads one result set off of the wire, if the result is actually an
-     * update count, creates an update-count only result set.
-     * 
-     * @param maxRows
-     *            the maximum number of rows to read (-1 means all rows)
-     * @param streamResults
-     *            should the driver leave the results on the wire,
-     *            and read them only when needed?
-     * @param resultPacket
-     *            the first packet of information in the result set
-     * @param metadataFromCache
-     *            metadata to avoid reading/parsing metadata
-     * @param resultSetFactory
-     * 
-     * @return a result set that either represents the rows, or an update count
-     * 
-     * @throws SQLException
-     *             if an error occurs while reading the rows
-     */
-    public <T extends ProtocolStructure> T readResultsForQueryOrUpdate(int maxRows, boolean streamResults, PacketPayload resultPacket,
-            ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws SQLException {
-
-        T rs = null;
+        Resultset rs = null;
         try {
             long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
 
             if (columnCount > 0) {
-                /*
-                 * Build a result set with rows.
-                 */
-
-                /*
-                 * Read ResultsetRows from server
-                 */
-                PacketPayload packet; // The packet from the server
+                // Build a result set with rows.
 
                 // Read in the column information
                 ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadataFromCache));
                 Field[] fields = cdef.getFields();
 
-                // There is no EOL packet after fields when CLIENT_DEPRECATE_EOF is set
+                // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set
                 if (!this.protocol.getServerSession().isEOFDeprecated()) {
-                    packet = this.protocol.readPacket(this.protocol.getReusablePacket());
-                    this.protocol.readServerStatusForResultSets(packet, true);
+                    this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
                 }
 
                 ResultsetRows rows = null;
 
-                //
-                // Handle cursor-based fetch first
-                //
-
                 if (!streamResults) {
-                    // read single row set
-
                     TextRowFactory trf = new TextRowFactory(this.protocol, cdef, resultSetFactory.getResultSetConcurrency(), false);
-                    ArrayList<ResultSetRow> rowList = new ArrayList<ResultSetRow>();
-                    ResultSetRow row = this.protocol.read(ResultSetRow.class, trf);
+                    ArrayList<ResultsetRow> rowList = new ArrayList<ResultsetRow>();
 
-                    int rowCount = 0;
-
-                    if (row != null) {
-                        rowList.add(row);
-                        rowCount = 1;
-                    }
-
+                    ResultsetRow row = this.protocol.read(ResultsetRow.class, trf);
                     while (row != null) {
-                        row = this.protocol.read(ResultSetRow.class, trf);
-
-                        if (row != null) {
-                            if ((maxRows == -1) || (rowCount < maxRows)) {
-                                rowList.add(row);
-                                rowCount++;
-                            }
+                        if ((maxRows == -1) || (rowList.size() < maxRows)) {
+                            rowList.add(row);
                         }
+                        row = this.protocol.read(ResultsetRow.class, trf);
                     }
 
                     rows = new ResultsetRowsStatic(rowList, fields);
 
                 } else {
-                    rows = new ResultsetRowsStreaming<T>(this.protocol, fields, false, resultSetFactory);
+                    rows = new ResultsetRowsStreaming<Resultset>(this.protocol, fields, false, resultSetFactory);
                     this.protocol.setStreamingData(rows);
                 }
 
@@ -157,7 +102,7 @@ public class TextResultsetReader implements StructureReader<Resultset> {
             } else {
                 // check for file request
                 if (columnCount == PacketPayload.NULL_LENGTH) {
-                    String charEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                    String charEncoding = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
                     String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM,
                             this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
                     resultPacket = this.protocol.sendFileToServer(fileName);
