@@ -28,9 +28,9 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
@@ -54,7 +54,7 @@ import com.mysql.cj.mysqla.io.TextRowFactory;
  * we only stream result sets when they are forward-only, read-only, and the
  * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
  */
-public class ResultsetRowsStreaming<T extends ProtocolStructure> extends AbstractResultsetRows implements ResultsetRows {
+public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractResultsetRows implements ResultsetRows {
 
     private MysqlaProtocol protocol;
 
@@ -70,7 +70,7 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    private StructureFactory<T> resultSetFactory;
+    private ProtocolEntityFactory<T> resultSetFactory;
 
     /**
      * Creates a new RowDataDynamic object.
@@ -83,7 +83,7 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
      *            is this data in native format?
      * @param resultSetFactory
      */
-    public ResultsetRowsStreaming(MysqlaProtocol io, ColumnDefinition columnDefinition, boolean isBinaryEncoded, StructureFactory<T> resultSetFactory) {
+    public ResultsetRowsStreaming(MysqlaProtocol io, ColumnDefinition columnDefinition, boolean isBinaryEncoded, ProtocolEntityFactory<T> resultSetFactory) {
         this.protocol = io;
         this.isBinaryEncoded = isBinaryEncoded;
         this.metadata = columnDefinition;
@@ -133,7 +133,7 @@ public class ResultsetRowsStreaming<T extends ProtocolStructure> extends Abstrac
                     try {
                         this.protocol.sqlQueryDirect(null, "SET net_write_timeout=" + oldValue,
                                 this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1,
-                                false, null, null, null, (StructureFactory<Resultset>) this.resultSetFactory);
+                                false, null, null, null, (ProtocolEntityFactory<Resultset>) this.resultSetFactory);
 
                     } catch (Exception ex) {
                         throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);

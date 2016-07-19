@@ -23,8 +23,8 @@
 
 package com.mysql.cj.mysqla.io;
 
-import com.mysql.cj.api.mysqla.io.StructureFactory;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.Resultset.Type;
@@ -34,7 +34,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqla.result.MysqlaResultset;
 import com.mysql.cj.mysqla.result.OkPacket;
 
-public class ResultsetFactory implements StructureFactory<Resultset> {
+public class ResultsetFactory implements ProtocolEntityFactory<Resultset> {
 
     private Type type = Type.FORWARD_ONLY;
     private Concurrency concurrency = Concurrency.READ_ONLY;
@@ -53,15 +53,15 @@ public class ResultsetFactory implements StructureFactory<Resultset> {
     }
 
     @Override
-    public Resultset createFromProtocolStructure(ProtocolStructure protocolStructure) {
-        if (protocolStructure instanceof OkPacket) {
-            return new MysqlaResultset((OkPacket) protocolStructure);
+    public Resultset createFromProtocolEntity(ProtocolEntity protocolEntity) {
+        if (protocolEntity instanceof OkPacket) {
+            return new MysqlaResultset((OkPacket) protocolEntity);
 
-        } else if (protocolStructure instanceof ResultsetRows) {
-            return new MysqlaResultset((ResultsetRows) protocolStructure);
+        } else if (protocolEntity instanceof ResultsetRows) {
+            return new MysqlaResultset((ResultsetRows) protocolEntity);
 
         }
-        throw ExceptionFactory.createException(WrongArgumentException.class, "Unknown ProtocolStructure class " + protocolStructure);
+        throw ExceptionFactory.createException(WrongArgumentException.class, "Unknown ProtocolEntity class " + protocolEntity);
     }
 
 }

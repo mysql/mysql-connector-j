@@ -558,7 +558,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     // Note, row data is linked between these two result sets
     public ResultSetInternalMethods copy(ResultSetFactory resultSetFactory) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = resultSetFactory.createJdbcResultSet(getConcurrency(), getType(), this.rowData); // note, doesn't work for updatable result sets
+            ResultSetInternalMethods rs = resultSetFactory.createFromResultsetRows(getConcurrency(), getType(), this.rowData); // note, doesn't work for updatable result sets
 
             return rs;
         }

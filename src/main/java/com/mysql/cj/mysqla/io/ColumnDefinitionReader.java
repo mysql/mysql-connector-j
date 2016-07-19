@@ -25,15 +25,15 @@ package com.mysql.cj.mysqla.io;
 
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
-import com.mysql.cj.api.mysqla.io.StructureReader;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 
-public class ColumnDefinitionReader implements StructureReader<ColumnDefinition> {
+public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefinition> {
 
     private MysqlaProtocol protocol;
 
@@ -42,7 +42,7 @@ public class ColumnDefinitionReader implements StructureReader<ColumnDefinition>
     }
 
     @Override
-    public ColumnDefinition read(StructureFactory<ColumnDefinition> sf) {
+    public ColumnDefinition read(ProtocolEntityFactory<ColumnDefinition> sf) {
 
         ColumnDefinitionFactory cdf = (ColumnDefinitionFactory) sf;
 

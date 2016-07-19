@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
-import com.mysql.cj.api.mysqla.io.StructureReader;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
@@ -40,7 +40,7 @@ import com.mysql.cj.mysqla.result.OkPacket;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
 import com.mysql.cj.mysqla.result.ResultsetRowsStreaming;
 
-public class TextResultsetReader implements StructureReader<Resultset> {
+public class TextResultsetReader implements ProtocolEntityReader<Resultset> {
 
     protected MysqlaProtocol protocol;
 
@@ -50,7 +50,7 @@ public class TextResultsetReader implements StructureReader<Resultset> {
 
     @Override
     public Resultset read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
-            StructureFactory<Resultset> resultSetFactory) throws IOException {
+            ProtocolEntityFactory<Resultset> resultSetFactory) throws IOException {
 
         Resultset rs = null;
         //try {
@@ -91,7 +91,7 @@ public class TextResultsetReader implements StructureReader<Resultset> {
             /*
              * Build ResultSet from ResultsetRows
              */
-            rs = resultSetFactory.createFromProtocolStructure(rows);
+            rs = resultSetFactory.createFromProtocolEntity(rows);
 
         } else {
             // check for file request
@@ -108,7 +108,7 @@ public class TextResultsetReader implements StructureReader<Resultset> {
             // read and parse OK packet
             OkPacket ok = this.protocol.readServerStatusForResultSets(resultPacket, false); // oldStatus set in sendCommand()
 
-            rs = resultSetFactory.createFromProtocolStructure(ok);
+            rs = resultSetFactory.createFromProtocolEntity(ok);
         }
         return rs;
 

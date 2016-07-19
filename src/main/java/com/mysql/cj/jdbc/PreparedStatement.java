@@ -94,7 +94,6 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
-import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
@@ -738,8 +737,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     protected ReadableProperty<Boolean> useStreamLengthsInPrepStmts;
     protected ReadableProperty<Boolean> autoClosePStmtStreams;
     protected ReadableProperty<Boolean> treatUtilDateAsTimestamp;
-
-    protected ResultSetFactory noStatementResultSetFactory;
 
     /**
      * Creates a prepared statement instance
@@ -4727,7 +4724,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             rows.add(new ByteArrayRow(rowData, getExceptionInterceptor()));
 
-            this.bindingsAsRs = PreparedStatement.this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            this.bindingsAsRs = PreparedStatement.this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(typeMetadata)));
             this.bindingsAsRs.next();
         }

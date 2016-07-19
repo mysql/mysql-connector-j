@@ -27,7 +27,7 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
@@ -37,7 +37,7 @@ import com.mysql.cj.core.io.MysqlTextValueDecoder;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.TextBufferRow;
 
-public class TextRowFactory extends AbstractRowFactory implements StructureFactory<ResultsetRow> {
+public class TextRowFactory extends AbstractRowFactory implements ProtocolEntityFactory<ResultsetRow> {
 
     protected ColumnDefinition columnDefinition;
     protected Resultset.Concurrency resultSetConcurrency;

@@ -23,7 +23,7 @@
 
 package com.mysql.cj.mysqla.result;
 
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
@@ -53,7 +53,7 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
      */
     protected ResultsetRowsOwner owner;
 
-    protected StructureFactory<ResultsetRow> rowFactory;
+    protected ProtocolEntityFactory<ResultsetRow> rowFactory;
 
     @Override
     public void setOwner(ResultsetRowsOwner rs) {

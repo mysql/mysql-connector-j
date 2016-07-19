@@ -699,7 +699,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
             }
 
-            java.sql.ResultSet paramTypesRs = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            java.sql.ResultSet paramTypesRs = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(resultRows, new MysqlaColumnDefinition(fields)));
 
             convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);

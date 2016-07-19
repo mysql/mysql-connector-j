@@ -1264,7 +1264,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             stmt = null;
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -1292,7 +1292,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[19] = new Field("", "SCOPE_TABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
         fields[20] = new Field("", "SOURCE_DATA_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 32);
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<ResultsetRow>(), new MysqlaColumnDefinition(fields)));
     }
 
@@ -1402,7 +1402,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -1924,7 +1924,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
             }
 
-            return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
         } finally {
             if (results != null) {
@@ -2060,7 +2060,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(grantRows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -2289,7 +2289,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -2459,7 +2459,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -2638,7 +2638,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -2782,7 +2782,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -2901,7 +2901,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 rows.add(sortedRowsIterator.next());
             }
 
-            java.sql.ResultSet indexInfo = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            java.sql.ResultSet indexInfo = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
             return indexInfo;
@@ -3227,7 +3227,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -3367,7 +3367,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             getCallStmtParameterTypes(catalog, procNameToCall, procType, columnNamePattern, resultRows, fields.length == 17 /* for getFunctionColumns */);
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(resultRows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -3533,7 +3533,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             procedureRows.add(procRow.getValue());
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(procedureRows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -3600,7 +3600,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[1] = new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
 
         ArrayList<Row> tuples = new ArrayList<Row>();
-        java.sql.ResultSet results = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
 
         return results;
@@ -3689,7 +3689,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[2] = new Field("", "TABLE_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
         fields[3] = new Field("", "SUPERTABLE_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<Row>(), new MysqlaColumnDefinition(fields)));
     }
 
@@ -3702,7 +3702,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[4] = new Field("", "SUPERTYPE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
         fields[5] = new Field("", "SUPERTYPE_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<Row>(), new MysqlaColumnDefinition(fields)));
     }
 
@@ -3831,7 +3831,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(grantRows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -4048,7 +4048,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         tuples.addAll(sortedRows.values());
-        java.sql.ResultSet tables = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        java.sql.ResultSet tables = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, createTablesFields()));
 
         return tables;
@@ -4079,7 +4079,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         tuples.add(new ByteArrayRow(new byte[][] { TableType.TABLE.asBytes() }, getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(new byte[][] { TableType.VIEW.asBytes() }, getExceptionInterceptor()));
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
     }
 
@@ -4243,7 +4243,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // TODO add missed types (aliases)
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
     }
 
@@ -4259,7 +4259,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         ArrayList<Row> tuples = new ArrayList<Row>();
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
     }
 
@@ -4396,7 +4396,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
     }
 
@@ -5439,7 +5439,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[2] = new Field("", "DEFAULT_VALUE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255);
         fields[3] = new Field("", "DESCRIPTION", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255);
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<Row>(), new MysqlaColumnDefinition(fields)));
     }
 
@@ -5495,7 +5495,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         Field[] fields = { new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255),
                 new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255) };
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<Row>(), new MysqlaColumnDefinition(fields)));
     }
 
@@ -5536,7 +5536,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new Field("", "CHAR_OCTET_LENGTH", this.metadataCollationIndex, this.metadataEncoding, MysqlType.INT, 12),
                 new Field("", "IS_NULLABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 512) };
 
-        return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(new ArrayList<Row>(), new MysqlaColumnDefinition(fields)));
     }
 

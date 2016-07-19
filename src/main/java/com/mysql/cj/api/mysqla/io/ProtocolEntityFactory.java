@@ -23,12 +23,12 @@
 
 package com.mysql.cj.api.mysqla.io;
 
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 
-public interface StructureFactory<T> {
+public interface ProtocolEntityFactory<T> {
 
     /**
      * 
@@ -49,10 +49,10 @@ public interface StructureFactory<T> {
 
     /**
      * 
-     * @param protocolStructure
+     * @param protocolEntity
      * @return
      */
-    default T createFromProtocolStructure(ProtocolStructure protocolStructure) {
+    default T createFromProtocolEntity(ProtocolEntity protocolEntity) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 }

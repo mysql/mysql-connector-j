@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 
-public interface StructureReader<T extends ProtocolStructure> {
+public interface ProtocolEntityReader<T extends ProtocolEntity> {
 
     /**
      * 
@@ -39,7 +39,7 @@ public interface StructureReader<T extends ProtocolStructure> {
      * @return
      * @throws IOException
      */
-    default T read(StructureFactory<T> sf) throws IOException {
+    default T read(ProtocolEntityFactory<T> sf) throws IOException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 
@@ -56,15 +56,15 @@ public interface StructureReader<T extends ProtocolStructure> {
      *            the first packet of information in the result set
      * @param metadataFromCache
      *            metadata to avoid reading/parsing metadata
-     * @param resultSetFactory
+     * @param protocolEntityFactory
      * 
      * @return a result set that either represents the rows, or an update count
      * 
      * @throws SQLException
      *             if an error occurs while reading the rows
      */
-    default T read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory)
-            throws IOException {
+    default T read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
+            ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 

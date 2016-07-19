@@ -1086,17 +1086,13 @@ public class ServerPreparedStatement extends PreparedStatement {
             packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_EXECUTE);
             packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
-            //			boolean usingCursor = false;
-
             // we only create cursor-backed result sets if
             // a) The query is a SELECT
             // b) The server supports it
             // c) We know it is forward-only (note this doesn't preclude updatable result sets)
             // d) The user has set a fetch size
-            if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
-                    && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0) {
+            if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY && getFetchSize() > 0) {
                 packet.writeInteger(IntegerDataType.INT1, OPEN_CURSOR_FLAG);
-                //                  usingCursor = true;
             } else {
                 packet.writeInteger(IntegerDataType.INT1, 0); // placeholder for flags
             }

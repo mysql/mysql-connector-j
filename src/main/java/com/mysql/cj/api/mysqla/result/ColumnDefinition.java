@@ -28,10 +28,10 @@ import java.util.Map;
 import com.mysql.cj.core.result.Field;
 
 /**
- * Represents Protocol::ColumnDefinition41 structure
+ * Represents Protocol::ColumnDefinition41 protocol entity.
  *
  */
-public interface ColumnDefinition extends ProtocolStructure {
+public interface ColumnDefinition extends ProtocolEntity {
 
     Field[] getFields();
 
@@ -70,10 +70,7 @@ public interface ColumnDefinition extends ProtocolStructure {
     int findColumn(String columnName, boolean useColumnNamesInFindColumn);
 
     /**
-     * Check if fields with type BLOB, MEDIUMBLOB, LONGBLOB, TEXT, MEDIUMTEXT or LONGTEXT
-     * exist in this ColumnDefinition.
-     * This check is used for making a decision about whether we want to force a
-     * buffer row (better for rows with large fields).
+     * Check if fields with type BLOB, MEDIUMBLOB, LONGBLOB, TEXT, MEDIUMTEXT or LONGTEXT exist in this ColumnDefinition.
      */
     boolean hasLargeFields();
 }

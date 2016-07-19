@@ -30,12 +30,12 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
-import com.mysql.cj.api.mysqla.io.StructureReader;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
-public class ResultsetRowReader implements StructureReader<ResultsetRow> {
+public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow> {
 
     protected MysqlaProtocol protocol;
 
@@ -60,7 +60,7 @@ public class ResultsetRowReader implements StructureReader<ResultsetRow> {
      * 
      */
     @Override
-    public ResultsetRow read(StructureFactory<ResultsetRow> sf) throws IOException {
+    public ResultsetRow read(ProtocolEntityFactory<ResultsetRow> sf) throws IOException {
         AbstractRowFactory rf = (AbstractRowFactory) sf;
         PacketPayload rowPacket = null;
         PacketHeader hdr = this.protocol.getPacketReader().readHeader();

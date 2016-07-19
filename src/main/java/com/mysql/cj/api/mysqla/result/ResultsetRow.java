@@ -31,5 +31,5 @@ import com.mysql.cj.api.result.Row;
  * 
  * Notice that <strong>no</strong> bounds checking is expected for implementors of this interface, it happens in ResultSetImpl.
  */
-public interface ResultsetRow extends Row, ProtocolStructure {
+public interface ResultsetRow extends Row, ProtocolEntity {
 }

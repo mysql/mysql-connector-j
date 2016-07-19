@@ -59,10 +59,10 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
-import com.mysql.cj.api.mysqla.io.StructureReader;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.api.mysqla.result.ProtocolStructure;
+import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
@@ -156,8 +156,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     private boolean queryNoIndexUsed = false;
     private boolean serverQueryWasSlow = false;
 
-    protected Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> STRUCTURE_CLASS_TO_TEXT_READER;
-    protected Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> STRUCTURE_CLASS_TO_BINARY_READER;
+    protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> PROTOCOL_ENTITY_CLASS_TO_TEXT_READER;
+    protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> PROTOCOL_ENTITY_CLASS_TO_BINARY_READER;
 
     /**
      * Does the character set of this connection match the character set of the
@@ -249,16 +249,16 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         this.authProvider = new MysqlaAuthenticationProvider(this.log);
         this.authProvider.init(this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
-        Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> structureClassToReader = new HashMap<>();
-        structureClassToReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
-        structureClassToReader.put(ResultsetRow.class, new ResultsetRowReader(this));
-        structureClassToReader.put(Resultset.class, new TextResultsetReader(this));
-        this.STRUCTURE_CLASS_TO_TEXT_READER = Collections.unmodifiableMap(structureClassToReader);
+        Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> protocolEntityClassToTextReader = new HashMap<>();
+        protocolEntityClassToTextReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
+        protocolEntityClassToTextReader.put(ResultsetRow.class, new ResultsetRowReader(this));
+        protocolEntityClassToTextReader.put(Resultset.class, new TextResultsetReader(this));
+        this.PROTOCOL_ENTITY_CLASS_TO_TEXT_READER = Collections.unmodifiableMap(protocolEntityClassToTextReader);
 
-        Map<Class<? extends ProtocolStructure>, StructureReader<? extends ProtocolStructure>> structureClassToBinaryReader = new HashMap<>();
-        structureClassToBinaryReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
-        structureClassToBinaryReader.put(Resultset.class, new BinaryResultsetReader(this));
-        this.STRUCTURE_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(structureClassToBinaryReader);
+        Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> protocolEntityClassToBinaryReader = new HashMap<>();
+        protocolEntityClassToBinaryReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
+        protocolEntityClassToBinaryReader.put(Resultset.class, new BinaryResultsetReader(this));
+        this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(protocolEntityClassToBinaryReader);
 
     }
 
@@ -804,7 +804,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
-            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, StructureFactory<T> resultSetFactory) throws IOException {
+            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
         this.statementExecutionDepth++;
 
         try {
@@ -1596,31 +1596,31 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      */
 
     @Override
-    public <T extends ProtocolStructure> T read(Class<T> requiredClass, StructureFactory<T> structureFactory) throws IOException {
+    public <T extends ProtocolEntity> T read(Class<T> requiredClass, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
         @SuppressWarnings("unchecked")
-        StructureReader<T> sr = (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
+        ProtocolEntityReader<T> sr = (ProtocolEntityReader<T>) this.PROTOCOL_ENTITY_CLASS_TO_TEXT_READER.get(requiredClass);
         if (sr == null) {
-            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
+            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "ProtocolEntityReader isn't available for class " + requiredClass);
         }
-        return sr.read(structureFactory);
+        return sr.read(protocolEntityFactory);
     }
 
     @Override
-    public <T extends ProtocolStructure> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
-            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, StructureFactory<T> structureFactory) throws IOException {
+    public <T extends ProtocolEntity> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
+            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
         @SuppressWarnings("unchecked")
-        StructureReader<T> sr = isBinaryEncoded ? (StructureReader<T>) this.STRUCTURE_CLASS_TO_BINARY_READER.get(requiredClass)
-                : (StructureReader<T>) this.STRUCTURE_CLASS_TO_TEXT_READER.get(requiredClass);
+        ProtocolEntityReader<T> sr = isBinaryEncoded ? (ProtocolEntityReader<T>) this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER.get(requiredClass)
+                : (ProtocolEntityReader<T>) this.PROTOCOL_ENTITY_CLASS_TO_TEXT_READER.get(requiredClass);
         if (sr == null) {
-            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "StructureReader isn't available for class " + requiredClass);
+            throw ExceptionFactory.createException(FeatureNotAvailableException.class, "ProtocolEntityReader isn't available for class " + requiredClass);
         }
-        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, structureFactory);
+        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, protocolEntityFactory);
     }
 
     /**
      * Read next result set from multi-result chain.
      * 
-     * @param currentStructure
+     * @param currentProtocolEntity
      * @param maxRows
      * @param streamResults
      * @param isBinaryEncoded
@@ -1628,14 +1628,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
      * @return
      * @throws SQLException
      */
-    public <T extends ProtocolStructure> T readNextResultset(T currentStructure, int maxRows, boolean streamResults, boolean isBinaryEncoded,
-            StructureFactory<T> resultSetFactory) throws IOException {
+    public <T extends ProtocolEntity> T readNextResultset(T currentProtocolEntity, int maxRows, boolean streamResults, boolean isBinaryEncoded,
+            ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
         T result = null;
-        if (Resultset.class.isAssignableFrom(currentStructure.getClass()) && this.serverSession.useMultiResults()) {
+        if (Resultset.class.isAssignableFrom(currentProtocolEntity.getClass()) && this.serverSession.useMultiResults()) {
             if (this.serverSession.hasMoreResults()) {
 
-                T currentResultSet = currentStructure;
+                T currentResultSet = currentProtocolEntity;
                 T newResultSet;
                 do {
                     PacketPayload fieldPacket = checkErrorPacket();
@@ -1657,7 +1657,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     public <T extends Resultset> T readAllResults(int maxRows, boolean streamResults, PacketPayload resultPacket, boolean isBinaryEncoded,
-            ColumnDefinition metadataFromCache, StructureFactory<T> resultSetFactory) throws IOException {
+            ColumnDefinition metadataFromCache, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
         resultPacket.setPosition(0);
         T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadataFromCache, resultSetFactory);

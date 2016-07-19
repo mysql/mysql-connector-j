@@ -50,7 +50,7 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.AbstractSession;
@@ -449,7 +449,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      */
     public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, StructureFactory<T> resultSetFactory) throws IOException {
+            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
         return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
                 this::getProfilerEventHandlerInstanceFunction, resultSetFactory);

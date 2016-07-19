@@ -24,10 +24,10 @@
 package com.mysql.cj.mysqla.io;
 
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 
-public class ColumnDefinitionFactory implements StructureFactory<ColumnDefinition> {
+public class ColumnDefinitionFactory implements ProtocolEntityFactory<ColumnDefinition> {
 
     private long columnCount;
     private ColumnDefinition columnDefinitionFromCache;

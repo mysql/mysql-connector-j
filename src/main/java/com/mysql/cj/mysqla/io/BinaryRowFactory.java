@@ -26,7 +26,7 @@ package com.mysql.cj.mysqla.io;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.io.StructureFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
@@ -45,7 +45,7 @@ import com.mysql.cj.mysqla.result.ByteArrayRow;
  * Handle binary-encoded data for server-side PreparedStatements
  *
  */
-public class BinaryRowFactory extends AbstractRowFactory implements StructureFactory<ResultsetRow> {
+public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEntityFactory<ResultsetRow> {
 
     public BinaryRowFactory(MysqlaProtocol protocol, ColumnDefinition columnDefinition, Resultset.Concurrency resultSetConcurrency,
             boolean canReuseRowPacketForBufferRow) {

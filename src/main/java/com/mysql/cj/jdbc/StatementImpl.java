@@ -1505,7 +1505,7 @@ public class StatementImpl implements Statement {
 
             rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
 
-            return this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(rows, new MysqlaColumnDefinition(fields)));
         }
     }
@@ -1742,7 +1742,7 @@ public class StatementImpl implements Statement {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 
-            this.generatedKeysResults = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            this.generatedKeysResults = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(this.batchedGeneratedKeys, new MysqlaColumnDefinition(fields)));
 
             return this.generatedKeysResults;
@@ -1806,7 +1806,7 @@ public class StatementImpl implements Statement {
                 }
             }
 
-            ResultSetImpl gkRs = this.resultSetFactory.createJdbcResultSet(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSetImpl gkRs = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(rowSet, new MysqlaColumnDefinition(fields)));
 
             return gkRs;

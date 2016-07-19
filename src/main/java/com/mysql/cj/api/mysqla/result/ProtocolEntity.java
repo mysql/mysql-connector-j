@@ -23,6 +23,6 @@
 
 package com.mysql.cj.api.mysqla.result;
 
-public interface ProtocolStructure {
+public interface ProtocolEntity {
 
 }

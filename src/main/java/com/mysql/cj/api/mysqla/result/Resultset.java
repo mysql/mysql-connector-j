@@ -24,14 +24,14 @@
 package com.mysql.cj.api.mysqla.result;
 
 /**
- * Represents ProtocolText::Resultset or ProtocolBinary::Resultset structure.
+ * Represents ProtocolText::Resultset or ProtocolBinary::Resultset entity.
  * 
  * See:
  * http://dev.mysql.com/doc/internals/en/com-query-response.html#packet-ProtocolText::Resultset
  * http://dev.mysql.com/doc/internals/en/binary-protocol-resultset.html
  *
  */
-public interface Resultset extends ProtocolStructure {
+public interface Resultset extends ProtocolEntity {
 
     public enum Concurrency {
         /**

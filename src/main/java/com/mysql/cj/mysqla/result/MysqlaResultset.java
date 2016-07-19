@@ -59,7 +59,6 @@ public class MysqlaResultset implements Resultset {
     protected Row thisRow = null; // Values for current row
 
     public MysqlaResultset() {
-        // TODO Auto-generated constructor stub
     }
 
     /**

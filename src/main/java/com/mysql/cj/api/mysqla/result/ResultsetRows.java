@@ -33,7 +33,7 @@ import com.mysql.cj.core.exceptions.ExceptionFactory;
  * This interface abstracts away how row data is accessed by the result set. It is meant to allow a static implementation (Current version), and a streaming
  * one. It extends the {@link RowList} functionality by providing row positioning, updatability and ownership.
  */
-public interface ResultsetRows extends RowList, ProtocolStructure {
+public interface ResultsetRows extends RowList, ProtocolEntity {
 
     /**
      * Adds a row.
