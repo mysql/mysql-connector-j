@@ -38,12 +38,13 @@ public interface Resultset extends ProtocolEntity {
          * The constant indicating the concurrency mode for a
          * <code>Resultset</code> object that may NOT be updated.
          */
-        READ_ONLY(1007), // map to java.sql.ResultSet.CONCUR_READ_ONLY
+        READ_ONLY(java.sql.ResultSet.CONCUR_READ_ONLY),
+
         /**
          * The constant indicating the concurrency mode for a
          * <code>Resultset</code> object that may be updated.
          */
-        UPDATABLE(1008); // map to java.sql.ResultSet.CONCUR_UPDATABLE
+        UPDATABLE(java.sql.ResultSet.CONCUR_UPDATABLE);
 
         private int value;
 
@@ -71,21 +72,21 @@ public interface Resultset extends ProtocolEntity {
          * The constant indicating the type for a <code>Resultset</code> object
          * whose cursor may move only forward.
          */
-        FORWARD_ONLY(1003), // map to java.sql.ResultSet.TYPE_FORWARD_ONLY
+        FORWARD_ONLY(java.sql.ResultSet.TYPE_FORWARD_ONLY),
 
         /**
          * The constant indicating the type for a <code>Resultset</code> object
          * that is scrollable but generally not sensitive to changes to the data
          * that underlies the <code>Resultset</code>.
          */
-        SCROLL_INSENSITIVE(1004), // map to java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE
+        SCROLL_INSENSITIVE(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE),
 
         /**
          * The constant indicating the type for a <code>Resultset</code> object
          * that is scrollable and generally sensitive to changes to the data
          * that underlies the <code>Resultset</code>.
          */
-        SCROLL_SENSITIVE(1005); // map to java.sql.ResultSet.TYPE_SCROLL_SENSITIVE
+        SCROLL_SENSITIVE(java.sql.ResultSet.TYPE_SCROLL_SENSITIVE);
 
         private int value;
 
