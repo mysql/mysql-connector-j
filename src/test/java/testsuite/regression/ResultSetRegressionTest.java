@@ -3496,7 +3496,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug33678() throws Exception {
         createTable("testBug33678", "(field1 INT)");
 
-        Connection multiConn = getConnectionWithProps("allowMultiQueries=true");
+        Connection multiConn = getConnectionWithProps("allowMultiQueries=true,useSSL=false");
         Statement multiStmt = multiConn.createStatement();
 
         try {

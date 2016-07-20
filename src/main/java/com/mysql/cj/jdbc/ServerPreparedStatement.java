@@ -1408,7 +1408,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                             this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
                 }
 
-                //boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
+                boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
 
                 if (this.parameterCount > 0) {
                     //this.parameterFields = new Field[this.parameterCount];
@@ -1418,9 +1418,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                     //    metaDataPacket = this.session.readPacket();
                     //    this.parameterFields[i] = this.session.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
                     //}
-                    //if (checkEOF) { // Skip the following EOF packet.
-                    //    this.session.readPacket();
-                    //}
+                    if (checkEOF) { // Skip the following EOF packet.
+                        this.session.readPacket();
+                    }
 
                     this.parameterFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.parameterCount, null))
                             .getFields();
