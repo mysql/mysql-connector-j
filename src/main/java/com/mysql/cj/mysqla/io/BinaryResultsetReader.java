@@ -51,7 +51,7 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset> {
     }
 
     @Override
-    public Resultset read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
+    public Resultset read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadata,
             ProtocolEntityFactory<Resultset> resultSetFactory) throws IOException {
 
         Resultset rs = null;
@@ -62,7 +62,7 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset> {
             // Build a result set with rows.
 
             // Read in the column information
-            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadataFromCache));
+            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadata));
 
             boolean isCursorPosible = this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
                     && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY;

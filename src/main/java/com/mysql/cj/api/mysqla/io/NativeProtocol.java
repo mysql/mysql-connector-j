@@ -189,8 +189,21 @@ public interface NativeProtocol extends Protocol {
 
     <T extends ProtocolEntity> T read(Class<T> requiredClass, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException;
 
+    /**
+     * 
+     * @param requiredClass
+     * @param maxRows
+     * @param streamResults
+     * @param resultPacket
+     * @param isBinaryEncoded
+     * @param metadata
+     *            use this metadata instead of the one provided on wire
+     * @param protocolEntityFactory
+     * @return
+     * @throws IOException
+     */
     <T extends ProtocolEntity> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket, boolean isBinaryEncoded,
-            ColumnDefinition metadataFromCache, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException;
+            ColumnDefinition metadata, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException;
 
     /**
      * Sets an InputStream instance that will be used to send data

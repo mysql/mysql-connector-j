@@ -42,7 +42,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
      * @param rows
      */
     @SuppressWarnings("unchecked")
-    public <T extends Row> ResultsetRowsStatic(List<T> rows, ColumnDefinition columnDefinition) {
+    public ResultsetRowsStatic(List<? extends Row> rows, ColumnDefinition columnDefinition) {
         this.currentPositionInFetchedRows = -1;
         this.rows = (List<Row>) rows;
         this.metadata = columnDefinition;

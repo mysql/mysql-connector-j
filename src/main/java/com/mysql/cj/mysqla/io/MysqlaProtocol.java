@@ -1607,14 +1607,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
     @Override
     public <T extends ProtocolEntity> T read(Class<Resultset> requiredClass, int maxRows, boolean streamResults, PacketPayload resultPacket,
-            boolean isBinaryEncoded, ColumnDefinition metadataFromCache, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
+            boolean isBinaryEncoded, ColumnDefinition metadata, ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
         @SuppressWarnings("unchecked")
         ProtocolEntityReader<T> sr = isBinaryEncoded ? (ProtocolEntityReader<T>) this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER.get(requiredClass)
                 : (ProtocolEntityReader<T>) this.PROTOCOL_ENTITY_CLASS_TO_TEXT_READER.get(requiredClass);
         if (sr == null) {
             throw ExceptionFactory.createException(FeatureNotAvailableException.class, "ProtocolEntityReader isn't available for class " + requiredClass);
         }
-        return sr.read(maxRows, streamResults, resultPacket, metadataFromCache, protocolEntityFactory);
+        return sr.read(maxRows, streamResults, resultPacket, metadata, protocolEntityFactory);
     }
 
     /**
@@ -1657,10 +1657,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     public <T extends Resultset> T readAllResults(int maxRows, boolean streamResults, PacketPayload resultPacket, boolean isBinaryEncoded,
-            ColumnDefinition metadataFromCache, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
+            ColumnDefinition metadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
         resultPacket.setPosition(0);
-        T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadataFromCache, resultSetFactory);
+        T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadata, resultSetFactory);
 
         if (this.serverSession.hasMoreResults()) {
             T currentResultSet = topLevelResultSet;

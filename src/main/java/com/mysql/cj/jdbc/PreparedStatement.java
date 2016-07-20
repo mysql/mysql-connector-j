@@ -1782,7 +1782,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *            should a 'streaming' result set be created?
      * @param queryIsSelectOnly
      *            is this query doing a SELECT?
-     * @param unpackFields
+     * @param metadata
+     *            use this metadata instead of the one provided on wire
+     * @param isBatch
      * 
      * @return the results as a ResultSet
      * 
@@ -1790,7 +1792,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      *             if an error occurs.
      */
     protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket, boolean createStreamingResultSet,
-            boolean queryIsSelectOnly, ColumnDefinition metadataFromCache, boolean isBatch) throws SQLException {
+            boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
 
@@ -1822,7 +1824,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket, createStreamingResultSet, this.getCurrentCatalog(),
-                            metadataFromCache, isBatch);
+                            metadata, isBatch);
 
                     if (timeoutTask != null) {
                         timeoutTask.cancel();

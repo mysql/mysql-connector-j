@@ -38,12 +38,32 @@ public interface Resultset extends ProtocolEntity {
          * The constant indicating the concurrency mode for a
          * <code>Resultset</code> object that may NOT be updated.
          */
-        READ_ONLY, // map to java.sql.ResultSet.CONCUR_READ_ONLY
+        READ_ONLY(1007), // map to java.sql.ResultSet.CONCUR_READ_ONLY
         /**
          * The constant indicating the concurrency mode for a
          * <code>Resultset</code> object that may be updated.
          */
-        UPDATABLE // map to java.sql.ResultSet.CONCUR_UPDATABLE
+        UPDATABLE(1008); // map to java.sql.ResultSet.CONCUR_UPDATABLE
+
+        private int value;
+
+        private Concurrency(int jdbcRsConcur) {
+            value = jdbcRsConcur;
+        }
+
+        public int getIntValue() {
+            return this.value;
+        }
+
+        public static Concurrency fromValue(int concurMode, Concurrency backupValue) {
+            for (Concurrency c : values()) {
+                if (c.getIntValue() == concurMode) {
+                    return c;
+                }
+            }
+            return backupValue;
+        }
+
     }
 
     public enum Type {
@@ -51,21 +71,40 @@ public interface Resultset extends ProtocolEntity {
          * The constant indicating the type for a <code>Resultset</code> object
          * whose cursor may move only forward.
          */
-        FORWARD_ONLY, // map to java.sql.ResultSet.TYPE_FORWARD_ONLY
+        FORWARD_ONLY(1003), // map to java.sql.ResultSet.TYPE_FORWARD_ONLY
 
         /**
          * The constant indicating the type for a <code>Resultset</code> object
          * that is scrollable but generally not sensitive to changes to the data
          * that underlies the <code>Resultset</code>.
          */
-        SCROLL_INSENSITIVE, // map to java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE
+        SCROLL_INSENSITIVE(1004), // map to java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE
 
         /**
          * The constant indicating the type for a <code>Resultset</code> object
          * that is scrollable and generally sensitive to changes to the data
          * that underlies the <code>Resultset</code>.
          */
-        SCROLL_SENSITIVE // map to java.sql.ResultSet.TYPE_SCROLL_SENSITIVE
+        SCROLL_SENSITIVE(1005); // map to java.sql.ResultSet.TYPE_SCROLL_SENSITIVE
+
+        private int value;
+
+        private Type(int jdbcRsType) {
+            this.value = jdbcRsType;
+        }
+
+        public int getIntValue() {
+            return this.value;
+        }
+
+        public static Type fromValue(int rsType, Type backupValue) {
+            for (Type t : values()) {
+                if (t.getIntValue() == rsType) {
+                    return t;
+                }
+            }
+            return backupValue;
+        }
     }
 
     /**

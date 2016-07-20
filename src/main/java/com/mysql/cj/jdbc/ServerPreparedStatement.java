@@ -691,13 +691,13 @@ public class ServerPreparedStatement extends PreparedStatement {
 
     @Override
     protected com.mysql.cj.api.jdbc.result.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket,
-            boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadataFromCache, boolean isBatch) throws SQLException {
+            boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.numberOfExecutions++;
 
             // We defer to server-side execution
             try {
-                return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
+                return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
                 if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
@@ -1019,12 +1019,12 @@ public class ServerPreparedStatement extends PreparedStatement {
      * 
      * @param maxRowsToRetrieve
      * @param createStreamingResultSet
-     * @param metadataFromCache
+     * @param metadata
+     *            use this metadata instead of the one provided on wire
      * 
      * @throws SQLException
      */
-    private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadataFromCache)
-            throws SQLException {
+    private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
                 ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPre(this.originalSql, this, true);
@@ -1256,7 +1256,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getProtocol().readAllResults(maxRowsToRetrieve,
-                        createStreamingResultSet, resultPacket, true, metadataFromCache, this.resultSetFactory);
+                        createStreamingResultSet, resultPacket, true, metadata, this.resultSetFactory);
 
                 if (this.session.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);

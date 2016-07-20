@@ -54,8 +54,8 @@ public interface ProtocolEntityReader<T extends ProtocolEntity> {
      *            and read them only when needed?
      * @param resultPacket
      *            the first packet of information in the result set
-     * @param metadataFromCache
-     *            metadata to avoid reading/parsing metadata
+     * @param metadata
+     *            use this metadata instead of the one provided on wire
      * @param protocolEntityFactory
      * 
      * @return a result set that either represents the rows, or an update count
@@ -63,8 +63,8 @@ public interface ProtocolEntityReader<T extends ProtocolEntity> {
      * @throws SQLException
      *             if an error occurs while reading the rows
      */
-    default T read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadataFromCache,
-            ProtocolEntityFactory<T> protocolEntityFactory) throws IOException {
+    default T read(int maxRows, boolean streamResults, PacketPayload resultPacket, ColumnDefinition metadata, ProtocolEntityFactory<T> protocolEntityFactory)
+            throws IOException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 

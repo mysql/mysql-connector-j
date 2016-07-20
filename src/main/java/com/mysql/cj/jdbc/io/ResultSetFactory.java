@@ -23,7 +23,6 @@
 
 package com.mysql.cj.jdbc.io;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -46,33 +45,16 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl> {
     private JdbcConnection conn;
     private StatementImpl stmt;
 
-    private Type type = Type.FORWARD_ONLY;
-    private Concurrency concurrency = Concurrency.READ_ONLY;
+    private Type type;
+    private Concurrency concurrency;
 
     public ResultSetFactory(JdbcConnection connection, StatementImpl creatorStmt) throws SQLException {
         this.conn = connection;
         this.stmt = creatorStmt;
 
         if (creatorStmt != null) {
-            switch (creatorStmt.getResultSetType()) {
-                case ResultSet.TYPE_SCROLL_INSENSITIVE:
-                    this.type = Type.SCROLL_INSENSITIVE;
-                    break;
-                case ResultSet.TYPE_SCROLL_SENSITIVE:
-                    this.type = Type.SCROLL_SENSITIVE;
-                    break;
-                default:
-                    this.type = Type.FORWARD_ONLY;
-                    break;
-            }
-            switch (creatorStmt.getResultSetConcurrency()) {
-                case ResultSet.CONCUR_UPDATABLE:
-                    this.concurrency = Concurrency.UPDATABLE;
-                    break;
-                default:
-                    this.concurrency = Concurrency.READ_ONLY;
-                    break;
-            }
+            this.type = Type.fromValue(creatorStmt.getResultSetType(), Type.FORWARD_ONLY);
+            this.concurrency = Concurrency.fromValue(creatorStmt.getResultSetConcurrency(), Concurrency.READ_ONLY);
         }
     }
 
@@ -91,9 +73,8 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl> {
                 return new ResultSetImpl((OkPacket) protocolEntity, this.conn, this.stmt);
 
             } else if (protocolEntity instanceof ResultsetRows) {
-                int resultSetConcurrency = getResultSetConcurrency() == Concurrency.READ_ONLY ? ResultSet.CONCUR_READ_ONLY : ResultSet.CONCUR_UPDATABLE;
-                int resultSetType = getResultSetType() == Type.FORWARD_ONLY ? ResultSet.TYPE_FORWARD_ONLY
-                        : (getResultSetType() == Type.SCROLL_INSENSITIVE ? ResultSet.TYPE_SCROLL_INSENSITIVE : ResultSet.TYPE_SCROLL_SENSITIVE);
+                int resultSetConcurrency = getResultSetConcurrency().getIntValue();
+                int resultSetType = getResultSetType().getIntValue();
 
                 return createFromResultsetRows(resultSetConcurrency, resultSetType, (ResultsetRows) protocolEntity);
 
