@@ -64,7 +64,8 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset> {
 
             // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set
             if (!this.protocol.getServerSession().isEOFDeprecated()) {
-                this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
+                this.protocol.skipPacket();
+                //this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
             }
 
             ResultsetRows rows = null;
