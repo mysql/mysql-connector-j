@@ -45,8 +45,8 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl> {
     private JdbcConnection conn;
     private StatementImpl stmt;
 
-    private Type type;
-    private Concurrency concurrency;
+    private Type type = Type.FORWARD_ONLY;
+    private Concurrency concurrency = Concurrency.READ_ONLY;
 
     public ResultSetFactory(JdbcConnection connection, StatementImpl creatorStmt) throws SQLException {
         this.conn = connection;

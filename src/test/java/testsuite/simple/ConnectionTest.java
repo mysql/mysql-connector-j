@@ -216,6 +216,8 @@ public class ConnectionTest extends BaseTestCase {
             System.out.println("SQLState: " + sqlEx.getSQLState());
             System.out.println("Vendor error: " + sqlEx.getErrorCode());
             System.out.println("Message: " + sqlEx.getMessage());
+            System.out.println("Stacktrace: ");
+            sqlEx.printStackTrace();
 
             //
             // Check whether the driver thinks it really is deadlock...
