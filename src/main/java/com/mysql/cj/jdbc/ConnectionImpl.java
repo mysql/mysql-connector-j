@@ -2178,7 +2178,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             checkClosed();
         }
 
-        return com.mysql.cj.jdbc.DatabaseMetaData.getInstance(getMultiHostSafeProxy(), this.database, checkForInfoSchema, this.nullStatementResultSetFactory);
+        com.mysql.cj.jdbc.DatabaseMetaData dbmeta = com.mysql.cj.jdbc.DatabaseMetaData.getInstance(getMultiHostSafeProxy(), this.database, checkForInfoSchema,
+                this.nullStatementResultSetFactory);
+
+        if (getSession() != null && getSession().getProtocol() != null) {
+            dbmeta.setMetadataEncoding(getSession().getServerSession().getCharacterSetMetadata());
+            dbmeta.setMetadataCollationIndex(getSession().getServerSession().getMetadataCollationIndex());
+        }
+
+        return dbmeta;
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
