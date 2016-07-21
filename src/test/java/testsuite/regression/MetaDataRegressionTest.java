@@ -1980,6 +1980,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     public void testBug20491() throws Exception {
+        System.out.println("testBug20491:");
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE '%char%'");
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString(1) + " = " + this.rs.getString(2));
+        }
+        this.rs.close();
+
         String[] fields = { "field1_ae_\u00e4", "field2_ue_\u00fc", "field3_oe_\u00f6", "field4_sz_\u00df" };
 
         createTable("tst", "(`" + fields[0] + "` int(10) unsigned NOT NULL default '0', `" + fields[1] + "` varchar(45) default '', `" + fields[2]
