@@ -1418,6 +1418,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     public void clearWarnings() throws SQLException {
         // firstWarning = null;
+        checkClosed();
     }
 
     /**
