@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.4
 
+  - X DevAPI URL prefix changed from "mysql:x:" to "mysqlx:".
+
   - Fix for Bug#24301468 X DEVAPI SSL CONNECTION FAILS ON WINDOWS
 
   - The X DevAPI Table object now represents both database tables and views.

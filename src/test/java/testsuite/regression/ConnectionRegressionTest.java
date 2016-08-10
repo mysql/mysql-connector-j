@@ -3750,12 +3750,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * This test requires two server instances:
      * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable
      * configured without RSA encryption support
-     * 2) additional server instance pointed by com.mysql.jdbc.testsuite.url.sha256default
+     * 2) additional server instance pointed by com.mysql.cj.testsuite.url.openssl
      * variable configured with default-authentication-plugin=sha256_password
      * and RSA encryption enabled.
      * 
      * To run this test please add this variable to ant call:
-     * -Dcom.mysql.jdbc.testsuite.url.sha256default=jdbc:mysql://localhost:3307/test?user=root&password=pwd
+     * -Dcom.mysql.cj.testsuite.url.openssl=jdbc:mysql://localhost:3307/test?user=root&password=pwd
      * 
      * @throws Exception
      */
@@ -5520,7 +5520,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * default-authentication-plugin=sha256_password and RSA encryption enabled.
      * 
      * To run this test please add this variable to ant call:
-     * -Dcom.mysql.jdbc.testsuite.url.sha256default=jdbc:mysql://localhost:3307/test?user=root&password=pwd
+     * -Dcom.mysql.cj.testsuite.url.openssl=jdbc:mysql://localhost:3307/test?user=root&password=pwd
      * 
      * @throws Exception
      */
@@ -6110,7 +6110,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * default-authentication-plugin=sha256_password and RSA encryption enabled.
      * 
      * To run this test please add this variable to ant call:
-     * -Dcom.mysql.jdbc.testsuite.url.sha256default=jdbc:mysql://localhost:3307/test?user=root&password=pwd
+     * -Dcom.mysql.cj.testsuite.url.openssl=jdbc:mysql://localhost:3307/test?user=root&password=pwd
      * 
      * @throws Exception
      */
@@ -7044,7 +7044,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * 1. Default connection string points to a server configured with both SSL *and* RSA encryption.
      * or
      * 2. Default connection string points to a server configured with SSL enabled but no RSA encryption *and* the property
-     * com.mysql.jdbc.testsuite.url.sha256default points to an additional server configured with
+     * com.mysql.cj.testsuite.url.openssl points to an additional server configured with
      * default-authentication-plugin=sha256_password and RSA encryption.
      * 
      * If none of the servers has SSL and RSA encryption enabled then only 'mysql_native_password' and 'mysql_old_password' plugins are tested.
@@ -7282,7 +7282,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     case 3:
                         /*
                          * Test with an RSA encryption enabled connection, using public key retrieved from server.
-                         * Requires additional server instance pointed by 'com.mysql.jdbc.testsuite.url.sha256default'.
+                         * Requires additional server instance pointed by 'com.mysql.cj.testsuite.url.openssl'.
                          * Can't be used with plugin 'cleartext_plugin_server'.
                          */
                         if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
@@ -7295,7 +7295,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     case 4:
                         /*
                          * Test with an RSA encryption enabled connection, using public key pointed by the property 'serverRSAPublicKeyFile'.
-                         * Requires additional server instance pointed by 'com.mysql.jdbc.testsuite.url.sha256default'.
+                         * Requires additional server instance pointed by 'com.mysql.cj.testsuite.url.openssl'.
                          * Can't be used with plugin 'cleartext_plugin_server'.
                          */
                         if (pluginName.equals("cleartext_plugin_server") || !rsaEnabled) {
@@ -7360,7 +7360,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#75670 - Connection fails with "Public Key Retrieval is not allowed" for native auth.
      * 
-     * Requires additional server instance pointed by com.mysql.jdbc.testsuite.url.sha256default variable configured with
+     * Requires additional server instance pointed by com.mysql.cj.testsuite.url.openssl variable configured with
      * default-authentication-plugin=sha256_password and RSA encryption enabled.
      * 
      * @throws Exception
