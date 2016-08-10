@@ -61,9 +61,11 @@ import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.log.LogFactory;
@@ -140,16 +142,16 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
     private String fabricPassword;
     private boolean reportErrors = false;
 
-    protected ConnectionString connectionString;
+    protected ConnectionUrl connectionUrl;
 
     // Synchronized Set that holds temporary "locks" on ReplicationConnectionGroups being synced.
     // These locks are used to prevent simultaneous syncing of the state of the current group's servers.
     private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
 
-    public FabricMySQLConnectionProxy(ConnectionString connectionString) throws SQLException {
-        this.connectionString = connectionString;
+    public FabricMySQLConnectionProxy(ConnectionUrl connectionString) throws SQLException {
+        this.connectionUrl = connectionString;
 
-        Properties props = connectionString.getProperties();
+        Properties props = connectionString.getConnectionArgumentsAsProperties();
 
         // first, handle and remove Fabric-specific properties.  once fabricShardKey et al are ConnectionProperty instances this will be unnecessary
         this.fabricShardKey = props.getProperty(PropertyDefinitions.PNAME_fabricShardKey);
@@ -597,16 +599,15 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         }
 
         // otherwise, build a replication connection to the current group
-        List<String> masterHost = new ArrayList<String>();
-        List<String> slaveHosts = new ArrayList<String>();
+        List<HostInfo> masterHost = new ArrayList<>();
+        List<HostInfo> slaveHosts = new ArrayList<>();
         for (Server s : this.serverGroup.getServers()) {
             if (s.isMaster()) {
-                masterHost.add(s.getHostPortString());
+                masterHost.add(this.connectionUrl.getHostOrSpawnIsolated(s.getHostPortString()));
             } else if (s.isSlave()) {
-                slaveHosts.add(s.getHostPortString());
+                slaveHosts.add(this.connectionUrl.getHostOrSpawnIsolated(s.getHostPortString()));
             }
         }
-        Properties info = getPropertySet().exposeAsProperties(null);
         ReplicationConnectionGroup replConnGroup = ReplicationConnectionGroupManager.getConnectionGroup(this.serverGroup.getName());
         if (replConnGroup != null) {
             if (replConnGroupLocks.add(this.serverGroup.getName())) {
@@ -617,16 +618,18 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
                 }
             }
         }
-        info.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, this.serverGroup.getName());
-        info.setProperty(PropertyDefinitions.PNAME_user, this.username);
-        info.setProperty(PropertyDefinitions.PNAME_password, this.password);
-        info.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
-        info.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
-        info.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
-        info.setProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
-        info.setProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
-        info.setProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
-        this.currentConnection = ReplicationConnectionProxy.createProxyInstance(this.connectionString, masterHost, info, slaveHosts, info);
+
+        Map<String, String> connProperties = this.connectionUrl.getOriginalProperties();
+        connProperties.put(PropertyDefinitions.PNAME_replicationConnectionGroup, this.serverGroup.getName());
+        connProperties.put(PropertyDefinitions.PNAME_user, this.username);
+        connProperties.put(PropertyDefinitions.PNAME_password, this.password);
+        connProperties.put(PropertyDefinitions.DBNAME_PROPERTY_KEY, getCatalog());
+        connProperties.put(PropertyDefinitions.PNAME_connectionAttributes, "fabricHaGroup:" + this.serverGroup.getName());
+        connProperties.put(PropertyDefinitions.PNAME_retriesAllDown, "1");
+        connProperties.put(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
+        connProperties.put(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
+        connProperties.put(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
+        this.currentConnection = ReplicationConnectionProxy.createProxyInstance(new ReplicationConnectionUrl(masterHost, slaveHosts, connProperties));
 
         this.serverConnections.put(this.serverGroup, this.currentConnection);
 

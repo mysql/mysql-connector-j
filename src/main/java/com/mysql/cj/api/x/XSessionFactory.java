@@ -31,9 +31,9 @@ import java.util.Properties;
  * <pre>
  * XSessionFactory xFactory = new XSessionFactory();
  * 
- * {@link XSession} crudSession = xFactory.getSession("<b>mysql:x:</b>//host[:port]/db?user=user1&amp;password=pwd1");
+ * {@link XSession} crudSession = xFactory.getSession("<b>mysqlx:</b>//host[:port]/db?user=user1&amp;password=pwd1");
  * 
- * {@link NodeSession} nodeSession = xFactory.getNodeSession("<b>mysql:x:</b>//host[:port]/db?user=user1&amp;password=pwd1");
+ * {@link NodeSession} nodeSession = xFactory.getNodeSession("<b>mysqlx:</b>//host[:port]/db?user=user1&amp;password=pwd1");
  * </pre>
  *
  */

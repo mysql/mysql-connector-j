@@ -29,7 +29,6 @@ import java.io.Serializable;
 import java.net.SocketAddress;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -54,11 +53,10 @@ import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.AbstractSession;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.HostInfo;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -89,22 +87,16 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     private HostInfo hostInfo = null;
 
-    private String hostToConnectTo = "localhost";
-    private int portToConnectTo = 3306;
-
     protected ModifiableProperty<Integer> socketTimeout;
 
     private boolean serverHasFracSecsSupport = true;
 
-    public MysqlaSession(ConnectionString connectionString, String hostToConnectTo, int portToConnectTo, Properties info, PropertySet propSet) {
+    public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.propertySet = propSet;
-
-        this.hostToConnectTo = hostToConnectTo;
-        this.portToConnectTo = portToConnectTo;
 
         this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
 
-        this.hostInfo = connectionString.getHostInfo(this.propertySet, this.hostToConnectTo, this.portToConnectTo, info);
+        this.hostInfo = hostInfo;
 
         //
         // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
@@ -115,27 +107,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         //
         this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME,
                 getExceptionInterceptor());
-
-        if (ConnectionString.isHostPropertiesList(hostToConnectTo)) {
-            Properties hostSpecificProps = ConnectionString.expandHostKeyValues(hostToConnectTo);
-
-            Enumeration<?> propertyNames = hostSpecificProps.propertyNames();
-
-            while (propertyNames.hasMoreElements()) {
-                String propertyName = propertyNames.nextElement().toString();
-                String propertyValue = hostSpecificProps.getProperty(propertyName);
-
-                info.setProperty(propertyName, propertyValue);
-            }
-        } else {
-        }
-
     }
 
-    public void connect(MysqlConnection conn, ConnectionString connectionString, Properties mergedProps, String user, String password, String database,
-            int loginTimeout) throws IOException {
+    public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout)
+            throws IOException {
 
-        this.hostInfo = connectionString.getHostInfo(this.propertySet, this.hostToConnectTo, this.portToConnectTo, mergedProps);
+        this.hostInfo = hi;
 
         // reset max-rows to default value
         this.setSessionMaxRows(-1);

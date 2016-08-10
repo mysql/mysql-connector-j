@@ -36,12 +36,12 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.conf.url.LoadbalanceConnectionUrl;
+import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
@@ -50,8 +50,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
  */
 public class ReplicationConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
     private ReplicationConnection thisAsReplicationConnection;
-
-    private NonRegisteringDriver driver;
 
     protected boolean enableJMX = false;
     protected boolean allowMasterDownConnections = false;
@@ -63,29 +61,21 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     ReplicationConnectionGroup connectionGroup;
     private long connectionGroupID = -1;
 
-    private List<String> masterHosts;
-    private Properties masterProperties;
+    private List<HostInfo> masterHosts;
     protected LoadBalancedConnection masterConnection;
 
-    private List<String> slaveHosts;
-    private Properties slaveProperties;
+    private List<HostInfo> slaveHosts;
     protected LoadBalancedConnection slavesConnection;
 
-    // the proxy to propagate to underlying connections
-    //private JdbcConnection proxy;
-
-    public static ReplicationConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
-        ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString);
-
-        return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
-                new Class<?>[] { ReplicationConnection.class, JdbcConnection.class }, connProxy);
-    }
-
-    public static ReplicationConnection createProxyInstance(ConnectionString connectionString, List<String> masterHostList, Properties masterProperties,
-            List<String> slaveHostList, Properties slaveProperties) throws SQLException {
-        ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionString, masterHostList, masterProperties, slaveHostList,
-                slaveProperties);
-
+    /**
+     * Static factory to create {@link ReplicationConnection} instances.
+     * 
+     * @param connectionUrl
+     *            The connection URL containing the hosts in a replication setup.
+     * @return A {@link ReplicationConnection} proxy.
+     */
+    public static ReplicationConnection createProxyInstance(ReplicationConnectionUrl connectionUrl) throws SQLException {
+        ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionUrl);
         return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
                 new Class<?>[] { ReplicationConnection.class, JdbcConnection.class }, connProxy);
     }
@@ -94,40 +84,19 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * Creates a proxy for java.sql.Connection that routes requests to a load-balanced connection of master servers or a load-balanced connection of slave
      * servers. Each sub-connection is created with its own set of independent properties.
      * 
-     * @param connectionString
-     * @throws SQLException
+     * @param connectionUrl
+     *            The connection URL containing the hosts in a replication setup.
      */
-    public ReplicationConnectionProxy(ConnectionString connectionString) throws SQLException {
-        this(connectionString, connectionString.getMasterHostList(), connectionString.getMasterProps(), connectionString.getSlaveHostList(),
-                connectionString.getSlavesProps());
-    }
-
-    /**
-     * Creates a proxy for java.sql.Connection that routes requests to a load-balanced connection of master servers or a load-balanced connection of slave
-     * servers. Each sub-connection is created with its own set of independent properties.
-     * 
-     * @param connectionString
-     *            ConnectionString object containing parsed connection string
-     * @param masterHostList
-     *            The list of hosts to use in the masters connection.
-     * @param masterProperties
-     *            The properties for the masters connection.
-     * @param slaveHostList
-     *            The list of hosts to use in the slaves connection.
-     * @param slaveProperties
-     *            The properties for the slaves connection.
-     * @throws SQLException
-     */
-    private ReplicationConnectionProxy(ConnectionString connectionString, List<String> masterHostList, Properties masterProperties, List<String> slaveHostList,
-            Properties slaveProperties) throws SQLException {
+    private ReplicationConnectionProxy(ReplicationConnectionUrl connectionUrl) throws SQLException {
         super();
+
+        Properties props = connectionUrl.getConnectionArgumentsAsProperties();
 
         this.thisAsReplicationConnection = (ReplicationConnection) this.thisAsConnection;
 
-        this.connectionString = connectionString;
+        this.connectionUrl = connectionUrl;
 
-        String enableJMXAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
-        //boolean enableJMX = false;
+        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
@@ -135,7 +104,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String allowMasterDownConnectionsAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "false");
+        String allowMasterDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "false");
         try {
             this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
         } catch (Exception e) {
@@ -144,7 +113,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String allowSlaveDownConnectionsAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "false");
+        String allowSlaveDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "false");
         try {
             this.allowSlaveDownConnections = Boolean.parseBoolean(allowSlaveDownConnectionsAsString);
         } catch (Exception e) {
@@ -153,7 +122,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String readFromMasterWhenNoSlavesAsString = masterProperties.getProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves);
+        String readFromMasterWhenNoSlavesAsString = props.getProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves);
         try {
             this.readFromMasterWhenNoSlavesOriginal = Boolean.parseBoolean(readFromMasterWhenNoSlavesAsString);
 
@@ -163,24 +132,21 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String group = masterProperties.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
+        String group = props.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
         if (group != null) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
             if (this.enableJMX) {
                 ReplicationConnectionGroupManager.registerJmx();
             }
-            this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this.thisAsReplicationConnection, masterHostList, slaveHostList);
+            this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this.thisAsReplicationConnection,
+                    connectionUrl.getMastersListAsHostPortPairs(), connectionUrl.getSlavesListAsHostPortPairs());
 
-            this.slaveHosts = new ArrayList<String>(this.connectionGroup.getSlaveHosts());
-            this.masterHosts = new ArrayList<String>(this.connectionGroup.getMasterHosts());
+            this.masterHosts = connectionUrl.getMasterHostsListFromHostPortPairs(this.connectionGroup.getMasterHosts());
+            this.slaveHosts = connectionUrl.getSlaveHostsListFromHostPortPairs(this.connectionGroup.getSlaveHosts());
         } else {
-            this.slaveHosts = new ArrayList<String>(slaveHostList);
-            this.masterHosts = new ArrayList<String>(masterHostList);
+            this.masterHosts = new ArrayList<>(connectionUrl.getMastersList());
+            this.slaveHosts = new ArrayList<>(connectionUrl.getSlavesList());
         }
-
-        this.driver = new NonRegisteringDriver();
-        this.slaveProperties = slaveProperties;
-        this.masterProperties = masterProperties;
 
         resetReadFromMasterWhenNoSlaves();
 
@@ -428,8 +394,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             return null;
         }
 
-        LoadBalancedConnection newMasterConn = (LoadBalancedConnection) this.driver.connect(buildURL(this.masterHosts, this.masterProperties),
-                this.masterProperties);
+        LoadBalancedConnection newMasterConn = LoadBalancedConnectionProxy
+                .createProxyInstance(new LoadbalanceConnectionUrl(this.masterHosts, this.connectionUrl.getOriginalProperties()));
         newMasterConn.setProxy(getProxy());
 
         this.masterConnection = newMasterConn;
@@ -443,33 +409,13 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             return null;
         }
 
-        LoadBalancedConnection newSlavesConn = (LoadBalancedConnection) this.driver.connect(buildURL(this.slaveHosts, this.slaveProperties),
-                this.slaveProperties);
+        LoadBalancedConnection newSlavesConn = LoadBalancedConnectionProxy
+                .createProxyInstance(new LoadbalanceConnectionUrl(this.slaveHosts, this.connectionUrl.getOriginalProperties()));
         newSlavesConn.setProxy(getProxy());
         newSlavesConn.setReadOnly(true);
 
         this.slavesConnection = newSlavesConn;
         return this.slavesConnection;
-    }
-
-    private String buildURL(List<String> hosts, Properties props) {
-        StringBuilder url = new StringBuilder(ConnectionStringType.LOADBALANCING_CONNECTION.urlPrefix);
-
-        boolean firstHost = true;
-        for (String host : hosts) {
-            if (!firstHost) {
-                url.append(',');
-            }
-            url.append(host);
-            firstHost = false;
-        }
-        url.append("/");
-        String masterDb = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        if (masterDb != null) {
-            url.append(masterDb);
-        }
-
-        return url.toString();
     }
 
     private synchronized boolean switchToMasterConnection() throws SQLException {
@@ -534,7 +480,11 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     }
 
     public synchronized void promoteSlaveToMaster(String hostPortPair) throws SQLException {
-        this.masterHosts.add(hostPortPair);
+        HostInfo host = getSlaveHost(hostPortPair);
+        if (host == null) {
+            return;
+        }
+        this.masterHosts.add(host);
         removeSlave(hostPortPair);
         if (this.masterConnection != null) {
             this.masterConnection.addHost(hostPortPair);
@@ -550,11 +500,15 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     }
 
     public synchronized void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowSlave) throws SQLException {
+        HostInfo host = getMasterHost(hostPortPair);
+        if (host == null) {
+            return;
+        }
         if (isNowSlave) {
-            this.slaveHosts.add(hostPortPair);
+            this.slaveHosts.add(host);
             resetReadFromMasterWhenNoSlaves();
         }
-        this.masterHosts.remove(hostPortPair);
+        this.masterHosts.remove(host);
 
         // The master connection may have been implicitly closed by a previous op., don't let it stop us.
         if (this.masterConnection == null || this.masterConnection.isClosed()) {
@@ -582,12 +536,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         if (hostPortPair == null) {
             return false;
         }
-        for (String masterHost : this.masterHosts) {
-            if (masterHost.equalsIgnoreCase(hostPortPair)) {
-                return true;
-            }
-        }
-        return false;
+        return this.masterHosts.stream().anyMatch(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair()));
     }
 
     public synchronized JdbcConnection getSlavesConnection() {
@@ -598,7 +547,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         if (this.isHostSlave(hostPortPair)) {
             return;
         }
-        this.slaveHosts.add(hostPortPair);
+        this.slaveHosts.add(getConnectionUrl().getSlaveHostOrSpawnIsolated(hostPortPair));
         resetReadFromMasterWhenNoSlaves();
         if (this.slavesConnection == null) {
             initializeSlavesConnection();
@@ -613,7 +562,11 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     }
 
     public synchronized void removeSlave(String hostPortPair, boolean closeGently) throws SQLException {
-        this.slaveHosts.remove(hostPortPair);
+        HostInfo host = getSlaveHost(hostPortPair);
+        if (host == null) {
+            return;
+        }
+        this.slaveHosts.remove(host);
         resetReadFromMasterWhenNoSlaves();
 
         if (this.slavesConnection == null || this.slavesConnection.isClosed()) {
@@ -644,13 +597,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         if (hostPortPair == null) {
             return false;
         }
-        for (String test : this.slaveHosts) {
-            if (test.equalsIgnoreCase(hostPortPair)) {
-                return true;
-            }
-        }
-        return false;
-
+        return this.slaveHosts.stream().anyMatch(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair()));
     }
 
     public synchronized void setReadOnly(boolean readOnly) throws SQLException {
@@ -706,5 +653,17 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     private void resetReadFromMasterWhenNoSlaves() {
         this.readFromMasterWhenNoSlaves = this.slaveHosts.isEmpty() || this.readFromMasterWhenNoSlavesOriginal;
+    }
+
+    private HostInfo getMasterHost(String hostPortPair) {
+        return this.masterHosts.stream().filter(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair())).findFirst().orElse(null);
+    }
+
+    private HostInfo getSlaveHost(String hostPortPair) {
+        return this.slaveHosts.stream().filter(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair())).findFirst().orElse(null);
+    }
+
+    private ReplicationConnectionUrl getConnectionUrl() {
+        return (ReplicationConnectionUrl) this.connectionUrl;
     }
 }

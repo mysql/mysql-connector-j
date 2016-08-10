@@ -38,8 +38,8 @@ import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.api.x.XSession;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 /**
@@ -95,17 +95,17 @@ public class TestMysqlxRequirements extends BaseMysqlxTestCase {
 
         // TODO test different URLs
 
-        ConnectionString conStr = new ConnectionString(url, null);
+        ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
 
-        Properties props = conStr.getProperties();
+        Properties props = conUrl.getMainHost().exposeAsProperties();
         sess = getSession(props);
         sess.close();
 
         // test connection without port specification
         props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
         sess = getSession(props);
-        ConnectionString conStr1 = new ConnectionString(sess.getUri(), null);
-        assertEquals("33060", conStr1.getProperties().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+        ConnectionUrl conUrl1 = ConnectionUrl.getConnectionUrlInstance(sess.getUri(), null);
+        assertEquals("33060", conUrl1.getMainHost().exposeAsProperties().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         sess.close();
 
         // TODO test different properties

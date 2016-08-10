@@ -23,6 +23,8 @@
 
 package testsuite;
 
+import static com.mysql.cj.core.util.StringUtils.isNullOrEmpty;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,14 +43,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrlParser;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
@@ -71,15 +75,16 @@ public abstract class BaseTestCase extends TestCase {
     protected boolean DISABLED_testBug5874 = true; // TODO this test is working in c/J 5.1 but fails here; disabled for later analysis
 
     /**
-     * JDBC URL, initialized from com.mysql.cj.testsuite.url system property,
-     * or defaults to jdbc:mysql:///test
+     * JDBC URL, initialized from com.mysql.cj.testsuite.url system property, or defaults to jdbc:mysql:///test and its connection URL.
      */
     public static String dbUrl = "jdbc:mysql:///test";
+    protected static ConnectionUrl mainConnectionUrl = null;
 
     /**
-     * JDBC URL, initialized from com.mysql.cj.testsuite.url.openssl system property
+     * JDBC URL, initialized from com.mysql.cj.testsuite.url.openssl system property and its connection URL
      */
     protected static String sha256Url = null;
+    protected static ConnectionUrl sha256ConnectionUrl = null;
 
     /** Instance counter */
     private static int instanceCount = 1;
@@ -144,19 +149,14 @@ public abstract class BaseTestCase extends TestCase {
         if ((newDbUrl != null) && (newDbUrl.trim().length() != 0)) {
             dbUrl = newDbUrl;
         }
+        mainConnectionUrl = ConnectionUrl.getConnectionUrlInstance(dbUrl, null);
+        this.dbName = mainConnectionUrl.getDatabase();
 
         String defaultSha256Url = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_openssl);
 
         if ((defaultSha256Url != null) && (defaultSha256Url.trim().length() != 0)) {
             sha256Url = defaultSha256Url;
-        }
-
-        String dbNameFromUrl = null;
-        try {
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
-            dbNameFromUrl = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        } finally {
-            this.dbName = dbNameFromUrl;
+            sha256ConnectionUrl = ConnectionUrl.getConnectionUrlInstance(sha256Url, null);
         }
     }
 
@@ -437,24 +437,7 @@ public abstract class BaseTestCase extends TestCase {
      *             if parsing fails
      */
     protected Properties getPropertiesFromTestsuiteUrl() throws SQLException {
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
-
-        String hostname = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-
-        if (hostname == null) {
-            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
-        } else if (hostname.startsWith(":")) {
-            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, hostname.substring(1));
-        }
-
-        String portNumber = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        if (portNumber == null) {
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-        }
-
-        return props;
+        return mainConnectionUrl.getMainHost().exposeAsProperties();
     }
 
     protected Properties getHostFreePropertiesFromTestsuiteUrl() throws SQLException {
@@ -473,15 +456,6 @@ public abstract class BaseTestCase extends TestCase {
     protected void removeHostRelatedProps(Properties props) {
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        int numHosts = Integer.parseInt(props.getProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY));
-
-        for (int i = 1; i <= numHosts; i++) {
-            props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + i);
-            props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + i);
-        }
-
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
     }
 
     protected int getRowCount(String tableName) throws SQLException {
@@ -1026,84 +1000,48 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
-        String replicationUrl = getMasterSlaveUrl().replaceFirst(ConnectionStringType.SINGLE_CONNECTION.urlPrefix,
-                ConnectionStringType.REPLICATION_CONNECTION.urlPrefix);
+        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol());
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getHostFreePropertiesFromTestsuiteUrl(props));
-
         return replConn;
     }
 
     protected String getMasterSlaveUrl() throws SQLException {
+        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtol());
+    }
 
-        Properties defaultProps = getPropertiesFromTestsuiteUrl();
-        String hostname = defaultProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-
-        if (ConnectionString.isHostPropertiesList(hostname)) {
-            String url = String.format("jdbc:mysql://%s,%s/", hostname, hostname);
-
-            return url;
-        }
-
-        StringBuilder urlBuf = new StringBuilder("jdbc:mysql://");
-
-        String portNumber = defaultProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-
-        hostname = (hostname == null ? "localhost" : hostname);
-
-        for (int i = 0; i < 2; i++) {
-            urlBuf.append(hostname);
-            urlBuf.append(":");
-            urlBuf.append(portNumber);
-
-            if (i == 0) {
-                urlBuf.append(",");
-            }
-        }
-        urlBuf.append("/");
-
-        return urlBuf.toString();
+    protected String getMasterSlaveUrl(String protocol) throws SQLException {
+        HostInfo hostInfo = mainConnectionUrl.getMainHost();
+        return String.format("%s//%s,%s/", protocol, hostInfo.getHostPortPair(), hostInfo.getHostPortPair());
     }
 
     protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
-        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
-
-        String defaultHost = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-
-        if (!ConnectionString.isHostPropertiesList(defaultHost)) {
-            String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-            defaultHost = defaultHost + ":" + port;
+        if (customHostLocation > 3) {
+            throw new IllegalArgumentException();
         }
+        HostInfo defaultHost = mainConnectionUrl.getMainHost();
+        Properties parsedProps = defaultHost.exposeAsProperties();
         removeHostRelatedProps(parsedProps);
-
-        if (customHost != null && customHost.length() > 0) {
-            customHost = customHost + ",";
-        } else {
-            customHost = "";
-        }
-
-        String hostsString = null;
-
-        switch (customHostLocation) {
-            case 1:
-                hostsString = customHost + defaultHost;
-                break;
-            case 2:
-                hostsString = defaultHost + "," + customHost + defaultHost;
-                break;
-            case 3:
-                hostsString = defaultHost + "," + customHost;
-                hostsString = hostsString.substring(0, hostsString.length() - 1);
-                break;
-            default:
-                throw new IllegalArgumentException();
-        }
-
         if (props != null) {
             parsedProps.putAll(props);
         }
 
-        Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + hostsString, parsedProps);
+        /*
+         * 1: customHost,defaultHost
+         * 2: defaultHost,customHost,defaultHost
+         * 3: defaultHost,customHost
+         */
+        StringJoiner hostsString = new StringJoiner(",");
+        if (customHostLocation > 1) {
+            hostsString.add(defaultHost.getHostPortPair());
+        }
+        if (!isNullOrEmpty(customHost)) {
+            hostsString.add(customHost);
+        }
+        if (customHostLocation < 3) {
+            hostsString.add(defaultHost.getHostPortPair());
+        }
 
+        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtol() + "//" + hostsString, parsedProps);
         return lbConn;
     }
 
@@ -1116,22 +1054,19 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected String getPort(Properties props) throws SQLException {
-        String port = ConnectionString.parseUrl(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        if (port == null) {
-            port = "3306";
+        String port;
+        if (props == null || (port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY)) == null) {
+            return String.valueOf(mainConnectionUrl.getMainHost().getPort());
         }
         return port;
     }
 
     protected String getPortFreeHostname(Properties props) throws SQLException {
-        String host = ConnectionString.parseUrl(BaseTestCase.dbUrl, props).getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-
-        if (host == null) {
-            host = "localhost";
+        String host;
+        if (props == null || (host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)) == null) {
+            return mainConnectionUrl.getMainHost().getHost();
         }
-
-        host = host.split(":")[0];
-        return host;
+        return ConnectionUrlParser.parseHostPortPair(host).left;
     }
 
     protected Connection getUnreliableMultiHostConnection(String haMode, String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
@@ -1142,10 +1077,10 @@ public abstract class BaseTestCase extends TestCase {
         props = getHostFreePropertiesFromTestsuiteUrl(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties parsedProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
-        String db = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(parsedProps);
+        HostInfo defaultHost = mainConnectionUrl.getMainHost();
+        String db = defaultHost.getDatabase();
+        String port = String.valueOf(defaultHost.getPort());
+        String host = defaultHost.getHost();
 
         UnreliableSocketFactory.flushAllStaticData();
 
@@ -1155,7 +1090,7 @@ public abstract class BaseTestCase extends TestCase {
             UnreliableSocketFactory.mapHost(hostName, host);
             hostString.append(delimiter);
             delimiter = ",";
-            hostString.append(hostName + ":" + (port == null ? "3306" : port));
+            hostString.append(hostName + ":" + port);
 
             if (downedHosts.contains(hostName)) {
                 UnreliableSocketFactory.downHost(hostName);
@@ -1168,7 +1103,7 @@ public abstract class BaseTestCase extends TestCase {
             haMode += ":";
         }
 
-        return getConnectionWithProps("jdbc:mysql:" + haMode + "//" + hostString.toString() + "/" + db, props);
+        return getConnectionWithProps(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtol() + haMode + "//" + hostString.toString() + "/" + db, props);
     }
 
     protected Connection getUnreliableFailoverConnection(String[] hostNames, Properties props) throws Exception {
@@ -1216,15 +1151,20 @@ public abstract class BaseTestCase extends TestCase {
         public String getAddress() {
             return getAddress(false);
         }
+
+        public String getHostPortPair() {
+            return this.hostName + ":" + this.port;
+        }
     }
 
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
         props = getHostFreePropertiesFromTestsuiteUrl(props);
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
-        Properties parsed = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
-        String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String host = getPortFreeHostname(parsed);
+
+        HostInfo defaultHost = mainConnectionUrl.getMainHost();
+        String db = defaultHost.getDatabase();
+        String port = String.valueOf(defaultHost.getPort());
+        String host = defaultHost.getHost();
 
         UnreliableSocketFactory.flushAllStaticData();
 
@@ -1243,7 +1183,8 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() + "/" + db, props);
+        return (ReplicationConnection) getConnectionWithProps(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol() + "//" + hostString.toString() + "/" + db,
+                props);
     }
 
     protected boolean assertEqualsFSAware(String matchStr, String inStr) throws Exception {

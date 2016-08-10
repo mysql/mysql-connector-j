@@ -28,7 +28,7 @@ import java.util.Properties;
 import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.api.x.XSessionFactory;
-import com.mysql.cj.core.ConnectionString;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
@@ -40,13 +40,12 @@ import com.mysql.cj.mysqlx.devapi.SessionImpl;
 public class MysqlxSessionFactory implements XSessionFactory {
 
     private Properties parseUrl(String url) {
-        ConnectionString conStr = new ConnectionString(url, null);
-        Properties properties = conStr.getProperties();
-
-        if (properties == null) {
+        ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
+        if (conUrl.getType() == null) {
             throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
         }
 
+        Properties properties = conUrl.getMainHost().exposeAsProperties();
         return properties;
     }
 

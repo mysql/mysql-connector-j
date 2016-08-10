@@ -49,7 +49,6 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
@@ -2590,10 +2589,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug61150() throws Exception {
-        Properties oldProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        Properties oldProps = getPropertiesFromTestsuiteUrl();
 
-        String host = ConnectionString.host(oldProps);
-        int port = ConnectionString.port(oldProps);
+        String host = oldProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        int port = Integer.parseInt(oldProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
         if (host != null) {
             newUrlToTestNoDB.append(host);
@@ -2714,7 +2713,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         CallableStatement cStmt = null;
 
         try {
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
+            Properties props = getPropertiesFromTestsuiteUrl();
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
             if (dbname == null) {
                 assertTrue("No database selected", false);
@@ -2844,11 +2843,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug63800() throws Exception {
         try {
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
+            Properties props = getPropertiesFromTestsuiteUrl();
             String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                fail("No database selected");
-            }
+            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             for (String prop : new String[] { "dummyProp", PropertyDefinitions.PNAME_useInformationSchema }) {
                 props = new Properties();

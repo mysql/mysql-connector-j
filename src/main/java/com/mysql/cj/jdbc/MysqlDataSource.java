@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -39,9 +38,9 @@ import javax.sql.DataSource;
 
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -360,12 +359,10 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      */
     public String getUrl() {
         if (!this.explicitUrl) {
-            String builtUrl = "jdbc:mysql://";
-            builtUrl = builtUrl + getServerName() + ":" + getPort() + "/" + getDatabaseName();
-
-            return builtUrl;
+            StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getProtol());
+            sbUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
+            return sbUrl.toString();
         }
-
         return this.url;
     }
 
@@ -403,21 +400,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         String jdbcUrlToUse = null;
 
         if (!this.explicitUrl) {
-            StringBuilder jdbcUrl = new StringBuilder("jdbc:mysql://");
-
-            if (this.hostName != null) {
-                jdbcUrl.append(this.hostName);
-            }
-
-            jdbcUrl.append(":");
-            jdbcUrl.append(this.port);
-            jdbcUrl.append("/");
-
-            if (this.databaseName != null) {
-                jdbcUrl.append(this.databaseName);
-            }
-
-            jdbcUrlToUse = jdbcUrl.toString();
+            jdbcUrlToUse = getUrl();
         } else {
             jdbcUrlToUse = this.url;
         }
@@ -425,19 +408,12 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         //
         // URL should take precedence over properties
         //
-
-        Properties urlProps = ConnectionString.parseUrl(jdbcUrlToUse, null);
+        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
+        Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        Iterator<Object> keys = urlProps.keySet().iterator();
-
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-
-            props.setProperty(key, urlProps.getProperty(key));
-        }
+        urlProps.stringPropertyNames().stream().forEach(k -> props.setProperty(k, urlProps.getProperty(k)));
 
         return mysqlDriver.connect(jdbcUrlToUse, props);
     }

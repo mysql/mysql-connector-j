@@ -33,8 +33,8 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.Schema;
-import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.StringValueFactory;
@@ -121,13 +121,8 @@ public abstract class AbstractSession implements BaseSession {
     public String getUri() {
         PropertySet pset = this.session.getPropertySet();
 
-        StringBuilder sb = new StringBuilder(ConnectionStringType.X_SESSION.urlPrefix);
-        sb.append(this.session.getHost());
-        sb.append(":");
-        sb.append(this.session.getPort());
-        sb.append("/");
-        sb.append(this.defaultSchemaName);
-        sb.append("?");
+        StringBuilder sb = new StringBuilder(ConnectionUrl.Type.MYSQLX_SESSION.getProtol());
+        sb.append("//").append(this.session.getHost()).append(":").append(this.session.getPort()).append("/").append(this.defaultSchemaName).append("?");
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
             ReadableProperty<?> propToGet = pset.getReadableProperty(propName);

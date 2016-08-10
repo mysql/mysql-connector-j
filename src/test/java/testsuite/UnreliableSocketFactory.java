@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.cj.api.io.SocketFactory;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.io.StandardSocketFactory;
 
@@ -196,35 +194,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         if (hostnameToConnectTo == null) {
             hostnameToConnectTo = this.hostname;
-        }
-
-        if (ConnectionString.isHostPropertiesList(hostnameToConnectTo)) {
-            Properties hostSpecificProps = ConnectionString.expandHostKeyValues(hostnameToConnectTo);
-
-            String protocol = hostSpecificProps.getProperty(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
-
-            if ("unix".equalsIgnoreCase(protocol)) {
-                SocketFactory factory;
-                try {
-                    factory = (SocketFactory) Class.forName("org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory").newInstance();
-                } catch (InstantiationException e) {
-                    throw new SocketException(e.getMessage());
-                } catch (IllegalAccessException e) {
-                    throw new SocketException(e.getMessage());
-                } catch (ClassNotFoundException e) {
-                    throw new SocketException(e.getMessage());
-                }
-
-                String path = hostSpecificProps.getProperty(PropertyDefinitions.PATH_PROPERTY_KEY);
-
-                if (path != null) {
-                    hostSpecificProps.setProperty("junixsocket.file", path);
-                }
-
-                return new HangingSocket(factory.connect(hostnameToConnectTo, this.portNumber, hostSpecificProps, this.loginTimeoutCountdown), this.props,
-                        this.hostname);
-            }
-
         }
 
         return new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props, this.loginTimeoutCountdown), this.props, this.hostname);

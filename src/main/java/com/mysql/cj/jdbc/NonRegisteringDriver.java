@@ -23,6 +23,8 @@
 
 package com.mysql.cj.jdbc;
 
+import static com.mysql.cj.core.util.StringUtils.isNullOrEmpty;
+
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.sql.DriverPropertyInfo;
@@ -33,11 +35,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.ConnectionString.ConnectionStringType;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.conf.url.LoadbalanceConnectionUrl;
+import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
+import com.mysql.cj.core.conf.url.ConnectionUrl.Type;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
@@ -142,7 +147,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @see java.sql.Driver#acceptsURL
      */
     public boolean acceptsURL(String url) throws SQLException {
-        return (ConnectionString.parseUrl(url, null) != null);
+        return (ConnectionUrl.acceptsUrl(url));
     }
 
     //
@@ -187,39 +192,36 @@ public class NonRegisteringDriver implements java.sql.Driver {
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
 
         try {
-            ConnectionString conStr = new ConnectionString(url, info);
-            if (conStr.getProperties() == null) {
+            ConnectionUrl conStr = ConnectionUrl.getConnectionUrlInstance(url, info);
+            if (conStr.getType() == null) {
                 /*
                  * According to JDBC spec:
-                 * The driver should return "null" if it realizes it is the wrong kind
-                 * of driver to connect to the given URL. This will be common, as when
-                 * the JDBC driver manager is asked to connect to a given URL it passes
-                 * the URL to each loaded driver in turn.
+                 * The driver should return "null" if it realizes it is the wrong kind of driver to connect to the given URL. This will be common, as when the
+                 * JDBC driver manager is asked to connect to a given URL it passes the URL to each loaded driver in turn.
                  */
                 return null;
             }
 
-            switch (conStr.connectionStringType) {
-                case LOADBALANCING_CONNECTION:
-                    return LoadBalancedConnectionProxy.createProxyInstance(conStr);
+            switch (conStr.getType()) {
+                case LOADBALANCE_CONNECTION:
+                    return LoadBalancedConnectionProxy.createProxyInstance((LoadbalanceConnectionUrl) conStr);
 
                 case FAILOVER_CONNECTION:
                     return FailoverConnectionProxy.createProxyInstance(conStr);
 
                 case REPLICATION_CONNECTION:
-                    return ReplicationConnectionProxy.createProxyInstance(conStr);
+                    return ReplicationConnectionProxy.createProxyInstance((ReplicationConnectionUrl) conStr);
 
                 case FABRIC_CONNECTION:
                     // TODO test it
                     return new FabricMySQLConnectionProxy(conStr);
 
-                case X_SESSION:
+                case MYSQLX_SESSION:
                     // TODO test it
                     //return new MysqlxJdbcConnection(conStr.getProperties());
 
                 default:
-                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr, ConnectionString.host(conStr.getProperties()),
-                            ConnectionString.port(conStr.getProperties()), conStr.getProperties());
+                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());
 
             }
 
@@ -279,32 +281,45 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * @see java.sql.Driver#getPropertyInfo
      */
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
-        if (info == null) {
-            info = new Properties();
+        String host = "";
+        String port = "";
+        String database = "";
+        String user = "";
+        String password = "";
+
+        if (!isNullOrEmpty(url)) {
+            ConnectionUrl connStr = ConnectionUrl.getConnectionUrlInstance(url, info);
+            if (connStr.getType() == Type.SINGLE_CONNECTION) {
+                HostInfo hostInfo = connStr.getMainHost();
+                info = hostInfo.exposeAsProperties();
+            }
         }
 
-        if ((url != null) && url.startsWith(ConnectionStringType.SINGLE_CONNECTION.urlPrefix)) {
-            info = ConnectionString.parseUrl(url, info);
+        if (info != null) {
+            host = info.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+            port = info.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+            database = info.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            user = info.getProperty(PropertyDefinitions.PNAME_user);
+            password = info.getProperty(PropertyDefinitions.PNAME_password);
         }
 
-        DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyDefinitions.HOST_PROPERTY_KEY, info.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+        DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyDefinitions.HOST_PROPERTY_KEY, host);
         hostProp.required = true;
         hostProp.description = Messages.getString("NonRegisteringDriver.3");
 
-        DriverPropertyInfo portProp = new DriverPropertyInfo(PropertyDefinitions.PORT_PROPERTY_KEY,
-                info.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306"));
+        DriverPropertyInfo portProp = new DriverPropertyInfo(PropertyDefinitions.PORT_PROPERTY_KEY, port);
         portProp.required = false;
         portProp.description = Messages.getString("NonRegisteringDriver.7");
 
-        DriverPropertyInfo dbProp = new DriverPropertyInfo(PropertyDefinitions.DBNAME_PROPERTY_KEY, info.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
+        DriverPropertyInfo dbProp = new DriverPropertyInfo(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
         dbProp.required = false;
-        dbProp.description = "Database name";
+        dbProp.description = Messages.getString("NonRegisteringDriver.10");
 
-        DriverPropertyInfo userProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_user, info.getProperty(PropertyDefinitions.PNAME_user));
+        DriverPropertyInfo userProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_user, user);
         userProp.required = true;
         userProp.description = Messages.getString("NonRegisteringDriver.13");
 
-        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_password, info.getProperty(PropertyDefinitions.PNAME_password));
+        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_password, password);
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 

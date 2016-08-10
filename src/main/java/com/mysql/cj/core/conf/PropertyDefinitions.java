@@ -116,17 +116,13 @@ public class PropertyDefinitions {
      */
     public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
     public static final String PATH_PROPERTY_KEY = "PATH";
+    public final static String TYPE_PROPERTY_KEY = "TYPE";
     /** Key used to retrieve the hostname value from the properties instance passed to the driver. */
     public static final String HOST_PROPERTY_KEY = "HOST";
     /** Key used to retrieve the port number value from the properties instance passed to the driver. */
     public static final String PORT_PROPERTY_KEY = "PORT";
     /** Key used to retrieve the database value from the properties instance passed to the driver. */
     public static final String DBNAME_PROPERTY_KEY = "DBNAME";
-    public static final String NUM_HOSTS_PROPERTY_KEY = "NUM_HOSTS";
-    /** Index for hostname coming out of parseHostPortPair(). */
-    public final static int HOST_NAME_INDEX = 0;
-    /** Index for port # coming out of parseHostPortPair(). */
-    public final static int PORT_NUMBER_INDEX = 1;
 
     /*
      * Categories of connection properties
@@ -299,7 +295,6 @@ public class PropertyDefinitions {
     public static final String PNAME_resultSetSizeThreshold = "resultSetSizeThreshold";
     public static final String PNAME_rewriteBatchedStatements = "rewriteBatchedStatements";
     public static final String PNAME_rollbackOnPooledClose = "rollbackOnPooledClose";
-    public static final String PNAME_roundRobinLoadBalance = "roundRobinLoadBalance";
     public static final String PNAME_secondsBeforeRetryMaster = "secondsBeforeRetryMaster";
     public static final String PNAME_selfDestructOnPingSecondsLifetime = "selfDestructOnPingSecondsLifetime";
     public static final String PNAME_selfDestructOnPingMaxOperations = "selfDestructOnPingMaxOperations";
@@ -380,8 +375,6 @@ public class PropertyDefinitions {
     public static final String PNAME_autoConfigureForColdFusion = "autoConfigureForColdFusion";
 
     public static final String PNAME_testsuite_faultInjection_serverCharsetIndex = "com.mysql.cj.testsuite.faultInjection.serverCharsetIndex"; // was "com.mysql.jdbc.faultInjection.serverCharsetIndex"
-    /** For testsuite.regression.ConnectionRegressionTest.testBug12218() */
-    public static final String PNAME_testsuite_slave_properties = "com.mysql.cj.testsuite.replicationConnection.isSlave";
     // ----------------
 
     /*
@@ -760,9 +753,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_rollbackOnPooledClose, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.rollbackOnPooledClose"), "3.0.15", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_roundRobinLoadBalance, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.roundRobinLoadBalance"), "3.1.2", CATEGORY_HA, 5),
-
                 new IntegerPropertyDefinition(PNAME_secondsBeforeRetryMaster, 30, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), "3.0.2", CATEGORY_HA, 8, 0, Integer.MAX_VALUE),
 
@@ -1096,7 +1086,6 @@ public class PropertyDefinitions {
                 put(PNAME_resultSetSizeThreshold, "resultSetSizeThreshold");
                 put(PNAME_rewriteBatchedStatements, "rewriteBatchedStatements");
                 put(PNAME_rollbackOnPooledClose, "rollbackOnPooledClose");
-                put(PNAME_roundRobinLoadBalance, "roundRobinLoadBalance");
                 put(PNAME_secondsBeforeRetryMaster, "secondsBeforeRetryMaster");
                 put(PNAME_selfDestructOnPingSecondsLifetime, "selfDestructOnPingSecondsLifetime");
                 put(PNAME_selfDestructOnPingMaxOperations, "selfDestructOnPingMaxOperations");

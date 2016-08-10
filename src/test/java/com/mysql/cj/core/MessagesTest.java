@@ -32,13 +32,33 @@ public class MessagesTest {
     @Test
     public void testLocalizedErrorMessages() throws Exception {
         Exception ex = new Exception();
+
+        assertEquals("The database URL cannot be null.", Messages.getString("ConnectionString.0"));
+        assertEquals("Malformed database URL, failed to parse the main URL sections.", Messages.getString("ConnectionString.1"));
+        assertEquals("Malformed database URL, there must be a single '$' between the user info section and the host section starting with 'Test'.",
+                Messages.getString("ConnectionString.2", new Object[] { "$", "Test" }));
+        assertEquals("Failed to parse the host:port pair 'host:123'.", Messages.getString("ConnectionString.3", new Object[] { "host:123" }));
+        assertEquals("Malformed database URL, failed to parse the connection string near 'Test'.",
+                Messages.getString("ConnectionString.4", new Object[] { "Test" }));
+        assertEquals("Connector/J cannot handle a database URL of type 'Test'.", Messages.getString("ConnectionString.5", new Object[] { "Test" }));
+        assertEquals("Connector/J cannot handle a database URL of type 'Test' that takes 100 hosts.",
+                Messages.getString("ConnectionString.6", new Object[] { "Test", 100 }));
+        assertEquals("Malformed database URL, failed to parse the port '123' as a number.", Messages.getString("ConnectionString.7", new Object[] { 123 }));
+        assertEquals("Illegal transformation to the 'Test' property. The value 'Ten' is not a valid number.",
+                Messages.getString("ConnectionString.8", new Object[] { "Test", "Ten" }));
+        assertEquals("Malformed database URL, host 'Test1' is duplicated but 'Test2' connections can only handle one instance of each host:port pair.",
+                Messages.getString("ConnectionString.9", new Object[] { "Test1", "Test2" }));
+        assertEquals(
+                "Malformed database URL, Host 'Test1' is duplicated in the combined hosts list (masters & slaves) but 'Test2' connections can only handle one instance of each host:port pair.",
+                Messages.getString("ConnectionString.10", new Object[] { "Test1", "Test2" }));
+        assertEquals("Unable to create properties transform instance 'Test' due to underlying exception: " + ex.toString(),
+                Messages.getString("ConnectionString.11", new Object[] { "Test", ex.toString() }));
+        assertEquals("Can't find configuration template named 'Test'", Messages.getString("ConnectionString.12", new Object[] { "Test" }));
+        assertEquals("Unable to load configuration template 'Test' due to underlying IOException",
+                Messages.getString("ConnectionString.13", new Object[] { "Test" }));
+
         assertEquals("Cannot load connection class because of underlying exception: " + ex.toString(),
                 Messages.getString("NonRegisteringDriver.17", new Object[] { ex.toString() }));
-        assertEquals("Unable to create properties transform instance 'Test' due to underlying exception: " + ex.toString(),
-                Messages.getString("NonRegisteringDriver.38", new Object[] { "Test", ex.toString() }));
-        assertEquals("Can't find configuration template named 'Test'", Messages.getString("NonRegisteringDriver.39", new Object[] { "Test" }));
-        assertEquals("Unable to load configuration template 'Test' due to underlying IOException",
-                Messages.getString("NonRegisteringDriver.40", new Object[] { "Test" }));
 
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("Field.12", new Object[] { "Test" }));
         assertEquals("Unsupported character encoding 'Test'", Messages.getString("StringUtils.0", new Object[] { "Test" }));

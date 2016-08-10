@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -79,7 +79,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
     public DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
-        int numProperties = PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet().size();
+        int numProperties = PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.size();
 
         int listSize = numProperties + slotsToReserve;
 
@@ -88,13 +88,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         int i = slotsToReserve;
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToExpose = getReadableProperty(propName);
-
-            if (info != null) {
-                propToExpose.initializeFrom(info, null);
-            }
-
-            driverProperties[i++] = getAsDriverPropertyInfo(propToExpose);
+            driverProperties[i++] = getAsDriverPropertyInfo(getReadableProperty(propName));
         }
 
         return driverProperties;

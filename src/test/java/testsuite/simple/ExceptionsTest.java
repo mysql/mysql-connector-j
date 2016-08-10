@@ -47,9 +47,9 @@ public class ExceptionsTest extends BaseTestCase {
                         return null;
                     }
                 });
-        assertThrows(SQLException.class, "Can't find configuration template named 'wrongvalue'", new Callable<Void>() {
+        assertThrows(SQLException.class, ".*Can't find configuration template named 'wrongvalue'", new Callable<Void>() {
             public Void call() throws Exception {
-                new NonRegisteringDriver().acceptsURL(dbUrl + "&useConfigs=wrongvalue");
+                new NonRegisteringDriver().connect(dbUrl + "&useConfigs=wrongvalue", null);
                 return null;
             }
         });

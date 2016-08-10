@@ -37,7 +37,6 @@ import java.sql.Types;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -237,7 +236,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
         }
 
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
@@ -382,7 +381,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
         Connection c = null;
         String datadir = null;
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         props = new Properties();

@@ -59,8 +59,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
@@ -694,7 +694,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, transformClassName);
 
-        Properties transformedProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, props);
+        Properties transformedProps = ConnectionUrl.getConnectionUrlInstance(BaseTestCase.dbUrl, props).getConnectionArgumentsAsProperties();
 
         assertTrue("albequerque".equals(transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)));
     }
@@ -869,27 +869,15 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testFailoverConnection() throws Exception {
 
-        if (!isServerRunningOnWindows()) { // windows sockets don't
-                                          // work for this test
+        if (!isServerRunningOnWindows()) { // windows sockets don't work for this test
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
             props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
 
-            Properties urlProps = ConnectionString.parseUrl(dbUrl, null);
-
-            String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-            String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1", host);
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1", port);
-            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".2", host);
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".2", port);
-            props.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "2");
-
             Connection failoverConnection = null;
 
             try {
-                failoverConnection = getConnectionWithProps(props);
+                failoverConnection = getFailoverConnection(props);
 
                 String originalConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT connection_id()").toString();
                 System.out.println("Original Connection Id = " + originalConnectionId);
@@ -929,16 +917,15 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testCannedConfigs() throws Exception {
 
-        Properties cannedProps = ConnectionString.parseUrl("jdbc:mysql:///?useConfigs=clusterBase", null);
+        Properties cannedProps = ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase", null).getConnectionArgumentsAsProperties();
 
         assertTrue("true".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_autoReconnect)));
         assertTrue("false".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_failOverReadOnly)));
-        assertTrue("true".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance)));
 
         // this will fail, but we test that too
         assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
             public Void call() throws Exception {
-                ConnectionString.parseUrl("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
                 return null;
             }
         });
@@ -1265,7 +1252,7 @@ public class ConnectionTest extends BaseTestCase {
 
         assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
 
-        String hostname = ConnectionString.host(ConnectionString.parseUrl(dbUrl, null));
+        String hostname = mainConnectionUrl.getMainHost().getHost();
 
         if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
 
@@ -1618,7 +1605,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNewHostParsing() throws Exception {
-        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
+        Properties parsedProps = getPropertiesFromTestsuiteUrl();
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
         String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
         String user = parsedProps.getProperty(PropertyDefinitions.PNAME_user);
@@ -1658,7 +1645,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testIsLocal() throws Exception {
-        Properties parsedProps = ConnectionString.parseUrl(dbUrl, null);
+        Properties parsedProps = getPropertiesFromTestsuiteUrl();
         String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {
@@ -1763,7 +1750,7 @@ public class ConnectionTest extends BaseTestCase {
      * - acceptsURL() throws SQLException if URL is null.
      */
     public void testDriverAcceptsURLNullArgument() {
-        assertThrows(SQLException.class, "Url is not allowed to be null.", new Callable<Void>() {
+        assertThrows(SQLException.class, "The database URL cannot be null.", new Callable<Void>() {
             public Void call() throws Exception {
                 Driver mysqlDriver = new Driver();
                 mysqlDriver.acceptsURL(null);
@@ -1778,7 +1765,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testDriverConnectNullArgument() throws Exception {
         assertThrows(SQLException.class,
-                "Cannot load connection class because of underlying exception: com.mysql.cj.core.exceptions.WrongArgumentException: Url is not allowed to be null.",
+                "Cannot load connection class because of underlying exception: com.mysql.cj.core.exceptions.WrongArgumentException: The database URL cannot be null.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         Driver mysqlDriver = new Driver();

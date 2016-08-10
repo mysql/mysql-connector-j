@@ -28,14 +28,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.ConnectionString;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
 
@@ -56,9 +57,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     private static final String METHOD_GET_TRANSACTION_ISOLATION = "getTransactionIsolation";
     private static final String METHOD_GET_SESSION_MAX_ROWS = "getSessionMaxRows";
 
-    List<String> hostList;
-    Properties localProps;
-    protected ConnectionString connectionString;
+    List<HostInfo> hostsList;
+    protected ConnectionUrl connectionUrl;
 
     boolean autoReconnect = false;
 
@@ -112,50 +112,37 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     }
 
     /**
-     * Constructs a MultiHostConnectionProxy instance for the given list of hosts and connection properties.
+     * Constructs a MultiHostConnectionProxy instance for the given connection URL.
      * 
-     * @param hosts
-     *            The lists of hosts available to switch on.
-     * @param props
-     *            The properties to be used in new internal connections.
+     * @param connectionUrl
+     *            The connection URL.
      */
-    MultiHostConnectionProxy(ConnectionString connectionString) throws SQLException {
+    MultiHostConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         this();
-        initializeHostsSpecs(connectionString, ConnectionString.getHosts(connectionString.getProperties()), connectionString.getProperties());
+        initializeHostsSpecs(connectionUrl, connectionUrl.getHostList());
     }
 
     /**
      * Initializes the hosts lists and makes a "clean" local copy of the given connection properties so that it can be later used to create standard
      * connections.
      * 
+     * @param connUrl
+     *            The connection URL that initialized this multi-host connection.
      * @param hosts
      *            The list of hosts for this multi-host connection.
-     * @param props
-     *            Connection properties from where to get initial settings and to be used in new connections.
      * @return
      *         The number of hosts found in the hosts list.
      */
-    int initializeHostsSpecs(ConnectionString connString, List<String> hosts, Properties props) {
+    int initializeHostsSpecs(ConnectionUrl connUrl, List<HostInfo> hosts) {
+        this.connectionUrl = connUrl;
+
+        Properties props = connUrl.getConnectionArgumentsAsProperties();
+
         this.autoReconnect = "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnect))
                 || "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
 
-        this.connectionString = connString;
-
-        this.hostList = hosts;
-        int numHosts = this.hostList.size();
-
-        this.localProps = (Properties) props.clone();
-        this.localProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        this.localProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        for (int i = 0; i < numHosts; i++) {
-            this.localProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY + "." + (i + 1));
-            this.localProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY + "." + (i + 1));
-        }
-
-        this.localProps.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-        this.localProps.setProperty(PropertyDefinitions.PNAME_useLocalSessionState, "true");
-
+        this.hostsList = new ArrayList<>(hosts);
+        int numHosts = this.hostsList.size();
         return numHosts;
     }
 
@@ -298,38 +285,16 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     abstract void pickNewConnection() throws SQLException;
 
     /**
-     * Creates a new physical connection for the given host:port.
+     * Creates a new physical connection for the given {@link HostInfo}.
      * 
-     * @param hostPortSpec
-     *            The host:port specification.
+     * @param hostInfo
+     *            The host info instance.
      * @return
      *         The new Connection instance.
      */
-    synchronized ConnectionImpl createConnectionForHost(String hostPortSpec) throws SQLException {
-        Properties connProps = (Properties) this.localProps.clone();
-
-        String[] hostPortPair = ConnectionString.parseHostPortPair(hostPortSpec);
-        String hostName = hostPortPair[PropertyDefinitions.HOST_NAME_INDEX];
-        String portNumber = hostPortPair[PropertyDefinitions.PORT_NUMBER_INDEX];
-
-        if (hostName == null) {
-            throw new SQLException(Messages.getString("MultiHostConnectionProxy.0"));
-        }
-        if (portNumber == null) {
-            portNumber = "3306"; // use default
-        }
-
-        connProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, hostName);
-        connProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, portNumber);
-        connProps.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY + ".1", hostName);
-        connProps.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY + ".1", portNumber);
-        connProps.setProperty(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY, "1");
-        connProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "false"); // make sure we don't pickup the default value
-
-        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(this.connectionString, hostName, Integer.parseInt(portNumber), connProps);
-
+    synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
+        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostInfo);
         conn.setProxy(getProxy());
-
         return conn;
     }
 

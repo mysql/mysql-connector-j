@@ -29,9 +29,9 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.x.XSessionFactory;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.mysqlx.MysqlxError;
 import com.mysql.cj.mysqlx.MysqlxSession;
 import com.mysql.cj.mysqlx.io.MysqlxProtocol;
@@ -56,11 +56,11 @@ public class InternalMysqlxBaseTestCase {
 
     public InternalMysqlxBaseTestCase() {
         if (this.isSetForMySQLxTests) {
-            ConnectionString conStr = new ConnectionString(this.baseUrl, null);
-            if (conStr.getProperties() == null) {
+            ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(this.baseUrl, null);
+            if (conUrl.getType() == null) {
                 throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");
             }
-            this.testProperties = conStr.getProperties();
+            this.testProperties = conUrl.getMainHost().exposeAsProperties();
         }
     }
 

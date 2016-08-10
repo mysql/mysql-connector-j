@@ -1226,7 +1226,7 @@ public class StringUtils {
     }
 
     public static boolean isNullOrEmpty(String toTest) {
-        return (toTest == null || toTest.length() == 0);
+        return (toTest == null || toTest.isEmpty());
     }
 
     /**

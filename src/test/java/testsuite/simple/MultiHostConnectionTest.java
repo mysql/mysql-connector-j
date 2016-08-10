@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
 import testsuite.BaseTestCase;
@@ -137,13 +136,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
      */
     public void testFailoverConnection() throws Exception {
-        Properties props = getPropertiesFromTestsuiteUrl();
-
-        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-            host = host + ":" + port;
-        }
+        String hostPortPair = mainConnectionUrl.getMainHost().getHostPortPair();
         String noHost = "testfoconn-nohost:12345";
 
         StringBuilder testURL = new StringBuilder("jdbc:mysql://");
@@ -167,9 +160,9 @@ public class MultiHostConnectionTest extends BaseTestCase {
         // at least one host up
         for (int i = 1; i < 8; i++) {
             testURL = new StringBuilder("jdbc:mysql://");
-            testURL.append((i & 1) == 0 ? noHost : host).append(",");
-            testURL.append((i & 2) == 0 ? noHost : host).append(",");
-            testURL.append((i & 4) == 0 ? noHost : host).append("/");
+            testURL.append((i & 1) == 0 ? noHost : hostPortPair).append(",");
+            testURL.append((i & 2) == 0 ? noHost : hostPortPair).append(",");
+            testURL.append((i & 4) == 0 ? noHost : hostPortPair).append("/");
 
             Connection testConn = getConnectionWithProps(testURL.toString(), testConnProps);
 

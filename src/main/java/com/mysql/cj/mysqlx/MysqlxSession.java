@@ -54,7 +54,6 @@ import com.mysql.cj.api.x.DatabaseObject;
 import com.mysql.cj.api.x.DocResult;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SqlResult;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -64,6 +63,7 @@ import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StatementExecuteOk;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqlx.devapi.DatabaseObjectDescription;
 import com.mysql.cj.mysqlx.devapi.DevapiRowFactory;
 import com.mysql.cj.mysqlx.devapi.DocResultImpl;
@@ -105,8 +105,11 @@ public class MysqlxSession implements Session {
         pset.initializeProperties(properties);
 
         // create protocol instance
-        this.host = ConnectionString.normalizeHost(properties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
-        this.port = ConnectionString.parsePortNumber(properties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "33060"));
+        this.host = properties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        if (this.host == null || StringUtils.isEmptyOrWhitespaceOnly(this.host)) {
+            this.host = "localhost";
+        }
+        this.port = Integer.parseInt(properties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "33060"));
 
         this.protocol = MysqlxProtocolFactory.getInstance(this.host, this.port, pset);
     }

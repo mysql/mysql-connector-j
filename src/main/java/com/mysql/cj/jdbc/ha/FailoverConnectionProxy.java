@@ -29,8 +29,8 @@ import java.sql.SQLException;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.util.Util;
@@ -99,8 +99,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         }
     }
 
-    public static JdbcConnection createProxyInstance(ConnectionString connectionString) throws SQLException {
-        FailoverConnectionProxy connProxy = new FailoverConnectionProxy(connectionString);
+    public static JdbcConnection createProxyInstance(ConnectionUrl connectionUrl) throws SQLException {
+        FailoverConnectionProxy connProxy = new FailoverConnectionProxy(connectionUrl);
 
         return (JdbcConnection) java.lang.reflect.Proxy.newProxyInstance(JdbcConnection.class.getClassLoader(), new Class<?>[] { JdbcConnection.class },
                 connProxy);
@@ -114,11 +114,11 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @param props
      *            The properties to be used in new internal connections.
      */
-    private FailoverConnectionProxy(ConnectionString connectionString) throws SQLException {
-        super(connectionString);
+    private FailoverConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
+        super(connectionUrl);
 
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
-        connProps.initializeProperties(connectionString.getProperties());
+        connProps.initializeProperties(connectionUrl.getConnectionArgumentsAsProperties());
 
         this.secondsBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
         this.queriesBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
@@ -204,7 +204,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *         The new connection instance.
      */
     synchronized ConnectionImpl createConnectionForHostIndex(int hostIndex) throws SQLException {
-        return createConnectionForHost(this.hostList.get(hostIndex));
+        return createConnectionForHost(this.hostsList.get(hostIndex));
     }
 
     /**
@@ -219,7 +219,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         } catch (SQLException e) {
             if (this.currentConnection != null) {
                 StringBuilder msg = new StringBuilder("Connection to ").append(isPrimaryHostIndex(hostIndex) ? "primary" : "secondary").append(" host '")
-                        .append(this.hostList.get(hostIndex)).append("' failed");
+                        .append(this.hostsList.get(hostIndex)).append("' failed");
                 try {
                     this.currentConnection.getSession().getLog().logWarn(msg.toString(), e);
                 } catch (CJException ex) {
@@ -353,7 +353,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *            Allows to return the primary host index even if the usual required conditions aren't met.
      */
     private int nextHost(int currHostIdx, boolean vouchForPrimaryHost) {
-        int nextHostIdx = (currHostIdx + 1) % this.hostList.size();
+        int nextHostIdx = (currHostIdx + 1) % this.hostsList.size();
         if (isPrimaryHostIndex(nextHostIdx) && isConnected() && !vouchForPrimaryHost && this.enableFallBackToPrimaryHost && !readyToFallBackToPrimaryHost()) {
             // Skip primary host, assume this.hostList.size() >= 2
             nextHostIdx = nextHost(nextHostIdx, vouchForPrimaryHost);

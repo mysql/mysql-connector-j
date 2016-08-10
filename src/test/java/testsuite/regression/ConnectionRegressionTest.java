@@ -106,10 +106,12 @@ import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.core.exceptions.ClosedOnExpiredPasswordException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -434,13 +436,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 int bogusPortNumber = 65534;
 
-                Properties oldProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+                HostInfo defaultHost = mainConnectionUrl.getMainHost();
 
-                String host = ConnectionString.host(oldProps);
-                int port = ConnectionString.port(oldProps);
-                String database = oldProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-                String user = oldProps.getProperty(PropertyDefinitions.PNAME_user);
-                String password = oldProps.getProperty(PropertyDefinitions.PNAME_password);
+                String host = defaultHost.getHost();
+                int port = defaultHost.getPort();
+                String database = defaultHost.getDatabase();
+                String user = defaultHost.getUser();
+                String password = defaultHost.getPassword();
 
                 StringBuilder newUrlToTestPortNum = new StringBuilder("jdbc:mysql://");
 
@@ -581,19 +583,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             should work in most cases.
      */
     public void testBug6966() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = ConnectionString.parseUrl(dbUrl, null);
-
-        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -641,21 +638,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the tests fails.
      */
     public void testBug7952() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        HostInfo defaultHost = mainConnectionUrl.getMainHost();
+        Properties props = defaultHost.exposeAsProperties();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
 
-        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String host = defaultHost.getHostPortPair() + "," + defaultHost.getHostPortPair();
 
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-
-            host = host + ":" + port;
-        }
-
-        host = host + "," + host;
-
-        props.remove("PORT");
-        props.remove("HOST");
+        removeHostRelatedProps(props);
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "10");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -838,101 +827,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * In some case Connector/J's round-robin function doesn't work.
-     * 
-     * I had 2 mysqld, node1 "localhost:3306" and node2 "localhost:3307".
-     * 
-     * 1. node1 is up, node2 is up
-     * 
-     * 2. java-program connect to node1 by using properties
-     * "autoRecconect=true",
-     * "roundRobinLoadBalance=true","failOverReadOnly=false".
-     * 
-     * 3. node1 is down, node2 is up
-     * 
-     * 4. java-program execute a query and fail, but Connector/J's round-robin
-     * fashion failover work and if java-program retry a query it can succeed
-     * (connection is change to node2 by Connector/j)
-     * 
-     * 5. node1 is up, node2 is up
-     * 
-     * 6. node1 is up, node2 is down
-     * 
-     * 7. java-program execute a query, but this time Connector/J doesn't work
-     * althought node1 is up and usable.
-     * 
-     * 
-     * @throws Exception
-     */
-
-    /*
-     * FIXME: This test is no longer valid with random selection of hosts public
-     * void testBug8643() throws Exception { if (runMultiHostTests()) {
-     * Properties defaultProps = getMasterSlaveProps();
-     * 
-     * defaultProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-     * defaultProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-     * 
-     * defaultProps.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
-     * defaultProps.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "true");
-     * defaultProps.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
-     * 
-     * Connection con = null; try { con =
-     * DriverManager.getConnection(getMasterSlaveUrl(), defaultProps); Statement
-     * stmt1 = con.createStatement();
-     * 
-     * ResultSet rs1 = stmt1 .executeQuery("show variables like 'port'");
-     * rs1.next();
-     * 
-     * rs1 = stmt1.executeQuery("select connection_id()"); rs1.next(); String
-     * originalConnectionId = rs1.getString(1); this.stmt.executeUpdate("kill "
-     * + originalConnectionId);
-     * 
-     * int numLoops = 8;
-     * 
-     * SQLException caughtException = null;
-     * 
-     * while (caughtException == null && numLoops > 0) { numLoops--;
-     * 
-     * try { rs1 = stmt1.executeQuery("show variables like 'port'"); } catch
-     * (SQLException sqlEx) { caughtException = sqlEx; } }
-     * 
-     * assertNotNull(caughtException);
-     * 
-     * // failover and retry rs1 =
-     * stmt1.executeQuery("show variables like 'port'");
-     * 
-     * rs1.next(); assertTrue(!((com.mysql.jdbc.Connection) con)
-     * .isMasterConnection());
-     * 
-     * rs1 = stmt1.executeQuery("select connection_id()"); rs1.next(); String
-     * nextConnectionId = rs1.getString(1);
-     * assertTrue(!nextConnectionId.equals(originalConnectionId));
-     * 
-     * this.stmt.executeUpdate("kill " + nextConnectionId);
-     * 
-     * numLoops = 8;
-     * 
-     * caughtException = null;
-     * 
-     * while (caughtException == null && numLoops > 0) { numLoops--;
-     * 
-     * try { rs1 = stmt1.executeQuery("show variables like 'port'"); } catch
-     * (SQLException sqlEx) { caughtException = sqlEx; } }
-     * 
-     * assertNotNull(caughtException);
-     * 
-     * // failover and retry rs1 =
-     * stmt1.executeQuery("show variables like 'port'");
-     * 
-     * rs1.next(); assertTrue(((com.mysql.jdbc.Connection) con)
-     * .isMasterConnection());
-     * 
-     * } finally { if (con != null) { try { con.close(); } catch (Exception e) {
-     * e.printStackTrace(); } } } } }
-     */
-
-    /**
      * Tests fix for BUG#9206, can not use 'UTF-8' for characterSetResults
      * configuration property.
      */
@@ -1069,8 +963,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         if (runMultiHostTests()) {
             Connection replConn = null;
 
+            HostInfo hostInfo = mainConnectionUrl.getMainHost();
+            String replUrl = String.format("%1$s//address=(host=%2$s)(port=%3$d),address=(host=%2$s)(port=%3$d)(isSlave=true)/%4$s",
+                    ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol(), hostInfo.getHost(), hostInfo.getPort(), hostInfo.getDatabase());
+
             try {
-                replConn = getMasterSlaveReplicationConnection();
+                replConn = DriverManager.getConnection(replUrl, hostInfo.getUser(), hostInfo.getPassword());
                 assertTrue(
                         !((ReplicationConnection) replConn).getMasterConnection().hasSameProperties(((ReplicationConnection) replConn).getSlavesConnection()));
             } finally {
@@ -1463,22 +1361,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             should work in most cases.
      */
     public void testBug23281() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        HostInfo defaultHost = mainConnectionUrl.getMainHost();
+        Properties props = defaultHost.exposeAsProperties();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "false");
-        props.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "true");
         props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
         props.setProperty(PropertyDefinitions.PNAME_connectTimeout, "5000");
 
-        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String host = defaultHost.getHostPortPair();
 
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-
-            host = host + ":" + port;
-        }
-
-        props.remove("PORT");
-        props.remove("HOST");
+        removeHostRelatedProps(props);
 
         StringBuilder newHostBuf = new StringBuilder();
 
@@ -1486,12 +1377,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         newHostBuf.append(",");
         // newHostBuf.append(host);
-        newHostBuf.append("192.0.2.1"); // non-exsitent machine from RFC3330
-                                       // test network
+        newHostBuf.append("192.0.2.1"); // non-exsitent machine from RFC3330 test network
         newHostBuf.append(":65532"); // make sure the slave fails
-
-        props.remove("PORT");
-        props.remove("HOST");
 
         Connection failoverConnection = null;
 
@@ -1676,11 +1563,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
             String db = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "test");
 
-            String hostSpec = host;
-
-            if (!ConnectionString.isHostPropertiesList(host)) {
-                hostSpec = host + ":" + port;
-            }
+            String hostSpec = host + ":" + port;
 
             props = getHostFreePropertiesFromTestsuiteUrl();
             props.remove(PropertyDefinitions.PNAME_useSSL);
@@ -2057,6 +1940,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replicationGroup1);
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "3");
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "1");
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(new String[] { "first", "second", "third" }, props);
         assertNotNull("Connection should not be null", this.conn);
         conn2.setAutoCommit(false);
@@ -2121,6 +2005,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testReplicationConnectionHostManagement() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "3");
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "1");
 
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(new String[] { "first", "second", "third" }, props);
         conn2.setAutoCommit(false);
@@ -2255,9 +2140,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(configs, props);
         assertFalse(conn2.isReadOnly());
         assertTrue(conn2.isMasterConnection());
-        assertTrue(conn2.isHostSlave(first.getAddress()));
-        assertTrue(conn2.isHostMaster(second.getAddress()));
-        assertTrue(conn2.isHostMaster(third.getAddress()));
+        assertTrue(conn2.isHostSlave(first.getHostPortPair()));
+        assertTrue(conn2.isHostMaster(second.getHostPortPair()));
+        assertTrue(conn2.isHostMaster(third.getHostPortPair()));
 
     }
 
@@ -2266,6 +2151,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "3");
         String replicationGroup = "memoryGroup";
         props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replicationGroup);
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "1");
 
         Set<MockConnectionConfiguration> configs = new HashSet<MockConnectionConfiguration>();
         MockConnectionConfiguration first = new MockConnectionConfiguration("first", "slave", null, false);
@@ -2278,17 +2164,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         ReplicationConnection conn2 = this.getUnreliableReplicationConnection(configs, props);
 
-        ReplicationConnectionGroupManager.promoteSlaveToMaster(replicationGroup, first.getAddress());
-        ReplicationConnectionGroupManager.removeMasterHost(replicationGroup, second.getAddress());
-        ReplicationConnectionGroupManager.addSlaveHost(replicationGroup, second.getAddress());
+        ReplicationConnectionGroupManager.promoteSlaveToMaster(replicationGroup, first.getHostPortPair());
+        ReplicationConnectionGroupManager.removeMasterHost(replicationGroup, second.getHostPortPair());
+        ReplicationConnectionGroupManager.addSlaveHost(replicationGroup, second.getHostPortPair());
 
         conn2.setReadOnly(false);
 
         assertFalse(conn2.isReadOnly());
         assertTrue(conn2.isMasterConnection());
-        assertTrue(conn2.isHostMaster(first.getAddress()));
-        assertTrue(conn2.isHostSlave(second.getAddress()));
-        assertTrue(conn2.isHostSlave(third.getAddress()));
+        assertTrue(conn2.isHostMaster(first.getHostPortPair()));
+        assertTrue(conn2.isHostSlave(second.getHostPortPair()));
+        assertTrue(conn2.isHostSlave(third.getHostPortPair()));
 
         // make sure state changes made are reflected in new connections:
 
@@ -2298,9 +2184,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         assertFalse(conn3.isReadOnly());
         assertTrue(conn3.isMasterConnection());
-        assertTrue(conn3.isHostMaster(first.getAddress()));
-        assertTrue(conn3.isHostSlave(second.getAddress()));
-        assertTrue(conn3.isHostSlave(third.getAddress()));
+        assertTrue(conn3.isHostMaster(first.getHostPortPair()));
+        assertTrue(conn3.isHostSlave(second.getHostPortPair()));
+        assertTrue(conn3.isHostSlave(third.getHostPortPair()));
 
     }
 
@@ -2329,8 +2215,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(0, bean.getSlavePromotionCount(replicationGroup));
         assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
         assertEquals(2, bean.getActiveSlaveHostCount(replicationGroup));
-        bean.removeSlaveHost(replicationGroup, first.getAddress());
-        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(first.getAddress()));
+        bean.removeSlaveHost(replicationGroup, first.getHostPortPair());
+        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(first.getHostPortPair()));
         assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
         conn2.close();
         assertEquals(0, bean.getActiveLogicalConnectionCount(replicationGroup));
@@ -2339,14 +2225,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(2, bean.getTotalLogicalConnectionCount(replicationGroup));
         assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
         assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
-        bean.promoteSlaveToMaster(replicationGroup, third.getAddress());
+        bean.promoteSlaveToMaster(replicationGroup, third.getHostPortPair());
         assertEquals(2, bean.getActiveMasterHostCount(replicationGroup));
         assertEquals(0, bean.getActiveSlaveHostCount(replicationGroup));
         // confirm this works when no group filter is specified:
-        bean.addSlaveHost(null, first.getAddress());
+        bean.addSlaveHost(null, first.getHostPortPair());
         assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
         assertEquals(2, bean.getActiveMasterHostCount(replicationGroup));
-        bean.removeMasterHost(replicationGroup, second.getAddress());
+        bean.removeMasterHost(replicationGroup, second.getHostPortPair());
         assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
         assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
 
@@ -2355,13 +2241,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(2, bean.getActiveLogicalConnectionCount(replicationGroup));
         assertEquals(3, bean.getTotalLogicalConnectionCount(replicationGroup));
 
-        assertTrue(bean.getMasterHostsList(replicationGroup).contains(third.getAddress()));
-        assertFalse(bean.getMasterHostsList(replicationGroup).contains(first.getAddress()));
-        assertFalse(bean.getMasterHostsList(replicationGroup).contains(second.getAddress()));
+        assertTrue(bean.getMasterHostsList(replicationGroup).contains(third.getHostPortPair()));
+        assertFalse(bean.getMasterHostsList(replicationGroup).contains(first.getHostPortPair()));
+        assertFalse(bean.getMasterHostsList(replicationGroup).contains(second.getHostPortPair()));
 
-        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(third.getAddress()));
-        assertTrue(bean.getSlaveHostsList(replicationGroup).contains(first.getAddress()));
-        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(second.getAddress()));
+        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(third.getHostPortPair()));
+        assertTrue(bean.getSlaveHostsList(replicationGroup).contains(first.getHostPortPair()));
+        assertFalse(bean.getSlaveHostsList(replicationGroup).contains(second.getHostPortPair()));
 
         assertTrue(bean.getMasterHostsList(replicationGroup).contains(conn3.getMasterConnection().getHost()));
         assertTrue(bean.getSlaveHostsList(replicationGroup).contains(conn3.getSlavesConnection().getHost()));
@@ -2530,16 +2416,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
         url.append('/');
         url.append(dbname);
 
-        Properties result = ConnectionString.parseUrl(url.toString(), new Properties());
+        HostInfo connectionHost = ConnectionUrl.getConnectionUrlInstance(url.toString(), null).getMainHost();
 
-        assertEquals("hostname not equal", host, result.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY));
+        assertEquals("hostname not equal", host, connectionHost.getHost());
         if (port != null) {
-            assertEquals("port not equal", port, result.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+            assertEquals("port not equal", port, String.valueOf(connectionHost.getPort()));
         } else {
-            assertEquals("port default incorrect", "3306", result.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+            assertEquals("port default incorrect", "3306", String.valueOf(connectionHost.getPort()));
         }
 
-        assertEquals("dbname not equal", dbname, result.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
+        assertEquals("dbname not equal", dbname, connectionHost.getDatabase());
     }
 
     public void testBug44324() throws Exception {
@@ -2622,15 +2508,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug48486() throws Exception {
 
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
-        String hostSpec = host;
-
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            hostSpec = host + ":" + port;
-        }
+        String hostSpec = host + ":" + port;
 
         String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
@@ -2702,11 +2584,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public void testBug51266() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_roundRobinLoadBalance, "true"); // shouldn't be
-        // needed, but used
-        // in reported bug,
-        // it's removed by
-        // the driver
         Set<String> downedHosts = new HashSet<String>();
         downedHosts.add("first");
 
@@ -2770,11 +2647,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = ConnectionString.parseUrl(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        if (portNumber == null) {
-            portNumber = "3306";
-        }
+        String portNumber = String.valueOf(mainConnectionUrl.getMainHost().getPort());
 
         ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
         Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
@@ -2848,12 +2721,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = ConnectionString.parseUrl(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        if (portNumber == null) {
-            portNumber = "3306";
-        }
-
         Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
         conn2.setAutoCommit(true);
         CountingReBalanceStrategy.resetTimesRebalanced();
@@ -2921,24 +2788,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             rebalancedTimes++;
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
-
         }
     }
 
     public void testBug56429() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
-
-        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -3016,19 +2877,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug58706() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = ConnectionString.parseUrl(dbUrl, null);
-
-        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "0");
         props.setProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster, "1");
@@ -3188,19 +3044,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug63284() throws Exception {
-        Properties props = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-        Properties urlProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
-
-        String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
         props.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
         props.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -3387,11 +3238,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin" + ext + "'");
             }
 
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
-            }
+            String dbname = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             // create proxy users
             createUser("'wl5851user'@'%'", "identified WITH test_plugin_server AS 'plug_dest'");
@@ -3405,7 +3253,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
-            props = new Properties();
+            Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_user, "wl5851user");
             props.setProperty(PropertyDefinitions.PNAME_password, "plug_dest");
             props.setProperty(PropertyDefinitions.PNAME_authenticationPlugins, "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
@@ -3462,11 +3310,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth" + ext + "'");
             }
 
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
-            }
+            String dbname = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             createUser("'wl5851user2'@'%'", "identified WITH two_questions AS 'two_questions_password'");
             this.stmt.executeUpdate("delete from mysql.db where user='wl5851user2'");
@@ -3477,7 +3322,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
-            props = new Properties();
+            Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_user, "wl5851user2");
             props.setProperty(PropertyDefinitions.PNAME_password, "two_questions_password");
             props.setProperty(PropertyDefinitions.PNAME_authenticationPlugins, "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
@@ -3533,11 +3378,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth" + ext + "'");
             }
 
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
-            }
+            String dbname = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             createUser("'wl5851user3'@'%'", "identified WITH three_attempts AS 'three_attempts_password'");
             this.stmt.executeUpdate("delete from mysql.db where user='wl5851user3'");
@@ -3548,7 +3390,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     "insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
-            props = new Properties();
+            Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_user, "wl5851user3");
             props.setProperty(PropertyDefinitions.PNAME_password, "three_attempts_password");
             props.setProperty(PropertyDefinitions.PNAME_authenticationPlugins, "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
@@ -3831,11 +3673,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
             }
 
-            Properties props = ConnectionString.parseUrl(dbUrl, null);
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            if (dbname == null) {
-                assertTrue("No database selected", false);
-            }
+            String dbname = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             // create proxy users
             createUser("'wl5735user'@'%'", "identified WITH cleartext_plugin_server AS ''");
@@ -3851,7 +3690,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     + "'Y', 'Y', 'N', 'N')");
             this.stmt.executeUpdate("flush privileges");
 
-            props = new Properties();
+            Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_user, "wl5735user");
             props.setProperty(PropertyDefinitions.PNAME_password, "");
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
@@ -4450,7 +4289,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug64205() throws Exception {
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         if (dbname == null) {
             assertTrue("No database selected", false);
@@ -4595,7 +4434,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout, "100");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer, "true");
 
-        String portNumber = ConnectionString.parseUrl(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -4724,7 +4563,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement testSt = null;
         ResultSet testRs = null;
 
-        Properties urlProps = ConnectionString.parseUrl(dbUrl, null);
+        Properties urlProps = getPropertiesFromTestsuiteUrl();
         String dbname = urlProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         try {
@@ -4952,13 +4791,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug16224249() throws Exception {
 
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-        String hostSpec = host;
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            hostSpec = host + ":" + port;
-        }
+        String hostSpec = host + ":" + port;
 
         String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
@@ -5098,7 +4934,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
 
-        String portNumber = ConnectionString.parseUrl(dbUrl, null).getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
         if (portNumber == null) {
             portNumber = "3306";
@@ -5383,18 +5219,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     break;
                 case 2:
                     //failover connection
-                    Properties baseprops = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
+                    Properties baseprops = getPropertiesFromTestsuiteUrl();
                     baseprops.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
                     baseprops.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
-                    Properties urlProps = ConnectionString.parseUrl(BaseTestCase.dbUrl, null);
-                    String host = urlProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-                    String port = urlProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+                    String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+                    String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
 
                     baseprops.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-                    baseprops.remove(PropertyDefinitions.NUM_HOSTS_PROPERTY_KEY);
-                    baseprops.remove(PropertyDefinitions.HOST_PROPERTY_KEY + ".1");
-                    baseprops.remove(PropertyDefinitions.PORT_PROPERTY_KEY + ".1");
 
                     baseprops.setProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster, "50");
                     baseprops.setProperty(PropertyDefinitions.PNAME_maxReconnects, "1");
@@ -5495,13 +5327,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement st1 = null;
         Connection c2 = null;
         Properties props = new Properties();
-        Properties props1 = ConnectionString.parseUrl(dbUrl, null);
+        Properties props1 = getPropertiesFromTestsuiteUrl();
         String host = props1.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
-        String url = "jdbc:mysql://" + host;
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            String port = props1.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-            url = url + ":" + port;
-        }
+        String port = props1.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
+        String url = "jdbc:mysql://" + host + ":" + port;
 
         try {
             props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
@@ -5999,12 +5828,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * single master host to the test URL.
      */
     private ReplicationConnection getTestReplicationConnectionNoSlaves(String masterHost) throws Exception {
-        Properties props = getPropertiesFromTestsuiteUrl();
-        List<String> masterHosts = new ArrayList<String>();
-        masterHosts.add(masterHost);
-        List<String> slaveHosts = new ArrayList<String>(); // empty
-        ReplicationConnection replConn = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), masterHosts, props, slaveHosts,
-                props);
+        Properties props = getHostFreePropertiesFromTestsuiteUrl();
+        List<HostInfo> masterHosts = new ArrayList<>();
+        masterHosts.add(mainConnectionUrl.getHostOrSpawnIsolated(masterHost));
+        List<HostInfo> slaveHosts = new ArrayList<>(); // empty
+        Map<String, String> properties = new HashMap<>();
+        props.stringPropertyNames().stream().forEach(k -> properties.put(k, props.getProperty(k)));
+        ReplicationConnection replConn = ReplicationConnectionProxy.createProxyInstance(new ReplicationConnectionUrl(masterHosts, slaveHosts, properties));
         return replConn;
     }
 
@@ -6231,15 +6061,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug62577() throws Exception {
 
-        Properties props = ConnectionString.parseUrl(dbUrl, null);
+        Properties props = getPropertiesFromTestsuiteUrl();
         String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
         String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
 
-        String hostSpec = host;
-
-        if (!ConnectionString.isHostPropertiesList(host)) {
-            hostSpec = host + ":" + port;
-        }
+        String hostSpec = host + ":" + port;
 
         String database = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         removeHostRelatedProps(props);
@@ -8613,6 +8439,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("********************************************************************************");
 
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
         testConn.setAutoCommit(false);
@@ -8777,6 +8604,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         System.out.println("********************************************************************************");
 
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props);
         testConn.setAutoCommit(false);
@@ -8791,7 +8619,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         /*
          * The l/b connection won't be able to use removed hosts.
-         * Undelying connection is invalidated after removing the host currently being used.
+         * Underlying connection is invalidated after removing the host currently being used.
          */
 
         // Remove the connected host.
@@ -8884,7 +8712,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         /*
          * The l/b connection won't be able to use any number of removed hosts (including the current active host).
-         * Undelying connection is invalidated after removing the host currently being used.
+         * Underlying connection is invalidated after removing the host currently being used.
          */
 
         // Remove two hosts, one of them is from the active connection.
@@ -8946,6 +8774,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * Initial connection will be able to use all hosts, even after removed from the connection group.
          */
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3, host4 }, props);
         testConn.setAutoCommit(false);
@@ -9057,6 +8886,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * Initial connection will be able to use only the hosts available when it was initialized, even after adding new ones to the connection group.
          */
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0");
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, lbConnGroup);
         Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2 }, props);
         testConn.setAutoCommit(false);
@@ -9159,32 +8989,34 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
         final String password = connProps.getProperty(PropertyDefinitions.PNAME_password, "");
 
-        final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_user, username);
-        props.setProperty(PropertyDefinitions.PNAME_password, password);
-        props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0"); // Speed up the test execution.
+        final Map<String, String> props = new HashMap<>();
+        props.put(PropertyDefinitions.PNAME_user, username);
+        props.put(PropertyDefinitions.PNAME_password, password);
+        props.put(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
+        props.put(PropertyDefinitions.PNAME_useSSL, "false");
+        props.put(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "0"); // Speed up the test execution.
         // Replicate the properties used in FabricMySQLConnectionProxy.getActiveConnection().
-        props.setProperty(PropertyDefinitions.PNAME_retriesAllDown, "1");
-        props.setProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
-        props.setProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
-        props.setProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
+        props.put(PropertyDefinitions.PNAME_retriesAllDown, "1");
+        props.put(PropertyDefinitions.PNAME_allowMasterDownConnections, "true");
+        props.put(PropertyDefinitions.PNAME_allowSlaveDownConnections, "true");
+        props.put(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves, "true");
+
+        ConnectionUrl replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo> emptyList(), Collections.<HostInfo> emptyList(), props);
 
         String replConnGroup = "";
-        final List<String> emptyHostsList = Collections.emptyList();
-        final List<String> singleHostList = Collections.singletonList(hostPortPair);
+        final List<HostInfo> emptyHostsList = Collections.emptyList();
+        final List<HostInfo> singleHostList = Collections.singletonList(replConnectionUrl.getHostOrSpawnIsolated(hostPortPair));
 
         /*
          * Case A:
          * - Initialize a replication connection with masters and slaves lists empty.
          */
         replConnGroup = "Bug22678872A";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
         assertThrows(SQLException.class, "A replication connection cannot be initialized without master hosts and slave hosts, simultaneously\\.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
-                        ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), emptyHostsList, props, emptyHostsList, props);
+                        ReplicationConnectionProxy.createProxyInstance(new ReplicationConnectionUrl(emptyHostsList, emptyHostsList, props));
                         return null;
                     }
                 });
@@ -9195,9 +9027,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Then remove the master and add it back as a slave, followed by a promotion to master.
          */
         replConnGroup = "Bug22678872B";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnB = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
-                emptyHostsList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnB = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(singleHostList, emptyHostsList, props));
         assertTrue(testConnB.isMasterConnection());  // Connected to a master host.
         assertFalse(testConnB.isReadOnly());
         testConnB.setAutoCommit(false); // This was the method that triggered the original NPE. 
@@ -9234,9 +9066,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Then remove the slave and add it back, followed by a promotion to master.
          */
         replConnGroup = "Bug22678872C";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnC = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), emptyHostsList, props,
-                singleHostList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnC = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(emptyHostsList, singleHostList, props));
         assertFalse(testConnC.isMasterConnection());  // Connected to a slave host.
         assertTrue(testConnC.isReadOnly());
         testConnC.setAutoCommit(false);
@@ -9268,9 +9100,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872D";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnD = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
-                singleHostList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnD = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(singleHostList, singleHostList, props));
         assertTrue(testConnD.isMasterConnection());  // Connected to a master host.
         assertFalse(testConnD.isReadOnly());
         testConnD.setAutoCommit(false);
@@ -9308,9 +9140,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872E";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnE = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
-                singleHostList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnE = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(singleHostList, singleHostList, props));
         assertTrue(testConnE.isMasterConnection());  // Connected to a master host.
         assertFalse(testConnE.isReadOnly());
         testConnE.setAutoCommit(false);
@@ -9352,9 +9184,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally add the slave host back and promote it to master.
          */
         replConnGroup = "Bug22678872F";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnF = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), singleHostList, props,
-                singleHostList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnF = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(singleHostList, singleHostList, props));
         assertTrue(testConnF.isMasterConnection());  // Connected to a master host.
         assertFalse(testConnF.isReadOnly());
         testConnF.setAutoCommit(false);
@@ -9397,19 +9229,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * - Finally bring up the host again and check the connection status.
          */
         // Use the UnreliableSocketFactory to control when the host must be downed.
+        props.remove(PropertyDefinitions.PNAME_replicationConnectionGroup);
+        props.put(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
+        replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo> emptyList(), Collections.<HostInfo> emptyList(), props);
+
         final String newHost = "bug22678872";
         final String newHostPortPair = newHost + ":" + port;
         final String hostConnected = UnreliableSocketFactory.getHostConnectedStatus(newHost);
         final String hostNotConnected = UnreliableSocketFactory.getHostFailedStatus(newHost);
-        final List<String> newSingleHostList = Collections.singletonList(newHostPortPair);
+        final List<HostInfo> newSingleHostList = Collections.singletonList(replConnectionUrl.getHostOrSpawnIsolated(newHostPortPair));
         UnreliableSocketFactory.flushAllStaticData();
         UnreliableSocketFactory.mapHost(newHost, host);
-        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         replConnGroup = "Bug22678872G";
-        props.setProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
-        final ReplicationConnection testConnG = ReplicationConnectionProxy.createProxyInstance(new ConnectionString(dbUrl, props), newSingleHostList, props,
-                newSingleHostList, props);
+        props.put(PropertyDefinitions.PNAME_replicationConnectionGroup, replConnGroup);
+        final ReplicationConnection testConnG = ReplicationConnectionProxy
+                .createProxyInstance(new ReplicationConnectionUrl(newSingleHostList, newSingleHostList, props));
         assertTrue(testConnG.isMasterConnection()); // Connected to a master host.
         assertFalse(testConnG.isReadOnly());
         testConnG.setAutoCommit(false);

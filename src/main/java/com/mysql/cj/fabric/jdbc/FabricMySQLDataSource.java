@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,11 +25,10 @@ package com.mysql.cj.fabric.jdbc;
 
 import java.sql.Driver;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.Properties;
 
-import com.mysql.cj.core.ConnectionString;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 /**
@@ -69,20 +68,8 @@ public class FabricMySQLDataSource extends MysqlDataSource {
         String jdbcUrlToUse = null;
 
         if (!this.explicitUrl) {
-            StringBuilder jdbcUrl = new StringBuilder("jdbc:mysql:fabric://");
-
-            if (this.hostName != null) {
-                jdbcUrl.append(this.hostName);
-            }
-
-            jdbcUrl.append(":");
-            jdbcUrl.append(this.port);
-            jdbcUrl.append("/");
-
-            if (this.databaseName != null) {
-                jdbcUrl.append(this.databaseName);
-            }
-
+            StringBuilder jdbcUrl = new StringBuilder(ConnectionUrl.Type.FABRIC_CONNECTION.getProtol());
+            jdbcUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
             jdbcUrlToUse = jdbcUrl.toString();
         } else {
             jdbcUrlToUse = this.url;
@@ -91,19 +78,12 @@ public class FabricMySQLDataSource extends MysqlDataSource {
         //
         // URL should take precedence over properties
         //
-
-        Properties urlProps = ConnectionString.parseUrl(jdbcUrlToUse, null);
+        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
+        Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
-
-        Iterator<Object> keys = urlProps.keySet().iterator();
-
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-
-            props.setProperty(key, urlProps.getProperty(key));
-        }
+        urlProps.stringPropertyNames().stream().forEach(k -> props.setProperty(k, urlProps.getProperty(k)));
 
         if (this.fabricShardKey != null) {
             props.setProperty(PropertyDefinitions.PNAME_fabricShardKey, this.fabricShardKey);

@@ -38,7 +38,7 @@ import com.mysql.cj.x.json.JsonString;
  */
 public class DevApiSample {
     public static void main(String[] args) {
-        XSession session = new MysqlxSessionFactory().getSession("mysql:x://localhost:33060/test?user=user&password=password1234");
+        XSession session = new MysqlxSessionFactory().getSession("mysqlx://localhost:33060/test?user=user&password=password1234");
         System.err.println("Connected!");
         Schema schema = session.getDefaultSchema();
         System.err.println("Default schema is: " + schema);
