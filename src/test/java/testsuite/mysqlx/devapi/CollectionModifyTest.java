@@ -132,4 +132,78 @@ public class CollectionModifyTest extends CollectionTest {
         assertEquals(new Integer(44), ((JsonNumber) xArray.get(3)).getInteger());
         assertEquals(4, xArray.size());
     }
+
+    @Test
+    public void testJsonModify() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        DbDoc nestedDoc = new DbDoc().add("z", new JsonNumber().setValue("100"));
+        DbDoc doc = new DbDoc().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
+
+        this.collection.add("{\"x\":1, \"y\":1}").execute();
+        this.collection.add("{\"x\":2, \"y\":2}").execute();
+        this.collection.add(doc).execute();
+        this.collection.add("{\"x\":4, \"m\":1}").execute();
+
+        this.collection.modify("y = 1").set("y", nestedDoc).execute();
+        this.collection.modify("y = :n").set("y", nestedDoc).bind("n", 2).execute();
+
+        this.collection.modify("x = 1").set("m", 1).execute();
+        this.collection.modify().change("$.m", nestedDoc).execute();
+
+        assertEquals(1, this.collection.find("x = :x").bind("x", 1).execute().count());
+        assertEquals(0, this.collection.find("y = :y").bind("y", 2).execute().count());
+        assertEquals(3, this.collection.find("y = {\"z\": 100}").execute().count());
+        assertEquals(2, this.collection.find("m = {\"z\": 100}").execute().count());
+
+        // TODO check later whether it's possible; for now placeholders are of Scalar type only
+        //assertEquals(1, this.collection.find("y = :y").bind("y", nestedDoc).execute().count());
+
+        // literal won't match JSON docs
+        assertEquals(0, this.collection.find("y = :y").bind("y", "{\"z\": 100}").execute().count());
+
+        DocResult res = this.collection.find().execute();
+        while (res.hasNext()) {
+            DbDoc jd = res.next();
+            if (jd.get("y") != null) {
+                assertEquals(nestedDoc.toString(), ((DbDoc) jd.get("y")).toString());
+            }
+            if (jd.get("m") != null) {
+                assertEquals(nestedDoc.toString(), ((DbDoc) jd.get("m")).toString());
+            }
+        }
+    }
+
+    @Test
+    public void testArrayModify() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        JsonArray xArray = new JsonArray().addValue(new JsonString().setValue("a")).addValue(new JsonNumber().setValue("1"));
+        DbDoc doc = new DbDoc().add("x", new JsonNumber().setValue("3")).add("y", xArray);
+
+        this.collection.add("{\"x\":1, \"y\":[\"b\", 2]}").execute();
+        this.collection.add("{\"x\":2, \"y\":22}").execute();
+        this.collection.add(doc).execute();
+
+        this.collection.modify().arrayInsert("$.y[1]", 44).execute();
+        this.collection.modify("x = 2").change("$.y", xArray).execute();
+        this.collection.modify("x = 3").set("y", xArray).execute();
+
+        DocResult res = this.collection.find().execute();
+        while (res.hasNext()) {
+            DbDoc jd = res.next();
+            if (((JsonNumber) jd.get("x")).getInteger() == 1) {
+                assertEquals((new JsonArray().addValue(new JsonString().setValue("b")).addValue(new JsonNumber().setValue("44"))
+                        .addValue(new JsonNumber().setValue("2"))).toString(), (jd.get("y")).toString());
+            } else {
+                assertEquals(xArray.toString(), jd.get("y").toString());
+            }
+        }
+
+    }
+
 }

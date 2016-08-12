@@ -26,6 +26,8 @@ package testsuite.mysqlx.devapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,9 @@ import com.mysql.cj.api.x.Result;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Table;
+import com.mysql.cj.x.json.DbDoc;
+import com.mysql.cj.x.json.JsonParser;
+import com.mysql.cj.x.json.JsonString;
 
 /**
  * @todo
@@ -137,6 +142,52 @@ public class TableInsertTest extends TableTest {
         } finally {
             sqlUpdate("drop table if exists basicInsert");
             sqlUpdate("drop view if exists basicInsertView");
+        }
+    }
+
+    @Test
+    public void jsonInsert() throws IOException {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        try {
+            sqlUpdate("drop table if exists jsonInsert");
+            sqlUpdate("create table jsonInsert (_id varchar(32), doc JSON)");
+
+            Table table = this.schema.getTable("jsonInsert");
+
+            table.insert("_id", "doc").values(1, "{\"x\":\"1\"}").execute();
+            table.insert().values(2, "{\"x\":\"2\"}").execute();
+
+            Map<String, Object> row = new HashMap<>();
+            row.put("_id", 3);
+            row.put("doc", "{\"x\":\"3\"}");
+            table.insert(row).execute();
+
+            DbDoc doc = new DbDoc().add("firstName", new JsonString().setValue("Georgia"));
+            doc.add("middleName", new JsonString().setValue("Totto"));
+            doc.add("lastName", new JsonString().setValue("O'Keeffe"));
+            table.insert("_id", "doc").values(4, doc).execute();
+
+            RowResult rows = table.select("_id, doc").orderBy("_id").execute();
+            Row r = rows.next();
+            assertEquals("1", r.getString("_id"));
+            assertEquals(JsonParser.parseDoc(new StringReader("{\"x\":\"1\"}")).toString(), r.getDbDoc("doc").toString());
+
+            r = rows.next();
+            assertEquals("2", r.getString("_id"));
+            assertEquals("{\"x\": \"2\"}", r.getString("doc"));
+
+            r = rows.next();
+            assertEquals("3", r.getString("_id"));
+            assertEquals("{\"x\": \"3\"}", r.getString("doc"));
+
+            r = rows.next();
+            assertEquals("4", r.getString("_id"));
+            assertEquals(doc.toString(), r.getDbDoc("doc").toString());
+
+        } finally {
+            sqlUpdate("drop table if exists jsonInsert");
         }
     }
 }

@@ -27,6 +27,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.mysql.cj.api.x.Expression;
@@ -39,6 +40,8 @@ import com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonArray;
+import com.mysql.cj.x.json.JsonNumber;
+import com.mysql.cj.x.json.JsonString;
 
 /**
  * Utilities to deal with Expr (and related) structures.
@@ -180,10 +183,6 @@ public class ExprUtil {
             return buildLiteralScalar((String) value);
         } else if (value.getClass() == Expression.class) {
             return new ExprParser(((Expression) value).getExpressionString(), allowRelationalColumns).parse();
-        } else if (value.getClass() == DbDoc.class) {
-            // TODO: check how xplugin handles this
-        } else if (value.getClass() == JsonArray.class) {
-            // TODO: check how xplugin handles this
         } else if (value.getClass() == Date.class) {
             return buildLiteralScalar(javaSqlDateFormat.format((java.util.Date) value));
         } else if (value.getClass() == Time.class) {
@@ -192,6 +191,15 @@ public class ExprUtil {
             return buildLiteralScalar(javaSqlTimestampFormat.format((java.util.Date) value));
         } else if (value.getClass() == java.util.Date.class) {
             return buildLiteralScalar(javaUtilDateFormat.format((java.util.Date) value));
+        } else if (value.getClass() == DbDoc.class) {
+            return (new ExprParser(((DbDoc) value).toString())).parse();
+        } else if (value.getClass() == JsonArray.class) {
+            return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder()
+                    .addAllValue(((JsonArray) value).stream().map(f -> ExprUtil.argObjectToExpr(f, true)).collect(Collectors.toList()))).build();
+        } else if (value.getClass() == JsonString.class) {
+            return buildLiteralScalar(((JsonString) value).getString());
+        } else if (value.getClass() == JsonNumber.class) {
+            return buildLiteralScalar(((JsonNumber) value).getInteger());
         }
         throw new FeatureNotAvailableException("TODO: other types: BigDecimal");
     }
