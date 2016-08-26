@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+mm-dd-yy - Version 6.0.5
+
 09-05-16 - Version 6.0.4
 
   - X DevAPI URL prefix changed from "mysql:x:" to "mysqlx:".
