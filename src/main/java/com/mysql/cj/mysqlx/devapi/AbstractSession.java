@@ -121,7 +121,7 @@ public abstract class AbstractSession implements BaseSession {
     public String getUri() {
         PropertySet pset = this.session.getPropertySet();
 
-        StringBuilder sb = new StringBuilder(ConnectionUrl.Type.MYSQLX_SESSION.getProtol());
+        StringBuilder sb = new StringBuilder(ConnectionUrl.Type.MYSQLX_SESSION.getProtocol());
         sb.append("//").append(this.session.getHost()).append(":").append(this.session.getPort()).append("/").append(this.defaultSchemaName).append("?");
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {

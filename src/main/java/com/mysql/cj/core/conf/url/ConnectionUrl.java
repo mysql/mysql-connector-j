@@ -120,7 +120,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             this.cardinality = cardinality;
         }
 
-        public String getProtol() {
+        public String getProtocol() {
             return this.protocol;
         }
 
@@ -141,7 +141,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
          */
         public static Type fromValue(String protocol, int n) {
             for (Type t : values()) {
-                if (t.getProtol().equalsIgnoreCase(protocol) && (n < 0 || t.getCardinality().assertSize(n))) {
+                if (t.getProtocol().equalsIgnoreCase(protocol) && (n < 0 || t.getCardinality().assertSize(n))) {
                     return t;
                 }
             }

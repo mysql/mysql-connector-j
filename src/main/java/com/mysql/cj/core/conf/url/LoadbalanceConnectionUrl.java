@@ -75,7 +75,7 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      * @return an instance of a {@link LoadbalanceConnectionUrl}
      */
     public LoadbalanceConnectionUrl(List<HostInfo> hosts, Map<String, String> properties) {
-        this.originalConnStr = ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtol() + "//**internally_generated**" + System.currentTimeMillis() + "**";
+        this.originalConnStr = ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//**internally_generated**" + System.currentTimeMillis() + "**";
         this.type = ConnectionUrl.Type.LOADBALANCE_CONNECTION;
         this.hosts.addAll(hosts);
         this.properties.putAll(properties);

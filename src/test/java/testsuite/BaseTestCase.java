@@ -50,9 +50,9 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.conf.url.ConnectionUrlParser;
 import com.mysql.cj.core.conf.url.HostInfo;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
@@ -1000,13 +1000,13 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
-        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol());
+        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol());
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getHostFreePropertiesFromTestsuiteUrl(props));
         return replConn;
     }
 
     protected String getMasterSlaveUrl() throws SQLException {
-        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtol());
+        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtocol());
     }
 
     protected String getMasterSlaveUrl(String protocol) throws SQLException {
@@ -1041,7 +1041,7 @@ public abstract class BaseTestCase extends TestCase {
             hostsString.add(defaultHost.getHostPortPair());
         }
 
-        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtol() + "//" + hostsString, parsedProps);
+        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//" + hostsString, parsedProps);
         return lbConn;
     }
 
@@ -1103,7 +1103,7 @@ public abstract class BaseTestCase extends TestCase {
             haMode += ":";
         }
 
-        return getConnectionWithProps(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtol() + haMode + "//" + hostString.toString() + "/" + db, props);
+        return getConnectionWithProps(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtocol() + haMode + "//" + hostString.toString() + "/" + db, props);
     }
 
     protected Connection getUnreliableFailoverConnection(String[] hostNames, Properties props) throws Exception {
@@ -1183,7 +1183,7 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        return (ReplicationConnection) getConnectionWithProps(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol() + "//" + hostString.toString() + "/" + db,
+        return (ReplicationConnection) getConnectionWithProps(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol() + "//" + hostString.toString() + "/" + db,
                 props);
     }
 

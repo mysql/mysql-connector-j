@@ -965,7 +965,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             HostInfo hostInfo = mainConnectionUrl.getMainHost();
             String replUrl = String.format("%1$s//address=(host=%2$s)(port=%3$d),address=(host=%2$s)(port=%3$d)(isSlave=true)/%4$s",
-                    ConnectionUrl.Type.REPLICATION_CONNECTION.getProtol(), hostInfo.getHost(), hostInfo.getPort(), hostInfo.getDatabase());
+                    ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol(), hostInfo.getHost(), hostInfo.getPort(), hostInfo.getDatabase());
 
             try {
                 replConn = DriverManager.getConnection(replUrl, hostInfo.getUser(), hostInfo.getPassword());
@@ -2847,8 +2847,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assert (endConnCount > 0);
 
-            if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this
-                                                      // testsuite?
+            if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this testsuite?
                 fail("We're leaking connections even when not failed over");
             }
         } finally {

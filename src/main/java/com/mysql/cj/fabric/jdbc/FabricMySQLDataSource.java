@@ -68,7 +68,7 @@ public class FabricMySQLDataSource extends MysqlDataSource {
         String jdbcUrlToUse = null;
 
         if (!this.explicitUrl) {
-            StringBuilder jdbcUrl = new StringBuilder(ConnectionUrl.Type.FABRIC_CONNECTION.getProtol());
+            StringBuilder jdbcUrl = new StringBuilder(ConnectionUrl.Type.FABRIC_CONNECTION.getProtocol());
             jdbcUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
             jdbcUrlToUse = jdbcUrl.toString();
         } else {

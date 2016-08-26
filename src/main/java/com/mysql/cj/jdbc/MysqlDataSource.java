@@ -359,7 +359,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      */
     public String getUrl() {
         if (!this.explicitUrl) {
-            StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getProtol());
+            StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getProtocol());
             sbUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
             return sbUrl.toString();
         }
