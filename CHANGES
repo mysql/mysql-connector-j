@@ -2,6 +2,9 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#80631 (22891845), ResultSet.getString return garbled result with json type data.
+    Thanks to Dong SongLing for his contribution.
+
   - Fix for Bug#64188 (13702433), MysqlXAConnection.MYSQL_ERROR_CODES_TO_XA_ERROR_CODES is missing XA error codes.
 
   - Fix for Bug#81072 (23103408), FabricMySQLConnectionProxy method nativeSQL does nothing.

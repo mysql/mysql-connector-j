@@ -5042,4 +5042,81 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
         assertEquals(testCase, 5, rowCount);
     }
+
+    /**
+     * Tests fix for Bug#80631 - ResultSet.getString return garbled result with json type data.
+     */
+    public void testBug80631() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 9)) {
+            return;
+        }
+
+        /*
+         * \u4E2D\u56FD = 中国 (Simplified Chinese): "China"
+         * \u65E5\u672C = 日本 (Japanese): "Japan"
+         * \uD83D\uDC2C = 🐬 (Emoji): "Dolphin"
+         * \u263A = ☺ (Symbols): "White Smiling Face"
+         */
+        String[] data = new String[] { "\u4E2D\u56FD", "\u65E5\u672C", "\uD83D\uDC2C", "\u263A" };
+        String jsonTmpl = "{\"data\": \"%s\"}";
+
+        createTable("testBug80631", "(data JSON)");
+        createProcedure("testBug80631Insert", "(IN data JSON) BEGIN INSERT INTO testBug80631 VALUES (data); END;");
+        createProcedure("testBug80631SELECT", "() BEGIN SELECT * FROM testBug80631; END;");
+
+        boolean useSPS = false;
+        do {
+            final String testCase = String.format("Case: [SPS: %s]", useSPS ? "Y" : "N");
+            final Connection testConn = getConnectionWithProps("characterEncoding=UTF-8,useUnicode=true,useServerPrepStmts=" + useSPS);
+
+            // Insert and select using a Statement.
+            Statement testStmt = testConn.createStatement();
+            for (String d : data) {
+                assertEquals(testCase, 1, testStmt.executeUpdate("INSERT INTO testBug80631 VALUES ('" + String.format(jsonTmpl, d) + "')"));
+            }
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug80631");
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testStmt.close();
+
+            testConn.createStatement().execute("TRUNCATE TABLE testBug80631");
+
+            // Insert and select using a PreparedStatement.
+            PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug80631 VALUES (?)");
+            for (String d : data) {
+                testPstmt.setString(1, String.format(jsonTmpl, d));
+                assertEquals(testCase, 1, testPstmt.executeUpdate());
+            }
+            testPstmt.close();
+            testPstmt = testConn.prepareStatement("SELECT * FROM testBug80631");
+            this.rs = testPstmt.executeQuery();
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testPstmt.close();
+
+            testConn.createStatement().execute("TRUNCATE TABLE testBug80631");
+
+            // Insert and select using a CallableStatement.
+            CallableStatement testCstmt = testConn.prepareCall("{CALL testBug80631Insert(?)}");
+            for (String d : data) {
+                testCstmt.setString(1, String.format(jsonTmpl, d));
+                assertEquals(testCase, 1, testCstmt.executeUpdate());
+            }
+            testCstmt.close();
+            testCstmt = testConn.prepareCall("{CALL testBug80631Select()}");
+            testCstmt.execute();
+            this.rs = testCstmt.getResultSet();
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testCstmt.close();
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
 }
