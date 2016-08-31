@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,7 +36,9 @@ import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
 import com.mysql.jdbc.ConnectionPropertiesImpl;
+import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.SQLError;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -407,6 +409,10 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements DataSou
         //
 
         Properties urlProps = mysqlDriver.parseURL(jdbcUrlToUse, null);
+        if (urlProps == null) {
+            throw SQLError.createSQLException(Messages.getString("MysqlDataSource.BadUrl", new Object[] { jdbcUrlToUse }),
+                    SQLError.SQL_STATE_CONNECTION_FAILURE, null);
+        }
         urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
         urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);

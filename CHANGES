@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#72632 (18759269), NullPointerException for invalid JDBC URL.
+
   - Fix for Bug#22750465, CONNECTOR/J HANGS WHEN FABRIC NODE IS DOWN.
 
   - Fix for Bug#82094 (23738636), ConcurrentModificationException on Fabric connections after topology changes.
