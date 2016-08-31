@@ -194,7 +194,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
         String[] splitValues = new String[2];
 
-        if (StringUtils.startsWithIgnoreCaseAndWs(hostPortPair, "address")) {
+        if (StringUtils.startsWithIgnoreCaseAndWs(hostPortPair, "address=")) {
             splitValues[HOST_NAME_INDEX] = hostPortPair.trim();
             splitValues[PORT_NUMBER_INDEX] = null;
 

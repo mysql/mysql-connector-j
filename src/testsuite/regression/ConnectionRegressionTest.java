@@ -9759,4 +9759,27 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(UnreliableSocketFactory.getHostsFromAllConnections().size(), expectedConnectionsHistory.length);
         UnreliableSocketFactory.flushConnectionAttempts();
     }
+
+    /**
+     * Tests fix for Bug#77649 - URL start with word "address",JDBC can't parse the "host:port" Correctly.
+     */
+    public void testBug77649() throws Exception {
+        Properties props = getPropertiesFromTestsuiteUrl();
+        String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+        String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+
+        String[] hosts = new String[] { host, "address", "address.somewhere", "addressing", "addressing.somewhere" };
+
+        UnreliableSocketFactory.flushAllStaticData();
+        for (int i = 1; i < hosts.length; i++) { // Don't map the first host.
+            UnreliableSocketFactory.mapHost(hosts[i], host);
+        }
+
+        props = getHostFreePropertiesFromTestsuiteUrl();
+        props.setProperty("socketFactory", UnreliableSocketFactory.class.getName());
+        for (String h : hosts) {
+            getConnectionWithProps(String.format("jdbc:mysql://%s:%s", h, port), props).close();
+            getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)", h, port), props).close();
+        }
+    }
 }
