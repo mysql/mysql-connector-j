@@ -73,13 +73,15 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
     static {
         HashMap<Integer, Integer> temp = new HashMap<Integer, Integer>();
 
-        temp.put(Integer.valueOf(1397), Integer.valueOf(XAException.XAER_NOTA));
-        temp.put(Integer.valueOf(1398), Integer.valueOf(XAException.XAER_INVAL));
-        temp.put(Integer.valueOf(1399), Integer.valueOf(XAException.XAER_RMFAIL));
-        temp.put(Integer.valueOf(1400), Integer.valueOf(XAException.XAER_OUTSIDE));
-        temp.put(Integer.valueOf(1401), Integer.valueOf(XAException.XAER_RMERR));
-        temp.put(Integer.valueOf(1402), Integer.valueOf(XAException.XA_RBROLLBACK));
-        temp.put(Integer.valueOf(1440), Integer.valueOf(XAException.XAER_DUPID));
+        temp.put(1397, XAException.XAER_NOTA);
+        temp.put(1398, XAException.XAER_INVAL);
+        temp.put(1399, XAException.XAER_RMFAIL);
+        temp.put(1400, XAException.XAER_OUTSIDE);
+        temp.put(1401, XAException.XAER_RMERR);
+        temp.put(1402, XAException.XA_RBROLLBACK);
+        temp.put(1440, XAException.XAER_DUPID);
+        temp.put(1613, XAException.XA_RBTIMEOUT);
+        temp.put(1614, XAException.XA_RBDEADLOCK);
 
         MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
     }
@@ -575,7 +577,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
     }
 
     protected static XAException mapXAExceptionFromSQLException(SQLException sqlEx) {
-        Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES.get(Integer.valueOf(sqlEx.getErrorCode()));
+        Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES.get(sqlEx.getErrorCode());
 
         if (xaCode != null) {
             return (XAException) new MysqlXAException(xaCode.intValue(), sqlEx.getMessage(), null).initCause(sqlEx);

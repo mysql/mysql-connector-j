@@ -2,8 +2,10 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#64188 (13702433), MysqlXAConnection.MYSQL_ERROR_CODES_TO_XA_ERROR_CODES is missing XA error codes.
+
   - Fix for Bug#81072 (23103408), FabricMySQLConnectionProxy method nativeSQL does nothing.
-  
+
   - Fix for Bug#81056 (23103406), Connector/J with Fabric always returns lower_case_table_names false.
 
   - Fix for Bug#77649 (21389278), URL start with word "address",JDBC can't parse the "host:port" Correctly.
