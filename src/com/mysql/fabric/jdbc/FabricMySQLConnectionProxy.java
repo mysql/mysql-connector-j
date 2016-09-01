@@ -2979,7 +2979,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean serverSupportsConvertFn() throws SQLException {
-        return false;
+        return getActiveMySQLConnection().serverSupportsConvertFn();
     }
 
     public void setReadInfoMsgEnabled(boolean flag) {
@@ -2989,7 +2989,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean storesLowerCaseTableName() {
-        return false;
+        return getActiveMySQLConnectionPassive().storesLowerCaseTableName();
     }
 
     public void throwConnectionClosedException() throws SQLException {
@@ -2998,10 +2998,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     public void unregisterStatement(com.mysql.jdbc.Statement stmt) {
     }
 
-    /**
-     * @param stmt
-     * @throws SQLException
-     */
     public void unsetMaxRows(com.mysql.jdbc.Statement stmt) throws SQLException {
     }
 
@@ -3021,11 +3017,6 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
-    /**
-     * 
-     * @param name
-     * @return
-     */
     public String getClientInfo(String name) {
         return null;
     }
@@ -3042,12 +3033,12 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
-    public SQLWarning getWarnings() {
-        return null;
+    public SQLWarning getWarnings() throws SQLException {
+        return getActiveMySQLConnection().getWarnings();
     }
 
-    public String nativeSQL(String sql) {
-        return null;
+    public String nativeSQL(String sql) throws SQLException {
+        return getActiveMySQLConnection().nativeSQL(sql);
     }
 
     public ProfilerEventHandler getProfilerEventHandlerInstance() {
