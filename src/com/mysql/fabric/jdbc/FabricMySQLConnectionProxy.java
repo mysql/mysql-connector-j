@@ -2855,11 +2855,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public String getHostPortPair() {
-        if (this.currentConnection == null) {
-            return null;
-        }
-
-        return this.currentConnection.getHostPortPair();
+        return getActiveMySQLConnectionPassive().getHostPortPair();
     }
 
     public long getId() {
@@ -2958,12 +2954,9 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean lowerCaseTableNames() {
-        return false;
+        return getActiveMySQLConnectionPassive().lowerCaseTableNames();
     }
 
-    /**
-     * @param stmt
-     */
     public void maxRowsChanged(com.mysql.jdbc.Statement stmt) {
     }
 
