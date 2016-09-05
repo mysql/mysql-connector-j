@@ -9782,4 +9782,34 @@ public class ConnectionRegressionTest extends BaseTestCase {
             getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)", h, port), props).close();
         }
     }
+
+    /**
+     * Tests fix for Bug#74711 - FORGOTTEN WORKAROUND FOR BUG#36326.
+     * 
+     * This test requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).
+     */
+    public void testBug74711() throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT @@global.query_cache_type, @@global.query_cache_size");
+        this.rs.next();
+        if (!"ON".equalsIgnoreCase(this.rs.getString(1)) || "0".equals(this.rs.getString(2))) {
+            System.err
+                    .println("Warning! testBug77411() requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).");
+            return;
+        }
+
+        boolean useLocTransSt = false;
+        boolean useElideSetAC = false;
+        do {
+            final String testCase = String.format("Case: [LocTransSt: %s, ElideAC: %s ]", useLocTransSt ? "Y" : "N", useElideSetAC ? "Y" : "N");
+            final Properties props = new Properties();
+            props.setProperty("useLocalTransactionState", Boolean.toString(useLocTransSt));
+            props.setProperty("elideSetAutoCommits", Boolean.toString(useElideSetAC));
+            Connection testConn = getConnectionWithProps(props);
+
+            assertEquals(testCase, useLocTransSt, ((ConnectionProperties) testConn).getUseLocalTransactionState());
+            assertEquals(testCase, useElideSetAC, ((ConnectionProperties) testConn).getElideSetAutoCommits());
+
+            testConn.close();
+        } while ((useLocTransSt = !useLocTransSt) || (useElideSetAC = !useElideSetAC));
+    }
 }

@@ -3430,7 +3430,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
 
         if (versionMeetsMinimum(5, 0, 0) && (getUseLocalTransactionState() || getElideSetAutoCommits()) && isQueryCacheEnabled()
-                && !versionMeetsMinimum(6, 0, 10)) {
+                && !versionMeetsMinimum(5, 1, 32)) {
             // Can't trust the server status flag on the wire if query cache is enabled, due to Bug#36326
             setUseLocalTransactionState(false);
             setElideSetAutoCommits(false);

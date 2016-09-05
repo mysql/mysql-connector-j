@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#74711 (19974685), FORGOTTEN WORKAROUND FOR BUG#36326.
+
   - Fix for Bug#80631 (22891845), ResultSet.getString return garbled result with json type data.
     Thanks to Dong SongLing for his contribution.
 
