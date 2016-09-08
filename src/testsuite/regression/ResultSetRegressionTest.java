@@ -5119,4 +5119,61 @@ public class ResultSetRegressionTest extends BaseTestCase {
             testConn.close();
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#23197238 - EXECUTEQUERY() FAILS FOR JSON DATA WHEN RESULTSETCONCURRENCY=CONCUR_UPDATABLE.
+     */
+    public void testBug23197238() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 9)) {
+            return;
+        }
+
+        createTable("testBug23197238", "(id INT AUTO_INCREMENT PRIMARY KEY, doc JSON DEFAULT NULL)");
+
+        String[] docs = new String[] { "{\"key1\": \"value1\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
+        Connection testConn = getConnectionWithProps("useCursorFetch=true");
+
+        Statement testStmt = testConn.createStatement();
+        testStmt.execute("INSERT INTO testBug23197238 (doc) VALUES ('" + docs[2] + "')");
+        testStmt.close();
+
+        testBug23197238Assert(new String[] { docs[2] });
+
+        testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        this.rs = testStmt.executeQuery("SELECT * FROM testBug23197238");
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, docs[1]);
+        this.rs.updateRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateObject(2, docs[1]);
+        this.rs.insertRow();
+        testStmt.close();
+
+        testBug23197238Assert(new String[] { docs[1], docs[1] });
+
+        PreparedStatement testPstmt = testConn.prepareStatement("SELECT * FROM testBug23197238 WHERE id = ?", ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE);
+        testPstmt.setObject(1, 1, Types.INTEGER);
+        this.rs = testPstmt.executeQuery();
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, docs[0]);
+        this.rs.updateRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateObject(2, docs[2]);
+        this.rs.insertRow();
+        testPstmt.close();
+
+        testBug23197238Assert(docs);
+
+        testConn.close();
+    }
+
+    private void testBug23197238Assert(String[] expected) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug23197238");
+        for (String e : expected) {
+            assertTrue(this.rs.next());
+            assertEquals(e, this.rs.getString(2));
+        }
+        assertFalse(this.rs.next());
+    }
 }
