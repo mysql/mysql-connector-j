@@ -5052,10 +5052,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
 
         /*
-         * \u4E2D\u56FD = 中国 (Simplified Chinese): "China"
-         * \u65E5\u672C = 日本 (Japanese): "Japan"
-         * \uD83D\uDC2C = 🐬 (Emoji): "Dolphin"
-         * \u263A = ☺ (Symbols): "White Smiling Face"
+         * \u4E2D\u56FD (Simplified Chinese): "China"
+         * \u65E5\u672C (Japanese): "Japan"
+         * \uD83D\uDC2C (Emoji): "Dolphin"
+         * \u263A (Symbols): "White Smiling Face"
          */
         String[] data = new String[] { "\u4E2D\u56FD", "\u65E5\u672C", "\uD83D\uDC2C", "\u263A" };
         String jsonTmpl = "{\"data\": \"%s\"}";
