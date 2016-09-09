@@ -783,9 +783,7 @@ public class MysqlIO {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
-
-                return !inTransactionOnServer;
+                return !inTransactionOnServer();
             }
 
             return autoCommitModeOnServer != autoCommitFlag;
@@ -2528,8 +2526,14 @@ public class MysqlIO {
 
             return returnPacket;
         } catch (IOException ioEx) {
+            preserveOldTransactionState();
             throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx,
                     getExceptionInterceptor());
+
+        } catch (SQLException e) {
+            preserveOldTransactionState();
+            throw e;
+
         } finally {
             if (timeoutMillis != 0) {
                 try {
@@ -3964,7 +3968,6 @@ public class MysqlIO {
                     throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0, errno);
                 }
                 throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, false, getExceptionInterceptor(), this.connection);
-
             }
 
             serverErrorMessage = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
@@ -4950,14 +4953,18 @@ public class MysqlIO {
     }
 
     private void checkTransactionState(int oldStatus) throws SQLException {
-        boolean previouslyInTrans = ((oldStatus & SERVER_STATUS_IN_TRANS) != 0);
-        boolean currentlyInTrans = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
+        boolean previouslyInTrans = (oldStatus & SERVER_STATUS_IN_TRANS) != 0;
+        boolean currentlyInTrans = inTransactionOnServer();
 
         if (previouslyInTrans && !currentlyInTrans) {
             this.connection.transactionCompleted();
         } else if (!previouslyInTrans && currentlyInTrans) {
             this.connection.transactionBegun();
         }
+    }
+
+    private void preserveOldTransactionState() {
+        this.serverStatus |= (this.oldServerStatus & SERVER_STATUS_IN_TRANS);
     }
 
     protected void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {

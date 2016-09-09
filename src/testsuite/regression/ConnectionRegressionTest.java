@@ -9812,4 +9812,41 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn.close();
         } while ((useLocTransSt = !useLocTransSt) || (useElideSetAC = !useElideSetAC));
     }
+
+    /**
+     * Tests fix for Bug#75209 - Set useLocalTransactionState may result in partially committed transaction.
+     */
+    public void testBug75209() throws Exception {
+        createTable("testBug75209", "(id INT PRIMARY KEY)", "InnoDB");
+
+        boolean useLocTransSt = false;
+        do {
+            this.stmt.executeUpdate("TRUNCATE TABLE testBug75209");
+            this.stmt.executeUpdate("INSERT INTO testBug75209 VALUES (1)");
+
+            final String testCase = String.format("Case: [LocTransSt: %s]", useLocTransSt ? "Y" : "N");
+
+            final Connection testConn = getConnectionWithProps("useLocalTransactionState=" + useLocTransSt);
+            testConn.setAutoCommit(false);
+
+            final Statement testStmt = testConn.createStatement();
+            try {
+                assertEquals(testCase, 1, testStmt.executeUpdate("INSERT INTO testBug75209 VALUES(2)"));
+
+                // This triggers Duplicate-key exception
+                testStmt.executeUpdate("INSERT INTO testBug75209 VALUES(2)");
+                fail(testCase + ": SQLException expected here!");
+            } catch (Exception e) {
+                testConn.rollback();
+            }
+            testStmt.close();
+
+            testConn.setAutoCommit(true);
+            testConn.close();
+
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM testBug75209");
+            assertTrue(this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+        } while (useLocTransSt = !useLocTransSt);
+    }
 }

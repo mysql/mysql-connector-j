@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#75209 (20212882), Set useLocalTransactionState may result in partially committed transaction.
+
   - Fix for Bug#23197238, EXECUTEQUERY() FAILS FOR JSON DATA WHEN RESULTSETCONCURRENCY=CONCUR_UPDATABLE.
 
   - Fix for Bug#48346 (11756431), Communications link failure when reading compressed data with compressed=true.
