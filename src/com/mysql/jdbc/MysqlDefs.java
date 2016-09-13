@@ -531,9 +531,9 @@ public final class MysqlDefs {
 
         while (mysqlTypes.hasNext()) {
             String mysqlTypeName = mysqlTypes.next();
-            buf.append(" WHEN ");
+            buf.append(" WHEN UPPER(");
             buf.append(mysqlTypeColumnName);
-            buf.append("='");
+            buf.append(")='");
             buf.append(mysqlTypeName);
             buf.append("' THEN ");
             buf.append(typesMap.get(mysqlTypeName));
@@ -544,7 +544,7 @@ public final class MysqlDefs {
                 buf.append(mysqlTypeColumnName);
                 buf.append("='");
                 buf.append(mysqlTypeName);
-                buf.append(" unsigned' THEN ");
+                buf.append(" UNSIGNED' THEN ");
                 buf.append(typesMap.get(mysqlTypeName));
             }
         }

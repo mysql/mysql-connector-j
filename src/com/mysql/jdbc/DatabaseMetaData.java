@@ -4089,7 +4089,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 void forEach(String catalogStr) throws SQLException {
                     String db = catalogStr;
 
-                    boolean fromSelect = false;
                     ResultSet proceduresRs = null;
                     boolean needsClientFiltering = true;
 
@@ -4097,11 +4096,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE ");
                     if (returnProcedures && !returnFunctions) {
-                        selectFromMySQLProcSQL.append("type = 'PROCEDURE' and ");
+                        selectFromMySQLProcSQL.append("type = 'PROCEDURE' AND ");
                     } else if (!returnProcedures && returnFunctions) {
-                        selectFromMySQLProcSQL.append("type = 'FUNCTION' and ");
+                        selectFromMySQLProcSQL.append("type = 'FUNCTION' AND ");
                     }
-                    selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name, type");
+                    selectFromMySQLProcSQL.append("name LIKE ? AND db <=> ? ORDER BY name, type");
 
                     java.sql.PreparedStatement proceduresStmt = prepareMetaDataSafeStatement(selectFromMySQLProcSQL.toString());
 
@@ -4109,9 +4108,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         //
                         // Try using system tables first, as this is a little bit more efficient....
                         //
-
-                        boolean hasTypeColumn = false;
-
                         if (db != null) {
                             if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
                                 db = db.toLowerCase();
@@ -4127,49 +4123,41 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         try {
                             proceduresRs = proceduresStmt.executeQuery();
-                            fromSelect = true;
                             needsClientFiltering = false;
-                            hasTypeColumn = true;
-                        } catch (SQLException sqlEx) {
 
-                            //
-                            // Okay, system tables aren't accessible, so use 'SHOW ....'....
-                            //
-                            proceduresStmt.close();
-
-                            fromSelect = false;
-
-                            if (DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 1)) {
-                                nameIndex = 2;
-                            } else {
-                                nameIndex = 1;
+                            if (returnProcedures) {
+                                convertToJdbcProcedureList(true, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
                             }
 
-                            proceduresStmt = prepareMetaDataSafeStatement("SHOW PROCEDURE STATUS LIKE ?");
+                            if (returnFunctions) {
+                                convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                            }
 
-                            proceduresStmt.setString(1, procNamePattern);
+                        } catch (SQLException sqlEx) {
+                            nameIndex = DatabaseMetaData.this.conn.versionMeetsMinimum(5, 0, 1) ? 2 : 1;
 
-                            proceduresRs = proceduresStmt.executeQuery();
-                        }
+                            // System tables aren't accessible, so use 'SHOW [FUNCTION|PROCEDURE] STATUS instead.
+                            // Functions first:
+                            if (returnFunctions) {
+                                proceduresStmt.close();
 
-                        if (returnProcedures) {
-                            convertToJdbcProcedureList(fromSelect, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
-                        }
+                                proceduresStmt = prepareMetaDataSafeStatement("SHOW FUNCTION STATUS LIKE ?");
+                                proceduresStmt.setString(1, procNamePattern);
+                                proceduresRs = proceduresStmt.executeQuery();
 
-                        if (!hasTypeColumn) {
-                            // need to go after functions too...
-                            proceduresStmt.close();
+                                convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                            }
 
-                            proceduresStmt = prepareMetaDataSafeStatement("SHOW FUNCTION STATUS LIKE ?");
+                            // Procedures next:
+                            if (returnProcedures) {
+                                proceduresStmt.close();
 
-                            proceduresStmt.setString(1, procNamePattern);
+                                proceduresStmt = prepareMetaDataSafeStatement("SHOW PROCEDURE STATUS LIKE ?");
+                                proceduresStmt.setString(1, procNamePattern);
+                                proceduresRs = proceduresStmt.executeQuery();
 
-                            proceduresRs = proceduresStmt.executeQuery();
-
-                        }
-                        //Should be here, not in IF block!
-                        if (returnFunctions) {
-                            convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                                convertToJdbcProcedureList(false, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
+                            }
                         }
 
                     } finally {

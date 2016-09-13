@@ -5011,7 +5011,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
         Properties props = new Properties();
         props.setProperty("connectionAttributes", "first:one,again:two");
-        props.setProperty("user", "root");
+        props.setProperty("user", getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.USER_PROPERTY_KEY));
         Connection attConn = super.getConnectionWithProps(props);
         ResultSet rslt = attConn.createStatement()
                 .executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");

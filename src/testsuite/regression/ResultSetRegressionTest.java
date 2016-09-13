@@ -1530,16 +1530,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug12104() throws Exception {
-        if (versionMeetsMinimum(4, 1)) {
-            createTable("testBug12104", "(field1 GEOMETRY)", "MyISAM");
+        createTable("testBug12104", "(field1 GEOMETRY)", "MyISAM");
 
+        if (!versionMeetsMinimum(5, 6)) {
             this.stmt.executeUpdate("INSERT INTO testBug12104 VALUES (GeomFromText('POINT(1 1)'))");
-            this.pstmt = this.conn.prepareStatement("SELECT field1 FROM testBug12104");
-            this.rs = this.pstmt.executeQuery();
-            assertTrue(this.rs.next());
-            System.out.println(this.rs.getObject(1));
-
+        } else {
+            this.stmt.executeUpdate("INSERT INTO testBug12104 VALUES (ST_GeomFromText('POINT(1 1)'))");
         }
+        this.pstmt = this.conn.prepareStatement("SELECT field1 FROM testBug12104");
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.next());
+        System.out.println(this.rs.getObject(1));
     }
 
     /**

@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.40
 
+  - Fix for Bug#24619829, NEW FAILURES IN C/JAVA UNITTESTS AGAINST MYSQL 8.0.
+
   - Fix for Bug#75209 (20212882), Set useLocalTransactionState may result in partially committed transaction.
 
   - Fix for Bug#23197238, EXECUTEQUERY() FAILS FOR JSON DATA WHEN RESULTSETCONCURRENCY=CONCUR_UPDATABLE.
