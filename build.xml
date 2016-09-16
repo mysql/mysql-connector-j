@@ -136,6 +136,8 @@ com.mysql.cj.build.driver.version.status - optional
 com.mysql.cj.build.driver.version.extra - optional
 com.mysql.cj.build.driver.version.snapshot - optional, default '-SNAPSHOT'
 com.mysql.cj.build.driver.version - ${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}${com.mysql.cj.build.driver.version.status}
+com.mysql.cj.build.driver.version.series - product series, i.e. x.y
+com.mysql.cj.build.driver.version.numeric - numeric version, i.e. x.y.z
 com.mysql.cj.build.driver.version.full - ${version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}
 
 com.mysql.cj.build.driver.displayName - default 'MySQL Connector Java'
@@ -151,6 +153,7 @@ com.mysql.cj.dist.dir.prepare - directory for preparing packages, default ${com.
 com.mysql.cj.dist.dir.package - directory for preparing packages for given driver full name, default ${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.build.driver.fullName}
 com.mysql.cj.dist.dir.prebuilt.docs - where to take prebuilt documentation files for adding them to packages, default /tmp/connectorj/docs/prebuilt
 
+com.mysql.cj.build.deb.maintainerEmail - the deb package maintainer email, default 'MySQL Release Engineering &lt;mysql-build@oss.oracle.com&gt;'
 
 Available test properties
 =========================
@@ -182,7 +185,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.build.driver.version.subminor" value="5" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
-    <property name="com.mysql.cj.build.driver.version" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}${com.mysql.cj.build.driver.version.status}" />
+    <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
+    <property name="com.mysql.cj.build.driver.version.numeric" value="${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}" />
+    <property name="com.mysql.cj.build.driver.version" value="${com.mysql.cj.build.driver.version.numeric}${com.mysql.cj.build.driver.version.status}" />
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector Java" />
     <property name="com.mysql.cj.build.driver.version.snapshot" value="-SNAPSHOT" />
@@ -197,6 +202,8 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.dist.dir" value="./dist" />
     <property name="com.mysql.cj.dist.dir.prepare" value="${com.mysql.cj.dist.dir}/toArchive" />
     <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.build.driver.fullName}" />
+
+    <property name="com.mysql.cj.build.deb.maintainerEmail" value="MySQL Release Engineering &lt;mysql-build@oss.oracle.com&gt;" />
 
     <property name="com.mysql.cj.testsuite.build.dir" value="./buildtest" />
     <property name="com.mysql.cj.testsuite.junit.results" value="${com.mysql.cj.testsuite.build.dir}/junit" />
@@ -1257,6 +1264,126 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <condition property="com.mysql.cj.coverage.report.dir.final" value="${com.mysql.cj.coverage.report.dir}" else="${com.mysql.cj.coverage.result.dir.final}/report">
             <isset property="com.mysql.cj.coverage.report.dir" />
         </condition>
+    </target>
+
+
+    <!-- *********************************** -->
+    <!-- ******** RPM/DEB PACKAGING ******** -->
+    <!-- *********************************** -->
+
+    <tstamp>
+      <format property="time.year"      pattern="yyyy"/>
+      <format property="time.month"     pattern="mm"/>
+      <format property="time.day"       pattern="dd"/>
+      <format property="time.dayOfWeek" pattern="EEE"/>
+      <format property="time.dayTime"   pattern="HH:mm:ss"/>
+      <format property="time.timeZone"  pattern="HH:mm:ss"/>
+    </tstamp>
+
+    <filterset id="packaging-common">
+      <filter token="MYSQL_CJ_VERSION" value="${com.mysql.cj.build.driver.version.numeric}" />
+      <filter token="MYSQL_CJ_VERSION_STATUS" value="${com.mysql.cj.build.driver.version.status}" />
+      <filter token="MYSQL_CJ_VERSION_EXTRA" value="${com.mysql.cj.build.driver.version.extra}" />
+      <filter token="MYSQL_CJ_VERSION_SNAPSHOT" value="${com.mysql.cj.build.driver.version.snapshot}" />
+    </filterset>
+
+    <!-- *********************************** -->
+    <!-- ******** DEB PACKAGING ******** -->
+    <!-- *********************************** -->
+
+    <target name="prepare-debian-commercial-props" if="com.mysql.cj.build.commercial" >
+      <echo message="Using Commercial settings"/>
+      <property name="product_suffix" value="-commercial" />
+      <property name="lic_file" value="LICENSE.mysql" />
+    </target>
+
+    <target name="prepare-debian-gpl-props" unless="com.mysql.cj.build.commercial" >
+      <echo message="Using GPL settings"/>
+      <property name="product_suffix" value="" />
+      <property name="lic_file" value="COPYING" />
+    </target>
+
+    <target name="build-debian-pkg"
+        depends="prepare-debian-commercial-props, prepare-debian-gpl-props">
+        <exec executable="lsb_release"
+              outputproperty="lsb_id">
+          <arg value="--short"/>
+          <arg value="--id"/>
+        </exec>
+        <exec executable="lsb_release"
+              outputproperty="lsb_release">
+          <arg value="--short"/>
+          <arg value="--release"/>
+        </exec>
+        <exec executable="lsb_release"
+              outputproperty="codename">
+          <arg value="--short"/>
+          <arg value="--codename"/>
+        </exec>
+        <!-- Make OS name lowercase and for debian use only major version number -->
+        <exec executable="perl"
+              inputstring="${lsb_id}${lsb_release}"
+              outputproperty="id_release">
+          <arg value="-ne"/>
+          <arg value="s/(debian\d+).*/$1/i; print lc"/>
+        </exec>
+
+        <delete dir="build/deb"/>
+
+        <!-- The tar task doesn't like the './' in the 'excludes' filter -->
+        <script language="javascript">
+          var orig = project.getProperty("com.mysql.cj.dist.dir");
+          project.setProperty("com.mysql.cj.dist.dir.filter", orig.replace("./", ""));
+        </script>
+        <property name="orig_package_name" value="mysql-connector-java${product_suffix}_${com.mysql.cj.build.driver.version.full}${id_release}.orig.tar.gz" />
+        <tar destfile="build/deb/${orig_package_name}"
+          basedir="." compression="gzip"
+          excludes="${com.mysql.cj.dist.dir.filter}/** build/**"/>
+
+        <copy todir="build/deb/src" overwrite="true">
+          <fileset dir="." excludes="${com.mysql.cj.dist.dir.filter}/** build/**"/>
+        </copy>
+
+        <tstamp>
+          <format property="time.deb.packageTimeStamp" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
+        </tstamp>
+
+        <copy todir="build/deb/src/debian"
+          overwrite="true">
+            <fileset dir="src/build/misc/debian.in"/>
+            <filterset refid="packaging-common" />
+            <filterset>
+                <filter token="PRODUCT" value="MySQL Connector/J ${com.mysql.cj.build.driver.version.series}" />
+                <filter token="WITH_JARDEPS" value="${com.mysql.cj.extra.libs}" />
+                <filter token="YEAR" value="${time.year}" />
+                <filter token="PACKAGE_TIMESTAMP" value="${time.deb.packageTimeStamp}" />
+                <filter token="ID_RELEASE" value="${id_release}" />
+                <filter token="CODENAME" value="${codename}" />
+                <filter token="LIC_FILE" value="${lic_file}" />
+                <filter token="PRODUCT_SUFFIX" value="${product_suffix}" />
+                <filter token="VERSION_FULL" value="${com.mysql.cj.build.driver.version.full}" />
+                <filter token="MAINTAINER_EMAIL" value="${com.mysql.cj.build.deb.maintainerEmail}" />
+            </filterset>
+        </copy>
+
+        <exec executable="debuild"
+              dir="build/deb/src"
+              failonerror="true">
+          <arg value="--set-envvar=ANT_HOME=${ant.home}"/>
+          <arg value="--set-envvar=JAVA_HOME=${com.mysql.cj.build.jdk}"/>
+          <arg value="--set-envvar=COMMERCIAL=${com.mysql.cj.build.commercial}"/>
+          <arg value="-uc"/>
+          <arg value="-us"/>
+          <arg value="-j4"/>
+        </exec>
+
+        <!-- We can't control the output file path for debuild, so we move/cleanup the files post build -->
+        <move todir="${com.mysql.cj.dist.dir}">
+          <fileset dir="build/deb">
+            <exclude name="src/**"/>
+            <exclude name="${orig_package_name}"/>
+          </fileset>
+        </move>
     </target>
 
 

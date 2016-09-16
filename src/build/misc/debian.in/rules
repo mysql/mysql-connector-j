@@ -1,0 +1,85 @@
+#!/usr/bin/make -f
+# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+#
+# The MySQL Connector/J is licensed under the terms of the GPLv2
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+# There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+# this software, see the FOSS License Exception
+# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+#
+# This program is free software; you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software Foundation; version 2
+# of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this
+# program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+# Floor, Boston, MA 02110-1301  USA
+
+upstream_version := $(shell dpkg-parsechangelog | sed -n -e'/^Version: / { s/Version: //; s/-[^-]\+$$//; p }')
+base_version = $(shell echo $(upstream_version) | sed -e's/r[0-9]\+$$//')
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+ANT_COMMON_OPTIONS=\
+  -Dcom.mysql.cj.build.dir.driver=build/driver \
+ -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
+ -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
+ -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
+  -Dcom.mysql.cj.extra.libs=@WITH_JARDEPS@ \
+  -Dcom.mysql.cj.build.driver.extraName=@PRODUCT_SUFFIX@ \
+  -Djava.awt.headless=true
+
+ifeq ($(ANT_HOME),)
+ANT_CMD=ant
+else
+ANT_CMD=$(ANT_HOME)/bin/ant
+endif
+
+ANT_OPTS=-Xmx512M
+
+ifneq ($(JAVA_HOME),)
+ANT_JAVA_OPT=-Dcom.mysql.cj.build.jdk=$(JAVA_HOME)
+endif
+
+ifneq ($(COMMERCIAL),)
+ANT_COM_OPT=-Dcom.mysql.cj.build.commercial=true
+endif
+
+%:
+    #dh $@ --with autoreconf
+    dh  $@
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+    echo $(PATH)
+    echo $(JAVA_HOME)
+    $(ANT_CMD) \
+      $(ANT_COMMON_OPTIONS) \
+      $(ANT_JAVA_OPT) \
+      $(ANT_COM_OPT) \
+      full-package-no-sources
+
+# Do nothing; the test suite requires a sql server, so we can't run it
+# as part of the build.
+#override_dh_auto_test:
+
+# we should never need to run this for our plugin package; running it creates
+# a spurious shlibs file that shouldn't be there.
+#override_dh_shlibdeps:
+#    dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
+#TMP_INSTDIR = $(CURDIR)/debian/tmp
+#
+#PRIVATE_BINDIR = /usr/lib/mysqlsh
+#TMP_PRIVATE_BINDIR = $(TMP_INSTDIR)$(PRIVATE_BINDIR)
+#
+override_dh_auto_clean:
+    $(ANT_CMD) clean
+#
+#override_dh_auto_install:
+#    dh_auto_install -- libdir=$(PRIVATE_BINDIR) DESTDIR=$(TMP_INSTDIR)

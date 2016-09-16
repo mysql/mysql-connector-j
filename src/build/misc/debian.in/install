@@ -1,0 +1,5 @@
+dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@-bin.jar usr/share/java
+
+#legal
+dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/@LIC_FILE@ usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
+dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/README usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@

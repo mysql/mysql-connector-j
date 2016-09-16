@@ -1,0 +1,20 @@
+Source: mysql-connector-java@PRODUCT_SUFFIX@
+Section: database
+Priority: optional
+Maintainer: Oracle MySQL Product Engineering Team <mysql-build@oss.oracle.com>
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8.9.4)
+Homepage: http://dev.mysql.com/downloads/connector/j/
+#Build-Depends: debhelper (>= 8.9.4), javahelper (>=0.25)
+#Build-Depends-Indep: default-jdk, default-jdk-doc, ant
+#Vcs-Git: git://git.debian.org/collab-maint/mysql-connector-java.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/mysql-connector-java.git;a=summary
+
+Package: mysql-connector-java@PRODUCT_SUFFIX@
+#Section: java
+Section: database
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}, libprotobuf-java
+Description: MySQL Connector/J
+ Standardized MySQL database driver for Java

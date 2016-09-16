@@ -1,0 +1,5 @@
+mysql-connector-java@PRODUCT_SUFFIX@ (@MYSQL_CJ_VERSION@@ID_RELEASE@) @CODENAME@; urgency=low
+
+  * Updating the packaging source for mysql-connector-java.
+
+ -- @MAINTAINER_EMAIL@  @PACKAGE_TIMESTAMP@
