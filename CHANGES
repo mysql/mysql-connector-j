@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+mm-dd-yy - Version 5.1.41
+
 09-30-16 - Version 5.1.40
 
   - Fix for Bug#24619829, NEW FAILURES IN C/JAVA UNITTESTS AGAINST MYSQL 8.0.
