@@ -32,4 +32,17 @@ package com.mysql.cj.api.x;
  */
 public interface XSession extends BaseSession {
 
+    /**
+     * Create a "virtual" {@link NodeSession} instance, the one which shares the connection to the router with the XSession used to create it.
+     * <p>
+     * The lifespan of a virtual NodeSession is bound to the lifespan of the XSession that created it.
+     * A virtual NodeSession offers the same functionality as a normal NodeSession.
+     * <p>
+     * XSession.close() will also close any virtual NodeSession instance bound to this XSession.
+     * A virtual NodeSession.close() closes only the NodeSession, the parent XSession remains valid.
+     * <p>
+     * Sharing the connection to the router also means that any pending result of virtual NodeSession is flushed before starting a new XSession command
+     * and vice versa.
+     */
+    NodeSession bindToDefaultShard();
 }

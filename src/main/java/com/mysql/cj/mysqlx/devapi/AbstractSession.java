@@ -57,6 +57,9 @@ public abstract class AbstractSession implements BaseSession {
         this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
+    protected AbstractSession() {
+    }
+
     public List<Schema> getSchemas() {
         Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
         Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
@@ -65,6 +68,10 @@ public abstract class AbstractSession implements BaseSession {
 
     public Schema getSchema(String schemaName) {
         return new SchemaImpl(this, schemaName);
+    }
+
+    public String getDefaultSchemaName() {
+        return this.defaultSchemaName;
     }
 
     public Schema getDefaultSchema() {

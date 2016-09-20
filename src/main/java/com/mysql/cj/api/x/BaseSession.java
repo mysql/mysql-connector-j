@@ -43,6 +43,11 @@ public interface BaseSession {
     Schema getSchema(String schemaName);
 
     /**
+     * Retrieve the default schema name which may be configured at connect time.
+     */
+    String getDefaultSchemaName();
+
+    /**
      * Retrieve the default schema which may be configured at connect time.
      */
     Schema getDefaultSchema();
