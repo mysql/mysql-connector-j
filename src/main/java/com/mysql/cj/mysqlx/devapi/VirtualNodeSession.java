@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,21 +23,24 @@
 
 package com.mysql.cj.mysqlx.devapi;
 
-import java.util.Properties;
+import com.mysql.cj.api.x.XSession;
 
-import com.mysql.cj.api.x.NodeSession;
+public class VirtualNodeSession extends NodeSessionImpl {
 
-public class NodeSessionImpl extends AbstractSession implements NodeSession {
+    protected VirtualNodeSession(XSession xsession) {
+        this.session = xsession.getMysqlxSession();
+        this.defaultSchemaName = xsession.getDefaultSchemaName();
 
-    public NodeSessionImpl(Properties properties) {
-        super(properties);
     }
 
-    protected NodeSessionImpl() {
+    @Override
+    public void close() {
+        this.session = null;
     }
 
-    public SqlStatementImpl sql(String sql) {
-        return new SqlStatementImpl(this, sql);
+    @Override
+    public boolean isOpen() {
+        return this.session != null && this.session.isOpen();
     }
 
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,10 +25,25 @@ package com.mysql.cj.mysqlx.devapi;
 
 import java.util.Properties;
 
+import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.XSession;
+import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 
 public class SessionImpl extends AbstractSession implements XSession {
+
     public SessionImpl(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public NodeSession bindToDefaultShard() {
+        // Throws RuntimeError if the XSession is not connected to a farm or the connection to a MySQLd node of the shard fails
+        if (!isOpen()) {
+            throw new ConnectionIsClosedException("Can't bind NodeSession to closed XSession.");
+        }
+
+        // TODO add binding to the _shard_ when available in X Protocol
+
+        return new VirtualNodeSession(this);
     }
 }

@@ -27,13 +27,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.Callable;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.SqlResult;
 import com.mysql.cj.api.x.SqlStatement;
+import com.mysql.cj.api.x.XSession;
+import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.x.MysqlxSessionFactory;
 
 public class NodeSessionTest extends DevApiBaseTestCase {
     @Before
@@ -123,5 +130,78 @@ public class NodeSessionTest extends DevApiBaseTestCase {
         this.session.sql("call basicMultipleResults()");
         this.session.sql("call basicMultipleResults()");
         this.session.sql("call basicMultipleResults()");
+    }
+
+    @Test
+    public void virtualNodeSession() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+
+        sqlUpdate("drop table if exists virtualNodeSession1");
+        sqlUpdate("drop table if exists virtualNodeSession2");
+
+        sqlUpdate("create table virtualNodeSession1 (_id varchar(32), name varchar(20))");
+        sqlUpdate("create table virtualNodeSession2 (_id varchar(32), birthday date, age int)");
+
+        sqlUpdate("insert into virtualNodeSession1 values ('some long UUID', 'Sakila')");
+        sqlUpdate("insert into virtualNodeSession2 values ('some long UUID', '2000-05-27', 14)");
+
+        // 1. Ensure both XSession and NodeSession share the same router connection
+        XSession xsess = new MysqlxSessionFactory().getSession(this.testProperties);
+        NodeSession nsess = xsess.bindToDefaultShard();
+
+        assertEquals(xsess.getMysqlxSession(), nsess.getMysqlxSession()); // server channel is shared for both xsess and nsess
+
+        // 2. select and close NodeSession
+        SqlStatement stmt = nsess.sql("SELECT * FROM virtualNodeSession1 RIGHT JOIN virtualNodeSession2 ON virtualNodeSession1._id = virtualNodeSession2._id");
+        SqlResult res = stmt.execute();
+
+        assertTrue(res.hasData());
+        Row r = res.next();
+        assertEquals("some long UUID", r.getString("_id"));
+        assertEquals("Sakila", r.getString("name"));
+        assertEquals("2000-05-27", r.getString("birthday"));
+        assertEquals(14, r.getInt("age"));
+
+        nsess.close();
+        assertFalse(nsess.isOpen());
+        assertTrue(xsess.isOpen());
+
+        // 3. concurrent use of XSession and NodeSession
+        nsess = xsess.bindToDefaultShard();
+        stmt = nsess.sql("SELECT * FROM virtualNodeSession1");
+        SqlResult res1 = stmt.execute();
+
+        xsess.getSchemas(); // flushes pending res1
+
+        // A session supports processing a single command at a time. Since xsess and nsess share the channel the
+        // pending result of nsess.sql() is flushed before starting a new xsess command.
+        assertThrows(WrongArgumentException.class, "No active result", new Callable<Void>() {
+            public Void call() throws Exception {
+                res1.hasData();
+                return null;
+            }
+        });
+
+        // 4. close XSession
+        nsess = xsess.bindToDefaultShard();
+        assertTrue(nsess.isOpen());
+        assertTrue(xsess.isOpen());
+
+        xsess.close();
+        assertFalse(nsess.isOpen());
+        assertFalse(xsess.isOpen());
+
+        // 5. exception if XSession is disconnected
+        assertThrows(ConnectionIsClosedException.class, "Can't bind NodeSession to closed XSession.", new Callable<Void>() {
+            public Void call() throws Exception {
+                xsess.bindToDefaultShard();
+                return null;
+            }
+        });
+
+        sqlUpdate("drop table if exists virtualNodeSession1");
+        sqlUpdate("drop table if exists virtualNodeSession2");
     }
 }
