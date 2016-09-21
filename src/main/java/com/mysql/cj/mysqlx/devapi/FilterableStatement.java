@@ -46,12 +46,12 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
         return (STMT_T) this;
     }
 
-    public STMT_T sort(String sortFields) {
+    public STMT_T sort(String... sortFields) {
         return orderBy(sortFields);
     }
 
     @SuppressWarnings("unchecked")
-    public STMT_T orderBy(String sortFields) {
+    public STMT_T orderBy(String... sortFields) {
         this.filterParams.setOrder(sortFields);
         return (STMT_T) this;
     }

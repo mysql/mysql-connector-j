@@ -37,11 +37,11 @@ public interface Collection extends DatabaseObject {
      */
     AddStatement add(Map<String, ?> doc);
 
-    /**
-     * Add a document in the form of a JSON string.
-     */
-    AddStatement add(String jsonString);
+    AddStatement add(String... jsonStrings);
 
+    // TODO we have to keep add(DbDoc document) method because the DbDoc does extend the TreeMap<String, JsonValue>,
+    // thus w/o this method the col.add(dbdoc) will call the add(Map<String, ?> doc) method (which is not implemented yet)
+    // instead of add(DbDoc... documents).
     /**
      * Add a document in the form of a DbDoc.
      */
@@ -50,7 +50,7 @@ public interface Collection extends DatabaseObject {
     /**
      * Add a sequence of documents.
      */
-    AddStatement add(DbDoc documents[]);
+    AddStatement add(DbDoc... documents);
 
     /**
      * Create a new find statement retrieving all documents in the collection.

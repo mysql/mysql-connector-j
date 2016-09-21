@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,7 +23,9 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.mysqlx.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr;
@@ -41,14 +43,14 @@ public abstract class FindParams extends FilterParams {
         super(schemaName, collectionName, criteriaString, isRelational);
     }
 
-    public abstract void setFields(String projection);
+    public abstract void setFields(String... projection);
 
     public Object getFields() {
         return this.fields;
     }
 
-    public void setGrouping(String groupBy) {
-        this.grouping = new ExprParser(groupBy, isRelational()).parseExprList();
+    public void setGrouping(String... groupBy) {
+        this.grouping = new ExprParser(Arrays.stream(groupBy).collect(Collectors.joining(", ")), isRelational()).parseExprList();
     }
 
     public Object getGrouping() {

@@ -65,7 +65,7 @@ public class TableDeleteTest extends TableTest {
 
             Table table = this.schema.getTable("testDelete");
             assertEquals(3, table.count());
-            Result res = table.delete().where("age == 13").execute();
+            Result res = table.delete().orderBy("age", "name").where("age == 13").execute();
             assertEquals(null, res.getAutoIncrementValue());
             assertEquals(2, table.count());
 

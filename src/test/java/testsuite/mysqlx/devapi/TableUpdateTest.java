@@ -71,7 +71,8 @@ public class TableUpdateTest extends TableTest {
             assertEquals(null, res.getAutoIncrementValue());
 
             Table view = this.schema.getTable("updatesView");
-            res = view.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 3")).where("name == 'Shakila'").execute();
+            res = view.update().set("name", expr("concat(name, '-updated')")).set("age", expr("age + 3")).where("name == 'Shakila'").orderBy("age", "name")
+                    .execute();
             assertEquals(null, res.getAutoIncrementValue());
 
             RowResult rows = table.select("name, age").where("_id == :theId").bind("theId", 1).execute();

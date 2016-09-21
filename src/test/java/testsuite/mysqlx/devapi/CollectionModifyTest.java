@@ -72,13 +72,17 @@ public class CollectionModifyTest extends CollectionTest {
             return;
         }
         this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
+        this.collection.add("{\"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
 
         this.collection.modify().unset("$.x").unset("$.y").execute();
+        this.collection.modify().unset("$.a", "$.b").execute();
 
         DocResult res = this.collection.find().execute();
         DbDoc jd = res.next();
         assertNull(jd.get("x"));
         assertNull(jd.get("y"));
+        assertNull(jd.get("a"));
+        assertNull(jd.get("b"));
     }
 
     @Test

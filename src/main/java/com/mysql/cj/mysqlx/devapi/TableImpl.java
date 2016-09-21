@@ -83,8 +83,9 @@ public class TableImpl implements Table {
         return new InsertStatementImpl(this, fieldsAndValues);
     }
 
-    public SelectStatement select(String searchFields) {
-        return new SelectStatementImpl(this, searchFields);
+    @Override
+    public SelectStatement select(String... projection) {
+        return new SelectStatementImpl(this, projection);
     }
 
     public UpdateStatement update() {

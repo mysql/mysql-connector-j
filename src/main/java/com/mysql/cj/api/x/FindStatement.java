@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,9 +30,9 @@ import com.mysql.cj.x.json.DbDoc;
  */
 public interface FindStatement extends DataStatement<FindStatement, DocResult, DbDoc> {
     /**
-     * Add/replace the field projection defining the result.
+     * Add/replace the field projections defining the result.
      */
-    FindStatement fields(String projection);
+    FindStatement fields(String... projections);
 
     /**
      * Add/replace the field projection defining the result.
@@ -42,7 +42,7 @@ public interface FindStatement extends DataStatement<FindStatement, DocResult, D
     /**
      * Add/replace the aggregation fields for this query.
      */
-    FindStatement groupBy(String groupBy);
+    FindStatement groupBy(String... groupBy);
 
     /**
      * Add/replace the aggregate criteria for this query.
@@ -52,7 +52,14 @@ public interface FindStatement extends DataStatement<FindStatement, DocResult, D
     /**
      * Add/replace the order specification for this query.
      */
-    FindStatement orderBy(String sortFields);
+    FindStatement orderBy(String... sortFields);
+
+    /**
+     * Add/replace the order specification for this query.
+     * <p>
+     * Synonym for {@link #orderBy(String...)}
+     */
+    FindStatement sort(String... sortFields);
 
     /**
      * Add/replace the document offset for this query.

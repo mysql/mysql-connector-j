@@ -55,7 +55,8 @@ public class AddStatementImpl implements AddStatement {
 
     /* package private */ AddStatementImpl(CollectionImpl collection, DbDoc[] newDocs) {
         this.collection = collection;
-        this.newDocs = Arrays.asList(newDocs);
+        this.newDocs = new ArrayList<>();
+        this.newDocs.addAll(Arrays.asList(newDocs));
     }
 
     public AddStatement add(String jsonString) {
@@ -67,12 +68,7 @@ public class AddStatementImpl implements AddStatement {
         }
     }
 
-    public AddStatement add(DbDoc doc) {
-        this.newDocs.add(doc);
-        return this;
-    }
-
-    public AddStatement add(DbDoc[] docs) {
+    public AddStatement add(DbDoc... docs) {
         this.newDocs.addAll(Arrays.asList(docs));
         return this;
     }

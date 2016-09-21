@@ -74,20 +74,25 @@ public class CollectionImpl implements Collection {
         throw new FeatureNotAvailableException("TODO: ");
     }
 
-    public AddStatement add(String jsonString) {
+    @Override
+    public AddStatement add(String... jsonString) {
         try {
-            DbDoc doc = JsonParser.parseDoc(new StringReader(jsonString));
-            return add(doc);
+            DbDoc[] docs = new DbDoc[jsonString.length];
+            for (int i = 0; i < jsonString.length; i++) {
+                docs[i] = JsonParser.parseDoc(new StringReader(jsonString[i]));
+            }
+            return add(docs);
         } catch (IOException ex) {
             throw AssertionFailedException.shouldNotHappen(ex);
         }
     }
 
+    @Override
     public AddStatement add(DbDoc doc) {
         return new AddStatementImpl(this, doc);
     }
 
-    public AddStatement add(DbDoc[] docs) {
+    public AddStatement add(DbDoc... docs) {
         return new AddStatementImpl(this, docs);
     }
 

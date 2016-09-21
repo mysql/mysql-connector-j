@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     /**
      * Add/replace the order specification for this statement.
      */
-    ModifyStatement sort(String sortFields);
+    ModifyStatement sort(String... sortFields);
 
     /**
      * Add/replace the document limit for this statement.
@@ -48,9 +48,9 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     ModifyStatement change(String docPath, Object value);
 
     /**
-     * Nullify the given field.
+     * Nullify the given fields.
      */
-    ModifyStatement unset(String fields);
+    ModifyStatement unset(String... fields);
 
     /**
      * Unsupported.

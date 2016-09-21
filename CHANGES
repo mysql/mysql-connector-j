@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
+  - Extended DevAPI with flexible parameter lists.
+
 09-05-16 - Version 6.0.4
 
   - X DevAPI URL prefix changed from "mysql:x:" to "mysqlx:".

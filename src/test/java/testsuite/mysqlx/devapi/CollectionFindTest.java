@@ -78,6 +78,13 @@ public class CollectionFindTest extends CollectionTest {
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
+
+        // multiple projection strings
+        docs = this.collection.find().fields("$._id as _id", "$.g as g", "1 + 1 as q").execute();
+        doc = docs.next();
+        assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
+        assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
+        assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
     }
 
     @Test
@@ -321,6 +328,40 @@ public class CollectionFindTest extends CollectionTest {
 
         DbDoc d = this.collection.find().fields("CAST($.x as SIGNED) as x").execute().next();
         assertEquals(new Integer(100), ((JsonNumber) d.get("x")).getInteger());
+    }
+
+    @Test
+    public void testOrderBy() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        this.collection.add("{\"_id\":1, \"x\":20, \"y\":22}").execute();
+        this.collection.add("{\"_id\":2, \"x\":20, \"y\":21}").execute();
+        this.collection.add("{\"_id\":3, \"x\":10, \"y\":40}").execute();
+        this.collection.add("{\"_id\":4, \"x\":10, \"y\":50}").execute();
+
+        DocResult docs = this.collection.find().orderBy("$.x, $.y").execute();
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(3), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(4), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(2), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(1), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertFalse(docs.hasNext());
+
+        // multiple SortExprStr
+        docs = this.collection.find().sort("$.x", "$.y").execute();
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(3), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(4), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(2), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertTrue(docs.hasNext());
+        assertEquals(new Integer(1), ((JsonNumber) docs.next().get("_id")).getInteger());
+        assertFalse(docs.hasNext());
     }
 
     // TODO: test rest of expressions

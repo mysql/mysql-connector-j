@@ -45,9 +45,9 @@ public interface Table extends DatabaseObject {
     InsertStatement insert(Map<String, Object> fieldsAndValues);
 
     /**
-     * Create a new select statement using the given projection.
+     * Create a new select statement using the given projections.
      */
-    SelectStatement select(String projection);
+    SelectStatement select(String... projections);
 
     /**
      * Create a new update statement.

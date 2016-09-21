@@ -26,6 +26,7 @@ package com.mysql.cj.mysqlx;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -69,9 +70,9 @@ public class FilterParams {
         return this.order;
     }
 
-    public void setOrder(String orderExpression) {
+    public void setOrder(String... orderExpression) {
         // TODO: does this support placeholders? how do we prevent it?
-        this.order = new ExprParser(orderExpression, this.isRelational).parseOrderSpec();
+        this.order = new ExprParser(Arrays.stream(orderExpression).collect(Collectors.joining(", ")), this.isRelational).parseOrderSpec();
     }
 
     public Long getLimit() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,9 @@
 
 package com.mysql.cj.mysqlx;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class TableFindParams extends FindParams {
     public TableFindParams(String schemaName, String collectionName) {
         super(schemaName, collectionName, true);
@@ -33,7 +36,7 @@ public class TableFindParams extends FindParams {
     }
 
     @Override
-    public void setFields(String projection) {
-        this.fields = new ExprParser(projection, true).parseTableSelectProjection();
+    public void setFields(String... projection) {
+        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
     }
 }

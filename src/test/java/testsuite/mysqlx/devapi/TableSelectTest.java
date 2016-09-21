@@ -86,6 +86,14 @@ public class TableSelectTest extends TableTest {
         assertEquals("Sakila", row.getString("name"));
         assertEquals("some long UUID", row.getString(1));
         assertEquals("some long UUID", row.getString("_id"));
+
+        // select with multiple projection params
+        rows = table.select("`_id`", "name", "birthday").where("name like :name AND age < :age").bind(params).execute();
+        // verify metadata
+        columnNames = rows.getColumnNames();
+        assertEquals("_id", columnNames.get(0));
+        assertEquals("name", columnNames.get(1));
+        assertEquals("birthday", columnNames.get(2));
     }
 
     @Test
@@ -94,19 +102,19 @@ public class TableSelectTest extends TableTest {
             return;
         }
         sqlUpdate("drop table if exists complexQuery");
-        sqlUpdate("create table complexQuery (name varchar(32), age int)");
-        sqlUpdate("insert into complexQuery values ('Mamie', 11)");
-        sqlUpdate("insert into complexQuery values ('Eulalia', 11)");
-        sqlUpdate("insert into complexQuery values ('Polly', 12)");
-        sqlUpdate("insert into complexQuery values ('Rufus', 12)");
-        sqlUpdate("insert into complexQuery values ('Cassidy', 13)");
-        sqlUpdate("insert into complexQuery values ('Olympia', 14)");
-        sqlUpdate("insert into complexQuery values ('Lev', 14)");
-        sqlUpdate("insert into complexQuery values ('Tierney', 15)");
-        sqlUpdate("insert into complexQuery values ('Octavia', 15)");
-        sqlUpdate("insert into complexQuery values ('Vesper', 16)");
-        sqlUpdate("insert into complexQuery values ('Caspian', 17)");
-        sqlUpdate("insert into complexQuery values ('Romy', 17)");
+        sqlUpdate("create table complexQuery (name varchar(32), age int, something int)");
+        sqlUpdate("insert into complexQuery values ('Mamie', 11, 0)");
+        sqlUpdate("insert into complexQuery values ('Eulalia', 11, 0)");
+        sqlUpdate("insert into complexQuery values ('Polly', 12, 0)");
+        sqlUpdate("insert into complexQuery values ('Rufus', 12, 0)");
+        sqlUpdate("insert into complexQuery values ('Cassidy', 13, 0)");
+        sqlUpdate("insert into complexQuery values ('Olympia', 14, 0)");
+        sqlUpdate("insert into complexQuery values ('Lev', 14, 0)");
+        sqlUpdate("insert into complexQuery values ('Tierney', 15, 0)");
+        sqlUpdate("insert into complexQuery values ('Octavia', 15, 0)");
+        sqlUpdate("insert into complexQuery values ('Vesper', 16, 0)");
+        sqlUpdate("insert into complexQuery values ('Caspian', 17, 0)");
+        sqlUpdate("insert into complexQuery values ('Romy', 17, 0)");
         Table table = this.schema.getTable("complexQuery");
         // Result:
         // age_group | cnt
@@ -117,9 +125,9 @@ public class TableSelectTest extends TableTest {
         // 15        | 2   * first row in result
         // 16        | 1   <-- filtered out by having
         // 17        | 2   <-- filtered out by offset
-        SelectStatement stmt = table.select("age as age_group, count(name) as cnt");
+        SelectStatement stmt = table.select("age as age_group, count(name) as cnt, something");
         stmt.where("age > 11 and 1 < 2 and 40 between 30 and 900");
-        stmt.groupBy("age_group");
+        stmt.groupBy("something", "age_group");
         stmt.having("cnt > 1");
         stmt.orderBy("age_group desc");
         RowResult rows = stmt.limit(2).offset(1).execute();
@@ -376,5 +384,31 @@ public class TableSelectTest extends TableTest {
             sqlUpdate("drop table if exists basicTable2");
             sqlUpdate("drop view if exists basicView");
         }
+    }
+
+    @Test
+    public void testOrderBy() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        sqlUpdate("drop table if exists testOrderBy");
+        sqlUpdate("create table testOrderBy (_id int, x int, y int)");
+        sqlUpdate("insert into testOrderBy values (2,20,21), (1,20,22), (4,10,40), (3,10,50)");
+        Table table = this.schema.getTable("testOrderBy");
+
+        RowResult rows = table.select("_id").orderBy("x desc, y desc").execute();
+        int i = 1;
+        while (rows.hasNext()) {
+            assertEquals(i++, rows.next().getInt("_id"));
+        }
+        assertEquals(5, i);
+
+        // multiple SortExprStr
+        rows = table.select("_id").orderBy("x desc", "y desc").execute();
+        i = 1;
+        while (rows.hasNext()) {
+            assertEquals(i++, rows.next().getInt("_id"));
+        }
+        assertEquals(5, i);
     }
 }

@@ -44,6 +44,15 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         }
     }
 
+    /* package private */ SelectStatementImpl(TableImpl table, String... projection) {
+        super(new TableFindParams(table.getSchema().getName(), table.getName()));
+        this.findParams = (TableFindParams) this.filterParams;
+        this.table = table;
+        if (projection != null && projection.length > 0) {
+            this.findParams.setFields(projection);
+        }
+    }
+
     public RowResultImpl execute() {
         return this.table.getSession().getMysqlxSession().selectRows(this.findParams);
     }
@@ -56,7 +65,8 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         return this.table.getSession().getMysqlxSession().asyncSelectRowsReduce(this.findParams, id, reducer);
     }
 
-    public SelectStatement groupBy(String groupBy) {
+    @Override
+    public SelectStatement groupBy(String... groupBy) {
         this.findParams.setGrouping(groupBy);
         return this;
     }

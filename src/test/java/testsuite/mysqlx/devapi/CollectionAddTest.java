@@ -69,6 +69,24 @@ public class CollectionAddTest extends CollectionTest {
     }
 
     @Test
+    public void testBasicAddStringArray() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        this.collection.add("{\"_id\": 1}", "{\"_id\": 2}").execute();
+        assertEquals(true, this.collection.find("_id = 1").execute().hasNext());
+        assertEquals(true, this.collection.find("_id = 2").execute().hasNext());
+        assertEquals(false, this.collection.find("_id = 3").execute().hasNext());
+
+        this.collection.add(new String[] { "{\"_id\": 3}", "{\"_id\": 4}" }).execute();
+        assertEquals(true, this.collection.find("_id = 1").execute().hasNext());
+        assertEquals(true, this.collection.find("_id = 2").execute().hasNext());
+        assertEquals(true, this.collection.find("_id = 3").execute().hasNext());
+        assertEquals(true, this.collection.find("_id = 4").execute().hasNext());
+        assertEquals(false, this.collection.find("_id = 5").execute().hasNext());
+    }
+
+    @Test
     public void testBasicAddDoc() {
         if (!this.isSetForMySQLxTests) {
             return;
@@ -83,6 +101,25 @@ public class CollectionAddTest extends CollectionTest {
         DbDoc d = docs.next();
         JsonString val = (JsonString) d.get("lastName");
         assertEquals("O'Keeffe", val.getString());
+    }
+
+    @Test
+    public void testBasicAddDocArray() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        Result res = this.collection.add(new DbDoc().add("f1", new JsonString().setValue("doc1")), new DbDoc().add("f1", new JsonString().setValue("doc2")))
+                .execute();
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        DocResult docs = this.collection.find("f1 like 'doc%'").execute();
+        assertEquals(2, docs.count());
+
+        res = this.collection
+                .add(new DbDoc[] { new DbDoc().add("f1", new JsonString().setValue("doc3")), new DbDoc().add("f1", new JsonString().setValue("doc4")) })
+                .execute();
+        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        docs = this.collection.find("f1 like 'doc%'").execute();
+        assertEquals(4, docs.count());
     }
 
     @Test

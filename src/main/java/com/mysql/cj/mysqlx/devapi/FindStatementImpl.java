@@ -56,7 +56,8 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
         return this.collection.getSession().getMysqlxSession().asyncFindDocsReduce(this.findParams, id, reducer);
     }
 
-    public FindStatement fields(String projection) {
+    @Override
+    public FindStatement fields(String... projection) {
         this.findParams.setFields(projection);
         return this;
     }
@@ -66,7 +67,8 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
         return this;
     }
 
-    public FindStatement groupBy(String groupBy) {
+    @Override
+    public FindStatement groupBy(String... groupBy) {
         this.findParams.setGrouping(groupBy);
         return this;
     }

@@ -24,8 +24,10 @@
 package com.mysql.cj.mysqlx.devapi;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.ModifyStatement;
 import com.mysql.cj.api.x.Result;
@@ -46,45 +48,54 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
         }
     }
 
+    @Override
     public Result execute() {
         StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().updateDocs(this.filterParams, this.updates);
         return new UpdateResult(ok, null);
     }
 
+    @Override
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncUpdateDocs(this.filterParams, this.updates);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 
+    @Override
     public ModifyStatement set(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ITEM_SET, docPath).setValue(value));
         return this;
     }
 
+    @Override
     public ModifyStatement change(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ITEM_REPLACE, docPath).setValue(value));
         return this;
     }
 
-    public ModifyStatement unset(String docPath) {
-        this.updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, docPath));
+    @Override
+    public ModifyStatement unset(String... fields) {
+        this.updates.addAll(Arrays.stream(fields).map(docPath -> new UpdateSpec(UpdateType.ITEM_REMOVE, docPath)).collect(Collectors.toList()));
         return this;
     }
 
+    @Override
     public ModifyStatement merge(String document) {
         throw new FeatureNotAvailableException("TODO: not supported in xplugin");
     }
 
+    @Override
     public ModifyStatement arrayInsert(String field, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_INSERT, field).setValue(value));
         return this;
     }
 
+    @Override
     public ModifyStatement arrayAppend(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
         return this;
     }
 
+    @Override
     public ModifyStatement arrayDelete(String field, int position) {
         throw new FeatureNotAvailableException("TODO: not supported in xplugin");
     }
