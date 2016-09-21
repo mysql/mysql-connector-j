@@ -2,7 +2,9 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
-  - Extended DevAPI with flexible parameter lists.
+  - Extended X DevAPI with flexible parameter lists.
+  
+  - Added a virtual NodeSession to X DevAPI. 
 
 09-05-16 - Version 6.0.4
 
