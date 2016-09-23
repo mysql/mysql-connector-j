@@ -44,7 +44,6 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.BalanceStrategy;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.HostInfo;
@@ -53,7 +52,6 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.log.NullLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionGroup;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
@@ -99,8 +97,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     private long transactionCount = 0;
 
     private LoadBalanceExceptionChecker exceptionChecker;
-
-    private Log log = new NullLogger("LoadBalancingConnectionProxy");
 
     private static Class<?>[] INTERFACES_TO_PROXY = new Class<?>[] { LoadBalancedConnection.class, JdbcConnection.class };
 
@@ -226,8 +222,10 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         try {
             String lbExceptionChecker = props.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
                     StandardLoadBalanceExceptionChecker.class.getName());
-            this.exceptionChecker = (LoadBalanceExceptionChecker) Util
-                    .loadExtensions(null, props, lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null, this.log).get(0);
+            this.exceptionChecker = (LoadBalanceExceptionChecker) Util.getInstance(lbExceptionChecker, new Class<?>[0], new Object[0], null,
+                    Messages.getString("InvalidLoadBalanceExceptionChecker"));
+            this.exceptionChecker.init(props);
+
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e, null);
         }

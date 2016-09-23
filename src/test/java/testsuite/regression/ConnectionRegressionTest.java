@@ -6736,7 +6736,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug75168LoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public void init(Properties props) {
         }
 
         public void destroy() {
