@@ -46,7 +46,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -261,7 +261,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getStatementComment();
     }
 
-    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
+    public List<StatementInterceptor> getStatementInterceptorsInstances() {
         return getActiveMySQLConnection().getStatementInterceptorsInstances();
     }
 

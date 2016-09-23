@@ -69,7 +69,7 @@ import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -527,7 +527,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private boolean storesLowerCaseTableName;
 
-    private List<StatementInterceptorV2> statementInterceptors;
+    private List<StatementInterceptor> statementInterceptors;
 
     /**
      * If a CharsetEncoder is required for escaping. Needed for SJIS and related
@@ -666,13 +666,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public void initializeSafeStatementInterceptors() throws SQLException {
         this.isClosed = false;
         this.statementInterceptors = Util
-                .<StatementInterceptorV2> loadClasses(
+                .<StatementInterceptor> loadClasses(
                         getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
                         "MysqlIo.BadStatementInterceptor", getExceptionInterceptor())
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
 
-    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
+    public List<StatementInterceptor> getStatementInterceptorsInstances() {
         return this.statementInterceptors;
     }
 

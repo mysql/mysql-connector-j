@@ -31,13 +31,13 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 
-public class ServerStatusDiffInterceptor implements StatementInterceptorV2 {
+public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Map<String, String> preExecuteValues = new HashMap<String, String>();
 
@@ -47,7 +47,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptorV2 {
 
     private Log log;
 
-    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log l) {
+    public StatementInterceptor init(MysqlConnection conn, Properties props, Log l) {
         this.connection = (JdbcConnection) conn;
         this.log = l;
         return this;

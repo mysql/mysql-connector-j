@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
@@ -41,11 +41,11 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
-public class ResultSetScannerInterceptor implements StatementInterceptorV2 {
+public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     protected Pattern regexP;
 
-    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
         String regexFromUser = props.getProperty(PropertyDefinitions.PNAME_resultSetScannerRegex);
 
         if (regexFromUser == null || regexFromUser.length() == 0) {

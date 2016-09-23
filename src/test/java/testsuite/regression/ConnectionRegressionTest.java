@@ -101,7 +101,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -6752,7 +6752,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }
@@ -7887,7 +7887,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }

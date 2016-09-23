@@ -29,12 +29,12 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
-public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2 {
+public class LoadBalancedAutoCommitInterceptor implements StatementInterceptor {
     private int matchingAfterStatementCount = 0;
     private int matchingAfterStatementThreshold = 0;
     private String matchingAfterStatementRegex;
@@ -50,7 +50,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public StatementInterceptorV2 init(MysqlConnection connection, Properties props, Log log) {
+    public StatementInterceptor init(MysqlConnection connection, Properties props, Log log) {
         this.conn = (JdbcConnection) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");

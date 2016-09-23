@@ -53,7 +53,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
@@ -166,7 +166,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     protected boolean platformDbCharsetMatches = true; // changed once we've connected.
 
     private int statementExecutionDepth = 0;
-    private List<StatementInterceptorV2> statementInterceptors;
+    private List<StatementInterceptor> statementInterceptors;
 
     private ReadableProperty<Boolean> maintainTimeStats;
     private ReadableProperty<Integer> maxQuerySizeToLog;
@@ -1071,7 +1071,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         T previousResultSet = null;
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
+            StatementInterceptor interceptor = this.statementInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
@@ -1103,7 +1103,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             Exception statementException) {
 
         for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
+            StatementInterceptor interceptor = this.statementInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
@@ -1331,11 +1331,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
         return this.commandCount;
     }
 
-    public void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
+    public void setStatementInterceptors(List<StatementInterceptor> statementInterceptors) {
         this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
     }
 
-    public List<StatementInterceptorV2> getStatementInterceptors() {
+    public List<StatementInterceptor> getStatementInterceptors() {
         return this.statementInterceptors;
     }
 

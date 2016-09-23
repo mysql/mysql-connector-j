@@ -83,7 +83,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -5719,7 +5719,7 @@ public class StatementRegressionTest extends BaseTestCase {
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }
@@ -8966,7 +8966,7 @@ public class StatementRegressionTest extends BaseTestCase {
         private boolean sendFracSecs = false;
 
         @Override
-        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_sendFractionalSeconds));
             return this;
         }
@@ -9070,7 +9070,7 @@ public class StatementRegressionTest extends BaseTestCase {
         private int execCounter = 0;
 
         @Override
-        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
             // TODO Auto-generated method stub
             super.init(conn, props, log);
             System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts) + " | rewriteBatchedStatements: "

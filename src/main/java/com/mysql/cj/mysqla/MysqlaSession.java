@@ -45,7 +45,7 @@ import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -369,7 +369,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         }
     }
 
-    public void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
+    public void setStatementInterceptors(List<StatementInterceptor> statementInterceptors) {
         this.protocol.setStatementInterceptors(statementInterceptors);
     }
 

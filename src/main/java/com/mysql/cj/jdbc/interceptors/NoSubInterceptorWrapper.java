@@ -28,7 +28,7 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
@@ -36,11 +36,11 @@ import com.mysql.cj.core.Messages;
 /**
  * Wraps statement interceptors during driver startup so that they don't produce different result sets than we expect.
  */
-public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
+public class NoSubInterceptorWrapper implements StatementInterceptor {
 
-    private final StatementInterceptorV2 underlyingInterceptor;
+    private final StatementInterceptor underlyingInterceptor;
 
-    public NoSubInterceptorWrapper(StatementInterceptorV2 underlyingInterceptor) {
+    public NoSubInterceptorWrapper(StatementInterceptor underlyingInterceptor) {
         if (underlyingInterceptor == null) {
             throw new RuntimeException(Messages.getString("NoSubInterceptorWrapper.0"));
         }
@@ -56,7 +56,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
         this.underlyingInterceptor.init(conn, props, log);
         return this;
     }
@@ -74,7 +74,7 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return null; // don't allow result set substitution
     }
 
-    public StatementInterceptorV2 getUnderlyingInterceptor() {
+    public StatementInterceptor getUnderlyingInterceptor() {
         return this.underlyingInterceptor;
     }
 }

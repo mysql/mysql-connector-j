@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -373,7 +373,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     ServerVersion getServerVersion();
 
-    List<StatementInterceptorV2> getStatementInterceptorsInstances();
+    List<StatementInterceptor> getStatementInterceptorsInstances();
 
     void incrementNumberOfPreparedExecutes();
 

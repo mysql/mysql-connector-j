@@ -56,7 +56,7 @@ import com.mysql.cj.api.fabric.FabricMysqlConnection;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -1270,7 +1270,7 @@ public class FabricMySQLConnectionProxy extends AbstractJdbcConnection implement
         return null;
     }
 
-    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
+    public List<StatementInterceptor> getStatementInterceptorsInstances() {
         return null;
     }
 

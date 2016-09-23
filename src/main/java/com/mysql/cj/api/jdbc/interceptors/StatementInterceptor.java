@@ -32,12 +32,12 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
 /**
- * Implement this interface to be placed "in between" query execution, so that you can influence it. (currently experimental).
+ * Implement this interface to be placed "in between" query execution, so that you can influence it.
  * 
  * StatementInterceptors are "chainable" when configured by the user, the results returned by the "current" interceptor will be passed on to the next on in the
  * chain, from left-to-right order, as specified by the user in the JDBC configuration property "statementInterceptors".
  */
-public interface StatementInterceptorV2 {
+public interface StatementInterceptor {
 
     /**
      * Called once per connection that wants to use the interceptor
@@ -59,7 +59,7 @@ public interface StatementInterceptorV2 {
      *             can not initialize itself.
      */
 
-    StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log);
+    StatementInterceptor init(MysqlConnection conn, Properties props, Log log);
 
     /**
      * Called before the given statement is going to be sent to the

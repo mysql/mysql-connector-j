@@ -30,11 +30,11 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
-public class SessionAssociationInterceptor implements StatementInterceptorV2 {
+public class SessionAssociationInterceptor implements StatementInterceptor {
 
     protected String currentSessionKey;
     protected final static ThreadLocal<String> sessionLocal = new ThreadLocal<String>();
@@ -57,7 +57,7 @@ public class SessionAssociationInterceptor implements StatementInterceptorV2 {
     }
 
     @Override
-    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
         this.connection = (JdbcConnection) conn;
         return this;
     }

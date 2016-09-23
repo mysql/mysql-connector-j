@@ -28,13 +28,13 @@ import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
-public class BaseStatementInterceptor implements StatementInterceptorV2 {
+public class BaseStatementInterceptor implements StatementInterceptor {
 
-    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
         return this;
     }
 
