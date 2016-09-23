@@ -1,6 +1,27 @@
 # Changelog
 # $Id$
-04-29-16 - Version 5.1.39
+09-05-16 - Version 6.0.4
+
+  - X DevAPI URL prefix changed from "mysql:x:" to "mysqlx:".
+
+  - Fix for Bug#24301468 X DEVAPI SSL CONNECTION FAILS ON WINDOWS
+
+  - The X DevAPI Table object now represents both database tables and views.
+
+  - Added support for matching against pattern for X DevAPI list_objects calls.
+    Added Schema.getCollections(String pattern) and Schema.getTables(String pattern) interface methods.
+
+  - Switched to "mysqlx" namespace for X DevAPI StmtExecute messages. This change is incompatible to MySQL server versions < 5.7.14.
+
+  - Fix for Bug#82046 (23743947), MYSQL CONNECTOR JAVA OSGI METADATA BROKEN.
+
+  - Fix for Bug#21690043, CONNECT FAILS WHEN PASSWORD IS BLANK.
+
+  - Fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.
+
+06-17-16 - Version 6.0.3
+
+  - Fix for Bug#23535571, EXCESSIVE MEMORY USAGE WHEN ENABLEPACKETDEBUG=TRUE.
 
   - Fix for Bug#23212347, ALL API CALLS ON RESULTSET METADATA RESULTS IN NPE WHEN USESERVERPREPSTMTS=TRUE.
 
@@ -19,15 +40,26 @@
 
   - Fix for Bug#22730682, ARRAYINDEXOUTOFBOUNDSEXCEPTION FROM CONNECTIONGROUPMANAGER.REMOVEHOST().
 
-  - Fix for Bug#56479 (16738378), getTimestamp throws exception.
-
-  - Fix for Bug#79598 (22352812), Client side Prepared Statement caching bypasses JDBC42 Java 8 Time conversion.
-
   - Fix for Bug#77171 (21181466), On every connect getting sql_mode from server creates unnecessary exception.
 
   - Fix for Bug#79343 (22353759), NPE in TimeUtil.loadTimeZoneMappings causing server time zone value unrecognized.
 
-  - Fix for Bug#80522 (22833410), Using useCursorFetch leads to data corruption in Connector/J for TIME type.
+  - Fix for Bug#22038729, X DevAPI: Any API call after a failed CALL PROC() results in hang
+
+  - Remove Schema.drop(), Collection.drop() and replaced with X DevAPI's session.dropSchema() and session.dropCollection().
+    Also added session.dropTable().
+
+  - Fix for Bug#22932078, GETTIMESTAMP() RETURNS WRONG VALUE FOR FRACTIONAL PART
+
+  - Extracted packet readers from MysqlaProtocol.
+
+  - Fix for Bug#22972057, X protocol CLIENT HANGS AFTER CONNECTION FAILURE
+
+  - Fix for Bug#23044312, NullPointerException in X protocol AsyncMessageReader due to race condition
+
+  - Returned support for MySQL 5.5 and 5.6.
+
+04-05-16 - Version 6.0.2
 
   - Deprecate the EOF packet.
 
@@ -37,7 +69,7 @@
 
   - Fix for Bug#22598938, FABRICMYSQLDATASOURCE.GETCONNECTION() NPE AFTER SWITCHOVER.
 
-11-30-15 - Version 5.1.38
+  - Merged version 5.1.38.
 
   - Fix for Bug#21286268, CONNECTOR/J REPLICATION USE MASTER IF SLAVE IS UNAVAILABLE.
 
@@ -60,9 +92,27 @@
   - Fix for Bug#21934573, FABRIC CODE INVOLVED IN THREAD DEADLOCK.
     Duplicate: Bug#78710 (21966391), Deadlock on ReplicationConnection and ReplicationConnectionGroup when failover.
 
-10-15-15 - Version 5.1.37
+  - Merged version 5.1.37.
 
   - Fix for Bug#21876798, CONNECTOR/J WITH MYSQL FABRIC AND SPRING PRODUCES PROXY ERROR.
+
+10-19-15 - Version 6.0.1
+
+  - Removed useJvmCharsetConverters connection property. JVM charset converters are now used in all cases.
+
+  - Refactored value decoding and removed all date/time connection properties
+
+  - Refactored connection properties
+
+  - Assume existence of INFORMATION_SCHEMA.PARAMETERS (and thus MySQL 5.5) when preparing stored procedure calls.
+
+  - Removed retainStatementAfterResultSetClose connection property.
+
+  - Null-merge of Bug#54095 (11761585) fix.
+
+  - Removed support code for MySQL server versions < 5.7.
+
+  - Merged version 5.1.37.
 
   - Fix for Bug#76859 (20969312), DBMD getColumns using I_S doesn't have column IS_GENERATEDCOLUMN as per JDBC 4.1.
     Added support for GENERATED COLUMNS.
@@ -102,7 +152,7 @@
 
   - Fix for Bug#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.
 
-06-30-15 - Version 5.1.36
+  - Merged version 5.1.36.
 
   - Add test for new syntax 'ALTER TABLE ... DISCARD|IMPORT PARTITION ...' introduced in MySQL 5.7.4.
 
@@ -138,7 +188,7 @@
 
   - Fix for Bug#77217 (21184949), ClassCastException when executing a streaming PreparedStatement with Fabric
 
-03-23-15 - Version 5.1.35
+  - Merged version 5.1.35.
 
   - Fix for Bug#19536760, GETSTRING() CALL AFTER RS.RELATIVE() RETURNS NULLPOINTEREXCEPTION
 
@@ -181,7 +231,7 @@
 
   - Fix for Bug#74998 (20112694), readRemainingMultiPackets not computed correctly for rows larger than 16 MB.
 
-11-03-14 - Version 5.1.34
+  - Merged version 5.1.34.
 
   - Fix for Bug#73012 (19219158), Precedence between timezone options is unclear.
 
@@ -193,7 +243,7 @@
 
   - Fix for Bug#19383371, CONNECT USING MYSQL_OLD_PASSWORD USER FAILS WHEN PWD IS BLANK
 
-09-29-14 - Version 5.1.33
+  - Merged version 5.1.33.
 
   - Fix for Bug#17441747, C/J DOESN'T SUPPORT XA RECOVER OUTPUT FORMAT CHANGED IN MYSQL 5.7.
     Test case was disabled for affected server versions 5.7.0 - 5.7.4.
@@ -222,7 +272,7 @@
 
   - Fix for Bug#19172037, TEST FAILURES WHEN RUNNING AGAINST 5.6.20 SERVER VERSION
 
-08-04-14 - Version 5.1.32
+  - Merged version 5.1.32
 
   - Fix for Bug#71923 (18344403), Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact.
     Additionally several methods in StringUtils were fixed/upgraded.

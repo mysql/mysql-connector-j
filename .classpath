@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/JDBC4*.java|**/jdbc4*/**" kind="src" path="src"/>
-	<classpathentry kind="var" path="JSSE_JAR">
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="src" path="src/build/java"/>
+	<classpathentry kind="src" path="src/demo/java"/>
+	<classpathentry kind="src" path="src/generated/java">
 		<attributes>
-			<attribute name="javadoc_location" value="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+			<attribute name="ignore_optional_problems" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="src/lib/jboss-common-jdbc-wrapper.jar"/>
-	<classpathentry kind="lib" path="src/lib/c3p0-0.9.1-pre6.jar"/>
-	<classpathentry kind="lib" path="src/lib/slf4j-api-1.6.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="lib" path="lib/jboss-common-jdbc-wrapper.jar"/>
+	<classpathentry kind="lib" path="lib/c3p0-0.9.1-pre6.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MySQL ConnectorJ Extra Libraries"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

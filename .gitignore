@@ -1,5 +1,6 @@
 /bin/
 /build/
+/buildtest/
 /dist/
 /nbproject/
 /patches/
@@ -8,3 +9,10 @@
 *.lock
 *.swp
 *.DS_Store
+*.diff
+*.dot
+*.dot.png
+*.class
+.project.el
+.attach_pid*
+hs_err_pid*.log
