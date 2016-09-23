@@ -440,7 +440,6 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <fileset dir="src/main/java" />
             <fileset dir="src/main/resources" />
             <fileset dir="src/demo/java" />
-            <fileset dir="src/demo/resources" />
 
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
