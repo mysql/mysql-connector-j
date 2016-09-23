@@ -166,13 +166,17 @@ public class Util {
         return traceBuf.toString();
     }
 
-    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) {
+    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor, String errorMessage) {
 
         try {
             return handleNewInstance(Class.forName(className).getConstructor(argTypes), args, exceptionInterceptor);
         } catch (SecurityException | NoSuchMethodException | ClassNotFoundException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Can't instantiate required class", e, exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, errorMessage, e, exceptionInterceptor);
         }
+    }
+
+    public static Object getInstance(String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) {
+        return getInstance(className, argTypes, args, exceptionInterceptor, "Can't instantiate required class");
     }
 
     /**
