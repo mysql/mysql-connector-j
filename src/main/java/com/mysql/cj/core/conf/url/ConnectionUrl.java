@@ -109,7 +109,6 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         FAILOVER_CONNECTION("jdbc:mysql:", HostsCardinality.MULTIPLE), //
         LOADBALANCE_CONNECTION("jdbc:mysql:loadbalance:", HostsCardinality.ONE_OR_MORE), //
         REPLICATION_CONNECTION("jdbc:mysql:replication:", HostsCardinality.ONE_OR_MORE), //
-        FABRIC_CONNECTION("jdbc:mysql:fabric:", HostsCardinality.SINGLE), //
         MYSQLX_SESSION("mysqlx:", HostsCardinality.SINGLE);
 
         private String protocol;
@@ -209,9 +208,6 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                             break;
                         case REPLICATION_CONNECTION:
                             connectionString = new ReplicationConnectionUrl(connStrParser, info);
-                            break;
-                        case FABRIC_CONNECTION:
-                            connectionString = new FabricConnectionUrl(connStrParser, info);
                             break;
                         case MYSQLX_SESSION:
                             connectionString = new MysqlxConnectionUrl(connStrParser, info);

@@ -39,16 +39,15 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.ConnectionUrl.Type;
 import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.conf.url.LoadbalanceConnectionUrl;
 import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
-import com.mysql.cj.core.conf.url.ConnectionUrl.Type;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
 import com.mysql.cj.jdbc.ha.FailoverConnectionProxy;
 import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
@@ -211,10 +210,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
                 case REPLICATION_CONNECTION:
                     return ReplicationConnectionProxy.createProxyInstance((ReplicationConnectionUrl) conStr);
-
-                case FABRIC_CONNECTION:
-                    // TODO test it
-                    return new FabricMySQLConnectionProxy(conStr);
 
                 case MYSQLX_SESSION:
                     // TODO test it

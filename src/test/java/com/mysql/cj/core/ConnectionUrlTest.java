@@ -48,9 +48,9 @@ import org.junit.Test;
 
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.conf.url.ConnectionUrlParser;
 import com.mysql.cj.core.conf.url.HostInfo;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
 public class ConnectionUrlTest {
@@ -331,16 +331,7 @@ public class ConnectionUrlTest {
         assertEquals(ConnectionUrl.Type.LOADBALANCE_CONNECTION, ConnectionUrl.Type.fromValue("jdbc:mysql:loadbalance:", 2));
         assertEquals(ConnectionUrl.Type.REPLICATION_CONNECTION, ConnectionUrl.Type.fromValue("jdbc:mysql:replication:", 1));
         assertEquals(ConnectionUrl.Type.REPLICATION_CONNECTION, ConnectionUrl.Type.fromValue("jdbc:mysql:replication:", 2));
-        assertEquals(ConnectionUrl.Type.FABRIC_CONNECTION, ConnectionUrl.Type.fromValue("jdbc:mysql:fabric:", 1));
         assertEquals(ConnectionUrl.Type.MYSQLX_SESSION, ConnectionUrl.Type.fromValue("mysqlx:", 1));
-    }
-
-    /**
-     * Checks the expected exception from an incorrect usage of {@link ConnectionUrl.Type#fromValue(String, int)}.
-     */
-    @Test(expected = WrongArgumentException.class)
-    public void testTypeEnumWrongFabricValue() {
-        ConnectionUrl.Type.fromValue("jdbc:mysql:fabric:", 2);
     }
 
     /**
@@ -433,8 +424,6 @@ public class ConnectionUrlTest {
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:loadbalance://somehost:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:replication:"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:replication://somehost:1234/db?key=value"));
-        assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:fabric:"));
-        assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:fabric://somehost:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx://somehost:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx://127.0.0.1:1234/db?key=value"));
@@ -456,8 +445,6 @@ public class ConnectionUrlTest {
         assertFalse(ConnectionUrl.acceptsUrl("jdbc:replication://somehost:1234/db?key=value"));
         assertFalse(ConnectionUrl.acceptsUrl("replication:"));
         assertFalse(ConnectionUrl.acceptsUrl("replication://somehost:1234/db?key=value"));
-        assertFalse(ConnectionUrl.acceptsUrl("fabric:"));
-        assertFalse(ConnectionUrl.acceptsUrl("fabric://somehost:1234/db?key=value"));
         assertFalse(ConnectionUrl.acceptsUrl("jdbc:mysql:unknown:"));
         assertFalse(ConnectionUrl.acceptsUrl("jdbc:mysql:unknown://somehost:1234/db?key=value"));
         assertFalse(ConnectionUrl.acceptsUrl("mysql-x:"));
@@ -521,7 +508,6 @@ public class ConnectionUrlTest {
         connStr.put("jdbc:mysql:,", 3306);
         connStr.put("jdbc:mysql:loadbalance:,", 3306);
         connStr.put("jdbc:mysql:replication:,", 3306);
-        connStr.put("jdbc:mysql:fabric:", 32274);
         connStr.put("mysqlx:", 33060);
 
         for (String cs : connStr.keySet()) {

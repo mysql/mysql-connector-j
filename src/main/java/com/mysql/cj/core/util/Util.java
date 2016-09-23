@@ -376,8 +376,7 @@ public class Util {
      */
     public static boolean isJdbcPackage(String packageName) {
         return packageName != null && (packageName.startsWith("java.sql") || packageName.startsWith("javax.sql") || packageName.startsWith("com.mysql.cj.jdbc")
-                || packageName.startsWith("com.mysql.cj.fabric.jdbc") || packageName.startsWith("com.mysql.cj.api.jdbc")
-                || packageName.startsWith("com.mysql.cj.api.fabric.jdbc"));
+                || packageName.startsWith("com.mysql.cj.api.jdbc"));
     }
 
     /** Cache for the implemented interfaces searched. */

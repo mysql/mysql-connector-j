@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.fabric.FabricMysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
@@ -43,8 +42,6 @@ import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy;
-import com.mysql.cj.fabric.jdbc.FabricMySQLDataSource;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.BlobFromLocator;
 import com.mysql.cj.jdbc.CallableStatement;
@@ -194,8 +191,6 @@ public class TranslateExceptions {
          * 
          * java.sql.Connection extends java.sql.Wrapper
          * ----> com.mysql.cj.jdbc.JdbcConnection extends java.sql.Connection, MysqlConnection
-         * ----------> FabricMySQLConnection extends JdbcConnection
-         * -------------> com.mysql.cj.fabric.jdbc.FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
          * ----------> com.mysql.cj.jdbc.ConnectionImpl
          * ----------> com.mysql.cj.jdbc.LoadBalancedConnection extends JdbcConnection
          * -------------> com.mysql.cj.jdbc.LoadBalancedMySQLConnection extends MultiHostMySQLConnection implements LoadBalancedConnection
@@ -203,12 +198,6 @@ public class TranslateExceptions {
          * -------> com.mysql.cj.jdbc.ReplicationConnection implements JdbcConnection, PingTarget
          * -------> com.mysql.cj.jdbc.ConnectionWrapper
          */
-        // FabricMySQLConnectionProxy extends AbstractJdbcConnection implements FabricMySQLConnection
-        clazz = pool.get(FabricMySQLConnectionProxy.class.getName());
-        instrumentJdbcMethods(clazz, FabricMysqlConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("createNewIO", new CtClass[] { CtClass.booleanType }));
-        clazz.writeFile(args[0]);
-
         // ConnectionImpl extends AbstractJdbcConnection implements JdbcConnection
         clazz = pool.get(ConnectionImpl.class.getName());
         instrumentJdbcMethods(clazz, JdbcConnection.class, false, EXCEPTION_INTERCEPTOR_GETTER);
@@ -463,11 +452,6 @@ public class TranslateExceptions {
         instrumentJdbcMethods(clazz, javax.sql.DataSource.class);
         clazz.writeFile(args[0]);
 
-        // com.mysql.fabric.jdbc.FabricMySQLDataSource extends MysqlDataSource implements FabricPropertySet
-        clazz = pool.get(FabricMySQLDataSource.class.getName());
-        instrumentJdbcMethods(clazz, javax.sql.DataSource.class);
-        clazz.writeFile(args[0]);
-
         /*
          * javax.sql.PooledConnection
          */
@@ -517,7 +501,6 @@ public class TranslateExceptions {
          * TODO:
          * java.sql.SQLException
          */
-        // com.mysql.fabric.xmlrpc.exceptions.MySQLFabricException extends SQLException
         // com.mysql.cj.jdbc.exceptions.NotUpdatable extends SQLException
         // com.mysql.cj.jdbc.exceptions.OperationNotSupportedException extends SQLException
         // com.mysql.cj.jdbc.exceptions.PacketTooBigException extends SQLException
@@ -696,10 +679,6 @@ public class TranslateExceptions {
             System.out.println();
         }
 
-    }
-
-    private static void catchRuntimeException(CtClass clazz, CtMethod m) throws Exception {
-        catchRuntimeException(clazz, m, null, true);
     }
 
     private static void catchRuntimeException(CtClass clazz, CtMethod m, String exceptionInterceptorStr) throws Exception {

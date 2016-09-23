@@ -94,7 +94,6 @@ public class UtilsTest extends BaseTestCase {
         assertTrue(Util.isJdbcPackage("java.sql"));
         assertTrue(Util.isJdbcPackage("javax.sql"));
         assertTrue(Util.isJdbcPackage("javax.sql.rowset"));
-        assertTrue(Util.isJdbcPackage("com.mysql.cj.fabric.jdbc"));
         assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc"));
         assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.admin"));
         assertTrue(Util.isJdbcPackage("com.mysql.cj.jdbc.exceptions"));

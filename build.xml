@@ -46,14 +46,6 @@ list of test names is provided in the variable 'com.mysql.cj.testsuite.test.meth
 Targets: "test"
 
 
-MySQL Fabric support and testing
-================================
-
-Support for MySQL Fabric connections is seamlessly included in Connector/J, so when the driver is compiled it already includes all the required classes for it.
-Testing MySQL Fabric support can be done by setting specific variables and running the respective targets. Further details can be found in the last targets in
-this file.
-
-
 Coverage and instrumentation
 ============================
 
@@ -309,13 +301,6 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <condition>
                 <not>
                     <available file="${com.mysql.cj.extra.libs}" type="dir" />
-                </not>
-            </condition>
-        </fail>
-        <fail message="Hibernate libraries, required for build tasks, must be in the directory '${com.mysql.cj.extra.libs}/hibernate4'.">
-            <condition>
-                <not>
-                    <available file="${com.mysql.cj.extra.libs}/hibernate4" type="dir" />
                 </not>
             </condition>
         </fail>
@@ -614,7 +599,6 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <property name="com.mysql.cj.build.meta-inf.profiling-exports" value="com.mysql.cj.jdbc.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.util-exports" value="com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc.log&quot;" />
         <property name="com.mysql.cj.build.meta-inf.exceptions-exports" value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.fabric-exports" value="com.mysql.cj.fabric.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
 
         <property name="com.mysql.cj.build.meta-inf.interceptors-exports" value="com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
         <property name="com.mysql.cj.build.meta-inf.integration-exports" value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
@@ -639,7 +623,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <attribute name="Bundle-ManifestVersion" value="2" />
             <attribute name="Bundle-SymbolicName" value="com.mysql.cj" />
             <attribute name="Export-Package"
-                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.jee-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.fabric-exports}" />
+                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.jee-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports}" />
             <attribute name="Import-Package" value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.integration-imports}" />
         </manifest>
 
@@ -1065,7 +1049,6 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                 <batchtest unless="com.mysql.cj.testsuite.test.class" todir="${com.mysql.cj.testsuite.junit.results}">
                     <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
                         <include name="**/*Test.java" />
-                        <exclude name="**/fabric/*.java" />
                         <exclude name="**/perf/*.java" />
                     </fileset>
                 </batchtest>
@@ -1091,121 +1074,11 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- ********************************* -->
-    <!-- ***** FABRIC TESTS AND DEMO ***** -->
-    <!-- ********************************* -->
-
-
-    <!-- 'test' and 'demo' targets for Fabric intentionally don't depend on 'build'.
-         This allows building and testing code with the environmental JVM. -->
-
-    <!-- Test Fabric setup. -->
-    <target name="test-fabric-setup" description="Tests Fabric setup." depends="-extra-libs-check">
-        <java fork="on" classname="testsuite.fabric.SetupFabricTestsuite">
-            <syspropertyset refid="junit.system.properties"/>
-            <classpath>
-                <pathelement location="${com.mysql.cj.testsuite.compiler.output}" />
-                <pathelement location="${com.mysql.cj.build.dir.driver}" />
-                <pathelement path="${java.class.path}" />
-            </classpath>
-        </java>
-    </target>
-
-
-    <!-- Run test suite for Fabric. -->
-    <target name="test-fabric" description="Runs the test suite for Fabric." depends="test-fabric-setup">
-        <mkdir dir="${com.mysql.cj.testsuite.junit.results}/report" />
-
-        <local name="test.coverage" />
-        <condition property="test.coverage" value="true" else="false">
-            <isset property="com.mysql.cj.coverage.result.dir.final" />
-        </condition>
-
-        <jacoco:coverage destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}" enabled="${test.coverage}">
-        <junit printsummary="yes" fork="on" forkmode="once">
-            <syspropertyset refid="junit.system.properties"/>
-
-            <classpath>
-                <fileset dir="${com.mysql.cj.extra.libs}/hibernate4">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${com.mysql.cj.build.dir.driver}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
-                <pathelement location="${com.mysql.cj.testsuite.compiler.output}" />
-                <pathelement location="${com.mysql.cj.build.dir.driver}" />
-                <pathelement path="${java.class.path}" />
-            </classpath>
-
-            <formatter type="xml" />
-
-            <test if="com.mysql.cj.testsuite.test.class" name="${com.mysql.cj.testsuite.test.class}" />
-
-            <batchtest unless="com.mysql.cj.testsuite.test.class" todir="${com.mysql.cj.testsuite.junit.results}">
-                <fileset dir="${com.mysql.cj.testsuite.compiler.output}">
-                    <include name="**/fabric/**/Test*.java" />
-                    <exclude name="**/fabric/**/TestHashSharding.java" />
-                    <exclude name="**/fabric/**/TestHABasics.java" />
-                </fileset>
-            </batchtest>
-        </junit>
-        </jacoco:coverage>
-
-        <junitreport todir="${com.mysql.cj.testsuite.junit.results}/report">
-            <fileset dir="${com.mysql.cj.testsuite.junit.results}">
-                <include name="**/TEST-*.xml" />
-            </fileset>
-            <report format="frames" todir="${com.mysql.cj.testsuite.junit.results}/report" />
-        </junitreport>
-    </target>
-
-
-    <!-- Launch a Fabric demo. -->
-    <target name="demo-fabric" description="Launches a Fabric demo." depends="demo-fabric-client1, demo-fabric-employees-jdbc" />
-
-
-    <!-- Launch a client component from the Fabric demo. -->
-    <target name="demo-fabric-client1" description="Launches a client component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.Client1_Fabric" dir="${com.mysql.cj.build.dir.driver}">
-            <syspropertyset refid="junit.system.properties"/>
-        </java>
-    </target>
-
-
-    <!-- Launch an employees component from the Fabric demo. -->
-    <target name="demo-fabric-employees-jdbc" description="Launches a employees component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.EmployeesJdbc" dir="${com.mysql.cj.build.dir.driver}">
-            <syspropertyset refid="junit.system.properties"/>
-        </java>
-    </target>
-
-
-    <!-- Launch a Hibernate component from the Fabric demo. -->
-    <target name="demo-fabric-hibernate" description="Launches a Hibernate component from the Fabric demo." depends="-extra-libs-check">
-        <java fork="on" classname="demo.fabric.HibernateFabric" dir="${com.mysql.cj.build.dir.driver}">
-            <syspropertyset refid="junit.system.properties"/>
-
-            <classpath>
-                <fileset dir="${com.mysql.cj.extra.libs}/hibernate4">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="src/lib">
-                    <include name="**/*.jar" />
-                </fileset>
-                <dirset dir="${com.mysql.cj.build.dir.driver}" />
-            </classpath>
-        </java>
-    </target>
-
-
-    <!-- ********************************* -->
     <!-- ***** TESTING CODE COVERAGE ***** -->
     <!-- ********************************* -->
 
 
     <target name="test-coverage" description="Runs tests collecting coverage results." depends="-set-test-coverage-detaults, test"/>
-
-
-    <target name="test-fabric-coverage" description="Runs tests collecting coverage results." depends="-set-test-coverage-detaults, test-fabric"/>
 
 
     <target name="-set-test-coverage-detaults">

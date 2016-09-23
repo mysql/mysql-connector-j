@@ -68,20 +68,6 @@ public class PropertyDefinitions {
 
     public static final String SYSP_testsuite_url_mysqlx /*                   */ = "com.mysql.cj.testsuite.mysqlx.url";
 
-    public static final String SYSP_testsuite_fabric_hostname /*              */ = "com.mysql.cj.testsuite.fabric.hostname";
-    public static final String SYSP_testsuite_fabric_port /*                  */ = "com.mysql.cj.testsuite.fabric.port";
-    public static final String SYSP_testsuite_fabric_database /*              */ = "com.mysql.cj.testsuite.fabric.database";
-    public static final String SYSP_testsuite_fabric_username /*              */ = "com.mysql.cj.testsuite.fabric.username";
-    public static final String SYSP_testsuite_fabric_password /*              */ = "com.mysql.cj.testsuite.fabric.password";
-    public static final String SYSP_testsuite_fabric_fabricUsername /*        */ = "com.mysql.cj.testsuite.fabric.fabricUsername";
-    public static final String SYSP_testsuite_fabric_fabricPassword /*        */ = "com.mysql.cj.testsuite.fabric.fabricPassword";
-    public static final String SYSP_testsuite_fabric_global_host /*           */ = "com.mysql.cj.testsuite.fabric.global.host";
-    public static final String SYSP_testsuite_fabric_global_port /*           */ = "com.mysql.cj.testsuite.fabric.global.port";
-    public static final String SYSP_testsuite_fabric_shard1_host /*           */ = "com.mysql.cj.testsuite.fabric.shard1.host";
-    public static final String SYSP_testsuite_fabric_shard1_port /*           */ = "com.mysql.cj.testsuite.fabric.shard1.port";
-    public static final String SYSP_testsuite_fabric_shard2_host /*           */ = "com.mysql.cj.testsuite.fabric.shard2.host";
-    public static final String SYSP_testsuite_fabric_shard2_port /*           */ = "com.mysql.cj.testsuite.fabric.shard2.port";
-
     public static final String SYSP_testsuite_cantGrant /*                    */ = "com.mysql.cj.testsuite.cantGrant";
     public static final String SYSP_testsuite_disable_multihost_tests /*      */ = "com.mysql.cj.testsuite.disable.multihost.tests"; // TODO should be more specific for different types of multi-host configs
 
@@ -144,12 +130,11 @@ public class PropertyDefinitions {
     public static final String CATEGORY_EXCEPTIONS = Messages.getString("ConnectionProperties.categoryExceptions");
     public static final String CATEGORY_INTEGRATION = Messages.getString("ConnectionProperties.categoryIntegration");
     public static final String CATEGORY_JDBC = Messages.getString("ConnectionProperties.categoryJDBC");
-    public static final String CATEGORY_FABRIC = Messages.getString("ConnectionProperties.categoryFabric");
     public static final String CATEGORY_MYSQLX = Messages.getString("ConnectionProperties.categoryMysqlx");
 
     public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK, CATEGORY_SECURITY,
             CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES, CATEGORY_HA,
-            CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_FABRIC, CATEGORY_MYSQLX };
+            CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_MYSQLX };
 
     /*
      * Property modifiers
@@ -350,14 +335,6 @@ public class PropertyDefinitions {
     public static final String PNAME_detectCustomCollations = "detectCustomCollations";
     public static final String PNAME_dontCheckOnDuplicateKeyUpdateInSQL = "dontCheckOnDuplicateKeyUpdateInSQL";
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
-
-    public static final String PNAME_fabricShardKey = "fabricShardKey";
-    public static final String PNAME_fabricShardTable = "fabricShardTable";
-    public static final String PNAME_fabricServerGroup = "fabricServerGroup";
-    public static final String PNAME_fabricProtocol = "fabricProtocol";
-    public static final String PNAME_fabricUsername = "fabricUsername";
-    public static final String PNAME_fabricPassword = "fabricPassword";
-    public static final String PNAME_fabricReportErrors = "fabricReportErrors";
 
     public static final String PNAME_useAsyncProtocol = "mysqlx.useAsyncProtocol";
 
@@ -923,28 +900,6 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_readOnlyPropagatesToServer, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
-
-                // TODO improve fabric properties descriptions
-                new StringPropertyDefinition(PNAME_fabricShardKey, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricShardKey"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new StringPropertyDefinition(PNAME_fabricShardTable, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricShardTable"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new StringPropertyDefinition(PNAME_fabricServerGroup, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricServerGroup"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new StringPropertyDefinition(PNAME_fabricProtocol, "http", RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.fabricProtocol"),
-                        "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new StringPropertyDefinition(PNAME_fabricUsername, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricUsername"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new StringPropertyDefinition(PNAME_fabricPassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricPassword"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
-
-                new BooleanPropertyDefinition(PNAME_fabricReportErrors, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.fabricReportErrors"), "5.1.30", CATEGORY_FABRIC, Integer.MIN_VALUE),
 
                 // TODO improve MySQLx properties descriptions
 

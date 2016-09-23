@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -223,8 +223,7 @@ public class Jdk14Logger implements Log {
             String callerClassName = stackTrace[i].getClassName();
 
             if (!(callerClassName.startsWith("com.mysql.cj.api") || callerClassName.startsWith("com.mysql.cj.core")
-                    || callerClassName.startsWith("com.mysql.cj.api.fabric") || callerClassName.startsWith("com.mysql.cj.api.jdbc")
-                    || callerClassName.startsWith("com.mysql.cj.fabric") || callerClassName.startsWith("com.mysql.cj.jdbc"))) {
+                    || callerClassName.startsWith("com.mysql.cj.api.jdbc") || callerClassName.startsWith("com.mysql.cj.jdbc"))) {
                 return i;
             }
         }

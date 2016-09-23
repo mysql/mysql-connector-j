@@ -121,7 +121,6 @@ import com.mysql.cj.core.io.StandardSocketFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.fabric.jdbc.ErrorReportingExceptionInterceptor;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -121,7 +121,7 @@ public class LogUtils {
         String callingClassAndMethod = CALLER_INFORMATION_NOT_AVAILABLE;
 
         int endInternalMethods = Math.max(Math.max(stackTraceAsString.lastIndexOf("com.mysql.cj.api"), stackTraceAsString.lastIndexOf("com.mysql.cj.core")),
-                Math.max(stackTraceAsString.lastIndexOf("com.mysql.cj.jdbc"), stackTraceAsString.lastIndexOf("com.mysql.cj.fabric")));
+                stackTraceAsString.lastIndexOf("com.mysql.cj.jdbc"));
 
         if (endInternalMethods != -1) {
             int endOfLine = stackTraceAsString.indexOf(LINE_SEPARATOR, endInternalMethods);
