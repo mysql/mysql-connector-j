@@ -295,6 +295,31 @@ public class Util {
         return extensionList;
     }
 
+    public static <T> List<T> loadClasses(String extensionClassNames, String errorMessageKey, ExceptionInterceptor exceptionInterceptor) {
+
+        List<T> instances = new LinkedList<T>();
+
+        List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
+
+        String className = null;
+
+        try {
+            for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
+                className = interceptorsToCreate.get(i);
+                @SuppressWarnings("unchecked")
+                T instance = (T) Class.forName(className).newInstance();
+
+                instances.add(instance);
+            }
+
+        } catch (Throwable t) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString(errorMessageKey, new Object[] { className }), t,
+                    exceptionInterceptor);
+        }
+
+        return instances;
+    }
+
     /** Cache for the JDBC interfaces already verified */
     private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<Class<?>, Boolean>();
 

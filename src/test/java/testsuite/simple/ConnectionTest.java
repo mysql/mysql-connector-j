@@ -1906,8 +1906,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public static class TestEnableEscapeProcessingStatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement,
-                com.mysql.cj.api.jdbc.JdbcConnection connection) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();
             }
@@ -1928,7 +1927,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone
                         || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
-            return super.preProcess(sql, interceptedStatement, connection);
+            return super.preProcess(sql, interceptedStatement);
         }
     }
 }

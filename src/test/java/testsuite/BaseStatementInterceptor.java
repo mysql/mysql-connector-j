@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
@@ -35,10 +34,11 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 
 public class BaseStatementInterceptor implements StatementInterceptorV2 {
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        return this;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
         return null;
     }
 
@@ -49,8 +49,8 @@ public class BaseStatementInterceptor implements StatementInterceptorV2 {
     public void destroy() {
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
-            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         return originalResultSet;
     }
 

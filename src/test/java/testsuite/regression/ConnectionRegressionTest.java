@@ -101,6 +101,7 @@ import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -5813,8 +5814,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int cnt = 0;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.contains("SHOW COLLATION")) {
                 this.cnt++;
             }
@@ -6046,8 +6046,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug72712StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
                 throw new SQLException("Wrongt statement issued: " + sql);
             }
@@ -6750,6 +6749,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public static class Bug75168StatementInterceptor extends BaseStatementInterceptor {
         static Connection previousConnection = null;
 
+        private JdbcConnection connection;
+
+        @Override
+        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+            this.connection = (JdbcConnection) conn;
+            return this;
+        }
+
         @Override
         public void destroy() {
             if (previousConnection == null) {
@@ -6758,8 +6765,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql == null) {
                 sql = "";
             }
@@ -6767,8 +6773,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();
             }
             if (sql.indexOf("nonexistent_table") >= 0) {
-                assertTrue("Different connection expected.", !connection.equals(previousConnection));
-                previousConnection = connection;
+                assertTrue("Different connection expected.", !this.connection.equals(previousConnection));
+                previousConnection = this.connection;
             }
             return null;
         }
@@ -6988,8 +6994,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug75592StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.contains("SHOW VARIABLES WHERE")) {
                 throw new SQLException("'SHOW VARIABLES WHERE' statement issued: " + sql);
             }
@@ -7879,14 +7884,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class Bug56100StatementInterceptor extends BaseStatementInterceptor {
+        private JdbcConnection connection;
+
+        @Override
+        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+            this.connection = (JdbcConnection) conn;
+            return this;
+        }
+
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.contains("<HOST_NAME>")) {
-                return (T) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", connection.getHost()));
+                return (T) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", this.connection.getHost()));
             }
-            return super.preProcess(sql, interceptedStatement, connection);
+            return super.preProcess(sql, interceptedStatement);
         }
     }
 

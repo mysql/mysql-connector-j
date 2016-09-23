@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
@@ -57,20 +56,20 @@ public class NoSubInterceptorWrapper implements StatementInterceptorV2 {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
         this.underlyingInterceptor.init(conn, props, log);
+        return this;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
-            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
-        this.underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, connection, warningCount, noIndexUsed, noGoodIndexUsed,
-                statementException);
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+        this.underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, warningCount, noIndexUsed, noGoodIndexUsed, statementException);
 
         return null; // don't allow result set substitution
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
-        this.underlyingInterceptor.preProcess(sql, interceptedStatement, connection);
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
+        this.underlyingInterceptor.preProcess(sql, interceptedStatement);
 
         return null; // don't allow result set substitution
     }

@@ -32,9 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
@@ -42,11 +41,11 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
-public class ResultSetScannerInterceptor implements StatementInterceptor {
+public class ResultSetScannerInterceptor implements StatementInterceptorV2 {
 
     protected Pattern regexP;
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
+    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
         String regexFromUser = props.getProperty(PropertyDefinitions.PNAME_resultSetScannerRegex);
 
         if (regexFromUser == null || regexFromUser.length() == 0) {
@@ -58,11 +57,14 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
         } catch (Throwable t) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ResultSetScannerInterceptor.1"), t);
         }
+        return this;
 
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection) throws SQLException {
+    @Override
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
 
         // requirement of anonymous class
         final T finalResultSet = originalResultSet;
@@ -90,7 +92,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
         // we don't care about this event
 
         return null;

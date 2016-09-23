@@ -1085,7 +1085,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 //}
 
                 try {
-                    T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement, (JdbcConnection) this.connection);
+                    T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement);
 
                     if (interceptedResultSet != null) {
                         previousResultSet = interceptedResultSet;
@@ -1112,8 +1112,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                 String sqlToInterceptor = sql;
 
                 try {
-                    T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet,
-                            (JdbcConnection) this.connection, this.getWarningCount(), this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
+                    T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet, this.getWarningCount(),
+                            this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
 
                     if (interceptedResultSet != null) {
                         originalResultSet = interceptedResultSet;

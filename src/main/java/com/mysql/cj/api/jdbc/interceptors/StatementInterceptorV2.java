@@ -26,14 +26,18 @@ package com.mysql.cj.api.jdbc.interceptors;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
-public interface StatementInterceptorV2 extends Extension {
+/**
+ * Implement this interface to be placed "in between" query execution, so that you can influence it. (currently experimental).
+ * 
+ * StatementInterceptors are "chainable" when configured by the user, the results returned by the "current" interceptor will be passed on to the next on in the
+ * chain, from left-to-right order, as specified by the user in the JDBC configuration property "statementInterceptors".
+ */
+public interface StatementInterceptorV2 {
 
     /**
      * Called once per connection that wants to use the interceptor
@@ -55,7 +59,7 @@ public interface StatementInterceptorV2 extends Extension {
      *             can not initialize itself.
      */
 
-    void init(MysqlConnection conn, Properties props, Log log);
+    StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log);
 
     /**
      * Called before the given statement is going to be sent to the
@@ -87,7 +91,7 @@ public interface StatementInterceptorV2 extends Extension {
      * @see {@link Resultset}
      */
 
-    <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException;
+    <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException;
 
     /**
      * Should the driver execute this interceptor only for the
@@ -140,6 +144,6 @@ public interface StatementInterceptorV2 extends Extension {
      * 
      * @see {@link Resultset}
      */
-    <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
-            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException;
+    <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException;
 }

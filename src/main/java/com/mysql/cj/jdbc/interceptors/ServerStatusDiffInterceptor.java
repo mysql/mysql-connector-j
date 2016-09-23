@@ -31,27 +31,33 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 
-public class ServerStatusDiffInterceptor implements StatementInterceptor {
+public class ServerStatusDiffInterceptor implements StatementInterceptorV2 {
 
     private Map<String, String> preExecuteValues = new HashMap<String, String>();
 
     private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
+    private JdbcConnection connection;
+
     private Log log;
 
-    public void init(MysqlConnection conn, Properties props, Log l) {
+    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log l) {
+        this.connection = (JdbcConnection) conn;
         this.log = l;
+        return this;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection) throws SQLException {
+    @Override
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
 
-        populateMapWithSessionStatusValues(connection, this.postExecuteValues);
+        populateMapWithSessionStatusValues(this.postExecuteValues);
 
         this.log.logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
 
@@ -59,14 +65,14 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     }
 
-    private void populateMapWithSessionStatusValues(JdbcConnection connection, Map<String, String> toPopulate) throws SQLException {
+    private void populateMapWithSessionStatusValues(Map<String, String> toPopulate) throws SQLException {
         java.sql.Statement stmt = null;
         java.sql.ResultSet rs = null;
 
         try {
             toPopulate.clear();
 
-            stmt = connection.createStatement();
+            stmt = this.connection.createStatement();
             rs = stmt.executeQuery("SHOW SESSION STATUS");
             ResultSetUtil.resultSetToMap(toPopulate, rs);
         } finally {
@@ -80,9 +86,9 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
         }
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
 
-        populateMapWithSessionStatusValues(connection, this.preExecuteValues);
+        populateMapWithSessionStatusValues(this.preExecuteValues);
 
         return null; // we don't actually modify a result set
     }

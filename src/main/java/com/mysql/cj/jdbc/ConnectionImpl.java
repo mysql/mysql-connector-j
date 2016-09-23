@@ -42,7 +42,6 @@ import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +54,7 @@ import java.util.Timer;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
@@ -69,7 +69,6 @@ import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
@@ -104,8 +103,6 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
 import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
-import com.mysql.cj.jdbc.interceptors.ReflectiveStatementInterceptorAdapter;
-import com.mysql.cj.jdbc.interceptors.V1toV2StatementInterceptorAdapter;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
@@ -652,22 +649,14 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
                                     : Messages.getString("Connection.1",
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
-                            SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
+                    SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
 
     }
 
     public void unSafeStatementInterceptors() throws SQLException {
-
-        ArrayList<StatementInterceptorV2> unSafedStatementInterceptors = new ArrayList<StatementInterceptorV2>(this.statementInterceptors.size());
-
-        for (int i = 0; i < this.statementInterceptors.size(); i++) {
-            NoSubInterceptorWrapper wrappedInterceptor = (NoSubInterceptorWrapper) this.statementInterceptors.get(i);
-
-            unSafedStatementInterceptors.add(wrappedInterceptor.getUnderlyingInterceptor());
-        }
-
-        this.statementInterceptors = unSafedStatementInterceptors;
+        this.statementInterceptors = this.statementInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
+                .collect(Collectors.toList());
 
         if (this.session != null) {
             this.session.setStatementInterceptors(this.statementInterceptors);
@@ -676,28 +665,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public void initializeSafeStatementInterceptors() throws SQLException {
         this.isClosed = false;
-
-        List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props,
-                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(), "MysqlIo.BadStatementInterceptor",
-                getExceptionInterceptor(), this.session.getLog());
-
-        this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
-
-        for (int i = 0; i < unwrappedInterceptors.size(); i++) {
-            Extension interceptor = unwrappedInterceptors.get(i);
-
-            // adapt older versions of statement interceptors, handle the case where something wants v2 functionality but wants to run with an older driver
-            if (interceptor instanceof StatementInterceptor) {
-                if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
-                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
-                } else {
-                    this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
-                }
-            } else {
-                this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2) interceptor));
-            }
-        }
-
+        this.statementInterceptors = Util
+                .<StatementInterceptorV2> loadClasses(
+                        getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
+                        "MysqlIo.BadStatementInterceptor", getExceptionInterceptor())
+                .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
 
     public List<StatementInterceptorV2> getStatementInterceptorsInstances() {

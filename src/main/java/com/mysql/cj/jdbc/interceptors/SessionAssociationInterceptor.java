@@ -30,14 +30,15 @@ import java.util.Properties;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
-public class SessionAssociationInterceptor implements StatementInterceptor {
+public class SessionAssociationInterceptor implements StatementInterceptorV2 {
 
     protected String currentSessionKey;
     protected final static ThreadLocal<String> sessionLocal = new ThreadLocal<String>();
+    private JdbcConnection connection;
 
     public static final void setSessionKey(String key) {
         sessionLocal.set(key);
@@ -55,19 +56,23 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
         return true;
     }
 
-    public void init(MysqlConnection conn, Properties props, Log log) {
-
+    @Override
+    public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+        this.connection = (JdbcConnection) conn;
+        return this;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection) throws SQLException {
+    @Override
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
         return null;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
         String key = getSessionKey();
 
         if (key != null && !key.equals(this.currentSessionKey)) {
-            PreparedStatement pstmt = connection.clientPrepareStatement("SET @mysql_proxy_session=?");
+            PreparedStatement pstmt = this.connection.clientPrepareStatement("SET @mysql_proxy_session=?");
 
             try {
                 pstmt.setString(1, key);

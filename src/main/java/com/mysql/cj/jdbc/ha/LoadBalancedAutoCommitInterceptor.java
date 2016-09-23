@@ -33,13 +33,12 @@ import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.ConnectionImpl;
 
 public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2 {
     private int matchingAfterStatementCount = 0;
     private int matchingAfterStatementThreshold = 0;
     private String matchingAfterStatementRegex;
-    private ConnectionImpl conn;
+    private JdbcConnection conn;
     private LoadBalancedConnectionProxy proxy = null;
 
     public void destroy() {
@@ -51,8 +50,8 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return false;
     }
 
-    public void init(MysqlConnection connection, Properties props, Log log) {
-        this.conn = (ConnectionImpl) connection;
+    public StatementInterceptorV2 init(MysqlConnection connection, Properties props, Log log) {
+        this.conn = (JdbcConnection) connection;
 
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
         try {
@@ -61,16 +60,16 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
             // nothing here, being handled in LoadBalancedConnectionProxy.
         }
         String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
-        if ("".equals(autoCommitSwapRegex)) {
-            return;
+        if (!"".equals(autoCommitSwapRegex)) {
+            this.matchingAfterStatementRegex = autoCommitSwapRegex;
         }
-        this.matchingAfterStatementRegex = autoCommitSwapRegex;
+        return this;
 
     }
 
     @SuppressWarnings("resource")
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, JdbcConnection connection, int warningCount,
-            boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
+            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
 
         // don't care if auto-commit is not enabled
         if (!this.conn.getAutoCommit()) {
@@ -113,7 +112,7 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return originalResultSet;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement, JdbcConnection connection) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
         // we do nothing before execution, it's unsafe to swap servers at this point.
         return null;
     }

@@ -2673,7 +2673,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     public static class StatementInterceptorBug61332 extends BaseStatementInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
                 assertTrue("Assereet failed on: " + sql,

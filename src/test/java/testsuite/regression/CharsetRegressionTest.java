@@ -28,7 +28,6 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
@@ -74,8 +73,7 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     public static class Bug73663StatementInterceptor extends BaseStatementInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
                 throw new SQLException("Character set statement issued: " + sql);
             }

@@ -83,6 +83,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.api.jdbc.interceptors.StatementInterceptorV2;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -5507,8 +5508,7 @@ public class StatementRegressionTest extends BaseTestCase {
         String prevSql;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
 
             if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 String asSql = interceptedStatement.toString();
@@ -5715,11 +5715,20 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug51666StatementInterceptor extends BaseStatementInterceptor {
+
+        private JdbcConnection connection;
+
+        @Override
+        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
+            this.connection = (JdbcConnection) conn;
+            return this;
+        }
+
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection conn) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             if (sql.equals("SELECT 1")) {
-                java.sql.Statement test = conn.createStatement();
+                java.sql.Statement test = this.connection.createStatement();
                 return (T) test.executeQuery("/* execute this, not the original */ SELECT 1");
             }
             return null;
@@ -5747,8 +5756,8 @@ public class StatementRegressionTest extends BaseTestCase {
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public <T extends Resultset> T postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, T originalResultSet,
-                JdbcConnection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+        public <T extends Resultset> T postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, T originalResultSet, int warningCount,
+                boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
             if (noIndexUsed) {
                 hasSeenScan = true;
             }
@@ -8957,14 +8966,13 @@ public class StatementRegressionTest extends BaseTestCase {
         private boolean sendFracSecs = false;
 
         @Override
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
             this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_sendFractionalSeconds));
-            super.init(conn, props, log);
+            return this;
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             String query = sql;
             if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 query = interceptedStatement.toString();
@@ -8976,7 +8984,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
                 }
             }
-            return super.preProcess(sql, interceptedStatement, connection);
+            return super.preProcess(sql, interceptedStatement);
         }
 
     }
@@ -9062,18 +9070,18 @@ public class StatementRegressionTest extends BaseTestCase {
         private int execCounter = 0;
 
         @Override
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public StatementInterceptorV2 init(MysqlConnection conn, Properties props, Log log) {
             // TODO Auto-generated method stub
             super.init(conn, props, log);
             System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts) + " | rewriteBatchedStatements: "
                     + props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
             System.out.println("--------------------------------------------------------------------------------");
             this.expected = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)) ? expectedRWBS : expectedNonRWBS;
+            return this;
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, JdbcConnection connection)
-                throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
             String query = sql;
             if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 query = interceptedStatement.toString();
@@ -9086,7 +9094,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
                 assertEquals("Wrong statement at execution number " + this.execCounter, this.expected[this.execCounter++], query.charAt(0));
             }
-            return super.preProcess(sql, interceptedStatement, connection);
+            return super.preProcess(sql, interceptedStatement);
         }
 
     }
