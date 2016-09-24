@@ -7380,16 +7380,16 @@ public class StatementRegressionTest extends BaseTestCase {
 
         for (int tst = 0; tst < 8; tst++) {
             boolean useLegacyDatetimeCode = (tst & 0x1) != 0;
-            boolean useServerSidePreparedStatements = (tst & 0x2) != 0;
+            boolean useServerPrepStmts = (tst & 0x2) != 0;
             boolean sendFractionalSeconds = (tst & 0x4) != 0;
 
             String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-",
-                    useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
+                    useServerPrepStmts ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
             props.setProperty("statementInterceptors", TestBug77449StatementInterceptor.class.getName());
             props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode));
-            props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
             props.setProperty("sendFractionalSeconds", Boolean.toString(sendFractionalSeconds));
 
             Connection testConn = getConnectionWithProps(props);
@@ -7410,7 +7410,7 @@ public class StatementRegressionTest extends BaseTestCase {
             testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
             testStmt.executeUpdate("INSERT INTO testBug77449 VALUES (3, NOW(), NOW())/* no_ts_trunk */"); // insert dummy row
             this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 3");
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             this.rs.updateTimestamp("ts_short", originalTs);
             this.rs.updateTimestamp("ts_long", originalTs);
             this.rs.updateRow();
@@ -7423,27 +7423,27 @@ public class StatementRegressionTest extends BaseTestCase {
             // Assert values from previous inserts/updates.
             // 1st row: from Statement sent as String, no subject to TZ conversions.
             this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 1");
-            assertTrue(this.rs.next());
-            assertEquals(1, this.rs.getInt(1));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
             assertEquals(testCase, roundedTs, this.rs.getTimestamp(2));
             assertEquals(testCase, originalTs, this.rs.getTimestamp(3));
             // 2nd row: from PreparedStatement; 3rd row: from UpdatableResultSet.updateRow(); 4th row: from UpdatableResultSet.insertRow()
             this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id >= 2");
             for (int i = 2; i <= 4; i++) {
-                assertTrue(this.rs.next());
-                assertEquals(i, this.rs.getInt(1));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, i, this.rs.getInt(1));
                 assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(2));
                 assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(3));
             }
 
             this.stmt.execute("DELETE FROM testBug77449");
 
-            // Compare Connector/J with client trunction -> truncation occurs according to 'sendFractionalSeconds' value.
+            // Compare Connector/J with client truncation -> truncation occurs according to 'sendFractionalSeconds' value.
             testPStmt = testConn.prepareStatement("SELECT ? = ?");
             testPStmt.setTimestamp(1, originalTs);
             testPStmt.setTimestamp(2, truncatedTs);
             this.rs = testPStmt.executeQuery();
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             if (sendFractionalSeconds) {
                 assertFalse(testCase, this.rs.getBoolean(1));
             } else {
@@ -7457,7 +7457,7 @@ public class StatementRegressionTest extends BaseTestCase {
             cstmt.setTimestamp("ts_long", originalTs);
             cstmt.execute();
             this.rs = cstmt.getResultSet();
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(1));
             assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(2));
 
@@ -7477,15 +7477,18 @@ public class StatementRegressionTest extends BaseTestCase {
         @Override
         public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
                 throws SQLException {
-            String query = sql;
-            if (query == null && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
-                query = interceptedStatement.toString();
-                query = query.substring(query.indexOf(':') + 2);
-            }
+            if (!(interceptedStatement instanceof ServerPreparedStatement)) {
+                String query = sql;
+                if (query == null && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+                    query = interceptedStatement.toString();
+                    query = query.substring(query.indexOf(':') + 2);
+                }
 
-            if (query != null && ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk"))) {
-                if (this.sendFracSecs ^ query.contains(".999")) {
-                    fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
+                if (query != null
+                        && ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk"))) {
+                    if (this.sendFracSecs ^ query.contains(".999")) {
+                        fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
+                    }
                 }
             }
             return super.preProcess(sql, interceptedStatement, connection);
