@@ -25,22 +25,33 @@ package testsuite.mysqlx.devapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.x.Collection;
+import com.mysql.cj.api.x.CreateTableStatement;
 import com.mysql.cj.api.x.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.api.x.ForeignKeyDefinition.ChangeMode;
+import com.mysql.cj.api.x.Row;
+import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Table;
+import com.mysql.cj.api.x.Type;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqlx.MysqlxError;
+import com.mysql.cj.mysqlx.devapi.ColumnDef;
+import com.mysql.cj.mysqlx.devapi.ForeignKeyDef;
+import com.mysql.cj.mysqlx.devapi.GeneratedColumnDef;
 import com.mysql.cj.mysqlx.devapi.SessionImpl;
 
 public class SchemaTest extends DevApiBaseTestCase {
@@ -171,5 +182,241 @@ public class SchemaTest extends DevApiBaseTestCase {
             sqlUpdate("drop table if exists " + tableName);
         }
 
+    }
+
+    @Test
+    public void testCreateTable() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        String tableName1 = "testCreateTable1";
+        String tableName2 = "testCreateTable2";
+        String tableLikeName = "testCreateTable3";
+        String tableAsName = "testCreateTable4";
+        sqlUpdate("drop table if exists " + tableAsName);
+        sqlUpdate("drop table if exists " + tableAsName + "_check");
+        sqlUpdate("drop table if exists " + tableLikeName);
+        sqlUpdate("drop table if exists " + tableLikeName + "_check");
+        sqlUpdate("drop table if exists " + tableName2);
+        sqlUpdate("drop table if exists " + tableName2 + "_check");
+        sqlUpdate("drop table if exists " + tableName1);
+        sqlUpdate("drop table if exists " + tableName1 + "_check");
+
+        assertThrows(WrongArgumentException.class, "Length parameter is not applicable to the JSON type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.JSON, 3)).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "Decimals parameter is not applicable to the INT type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.INT, 3).decimals(2)).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "Length must be specified before decimals for column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.DECIMAL).decimals(2)).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "UNSIGNED is not applicable to the VARCHAR type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.STRING, 3).unsigned()).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "G, PG, PG3 is not applicable to the SMALLINT type of column 'rating'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("rating", Type.SMALLINT).values("G", "PG", "PG3")).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "BINARY is not applicable to the INT type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.INT, 3).binary()).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "CHARACTER SET is not applicable to the INT type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.INT, 3).charset("sjis")).execute();
+                return null;
+            }
+        });
+        assertThrows(WrongArgumentException.class, "COLLATE is not applicable to the INT type of column 'f01'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable(tableName1).addColumn(new ColumnDef("f01", Type.INT, 3).collation("sjis_japanese_ci")).execute();
+                return null;
+            }
+        });
+
+        // basics
+        CreateTableStatement func = this.schema.createTable(tableName1) //
+                .setDefaultCharset("utf8") //
+                .setDefaultCollation("utf8_general_ci") //
+                .addColumn(new ColumnDef("f01", Type.INT, 3).unsigned().notNull()) //
+                .addColumn(new ColumnDef("f02", Type.BIT, 2).setDefault("1").comment("some comment")) //
+                .addColumn(new ColumnDef("f03", Type.SMALLINT, 5).autoIncrement().uniqueIndex()) //
+                .addColumn(new ColumnDef("f04", Type.BIGINT, 6)) //
+                .addColumn(new ColumnDef("f05", Type.MEDIUMINT).unsigned()) //
+                .addColumn(new ColumnDef("f06", Type.FLOAT, 10).decimals(2)) //
+                .addColumn(new ColumnDef("f07", Type.DOUBLE, 5).decimals(2)) //
+                .addColumn(new ColumnDef("f08", Type.JSON)) //
+                .addColumn(new ColumnDef("f09", Type.STRING, 100).charset("sjis").collation("sjis_japanese_ci")) //
+                .addColumn(new ColumnDef("f10", Type.STRING, 100).charset("sjis").collation("sjis_japanese_ci").binary()) //
+                .addColumn(new ColumnDef("f11", Type.BYTES, 100)) //
+                .addColumn(new ColumnDef("f12", Type.GEOMETRY)) //
+                .addColumn(new ColumnDef("f13", Type.TIME).notNull().setDefault("'12:00'")) //
+                .addColumn(new ColumnDef("f14", Type.DATE).notNull().setDefault("'2016-09-01'")) //
+                .addColumn(new ColumnDef("f15", Type.DATETIME).notNull().setDefault("CURRENT_TIMESTAMP")) //
+                .addColumn(new ColumnDef("f16", Type.TIMESTAMP).notNull().setDefault("CURRENT_TIMESTAMP")) //
+                .addColumn(new ColumnDef("language_id", Type.TINYINT).unsigned().notNull()) //
+                .addColumn(new GeneratedColumnDef("gen01", Type.DOUBLE, 5, "f04 / f05").decimals(2).notNull()) //
+                .addPrimaryKey("f01", "f02") //
+                .addIndex("lang_id", "language_id") //
+                .addIndex("f05_idx", "f05") //
+                .addUniqueIndex("f07_idx", "f07") //
+                .addUniqueIndex("f09_idx", "f09") //
+                .setInitialAutoIncrement(0) //
+                .setComment("some table comment");
+        System.out.println(func);
+        Table t1 = func.execute();
+
+        String sql1 = " (f01 int(3) unsigned NOT NULL," //
+                + " f02 bit(2) NOT NULL DEFAULT b'1' COMMENT 'some comment'," //
+                + " f03 smallint(5) NOT NULL AUTO_INCREMENT," //
+                + " f04 bigint(6) DEFAULT NULL," //
+                + " f05 mediumint(8) unsigned DEFAULT NULL," + " f06 float(10,2) DEFAULT NULL," //
+                + " f07 double(5,2) DEFAULT NULL," + " f08 json DEFAULT NULL," //
+                + " f09 varchar(100) CHARACTER SET sjis DEFAULT NULL," //
+                + " f10 varchar(100) CHARACTER SET sjis COLLATE sjis_bin DEFAULT NULL," //
+                + " f11 varbinary(100) DEFAULT NULL," //
+                + " f12 geometry DEFAULT NULL," //
+                + " f13 time NOT NULL DEFAULT '12:00:00'," //
+                + " f14 date NOT NULL DEFAULT '2016-09-01'," //
+                + " f15 datetime NOT NULL DEFAULT CURRENT_TIMESTAMP," //
+                + " f16 timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," //
+                + " language_id tinyint(3) unsigned NOT NULL," //
+                + " gen01 double(5,2) GENERATED ALWAYS AS (f04 / f05) VIRTUAL NOT NULL," //
+                + " PRIMARY KEY (f01,f02)," //
+                + " UNIQUE KEY f03 (f03)," //
+                + " UNIQUE KEY f07_idx (f07)," //
+                + " UNIQUE KEY f09_idx (f09)," //
+                + " KEY f05_idx (f05)," //
+                + " KEY lang_id (language_id)" //
+                + ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='some table comment'";
+
+        checkCreatedTable(tableName1, sql1);
+
+        // create table like
+        Table tLike = this.schema.createTable(tableLikeName).like(tableName1).execute();
+        assertNotEquals(t1, tLike);
+        checkCreatedTable(tableLikeName, sql1);
+
+        // complex types, foreign keys
+        func = this.schema.createTable(tableName2) //
+                .addColumn(new ColumnDef("film_id", Type.SMALLINT).primaryKey().autoIncrement().unsigned()) //
+                .addColumn(new ColumnDef("title", Type.STRING, 255).notNull().uniqueIndex()) //
+                .addColumn(new ColumnDef("language_id", Type.TINYINT).unsigned().notNull()) //
+                .addColumn(new ColumnDef("original_language_id", Type.TINYINT).unsigned().setDefault(null)) //
+                .addColumn(new ColumnDef("rental_duration", Type.TINYINT).unsigned().notNull().setDefault("3")) //
+                .addColumn(new ColumnDef("rental_rate", Type.DECIMAL, 4).decimals(2).notNull().setDefault("4.99")) //
+                .addColumn(new ColumnDef("length", Type.SMALLINT).unsigned().setDefault(null)) //
+                .addColumn(new ColumnDef("replacement_cost", Type.DECIMAL, 5).decimals(2).notNull().setDefault("19.99")) //
+                .addColumn(new ColumnDef("rating", Type.ENUM).values("G", "PG", "PG-13", "R", "NC-17").setDefault("'G'")) //
+                .addColumn(
+                        new ColumnDef("special_features", Type.SET).values("Trailers", "Commentaries", "Deleted Scenes", "Behind the Scenes").setDefault(null)) //
+                .addColumn(new ColumnDef("last_update", Type.TIMESTAMP).notNull().setDefault("CURRENT_TIMESTAMP")) //
+                .addIndex("idx_title", "title") //
+                .addForeignKey("fk_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
+                .addForeignKey("fk_film_language_original",
+                        new ForeignKeyDef().fields("original_language_id").refersTo(tableName1, "language_id").onUpdate(ChangeMode.CASCADE));
+        System.out.println(func);
+        Table t2 = func.execute();
+
+        checkCreatedTable(tableName2,
+                "(film_id smallint(5) unsigned NOT NULL AUTO_INCREMENT," //
+                        + " title varchar(255) NOT NULL," //
+                        + " language_id tinyint(3) unsigned NOT NULL," //
+                        + " original_language_id tinyint(3) unsigned DEFAULT NULL," //
+                        + " rental_duration tinyint(3) unsigned NOT NULL DEFAULT '3'," //
+                        + " rental_rate decimal(4,2) NOT NULL DEFAULT '4.99'," //
+                        + " length smallint(5) unsigned DEFAULT NULL," //
+                        + " replacement_cost decimal(5,2) NOT NULL DEFAULT '19.99'," //
+                        + " rating enum('G','PG','PG-13','R','NC-17') DEFAULT 'G'," //
+                        + " special_features set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes') DEFAULT NULL," //
+                        + " last_update timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," //
+                        + " PRIMARY KEY (film_id)," //
+                        + " UNIQUE KEY title (title)," //
+                        + " KEY idx_title (title)," //
+                        + " KEY fk_film_language (language_id)," //
+                        + " KEY fk_film_language_original (original_language_id)," //
+                        + " CONSTRAINT testCreateTable2_ibfk_1 FOREIGN KEY (language_id) REFERENCES testCreateTable1 (language_id)," //
+                        + " CONSTRAINT testCreateTable2_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES testCreateTable1 (language_id) ON UPDATE CASCADE" //
+                        + ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+        try {
+            this.schema.createTable(tableName2).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
+            fail("Exception should be thrown if trying to create a table that already exists");
+        } catch (MysqlxError ex) {
+            // expected
+            assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+        }
+        Table t3 = this.schema.createTable(tableName2, true).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
+        assertEquals(t2, t3);
+
+        // create table as
+        func = this.schema.createTable(tableAsName) //
+                .addColumn(new ColumnDef("id", Type.SMALLINT).primaryKey().autoIncrement().unsigned()) //
+                .addIndex("idx_title", "title") //
+                .addForeignKey("fk_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
+                .setDefaultCharset("utf8") //
+                .setDefaultCollation("utf8_spanish_ci") //
+                .setComment("with generated columns") //
+                .as("SELECT film_id, title, language_id from " + tableName2);
+        System.out.println(func);
+        func.execute();
+
+        checkCreatedTable(tableAsName,
+                "(id smallint(5) unsigned NOT NULL AUTO_INCREMENT," // 
+                        + " film_id smallint(5) unsigned NOT NULL DEFAULT '0'," //
+                        + " title varchar(255) CHARACTER SET latin1 NOT NULL," //
+                        + " language_id tinyint(3) unsigned NOT NULL," //
+                        + " PRIMARY KEY (id)," //
+                        + " KEY idx_title (title)," //
+                        + " KEY fk_film_language (language_id)," //
+                        + " CONSTRAINT testCreateTable4_ibfk_1 FOREIGN KEY (language_id) REFERENCES testCreateTable1 (language_id)"
+                        + ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci COMMENT='with generated columns'");
+
+        sqlUpdate("drop table if exists " + tableAsName);
+        sqlUpdate("drop table if exists " + tableAsName + "_check");
+        sqlUpdate("drop table if exists " + tableLikeName);
+        sqlUpdate("drop table if exists " + tableLikeName + "_check");
+        sqlUpdate("drop table if exists " + tableName2);
+        sqlUpdate("drop table if exists " + tableName2 + "_check");
+        sqlUpdate("drop table if exists " + tableName1);
+        sqlUpdate("drop table if exists " + tableName1 + "_check");
+    }
+
+    private void checkCreatedTable(String name, String ddl) {
+        RowResult rows = this.session.sql("show create table " + name).execute();
+        Row row = rows.next();
+        String t1 = row.getString(1).substring(16 + name.length()); // skip CREATE TABLE `name` "
+
+        // need to drop the original table first to avoid duplicate constraints
+        sqlUpdate("drop table if exists " + name);
+
+        sqlUpdate("CREATE TABLE " + name + "_check " + ddl);
+
+        rows = this.session.sql("show create table " + name + "_check").execute();
+        row = rows.next();
+        String t2 = row.getString(1).substring(22 + name.length()); // skip CREATE TABLE `name_check` "
+
+        assertEquals(t2, t1);
+
+        // restore original table
+        sqlUpdate("drop table if exists " + name + "_check ");
+        sqlUpdate("CREATE TABLE " + name + " " + ddl);
     }
 }
