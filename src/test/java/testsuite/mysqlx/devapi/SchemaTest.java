@@ -189,10 +189,10 @@ public class SchemaTest extends DevApiBaseTestCase {
         if (!this.isSetForMySQLxTests) {
             return;
         }
-        String tableName1 = "testCreateTable1";
-        String tableName2 = "testCreateTable2";
-        String tableLikeName = "testCreateTable3";
-        String tableAsName = "testCreateTable4";
+        String tableName1 = "test_create_table1";
+        String tableName2 = "test_create_table2";
+        String tableLikeName = "test_create_table3";
+        String tableAsName = "test_create_table4";
         sqlUpdate("drop table if exists " + tableAsName);
         sqlUpdate("drop table if exists " + tableAsName + "_check");
         sqlUpdate("drop table if exists " + tableLikeName);
@@ -335,26 +335,25 @@ public class SchemaTest extends DevApiBaseTestCase {
         System.out.println(func);
         Table t2 = func.execute();
 
-        checkCreatedTable(tableName2,
-                "(film_id smallint(5) unsigned NOT NULL AUTO_INCREMENT," //
-                        + " title varchar(255) NOT NULL," //
-                        + " language_id tinyint(3) unsigned NOT NULL," //
-                        + " original_language_id tinyint(3) unsigned DEFAULT NULL," //
-                        + " rental_duration tinyint(3) unsigned NOT NULL DEFAULT '3'," //
-                        + " rental_rate decimal(4,2) NOT NULL DEFAULT '4.99'," //
-                        + " length smallint(5) unsigned DEFAULT NULL," //
-                        + " replacement_cost decimal(5,2) NOT NULL DEFAULT '19.99'," //
-                        + " rating enum('G','PG','PG-13','R','NC-17') DEFAULT 'G'," //
-                        + " special_features set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes') DEFAULT NULL," //
-                        + " last_update timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," //
-                        + " PRIMARY KEY (film_id)," //
-                        + " UNIQUE KEY title (title)," //
-                        + " KEY idx_title (title)," //
-                        + " KEY fk_film_language (language_id)," //
-                        + " KEY fk_film_language_original (original_language_id)," //
-                        + " CONSTRAINT testCreateTable2_ibfk_1 FOREIGN KEY (language_id) REFERENCES testCreateTable1 (language_id)," //
-                        + " CONSTRAINT testCreateTable2_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES testCreateTable1 (language_id) ON UPDATE CASCADE" //
-                        + ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+        checkCreatedTable(tableName2, "(film_id smallint(5) unsigned NOT NULL AUTO_INCREMENT," //
+                + " title varchar(255) NOT NULL," //
+                + " language_id tinyint(3) unsigned NOT NULL," //
+                + " original_language_id tinyint(3) unsigned DEFAULT NULL," //
+                + " rental_duration tinyint(3) unsigned NOT NULL DEFAULT '3'," //
+                + " rental_rate decimal(4,2) NOT NULL DEFAULT '4.99'," //
+                + " length smallint(5) unsigned DEFAULT NULL," //
+                + " replacement_cost decimal(5,2) NOT NULL DEFAULT '19.99'," //
+                + " rating enum('G','PG','PG-13','R','NC-17') DEFAULT 'G'," //
+                + " special_features set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes') DEFAULT NULL," //
+                + " last_update timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," //
+                + " PRIMARY KEY (film_id)," //
+                + " UNIQUE KEY title (title)," //
+                + " KEY idx_title (title)," //
+                + " KEY fk_film_language (language_id)," //
+                + " KEY fk_film_language_original (original_language_id)," //
+                + " CONSTRAINT " + tableName2 + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)," //
+                + " CONSTRAINT " + tableName2 + "_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES " + tableName1 + " (language_id) ON UPDATE CASCADE" //
+                + ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
 
         try {
             this.schema.createTable(tableName2).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
@@ -386,7 +385,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                         + " PRIMARY KEY (id)," //
                         + " KEY idx_title (title)," //
                         + " KEY fk_film_language (language_id)," //
-                        + " CONSTRAINT testCreateTable4_ibfk_1 FOREIGN KEY (language_id) REFERENCES testCreateTable1 (language_id)"
+                        + " CONSTRAINT " + tableAsName + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)"
                         + ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci COMMENT='with generated columns'");
 
         sqlUpdate("drop table if exists " + tableAsName);
