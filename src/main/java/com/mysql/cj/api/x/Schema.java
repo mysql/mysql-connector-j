@@ -25,6 +25,8 @@ package com.mysql.cj.api.x;
 
 import java.util.List;
 
+import com.mysql.cj.api.x.CreateTableStatement.CreateTableSplitStatement;
+
 /**
  * A client-side representation of a database schema. Provides access to the schema contents.
  */
@@ -111,5 +113,20 @@ public interface Schema extends DatabaseObject {
      * @param reuseExistingObject
      */
     Collection createCollection(String name, boolean reuseExistingObject);
+
+    /**
+     * Create a new table.
+     * 
+     * @param name
+     */
+    CreateTableSplitStatement createTable(String name);
+
+    /**
+     * Create a new table if it does not already exist on the server.
+     * 
+     * @param name
+     * @param reuseExistingObject
+     */
+    CreateTableSplitStatement createTable(String name, boolean reuseExistingObject);
 
 }

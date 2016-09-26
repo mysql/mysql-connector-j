@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.x.BaseSession;
 import com.mysql.cj.api.x.Collection;
+import com.mysql.cj.api.x.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.api.x.Schema;
 import com.mysql.cj.api.x.Table;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -131,6 +132,16 @@ public class SchemaImpl implements Schema {
             }
             throw ex;
         }
+    }
+
+    @Override
+    public CreateTableSplitStatement createTable(String tableName) {
+        return new CreateTableStatementImpl(this, tableName);
+    }
+
+    @Override
+    public CreateTableSplitStatement createTable(String tableName, boolean reuseExistingObject) {
+        return new CreateTableStatementImpl(this, tableName, reuseExistingObject);
     }
 
     @Override
