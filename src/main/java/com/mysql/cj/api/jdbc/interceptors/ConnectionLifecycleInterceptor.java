@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,8 +25,10 @@ package com.mysql.cj.api.jdbc.interceptors;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.Properties;
 
-import com.mysql.cj.api.Extension;
+import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.log.Log;
 
 /**
  * Implementors of this interface can be installed via the "connectionLifecycleInterceptors" configuration property and receive events and alter behavior of
@@ -34,7 +36,34 @@ import com.mysql.cj.api.Extension;
  * 
  * The driver will create one instance of a given interceptor per-connection.
  */
-public interface ConnectionLifecycleInterceptor extends Extension {
+public interface ConnectionLifecycleInterceptor {
+    /**
+     * Called once per connection that wants to use the extension
+     * 
+     * The properties are the same ones passed in in the URL or arguments to
+     * Driver.connect() or DriverManager.getConnection().
+     * 
+     * @param conn
+     *            the connection for which this extension is being created
+     * @param props
+     *            configuration values as passed to the connection. Note that
+     *            in order to support javax.sql.DataSources, configuration properties specific
+     *            to an interceptor <strong>must</strong> be passed via setURL() on the
+     *            DataSource. Extension properties are not exposed via
+     *            accessor/mutator methods on DataSources.
+     * @param log
+     *            logger instance
+     */
+
+    ConnectionLifecycleInterceptor init(MysqlConnection conn, Properties props, Log log);
+
+    /**
+     * Called by the driver when this extension should release any resources
+     * it is holding and cleanup internally before the connection is
+     * closed.
+     */
+    void destroy();
+
     /**
      * Called when an application calls Connection.close(), before the driver
      * processes its own internal logic for close.

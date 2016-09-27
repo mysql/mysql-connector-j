@@ -301,7 +301,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private transient Timer cancelTimer;
 
-    private List<Extension> connectionLifecycleInterceptors;
+    private List<ConnectionLifecycleInterceptor> connectionLifecycleInterceptors;
 
     private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
 
@@ -1103,10 +1103,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public void close() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
-                new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                new IterateBlock<ConnectionLifecycleInterceptor>(this.connectionLifecycleInterceptors.iterator()) {
                     @Override
-                    void forEach(Extension each) throws SQLException {
-                        ((ConnectionLifecycleInterceptor) each).close();
+                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                        each.close();
                     }
                 }.doForAll();
             }
@@ -1167,11 +1167,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             try {
                 if (this.connectionLifecycleInterceptors != null) {
-                    IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                            this.connectionLifecycleInterceptors.iterator()) {
 
                         @Override
-                        void forEach(Extension each) throws SQLException {
-                            if (!((ConnectionLifecycleInterceptor) each).commit()) {
+                        void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                            if (!each.commit()) {
                                 this.stopIterating = true;
                             }
                         }
@@ -2359,8 +2360,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         if (connectionInterceptorClasses != null) {
             try {
-                this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, connectionInterceptorClasses, "Connection.badLifecycleInterceptor",
-                        getExceptionInterceptor(), this.session.getLog());
+                this.connectionLifecycleInterceptors = Util
+                        .<ConnectionLifecycleInterceptor> loadClasses(
+                                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).getStringValue(),
+                                "Connection.badLifecycleInterceptor", getExceptionInterceptor())
+                        .stream().map(o -> o.init(this, this.props, this.session.getLog())).collect(Collectors.toList());
             } catch (CJException e) {
                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
@@ -3524,11 +3528,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             try {
                 if (this.connectionLifecycleInterceptors != null) {
-                    IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                            this.connectionLifecycleInterceptors.iterator()) {
 
                         @Override
-                        void forEach(Extension each) throws SQLException {
-                            if (!((ConnectionLifecycleInterceptor) each).rollback()) {
+                        void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                            if (!each.rollback()) {
                                 this.stopIterating = true;
                             }
                         }
@@ -3573,11 +3578,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             try {
                 if (this.connectionLifecycleInterceptors != null) {
-                    IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                            this.connectionLifecycleInterceptors.iterator()) {
 
                         @Override
-                        void forEach(Extension each) throws SQLException {
-                            if (!((ConnectionLifecycleInterceptor) each).rollback(savepoint)) {
+                        void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                            if (!each.rollback(savepoint)) {
                                 this.stopIterating = true;
                             }
                         }
@@ -3727,11 +3733,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             checkClosed();
 
             if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                        this.connectionLifecycleInterceptors.iterator()) {
 
                     @Override
-                    void forEach(Extension each) throws SQLException {
-                        if (!((ConnectionLifecycleInterceptor) each).setAutoCommit(autoCommitFlag)) {
+                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                        if (!each.setAutoCommit(autoCommitFlag)) {
                             this.stopIterating = true;
                         }
                     }
@@ -3797,11 +3804,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                        this.connectionLifecycleInterceptors.iterator()) {
 
                     @Override
-                    void forEach(Extension each) throws SQLException {
-                        if (!((ConnectionLifecycleInterceptor) each).setCatalog(catalog)) {
+                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                        if (!each.setCatalog(catalog)) {
                             this.stopIterating = true;
                         }
                     }
@@ -4219,11 +4227,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public void transactionBegun() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                        this.connectionLifecycleInterceptors.iterator()) {
 
                     @Override
-                    void forEach(Extension each) throws SQLException {
-                        ((ConnectionLifecycleInterceptor) each).transactionBegun();
+                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                        each.transactionBegun();
                     }
                 };
 
@@ -4235,11 +4244,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public void transactionCompleted() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                        this.connectionLifecycleInterceptors.iterator()) {
 
                     @Override
-                    void forEach(Extension each) throws SQLException {
-                        ((ConnectionLifecycleInterceptor) each).transactionCompleted();
+                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
+                        each.transactionCompleted();
                     }
                 };
 
