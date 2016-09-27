@@ -21,9 +21,7 @@
 
  */
 
-package com.mysql.cj.api.io;
-
-// TODO move this interface to com.mysql.cj.api.mysqla.io package
+package com.mysql.cj.api.mysqla.io;
 
 import java.io.IOException;
 
@@ -32,4 +30,19 @@ import java.io.IOException;
  */
 public interface PacketSender {
     void send(byte[] packet, int packetLen, byte packetSequence) throws IOException;
+
+    /**
+     * Return a PacketSender instance free of decorators.
+     * 
+     * @return
+     */
+    PacketSender undecorateAll();
+
+    /**
+     * Return the previous PacketSender instance from the decorators chain or the current PacketSender
+     * if it is the first entry in a chain.
+     * 
+     * @return
+     */
+    PacketSender undecorate();
 }

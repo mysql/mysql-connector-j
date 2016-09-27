@@ -48,7 +48,10 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.conf.RuntimeProperty;
+import com.mysql.cj.api.conf.RuntimeProperty.RuntimePropertyListener;
+import com.mysql.cj.api.io.PacketReceivedTimeHolder;
+import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -59,6 +62,7 @@ import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -103,7 +107,7 @@ import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.cj.mysqla.result.OkPacket;
 
-public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
+public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, RuntimePropertyListener {
 
     protected static final int INITIAL_PACKET_SIZE = 1024;
     protected static final int COMP_HEADER_LENGTH = 3;
@@ -262,6 +266,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
 
     }
 
+    public PacketSender getPacketSender() {
+        return this.packetSender;
+    }
+
     public PacketReader getPacketReader() {
         return this.packetReader;
     }
@@ -381,7 +389,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
             this.packetSender = this.compressedPacketSender;
         }
 
-        applyPacketDecorators();
+        applyPacketDecorators(this.packetSender, this.packetReader);
 
         try {
             this.socketConnection.setMysqlSocket(this.socketConnection.getSocketFactory().afterHandshake());
@@ -390,41 +398,81 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
                     this.getPacketSentTimeHolder().getLastPacketSentTime(), this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx,
                     getExceptionInterceptor());
         }
+
+        // listen for properties changes to allow decorators reconfiguration
+        this.maintainTimeStats.addListener(this);
+        pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).addListener(this);
+        pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).addListener(this);
+    }
+
+    @Override
+    public void handlePropertyChange(RuntimeProperty<?> prop) {
+        switch (prop.getPropertyDefinition().getName()) {
+            case PropertyDefinitions.PNAME_maintainTimeStats:
+            case PropertyDefinitions.PNAME_traceProtocol:
+            case PropertyDefinitions.PNAME_enablePacketDebug:
+
+                applyPacketDecorators(this.packetSender.undecorateAll(), this.packetReader.undecorateAll());
+
+                break;
+
+            default:
+                break;
+        }
     }
 
     /**
      * Apply optional decorators to configured PacketSender and PacketReader.
      */
-    protected void applyPacketDecorators() {
-        if (this.maintainTimeStats.getValue()) {
-            TimeTrackingPacketSender ttSender = new TimeTrackingPacketSender(this.packetSender);
-            this.setPacketSentTimeHolder(ttSender);
-            this.packetSender = ttSender;
+    public void applyPacketDecorators(PacketSender sender, PacketReader reader) {
+        TimeTrackingPacketSender ttSender = null;
+        TimeTrackingPacketReader ttReader = null;
+        LinkedList<StringBuilder> debugRingBuffer = null;
 
-            TimeTrackingPacketReader ttReader = new TimeTrackingPacketReader(this.packetReader);
-            this.setPacketReceivedTimeHolder(ttReader);
-            this.packetReader = ttReader;
+        if (this.maintainTimeStats.getValue()) {
+            ttSender = new TimeTrackingPacketSender(sender);
+            sender = ttSender;
+
+            ttReader = new TimeTrackingPacketReader(reader);
+            reader = ttReader;
         }
 
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue()) {
-            this.packetSender = new TracingPacketSender(this.packetSender, this.log, this.socketConnection.getHost(),
-                    getServerSession().getCapabilities().getThreadId());
-            this.packetReader = new TracingPacketReader(this.packetReader, this.log);
+            sender = new TracingPacketSender(sender, this.log, this.socketConnection.getHost(), getServerSession().getCapabilities().getThreadId());
+            reader = new TracingPacketReader(reader, this.log);
         }
 
         if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
 
-            this.packetDebugRingBuffer = new LinkedList<StringBuilder>();
+            debugRingBuffer = new LinkedList<StringBuilder>();
 
-            this.packetSender = new DebugBufferingPacketSender(this.packetSender, this.packetDebugRingBuffer,
+            sender = new DebugBufferingPacketSender(sender, debugRingBuffer,
                     this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
-            this.packetReader = new DebugBufferingPacketReader(this.packetReader, this.packetDebugRingBuffer,
+            reader = new DebugBufferingPacketReader(reader, debugRingBuffer,
                     this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
         }
 
         // do it after other decorators to have trace and debug applied to individual packets 
-        this.packetReader = new MultiPacketReader(this.packetReader);
+        reader = new MultiPacketReader(reader);
 
+        // atomic replacement of currently used objects
+        synchronized (this.packetReader) {
+            this.packetReader = reader;
+            this.packetDebugRingBuffer = debugRingBuffer;
+            this.setPacketSentTimeHolder(ttSender != null ? ttSender : new PacketSentTimeHolder() {
+                public long getLastPacketSentTime() {
+                    return 0;
+                }
+            });
+        }
+        synchronized (this.packetSender) {
+            this.packetSender = sender;
+            this.setPacketReceivedTimeHolder(ttReader != null ? ttReader : new PacketReceivedTimeHolder() {
+                public long getLastPacketReceivedTime() {
+                    return 0;
+                }
+            });
+        }
     }
 
     public MysqlaCapabilities readServerCapabilities() {
@@ -1393,13 +1441,15 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol {
     }
 
     public void dumpPacketRingBuffer() {
-        if (this.packetDebugRingBuffer != null) {
+        // use local variable to allow unsynchronized usage of the buffer
+        LinkedList<StringBuilder> localPacketDebugRingBuffer = this.packetDebugRingBuffer;
+        if (localPacketDebugRingBuffer != null) {
             StringBuilder dumpBuffer = new StringBuilder();
 
-            dumpBuffer.append("Last " + this.packetDebugRingBuffer.size() + " packets received from server, from oldest->newest:\n");
+            dumpBuffer.append("Last " + localPacketDebugRingBuffer.size() + " packets received from server, from oldest->newest:\n");
             dumpBuffer.append("\n");
 
-            for (Iterator<StringBuilder> ringBufIter = this.packetDebugRingBuffer.iterator(); ringBufIter.hasNext();) {
+            for (Iterator<StringBuilder> ringBufIter = localPacketDebugRingBuffer.iterator(); ringBufIter.hasNext();) {
                 dumpBuffer.append(ringBufIter.next());
                 dumpBuffer.append("\n");
             }

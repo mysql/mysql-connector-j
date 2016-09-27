@@ -77,12 +77,14 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
 
         this.valueAsObject = Integer.valueOf(intValue);
         this.wasExplicitlySet = true;
+        invokeListeners();
     }
 
     @Override
     public void resetValue() {
         this.valueAsObject = this.initialValueAsObject;
         this.valueAsString = this.initialValueAsString;
+        invokeListeners();
     }
 
 }

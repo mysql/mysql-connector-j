@@ -27,7 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.zip.Deflater;
 
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
@@ -212,5 +212,15 @@ public class CompressedPacketSender implements PacketSender {
 
         // release reference to (possibly large) compressed packet buffer
         this.compressedPacket = null;
+    }
+
+    @Override
+    public PacketSender undecorateAll() {
+        return this;
+    }
+
+    @Override
+    public PacketSender undecorate() {
+        return this;
     }
 }

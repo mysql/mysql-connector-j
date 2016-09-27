@@ -35,7 +35,7 @@ import java.util.zip.InflaterOutputStream;
 import org.junit.After;
 import org.junit.Test;
 
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 

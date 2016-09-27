@@ -73,11 +73,13 @@ public class ModifiableIntegerProperty extends ReadableIntegerProperty implement
 
         this.valueAsObject = Integer.valueOf(intValue);
         this.wasExplicitlySet = true;
+        invokeListeners();
     }
 
     @Override
     public void resetValue() {
         this.valueAsObject = this.initialValueAsObject;
+        invokeListeners();
     }
 
 }

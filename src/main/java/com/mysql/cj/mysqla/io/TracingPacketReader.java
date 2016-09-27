@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.StringUtils;
@@ -94,6 +94,16 @@ public class TracingPacketReader implements PacketReader {
     @Override
     public void resetPacketSequence() {
         this.packetReader.resetPacketSequence();
+    }
+
+    @Override
+    public PacketReader undecorateAll() {
+        return this.packetReader.undecorateAll();
+    }
+
+    @Override
+    public PacketReader undecorate() {
+        return this.packetReader;
     }
 
 }

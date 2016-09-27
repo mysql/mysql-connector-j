@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,7 +25,7 @@ package com.mysql.cj.mysqla.io;
 
 import static org.junit.Assert.assertEquals;
 
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 
 /**
  * Common functionality for packet sender tests.
@@ -38,6 +38,16 @@ public class PacketSenderTestBase {
         return new PacketSender() {
             public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
                 // no-op
+            }
+
+            @Override
+            public PacketSender undecorateAll() {
+                return this;
+            }
+
+            @Override
+            public PacketSender undecorate() {
+                return this;
             }
         };
     }

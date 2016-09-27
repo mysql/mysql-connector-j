@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,6 +24,9 @@
 package com.mysql.cj.core.conf;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.naming.RefAddr;
@@ -44,6 +47,8 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     protected T initialValueAsObject;
 
     protected boolean wasExplicitlySet = false;
+
+    private List<WeakReference<RuntimePropertyListener>> listeners;
 
     public AbstractRuntimeProperty() {
     }
@@ -94,6 +99,42 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     public boolean isExplicitlySet() {
         return this.wasExplicitlySet;
+    }
+
+    @Override
+    public void addListener(RuntimePropertyListener l) {
+        if (this.listeners == null) {
+            this.listeners = new ArrayList<>();
+        }
+        if (!this.listeners.contains(l)) {
+            this.listeners.add(new WeakReference<RuntimePropertyListener>(l));
+        }
+    }
+
+    @Override
+    public void removeListener(RuntimePropertyListener listener) {
+        if (this.listeners != null) {
+            for (WeakReference<RuntimePropertyListener> wr : this.listeners) {
+                RuntimePropertyListener l = wr.get();
+                if (l == listener) {
+                    this.listeners.remove(wr);
+                    break;
+                }
+            }
+        }
+    }
+
+    protected void invokeListeners() {
+        if (this.listeners != null) {
+            for (WeakReference<RuntimePropertyListener> wr : this.listeners) {
+                RuntimePropertyListener l = wr.get();
+                if (l != null) {
+                    l.handlePropertyChange(this);
+                } else {
+                    this.listeners.remove(wr);
+                }
+            }
+        }
     }
 
 }
