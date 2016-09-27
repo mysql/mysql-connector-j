@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,7 +26,7 @@ package com.mysql.cj.mysqla.io;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
@@ -48,5 +48,15 @@ public class SimplePacketSender implements PacketSender {
             this.outputStream.write(packet, packetSplitter.getOffset(), packetSplitter.getPacketLen());
         }
         this.outputStream.flush();
+    }
+
+    @Override
+    public PacketSender undecorateAll() {
+        return this;
+    }
+
+    @Override
+    public PacketSender undecorate() {
+        return this;
     }
 }

@@ -28,8 +28,8 @@ import java.util.Optional;
 
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.SocketConnection;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
@@ -125,6 +125,16 @@ public class SimplePacketReader implements PacketReader {
     @Override
     public void resetPacketSequence() {
         this.readPacketSequence = 0;
+    }
+
+    @Override
+    public PacketReader undecorateAll() {
+        return this;
+    }
+
+    @Override
+    public PacketReader undecorate() {
+        return this;
     }
 
 }

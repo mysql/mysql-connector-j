@@ -23,6 +23,8 @@
 
 package testsuite.simple;
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -57,6 +59,8 @@ import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.mysqla.io.PacketReader;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -67,6 +71,16 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.mysqla.io.DebugBufferingPacketReader;
+import com.mysql.cj.mysqla.io.DebugBufferingPacketSender;
+import com.mysql.cj.mysqla.io.MultiPacketReader;
+import com.mysql.cj.mysqla.io.MysqlaProtocol;
+import com.mysql.cj.mysqla.io.SimplePacketReader;
+import com.mysql.cj.mysqla.io.SimplePacketSender;
+import com.mysql.cj.mysqla.io.TimeTrackingPacketReader;
+import com.mysql.cj.mysqla.io.TimeTrackingPacketSender;
+import com.mysql.cj.mysqla.io.TracingPacketReader;
+import com.mysql.cj.mysqla.io.TracingPacketSender;
 import com.mysql.jdbc.Driver;
 
 import testsuite.BaseStatementInterceptor;
@@ -1928,6 +1942,122 @@ public class ConnectionTest extends BaseTestCase {
                         || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
             return super.preProcess(sql, interceptedStatement);
+        }
+    }
+
+    public void testDecoratorsChain() throws Exception {
+        Connection c = null;
+
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useCompression, "false");
+            props.setProperty(PropertyDefinitions.PNAME_maintainTimeStats, "true");
+            props.setProperty(PropertyDefinitions.PNAME_traceProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
+            c = getConnectionWithProps(props);
+
+            MysqlaProtocol p = ((JdbcConnection) c).getSession().getProtocol();
+            PacketSender sender = p.getPacketSender();
+            PacketReader reader = p.getPacketReader();
+
+            assertEquals(DebugBufferingPacketSender.class, sender.getClass());
+            assertEquals(TracingPacketSender.class, sender.undecorate().getClass());
+            assertEquals(TimeTrackingPacketSender.class, sender.undecorate().undecorate().getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().undecorate().undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(DebugBufferingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(TracingPacketReader.class, reader.undecorate().undecorate().getClass());
+            assertEquals(TimeTrackingPacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
+
+            // remove traceProtocol
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(false);
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(DebugBufferingPacketSender.class, sender.getClass());
+            assertEquals(TimeTrackingPacketSender.class, sender.undecorate().getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(DebugBufferingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(TimeTrackingPacketReader.class, reader.undecorate().undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
+
+            // remove maintainTimeStats
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(false);
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(DebugBufferingPacketSender.class, sender.getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(DebugBufferingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().getClass());
+
+            assertNotEquals(TimeTrackingPacketSender.class, p.getPacketSentTimeHolder().getClass());
+            assertNotEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
+
+            // remove enablePacketDebug
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(false);
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(SimplePacketSender.class, sender.getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().getClass());
+
+            // add maintainTimeStats
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(true);
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(TimeTrackingPacketSender.class, sender.getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(TimeTrackingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().getClass());
+
+            assertEquals(TimeTrackingPacketSender.class, p.getPacketSentTimeHolder().getClass());
+            assertEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
+
+            // remove listener and try to enable traceProtocol, it should be missed in this case
+            p.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).removeListener(p);
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(true); // please note that the property is changed anyways, see the next step
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(TimeTrackingPacketSender.class, sender.getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(TimeTrackingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().getClass());
+
+            // ensure that other listeners are still working
+            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(true);
+            sender = p.getPacketSender();
+            reader = p.getPacketReader();
+
+            assertEquals(DebugBufferingPacketSender.class, sender.getClass());
+            assertEquals(TracingPacketSender.class, sender.undecorate().getClass()); // it's here because we changed the traceProtocol previously
+            assertEquals(TimeTrackingPacketSender.class, sender.undecorate().undecorate().getClass());
+            assertEquals(SimplePacketSender.class, sender.undecorate().undecorate().undecorate().getClass());
+
+            assertEquals(MultiPacketReader.class, reader.getClass());
+            assertEquals(DebugBufferingPacketReader.class, reader.undecorate().getClass());
+            assertEquals(TracingPacketReader.class, reader.undecorate().undecorate().getClass());
+            assertEquals(TimeTrackingPacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
+            assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
+
+        } finally {
+            if (c != null) {
+                c.close();
+            }
         }
     }
 }

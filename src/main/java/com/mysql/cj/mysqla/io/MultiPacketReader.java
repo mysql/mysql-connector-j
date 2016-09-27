@@ -99,4 +99,14 @@ public class MultiPacketReader implements PacketReader {
         this.packetReader.resetPacketSequence();
     }
 
+    @Override
+    public PacketReader undecorateAll() {
+        return this.packetReader.undecorateAll();
+    }
+
+    @Override
+    public PacketReader undecorate() {
+        return this.packetReader;
+    }
+
 }

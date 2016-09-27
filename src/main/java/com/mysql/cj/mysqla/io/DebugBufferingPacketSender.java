@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.io.PacketSender;
+import com.mysql.cj.api.mysqla.io.PacketSender;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 
@@ -79,5 +79,15 @@ public class DebugBufferingPacketSender implements PacketSender {
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         pushPacketToDebugBuffer(packet, packetLen);
         this.packetSender.send(packet, packetLen, packetSequence);
+    }
+
+    @Override
+    public PacketSender undecorateAll() {
+        return this.packetSender.undecorateAll();
+    }
+
+    @Override
+    public PacketSender undecorate() {
+        return this.packetSender;
     }
 }

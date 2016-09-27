@@ -60,4 +60,18 @@ public interface PacketReader {
      */
     void resetPacketSequence();
 
+    /**
+     * Return a PacketReader instance free of decorators.
+     * 
+     * @return
+     */
+    PacketReader undecorateAll();
+
+    /**
+     * Return the previous PacketReader instance from the decorators chain or the current PacketReader
+     * if it is the first entry in a chain.
+     * 
+     * @return
+     */
+    PacketReader undecorate();
 }

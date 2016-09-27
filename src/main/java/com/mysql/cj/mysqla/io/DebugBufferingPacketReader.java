@@ -130,4 +130,14 @@ public class DebugBufferingPacketReader implements PacketReader {
         this.packetSequenceReset = true;
     }
 
+    @Override
+    public PacketReader undecorateAll() {
+        return this.packetReader.undecorateAll();
+    }
+
+    @Override
+    public PacketReader undecorate() {
+        return this.packetReader;
+    }
+
 }

@@ -72,11 +72,13 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
         }
         this.valueAsObject = Long.valueOf(longValue);
         this.wasExplicitlySet = true;
+        invokeListeners();
     }
 
     @Override
     public void resetValue() {
         this.valueAsObject = this.initialValueAsObject;
+        invokeListeners();
     }
 
 }
