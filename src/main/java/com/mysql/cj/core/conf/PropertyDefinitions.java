@@ -432,10 +432,10 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_allowSlaveDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.allowSlaveDownConnections"), "5.1.38", CATEGORY_HA, Integer.MAX_VALUE),
+                        Messages.getString("ConnectionProperties.allowSlaveDownConnections"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_readFromMasterWhenNoSlaves, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.readFromMasterWhenNoSlaves"), "5.1.38", CATEGORY_HA, Integer.MAX_VALUE),
+                        Messages.getString("ConnectionProperties.readFromMasterWhenNoSlaves"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_autoDeserialize, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoDeserialize"), "3.1.5", CATEGORY_BLOBS, Integer.MIN_VALUE),
@@ -745,7 +745,7 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.ha.enableJMX"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new IntegerPropertyDefinition(PNAME_loadBalanceHostRemovalGracePeriod, 15000, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.loadBalanceHostRemovalGracePeriod"), "5.1.39", CATEGORY_HA, Integer.MAX_VALUE, 0,
+                        Messages.getString("ConnectionProperties.loadBalanceHostRemovalGracePeriod"), "6.0.3", CATEGORY_HA, Integer.MAX_VALUE, 0,
                         Integer.MAX_VALUE),
 
                 new StringPropertyDefinition(PNAME_serverTimezone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
@@ -907,7 +907,7 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_MYSQLX, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.enableEscapeProcessing"), "5.1.37", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
+                        Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
 
         HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
         for (PropertyDefinition<?> pdef : pdefs) {
