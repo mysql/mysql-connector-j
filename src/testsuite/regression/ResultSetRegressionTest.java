@@ -4978,8 +4978,26 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for Bug#78685 - Wrong results when retrieving the value of a BIT column as an integer.
      */
     public void testBug78685() throws Exception {
-        createTable("testBug78685", "(b BIT(24))", "InnoDB");
-        this.stmt.executeUpdate("INSERT INTO testBug78685 VALUES (b'101110'), (47), ('0'), (49), ('2')");
+        createTable("testBug78685", "(b1 BIT(8), b2 BIT(16), b3 BIT(24))", "InnoDB");
+        // 46 == b'00101110' == '.'
+        // 11822 == b'0010111000101110' == '..'
+        // --
+        // 47 == '/'
+        // 12079 == '//'
+        // --
+        // 48 == '0'
+        // 12336 = '00'
+        // --
+        // 49 == b'00110001' == '1'
+        // 12593 == b'0011000100110001'  == '11'
+        // --
+        // 50 == '2'
+        // 12850 == '22'
+        // --
+        // 51 == '3'
+        // 13107 == '33'
+        this.stmt.executeUpdate("INSERT INTO testBug78685 VALUES (b'00101110', b'0010111000101110', b'0010111000101110'), ('/', '//', '//'), "
+                + "(48, 12336, 12336), (b'00110001', b'0011000100110001', b'0011000100110001'), ('2', '22', '22'), (51, 13107, 13107)");
 
         boolean useFastIntParsing = false;
         boolean useServerPrepStmts = false;
@@ -4991,17 +5009,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
             final Properties props = new Properties();
             props.setProperty("useFastIntParsing", Boolean.toString(useFastIntParsing));
             Connection testConn = getConnectionWithProps(props);
-            this.rs = testConn.createStatement().executeQuery("SELECT b, b + 0, BIN(b) FROM testBug78685");
+            this.rs = testConn.createStatement().executeQuery("SELECT b1, b1 + 0, BIN(b1), b2, b2 + 0, BIN(b2), b3, b3 + 0, BIN(b3) FROM testBug78685");
             testBug78685CheckData(testCase);
             testConn.close();
 
-            // Test result ser from prepared statements
+            // Test result set from prepared statements
             testCase = String.format("Case [fstIntPrs: %s, useSPS: %s, StmtType: %s]", useFastIntParsing ? "Y" : "N", useServerPrepStmts ? "Y" : "N",
                     "PrepStmt");
 
             props.setProperty("useServerPrepStmts", Boolean.toString(useServerPrepStmts));
             testConn = getConnectionWithProps(props);
-            this.pstmt = testConn.prepareStatement("SELECT b, b + 0, BIN(b) FROM testBug78685");
+            this.pstmt = testConn.prepareStatement("SELECT b1, b1 + 0, BIN(b1), b2, b2 + 0, BIN(b2), b3, b3 + 0, BIN(b3) FROM testBug78685");
             this.rs = this.pstmt.executeQuery();
             testBug78685CheckData("");
             testConn.close();
@@ -5011,37 +5029,114 @@ public class ResultSetRegressionTest extends BaseTestCase {
     private void testBug78685CheckData(String testCase) throws Exception {
         int rowCount = 0;
         while (this.rs.next()) {
-            final int expectedNum = 46 + rowCount;
+            int expectedNumBase = 46 + rowCount;
+
+            // Column "b1 BIT(8)"
+            int expectedNum = expectedNumBase;
 
             assertEquals(testCase, expectedNum, this.rs.getShort(1));
             assertEquals(testCase, expectedNum, this.rs.getInt(1));
             assertEquals(testCase, expectedNum, this.rs.getLong(1));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(1).intValue());
             assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(1));
             assertTrue(this.rs.getObject(1) instanceof byte[]);
-            assertByteArrayEquals(testCase, new byte[] { 0, 0, (byte) (expectedNum) }, (byte[]) this.rs.getObject(1));
+            assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(1));
 
             assertEquals(testCase, expectedNum, this.rs.getShort(2));
             assertEquals(testCase, expectedNum, this.rs.getInt(2));
             assertEquals(testCase, expectedNum, this.rs.getLong(2));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(2).intValue());
             assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(2));
             assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(2));
 
-            final ResultSet testRs = this.rs;
+            final ResultSet testRs1 = this.rs;
             assertThrows(SQLException.class, "'[01\\.]+' in column '3' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
                 public Void call() throws Exception {
-                    testRs.getShort(3);
+                    testRs1.getShort(3);
                     return null;
                 }
             });
-            final String expectedString = Integer.toBinaryString(expectedNum);
+            String expectedString = Integer.toBinaryString(expectedNum);
             assertEquals(testCase, Integer.parseInt(expectedString), this.rs.getInt(3));
             assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(3));
             assertEquals(testCase, expectedString, this.rs.getString(3));
             assertEquals(testCase, expectedString, this.rs.getObject(3));
 
+            // Column "b1 BIT(16)"
+            expectedNum = expectedNumBase + expectedNumBase * 256;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(4));
+            assertEquals(testCase, expectedNum, this.rs.getInt(4));
+            assertEquals(testCase, expectedNum, this.rs.getLong(4));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(4).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(4));
+            assertTrue(this.rs.getObject(4) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(4));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(5));
+            assertEquals(testCase, expectedNum, this.rs.getInt(5));
+            assertEquals(testCase, expectedNum, this.rs.getLong(5));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(5).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(5));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(5));
+
+            final ResultSet testRs2 = this.rs;
+            assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs2.getShort(6);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs2.getInt(6);
+                    return null;
+                }
+            });
+            expectedString = Long.toBinaryString(expectedNum);
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(6));
+            assertEquals(testCase, expectedString, this.rs.getString(6));
+            assertEquals(testCase, expectedString, this.rs.getObject(6));
+
+            // Column "b1 BIT(24)"
+            expectedNum = expectedNumBase + expectedNumBase * 256;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(7));
+            assertEquals(testCase, expectedNum, this.rs.getInt(7));
+            assertEquals(testCase, expectedNum, this.rs.getLong(7));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(7).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(7));
+            assertTrue(this.rs.getObject(7) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { 0, (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(7));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(8));
+            assertEquals(testCase, expectedNum, this.rs.getInt(8));
+            assertEquals(testCase, expectedNum, this.rs.getLong(8));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(8).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(8));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(8));
+
+            final ResultSet testRs3 = this.rs;
+            assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs3.getShort(9);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs3.getInt(9);
+                    return null;
+                }
+            });
+            expectedString = Long.toBinaryString(expectedNum);
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(9));
+            assertEquals(testCase, expectedString, this.rs.getString(9));
+            assertEquals(testCase, expectedString, this.rs.getObject(9));
+
             rowCount++;
         }
-        assertEquals(testCase, 5, rowCount);
+        assertEquals(testCase, 6, rowCount);
     }
 
     /**

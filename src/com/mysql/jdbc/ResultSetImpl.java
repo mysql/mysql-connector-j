@@ -2470,12 +2470,22 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      */
     public int getInt(int columnIndex) throws SQLException {
         checkRowPos();
+        checkColumnBounds(columnIndex);
 
         if (!this.isBinaryEncoded) {
             int columnIndexMinusOne = columnIndex - 1;
-            if (this.useFastIntParsing) {
-                checkColumnBounds(columnIndex);
 
+            if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+                long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
+
+                if (this.jdbcCompliantTruncationForReads && (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
+                    throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.INTEGER);
+                }
+
+                return (int) valueAsLong;
+            }
+
+            if (this.useFastIntParsing) {
                 if (this.thisRow.isNull(columnIndexMinusOne)) {
                     this.wasNullFlag = true;
                 } else {
@@ -2496,16 +2506,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     try {
                         return getIntWithOverflowCheck(columnIndexMinusOne);
                     } catch (NumberFormatException nfe) {
-                        if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-                            long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-
-                            if (this.connection.getJdbcCompliantTruncationForReads() && (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
-                                throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.INTEGER);
-                            }
-
-                            return (int) valueAsLong;
-                        }
-
                         try {
                             return parseIntAsDouble(columnIndex,
                                     this.thisRow.getString(columnIndexMinusOne, this.fields[columnIndexMinusOne].getEncoding(), this.connection));
@@ -2549,16 +2549,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 return 0;
             } catch (NumberFormatException nfe) {
-                if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-                    long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-
-                    if (this.jdbcCompliantTruncationForReads && (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
-                        throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.INTEGER);
-                    }
-
-                    return (int) valueAsLong;
-                }
-
                 try {
                     return parseIntAsDouble(columnIndex, val);
                 } catch (NumberFormatException newNfe) {
@@ -2666,15 +2656,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     }
 
     private long getLong(int columnIndex, boolean overflowCheck) throws SQLException {
-        if (!this.isBinaryEncoded) {
-            checkRowPos();
+        checkRowPos();
+        checkColumnBounds(columnIndex);
 
+        if (!this.isBinaryEncoded) {
             int columnIndexMinusOne = columnIndex - 1;
 
+            if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+                return getNumericRepresentationOfSQLBitType(columnIndex);
+            }
+
             if (this.useFastIntParsing) {
-
-                checkColumnBounds(columnIndex);
-
                 if (this.thisRow.isNull(columnIndexMinusOne)) {
                     this.wasNullFlag = true;
                 } else {
@@ -2695,10 +2687,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     try {
                         return getLongWithOverflowCheck(columnIndexMinusOne, overflowCheck);
                     } catch (NumberFormatException nfe) {
-                        if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-                            return getNumericRepresentationOfSQLBitType(columnIndex);
-                        }
-
                         try {
                             return parseLongAsDouble(columnIndexMinusOne,
                                     this.thisRow.getString(columnIndexMinusOne, this.fields[columnIndexMinusOne].getEncoding(), this.connection));
@@ -4980,13 +4968,21 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      *                if a database access error occurs
      */
     public short getShort(int columnIndex) throws SQLException {
+        checkRowPos();
+        checkColumnBounds(columnIndex);
+
         if (!this.isBinaryEncoded) {
-            checkRowPos();
+            if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+                long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
+
+                if (this.jdbcCompliantTruncationForReads && (valueAsLong < Short.MIN_VALUE || valueAsLong > Short.MAX_VALUE)) {
+                    throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.SMALLINT);
+                }
+
+                return (short) valueAsLong;
+            }
 
             if (this.useFastIntParsing) {
-
-                checkColumnBounds(columnIndex);
-
                 Object value = this.thisRow.getColumnValue(columnIndex - 1);
 
                 if (value == null) {
@@ -5019,16 +5015,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                     try {
                         return parseShortWithOverflowCheck(columnIndex, shortAsBytes, null);
                     } catch (NumberFormatException nfe) {
-                        if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-                            long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-
-                            if (this.jdbcCompliantTruncationForReads && (valueAsLong < Short.MIN_VALUE || valueAsLong > Short.MAX_VALUE)) {
-                                throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.SMALLINT);
-                            }
-
-                            return (short) valueAsLong;
-                        }
-
                         try {
                             return parseShortAsDouble(columnIndex, StringUtils.toString(shortAsBytes));
                         } catch (NumberFormatException newNfe) {
@@ -5063,16 +5049,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
                 return 0; // for NULL
             } catch (NumberFormatException nfe) {
-                if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-                    long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-
-                    if (this.jdbcCompliantTruncationForReads && (valueAsLong < Short.MIN_VALUE || valueAsLong > Short.MAX_VALUE)) {
-                        throwRangeException(String.valueOf(valueAsLong), columnIndex, Types.SMALLINT);
-                    }
-
-                    return (short) valueAsLong;
-                }
-
                 try {
                     return parseShortAsDouble(columnIndex, val);
                 } catch (NumberFormatException newNfe) {
