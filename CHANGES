@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
+  - Added client-side failover during XSession initialization for multi-router configuration.
+
   - Removed Extension interface. All extension classes now implement their specific interfaces.
 
   - Fix for Bug#22988922, GETLENGTH() RETURNS -1 FOR LONGBLOB AND LONGTEXT FIELDS.

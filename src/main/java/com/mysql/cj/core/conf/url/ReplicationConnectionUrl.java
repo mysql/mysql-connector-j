@@ -85,7 +85,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
         //            for (HostInfo hi : hostsLists) {
         //                if (visitedHosts.contains(hi.getHostPortPair())) {
         //                    throw ExceptionFactory.createException(WrongArgumentException.class,
-        //                            Messages.getString("ConnectionString.10", new Object[] { hi.getHostPortPair(), Type.REPLICATION_CONNECTION.getProtol() }));
+        //                            Messages.getString("ConnectionString.13", new Object[] { hi.getHostPortPair(), Type.REPLICATION_CONNECTION.getProtocol() }));
         //                }
         //                visitedHosts.add(hi.getHostPortPair());
         //            }

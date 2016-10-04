@@ -109,6 +109,10 @@ public class PropertyDefinitions {
     public static final String PORT_PROPERTY_KEY = "PORT";
     /** Key used to retrieve the database value from the properties instance passed to the driver. */
     public static final String DBNAME_PROPERTY_KEY = "DBNAME";
+    /** Key used to retrieve the address value ("host:port") from the properties instance passed to the driver. */
+    public static final String ADDRESS_PROPERTY_KEY = "ADDRESS";
+    /** Key used to retried the host priority in a list of hosts. */
+    public static final String PRIORITY_PROPERTY_KEY = "PRIORITY";
 
     /*
      * Categories of connection properties

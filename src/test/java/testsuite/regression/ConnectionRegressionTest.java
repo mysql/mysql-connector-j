@@ -1124,8 +1124,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } else {
             urlBuf.append('&');
         }
-
-        urlBuf.append("sessionVariables=@testBug13453='%25%26+%3D'");
+        // %25 := '%'; %26 := '&'; %3d := '=';
+        urlBuf.append("sessionVariables=@testBug13453%3D'%25%26+%3D'");
 
         Connection encodedConn = null;
 

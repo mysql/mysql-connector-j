@@ -23,23 +23,27 @@
 
 package com.mysql.cj.mysqlx.io;
 
-import java.nio.channels.CompletionHandler;
-import java.util.concurrent.Future;
-import java.util.concurrent.CompletableFuture;
-import java.nio.*;
-import javax.net.ssl.*;
-import javax.net.ssl.SSLEngineResult.*;
-import com.mysql.cj.core.io.ExportControlled;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
 
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 
 /**
@@ -98,7 +102,7 @@ public class MysqlxProtocolFactory {
                 // TODO: setEnabledCipherSuites()
                 // TODO: setEnabledProtocols()
                 // TODO: how to differentiate servers that do and don't support TLSv1.2
-                sslEngine.setEnabledProtocols(new String[] {"TLSv1.1", "TLSv1"});
+                sslEngine.setEnabledProtocols(new String[] { "TLSv1.1", "TLSv1" });
                 //sslEngine.setEnabledProtocols(new String[] {"TLSv1.2", "TLSv1.1", "TLSv1"});
 
                 performTlsHandshake(sslEngine, channel);
@@ -106,12 +110,12 @@ public class MysqlxProtocolFactory {
                 // setup encrypted streams
                 messageReader.setChannel(new TlsDecryptingByteChannel(channel, sslEngine));
                 messageWriter.setChannel(new TlsEncryptingByteChannel(channel, sslEngine));
-            
+
                 // resume message processing
                 messageReader.start();
             }
             return protocol;
-        } catch (IOException | InterruptedException | ExecutionException ex) {
+        } catch (IOException | InterruptedException | ExecutionException | RuntimeException ex) {
             throw new CJCommunicationsException(ex);
         }
     }
@@ -163,19 +167,19 @@ public class MysqlxProtocolFactory {
     private static void write(AsynchronousSocketChannel channel, ByteBuffer data) {
         CompletableFuture<Void> f = new CompletableFuture<>();
         int bytesToWrite = data.limit();
-        CompletionHandler<Integer, Void> handler =  new CompletionHandler<Integer, Void>() {
-                public void completed(Integer bytesWritten, Void nothing) {
-                    if (bytesWritten < bytesToWrite) {
-                        channel.write(data, null, this);
-                    } else {
-                        f.complete(null);
-                    }
+        CompletionHandler<Integer, Void> handler = new CompletionHandler<Integer, Void>() {
+            public void completed(Integer bytesWritten, Void nothing) {
+                if (bytesWritten < bytesToWrite) {
+                    channel.write(data, null, this);
+                } else {
+                    f.complete(null);
                 }
+            }
 
-                public void failed(Throwable exc, Void nothing) {
-                    f.completeExceptionally(exc);
-                }
-            };
+            public void failed(Throwable exc, Void nothing) {
+                f.completeExceptionally(exc);
+            }
+        };
         channel.write(data, null, handler);
         try {
             f.get();

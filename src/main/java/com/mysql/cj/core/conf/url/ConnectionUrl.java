@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.conf.url;
 
+import static com.mysql.cj.core.conf.PropertyDefinitions.ADDRESS_PROPERTY_KEY;
 import static com.mysql.cj.core.conf.PropertyDefinitions.DBNAME_PROPERTY_KEY;
 import static com.mysql.cj.core.conf.PropertyDefinitions.HOST_PROPERTY_KEY;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PATH_PROPERTY_KEY;
@@ -33,6 +34,7 @@ import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_socketFactory;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_useConfigs;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_user;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PORT_PROPERTY_KEY;
+import static com.mysql.cj.core.conf.PropertyDefinitions.PRIORITY_PROPERTY_KEY;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PROTOCOL_PROPERTY_KEY;
 import static com.mysql.cj.core.conf.PropertyDefinitions.TYPE_PROPERTY_KEY;
 import static com.mysql.cj.core.io.NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME;
@@ -109,7 +111,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         FAILOVER_CONNECTION("jdbc:mysql:", HostsCardinality.MULTIPLE), //
         LOADBALANCE_CONNECTION("jdbc:mysql:loadbalance:", HostsCardinality.ONE_OR_MORE), //
         REPLICATION_CONNECTION("jdbc:mysql:replication:", HostsCardinality.ONE_OR_MORE), //
-        MYSQLX_SESSION("mysqlx:", HostsCardinality.SINGLE);
+        MYSQLX_SESSION("mysqlx:", HostsCardinality.ONE_OR_MORE);
 
         private String protocol;
         private HostsCardinality cardinality;
@@ -191,7 +193,6 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                     try {
                         Type.fromValue(connStrParser.getScheme(), -1);
                     } catch (WrongArgumentException e) {
-                        e.printStackTrace();
                         return new ConnectionUrl(connString) {
                         };
                     }
@@ -346,7 +347,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                 this.propertiesTransformer = (ConnectionPropertiesTransform) Class.forName(propertiesTransformClassName).newInstance();
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException e) {
                 throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
-                        Messages.getString("ConnectionString.11", new Object[] { propertiesTransformClassName, e.toString() }), e);
+                        Messages.getString("ConnectionString.9", new Object[] { propertiesTransformClassName, e.toString() }), e);
             }
         }
     }
@@ -379,12 +380,12 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             try (InputStream configAsStream = Driver.class.getResourceAsStream("../configurations/" + configFile + ".properties")) {
                 if (configAsStream == null) {
                     throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
-                            Messages.getString("ConnectionString.12", new Object[] { configFile }));
+                            Messages.getString("ConnectionString.10", new Object[] { configFile }));
                 }
                 configProps.load(configAsStream);
             } catch (IOException e) {
                 throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
-                        Messages.getString("ConnectionString.13", new Object[] { configFile }), e);
+                        Messages.getString("ConnectionString.11", new Object[] { configFile }), e);
             }
         }
         return configProps;
@@ -424,6 +425,8 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         hostProps.putAll(this.properties); // Add global connection arguments.
         hostProps.putAll(hi.getHostProperties()); // Add/override host specific connection arguments.
         hostProps.put(DBNAME_PROPERTY_KEY, getDatabase()); // Add the database name
+
+        hostProps = preprocessPerTypeHostProperties(hostProps);
 
         String host = hostProps.remove(HOST_PROPERTY_KEY);
         if (!isNullOrEmpty(hi.getHost())) {
@@ -465,6 +468,18 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         fixProtocolDependencies(hostProps);
 
         return buildHostInfo(host, port, user, password, hostProps);
+    }
+
+    /**
+     * Subclasses should override this to perform any required preprocessing on the host information properties.
+     * 
+     * @param hostProps
+     *            the host properties map to process
+     * @return
+     *         the processed host properties map
+     */
+    protected Map<String, String> preprocessPerTypeHostProperties(Map<String, String> hostProps) {
+        return hostProps;
     }
 
     /**
@@ -513,7 +528,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the host properties map to fix
      */
     protected void fixKeysCase(Map<String, String> hostProps) {
-        for (String key : Arrays.asList(PROTOCOL_PROPERTY_KEY, PATH_PROPERTY_KEY, TYPE_PROPERTY_KEY)) {
+        for (String key : Arrays.asList(PROTOCOL_PROPERTY_KEY, PATH_PROPERTY_KEY, TYPE_PROPERTY_KEY, ADDRESS_PROPERTY_KEY, PRIORITY_PROPERTY_KEY)) {
             if (hostProps.containsKey(key)) {
                 hostProps.put(key, hostProps.remove(key));
             }
@@ -590,7 +605,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * 
      * @return the hosts list from this connection URL
      */
-    public List<HostInfo> getHostList() {
+    public List<HostInfo> getHostsList() {
         return Collections.unmodifiableList(this.hosts);
     }
 
@@ -621,9 +636,9 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             }
         }
 
-        ConnectionUrlParser.Pair<String, String> hostAndPort = ConnectionUrlParser.parseHostPortPair(hostPortPair);
+        ConnectionUrlParser.Pair<String, Integer> hostAndPort = ConnectionUrlParser.parseHostPortPair(hostPortPair);
         String host = hostAndPort.left;
-        int port = Integer.parseInt(hostAndPort.right);
+        Integer port = hostAndPort.right;
         String user = getDefaultUser();
         String password = getDefaultPassword();
 

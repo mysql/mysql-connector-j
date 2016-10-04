@@ -29,6 +29,8 @@ import com.mysql.cj.api.x.NodeSession;
 import com.mysql.cj.api.x.XSession;
 import com.mysql.cj.api.x.XSessionFactory;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.mysqlx.devapi.NodeSessionImpl;
@@ -39,19 +41,29 @@ import com.mysql.cj.mysqlx.devapi.SessionImpl;
  */
 public class MysqlxSessionFactory implements XSessionFactory {
 
-    private Properties parseUrl(String url) {
-        ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
-        if (conUrl.getType() == null) {
+    private ConnectionUrl parseUrl(String url) {
+        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
+        if (connUrl.getType() != ConnectionUrl.Type.MYSQLX_SESSION) {
             throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
         }
-
-        Properties properties = conUrl.getMainHost().exposeAsProperties();
-        return properties;
+        return connUrl;
     }
 
     @Override
     public XSession getSession(String url) {
-        return new SessionImpl(parseUrl(url));
+        CJCommunicationsException latestException = null;
+        ConnectionUrl connUrl = parseUrl(url);
+        for (HostInfo hi : connUrl.getHostsList()) {
+            try {
+                return new SessionImpl(hi.exposeAsProperties());
+            } catch (CJCommunicationsException e) {
+                latestException = e;
+            }
+        }
+        if (latestException != null) {
+            throw latestException;
+        }
+        return null;
     }
 
     @Override
@@ -61,12 +73,15 @@ public class MysqlxSessionFactory implements XSessionFactory {
 
     @Override
     public NodeSession getNodeSession(String url) {
-        return new NodeSessionImpl(parseUrl(url));
+        ConnectionUrl connUrl = parseUrl(url);
+        if (connUrl.getHostsList().size() > 1) {
+            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "A NodeSession cannot be initialized with a multi-host URL.");
+        }
+        return new NodeSessionImpl(connUrl.getMainHost().exposeAsProperties());
     }
 
     @Override
     public NodeSession getNodeSession(Properties properties) {
         return new NodeSessionImpl(properties);
     }
-
 }

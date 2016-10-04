@@ -143,7 +143,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, connectionUrl.getHostInfoListAsHostPortPairs());
             hosts = connectionUrl.getHostInfoListFromHostPortPairs(this.connectionGroup.getInitialHosts());
         } else {
-            hosts = connectionUrl.getHostList();
+            hosts = connectionUrl.getHostsList();
         }
 
         // hosts specifications may have been reset with settings from a previous connection group

@@ -119,7 +119,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      */
     MultiHostConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         this();
-        initializeHostsSpecs(connectionUrl, connectionUrl.getHostList());
+        initializeHostsSpecs(connectionUrl, connectionUrl.getHostsList());
     }
 
     /**

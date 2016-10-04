@@ -31,11 +31,13 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
@@ -792,21 +794,12 @@ public class StringUtils {
             throw new IllegalArgumentException();
         }
 
-        StringTokenizer tokenizer = new StringTokenizer(stringToSplit, delimiter, false);
-
-        List<String> splitTokens = new ArrayList<String>(tokenizer.countTokens());
-
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-
-            if (trim) {
-                token = token.trim();
-            }
-
-            splitTokens.add(token);
+        String[] tokens = stringToSplit.split(delimiter, -1);
+        Stream<String> tokensStream = Arrays.asList(tokens).stream();
+        if (trim) {
+            tokensStream = tokensStream.map(String::trim);
         }
-
-        return splitTokens;
+        return tokensStream.collect(Collectors.toList());
     }
 
     /**
@@ -824,6 +817,27 @@ public class StringUtils {
      * @throws IllegalArgumentException
      */
     public static List<String> split(String stringToSplit, String delimiter, String markers, String markerCloses, boolean trim) {
+        return split(stringToSplit, delimiter, markers, markerCloses, trim, SEARCH_MODE__MRK_COM_WS);
+    }
+
+    /**
+     * Splits stringToSplit into a list, using the given delimiter
+     * 
+     * @param stringToSplit
+     *            the string to split
+     * @param delimiter
+     *            the string to split on
+     * @param trim
+     *            should the split strings be whitespace trimmed?
+     * @param searchMode
+     *            a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+     *            behavior of the search
+     * 
+     * @return the list of strings, split by delimiter
+     * 
+     * @throws IllegalArgumentException
+     */
+    public static List<String> split(String stringToSplit, String delimiter, String markers, String markerCloses, boolean trim, Set<SearchMode> searchMode) {
         if (stringToSplit == null) {
             return new ArrayList<String>();
         }
@@ -837,26 +851,20 @@ public class StringUtils {
 
         List<String> splitTokens = new ArrayList<String>();
 
-        while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, markers, markerCloses, SEARCH_MODE__MRK_COM_WS)) != -1) {
+        while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, markers, markerCloses, searchMode)) != -1) {
             String token = stringToSplit.substring(currentPos, delimPos);
-
             if (trim) {
                 token = token.trim();
             }
-
             splitTokens.add(token);
-            currentPos = delimPos + 1;
+            currentPos = delimPos + delimiter.length();
         }
 
-        if (currentPos < stringToSplit.length()) {
-            String token = stringToSplit.substring(currentPos);
-
-            if (trim) {
-                token = token.trim();
-            }
-
-            splitTokens.add(token);
+        String token = stringToSplit.substring(currentPos);
+        if (trim) {
+            token = token.trim();
         }
+        splitTokens.add(token);
 
         return splitTokens;
     }
@@ -1860,5 +1868,9 @@ public class StringUtils {
             }
         }
         return true;
+    }
+
+    public static String safeTrim(String toTrim) {
+        return isNullOrEmpty(toTrim) ? toTrim : toTrim.trim();
     }
 }

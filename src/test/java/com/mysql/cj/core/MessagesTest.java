@@ -35,8 +35,8 @@ public class MessagesTest {
 
         assertEquals("The database URL cannot be null.", Messages.getString("ConnectionString.0"));
         assertEquals("Malformed database URL, failed to parse the main URL sections.", Messages.getString("ConnectionString.1"));
-        assertEquals("Malformed database URL, there must be a single '$' between the user info section and the host section starting with 'Test'.",
-                Messages.getString("ConnectionString.2", new Object[] { "$", "Test" }));
+        assertEquals("Malformed database URL, failed to parse the URL authority segment 'Test'.",
+                Messages.getString("ConnectionString.2", new Object[] { "Test" }));
         assertEquals("Failed to parse the host:port pair 'host:123'.", Messages.getString("ConnectionString.3", new Object[] { "host:123" }));
         assertEquals("Malformed database URL, failed to parse the connection string near 'Test'.",
                 Messages.getString("ConnectionString.4", new Object[] { "Test" }));
@@ -46,16 +46,22 @@ public class MessagesTest {
         assertEquals("Malformed database URL, failed to parse the port '123' as a number.", Messages.getString("ConnectionString.7", new Object[] { 123 }));
         assertEquals("Illegal transformation to the 'Test' property. The value 'Ten' is not a valid number.",
                 Messages.getString("ConnectionString.8", new Object[] { "Test", "Ten" }));
-        assertEquals("Malformed database URL, host 'Test1' is duplicated but 'Test2' connections can only handle one instance of each host:port pair.",
-                Messages.getString("ConnectionString.9", new Object[] { "Test1", "Test2" }));
-        assertEquals(
-                "Malformed database URL, Host 'Test1' is duplicated in the combined hosts list (masters & slaves) but 'Test2' connections can only handle one instance of each host:port pair.",
-                Messages.getString("ConnectionString.10", new Object[] { "Test1", "Test2" }));
         assertEquals("Unable to create properties transform instance 'Test' due to underlying exception: " + ex.toString(),
-                Messages.getString("ConnectionString.11", new Object[] { "Test", ex.toString() }));
-        assertEquals("Can't find configuration template named 'Test'", Messages.getString("ConnectionString.12", new Object[] { "Test" }));
+                Messages.getString("ConnectionString.9", new Object[] { "Test", ex.toString() }));
+        assertEquals("Can't find configuration template named 'Test'", Messages.getString("ConnectionString.10", new Object[] { "Test" }));
         assertEquals("Unable to load configuration template 'Test' due to underlying IOException",
-                Messages.getString("ConnectionString.13", new Object[] { "Test" }));
+                Messages.getString("ConnectionString.11", new Object[] { "Test" }));
+        assertEquals("Illegal database URL, host 'Test1' is duplicated but 'Test2' connections can only handle one instance of each host:port pair.",
+                Messages.getString("ConnectionString.12", new Object[] { "Test1", "Test2" }));
+        assertEquals(
+                "Illegal database URL, Host 'Test1' is duplicated in the combined hosts list (masters & slaves) but 'Test2' connections can only handle one instance of each host:port pair.",
+                Messages.getString("ConnectionString.13", new Object[] { "Test1", "Test2" }));
+        assertEquals("Illegal database URL, in a 'Test' multi-host connection it is required the same credentials in all hosts.",
+                Messages.getString("ConnectionString.14", new Object[] { "Test" }));
+        assertEquals("Illegal database URL, in a 'Test' multi-host connection it is required that all or none of the hosts set a \"priority\" value.",
+                Messages.getString("ConnectionString.15", new Object[] { "Test" }));
+        assertEquals("Illegal database URL, in a 'Test' multi-host connection the \"priority\" setting must be a value between 0 and 100.",
+                Messages.getString("ConnectionString.16", new Object[] { "Test" }));
 
         assertEquals("Cannot load connection class because of underlying exception: " + ex.toString(),
                 Messages.getString("NonRegisteringDriver.17", new Object[] { ex.toString() }));
