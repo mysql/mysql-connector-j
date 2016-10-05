@@ -489,6 +489,11 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         if (this.masterConnection != null) {
             this.masterConnection.addHost(hostPortPair);
         }
+
+        // Switch back to the masters connection if this connection was running in fail-safe mode.
+        if (!this.readOnly && !isMasterConnection()) {
+            switchToMasterConnection();
+        }
     }
 
     public synchronized void removeMasterHost(String hostPortPair) throws SQLException {

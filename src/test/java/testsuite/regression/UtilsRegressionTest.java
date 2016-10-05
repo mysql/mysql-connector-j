@@ -23,11 +23,17 @@
 
 package testsuite.regression;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 
+import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.util.TimeUtil;
 
 import testsuite.BaseTestCase;
@@ -632,5 +638,67 @@ public class UtilsRegressionTest extends BaseTestCase {
     public void testBug70436() throws Exception {
         assertEquals("Asia/Yerevan", TimeUtil.getCanonicalTimezone("Caucasus Standard Time", null));
         assertEquals("Asia/Tbilisi", TimeUtil.getCanonicalTimezone("Georgian Standard Time", null));
+    }
+
+    /**
+     * Tests fix for Bug#82115 - Some exceptions are intercepted twice or fail to set the init cause.
+     */
+    public void testBug82115() throws Exception {
+        Exception ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), null, null);
+        assertEquals("ORIGINAL_EXCEPTION", ex.getMessage());
+        assertEquals("ORIGINAL_CAUSE", ex.getCause().getMessage());
+
+        ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), new ExceptionInterceptor() {
+            boolean alreadyIntercepted = false;
+
+            @Override
+            public void init(MysqlConnection con, Properties props, Log log) {
+                this.alreadyIntercepted = false;
+            }
+
+            public void destroy() {
+            }
+
+            @Override
+            public Exception interceptException(Exception sqlEx, MysqlConnection con) {
+                assertFalse(this.alreadyIntercepted);
+                this.alreadyIntercepted = true;
+
+                assertEquals("ORIGINAL_EXCEPTION", sqlEx.getMessage());
+                assertEquals("ORIGINAL_CAUSE", sqlEx.getCause().getMessage());
+
+                SQLException newSqlEx = new SQLException("INTERCEPT_EXCEPTION");
+                return newSqlEx;
+            }
+        }, null);
+        assertEquals("INTERCEPT_EXCEPTION", ex.getMessage());
+        assertNull(ex.getCause());
+
+        ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), new ExceptionInterceptor() {
+            boolean alreadyIntercepted = false;
+
+            @Override
+            public void init(MysqlConnection con, Properties props, Log log) {
+                this.alreadyIntercepted = false;
+            }
+
+            public void destroy() {
+            }
+
+            @Override
+            public Exception interceptException(Exception sqlEx, MysqlConnection con) {
+                assertFalse(this.alreadyIntercepted);
+                this.alreadyIntercepted = true;
+
+                assertEquals("ORIGINAL_EXCEPTION", sqlEx.getMessage());
+                assertEquals("ORIGINAL_CAUSE", sqlEx.getCause().getMessage());
+
+                SQLException newSqlEx = new SQLException("INTERCEPT_EXCEPTION");
+                newSqlEx.initCause(new Exception("INTERCEPT_CAUSE"));
+                return newSqlEx;
+            }
+        }, null);
+        assertEquals("INTERCEPT_EXCEPTION", ex.getMessage());
+        assertEquals("INTERCEPT_CAUSE", ex.getCause().getMessage());
     }
 }

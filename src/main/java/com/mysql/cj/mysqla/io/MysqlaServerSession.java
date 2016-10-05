@@ -290,9 +290,7 @@ public class MysqlaServerSession implements ServerSession {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
-                boolean inTransactionOnServer = inTransactionOnServer();
-
-                return !inTransactionOnServer;
+                return !inTransactionOnServer();
             }
 
             return autoCommitModeOnServer != autoCommitFlag;
@@ -451,6 +449,10 @@ public class MysqlaServerSession implements ServerSession {
 
     public void setCharacterSetResultsOnServer(String characterSetResultsOnServer) {
         this.characterSetResultsOnServer = characterSetResultsOnServer;
+    }
+
+    public void preserveOldTransactionState() {
+        this.statusFlags |= this.oldStatusFlags & SERVER_STATUS_IN_TRANS;
     }
 
 }

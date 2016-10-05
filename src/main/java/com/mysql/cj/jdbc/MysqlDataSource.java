@@ -41,6 +41,7 @@ import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -409,6 +410,10 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         // URL should take precedence over properties
         //
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
+        if (connUrl.getType() == null) {
+            throw SQLError.createSQLException(Messages.getString("MysqlDataSource.BadUrl", new Object[] { jdbcUrlToUse }),
+                    SQLError.SQL_STATE_CONNECTION_FAILURE, null);
+        }
         Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);

@@ -4720,7 +4720,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "first:one,again:two");
-        props.setProperty(PropertyDefinitions.PNAME_user, "root");
+        props.setProperty(PropertyDefinitions.PNAME_user, getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.PNAME_user));
         Connection attConn = super.getConnectionWithProps(props);
         ResultSet rslt = attConn.createStatement()
                 .executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");
@@ -9317,5 +9317,99 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertConnectionsHistory(expectedConnectionsHistory);
         assertEquals(UnreliableSocketFactory.getHostsFromAllConnections().size(), expectedConnectionsHistory.length);
         UnreliableSocketFactory.flushConnectionAttempts();
+    }
+
+    /**
+     * Tests fix for Bug#77649 - URL start with word "address",JDBC can't parse the "host:port" Correctly.
+     */
+    public void testBug77649() throws Exception {
+        Properties props = getPropertiesFromTestsuiteUrl();
+        String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+
+        String[] hosts = new String[] { host, "address", "address.somewhere", "addressing", "addressing.somewhere" };
+
+        UnreliableSocketFactory.flushAllStaticData();
+        for (int i = 1; i < hosts.length; i++) { // Don't map the first host.
+            UnreliableSocketFactory.mapHost(hosts[i], host);
+        }
+
+        props = getHostFreePropertiesFromTestsuiteUrl();
+        props.setProperty(PropertyDefinitions.PNAME_socketFactory, UnreliableSocketFactory.class.getName());
+        for (String h : hosts) {
+            getConnectionWithProps(String.format("jdbc:mysql://%s:%s", h, port), props).close();
+            getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)", h, port), props).close();
+        }
+    }
+
+    /**
+     * Tests fix for Bug#74711 - FORGOTTEN WORKAROUND FOR BUG#36326.
+     * 
+     * This test requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).
+     */
+    public void testBug74711() throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT @@global.query_cache_type, @@global.query_cache_size");
+        this.rs.next();
+        if (!"ON".equalsIgnoreCase(this.rs.getString(1)) || "0".equals(this.rs.getString(2))) {
+            System.err
+                    .println("Warning! testBug77411() requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).");
+            return;
+        }
+
+        boolean useLocTransSt = false;
+        boolean useElideSetAC = false;
+        do {
+            final String testCase = String.format("Case: [LocTransSt: %s, ElideAC: %s ]", useLocTransSt ? "Y" : "N", useElideSetAC ? "Y" : "N");
+            final Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useLocalTransactionState, Boolean.toString(useLocTransSt));
+            props.setProperty(PropertyDefinitions.PNAME_elideSetAutoCommits, Boolean.toString(useElideSetAC));
+            Connection testConn = getConnectionWithProps(props);
+
+            assertEquals(testCase, useLocTransSt, ((JdbcConnection) testConn).getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalTransactionState).getValue().booleanValue());
+            assertEquals(testCase, useElideSetAC, ((JdbcConnection) testConn).getPropertySet()
+                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue().booleanValue());
+
+            testConn.close();
+        } while ((useLocTransSt = !useLocTransSt) || (useElideSetAC = !useElideSetAC));
+    }
+
+    /**
+     * Tests fix for Bug#75209 - Set useLocalTransactionState may result in partially committed transaction.
+     */
+    public void testBug75209() throws Exception {
+        createTable("testBug75209", "(id INT PRIMARY KEY)", "InnoDB");
+
+        boolean useLocTransSt = false;
+        final Properties props = new Properties();
+        do {
+            this.stmt.executeUpdate("TRUNCATE TABLE testBug75209");
+            this.stmt.executeUpdate("INSERT INTO testBug75209 VALUES (1)");
+
+            final String testCase = String.format("Case: [LocTransSt: %s]", useLocTransSt ? "Y" : "N");
+
+            props.setProperty(PropertyDefinitions.PNAME_useLocalTransactionState, Boolean.toString(useLocTransSt));
+            final Connection testConn = getConnectionWithProps(props);
+            testConn.setAutoCommit(false);
+
+            final Statement testStmt = testConn.createStatement();
+            try {
+                assertEquals(testCase, 1, testStmt.executeUpdate("INSERT INTO testBug75209 VALUES(2)"));
+
+                // This triggers Duplicate-key exception
+                testStmt.executeUpdate("INSERT INTO testBug75209 VALUES(2)");
+                fail(testCase + ": SQLException expected here!");
+            } catch (Exception e) {
+                testConn.rollback();
+            }
+            testStmt.close();
+
+            testConn.setAutoCommit(true);
+            testConn.close();
+
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM testBug75209");
+            assertTrue(this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+        } while (useLocTransSt = !useLocTransSt);
     }
 }

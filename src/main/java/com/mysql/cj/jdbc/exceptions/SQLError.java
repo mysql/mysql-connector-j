@@ -495,16 +495,17 @@ public class SQLError {
     }
 
     public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor, MysqlConnection conn) {
-        SQLException sqlEx = createSQLException(message, sqlState, interceptor);
-
-        if (cause != null) {
-            try {
-                sqlEx.initCause(cause);
-            } catch (Throwable t) {
-                // we're not going to muck with that here, since it's an error condition anyway!
+        SQLException sqlEx = createSQLException(message, sqlState, null);
+        if (sqlEx.getCause() == null) {
+            if (cause != null) {
+                try {
+                    sqlEx.initCause(cause);
+                } catch (Throwable t) {
+                    // we're not going to muck with that here, since it's an error condition anyway!
+                }
             }
         }
-
+        // Run through the exception interceptor after setting the init cause.
         return runThroughExceptionInterceptor(interceptor, sqlEx, conn);
     }
 

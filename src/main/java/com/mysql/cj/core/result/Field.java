@@ -71,6 +71,11 @@ public class Field {
         // ucs2, utf16, and utf32 cannot be used as a client character set, but if it was received from server under some circumstances we can parse them as utf16
         this.encoding = "UnicodeBig".equals(encoding) ? "UTF-16" : encoding;
 
+        // MySQL encodes JSON data with utf8mb4.
+        if (mysqlType == MysqlType.JSON) {
+            this.encoding = "UTF-8";
+        }
+
         this.mysqlType = mysqlType;
 
         adjustFlagsByMysqlType();

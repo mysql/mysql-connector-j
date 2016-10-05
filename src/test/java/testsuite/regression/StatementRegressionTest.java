@@ -8877,16 +8877,15 @@ public class StatementRegressionTest extends BaseTestCase {
 
         for (int tst = 0; tst < 8; tst++) {
             boolean useLegacyDatetimeCode = (tst & 0x1) != 0;
-            boolean useServerSidePreparedStatements = (tst & 0x2) != 0;
+            boolean useServerPrepStmts = (tst & 0x2) != 0;
             boolean sendFractionalSeconds = (tst & 0x4) != 0;
 
             String testCase = String.format("Case: %d [ %s | %s | %s ]", tst, useLegacyDatetimeCode ? "useLegDTCode" : "-",
-                    useServerSidePreparedStatements ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
+                    useServerPrepStmts ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77449StatementInterceptor.class.getName());
-            props.setProperty("useLegacyDatetimeCode", Boolean.toString(useLegacyDatetimeCode)); // TODO property was removed in 6.0
-            props.setProperty("useServerSidePreparedStatements", Boolean.toString(useServerSidePreparedStatements)); // TODO PropertyDefinitions.PNAME_useServerPrepStmts
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
             props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, Boolean.toString(sendFractionalSeconds));
 
             Connection testConn = getConnectionWithProps(props);
@@ -8907,7 +8906,7 @@ public class StatementRegressionTest extends BaseTestCase {
             testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
             testStmt.executeUpdate("INSERT INTO testBug77449 VALUES (3, NOW(), NOW())/* no_ts_trunk */"); // insert dummy row
             this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 3");
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             this.rs.updateTimestamp("ts_short", originalTs);
             this.rs.updateTimestamp("ts_long", originalTs);
             this.rs.updateRow();
@@ -8920,27 +8919,27 @@ public class StatementRegressionTest extends BaseTestCase {
             // Assert values from previous inserts/updates.
             // 1st row: from Statement sent as String, no subject to TZ conversions.
             this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 1");
-            assertTrue(this.rs.next());
-            assertEquals(1, this.rs.getInt(1));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
             assertEquals(testCase, roundedTs, this.rs.getTimestamp(2));
             assertEquals(testCase, originalTs, this.rs.getTimestamp(3));
             // 2nd row: from PreparedStatement; 3rd row: from UpdatableResultSet.updateRow(); 4th row: from UpdatableResultSet.insertRow()
             this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id >= 2");
             for (int i = 2; i <= 4; i++) {
-                assertTrue(this.rs.next());
-                assertEquals(i, this.rs.getInt(1));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, i, this.rs.getInt(1));
                 assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(2));
                 assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(3));
             }
 
             this.stmt.execute("DELETE FROM testBug77449");
 
-            // Compare Connector/J with client trunction -> truncation occurs according to 'sendFractionalSeconds' value.
+            // Compare Connector/J with client truncation -> truncation occurs according to 'sendFractionalSeconds' value.
             testPStmt = testConn.prepareStatement("SELECT ? = ?");
             testPStmt.setTimestamp(1, originalTs);
             testPStmt.setTimestamp(2, truncatedTs);
             this.rs = testPStmt.executeQuery();
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             if (sendFractionalSeconds) {
                 assertFalse(testCase, this.rs.getBoolean(1));
             } else {
@@ -8954,7 +8953,7 @@ public class StatementRegressionTest extends BaseTestCase {
             cstmt.setTimestamp("ts_long", originalTs);
             cstmt.execute();
             this.rs = cstmt.getResultSet();
-            assertTrue(this.rs.next());
+            assertTrue(testCase, this.rs.next());
             assertEquals(testCase, sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(1));
             assertEquals(testCase, sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(2));
 
@@ -8973,15 +8972,18 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
-            String query = sql;
-            if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                query = interceptedStatement.toString();
-                query = query.substring(query.indexOf(':') + 2);
-            }
+            if (!(interceptedStatement instanceof ServerPreparedStatement)) {
+                String query = sql;
+                if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                    query = interceptedStatement.toString();
+                    query = query.substring(query.indexOf(':') + 2);
+                }
 
-            if (query != null && ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk"))) {
-                if (this.sendFracSecs ^ query.contains(".999")) {
-                    fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
+                if (query != null
+                        && ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk"))) {
+                    if (this.sendFracSecs ^ query.contains(".999")) {
+                        fail("Wrong TIMESTAMP trunctation in query [" + query + "]");
+                    }
                 }
             }
             return super.preProcess(sql, interceptedStatement);
@@ -9159,6 +9161,9 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertEquals(testCase + "/Row#" + i, -i, this.rs.getInt(1));
             }
             assertFalse(testCase, this.rs.next());
+
+            lowLevelConn.close();
+            highLevelConn.close();
         }
     }
 
@@ -9359,5 +9364,202 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while ((useSSL = !useSSL) || (useSPS = !useSPS) || (useCursor = !useCursor) || (useCompr = !useCompr)); // Cycle through all possible combinations.
+    }
+
+    /**
+     * Tests fix for Bug#80615 - prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
+     * 
+     * There are two bugs here:
+     * 1. A server prepared statement leakage by not actually closing the statement on server when .close() is called in the client side. This occurs when
+     * setting 'cachePrepStmts=true&useServerPrepStmts=true' and a prepared statement is set as non-poolable ('setPoolable(false)'). By itself this doesn't
+     * cause any visible issue because the connector has a fail-safe mechanism that uses client-side prepared statements when server-side prepared statements
+     * fail to be prepared. So, the connector ends up using client-side prepared statements after the number of open prepared statements on server hits the
+     * value of 'max_prepared_stmt_count'.
+     * 2. A prepared statement fails to be prepared when there are too many open prepared statements on server. By setting the options
+     * 'rewriteBatchedStatements=true&useServerPrepStmts=true' when a query happens to be rewritten a new (server-side) prepared statement is required but the
+     * fail-safe mechanism isn't implemented in this spot, so, since the leakage described above already consumed all available prepared statements on server,
+     * this ends up throwing the exception.
+     * 
+     * This test combines three elements:
+     * 1. Call .close() on a server prepared statement. This promotes a prepared statement for caching if prepared statements cache is enabled.
+     * 2. cachePrepStmts=true|false. Turns on/off the prepared statements cache.
+     * 3. Call .setPoolable(true|false) on the prepared statement. This allows canceling the prepared statement caching, on a per statement basis. It has no
+     * effect if the prepared statements cache if turned off for the current connection.
+     * 
+     * Expected behavior:
+     * - If .close() is not called on server prepared statements then they also can't be promoted for caching. This causes a server prepared statements leak in
+     * all remaining combinations.
+     * - If .close() is called on server prepared statements and the prepared statements cache is disabled by any form (either per connection or per statement),
+     * then the statements is immediately closed on server side too.
+     * - If .close() is called on server prepared statements and the prepared statements cache is enabled (both in the connection and in the statement) then the
+     * statement is cached and only effectively closed in the server side if and when removed from the cache.
+     */
+    public void testBug80615() throws Exception {
+        final int prepStmtCacheSize = 5;
+        final int maxPrepStmtCount = 25;
+        final int testRepetitions = maxPrepStmtCount + 5;
+        int maxPrepStmtCountOri = -1;
+
+        try {
+            // Check if it is possible to create a server prepared statement with the current max_prepared_stmt_count.
+            Connection checkConn = getConnectionWithProps("useServerPrepStmts=true");
+            PreparedStatement checkPstmt = checkConn.prepareStatement("SELECT 1");
+            assertTrue("Failed to create a server prepared statement possibly because there are too many active prepared statements on server already.",
+                    checkPstmt instanceof ServerPreparedStatement);
+            checkPstmt.close();
+
+            this.rs = this.stmt.executeQuery("SELECT @@GLOBAL.max_prepared_stmt_count");
+            this.rs.next();
+            maxPrepStmtCountOri = this.rs.getInt(1);
+
+            this.stmt.execute("SET GLOBAL max_prepared_stmt_count = " + maxPrepStmtCount);
+            this.stmt.execute("FLUSH STATUS");
+
+            // Check if it is still possible to prepare new statements after setting the new max. This test requires at least prepStmtCacheSize + 2.
+            // The extra two statements are:
+            // 1 - The first statement that only gets cached in the end (when calling .close() on it).
+            // 2 - The statement that triggers the expelling of the oldest element of the cache to get room for itself.  
+            for (int i = 1; i <= prepStmtCacheSize + 2; i++) {
+                checkPstmt = checkConn.prepareStatement("SELECT " + i);
+                assertTrue("Test ABORTED because the server doesn't allow preparing at least " + (prepStmtCacheSize + 2) + " more statements.",
+                        checkPstmt instanceof ServerPreparedStatement);
+            }
+            checkConn.close(); // Also closes all prepared statements.
+
+            // Good to go, start the test.
+            boolean closeStmt = false;
+            boolean useCache = false;
+            boolean poolable = false;
+            do {
+                final String testCase = String.format("Case: [Close STMTs: %s, Use cache: %s, Poolable: %s ]", closeStmt ? "Y" : "N", useCache ? "Y" : "N",
+                        poolable ? "Y" : "N");
+
+                System.out.println();
+                System.out.println(testCase);
+                System.out.println("********************************************************************************");
+
+                createTable("testBug80615", "(id INT)");
+
+                final Properties props = new Properties();
+                props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+                props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, Boolean.toString(useCache));
+                if (useCache) {
+                    props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, String.valueOf(prepStmtCacheSize));
+                }
+
+                final Connection testConn = getConnectionWithProps(props);
+                final Statement checkStmt = testConn.createStatement();
+
+                // Prepare a statement to be executed later. This is prepare #1.
+                PreparedStatement testPstmt1 = testConn.prepareStatement("INSERT INTO testBug80615 VALUES (?)");
+                assertTrue(testCase, testPstmt1 instanceof ServerPreparedStatement);
+                ((StatementImpl) testPstmt1).setPoolable(poolable); // Need to cast, this is a JDBC 4.0 feature.
+                testPstmt1.setInt(1, 100);
+                testPstmt1.addBatch();
+                testPstmt1.setInt(1, 200);
+                testPstmt1.addBatch();
+
+                int prepCount = 1; // One server-side prepared statement already prepared.
+                int expectedPrepCount = prepCount;
+                int expectedExecCount = 0;
+                int expectedCloseCount = 0;
+
+                testBug80615CheckComStmtStatus(prepCount, true, testCase, checkStmt, expectedPrepCount, expectedExecCount, expectedCloseCount);
+
+                // Prepare a number of statements higher than the limit set on server. There are at most (*) maxPrepStmtCount - 1 prepares available.
+                // This should exhaust the number of allowed prepared statements, forcing the connector to use client-side prepared statements from that point
+                // forward unless statements are closed correctly.
+                // Under the tested circumstances there where some unexpected server prepared statements leaks (1st bug).
+                // (*) There's no canonical way of knowing exactly how many preparing statement slots are available because other sessions may be using them.
+                boolean isSPS = true;
+                do {
+                    PreparedStatement testPstmt2 = testConn.prepareStatement("INSERT INTO testBug80615 VALUES (" + prepCount + " + ?)");
+                    prepCount++;
+
+                    isSPS = testPstmt2 instanceof ServerPreparedStatement;
+                    if (closeStmt) {
+                        // Statements are being correctly closed so there is room to create new ones every time.
+                        assertTrue(testCase, isSPS);
+                    } else if (prepCount > maxPrepStmtCount) {
+                        // Not closing statements causes a server prepared statements leak on server.
+                        // In this iteration (if not before) it should have started failing-over to a client-side prepared statement.
+                        assertFalse(testCase, isSPS);
+                    } else if (prepCount <= prepStmtCacheSize + 2) {
+                        // There should be enough room to prepare server-side prepared statements. (This was checked in the beginning.)
+                        assertTrue(testCase, isSPS);
+                    } // prepStmtCacheSize + 1 < prepCount <= maxPrepStmtCount --> can't assert anything as there can statements prepared externally.
+
+                    ((StatementImpl) testPstmt2).setPoolable(poolable); // Need to cast, this is a JDBC 4.0 feature.
+                    testPstmt2.setInt(1, 0);
+                    testPstmt2.execute();
+                    if (isSPS) {
+                        expectedPrepCount++;
+                        expectedExecCount++;
+                    }
+                    if (closeStmt) {
+                        testPstmt2.close();
+                        if (isSPS) {
+                            if (useCache && poolable && (prepCount - 1) > prepStmtCacheSize) { // The first statement isn't cached yet.
+                                // A statement (oldest in cache) is effectively closed on server side only after local statements cache is full.
+                                expectedCloseCount++;
+                            } else if (!useCache || !poolable) {
+                                // The statement is closed immediately on server side.
+                                expectedCloseCount++;
+                            }
+                        }
+                    }
+
+                    testBug80615CheckComStmtStatus(prepCount, isSPS, testCase, checkStmt, expectedPrepCount, expectedExecCount, expectedCloseCount);
+                } while (prepCount < testRepetitions && isSPS);
+
+                if (closeStmt) {
+                    assertEquals(testCase, testRepetitions, prepCount);
+                } else {
+                    assertTrue(testCase, prepCount > prepStmtCacheSize + 2);
+                    assertTrue(testCase, prepCount <= maxPrepStmtCount + 1);
+                }
+
+                // Batched statements are being rewritten so this will prepare another statement underneath.
+                // It was failing before if the the number of stmt prepares on server was exhausted at this point (2nd Bug).
+                testPstmt1.executeBatch();
+                testPstmt1.close();
+
+                testConn.close();
+            } while ((closeStmt = !closeStmt) || (useCache = !useCache) || (poolable = !poolable));
+        } finally {
+            if (maxPrepStmtCountOri >= 0) {
+                this.stmt.execute("SET GLOBAL max_prepared_stmt_count = " + maxPrepStmtCountOri);
+                this.stmt.execute("FLUSH STATUS");
+            }
+        }
+    }
+
+    private void testBug80615CheckComStmtStatus(int prepCount, boolean isSPS, String testCase, Statement testStmt, int expectedPrepCount, int expectedExecCount,
+            int expectedCloseCount) throws Exception {
+        System.out.print(prepCount + ". ");
+        System.out.print(isSPS ? "[SPS]" : "[CPS]");
+
+        testCase += "\nIteration: " + prepCount;
+
+        int actualPrepCount = 0;
+        int actualExecCount = 0;
+        int actualCloseCount = 0;
+        this.rs = testStmt.executeQuery("SHOW SESSION STATUS WHERE Variable_name IN ('Com_stmt_prepare', 'Com_stmt_execute', 'Com_stmt_close')");
+        while (this.rs.next()) {
+            System.out.print(" (" + this.rs.getString(1).replace("Com_stmt_", "") + " " + this.rs.getInt(2) + ")");
+            if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_prepare")) {
+                actualPrepCount = this.rs.getInt(2);
+            } else if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_execute")) {
+                actualExecCount = this.rs.getInt(2);
+            } else if (this.rs.getString(1).equalsIgnoreCase("Com_stmt_close")) {
+                actualCloseCount = this.rs.getInt(2);
+            }
+        }
+        System.out.println();
+
+        assertEquals(testCase, expectedPrepCount, actualPrepCount);
+        assertEquals(testCase, expectedExecCount, actualExecCount);
+        assertEquals(testCase, expectedCloseCount, actualCloseCount);
     }
 }

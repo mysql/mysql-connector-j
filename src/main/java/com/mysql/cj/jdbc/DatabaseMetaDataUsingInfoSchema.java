@@ -135,51 +135,51 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append("UPPER(CASE");
         sqlBuf.append(
-                " WHEN LOCATE('UNSIGNED', COLUMN_TYPE) != 0 AND LOCATE('UNSIGNED', DATA_TYPE) = 0 AND LOCATE('SET', DATA_TYPE) <> 1 AND LOCATE('ENUM', DATA_TYPE) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
+                " WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
         if (this.tinyInt1isBit) {
-            sqlBuf.append(" WHEN DATA_TYPE='TINYINT' THEN CASE");
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE");
             if (this.transformedBitIsBoolean) {
                 sqlBuf.append(" WHEN LOCATE('(1)', COLUMN_TYPE) != 0 THEN 'BOOLEAN'");
             } else {
                 sqlBuf.append(" WHEN LOCATE('(1)', COLUMN_TYPE) != 0 THEN 'BIT'");
             }
-            sqlBuf.append(" WHEN LOCATE('UNSIGNED', COLUMN_TYPE) != 0 AND LOCATE('UNSIGNED', DATA_TYPE) = 0 THEN 'TINYINT UNSIGNED'");
+            sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'");
             sqlBuf.append(" ELSE DATA_TYPE END ");
         }
 
         // spatial data types
-        sqlBuf.append(" WHEN DATA_TYPE='POINT' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='LINESTRING' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='POLYGON' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN 'GEOMETRY'");
-        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
 
-        sqlBuf.append(" ELSE DATA_TYPE END) AS TYPE_NAME,");
+        sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,");
 
         sqlBuf.append("UPPER(CASE");
-        sqlBuf.append(" WHEN DATA_TYPE='DATE' THEN 10"); // supported range is '1000-01-01' to '9999-12-31'
-        sqlBuf.append(" WHEN DATA_TYPE='TIME' THEN 16"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
-        sqlBuf.append(" WHEN DATA_TYPE='DATETIME' THEN 26"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
-        sqlBuf.append(" WHEN DATA_TYPE='TIMESTAMP' THEN 26"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
-        sqlBuf.append(" WHEN DATA_TYPE='YEAR' THEN 4");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATE' THEN 10"); // supported range is '1000-01-01' to '9999-12-31'
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME' THEN 16"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' THEN 26"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIMESTAMP' THEN 26"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='YEAR' THEN 4");
         if (this.tinyInt1isBit) {
-            sqlBuf.append(" WHEN DATA_TYPE='TINYINT' AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
         }
         // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
-        sqlBuf.append(" WHEN DATA_TYPE='MEDIUMINT' AND LOCATE('UNSIGNED', COLUMN_TYPE) != 0 THEN 8");
-        sqlBuf.append(" WHEN DATA_TYPE='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 THEN 8");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
 
         // spatial data types
-        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRY' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='POINT' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='LINESTRING' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='POLYGON' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN 65535");
-        sqlBuf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRY' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 65535");
 
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
@@ -193,8 +193,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS BUFFER_LENGTH,");
 
         sqlBuf.append("UPPER(CASE");
-        sqlBuf.append(" WHEN DATA_TYPE='DECIMAL' THEN NUMERIC_SCALE");
-        sqlBuf.append(" WHEN DATA_TYPE='FLOAT' OR DATA_TYPE='DOUBLE' THEN");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DECIMAL' THEN NUMERIC_SCALE");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='FLOAT' OR UPPER(DATA_TYPE)='DOUBLE' THEN");
         sqlBuf.append(" CASE WHEN NUMERIC_SCALE IS NULL THEN 0");
         sqlBuf.append(" ELSE NUMERIC_SCALE END");
         sqlBuf.append(" ELSE NULL END) AS DECIMAL_DIGITS,");
@@ -663,8 +663,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+        sqlBuf.append(
+                "UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN CONCAT(DATA_TYPE, ' UNSIGNED') "
+                        + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION</B> int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
@@ -849,7 +850,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
         sqlBuf.append(" AS DATA_TYPE, ");
 
-        sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
+        sqlBuf.append("UPPER(COLUMN_TYPE) AS TYPE_NAME, ");
         sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 "
                 + "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
                 + "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " + Integer.MAX_VALUE + " THEN "
@@ -934,8 +935,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') "
-                + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+        sqlBuf.append(
+                "UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN CONCAT(DATA_TYPE, ' UNSIGNED') "
+                        + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION int => precision
         sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
@@ -1074,9 +1076,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         buf.append("CASE ");
         for (MysqlType mysqlType : MysqlType.values()) {
 
-            buf.append(" WHEN ");
+            buf.append(" WHEN UPPER(");
             buf.append(mysqlTypeColumnName);
-            buf.append("='");
+            buf.append(")='");
             buf.append(mysqlType.getName());
             buf.append("' THEN ");
 
@@ -1105,13 +1107,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        buf.append(" WHEN DATA_TYPE='POINT' THEN -2");
-        buf.append(" WHEN DATA_TYPE='LINESTRING' THEN -2");
-        buf.append(" WHEN DATA_TYPE='POLYGON' THEN -2");
-        buf.append(" WHEN DATA_TYPE='MULTIPOINT' THEN -2");
-        buf.append(" WHEN DATA_TYPE='MULTILINESTRING' THEN -2");
-        buf.append(" WHEN DATA_TYPE='MULTIPOLYGON' THEN -2");
-        buf.append(" WHEN DATA_TYPE='GEOMETRYCOLLECTION' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN -2");
 
         buf.append(" ELSE 1111");
         buf.append(" END ");

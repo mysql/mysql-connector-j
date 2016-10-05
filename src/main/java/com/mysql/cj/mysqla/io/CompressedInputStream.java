@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -152,12 +152,21 @@ public class CompressedInputStream extends InputStream {
             //	
             // Read data, note this this code is reached when using compressed packets that have not been compressed, as well
             //
-            uncompressedData = new byte[compressedPacketLength];
-            readFully(uncompressedData, 0, compressedPacketLength);
+            uncompressedLength = compressedPacketLength;
+            uncompressedData = new byte[uncompressedLength];
+            readFully(uncompressedData, 0, uncompressedLength);
         }
 
         if (doTrace) {
-            this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, compressedPacketLength));
+            if (uncompressedLength > 1024) {
+                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, 256));
+                byte[] tempData = new byte[256];
+                System.arraycopy(uncompressedData, uncompressedLength - 256, tempData, 0, 256);
+                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(tempData, 256));
+                this.log.logTrace("Large packet dump truncated. Showing first and last 256 bytes.");
+            } else {
+                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, uncompressedLength));
+            }
         }
 
         if ((this.buffer != null) && (this.pos < this.buffer.length)) {
@@ -168,13 +177,8 @@ public class CompressedInputStream extends InputStream {
             int remaining = this.buffer.length - this.pos;
             byte[] newBuffer = new byte[remaining + uncompressedData.length];
 
-            int newIndex = 0;
-
-            for (int i = this.pos; i < this.buffer.length; i++) {
-                newBuffer[newIndex++] = this.buffer[i];
-            }
-
-            System.arraycopy(uncompressedData, 0, newBuffer, newIndex, uncompressedData.length);
+            System.arraycopy(this.buffer, this.pos, newBuffer, 0, remaining);
+            System.arraycopy(uncompressedData, 0, newBuffer, remaining, uncompressedData.length);
 
             uncompressedData = newBuffer;
         }
@@ -244,10 +248,13 @@ public class CompressedInputStream extends InputStream {
             return -1;
         }
 
-        System.arraycopy(this.buffer, this.pos, b, off, len);
-        this.pos += len;
+        int remainingBufferLength = this.buffer.length - this.pos;
+        int consummedBytesLength = Math.min(remainingBufferLength, len);
 
-        return len;
+        System.arraycopy(this.buffer, this.pos, b, off, consummedBytesLength);
+        this.pos += consummedBytesLength;
+
+        return consummedBytesLength;
     }
 
     private final int readFully(byte[] b, int off, int len) throws IOException {

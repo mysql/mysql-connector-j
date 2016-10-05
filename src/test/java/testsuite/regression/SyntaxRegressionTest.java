@@ -627,18 +627,17 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testGISPreciseSpatialFunctions() throws Exception {
-
         if (!versionMeetsMinimum(5, 6)) {
             return;
         }
 
         String[] querySamples = new String[] {
-                "SELECT AsText(ST_Intersection(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT AsText(ST_Difference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT AsText(ST_Union(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT AsText(ST_SymDifference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT AsText(ST_Buffer(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), 0.5))",
-                "SELECT ST_Distance(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 10, 8 10, 4 16, 0 10))'))" };
+                "SELECT ST_AsText(ST_Intersection(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+                "SELECT ST_AsText(ST_Difference(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+                "SELECT ST_AsText(ST_Union(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+                "SELECT ST_AsText(ST_SymDifference(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+                "SELECT ST_AsText(ST_Buffer(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), 0.5))",
+                "SELECT ST_Distance(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 10, 8 10, 4 16, 0 10))'))" };
 
         for (String query : querySamples) {
             this.rs = this.stmt.executeQuery(query);
@@ -646,7 +645,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
             assertFalse("Query should return only one row.", this.rs.next());
             this.rs.close();
         }
-
     }
 
     /**

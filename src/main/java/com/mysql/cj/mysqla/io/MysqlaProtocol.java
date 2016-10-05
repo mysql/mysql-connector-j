@@ -664,8 +664,13 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
             return returnPacket;
         } catch (IOException ioEx) {
+            this.serverSession.preserveOldTransactionState();
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
+        } catch (CJException e) {
+            this.serverSession.preserveOldTransactionState();
+            throw e;
+
         } finally {
             if (timeoutMillis != 0) {
                 try {

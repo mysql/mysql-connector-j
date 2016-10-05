@@ -1518,7 +1518,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug12104() throws Exception {
         createTable("testBug12104", "(field1 GEOMETRY)", "MyISAM");
 
-        this.stmt.executeUpdate("INSERT INTO testBug12104 VALUES (GeomFromText('POINT(1 1)'))");
+        if (!versionMeetsMinimum(5, 6)) {
+            this.stmt.executeUpdate("INSERT INTO testBug12104 VALUES (GeomFromText('POINT(1 1)'))");
+        } else {
+            this.stmt.executeUpdate("INSERT INTO testBug12104 VALUES (ST_GeomFromText('POINT(1 1)'))");
+        }
         this.pstmt = this.conn.prepareStatement("SELECT field1 FROM testBug12104");
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
@@ -4945,5 +4949,316 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(false, rs1.getBoolean("c8"));
         assertEquals(false, rs1.getBoolean("cb1"));
         assertEquals(false, rs1.getBoolean("cb2"));
+    }
+
+    /**
+     * Tests fix for Bug#78685 - Wrong results when retrieving the value of a BIT column as an integer.
+     */
+    public void testBug78685() throws Exception {
+        createTable("testBug78685", "(b1 BIT(8), b2 BIT(16), b3 BIT(24))", "InnoDB");
+        // 46 == b'00101110' == '.'
+        // 11822 == b'0010111000101110' == '..'
+        // --
+        // 47 == '/'
+        // 12079 == '//'
+        // --
+        // 48 == '0'
+        // 12336 = '00'
+        // --
+        // 49 == b'00110001' == '1'
+        // 12593 == b'0011000100110001'  == '11'
+        // --
+        // 50 == '2'
+        // 12850 == '22'
+        // --
+        // 51 == '3'
+        // 13107 == '33'
+        this.stmt.executeUpdate("INSERT INTO testBug78685 VALUES (b'00101110', b'0010111000101110', b'0010111000101110'), ('/', '//', '//'), "
+                + "(48, 12336, 12336), (b'00110001', b'0011000100110001', b'0011000100110001'), ('2', '22', '22'), (51, 13107, 13107)");
+
+        boolean useServerPrepStmts = false;
+        do {
+            // Test result set from plain statements.
+            String testCase = String.format("Case [useSPS: %s, StmtType: %s]", useServerPrepStmts ? "Y" : "N", "Plain");
+
+            final Properties props = new Properties();
+            Connection testConn = getConnectionWithProps(props);
+            this.rs = testConn.createStatement().executeQuery("SELECT b1, b1 + 0, BIN(b1), b2, b2 + 0, BIN(b2), b3, b3 + 0, BIN(b3) FROM testBug78685");
+            testBug78685CheckData(testCase);
+            testConn.close();
+
+            // Test result set from prepared statements
+            testCase = String.format("Case [useSPS: %s, StmtType: %s]", useServerPrepStmts ? "Y" : "N", "PrepStmt");
+
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
+            testConn = getConnectionWithProps(props);
+            this.pstmt = testConn.prepareStatement("SELECT b1, b1 + 0, BIN(b1), b2, b2 + 0, BIN(b2), b3, b3 + 0, BIN(b3) FROM testBug78685");
+            this.rs = this.pstmt.executeQuery();
+            testBug78685CheckData("");
+            testConn.close();
+        } while (useServerPrepStmts = !useServerPrepStmts);
+    }
+
+    private void testBug78685CheckData(String testCase) throws Exception {
+        int rowCount = 0;
+        while (this.rs.next()) {
+            int expectedNumBase = 46 + rowCount;
+
+            // Column "b1 BIT(8)"
+            int expectedNum = expectedNumBase;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(1));
+            assertEquals(testCase, expectedNum, this.rs.getInt(1));
+            assertEquals(testCase, expectedNum, this.rs.getLong(1));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(1).intValue());
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(1));
+            assertTrue(this.rs.getObject(1) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(1));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(2));
+            assertEquals(testCase, expectedNum, this.rs.getInt(2));
+            assertEquals(testCase, expectedNum, this.rs.getLong(2));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(2).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(2));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(2));
+
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //final ResultSet testRs1 = this.rs;
+            //assertThrows(SQLException.class, "'[01\\.]+' in column '3' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+            //    public Void call() throws Exception {
+            //        testRs1.getShort(3);
+            //        return null;
+            //    }
+            //});
+            String expectedString = Integer.toBinaryString(expectedNum);
+            assertEquals(testCase, Integer.parseInt(expectedString), this.rs.getInt(3));
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(3));
+            assertEquals(testCase, expectedString, this.rs.getString(3));
+            assertEquals(testCase, expectedString, this.rs.getObject(3));
+
+            // Column "b1 BIT(16)"
+            expectedNum = expectedNumBase + expectedNumBase * 256;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(4));
+            assertEquals(testCase, expectedNum, this.rs.getInt(4));
+            assertEquals(testCase, expectedNum, this.rs.getLong(4));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(4).intValue());
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(4));
+            assertTrue(this.rs.getObject(4) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(4));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(5));
+            assertEquals(testCase, expectedNum, this.rs.getInt(5));
+            assertEquals(testCase, expectedNum, this.rs.getLong(5));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(5).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(5));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(5));
+
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //final ResultSet testRs2 = this.rs;
+            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+            //    public Void call() throws Exception {
+            //        testRs2.getShort(6);
+            //        return null;
+            //    }
+            //});
+            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
+            //    public Void call() throws Exception {
+            //        testRs2.getInt(6);
+            //        return null;
+            //    }
+            //});
+            expectedString = Long.toBinaryString(expectedNum);
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(6));
+            assertEquals(testCase, expectedString, this.rs.getString(6));
+            assertEquals(testCase, expectedString, this.rs.getObject(6));
+
+            // Column "b1 BIT(24)"
+            expectedNum = expectedNumBase + expectedNumBase * 256;
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(7));
+            assertEquals(testCase, expectedNum, this.rs.getInt(7));
+            assertEquals(testCase, expectedNum, this.rs.getLong(7));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(7).intValue());
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(7));
+            assertTrue(this.rs.getObject(7) instanceof byte[]);
+            assertByteArrayEquals(testCase, new byte[] { 0, (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(7));
+
+            assertEquals(testCase, expectedNum, this.rs.getShort(8));
+            assertEquals(testCase, expectedNum, this.rs.getInt(8));
+            assertEquals(testCase, expectedNum, this.rs.getLong(8));
+            assertEquals(testCase, expectedNum, this.rs.getBigDecimal(8).intValue());
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(8));
+            assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(8));
+
+            // TODO the following works in c/J 5.1 but not in 6.0
+            //final ResultSet testRs3 = this.rs;
+            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
+            //    public Void call() throws Exception {
+            //        testRs3.getShort(9);
+            //        return null;
+            //    }
+            //});
+            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
+            //    public Void call() throws Exception {
+            //        testRs3.getInt(9);
+            //        return null;
+            //    }
+            //});
+            expectedString = Long.toBinaryString(expectedNum);
+            assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(9));
+            assertEquals(testCase, expectedString, this.rs.getString(9));
+            assertEquals(testCase, expectedString, this.rs.getObject(9));
+
+            rowCount++;
+        }
+        assertEquals(testCase, 6, rowCount);
+    }
+
+    /**
+     * Tests fix for Bug#80631 - ResultSet.getString return garbled result with json type data.
+     */
+    public void testBug80631() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 9)) {
+            return;
+        }
+
+        /*
+         * \u4E2D\u56FD (Simplified Chinese): "China"
+         * \u65E5\u672C (Japanese): "Japan"
+         * \uD83D\uDC2C (Emoji): "Dolphin"
+         * \u263A (Symbols): "White Smiling Face"
+         */
+        String[] data = new String[] { "\u4E2D\u56FD", "\u65E5\u672C", "\uD83D\uDC2C", "\u263A" };
+        String jsonTmpl = "{\"data\": \"%s\"}";
+
+        createTable("testBug80631", "(data JSON)");
+        createProcedure("testBug80631Insert", "(IN data JSON) BEGIN INSERT INTO testBug80631 VALUES (data); END;");
+        createProcedure("testBug80631SELECT", "() BEGIN SELECT * FROM testBug80631; END;");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+
+        boolean useSPS = false;
+        do {
+            final String testCase = String.format("Case: [SPS: %s]", useSPS ? "Y" : "N");
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useSPS);
+            final Connection testConn = getConnectionWithProps(props);
+
+            // Insert and select using a Statement.
+            Statement testStmt = testConn.createStatement();
+            for (String d : data) {
+                assertEquals(testCase, 1, testStmt.executeUpdate("INSERT INTO testBug80631 VALUES ('" + String.format(jsonTmpl, d) + "')"));
+            }
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug80631");
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testStmt.close();
+
+            testConn.createStatement().execute("TRUNCATE TABLE testBug80631");
+
+            // Insert and select using a PreparedStatement.
+            PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug80631 VALUES (?)");
+            for (String d : data) {
+                testPstmt.setString(1, String.format(jsonTmpl, d));
+                assertEquals(testCase, 1, testPstmt.executeUpdate());
+            }
+            testPstmt.close();
+            testPstmt = testConn.prepareStatement("SELECT * FROM testBug80631");
+            this.rs = testPstmt.executeQuery();
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testPstmt.close();
+
+            testConn.createStatement().execute("TRUNCATE TABLE testBug80631");
+
+            // Insert and select using a CallableStatement.
+            CallableStatement testCstmt = testConn.prepareCall("{CALL testBug80631Insert(?)}");
+            for (String d : data) {
+                testCstmt.setString(1, String.format(jsonTmpl, d));
+                assertEquals(testCase, 1, testCstmt.executeUpdate());
+            }
+            testCstmt.close();
+            testCstmt = testConn.prepareCall("{CALL testBug80631Select()}");
+            testCstmt.execute();
+            this.rs = testCstmt.getResultSet();
+            for (int i = 0; i < data.length; i++) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, String.format(jsonTmpl, data[i]), this.rs.getString(1));
+            }
+            testCstmt.close();
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#23197238 - EXECUTEQUERY() FAILS FOR JSON DATA WHEN RESULTSETCONCURRENCY=CONCUR_UPDATABLE.
+     */
+    public void testBug23197238() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 9)) {
+            return;
+        }
+
+        createTable("testBug23197238", "(id INT AUTO_INCREMENT PRIMARY KEY, doc JSON DEFAULT NULL)");
+
+        String[] docs = new String[] { "{\"key1\": \"value1\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+        Connection testConn = getConnectionWithProps(props);
+
+        Statement testStmt = testConn.createStatement();
+        testStmt.execute("INSERT INTO testBug23197238 (doc) VALUES ('" + docs[2] + "')");
+        testStmt.close();
+
+        testBug23197238Assert(new String[] { docs[2] });
+
+        testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        this.rs = testStmt.executeQuery("SELECT * FROM testBug23197238");
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, docs[1]);
+        this.rs.updateRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateObject(2, docs[1]);
+        this.rs.insertRow();
+        testStmt.close();
+
+        testBug23197238Assert(new String[] { docs[1], docs[1] });
+
+        // TODO Next code fails because of Bug#24525461, UPDATABLE RESULTSET FEATURE FAILS WHEN USESERVERPREPSTMTS=TRUE"
+        /*
+         * PreparedStatement testPstmt = testConn.prepareStatement("SELECT * FROM testBug23197238 WHERE id = ?", ResultSet.TYPE_FORWARD_ONLY,
+         * ResultSet.CONCUR_UPDATABLE);
+         * testPstmt.setObject(1, 1, Types.INTEGER);
+         * testPstmt.setFetchSize(1);
+         * this.rs = testPstmt.executeQuery();
+         * assertTrue(this.rs.next());
+         * this.rs.updateObject(2, docs[0]);
+         * this.rs.updateRow();
+         * this.rs.moveToInsertRow();
+         * this.rs.updateObject(2, docs[2]);
+         * this.rs.insertRow();
+         * testPstmt.close();
+         *
+         * testBug23197238Assert(docs);
+         */
+
+        testConn.close();
+    }
+
+    private void testBug23197238Assert(String[] expected) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug23197238");
+        for (String e : expected) {
+            assertTrue(this.rs.next());
+            assertEquals(e, this.rs.getString(2));
+        }
+        assertFalse(this.rs.next());
     }
 }

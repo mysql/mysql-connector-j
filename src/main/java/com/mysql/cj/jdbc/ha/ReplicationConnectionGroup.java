@@ -26,9 +26,9 @@ package com.mysql.cj.jdbc.ha;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
 
@@ -44,9 +44,9 @@ public class ReplicationConnectionGroup {
     private long slavesPromoted = 0;
     private long activeConnections = 0;
     private HashMap<Long, ReplicationConnection> replicationConnections = new HashMap<Long, ReplicationConnection>();
-    private Set<String> slaveHostList = new HashSet<String>();
+    private Set<String> slaveHostList = new CopyOnWriteArraySet<>();
     private boolean isInitialized = false;
-    private Set<String> masterHostList = new HashSet<String>();
+    private Set<String> masterHostList = new CopyOnWriteArraySet<>();
 
     ReplicationConnectionGroup(String groupName) {
         this.groupName = groupName;

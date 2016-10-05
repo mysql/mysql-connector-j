@@ -1371,8 +1371,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testUseLocalSessionStateRollback() throws Exception {
-        // TODO check the need for this test
-        if (!versionMeetsMinimum(6, 0, 0)) {
+        if (!versionMeetsMinimum(5, 5, 0)) {
             return;
         }
 
@@ -1417,8 +1416,9 @@ public class ConnectionTest extends BaseTestCase {
         int rollbackCount = 0;
         int rollbackPos = 0;
 
+        // space is important here, we don't want to count occurrences in stack traces
         while (rollbackPos != -1) {
-            rollbackPos = searchIn.indexOf("rollback", rollbackPos);
+            rollbackPos = searchIn.indexOf(" rollback", rollbackPos);
 
             if (rollbackPos != -1) {
                 rollbackPos += "rollback".length();
@@ -1431,7 +1431,7 @@ public class ConnectionTest extends BaseTestCase {
         int commitCount = 0;
         int commitPos = 0;
 
-        // space is important here, we don't want to count "autocommit"
+        // space is important here, we don't want to count "autocommit" nor occurrences in stack traces
         while (commitPos != -1) {
             commitPos = searchIn.indexOf(" commit", commitPos);
 

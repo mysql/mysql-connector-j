@@ -591,4 +591,18 @@ public class DataSourceRegressionTest extends BaseTestCase {
             xaConnRecovery.close();
         }
     }
+
+    /**
+     * Tests fix for Bug#72632 - NullPointerException for invalid JDBC URL.
+     */
+    public void testBug72632() throws Exception {
+        final MysqlDataSource dataSource = new MysqlDataSource();
+        dataSource.setUrl("bad-connection-string");
+        assertThrows(SQLException.class, "Failed to get a connection using the URL 'bad-connection-string'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                dataSource.getConnection();
+                return null;
+            }
+        });
+    }
 }
