@@ -36,8 +36,8 @@ public class WarningImpl implements com.mysql.cj.api.x.Warning {
         return this.message.getLevel().getNumber();
     }
 
-    public int getCode() {
-        return this.message.getCode();
+    public long getCode() {
+        return Integer.toUnsignedLong(this.message.getCode());
     }
 
     public String getMessage() {

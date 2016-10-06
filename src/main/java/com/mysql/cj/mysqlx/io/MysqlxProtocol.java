@@ -540,7 +540,7 @@ public class MysqlxProtocol implements Protocol {
             LazyString columnName = new LazyString(col.getName().toString(characterSet));
             LazyString originalColumnName = new LazyString(col.getOriginalName().toString(characterSet));
 
-            long length = col.getLength();
+            long length = Integer.toUnsignedLong(col.getLength());
             int decimals = col.getFractionalDigits();
             int collationIndex = 0;
             if (col.hasCollation()) {

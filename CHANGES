@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
+  - Fix for Bug#22988922, GETLENGTH() RETURNS -1 FOR LONGBLOB AND LONGTEXT FIELDS.
+
   - Extended X DevAPI with flexible parameter lists.
   
   - Added a virtual NodeSession to X DevAPI. 

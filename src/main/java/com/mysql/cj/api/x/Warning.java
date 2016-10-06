@@ -35,7 +35,7 @@ public interface Warning {
     /**
      * Warning code.
      */
-    int getCode();
+    long getCode();
 
     /**
      * Warning message.

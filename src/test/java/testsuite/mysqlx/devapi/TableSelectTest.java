@@ -37,6 +37,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.x.Column;
 import com.mysql.cj.api.x.Row;
 import com.mysql.cj.api.x.RowResult;
 import com.mysql.cj.api.x.SelectStatement;
@@ -410,5 +411,24 @@ public class TableSelectTest extends TableTest {
             assertEquals(i++, rows.next().getInt("_id"));
         }
         assertEquals(5, i);
+    }
+
+    @Test
+    public void testBug22988922() {
+        if (!this.isSetForMySQLxTests) {
+            return;
+        }
+        sqlUpdate("drop table if exists testBug22988922");
+        sqlUpdate("create table testBug22988922 (g point,l longblob,t longtext)");
+
+        Table table = this.schema.getTable("testBug22988922");
+
+        RowResult rows = table.select("*").execute();
+        List<Column> metadata = rows.getColumns();
+        assertEquals(4294967295L, metadata.get(0).getLength());
+        assertEquals(4294967295L, metadata.get(1).getLength());
+        assertEquals(4294967295L, metadata.get(2).getLength());
+
+        sqlUpdate("drop table if exists testBug22988922");
     }
 }
