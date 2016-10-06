@@ -949,8 +949,7 @@ public enum MysqlType implements SQLType {
 
     @Override
     public Integer getVendorTypeNumber() {
-        // TODO consider returning of legacy protocol type ID
-        return null;
+        return this.jdbcType;
     }
 
 }

@@ -1753,13 +1753,15 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         }
     }
 
+    protected void registerOutParameter(int parameterIndex, MysqlType mysqlType) throws SQLException {
+        CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
+        paramDescriptor.desiredMysqlType = mysqlType;
+    }
+
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
         try {
             MysqlType mt = MysqlType.getByJdbcType(sqlType);
-
-            CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
-            paramDescriptor.desiredMysqlType = mt;
-
+            registerOutParameter(parameterIndex, mt);
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
                     SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
@@ -1767,29 +1769,37 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void registerOutParameter(int parameterIndex, SQLType sqlType) throws SQLException {
-        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber());
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(parameterIndex, (MysqlType) sqlType);
+        } else {
+            registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber());
+        }
+    }
+
+    protected void registerOutParameter(int parameterIndex, MysqlType mysqlType, @SuppressWarnings("unused") int scale) throws SQLException {
+        registerOutParameter(parameterIndex, mysqlType); // TODO is that correct that we ignore scale?
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
-        registerOutParameter(parameterIndex, sqlType);
+        registerOutParameter(parameterIndex, sqlType); // TODO is that correct that we ignore scale?
     }
 
     public void registerOutParameter(int parameterIndex, SQLType sqlType, int scale) throws SQLException {
-        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), scale);
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(parameterIndex, (MysqlType) sqlType, scale);
+        } else {
+            registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), scale);
+        }
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(int, int, java.lang.String)
-     */
+    protected void registerOutParameter(int parameterIndex, MysqlType mysqlType, @SuppressWarnings("unused") String typeName) throws SQLException {
+        registerOutParameter(parameterIndex, mysqlType); // TODO is that correct that we ignore typeName?
+    }
+
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException {
         try {
             MysqlType mt = MysqlType.getByJdbcType(sqlType);
-
-            CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
-            paramDescriptor.desiredMysqlType = mt;
-
-            // TODO why we ignore typeName?
-
+            registerOutParameter(parameterIndex, mt, typeName);
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
                     SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
@@ -1797,10 +1807,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void registerOutParameter(int parameterIndex, SQLType sqlType, String typeName) throws SQLException {
-
-        // TODO (MYSQLCONNJ-644) MysqlType also implements SQLType, we need to analyze SQLType instance here and in other methods where SQLType is used
-
-        registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), typeName);
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(parameterIndex, (MysqlType) sqlType, typeName);
+        } else {
+            registerOutParameter(parameterIndex, sqlType.getVendorTypeNumber(), typeName);
+        }
     }
 
     /**
@@ -1813,18 +1824,26 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void registerOutParameter(String parameterName, SQLType sqlType) throws SQLException {
-        registerOutParameter(parameterName, sqlType.getVendorTypeNumber());
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType);
+        } else {
+            registerOutParameter(getNamedParamIndex(parameterName, true), sqlType.getVendorTypeNumber());
+        }
     }
 
     /**
      * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, int)
      */
     public void registerOutParameter(String parameterName, int sqlType, int scale) throws SQLException {
-        registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
+        registerOutParameter(getNamedParamIndex(parameterName, true), sqlType, scale);
     }
 
     public void registerOutParameter(String parameterName, SQLType sqlType, int scale) throws SQLException {
-        registerOutParameter(parameterName, sqlType.getVendorTypeNumber(), scale);
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType, scale);
+        } else {
+            registerOutParameter(getNamedParamIndex(parameterName, true), sqlType.getVendorTypeNumber(), scale);
+        }
     }
 
     /**
@@ -1835,7 +1854,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     public void registerOutParameter(String parameterName, SQLType sqlType, String typeName) throws SQLException {
-        registerOutParameter(parameterName, sqlType.getVendorTypeNumber(), typeName);
+        if (sqlType instanceof MysqlType) {
+            registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType, typeName);
+        } else {
+            registerOutParameter(parameterName, sqlType.getVendorTypeNumber(), typeName);
+        }
     }
 
     /**
@@ -2107,7 +2130,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setObject(parameterName, x, targetSqlType.getVendorTypeNumber());
+            setObject(getNamedParamIndex(parameterName, false), x, targetSqlType);
         }
     }
 
@@ -2120,7 +2143,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setObject(parameterName, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+            setObject(getNamedParamIndex(parameterName, false), x, targetSqlType, scaleOrLength);
         }
     }
 
