@@ -28,7 +28,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -36,6 +35,7 @@ import com.mysql.cj.api.x.AddStatement;
 import com.mysql.cj.api.x.Result;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.io.StatementExecuteOk;
+import com.mysql.cj.mysqlx.DocumentID;
 import com.mysql.cj.x.json.DbDoc;
 import com.mysql.cj.x.json.JsonParser;
 import com.mysql.cj.x.json.JsonString;
@@ -75,7 +75,7 @@ public class AddStatementImpl implements AddStatement {
 
     private List<String> assignIds() {
         return this.newDocs.stream().filter(d -> d.get("_id") == null).map(d -> {
-            String newId = UUID.randomUUID().toString().replaceAll("-", "");
+            String newId = DocumentID.generate();
             d.put("_id", new JsonString().setValue(newId));
             return newId;
         }).collect(Collectors.toList());
