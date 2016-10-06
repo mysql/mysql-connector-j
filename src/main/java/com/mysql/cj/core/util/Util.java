@@ -35,15 +35,11 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
@@ -263,40 +259,6 @@ public class Util {
         }
 
         return diffMap;
-    }
-
-    /**
-     * Returns initialized instances of classes listed in extensionClassNames.
-     * There is no need to call Extension.init() method after that if you don't change connection or properties.
-     * 
-     * @param conn
-     * @param props
-     * @param extensionClassNames
-     * @param errorMessageKey
-     * @param exceptionInterceptor
-     */
-    public static List<Extension> loadExtensions(MysqlConnection conn, Properties props, String extensionClassNames, String errorMessageKey,
-            ExceptionInterceptor exceptionInterceptor, Log log) {
-        List<Extension> extensionList = new LinkedList<Extension>();
-
-        List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
-
-        String className = null;
-
-        try {
-            for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
-                className = interceptorsToCreate.get(i);
-                Extension extensionInstance = (Extension) Class.forName(className).newInstance();
-                extensionInstance.init(conn, props, log);
-
-                extensionList.add(extensionInstance);
-            }
-        } catch (Throwable t) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString(errorMessageKey, new Object[] { className }), t,
-                    exceptionInterceptor);
-        }
-
-        return extensionList;
     }
 
     public static <T> List<T> loadClasses(String extensionClassNames, String errorMessageKey, ExceptionInterceptor exceptionInterceptor) {

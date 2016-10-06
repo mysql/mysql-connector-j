@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.CJException;
@@ -644,7 +643,7 @@ public class UtilsRegressionTest extends BaseTestCase {
      * Tests fix for Bug#82115 - Some exceptions are intercepted twice or fail to set the init cause.
      */
     public void testBug82115() throws Exception {
-        Exception ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), null, null);
+        Exception ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), null);
         assertEquals("ORIGINAL_EXCEPTION", ex.getMessage());
         assertEquals("ORIGINAL_CAUSE", ex.getCause().getMessage());
 
@@ -652,15 +651,16 @@ public class UtilsRegressionTest extends BaseTestCase {
             boolean alreadyIntercepted = false;
 
             @Override
-            public void init(MysqlConnection con, Properties props, Log log) {
+            public ExceptionInterceptor init(Properties props, Log log) {
                 this.alreadyIntercepted = false;
+                return this;
             }
 
             public void destroy() {
             }
 
             @Override
-            public Exception interceptException(Exception sqlEx, MysqlConnection con) {
+            public Exception interceptException(Exception sqlEx) {
                 assertFalse(this.alreadyIntercepted);
                 this.alreadyIntercepted = true;
 
@@ -670,7 +670,7 @@ public class UtilsRegressionTest extends BaseTestCase {
                 SQLException newSqlEx = new SQLException("INTERCEPT_EXCEPTION");
                 return newSqlEx;
             }
-        }, null);
+        });
         assertEquals("INTERCEPT_EXCEPTION", ex.getMessage());
         assertNull(ex.getCause());
 
@@ -678,15 +678,16 @@ public class UtilsRegressionTest extends BaseTestCase {
             boolean alreadyIntercepted = false;
 
             @Override
-            public void init(MysqlConnection con, Properties props, Log log) {
+            public ExceptionInterceptor init(Properties props, Log log) {
                 this.alreadyIntercepted = false;
+                return this;
             }
 
             public void destroy() {
             }
 
             @Override
-            public Exception interceptException(Exception sqlEx, MysqlConnection con) {
+            public Exception interceptException(Exception sqlEx) {
                 assertFalse(this.alreadyIntercepted);
                 this.alreadyIntercepted = true;
 
@@ -697,7 +698,7 @@ public class UtilsRegressionTest extends BaseTestCase {
                 newSqlEx.initCause(new Exception("INTERCEPT_CAUSE"));
                 return newSqlEx;
             }
-        }, null);
+        });
         assertEquals("INTERCEPT_EXCEPTION", ex.getMessage());
         assertEquals("INTERCEPT_CAUSE", ex.getCause().getMessage());
     }

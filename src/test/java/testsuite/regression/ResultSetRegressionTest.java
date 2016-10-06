@@ -55,8 +55,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
 
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
@@ -4254,7 +4252,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             ExceptionInterceptorChain eic = (ExceptionInterceptorChain) ((JdbcConnection) c).getExceptionInterceptor();
 
             TestBug67318ExceptionInterceptor ei = null;
-            for (Extension ext : eic.getInterceptors()) {
+            for (ExceptionInterceptor ext : eic.getInterceptors()) {
                 if (ext instanceof TestBug67318ExceptionInterceptor) {
                     ei = (TestBug67318ExceptionInterceptor) ext;
                     break;
@@ -4292,13 +4290,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         public int alreadyClosedCounter = 0;
 
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public ExceptionInterceptor init(Properties props, Log log) {
+            return this;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx) {
 
             sqlEx.printStackTrace();
 

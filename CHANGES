@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
+  - Removed Extension interface. All extension classes now implement their specific interfaces.
+
   - Fix for Bug#22988922, GETLENGTH() RETURNS -1 FOR LONGBLOB AND LONGTEXT FIELDS.
 
   - Fix for Bug#24619829, NEW FAILURES IN C/JAVA UNITTESTS AGAINST MYSQL 8.0.
