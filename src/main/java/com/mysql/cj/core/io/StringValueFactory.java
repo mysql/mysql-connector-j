@@ -25,6 +25,7 @@ package com.mysql.cj.core.io;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.core.util.StringUtils;
@@ -94,12 +95,8 @@ public class StringValueFactory implements ValueFactory<String> {
 
     @Override
     public String createFromBit(byte[] bytes, int offset, int length) {
-        // truncate leading zeroes to provide correct conversion to string
-        while (length > 1 && bytes[offset] == 0) {
-            length--;
-            offset++;
-        }
-        return StringUtils.toString(bytes, offset, length, this.encoding);
+        // BIT values are interpreted as numbers, not as character codes
+        return new BigInteger(ByteBuffer.allocate(length + 1).put((byte) 0).put(bytes, offset, length).array()).toString();
     }
 
     public String createFromNull() {

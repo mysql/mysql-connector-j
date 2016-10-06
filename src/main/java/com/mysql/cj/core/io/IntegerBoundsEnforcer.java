@@ -46,7 +46,8 @@ public class IntegerBoundsEnforcer<T> extends BaseDecoratingValueFactory<T> {
     @Override
     public T createFromLong(long l) {
         if (l < this.min || l > this.max) {
-            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { l, this.targetVf.getTargetTypeName() }));
+            throw new NumberOutOfRange(
+                    Messages.getString("ResultSet.NumberOutOfRange", new Object[] { Long.valueOf(l).toString(), this.targetVf.getTargetTypeName() }));
         }
         return this.targetVf.createFromLong(l);
     }

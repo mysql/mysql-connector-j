@@ -250,14 +250,14 @@ public class TableSelectTest extends TableTest {
         assertEquals(true, row.getBoolean("cb1"));
         assertEquals(true, row.getBoolean("cb2"));
 
-        assertEquals("a", row.getString("c1"));
-        assertEquals("ba", row.getString("c2"));
-        assertEquals("cba", row.getString("c3"));
-        assertEquals("dcba", row.getString("c4"));
-        assertEquals("edcba", row.getString("c5"));
-        assertEquals("fedcba", row.getString("c6"));
-        assertEquals("gfedcba", row.getString("c7"));
-        assertEquals("hgfedcba", row.getString("c8"));
+        assertEquals(BigDecimal.valueOf(97).toString(), row.getString("c1"));
+        assertEquals(BigDecimal.valueOf(25185).toString(), row.getString("c2"));
+        assertEquals(BigDecimal.valueOf(6513249).toString(), row.getString("c3"));
+        assertEquals(BigDecimal.valueOf(1684234849).toString(), row.getString("c4"));
+        assertEquals(BigDecimal.valueOf(435475931745L).toString(), row.getString("c5"));
+        assertEquals(BigDecimal.valueOf(112585661964897L).toString(), row.getString("c6"));
+        assertEquals(BigDecimal.valueOf(29104508263162465L).toString(), row.getString("c7"));
+        assertEquals(BigDecimal.valueOf(7523094288207667809L).toString(), row.getString("c8"));
 
         assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
             public Void call() throws Exception {

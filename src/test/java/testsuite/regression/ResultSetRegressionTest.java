@@ -4850,14 +4850,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(true, rs1.getBoolean("cb1"));
         assertEquals(true, rs1.getBoolean("cb2"));
 
-        assertEquals("a", rs1.getString("c1"));
-        assertEquals("ba", rs1.getString("c2"));
-        assertEquals("cba", rs1.getString("c3"));
-        assertEquals("dcba", rs1.getString("c4"));
-        assertEquals("edcba", rs1.getString("c5"));
-        assertEquals("fedcba", rs1.getString("c6"));
-        assertEquals("gfedcba", rs1.getString("c7"));
-        assertEquals("hgfedcba", rs1.getString("c8"));
+        assertEquals(BigDecimal.valueOf(97).toString(), rs1.getString("c1"));
+        assertEquals(BigDecimal.valueOf(25185).toString(), rs1.getString("c2"));
+        assertEquals(BigDecimal.valueOf(6513249).toString(), rs1.getString("c3"));
+        assertEquals(BigDecimal.valueOf(1684234849).toString(), rs1.getString("c4"));
+        assertEquals(BigDecimal.valueOf(435475931745L).toString(), rs1.getString("c5"));
+        assertEquals(BigDecimal.valueOf(112585661964897L).toString(), rs1.getString("c6"));
+        assertEquals(BigDecimal.valueOf(29104508263162465L).toString(), rs1.getString("c7"));
+        assertEquals(BigDecimal.valueOf(7523094288207667809L).toString(), rs1.getString("c8"));
 
         assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
             public Void call() throws Exception {
@@ -5011,8 +5011,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, expectedNum, this.rs.getInt(1));
             assertEquals(testCase, expectedNum, this.rs.getLong(1));
             assertEquals(testCase, expectedNum, this.rs.getBigDecimal(1).intValue());
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(1));
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(1));
             assertTrue(this.rs.getObject(1) instanceof byte[]);
             assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(1));
 
@@ -5023,14 +5022,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(2));
             assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(2));
 
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //final ResultSet testRs1 = this.rs;
-            //assertThrows(SQLException.class, "'[01\\.]+' in column '3' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
-            //    public Void call() throws Exception {
-            //        testRs1.getShort(3);
-            //        return null;
-            //    }
-            //});
+            final ResultSet testRs1 = this.rs;
+            assertThrows(SQLException.class, "Value '[01]+' is outside of valid range for type java.lang.Short", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs1.getShort(3);
+                    return null;
+                }
+            });
             String expectedString = Integer.toBinaryString(expectedNum);
             assertEquals(testCase, Integer.parseInt(expectedString), this.rs.getInt(3));
             assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(3));
@@ -5044,8 +5042,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, expectedNum, this.rs.getInt(4));
             assertEquals(testCase, expectedNum, this.rs.getLong(4));
             assertEquals(testCase, expectedNum, this.rs.getBigDecimal(4).intValue());
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(4));
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(4));
             assertTrue(this.rs.getObject(4) instanceof byte[]);
             assertByteArrayEquals(testCase, new byte[] { (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(4));
 
@@ -5056,20 +5053,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(5));
             assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(5));
 
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //final ResultSet testRs2 = this.rs;
-            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
-            //    public Void call() throws Exception {
-            //        testRs2.getShort(6);
-            //        return null;
-            //    }
-            //});
-            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '6' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
-            //    public Void call() throws Exception {
-            //        testRs2.getInt(6);
-            //        return null;
-            //    }
-            //});
+            final ResultSet testRs2 = this.rs;
+            assertThrows(SQLException.class, "Value '[01]+' is outside of valid range for type java.lang.Short", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs2.getShort(6);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Value '[01]+' is outside of valid range for type java.lang.Integer", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs2.getInt(6);
+                    return null;
+                }
+            });
             expectedString = Long.toBinaryString(expectedNum);
             assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(6));
             assertEquals(testCase, expectedString, this.rs.getString(6));
@@ -5082,8 +5078,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, expectedNum, this.rs.getInt(7));
             assertEquals(testCase, expectedNum, this.rs.getLong(7));
             assertEquals(testCase, expectedNum, this.rs.getBigDecimal(7).intValue());
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(7));
+            assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(7));
             assertTrue(this.rs.getObject(7) instanceof byte[]);
             assertByteArrayEquals(testCase, new byte[] { 0, (byte) (expectedNumBase), (byte) (expectedNumBase) }, (byte[]) this.rs.getObject(7));
 
@@ -5094,20 +5089,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(testCase, String.valueOf(expectedNum), this.rs.getString(8));
             assertEquals(testCase, BigInteger.valueOf(expectedNum), this.rs.getObject(8));
 
-            // TODO the following works in c/J 5.1 but not in 6.0
-            //final ResultSet testRs3 = this.rs;
-            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype SMALLINT\\.", new Callable<Void>() {
-            //    public Void call() throws Exception {
-            //        testRs3.getShort(9);
-            //        return null;
-            //    }
-            //});
-            //assertThrows(SQLException.class, "'[E\\d\\.]+' in column '9' is outside valid range for the datatype INTEGER\\.", new Callable<Void>() {
-            //    public Void call() throws Exception {
-            //        testRs3.getInt(9);
-            //        return null;
-            //    }
-            //});
+            final ResultSet testRs3 = this.rs;
+            assertThrows(SQLException.class, "Value '[01]+' is outside of valid range for type java.lang.Short", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs3.getShort(9);
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Value '[01]+' is outside of valid range for type java.lang.Integer", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs3.getInt(9);
+                    return null;
+                }
+            });
             expectedString = Long.toBinaryString(expectedNum);
             assertEquals(testCase, Long.parseLong(expectedString), this.rs.getLong(9));
             assertEquals(testCase, expectedString, this.rs.getString(9));
