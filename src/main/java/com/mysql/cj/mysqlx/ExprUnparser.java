@@ -100,7 +100,7 @@ public class ExprUnparser {
                     docPathString.append(".*");
                     break;
                 case ARRAY_INDEX:
-                    docPathString.append("[").append("" + item.getIndex()).append("]");
+                    docPathString.append("[").append("" + Integer.toUnsignedLong(item.getIndex())).append("]");
                     break;
                 case ARRAY_INDEX_ASTERISK:
                     docPathString.append("[*]");
@@ -255,7 +255,7 @@ public class ExprUnparser {
             case OPERATOR:
                 return operatorToString(e.getOperator());
             case PLACEHOLDER:
-                return ":" + e.getPosition();
+                return ":" + Integer.toUnsignedLong(e.getPosition());
             case OBJECT:
                 return objectToString(e.getObject());
             default:

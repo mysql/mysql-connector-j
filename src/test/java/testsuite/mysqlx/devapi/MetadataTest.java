@@ -242,7 +242,7 @@ public class MetadataTest extends TableTest {
         assertEquals("doc", docCol.getColumnName());
         assertEquals("doc", docCol.getColumnLabel());
         assertEquals(Type.JSON, docCol.getType());
-        assertEquals(-1, docCol.getLength());
+        assertEquals(4294967295L, docCol.getLength());
         assertEquals(0, docCol.getFractionalDigits());
         assertEquals(true, docCol.isNumberSigned());
         assertEquals("binary", docCol.getCollationName());
