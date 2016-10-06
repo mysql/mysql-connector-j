@@ -3531,39 +3531,33 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      */
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType) throws SQLException {
-        if (!(parameterObj instanceof BigDecimal)) {
-            setObject(parameterIndex, parameterObj, targetSqlType, 0);
-        } else {
-            setObject(parameterIndex, parameterObj, targetSqlType, ((BigDecimal) parameterObj).scale());
-        }
+        setObject(parameterIndex, parameterObj, targetSqlType, parameterObj instanceof BigDecimal ? ((BigDecimal) parameterObj).scale() : 0);
     }
 
-    public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+    public void setObject(int parameterIndex, Object parameterObj, SQLType targetSqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber());
+            if (targetSqlType instanceof MysqlType) {
+                setObject(parameterIndex, parameterObj, (MysqlType) targetSqlType,
+                        parameterObj instanceof BigDecimal ? ((BigDecimal) parameterObj).scale() : 0);
+            } else {
+                setObject(parameterIndex, parameterObj, targetSqlType.getVendorTypeNumber());
+            }
         }
     }
 
     /**
-     * Set the value of a parameter using an object; use the java.lang
-     * equivalent objects for integral values.
+     * Set the value of a parameter using an object; use the java.lang equivalent objects for integral values.
      * 
      * <P>
-     * The given Java object will be converted to the targetSqlType before being sent to the database.
-     * </p>
-     * 
-     * <P>
-     * note that this method may be used to pass database-specific abstract data types. This is done by using a Driver-specific Java type and using a
-     * targetSqlType of Types.OTHER
-     * </p>
+     * The given Java object will be converted to the targetMysqlType before being sent to the database.
      * 
      * @param parameterIndex
      *            the first parameter is 1...
      * @param parameterObj
      *            the object containing the input parameter value
-     * @param targetSqlType
-     *            The SQL type to be send to the database
-     * @param scale
+     * @param targetMysqlType
+     *            The MysqlType to be send to the database
+     * @param scaleOrLength
      *            For Types.DECIMAL or Types.NUMERIC types
      *            this is the number of digits after the decimal. For all other
      *            types this value will be ignored.
@@ -3571,13 +3565,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
      * @throws SQLException
      *             if a database access error occurs
      */
-    public void setObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
+    protected void setObject(int parameterIndex, Object parameterObj, MysqlType targetMysqlType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (parameterObj == null) {
                 setNull(parameterIndex, MysqlType.UNKNOWN);
             } else {
-
-                //JDBC42Helper.convertJavaTimeToJavaSql(x)
                 if (parameterObj instanceof LocalDate) {
                     parameterObj = Date.valueOf((LocalDate) parameterObj);
                 } else if (parameterObj instanceof LocalDateTime) {
@@ -3587,8 +3579,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 }
 
                 try {
-                    MysqlType targetMysqlType = MysqlType.getByJdbcType(targetSqlType);
-
                     /*
                      * From Table-B5 in the JDBC Spec
                      */
@@ -3628,7 +3618,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         case DOUBLE_UNSIGNED:
                         case DECIMAL:
                         case DECIMAL_UNSIGNED:
-                            setNumericObject(parameterIndex, parameterObj, targetMysqlType, scale);
+                            setNumericObject(parameterIndex, parameterObj, targetMysqlType, scaleOrLength);
                             break;
 
                         case CHAR:
@@ -3727,11 +3717,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                             throw SQLError.createSQLException(Messages.getString("PreparedStatement.16"), SQLError.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
                     }
-                } catch (SQLException ex) {
-                    throw ex;
-                } catch (FeatureNotAvailableException nae) {
-                    throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
-                            SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 } catch (Exception ex) {
                     throw SQLError.createSQLException(
                             Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
@@ -3742,9 +3727,52 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         }
     }
 
+    /**
+     * Set the value of a parameter using an object; use the java.lang
+     * equivalent objects for integral values.
+     * 
+     * <P>
+     * The given Java object will be converted to the targetSqlType before being sent to the database.
+     * </p>
+     * 
+     * <P>
+     * note that this method may be used to pass database-specific abstract data types. This is done by using a Driver-specific Java type and using a
+     * targetSqlType of Types.OTHER
+     * </p>
+     * 
+     * @param parameterIndex
+     *            the first parameter is 1...
+     * @param parameterObj
+     *            the object containing the input parameter value
+     * @param targetSqlType
+     *            The SQL type to be send to the database
+     * @param scale
+     *            For Types.DECIMAL or Types.NUMERIC types
+     *            this is the number of digits after the decimal. For all other
+     *            types this value will be ignored.
+     * 
+     * @throws SQLException
+     *             if a database access error occurs
+     */
+    public void setObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            try {
+                MysqlType targetMysqlType = MysqlType.getByJdbcType(targetSqlType);
+                setObject(parameterIndex, parameterObj, targetMysqlType, scale);
+            } catch (FeatureNotAvailableException nae) {
+                throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
+                        SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+            }
+        }
+    }
+
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+            if (targetSqlType instanceof MysqlType) {
+                setObject(parameterIndex, x, (MysqlType) targetSqlType, scaleOrLength);
+            } else {
+                setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+            }
         }
     }
 

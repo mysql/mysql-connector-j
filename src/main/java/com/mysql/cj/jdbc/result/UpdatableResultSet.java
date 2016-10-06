@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.RowId;
 import java.sql.SQLException;
@@ -47,6 +48,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
@@ -1495,12 +1497,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
-        updateObjectInternal(columnIndex, x, null, 0);
+        updateObjectInternal(columnIndex, x, (Integer) null, 0);
     }
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-        updateObjectInternal(columnIndex, x, null, scale);
+        updateObjectInternal(columnIndex, x, (Integer) null, scale);
     }
 
     /**
@@ -1514,6 +1516,26 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @throws SQLException
      */
     protected synchronized void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
+        try {
+            MysqlType targetMysqlType = targetType == null ? null : MysqlType.getByJdbcType(targetType);
+            updateObjectInternal(columnIndex, x, targetMysqlType, scaleOrLength);
+
+        } catch (FeatureNotAvailableException nae) {
+            throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetType),
+                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+        }
+    }
+
+    /**
+     * Internal setObject implementation.
+     * 
+     * @param columnIndex
+     * @param x
+     * @param targetType
+     * @param scaleOrLength
+     * @throws SQLException
+     */
+    protected synchronized void updateObjectInternal(int columnIndex, Object x, SQLType targetType, int scaleOrLength) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
                 this.doingUpdates = true;
@@ -1548,22 +1570,22 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
-        updateObjectInternal(columnIndex, x, targetSqlType.getVendorTypeNumber(), 0);
+        updateObjectInternal(columnIndex, x, targetSqlType, 0);
     }
 
     @Override
     public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        updateObjectInternal(columnIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+        updateObjectInternal(columnIndex, x, targetSqlType, scaleOrLength);
     }
 
     @Override
     public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
-        updateObjectInternal(findColumn(columnLabel), x, targetSqlType.getVendorTypeNumber(), 0);
+        updateObjectInternal(findColumn(columnLabel), x, targetSqlType, 0);
     }
 
     @Override
     public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        updateObjectInternal(findColumn(columnLabel), x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
+        updateObjectInternal(findColumn(columnLabel), x, targetSqlType, scaleOrLength);
     }
 
     @Override

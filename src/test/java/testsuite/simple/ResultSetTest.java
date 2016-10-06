@@ -46,6 +46,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
@@ -343,7 +344,21 @@ public class ResultSetTest extends BaseTestCase {
         assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                rsTmp.updateObject(1, rsTmp.toString(), MysqlType.VARCHAR);
+                return null;
+            }
+        });
+        assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
                 rsTmp.updateObject(1, rsTmp.toString(), JDBCType.VARCHAR, 10);
+                return null;
+            }
+        });
+        assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                rsTmp.updateObject(1, rsTmp.toString(), MysqlType.VARCHAR, 10);
                 return null;
             }
         });
@@ -357,7 +372,21 @@ public class ResultSetTest extends BaseTestCase {
         assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                rsTmp.updateObject("test", rsTmp.toString(), MysqlType.VARCHAR);
+                return null;
+            }
+        });
+        assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
                 rsTmp.updateObject("test", rsTmp.toString(), JDBCType.VARCHAR, 10);
+                return null;
+            }
+        });
+        assertThrows(NotUpdatable.class, "Result Set not updatable.*", new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                rsTmp.updateObject("test", rsTmp.toString(), MysqlType.VARCHAR, 10);
                 return null;
             }
         });
@@ -449,10 +478,38 @@ public class ResultSetTest extends BaseTestCase {
         this.rs.updateObject("dt", testLocalDateTime, JDBCType.TIMESTAMP, 20);
         this.rs.updateObject("ts", testLocalDateTime, JDBCType.TIMESTAMP, 20);
         this.rs.insertRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateInt(1, 9);
+        this.rs.updateObject(2, testLocalDate, MysqlType.DATE);
+        this.rs.updateObject(3, testLocalTime, MysqlType.TIME);
+        this.rs.updateObject(4, testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateObject(5, testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.insertRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateInt(1, 10);
+        this.rs.updateObject(2, testLocalDate, MysqlType.DATE, 10);
+        this.rs.updateObject(3, testLocalTime, MysqlType.TIME, 8);
+        this.rs.updateObject(4, testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateObject(5, testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.insertRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateInt(1, 11);
+        this.rs.updateObject("d", testLocalDate, MysqlType.DATE);
+        this.rs.updateObject("t", testLocalTime, MysqlType.TIME);
+        this.rs.updateObject("dt", testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateObject("ts", testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.insertRow();
+        this.rs.moveToInsertRow();
+        this.rs.updateInt(1, 12);
+        this.rs.updateObject("d", testLocalDate, MysqlType.DATE, 10);
+        this.rs.updateObject("t", testLocalTime, MysqlType.TIME, 8);
+        this.rs.updateObject("dt", testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateObject("ts", testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.insertRow();
 
         // check final results.
         this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject1");
-        for (int i = 1; i <= 8; i++) {
+        for (int i = 1; i <= 12; i++) {
             assertTrue(this.rs.next());
             assertEquals(i, this.rs.getInt(1));
             assertEquals(testSqlDate, this.rs.getDate(2));
@@ -528,6 +585,30 @@ public class ResultSetTest extends BaseTestCase {
         this.rs.updateObject("dt", testLocalDateTime, JDBCType.TIMESTAMP, 20);
         this.rs.updateObject("ts", testLocalDateTime, JDBCType.TIMESTAMP, 20);
         this.rs.updateRow();
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, testLocalDate, MysqlType.DATE);
+        this.rs.updateObject(3, testLocalTime, MysqlType.TIME);
+        this.rs.updateObject(4, testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateObject(5, testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateRow();
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, testLocalDate, MysqlType.DATE, 10);
+        this.rs.updateObject(3, testLocalTime, MysqlType.TIME, 8);
+        this.rs.updateObject(4, testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateObject(5, testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateRow();
+        assertTrue(this.rs.next());
+        this.rs.updateObject("d", testLocalDate, MysqlType.DATE);
+        this.rs.updateObject("t", testLocalTime, MysqlType.TIME);
+        this.rs.updateObject("dt", testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateObject("ts", testLocalDateTime, MysqlType.TIMESTAMP);
+        this.rs.updateRow();
+        assertTrue(this.rs.next());
+        this.rs.updateObject("d", testLocalDate, MysqlType.DATE, 10);
+        this.rs.updateObject("t", testLocalTime, MysqlType.TIME, 8);
+        this.rs.updateObject("dt", testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateObject("ts", testLocalDateTime, MysqlType.TIMESTAMP, 20);
+        this.rs.updateRow();
 
         // check final results.
         this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject1");
@@ -558,7 +639,7 @@ public class ResultSetTest extends BaseTestCase {
             assertEquals(row, testLocalDateTime, this.rs.getObject("dt", LocalDateTime.class));
             assertEquals(row, testLocalDateTime, this.rs.getObject("ts", LocalDateTime.class));
         }
-        assertEquals(8, rowCount);
+        assertEquals(12, rowCount);
 
         /*
          * Objects java.time.Offset[Date]Time are supported via conversion to *CHAR or serialization.

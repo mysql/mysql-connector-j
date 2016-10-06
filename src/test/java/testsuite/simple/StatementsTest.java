@@ -59,6 +59,7 @@ import java.util.concurrent.Callable;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
@@ -1179,6 +1180,71 @@ public class StatementsTest extends BaseTestCase {
 
         assertEquals("11:22:33", this.rs.getString(6));
         assertEquals(new java.sql.Time(currentTime).toString(), this.rs.getString(7));
+    }
+
+    /**
+     * Tests for PreparedStatement.setObject(...SQLType...)
+     * 
+     * @throws Exception
+     */
+    public void testSetObjectWithMysqlType() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true"); // value=true for #5
+        Connection conn1 = getConnectionWithProps(props);
+        Statement stmt1 = conn1.createStatement();
+        createTable("t1",
+                " (c1 DECIMAL," // instance of String
+                        + "c2 VARCHAR(255)," // instance of String
+                        + "c3 BLOB," // instance of byte[]
+                        + "c4 DATE," // instance of java.util.Date
+                        + "c5 TIMESTAMP NULL," // instance of String
+                        + "c6 TIME," // instance of String
+                        + "c7 TIME)"); // instance of java.sql.Timestamp
+
+        this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+        long currentTime = System.currentTimeMillis();
+
+        this.pstmt.setObject(1, "1000", MysqlType.DECIMAL);
+        this.pstmt.setObject(2, "2000", MysqlType.VARCHAR);
+        this.pstmt.setObject(3, new byte[] { 0 }, MysqlType.BLOB);
+        this.pstmt.setObject(4, new java.util.Date(currentTime), MysqlType.DATE);
+        this.pstmt.setObject(5, "2000-01-01 23-59-59", MysqlType.TIMESTAMP);
+        this.pstmt.setObject(6, "11:22:33", MysqlType.TIME);
+        this.pstmt.setObject(7, new java.sql.Timestamp(currentTime), MysqlType.TIME);
+        this.pstmt.execute();
+
+        this.pstmt.setObject(1, null, MysqlType.DECIMAL);
+        this.pstmt.setObject(2, null, MysqlType.VARCHAR);
+        this.pstmt.setObject(3, null, MysqlType.BLOB);
+        this.pstmt.setObject(4, null, MysqlType.DATE);
+        this.pstmt.setObject(5, null, MysqlType.TIMESTAMP);
+        this.pstmt.setObject(6, null, MysqlType.TIME);
+        this.pstmt.setObject(7, null, MysqlType.TIME);
+        this.pstmt.execute();
+
+        this.rs = stmt1.executeQuery("SELECT * FROM t1");
+
+        this.rs.next();
+        assertEquals("1000", this.rs.getString(1));
+        assertEquals("2000", this.rs.getString(2));
+        assertEquals(1, ((byte[]) this.rs.getObject(3)).length);
+        assertEquals(0, ((byte[]) this.rs.getObject(3))[0]);
+        assertEquals(new java.sql.Date(currentTime).toString(), this.rs.getDate(4).toString());
+        assertEquals("2000-01-01 23:59:59", this.rs.getString(5));
+        assertEquals("11:22:33", this.rs.getString(6));
+        assertEquals(new java.sql.Time(currentTime).toString(), this.rs.getString(7));
+
+        this.rs.next();
+        assertEquals(null, this.rs.getString(1));
+        assertEquals(null, this.rs.getString(2));
+        assertEquals(null, this.rs.getObject(3));
+        assertEquals(null, this.rs.getObject(3));
+        assertEquals(null, this.rs.getDate(4));
+        assertEquals(null, this.rs.getString(5));
+        assertEquals(null, this.rs.getString(6));
+        assertEquals(null, this.rs.getString(7));
     }
 
     public void testStatementRewriteBatch() throws Exception {
@@ -3409,6 +3475,70 @@ public class StatementsTest extends BaseTestCase {
         testCstmt.registerOutParameter("b", JDBCType.BOOLEAN, "dummy");
         testCstmt.registerOutParameter("i", JDBCType.INTEGER, "dummy");
         testCstmt.registerOutParameter("c", JDBCType.CHAR, "dummy");
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+    }
+
+    /**
+     * Test for CallableStatement.registerOutParameter(...MysqlType...).
+     */
+    public void testCallStmtRegisterOutParameterWithMysqlType() throws Exception {
+        createProcedure("testRegisterOutParameterProc", "(OUT b BIT, OUT i INT, OUT c CHAR(10)) BEGIN SELECT 1, 1234, 'MySQL' INTO b, i, c; END");
+        final CallableStatement testCstmt = this.conn.prepareCall("{CALL testRegisterOutParameterProc(?, ?, ?)}");
+
+        // registerOutParameter by parameter index
+        testCstmt.registerOutParameter(1, MysqlType.BOOLEAN);
+        testCstmt.registerOutParameter(2, MysqlType.INT);
+        testCstmt.registerOutParameter(3, MysqlType.CHAR);
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+
+        testCstmt.registerOutParameter(1, MysqlType.BOOLEAN, 1);
+        testCstmt.registerOutParameter(2, MysqlType.INT, 1);
+        testCstmt.registerOutParameter(3, MysqlType.CHAR, 1);
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+
+        testCstmt.registerOutParameter(1, MysqlType.BOOLEAN, "dummy");
+        testCstmt.registerOutParameter(2, MysqlType.INT, "dummy");
+        testCstmt.registerOutParameter(3, MysqlType.CHAR, "dummy");
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+
+        // registerOutParameter by parameter name
+        testCstmt.registerOutParameter("b", MysqlType.BOOLEAN);
+        testCstmt.registerOutParameter("i", MysqlType.INT);
+        testCstmt.registerOutParameter("c", MysqlType.CHAR);
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+
+        testCstmt.registerOutParameter("b", MysqlType.BOOLEAN, 1);
+        testCstmt.registerOutParameter("i", MysqlType.INT, 1);
+        testCstmt.registerOutParameter("c", MysqlType.CHAR, 1);
+        testCstmt.execute();
+
+        assertEquals(Boolean.TRUE, testCstmt.getObject(1));
+        assertEquals(Integer.valueOf(1234), testCstmt.getObject(2));
+        assertEquals("MySQL", testCstmt.getObject(3));
+
+        testCstmt.registerOutParameter("b", MysqlType.BOOLEAN, "dummy");
+        testCstmt.registerOutParameter("i", MysqlType.INT, "dummy");
+        testCstmt.registerOutParameter("c", MysqlType.CHAR, "dummy");
         testCstmt.execute();
 
         assertEquals(Boolean.TRUE, testCstmt.getObject(1));
