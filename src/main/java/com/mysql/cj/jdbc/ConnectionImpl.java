@@ -58,8 +58,6 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.Extension;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -158,23 +156,23 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public class ExceptionInterceptorChain implements ExceptionInterceptor {
-        List<Extension> interceptors;
+        List<ExceptionInterceptor> interceptors;
 
         ExceptionInterceptorChain(String interceptorClasses) {
-            this.interceptors = Util.loadExtensions(ConnectionImpl.this, ConnectionImpl.this.props, interceptorClasses, "Connection.BadExceptionInterceptor",
-                    this, ConnectionImpl.this.getSession().getLog());
+            this.interceptors = Util.<ExceptionInterceptor> loadClasses(interceptorClasses, "Connection.BadExceptionInterceptor", this).stream()
+                    .map(o -> o.init(ConnectionImpl.this.props, ConnectionImpl.this.getSession().getLog())).collect(Collectors.toList());
         }
 
         void addRingZero(ExceptionInterceptor interceptor) throws SQLException {
             this.interceptors.add(0, interceptor);
         }
 
-        public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
+        public Exception interceptException(Exception sqlEx) {
             if (this.interceptors != null) {
-                Iterator<Extension> iter = this.interceptors.iterator();
+                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
 
                 while (iter.hasNext()) {
-                    sqlEx = ((ExceptionInterceptor) iter.next()).interceptException(sqlEx, ConnectionImpl.this);
+                    sqlEx = iter.next().interceptException(sqlEx);
                 }
             }
 
@@ -183,26 +181,27 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         public void destroy() {
             if (this.interceptors != null) {
-                Iterator<Extension> iter = this.interceptors.iterator();
+                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
 
                 while (iter.hasNext()) {
-                    ((ExceptionInterceptor) iter.next()).destroy();
+                    iter.next().destroy();
                 }
             }
 
         }
 
-        public void init(MysqlConnection conn, Properties properties, Log log) {
+        public ExceptionInterceptor init(Properties properties, Log log) {
             if (this.interceptors != null) {
-                Iterator<Extension> iter = this.interceptors.iterator();
+                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
 
                 while (iter.hasNext()) {
-                    ((ExceptionInterceptor) iter.next()).init(conn, properties, log);
+                    iter.next().init(properties, log);
                 }
             }
+            return this;
         }
 
-        public List<Extension> getInterceptors() {
+        public List<ExceptionInterceptor> getInterceptors() {
             return this.interceptors;
         }
 
@@ -2703,14 +2702,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
-                    public void init(MysqlConnection conn, Properties config, Log log) {
+                    public ExceptionInterceptor init(Properties config, Log log) {
+                        return this;
                     }
 
                     public void destroy() {
                     }
 
                     @SuppressWarnings("synthetic-access")
-                    public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
+                    public Exception interceptException(Exception sqlEx) {
                         if (sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
                                 && ((SQLException) sqlEx).getSQLState().startsWith("08")) {
                             ConnectionImpl.this.serverConfigCache.invalidate(getURL());

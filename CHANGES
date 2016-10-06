@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.5
 
+  - Removed Extension interface. All extension classes now implement their specific interfaces.
+
   - Extended X DevAPI with flexible parameter lists.
   
   - Added a virtual NodeSession to X DevAPI. 

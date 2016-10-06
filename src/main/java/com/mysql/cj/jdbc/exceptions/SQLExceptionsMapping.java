@@ -54,7 +54,7 @@ public class SQLExceptionsMapping {
             return (SQLException) ex.getCause();
 
         } else if (ex instanceof CJCommunicationsException) {
-            return SQLError.createCommunicationsException(null, ex.getMessage(), ex, interceptor);
+            return SQLError.createCommunicationsException(ex.getMessage(), ex, interceptor);
 
         } else if (ex instanceof CJConnectionFeatureNotAvailableException) {
             return new ConnectionFeatureNotAvailableException(ex.getMessage(), ex);

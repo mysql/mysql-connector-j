@@ -5960,14 +5960,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private int counter = 0;
 
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public ExceptionInterceptor init(Properties props, Log log) {
             this.counter++;
+            return this;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx) {
 
             return new SQLException("ExceptionInterceptor.init() called " + this.counter + " time(s)");
         }
@@ -5995,13 +5996,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
 
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public ExceptionInterceptor init(Properties props, Log log) {
+            return this;
         }
 
         public void destroy() {
         }
 
-        public SQLException interceptException(Exception sqlEx, MysqlConnection conn) {
+        public SQLException interceptException(Exception sqlEx) {
             if (!(sqlEx instanceof SQLException)) {
                 return SQLError.createSQLException("SQLException expected, but got " + sqlEx.getClass().getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx,
                         null);
@@ -7641,16 +7643,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         private boolean useSyncGroupServersLock = true;
 
-        public void init(MysqlConnection conn, Properties props, Log log) {
+        public ExceptionInterceptor init(Properties props, Log log) {
             if (props.containsKey("__useReplConnGroupLocks__")) {
                 this.useSyncGroupServersLock = Boolean.parseBoolean(props.getProperty("__useReplConnGroupLocks__"));
             }
+            return this;
         }
 
         public void destroy() {
         }
 
-        public Exception interceptException(Exception sqlEx, MysqlConnection conn) {
+        public Exception interceptException(Exception sqlEx) {
             // Make sure both threads execute the code after the synchronized block concurrently.
             synchronized (TestBug21934573ExceptionInterceptor.class) {
                 if (threadIsWaiting) {
