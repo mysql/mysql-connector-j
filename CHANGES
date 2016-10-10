@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+mm-dd-yy - Version 6.0.6
+
 10-21-16 - Version 6.0.5
 
   - Added client-side failover during XSession initialization for multi-router configuration.
