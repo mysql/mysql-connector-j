@@ -26,9 +26,9 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 ANT_COMMON_OPTIONS=\
   -Dcom.mysql.cj.build.dir.driver=build/driver \
- -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
- -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
- -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
+  -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
+  -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
+  -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
   -Dcom.mysql.cj.extra.libs=@WITH_JARDEPS@ \
   -Dcom.mysql.cj.build.driver.extraName=@PRODUCT_SUFFIX@ \
   -Djava.awt.headless=true
@@ -50,19 +50,19 @@ ANT_COM_OPT=-Dcom.mysql.cj.build.commercial=true
 endif
 
 %:
-    #dh $@ --with autoreconf
-    dh  $@
+	#dh $@ --with autoreconf
+	dh  $@
 
 override_dh_auto_configure:
 
 override_dh_auto_build:
-    echo $(PATH)
-    echo $(JAVA_HOME)
-    $(ANT_CMD) \
-      $(ANT_COMMON_OPTIONS) \
-      $(ANT_JAVA_OPT) \
-      $(ANT_COM_OPT) \
-      full-package-no-sources
+	echo $(PATH)
+	echo $(JAVA_HOME)
+	$(ANT_CMD) \
+	  $(ANT_COMMON_OPTIONS) \
+	  $(ANT_JAVA_OPT) \
+	  $(ANT_COM_OPT) \
+	  full-package-no-sources
 
 # Do nothing; the test suite requires a sql server, so we can't run it
 # as part of the build.
@@ -71,7 +71,7 @@ override_dh_auto_build:
 # we should never need to run this for our plugin package; running it creates
 # a spurious shlibs file that shouldn't be there.
 #override_dh_shlibdeps:
-#    dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+#	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
 
 #TMP_INSTDIR = $(CURDIR)/debian/tmp
 #
@@ -79,7 +79,7 @@ override_dh_auto_build:
 #TMP_PRIVATE_BINDIR = $(TMP_INSTDIR)$(PRIVATE_BINDIR)
 #
 override_dh_auto_clean:
-    $(ANT_CMD) clean
+	$(ANT_CMD) clean
 #
 #override_dh_auto_install:
-#    dh_auto_install -- libdir=$(PRIVATE_BINDIR) DESTDIR=$(TMP_INSTDIR)
+#	dh_auto_install -- libdir=$(PRIVATE_BINDIR) DESTDIR=$(TMP_INSTDIR)
