@@ -380,15 +380,36 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testExplicitPartitions() throws Exception {
-
         if (versionMeetsMinimum(5, 6, 5)) {
-            Connection c = null;
+
             String datadir = null;
+            this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
+            this.rs.next();
+            datadir = this.rs.getString(2);
+            if (datadir != null) {
+                datadir = new File(datadir).getCanonicalPath();
+            }
+
+            this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='secure_file_priv'");
+            this.rs.next();
+            String fileprivdir = this.rs.getString(2);
+            if ("NULL".equalsIgnoreCase(this.rs.getString(2))) {
+                fail("To run this test the server needs to be started with the option\"--secure-file-priv=\"");
+            } else if (fileprivdir.length() > 0) {
+                fileprivdir = new File(fileprivdir).getCanonicalPath();
+                if (!datadir.equals(fileprivdir)) {
+                    fail("To run this test the server option\"--secure-file-priv=\" needs to be empty or to match the server's data directory.");
+                }
+            }
+
+            Connection c = null;
             Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
             String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
             props = new Properties();
             props.setProperty("useServerPrepStmts", "true");
+
+            boolean exceptionCaugth = false;
             try {
 
                 this.stmt.executeUpdate("SET @old_default_storage_engine = @@default_storage_engine");
@@ -453,14 +474,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.stmt.executeUpdate("UNLOCK TABLES");
 
                 // Test LOAD
-                this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
-                this.rs.next();
-                datadir = this.rs.getString(2);
-
                 if (dbname == null) {
                     fail("No database selected");
                 } else {
-                    File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+                    File f = new File(datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt");
                     if (f.exists()) {
                         f.delete();
                     }
@@ -606,6 +623,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
                 this.stmt.executeUpdate("SET @@default_storage_engine = @old_default_storage_engine");
 
+            } catch (SQLException e) {
+                exceptionCaugth = true;
+                fail(e.getMessage());
+
             } finally {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS testExplicitPartitions, testExplicitPartitions2, testExplicitPartitions3");
 
@@ -613,11 +634,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
                     c.close();
                 }
                 if (datadir != null) {
-                    File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+                    File f = new File(datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt");
                     if (f.exists()) {
                         f.deleteOnExit();
-                    } else {
-                        fail("File " + datadir + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted."
+                    } else if (!exceptionCaugth) {
+                        fail("File " + datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted."
                                 + "You should run server and tests on the same filesystem.");
                     }
                 }
