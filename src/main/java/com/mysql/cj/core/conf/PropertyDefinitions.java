@@ -134,11 +134,11 @@ public class PropertyDefinitions {
     public static final String CATEGORY_EXCEPTIONS = Messages.getString("ConnectionProperties.categoryExceptions");
     public static final String CATEGORY_INTEGRATION = Messages.getString("ConnectionProperties.categoryIntegration");
     public static final String CATEGORY_JDBC = Messages.getString("ConnectionProperties.categoryJDBC");
-    public static final String CATEGORY_MYSQLX = Messages.getString("ConnectionProperties.categoryMysqlx");
+    public static final String CATEGORY_XDEVAPI = Messages.getString("ConnectionProperties.categoryXDevAPI");
 
     public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK, CATEGORY_SECURITY,
             CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES, CATEGORY_HA,
-            CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_MYSQLX };
+            CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_XDEVAPI };
 
     /*
      * Property modifiers
@@ -340,7 +340,7 @@ public class PropertyDefinitions {
     public static final String PNAME_dontCheckOnDuplicateKeyUpdateInSQL = "dontCheckOnDuplicateKeyUpdateInSQL";
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
 
-    public static final String PNAME_useAsyncProtocol = "mysqlx.useAsyncProtocol";
+    public static final String PNAME_useAsyncProtocol = "xdevapi.useAsyncProtocol";
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
 
@@ -905,10 +905,10 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_readOnlyPropagatesToServer, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                // TODO improve MySQLx properties descriptions
+                // TODO improve X DevAPI properties descriptions
 
                 new BooleanPropertyDefinition(PNAME_useAsyncProtocol, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_MYSQLX, Integer.MIN_VALUE),
+                        Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
