@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.api.x.core.RowToElement;
-import com.mysql.cj.api.x.protocol.ResultStreamer;
+import com.mysql.cj.api.x.io.ResultStreamer;
 import com.mysql.cj.api.xdevapi.Warning;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.result.BufferedRowList;

@@ -21,41 +21,40 @@
 
  */
 
-package com.mysql.cj.xdevapi;
+package com.mysql.cj.x.io;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.xdevapi.Column;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
+import com.mysql.cj.api.x.core.RowToElement;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.x.core.StatementExecuteOk;
-import com.mysql.cj.x.io.DevapiRowFactory;
+import com.mysql.cj.xdevapi.RowImpl;
 
-public class RowResultImpl extends AbstractDataResult<Row> implements RowResult {
+/**
+ * Create {@link com.mysql.cj.api.xdevapi.Row} objects from internal row representation.
+ */
+public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.xdevapi.Row> {
+    private Map<String, Integer> fieldNameToIndex;
     private ArrayList<Field> metadata;
-    protected TimeZone defaultTimeZone;
+    private TimeZone defaultTimeZone;
 
-    public RowResultImpl(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new DevapiRowFactory(metadata, defaultTimeZone));
+    public DevapiRowFactory(ArrayList<Field> metadata, TimeZone defaultTimeZone) {
         this.metadata = metadata;
         this.defaultTimeZone = defaultTimeZone;
     }
 
-    public int getColumnCount() {
-        return this.metadata.size();
+    private Map<String, Integer> getFieldNameToIndexMap() {
+        if (this.fieldNameToIndex == null) {
+            this.fieldNameToIndex = new HashMap<>();
+            IntStream.range(0, this.metadata.size()).forEach(i -> this.fieldNameToIndex.put(this.metadata.get(i).getColumnLabel(), i));
+        }
+        return this.fieldNameToIndex;
     }
 
-    public List<Column> getColumns() {
-        return this.metadata.stream().map(ColumnImpl::new).collect(Collectors.toList());
-    }
-
-    public List<String> getColumnNames() {
-        return this.metadata.stream().map(Field::getColumnLabel).collect(Collectors.toList());
+    public com.mysql.cj.api.xdevapi.Row apply(com.mysql.cj.api.result.Row internalRow) {
+        return new RowImpl(internalRow, this::getFieldNameToIndexMap, defaultTimeZone);
     }
 }

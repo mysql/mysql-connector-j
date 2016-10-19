@@ -39,12 +39,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.mysql.cj.api.x.protocol.ResultListener;
+import com.mysql.cj.api.x.io.ResultListener;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.x.core.StatementExecuteOk;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.protocol.XProtocol;
-import com.mysql.cj.x.protocol.XProtocolRow;
+import com.mysql.cj.x.io.XProtocol;
+import com.mysql.cj.x.io.XProtocolRow;
 import com.mysql.cj.xdevapi.DocFindParams;
 
 /**

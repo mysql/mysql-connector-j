@@ -50,7 +50,7 @@ import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.x.core.StatementExecuteOk;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.protocol.XProtocol;
+import com.mysql.cj.x.io.XProtocol;
 import com.mysql.cj.xdevapi.DocFindParams;
 import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.FindParams;

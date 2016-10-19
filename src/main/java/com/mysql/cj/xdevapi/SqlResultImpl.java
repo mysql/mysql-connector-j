@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.mysql.cj.api.x.protocol.ResultStreamer;
+import com.mysql.cj.api.x.io.ResultStreamer;
 import com.mysql.cj.api.xdevapi.Column;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.SqlResult;

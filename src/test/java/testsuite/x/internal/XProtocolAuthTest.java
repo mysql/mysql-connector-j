@@ -33,7 +33,7 @@ import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.protocol.XProtocol;
+import com.mysql.cj.x.io.XProtocol;
 
 /**
  * Tests for protocol-level auth APIs against X Plugin via X Protocol.

@@ -21,41 +21,38 @@
 
  */
 
-package com.mysql.cj.xdevapi;
+package com.mysql.cj.api.x.io;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.xdevapi.Column;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.x.core.StatementExecuteOk;
-import com.mysql.cj.x.io.DevapiRowFactory;
+import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.x.io.XProtocolRow;
 
-public class RowResultImpl extends AbstractDataResult<Row> implements RowResult {
-    private ArrayList<Field> metadata;
-    protected TimeZone defaultTimeZone;
+public interface ResultListener {
+    /**
+     * Called when metadata is available.
+     */
+    void onMetadata(ArrayList<Field> metadata);
 
-    public RowResultImpl(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new DevapiRowFactory(metadata, defaultTimeZone));
-        this.metadata = metadata;
-        this.defaultTimeZone = defaultTimeZone;
-    }
+    /**
+     * Called when row is available.
+     */
+    void onRow(XProtocolRow r);
 
-    public int getColumnCount() {
-        return this.metadata.size();
-    }
+    /**
+     * Called when result processing is complete. No additional notifications will be delivered.
+     */
+    void onComplete(StatementExecuteOk ok);
 
-    public List<Column> getColumns() {
-        return this.metadata.stream().map(ColumnImpl::new).collect(Collectors.toList());
-    }
+    /**
+     * Called when a server error is available. No additional notifications will be delivered.
+     */
+    void onError(XDevAPIError error);
 
-    public List<String> getColumnNames() {
-        return this.metadata.stream().map(Field::getColumnLabel).collect(Collectors.toList());
-    }
+    /**
+     * Called when an exception occurs. No additional notifications will be delivered.
+     */
+    void onException(Throwable t);
 }

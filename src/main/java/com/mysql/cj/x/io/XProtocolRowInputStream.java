@@ -21,41 +21,58 @@
 
  */
 
-package com.mysql.cj.xdevapi;
+package com.mysql.cj.x.io;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.NoSuchElementException;
 
 import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.xdevapi.Column;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.core.result.Field;
-import com.mysql.cj.x.core.StatementExecuteOk;
-import com.mysql.cj.x.io.DevapiRowFactory;
 
-public class RowResultImpl extends AbstractDataResult<Row> implements RowResult {
+/**
+ * @todo doc
+ */
+public class XProtocolRowInputStream implements RowList {
     private ArrayList<Field> metadata;
-    protected TimeZone defaultTimeZone;
+    private XProtocol protocol;
+    private boolean isDone = false;
+    private int position = -1;
+    /** @todo doc */
+    private XProtocolRow next;
 
-    public RowResultImpl(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new DevapiRowFactory(metadata, defaultTimeZone));
+    public XProtocolRowInputStream(ArrayList<Field> metadata, XProtocol protocol) {
         this.metadata = metadata;
-        this.defaultTimeZone = defaultTimeZone;
+        this.protocol = protocol;
     }
 
-    public int getColumnCount() {
-        return this.metadata.size();
+    public XProtocolRow readRow() {
+        if (!hasNext()) {
+            this.isDone = true;
+            return null;
+        }
+        this.position++;
+        XProtocolRow r = this.next;
+        this.next = null;
+        return r;
     }
 
-    public List<Column> getColumns() {
-        return this.metadata.stream().map(ColumnImpl::new).collect(Collectors.toList());
+    public XProtocolRow next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        return readRow();
     }
 
-    public List<String> getColumnNames() {
-        return this.metadata.stream().map(Field::getColumnLabel).collect(Collectors.toList());
+    public boolean hasNext() {
+        if (this.isDone) {
+            return false;
+        } else if (this.next == null) {
+            this.next = this.protocol.readRowOrNull(this.metadata);
+        }
+        return this.next != null;
+    }
+
+    public int getPosition() {
+        return this.position;
     }
 }

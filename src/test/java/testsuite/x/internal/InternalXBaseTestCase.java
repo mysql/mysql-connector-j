@@ -33,8 +33,8 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.protocol.XProtocol;
-import com.mysql.cj.x.protocol.XProtocolFactory;
+import com.mysql.cj.x.io.XProtocol;
+import com.mysql.cj.x.io.XProtocolFactory;
 import com.mysql.cj.xdevapi.XSessionFactory;
 
 /**
