@@ -211,9 +211,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 case REPLICATION_CONNECTION:
                     return ReplicationConnectionProxy.createProxyInstance((ReplicationConnectionUrl) conStr);
 
-                case MYSQLX_SESSION:
+                case XDEVAPI_SESSION:
                     // TODO test it
-                    //return new MysqlxJdbcConnection(conStr.getProperties());
+                    //return new XJdbcConnection(conStr.getProperties());
 
                 default:
                     return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());

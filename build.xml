@@ -1105,13 +1105,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                 <classfiles>
                     <fileset dir="${com.mysql.cj.build.dir.driver}">
                         <include name="com/mysql/cj/**" />
-                        <exclude name="com/mysql/cj/mysqlx/protobuf/**" />
+                        <exclude name="com/mysql/cj/x/protobuf/**" />
                     </fileset>
                 </classfiles>
                 <sourcefiles encoding="UTF-8">
                     <fileset dir="${com.mysql.cj.build.dir.driver}">
                         <include name="com/mysql/cj/**" />
-                        <exclude name="com/mysql/cj/mysqlx/protobuf/**" />
+                        <exclude name="com/mysql/cj/x/protobuf/**" />
                     </fileset>
                 </sourcefiles>
             </structure>
