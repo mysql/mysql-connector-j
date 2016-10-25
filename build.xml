@@ -209,7 +209,7 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
     <condition property="javac.compilerarg" value="-Xlint:all -Werror" else="">
-        <isset property="com.mysql.jdbc.failOnWarnings"/>
+        <isset property="com.mysql.jdbc.failOnWarnings" />
     </condition>
 
     <!-- Classpaths settings. -->
@@ -629,32 +629,33 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
         <property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}" />
 
-        <property name="jee-imports"
-                  value="javax.naming,javax.naming.spi,javax.sql,javax.transaction.xa;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
-        <property name="crypto-imports" value="javax.net,javax.net.ssl;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
+        <property name="crypto-imports" value="javax.net.ssl;javax.crypto;resolution:=optional" />
         <property name="jdbc4-imports"
-                  value="javax.xml.parsers, javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.w3c.dom,org.xml.sax,org.xml.sax.helpers;resolution:=optional" />
+                  value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
+        <property name="jee-imports" value="javax.sql;javax.naming;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
+        <property name="jmx-imports" value="javax.management;resolution:=optional" />
         <property name="integration-imports"
-                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;resolution:=optional,org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+        <property name="logging-imports" value="org.slf4j;resolution:=optional" />
+        <property name="fabric-imports"
+                  value="javax.xml.datatype;org.hibernate;org.hibernate.cfg;org.hibernate.service;org.hibernate.service.jdbc.connections.spi;resolution:=optional" />
 
         <property name="driver-exports"
-                  value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
+                  value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.management,javax.naming,javax.net.ssl,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
         <property name="jee-exports"
-                  value="com.mysql.jdbc.jdbc2.optional;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
+                  value="com.mysql.jdbc.jdbc2.optional;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.sql,javax.naming,javax.naming.spi,javax.transaction.xa&quot;" />
         <property name="logging-exports" value="com.mysql.jdbc.log;version=&quot;${osgid-version}&quot;" />
-        <property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
-        <property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />
+        <property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;" />
+        <property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;" />
         <property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
-        <property name="jdbc4-exceptions-exports"
-                  value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
-        <property name="fabric-exports"
-                  value="com.mysql.fabric.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
-
-        <property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="jdbc4-exceptions-exports" value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;" />
+        <property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;" />
         <property name="integration-exports"
-                  value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
+                  value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;;uses:=&quot;org.jboss.resource.adapter.jdbc,org.jboss.resource.adapter.jdbc.vendor&quot;" />
         <property name="configs-exports" value="com.mysql.jdbc.configs;version=&quot;${osgid-version}&quot;" />
-        <property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;" />
+        <property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="fabric-exports"
+                  value="com.mysql.fabric;com.mysql.fabric.hibernate;com.mysql.fabric.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,javax.xml.datatype;org.hibernate;org.hibernate.cfg;org.hibernate.service;org.hibernate.service.jdbc.connections.spi&quot;" />
 
         <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
@@ -668,14 +669,15 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <!-- OSGi -->
             <attribute name="Bundle-Vendor" value="Oracle Corporation" />
-            <attribute name="Bundle-Classpath" value="." />
+            <attribute name="Bundle-ClassPath" value="." />
             <attribute name="Bundle-Version" value="${osgid-version}" />
             <attribute name="Bundle-Name" value="Oracle Corporation's JDBC Driver for MySQL" />
             <attribute name="Bundle-ManifestVersion" value="2" />
             <attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
             <attribute name="Export-Package"
                        value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports},${fabric-exports}" />
-            <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
+            <attribute name="Import-Package"
+                       value="${crypto-imports},${jdbc4-imports},${jee-imports},${jmx-imports},${integration-imports},${logging-imports},${fabric-imports}" />
         </manifest>
 
         <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
@@ -1186,8 +1188,8 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <syspropertyset refid="junit.system.properties" />
             <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
-            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml"/>
-            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}"/>
+            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml" />
+            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}" />
 
             <classpath>
                 <pathelement location="${com.mysql.jdbc.extra.libs}/jcov/jcov_file_saver.jar" />
@@ -1238,8 +1240,8 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <syspropertyset refid="junit.system.properties" />
             <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
-            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml"/>
-            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}"/>
+            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml" />
+            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}" />
 
             <classpath>
                 <pathelement location="${com.mysql.jdbc.extra.libs}/jcov/jcov_file_saver.jar" />
@@ -1283,8 +1285,8 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <syspropertyset refid="junit.system.properties" />
             <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
-            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml"/>
-            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}"/>
+            <sysproperty key="jcov.template" value="${com.mysql.jdbc.coverage.result.dir.final}/template.xml" />
+            <sysproperty key="jcov.file" value="${com.mysql.jdbc.coverage.result.dir.final}/${com.mysql.jdbc.coverage.result.name.final}" />
 
             <classpath>
                 <pathelement location="${com.mysql.jdbc.extra.libs}/jcov/jcov_file_saver.jar" />
@@ -1462,13 +1464,13 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
     <!-- ********************************* -->
 
 
-    <target name="test-coverage" depends="-jcov-instrument, test" description="Runs tests collecting coverage results."/>
+    <target name="test-coverage" depends="-jcov-instrument, test" description="Runs tests collecting coverage results." />
 
 
     <target name="-jcov-instrument" depends="compile-driver, -set-test-coverage-detaults">
-        <mkdir dir="${buildDir}/${fullProdName}-instr"/>
-        <mkdir dir="${com.mysql.jdbc.coverage.result.dir.final}"/>
-        <delete file="${com.mysql.jdbc.coverage.result.dir.final}/template.xml"/>
+        <mkdir dir="${buildDir}/${fullProdName}-instr" />
+        <mkdir dir="${com.mysql.jdbc.coverage.result.dir.final}" />
+        <delete file="${com.mysql.jdbc.coverage.result.dir.final}/template.xml" />
 
         <java fork="true" jvm="${com.mysql.jdbc.jdk8}/bin/java" classname="com.sun.tdk.jcov.Instr" classpathref="project.build.classpath">
             <arg line="-e testsuite.* -e demo.* -t ${com.mysql.jdbc.coverage.result.dir.final}/template.xml -output ${buildDir}/${fullProdName}-instr ${buildDir}/${fullProdName}" />
@@ -1492,7 +1494,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
 
     <target name="report-coverage" depends="-jcov-merge, -set-report-coverage-detaults" description="Merges coverage results and creates HTML coverage report.">
-        <mkdir dir="${com.mysql.jdbc.coverage.report.dir.final}"/>
+        <mkdir dir="${com.mysql.jdbc.coverage.report.dir.final}" />
         <java fork="true" jvm="${com.mysql.jdbc.jdk8}/bin/java" classname="com.sun.tdk.jcov.RepGen" classpathref="project.build.classpath">
             <arg line="-e testsuite.* -e demo.* -src ${sourceDir} -o ${com.mysql.jdbc.coverage.report.dir.final} ${com.mysql.jdbc.coverage.merge.result.final}" />
         </java>
@@ -1507,10 +1509,14 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
 
     <target name="-set-report-coverage-detaults" depends="-set-test-coverage-detaults">
-        <condition property="com.mysql.jdbc.coverage.merge.result.final" value="${com.mysql.jdbc.coverage.merge.result}" else="${com.mysql.jdbc.coverage.result.dir.final}/result.xml">
+        <condition property="com.mysql.jdbc.coverage.merge.result.final"
+                   value="${com.mysql.jdbc.coverage.merge.result}"
+                   else="${com.mysql.jdbc.coverage.result.dir.final}/result.xml">
             <isset property="com.mysql.jdbc.coverage.merge.result" />
         </condition>
-        <condition property="com.mysql.jdbc.coverage.report.dir.final" value="${com.mysql.jdbc.coverage.report.dir}" else="${com.mysql.jdbc.coverage.result.dir.final}/report">
+        <condition property="com.mysql.jdbc.coverage.report.dir.final"
+                   value="${com.mysql.jdbc.coverage.report.dir}"
+                   else="${com.mysql.jdbc.coverage.result.dir.final}/report">
             <isset property="com.mysql.jdbc.coverage.report.dir" />
         </condition>
     </target>
