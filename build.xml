@@ -178,15 +178,18 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
     <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
-    <property name="com.mysql.cj.build.driver.version.numeric" value="${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}" />
+    <property name="com.mysql.cj.build.driver.version.numeric"
+              value="${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}" />
     <property name="com.mysql.cj.build.driver.version" value="${com.mysql.cj.build.driver.version.numeric}${com.mysql.cj.build.driver.version.status}" />
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector Java" />
     <property name="com.mysql.cj.build.driver.version.snapshot" value="-SNAPSHOT" />
     <property name="com.mysql.cj.build.driver.version.extra" value="" />
-    <property name="com.mysql.cj.build.driver.version.full" value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
+    <property name="com.mysql.cj.build.driver.version.full"
+              value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
     <property name="com.mysql.cj.build.driver.extraName" value="" />
-    <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}-${com.mysql.cj.build.driver.version.full}" />
+    <property name="com.mysql.cj.build.driver.fullName"
+              value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}-${com.mysql.cj.build.driver.version.full}" />
 
     <property name="com.mysql.cj.build.dir" value="./build" />
     <property name="com.mysql.cj.build.dir.driver" value="${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}" />
@@ -241,7 +244,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
     <condition property="javac.compilerarg" value="-Xlint:all -Werror" else="">
-        <isset property="com.mysql.cj.build.failOnWarnings"/>
+        <isset property="com.mysql.cj.build.failOnWarnings" />
     </condition>
 
     <!-- Classpaths settings. -->
@@ -370,11 +373,12 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <target name="init" depends="-compiler-check, -init-copy, -init-filter-license, -init-no-crypto">
         <!-- The following is needed for source distributions as the classpath can't be dynamically altered, and not having this directory present causes the
              build to fail. -->
-        <available property="com.mysql.cj.prebuiltDocsPresent" file="${com.mysql.cj.dist.dir.prebuilt.docs}"/>
-        <available property="com.mysql.cj.c3p0Present" classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="project.build.classpath"/>
-        <available property="com.mysql.cj.log4jPresent" classname="org.apache.log4j.Logger" classpathref="project.build.classpath"/>
-        <available property="com.mysql.cj.jbossPresent" classname="org.jboss.resource.adapter.jdbc.ValidConnectionChecker"
-                   classpathref="project.build.classpath"/>
+        <available property="com.mysql.cj.prebuiltDocsPresent" file="${com.mysql.cj.dist.dir.prebuilt.docs}" />
+        <available property="com.mysql.cj.c3p0Present" classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="project.build.classpath" />
+        <available property="com.mysql.cj.log4jPresent" classname="org.apache.log4j.Logger" classpathref="project.build.classpath" />
+        <available property="com.mysql.cj.jbossPresent"
+                   classname="org.jboss.resource.adapter.jdbc.ValidConnectionChecker"
+                   classpathref="project.build.classpath" />
     </target>
 
 
@@ -446,7 +450,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         </copy>
 
         <copy todir="${com.mysql.cj.build.dir.driver}/lib" filtering="false">
-            <fileset dir="lib"/>
+            <fileset dir="lib" />
         </copy>
     </target>
 
@@ -561,7 +565,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Build a distribution 'image' that include docs. -->
-    <target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'." depends="real-clean, dist, -bundle-docs" />
+    <target name="full-dist"
+            description="Builds driver, binary .jar file and docs, basically a distribution 'image'."
+            depends="real-clean, dist, -bundle-docs" />
 
 
     <!-- Build and install the driver jar into the local maven repository. -->
@@ -582,30 +588,44 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
         <!-- JDBC 4+ support of service provider mechanism. -->
         <mkdir dir="${com.mysql.cj.build.dir.driver}/META-INF/services/" />
-        <echo file="${com.mysql.cj.build.dir.driver}/META-INF/services/java.sql.Driver"
-              message="com.mysql.cj.jdbc.Driver" />
+        <echo file="${com.mysql.cj.build.dir.driver}/META-INF/services/java.sql.Driver" message="com.mysql.cj.jdbc.Driver" />
 
-        <property name="com.mysql.cj.build.meta-inf.osgid-version" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}" />
+        <property name="com.mysql.cj.build.meta-inf.osgid-version"
+                  value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}" />
 
         <property name="com.mysql.cj.build.meta-inf.crypto-imports" value="javax.net.ssl;javax.crypto;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.jdbc4-imports" value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.jdbc4-imports"
+                  value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql,javax.naming,javax.naming.spi,javax.transaction.xa" />
         <property name="com.mysql.cj.build.meta-inf.jmx-imports" value="javax.management;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.integration-imports" value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
-    	<property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
-    	<property name="com.mysql.cj.build.meta-inf.xdevapi-imports" value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.integration-imports"
+                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.xdevapi-imports"
+                  value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
 
-        <property name="com.mysql.cj.build.meta-inf.driver-exports" value="com.mysql.cj.api.jdbc;com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;javax.management,javax.naming,javax.naming.spi,javax.net.ssl,javax.sql,javax.transaction.xa,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.logging-exports" value="com.mysql.cj.api.log;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.profiling-exports" value="com.mysql.cj.core.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.util-exports" value="com.mysql.cj.core.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.exceptions-exports" value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-    	<property name="com.mysql.cj.build.meta-inf.ha-exports" value="com.mysql.cj.api.jdbc.ha;com.mysql.cj.jdbc.ha;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-    	<property name="com.mysql.cj.build.meta-inf.interceptors-exports" value="com.mysql.cj.api.jdbc.interceptors;com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.integration-exports" value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;org.jboss.resource.adapter.jdbc,org.jboss.resource.adapter.jdbc.vendor&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.configs-exports" value="com.mysql.cj.configurations;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.legacy-exports" value="com.mysql.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.xdevapi-exports" value="com.mysql.cj.api.xdevapi;com.mysql.cj.xdevapi;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.google.protobuf,javax.security.auth.callback,javax.security.sasl&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.driver-exports"
+                  value="com.mysql.cj.api.jdbc;com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;javax.management,javax.naming,javax.naming.spi,javax.net.ssl,javax.sql,javax.transaction.xa,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.logging-exports"
+                  value="com.mysql.cj.api.log;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.profiling-exports"
+                  value="com.mysql.cj.core.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.util-exports"
+                  value="com.mysql.cj.core.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.exceptions-exports"
+                  value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.ha-exports"
+                  value="com.mysql.cj.api.jdbc.ha;com.mysql.cj.jdbc.ha;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.interceptors-exports"
+                  value="com.mysql.cj.api.jdbc.interceptors;com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.integration-exports"
+                  value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;org.jboss.resource.adapter.jdbc,org.jboss.resource.adapter.jdbc.vendor&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.configs-exports"
+                  value="com.mysql.cj.configurations;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.legacy-exports"
+                  value="com.mysql.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.xdevapi-exports"
+                  value="com.mysql.cj.api.xdevapi;com.mysql.cj.xdevapi;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.google.protobuf,javax.security.auth.callback,javax.security.sasl&quot;" />
 
         <manifest file="${com.mysql.cj.build.dir.driver}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
@@ -626,7 +646,8 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <attribute name="Bundle-SymbolicName" value="com.mysql.cj" />
             <attribute name="Export-Package"
                        value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.xdevapi-exports}" />
-            <attribute name="Import-Package" value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
+            <attribute name="Import-Package"
+                       value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
         </manifest>
 
         <jar jarfile="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}-bin.jar"
@@ -728,7 +749,10 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             unless="com.mysql.cj.build.commercial">
         <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.build.driver.fullName}.maven.tar.gz" />
 
-        <tar destfile="${com.mysql.cj.dist.dir}/${com.mysql.cj.build.driver.fullName}.maven.tar.gz" basedir="${com.mysql.cj.build.dir.maven}" compression="gzip" longfile="gnu" />
+        <tar destfile="${com.mysql.cj.dist.dir}/${com.mysql.cj.build.driver.fullName}.maven.tar.gz"
+             basedir="${com.mysql.cj.build.dir.maven}"
+             compression="gzip"
+             longfile="gnu" />
     </target>
 
 
@@ -747,7 +771,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="${com.mysql.cj.build.dir.driver}/pom.xml" toFile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" filtering="false" />
+        <copy file="${com.mysql.cj.build.dir.driver}/pom.xml"
+              toFile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom"
+              filtering="false" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
@@ -758,13 +784,21 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Create a Maven bundle for upload to their repository (include sources). -->
-    <target name="-create-maven-archive-sources" depends="-create-maven-archive-sources-check, -create-maven-archive-common" unless="com.mysql.cj.build.noMavenSources" >
+    <target name="-create-maven-archive-sources"
+            depends="-create-maven-archive-sources-check, -create-maven-archive-common"
+            unless="com.mysql.cj.build.noMavenSources">
         <jar jarfile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
              basedir="${com.mysql.cj.build.compiler.output}"
              includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
              excludes="testsuite/**,demo/**,instrumentation/**,doc/**" />
-        <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
+                  forceOverwrite="yes"
+                  fileext=".md5"
+                  algorithm="MD5" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
+                  forceOverwrite="yes"
+                  fileext=".sha1"
+                  algorithm="SHA-1" />
     </target>
 
     <target name="-create-maven-archive-sources-check">
@@ -780,7 +814,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <target name="-bundle-docs" depends="init" if="com.mysql.cj.prebuiltDocsPresent">
         <copy file="${com.mysql.cj.dist.dir.prebuilt.docs}/en/html/connector-j.html" todir="${com.mysql.cj.build.dir.driver}/docs" failonerror="false" />
         <copy file="${com.mysql.cj.dist.dir.prebuilt.docs}/en/pdf/connector-j.pdf" todir="${com.mysql.cj.build.dir.driver}/docs" failonerror="false" />
-        <copy file="${com.mysql.cj.dist.dir.prebuilt.docs}/en/txt/connector-j.txt" tofile="${com.mysql.cj.build.dir.driver}/docs/README.txt" failonerror="false" />
+        <copy file="${com.mysql.cj.dist.dir.prebuilt.docs}/en/txt/connector-j.txt"
+              tofile="${com.mysql.cj.build.dir.driver}/docs/README.txt"
+              failonerror="false" />
     </target>
 
 
@@ -815,7 +851,11 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <classpath refid="project.build.classpath" />
             <compilerarg line="${javac.compilerarg}" />
         </javac>
-        <java jvm="${com.mysql.cj.build.jdk.java}" classname="instrumentation.CommonChecks" classpathref="instrumentation.classpath" fork="yes" failonerror="true">
+        <java jvm="${com.mysql.cj.build.jdk.java}"
+              classname="instrumentation.CommonChecks"
+              classpathref="instrumentation.classpath"
+              fork="yes"
+              failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
         </java>
         <java jvm="${com.mysql.cj.build.jdk.java}"
@@ -961,7 +1001,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             description="Generates properties table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="com.mysql.cj.generated.properties.xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator" output="${com.mysql.cj.generated.properties.xml}" classpath="${com.mysql.cj.build.dir.driver}" />
+        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator"
+              output="${com.mysql.cj.generated.properties.xml}"
+              classpath="${com.mysql.cj.build.dir.driver}" />
         <copy file="${com.mysql.cj.generated.properties.xml}" tofile="${com.mysql.cj.build.dir.driver}/docs/sources/connPropsToDocbook.xml" />
         <delete file="${com.mysql.cj.generated.properties.xml}" />
     </target>
@@ -972,7 +1014,9 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             description="Generates error mapping table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="com.mysql.cj.generated.errorsMapping.xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator" output="${com.mysql.cj.generated.errorsMapping.xml}" classpath="${com.mysql.cj.build.dir.driver}" />
+        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator"
+              output="${com.mysql.cj.generated.errorsMapping.xml}"
+              classpath="${com.mysql.cj.build.dir.driver}" />
         <copy file="${com.mysql.cj.generated.errorsMapping.xml}" tofile="${com.mysql.cj.build.dir.driver}/docs/sources/errorMapToDocbook.xml" />
         <delete file="${com.mysql.cj.generated.errorsMapping.xml}" />
     </target>
@@ -1022,13 +1066,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                    fork="on"
                    forkmode="once"
                    jvm="${com.mysql.cj.testsuite.jvm.java}"
-    	           errorProperty="com.mysql.cj.testsuite.junit.fail"
-        	       failureProperty="com.mysql.cj.testsuite.junit.fail">
+                   errorProperty="com.mysql.cj.testsuite.junit.fail"
+                   failureProperty="com.mysql.cj.testsuite.junit.fail">
                 <jvmarg value="-Xmx1024m" />
-    
+
                 <syspropertyset refid="junit.system.properties" />
                 <sysproperty key="com.mysql.cj.testsuite.url" value="${com.mysql.cj.testsuite.url}" />
-    
+
                 <classpath>
                     <fileset dir="${com.mysql.cj.extra.libs}">
                         <include name="**/*.jar" />
@@ -1041,13 +1085,19 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                     <pathelement path="${com.mysql.cj.testsuite.build.classpath}" />
                     <pathelement path="${java.class.path}" />
                 </classpath>
-    
+
                 <formatter type="xml" />
-    
-                <test if="${com.mysql.cj.testsuite.test.methods.enabled}" name="${com.mysql.cj.testsuite.test.class}" methods="${com.mysql.cj.testsuite.test.methods}" todir="${com.mysql.cj.testsuite.junit.results}" />
-    
-                <test if="com.mysql.cj.testsuite.test.class" unless="com.mysql.cj.testsuite.test.methods" name="${com.mysql.cj.testsuite.test.class}" todir="${com.mysql.cj.testsuite.junit.results}" />
-    
+
+                <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
+                      name="${com.mysql.cj.testsuite.test.class}"
+                      methods="${com.mysql.cj.testsuite.test.methods}"
+                      todir="${com.mysql.cj.testsuite.junit.results}" />
+
+                <test if="com.mysql.cj.testsuite.test.class"
+                      unless="com.mysql.cj.testsuite.test.methods"
+                      name="${com.mysql.cj.testsuite.test.class}"
+                      todir="${com.mysql.cj.testsuite.junit.results}" />
+
                 <batchtest unless="com.mysql.cj.testsuite.test.class" todir="${com.mysql.cj.testsuite.junit.results}">
                     <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
                         <include name="**/*Test.java" />
@@ -1080,11 +1130,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- ********************************* -->
 
 
-    <target name="test-coverage" description="Runs tests collecting coverage results." depends="-set-test-coverage-detaults, test"/>
+    <target name="test-coverage" description="Runs tests collecting coverage results." depends="-set-test-coverage-detaults, test" />
 
 
     <target name="-set-test-coverage-detaults">
-        <condition property="com.mysql.cj.coverage.result.dir.final" value="${com.mysql.cj.coverage.result.dir}" else="${com.mysql.cj.testsuite.build.dir}/coverage">
+        <condition property="com.mysql.cj.coverage.result.dir.final"
+                   value="${com.mysql.cj.coverage.result.dir}"
+                   else="${com.mysql.cj.testsuite.build.dir}/coverage">
             <isset property="com.mysql.cj.coverage.result.dir" />
         </condition>
         <condition property="com.mysql.cj.coverage.result.name.final" value="${com.mysql.cj.coverage.result.name}" else="jacoco.exec">
@@ -1098,10 +1150,12 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- *********************************** -->
 
 
-    <target name="report-coverage" depends="-set-report-coverage-detaults, -jacoco-merge" description="Merges coverage results and creates HTML coverage report.">
+    <target name="report-coverage"
+            depends="-set-report-coverage-detaults, -jacoco-merge"
+            description="Merges coverage results and creates HTML coverage report.">
         <jacoco:report>
             <executiondata>
-                <file file="${com.mysql.cj.coverage.merge.result.final}"/>
+                <file file="${com.mysql.cj.coverage.merge.result.final}" />
             </executiondata>
 
             <structure name="Connector/J classes">
@@ -1119,7 +1173,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                 </sourcefiles>
             </structure>
 
-            <html destdir="${com.mysql.cj.coverage.report.dir.final}"/>
+            <html destdir="${com.mysql.cj.coverage.report.dir.final}" />
 
         </jacoco:report>
     </target>
@@ -1127,16 +1181,20 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <target name="-jacoco-merge" depends="-set-report-coverage-detaults" if="com.mysql.cj.coverage.merge.files">
         <jacoco:merge destfile="${com.mysql.cj.coverage.merge.result.final}">
-            <fileset dir="${com.mysql.cj.coverage.result.dir.final}" includes="${com.mysql.cj.coverage.merge.files}"/>
+            <fileset dir="${com.mysql.cj.coverage.result.dir.final}" includes="${com.mysql.cj.coverage.merge.files}" />
         </jacoco:merge>
     </target>
 
 
     <target name="-set-report-coverage-detaults" depends="-set-test-coverage-detaults">
-        <condition property="com.mysql.cj.coverage.merge.result.final" value="${com.mysql.cj.coverage.merge.result}" else="${com.mysql.cj.coverage.result.dir.final}/jacoco.exec">
+        <condition property="com.mysql.cj.coverage.merge.result.final"
+                   value="${com.mysql.cj.coverage.merge.result}"
+                   else="${com.mysql.cj.coverage.result.dir.final}/jacoco.exec">
             <isset property="com.mysql.cj.coverage.merge.result" />
         </condition>
-        <condition property="com.mysql.cj.coverage.report.dir.final" value="${com.mysql.cj.coverage.report.dir}" else="${com.mysql.cj.coverage.result.dir.final}/report">
+        <condition property="com.mysql.cj.coverage.report.dir.final"
+                   value="${com.mysql.cj.coverage.report.dir}"
+                   else="${com.mysql.cj.coverage.result.dir.final}/report">
             <isset property="com.mysql.cj.coverage.report.dir" />
         </condition>
     </target>
@@ -1147,63 +1205,57 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- *********************************** -->
 
     <tstamp>
-      <format property="time.year"      pattern="yyyy"/>
-      <format property="time.month"     pattern="mm"/>
-      <format property="time.day"       pattern="dd"/>
-      <format property="time.dayOfWeek" pattern="EEE"/>
-      <format property="time.dayTime"   pattern="HH:mm:ss"/>
-      <format property="time.timeZone"  pattern="HH:mm:ss"/>
+        <format property="time.year" pattern="yyyy" />
+        <format property="time.month" pattern="mm" />
+        <format property="time.day" pattern="dd" />
+        <format property="time.dayOfWeek" pattern="EEE" />
+        <format property="time.dayTime" pattern="HH:mm:ss" />
+        <format property="time.timeZone" pattern="HH:mm:ss" />
     </tstamp>
 
     <filterset id="packaging-common">
-      <filter token="MYSQL_CJ_VERSION" value="${com.mysql.cj.build.driver.version.numeric}" />
-      <filter token="MYSQL_CJ_VERSION_STATUS" value="${com.mysql.cj.build.driver.version.status}" />
-      <filter token="MYSQL_CJ_VERSION_EXTRA" value="${com.mysql.cj.build.driver.version.extra}" />
-      <filter token="MYSQL_CJ_VERSION_SNAPSHOT" value="${com.mysql.cj.build.driver.version.snapshot}" />
+        <filter token="MYSQL_CJ_VERSION" value="${com.mysql.cj.build.driver.version.numeric}" />
+        <filter token="MYSQL_CJ_VERSION_STATUS" value="${com.mysql.cj.build.driver.version.status}" />
+        <filter token="MYSQL_CJ_VERSION_EXTRA" value="${com.mysql.cj.build.driver.version.extra}" />
+        <filter token="MYSQL_CJ_VERSION_SNAPSHOT" value="${com.mysql.cj.build.driver.version.snapshot}" />
     </filterset>
 
     <!-- *********************************** -->
     <!-- ******** DEB PACKAGING ******** -->
     <!-- *********************************** -->
 
-    <target name="prepare-debian-commercial-props" if="com.mysql.cj.build.commercial" >
-      <echo message="Using Commercial settings"/>
-      <property name="product_suffix" value="-commercial" />
-      <property name="lic_file" value="LICENSE.mysql" />
+    <target name="prepare-debian-commercial-props" if="com.mysql.cj.build.commercial">
+        <echo message="Using Commercial settings" />
+        <property name="product_suffix" value="-commercial" />
+        <property name="lic_file" value="LICENSE.mysql" />
     </target>
 
-    <target name="prepare-debian-gpl-props" unless="com.mysql.cj.build.commercial" >
-      <echo message="Using GPL settings"/>
-      <property name="product_suffix" value="" />
-      <property name="lic_file" value="COPYING" />
+    <target name="prepare-debian-gpl-props" unless="com.mysql.cj.build.commercial">
+        <echo message="Using GPL settings" />
+        <property name="product_suffix" value="" />
+        <property name="lic_file" value="COPYING" />
     </target>
 
-    <target name="build-debian-pkg"
-        depends="prepare-debian-commercial-props, prepare-debian-gpl-props">
-        <exec executable="lsb_release"
-              outputproperty="lsb_id">
-          <arg value="--short"/>
-          <arg value="--id"/>
+    <target name="build-debian-pkg" depends="prepare-debian-commercial-props, prepare-debian-gpl-props">
+        <exec executable="lsb_release" outputproperty="lsb_id">
+            <arg value="--short" />
+            <arg value="--id" />
         </exec>
-        <exec executable="lsb_release"
-              outputproperty="lsb_release">
-          <arg value="--short"/>
-          <arg value="--release"/>
+        <exec executable="lsb_release" outputproperty="lsb_release">
+            <arg value="--short" />
+            <arg value="--release" />
         </exec>
-        <exec executable="lsb_release"
-              outputproperty="codename">
-          <arg value="--short"/>
-          <arg value="--codename"/>
+        <exec executable="lsb_release" outputproperty="codename">
+            <arg value="--short" />
+            <arg value="--codename" />
         </exec>
         <!-- Make OS name lowercase and for debian use only major version number -->
-        <exec executable="perl"
-              inputstring="${lsb_id}${lsb_release}"
-              outputproperty="id_release">
-          <arg value="-ne"/>
-          <arg value="s/(debian\d+).*/$1/i; print lc"/>
+        <exec executable="perl" inputstring="${lsb_id}${lsb_release}" outputproperty="id_release">
+            <arg value="-ne" />
+            <arg value="s/(debian\d+).*/$1/i; print lc" />
         </exec>
 
-        <delete dir="build/deb"/>
+        <delete dir="build/deb" />
 
         <!-- The tar task doesn't like the './' in the 'excludes' filter -->
         <script language="javascript">
@@ -1211,21 +1263,18 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
           project.setProperty("com.mysql.cj.dist.dir.filter", orig.replace("./", ""));
         </script>
         <property name="orig_package_name" value="mysql-connector-java${product_suffix}_${com.mysql.cj.build.driver.version.full}${id_release}.orig.tar.gz" />
-        <tar destfile="build/deb/${orig_package_name}"
-          basedir="." compression="gzip"
-          excludes="${com.mysql.cj.dist.dir.filter}/** build/**"/>
+        <tar destfile="build/deb/${orig_package_name}" basedir="." compression="gzip" excludes="${com.mysql.cj.dist.dir.filter}/** build/**" />
 
         <copy todir="build/deb/src" overwrite="true">
-          <fileset dir="." excludes="${com.mysql.cj.dist.dir.filter}/** build/**"/>
+            <fileset dir="." excludes="${com.mysql.cj.dist.dir.filter}/** build/**" />
         </copy>
 
         <tstamp>
-          <format property="time.deb.packageTimeStamp" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
+            <format property="time.deb.packageTimeStamp" pattern="EEE, d MMM yyyy HH:mm:ss Z" />
         </tstamp>
 
-        <copy todir="build/deb/src/debian"
-          overwrite="true">
-            <fileset dir="src/build/misc/debian.in"/>
+        <copy todir="build/deb/src/debian" overwrite="true">
+            <fileset dir="src/build/misc/debian.in" />
             <filterset refid="packaging-common" />
             <filterset>
                 <filter token="PRODUCT" value="MySQL Connector/J ${com.mysql.cj.build.driver.version.series}" />
@@ -1241,23 +1290,21 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             </filterset>
         </copy>
 
-        <exec executable="debuild"
-              dir="build/deb/src"
-              failonerror="true">
-          <arg value="--set-envvar=ANT_HOME=${ant.home}"/>
-          <arg value="--set-envvar=JAVA_HOME=${com.mysql.cj.build.jdk}"/>
-          <arg value="--set-envvar=COMMERCIAL=${com.mysql.cj.build.commercial}"/>
-          <arg value="-uc"/>
-          <arg value="-us"/>
-          <arg value="-j4"/>
+        <exec executable="debuild" dir="build/deb/src" failonerror="true">
+            <arg value="--set-envvar=ANT_HOME=${ant.home}" />
+            <arg value="--set-envvar=JAVA_HOME=${com.mysql.cj.build.jdk}" />
+            <arg value="--set-envvar=COMMERCIAL=${com.mysql.cj.build.commercial}" />
+            <arg value="-uc" />
+            <arg value="-us" />
+            <arg value="-j4" />
         </exec>
 
         <!-- We can't control the output file path for debuild, so we move/cleanup the files post build -->
         <move todir="${com.mysql.cj.dist.dir}">
-          <fileset dir="build/deb">
-            <exclude name="src/**"/>
-            <exclude name="${orig_package_name}"/>
-          </fileset>
+            <fileset dir="build/deb">
+                <exclude name="src/**" />
+                <exclude name="${orig_package_name}" />
+            </fileset>
         </move>
     </target>
 
