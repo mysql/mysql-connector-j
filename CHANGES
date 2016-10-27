@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.6
 
+  - Fix for Bug#82826 (24942672), Unneeded version requirement for javax.net.ssl Import-Package on OSGi MANIFEST.MF.
+
 10-21-16 - Version 6.0.5
 
   - Added client-side failover during XSession initialization for multi-router configuration.
