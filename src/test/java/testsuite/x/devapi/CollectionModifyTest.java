@@ -26,6 +26,8 @@ package testsuite.x.devapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.io.StringReader;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +36,7 @@ import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
+import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
 
 /**
@@ -207,6 +210,45 @@ public class CollectionModifyTest extends CollectionTest {
                 assertEquals(xArray.toString(), jd.get("y").toString());
             }
         }
+
+    }
+
+    /**
+     * Tests fix for BUG#24471057, UPDATE FAILS WHEN THE NEW VALUE IS OF TYPE DBDOC WHICH HAS ARRAY IN IT.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    @Test
+    public void testBug24471057() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        String docStr = "{\"B\" : 2, \"ID\" : 1, \"KEY\" : [1]}";
+        DbDoc doc1 = JsonParser.parseDoc(new StringReader(docStr));
+
+        this.collection.add(doc1).execute();
+        this.collection.modify("ID=1").set("$.B", doc1).execute();
+
+        // expected doc
+        DbDoc doc2 = JsonParser.parseDoc(new StringReader(docStr));
+        doc2.put("B", doc1);
+        doc2.put("_id", doc1.get("_id"));
+        DocResult docs = this.collection.find().execute();
+        DbDoc doc = docs.next();
+        assertEquals(doc2.toString(), doc.toString());
+
+        // DbDoc as an array member
+        DbDoc doc3 = JsonParser.parseDoc(new StringReader(docStr));
+        ((JsonArray) doc1.get("KEY")).add(doc3);
+        this.collection.modify("ID=1").set("$.B", doc1).execute();
+
+        // expected doc
+        doc2.put("B", doc1);
+        docs = this.collection.find().execute();
+        doc = docs.next();
+        assertEquals(doc2.toString(), doc.toString());
 
     }
 

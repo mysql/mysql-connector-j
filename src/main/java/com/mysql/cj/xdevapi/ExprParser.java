@@ -36,6 +36,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
+import com.mysql.cj.x.protobuf.MysqlxExpr.Array;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
@@ -714,6 +715,15 @@ public class ExprParser {
                 }
                 consumeToken(TokenType.RCURLY);
                 return Expr.newBuilder().setType(Expr.Type.OBJECT).setObject(builder.build()).build();
+            }
+            case LSQBRACKET: { // Array
+                Array.Builder builder = Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder();
+                parseCommaSeparatedList(() -> {
+                    return expr();
+                }).stream().forEach(builder::addValue);
+
+                consumeToken(TokenType.RSQBRACKET);
+                return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(builder).build();
             }
             case CAST: {
                 consumeToken(TokenType.LPAREN);
