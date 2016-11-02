@@ -32,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.AddStatement;
+import com.mysql.cj.api.xdevapi.JsonValue;
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.x.core.StatementExecuteOk;
@@ -70,7 +71,11 @@ public class AddStatementImpl implements AddStatement {
     }
 
     private List<String> assignIds() {
-        return this.newDocs.stream().filter(d -> d.get("_id") == null).map(d -> {
+        return this.newDocs.stream().map(d -> {
+            JsonValue id = d.get("_id");
+            if (id != null) {
+                return id instanceof JsonString ? ((JsonString) id).getString() : id.toString();
+            }
             String newId = DocumentID.generate();
             d.put("_id", new JsonString().setValue(newId));
             return newId;

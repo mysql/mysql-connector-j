@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.6
 
+  - Fix for Bug#81691 (23519211), GETLASTDOCUMENTIDS() DOESN'T REPORT IDS PROVIDED BY USER.
+
   - Fix for Bug#82826 (24942672), Unneeded version requirement for javax.net.ssl Import-Package on OSGi MANIFEST.MF.
 
 10-21-16 - Version 6.0.5

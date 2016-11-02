@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
@@ -146,14 +147,24 @@ public class CollectionAddTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        String json = "{'_id': 'Id#1', 'name': '<unknown>'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertEquals(0, res.getLastDocumentIds().size());
+        String json1 = "{'_id': 'Id#1', 'name': 'assignedId'}".replaceAll("'", "\"");
+        String json2 = "{'name': 'autoId'}".replaceAll("'", "\"");
+        Result res = this.collection.add(json1).add(json2).execute();
 
-        DocResult docs = this.collection.find("_id == 'Id#1'").execute();
-        DbDoc d = docs.next();
-        JsonString val = (JsonString) d.get("name");
-        assertEquals("<unknown>", val.getString());
+        List<String> ids = res.getLastDocumentIds();
+        assertEquals(2, ids.size());
+
+        for (String strId : ids) {
+            DocResult docs = this.collection.find("_id == '" + strId + "'").execute();
+            DbDoc d = docs.next();
+            JsonString val = (JsonString) d.get("name");
+            if (strId.equals("Id#1")) {
+                assertEquals("assignedId", val.getString());
+            } else {
+                assertEquals("autoId", val.getString());
+            }
+        }
+
     }
 
     @Test
