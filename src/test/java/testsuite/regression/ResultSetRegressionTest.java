@@ -33,6 +33,7 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
+import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -41,6 +42,12 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -5253,5 +5260,122 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(e, this.rs.getString(2));
         }
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for BUG#81202 - RESULTSETIMPL.GETOBJECT THROWS NULLPOINTEREXCEPTION WHEN FIELD IS NULL.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug81202() throws Exception {
+        createTable("testBug81202", "(id INT unsigned NOT NULL, value_timestamp TIMESTAMP NULL, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB)");
+
+        OffsetDateTime testOffsetDateTime = OffsetDateTime.of(2015, 8, 04, 12, 34, 56, 7890, ZoneOffset.UTC);
+        OffsetTime testOffsetTime = OffsetTime.of(12, 34, 56, 7890, ZoneOffset.UTC);
+
+        this.pstmt = this.conn.prepareStatement("INSERT INTO testBug81202 VALUES (?, TIMESTAMP '2016-04-27 12:15:55', ?, ?, ?, ?)");
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setObject(2, testOffsetTime, JDBCType.VARCHAR);
+        this.pstmt.setObject(3, testOffsetTime);
+        this.pstmt.setObject(4, testOffsetDateTime, JDBCType.VARCHAR);
+        this.pstmt.setObject(5, testOffsetDateTime);
+        assertEquals(1, this.pstmt.executeUpdate());
+
+        this.stmt.executeUpdate("INSERT INTO testBug81202 VALUES (2, NULL, NULL, NULL, NULL, NULL)");
+
+        // autoDeserialize=true is needed for retrieving OffsetTime and OffsetDateTime from BLOBs
+        Connection testConn = getConnectionWithProps("autoDeserialize=true");
+        this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug81202");
+
+        assertTrue(this.rs.next());
+        assertEquals(LocalDate.of(2016, 4, 27), this.rs.getObject(2, LocalDate.class));
+        assertEquals(LocalDateTime.of(2016, 4, 27, 12, 15, 55), this.rs.getObject(2, LocalDateTime.class));
+        assertEquals(LocalTime.of(12, 15, 55), this.rs.getObject(2, LocalTime.class));
+        assertEquals(testOffsetTime, this.rs.getObject(3, OffsetTime.class));
+        assertEquals(testOffsetTime, this.rs.getObject(4, OffsetTime.class));
+        assertEquals(testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class));
+        assertEquals(testOffsetDateTime, this.rs.getObject(6, OffsetDateTime.class));
+
+        assertTrue(this.rs.next());
+        assertNull(this.rs.getObject(2, LocalDate.class));
+        assertNull(this.rs.getObject(2, LocalDateTime.class));
+        assertNull(this.rs.getObject(2, LocalTime.class));
+        assertNull(this.rs.getObject(3, OffsetTime.class));
+        assertNull(this.rs.getObject(4, OffsetTime.class));
+        assertNull(this.rs.getObject(5, OffsetDateTime.class));
+        assertNull(this.rs.getObject(6, OffsetDateTime.class));
+
+        assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for BUG#82964 - JSR-310 DATA TYPES CREATED THROUGH JAVA.SQL TYPES.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug82964() throws Exception {
+
+        createTable("testBug82964", "(id bigint NOT NULL, timestamp_column timestamp(3))");
+
+        TimeZone savedTz = TimeZone.getDefault();
+        try {
+            // Setting JVM timezone to Europe/Berlin because the test timestamp "2016-03-27 02:15:00" doesn't exist there.
+            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
+
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+            if (versionMeetsMinimum(5, 7, 4)) {
+                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+            }
+
+            if (versionMeetsMinimum(5, 7, 5)) {
+                String sqlMode = getMysqlVariable("sql_mode");
+                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                    props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                }
+            }
+
+            Connection convertToNullConn = getConnectionWithProps(props);
+            Statement convertToNullStmt = convertToNullConn.createStatement();
+
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round");
+            Connection roundConn = getConnectionWithProps(props);
+            Statement roundStmt = roundConn.createStatement();
+
+            convertToNullStmt.executeUpdate("INSERT INTO testBug82964 (id, timestamp_column) VALUES (1, TIMESTAMP '2016-03-27 02:15:00')");
+            convertToNullStmt.executeUpdate("INSERT INTO testBug82964 (id, timestamp_column) VALUES (2, '0000-00-00 00:00:00')"); // to check decorators
+
+            // checking with ZeroDateTimeToNullValueFactory decorator
+            this.rs = convertToNullStmt.executeQuery("SELECT timestamp_column FROM testBug82964");
+            assertTrue(this.rs.next());
+            assertEquals(LocalDate.of(2016, 3, 27), this.rs.getObject(1, LocalDate.class));
+            assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), this.rs.getObject(1, LocalDateTime.class));
+            assertEquals(LocalTime.of(2, 15), this.rs.getObject(1, LocalTime.class));
+            assertTrue(this.rs.next());
+            assertNull(this.rs.getObject(1, LocalDate.class));
+            assertNull(this.rs.getObject(1, LocalDateTime.class));
+            assertNull(this.rs.getObject(1, LocalTime.class));
+            assertFalse(this.rs.next());
+
+            // checking with ZeroDateTimeToDefaultValueFactory decorator
+            this.rs = roundStmt.executeQuery("SELECT timestamp_column FROM testBug82964");
+            assertTrue(this.rs.next());
+            assertEquals(LocalDate.of(2016, 3, 27), this.rs.getObject(1, LocalDate.class));
+            assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), this.rs.getObject(1, LocalDateTime.class));
+            assertEquals(LocalTime.of(2, 15), this.rs.getObject(1, LocalTime.class));
+            assertTrue(this.rs.next());
+            assertEquals(LocalDate.of(1, 1, 1), this.rs.getObject(1, LocalDate.class));
+            assertEquals(LocalDateTime.of(1, 1, 1, 0, 0), this.rs.getObject(1, LocalDateTime.class));
+            assertEquals(LocalTime.of(0, 0), this.rs.getObject(1, LocalTime.class));
+            assertFalse(this.rs.next());
+
+        } finally {
+            // restore default JVM timezone
+            TimeZone.setDefault(savedTz);
+        }
+
     }
 }
