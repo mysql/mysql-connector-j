@@ -104,6 +104,9 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
+import com.mysql.cj.jdbc.io.JdbcLocalDateTimeValueFactory;
+import com.mysql.cj.jdbc.io.JdbcLocalDateValueFactory;
+import com.mysql.cj.jdbc.io.JdbcLocalTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
 import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
@@ -206,6 +209,10 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     private ValueFactory<Time> defaultTimeValueFactory;
     private ValueFactory<Timestamp> defaultTimestampValueFactory;
 
+    private ValueFactory<LocalDate> defaultLocalDateValueFactory;
+    private ValueFactory<LocalDateTime> defaultLocalDateTimeValueFactory;
+    private ValueFactory<LocalTime> defaultLocalTimeValueFactory;
+
     protected ReadableProperty<Boolean> emptyStringsConvertToZero;
     protected ReadableProperty<Boolean> emulateLocators;
     protected boolean yearIsDateType = true;
@@ -278,6 +285,10 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
                 this.zeroDateTimeBehavior);
         this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(this.session.getDefaultTimeZone()),
                 this.zeroDateTimeBehavior);
+
+        this.defaultLocalDateValueFactory = decorateDateTimeValueFactory(new JdbcLocalDateValueFactory(this), this.zeroDateTimeBehavior);
+        this.defaultLocalTimeValueFactory = decorateDateTimeValueFactory(new JdbcLocalTimeValueFactory(this), this.zeroDateTimeBehavior);
+        this.defaultLocalDateTimeValueFactory = decorateDateTimeValueFactory(new JdbcLocalDateTimeValueFactory(), this.zeroDateTimeBehavior);
 
         // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
         if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getInitialValue()) {
@@ -967,6 +978,24 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         return getDateOrTimestampValueFromRow(columnIndex, this.defaultTimestampValueFactory);
     }
 
+    public LocalDate getLocalDate(int columnIndex) throws SQLException {
+        checkRowPos();
+        checkColumnBounds(columnIndex);
+        return getDateOrTimestampValueFromRow(columnIndex, this.defaultLocalDateValueFactory);
+    }
+
+    public LocalDateTime getLocalDateTime(int columnIndex) throws SQLException {
+        checkRowPos();
+        checkColumnBounds(columnIndex);
+        return getDateOrTimestampValueFromRow(columnIndex, this.defaultLocalDateTimeValueFactory);
+    }
+
+    public LocalTime getLocalTime(int columnIndex) throws SQLException {
+        checkRowPos();
+        checkColumnBounds(columnIndex);
+        return getNonStringValueFromRow(columnIndex, this.defaultLocalTimeValueFactory);
+    }
+
     /*
      * This method is optimized by saving the configuration for the last-used cal/tz. If it's re-used, we don't need to create a new value factory (and thus
      * calendar, etc) instance
@@ -1351,24 +1380,26 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             return (T) getSQLXML(columnIndex);
 
         } else if (type.equals(LocalDate.class)) {
-            return (T) getDate(columnIndex).toLocalDate();
+            return (T) getLocalDate(columnIndex);
 
         } else if (type.equals(LocalDateTime.class)) {
-            return (T) getTimestamp(columnIndex).toLocalDateTime();
+            return (T) getLocalDateTime(columnIndex);
 
         } else if (type.equals(LocalTime.class)) {
-            return (T) getTime(columnIndex).toLocalTime();
+            return (T) getLocalTime(columnIndex);
 
         } else if (type.equals(OffsetDateTime.class)) {
             try {
-                return (T) OffsetDateTime.parse(getString(columnIndex));
+                String odt = getString(columnIndex);
+                return odt == null ? null : (T) OffsetDateTime.parse(odt);
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
 
         } else if (type.equals(OffsetTime.class)) {
             try {
-                return (T) OffsetTime.parse(getString(columnIndex));
+                String ot = getString(columnIndex);
+                return ot == null ? null : (T) OffsetTime.parse(getString(columnIndex));
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
