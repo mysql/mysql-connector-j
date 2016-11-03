@@ -5317,43 +5317,30 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug82964() throws Exception {
 
-        createTable("testBug82964", "(id bigint NOT NULL, timestamp_column timestamp)");
-
         TimeZone savedTz = TimeZone.getDefault();
         try {
             // Setting JVM timezone to Europe/Berlin because the test timestamp "2016-03-27 02:15:00" doesn't exist there.
             TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
-            if (versionMeetsMinimum(5, 7, 4)) {
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-            }
+            props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "Europe/Berlin");
 
-            if (versionMeetsMinimum(5, 7, 5)) {
-                String sqlMode = getMysqlVariable("sql_mode");
-                if (sqlMode.contains("STRICT_TRANS_TABLES")) {
-                    sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                    props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+            ResultSet rs1 = getConnectionWithProps(props).createStatement().executeQuery("SELECT '2016-03-27 02:15:00'");
+            assertTrue(rs1.next());
+            assertEquals(LocalDate.of(2016, 3, 27), rs1.getObject(1, LocalDate.class));
+            assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), rs1.getObject(1, LocalDateTime.class));
+            assertEquals(LocalTime.of(2, 15), rs1.getObject(1, LocalTime.class));
+            // "2016-03-27 02:15:00" is an impossible datetime for Europe/Berlin tz 
+            assertThrows(IllegalArgumentException.class, "HOUR_OF_DAY: 2 -> 3", new Callable<Void>() {
+                public Void call() throws Exception {
+                    rs1.getTimestamp(1).toLocalDateTime();
+                    return null;
                 }
-            }
-
-            Connection convertToNullConn = getConnectionWithProps(props);
-            Statement convertToNullStmt = convertToNullConn.createStatement();
-
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round");
-            Connection roundConn = getConnectionWithProps(props);
-            Statement roundStmt = roundConn.createStatement();
-
-            convertToNullStmt.executeUpdate("INSERT INTO testBug82964 (id, timestamp_column) VALUES (1, TIMESTAMP '2016-03-27 02:15:00')");
-            convertToNullStmt.executeUpdate("INSERT INTO testBug82964 (id, timestamp_column) VALUES (2, '0000-00-00 00:00:00')"); // to check decorators
+            });
 
             // checking with ZeroDateTimeToNullValueFactory decorator
-            this.rs = convertToNullStmt.executeQuery("SELECT timestamp_column FROM testBug82964");
-            assertTrue(this.rs.next());
-            assertEquals(LocalDate.of(2016, 3, 27), this.rs.getObject(1, LocalDate.class));
-            assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), this.rs.getObject(1, LocalDateTime.class));
-            assertEquals(LocalTime.of(2, 15), this.rs.getObject(1, LocalTime.class));
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+            this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertNull(this.rs.getObject(1, LocalDate.class));
             assertNull(this.rs.getObject(1, LocalDateTime.class));
@@ -5361,11 +5348,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
 
             // checking with ZeroDateTimeToDefaultValueFactory decorator
-            this.rs = roundStmt.executeQuery("SELECT timestamp_column FROM testBug82964");
-            assertTrue(this.rs.next());
-            assertEquals(LocalDate.of(2016, 3, 27), this.rs.getObject(1, LocalDate.class));
-            assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), this.rs.getObject(1, LocalDateTime.class));
-            assertEquals(LocalTime.of(2, 15), this.rs.getObject(1, LocalTime.class));
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round");
+            this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertEquals(LocalDate.of(1, 1, 1), this.rs.getObject(1, LocalDate.class));
             assertEquals(LocalDateTime.of(1, 1, 1, 0, 0), this.rs.getObject(1, LocalDateTime.class));
