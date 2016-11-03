@@ -42,6 +42,7 @@ import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.api.xdevapi.Type;
 import com.mysql.cj.core.exceptions.DataConversionException;
 
 /**
@@ -430,5 +431,33 @@ public class TableSelectTest extends TableTest {
         assertEquals(4294967295L, metadata.get(2).getLength());
 
         sqlUpdate("drop table if exists testBug22988922");
+    }
+
+    /**
+     * Tests fix for BUG#22931277, COLUMN.GETTYPE() RETURNS ERROR FOR VALID DATATYPES.
+     */
+    @Test
+    public void testBug22931277() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        sqlUpdate("drop table if exists testBug22931277");
+        sqlUpdate("create table testBug22931277 (j year,k datetime(3))");
+        Table table = this.schema.getTable("testBug22931277");
+
+        table = this.schema.getTable("testBug22931277");
+        table.insert("j", "k").values(2000, "2016-03-15 12:13:14").execute();
+
+        RowResult rows = table.select("1,j,k").execute();
+        List<Column> metadata = rows.getColumns();
+
+        Column myCol = metadata.get(0);
+        assertEquals(Type.TINYINT, myCol.getType());
+
+        myCol = metadata.get(1);
+        assertEquals(Type.SMALLINT, myCol.getType());
+
+        myCol = metadata.get(2);
+        assertEquals(Type.DATETIME, myCol.getType());
     }
 }

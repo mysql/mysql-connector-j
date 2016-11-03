@@ -61,35 +61,33 @@ public class ColumnImpl implements Column {
             case BIT:
                 return Type.BIT;
             case BIGINT:
-                switch ((int) this.field.getLength()) {
-                    case 4:
-                        return Type.TINYINT;
-                    case 6:
-                        return Type.SMALLINT;
-                    case 9:
-                        return Type.MEDIUMINT;
-                    case 11:
-                        return Type.INT;
-                    case 20:
-                        return Type.BIGINT;
-                    default:
-                        throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for signed int");
+                int len = (int) this.field.getLength();
+                if (len < 5) {
+                    return Type.TINYINT;
+                } else if (len < 7) {
+                    return Type.SMALLINT;
+                } else if (len < 10) {
+                    return Type.MEDIUMINT;
+                } else if (len < 12) {
+                    return Type.INT;
+                } else if (len < 21) {
+                    return Type.BIGINT;
                 }
+                throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for signed int");
             case BIGINT_UNSIGNED:
-                switch ((int) this.field.getLength()) {
-                    case 3:
-                        return Type.TINYINT;
-                    case 5:
-                        return Type.SMALLINT;
-                    case 8:
-                        return Type.MEDIUMINT;
-                    case 10:
-                        return Type.INT;
-                    case 20:
-                        return Type.BIGINT;
-                    default:
-                        throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for unsigned int");
+                len = (int) this.field.getLength();
+                if (len < 4) {
+                    return Type.TINYINT;
+                } else if (len < 6) {
+                    return Type.SMALLINT;
+                } else if (len < 9) {
+                    return Type.MEDIUMINT;
+                } else if (len < 11) {
+                    return Type.INT;
+                } else if (len < 21) {
+                    return Type.BIGINT;
                 }
+                throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for unsigned int");
             case FLOAT:
             case FLOAT_UNSIGNED:
                 return Type.FLOAT;
@@ -109,14 +107,13 @@ public class ColumnImpl implements Column {
             case TIME:
                 return Type.TIME;
             case DATETIME:
-                switch ((int) this.field.getLength()) {
-                    case 10:
-                        return Type.DATE;
-                    case 19:
-                        return Type.DATETIME;
-                    default:
-                        throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for datetime");
+                len = (int) this.field.getLength();
+                if (len == 10) {
+                    return Type.DATE;
+                } else if (len > 18 && len < 27) {
+                    return Type.DATETIME;
                 }
+                throw new IllegalArgumentException("Unknown field length `" + this.field.getLength() + "` for datetime");
             case TIMESTAMP:
                 return Type.TIMESTAMP;
             case SET:
