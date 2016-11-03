@@ -5317,7 +5317,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug82964() throws Exception {
 
-        createTable("testBug82964", "(id bigint NOT NULL, timestamp_column timestamp(3))");
+        createTable("testBug82964", "(id bigint NOT NULL, timestamp_column timestamp)");
 
         TimeZone savedTz = TimeZone.getDefault();
         try {
