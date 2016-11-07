@@ -318,7 +318,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             StringBuilder types = new StringBuilder();
 
-            HashMap<String, String> alreadyDoneTypes = new HashMap<String, String>();
+            HashMap<String, String> alreadyDoneTypes = new HashMap<>();
 
             while (this.rs.next()) {
                 String typeName = this.rs.getString("TYPE_NAME");
@@ -516,7 +516,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug4742() throws Exception {
-        HashMap<String, String> clashMap = new HashMap<String, String>();
+        HashMap<String, String> clashMap = new HashMap<>();
 
         this.rs = this.conn.getMetaData().getTypeInfo();
 
@@ -1908,7 +1908,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         ResultSetMetaData rsmd = this.stmt.executeQuery("SELECT * FROM testBug27916").getMetaData();
 
-        HashMap<String, Object> typeNameToPrecision = new HashMap<String, Object>();
+        HashMap<String, Object> typeNameToPrecision = new HashMap<>();
         this.rs = this.conn.getMetaData().getTypeInfo();
 
         while (this.rs.next()) {
@@ -1928,7 +1928,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
-        ArrayList<String> types = new ArrayList<String>();
+        ArrayList<String> types = new ArrayList<>();
         Connection PropConn = getConnectionWithProps(props);
         try {
             DatabaseMetaData dbmd = PropConn.getMetaData();
@@ -2352,7 +2352,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         checkTypes(this.rs, types);
     }
 
-    private final static Map<Integer, String> TYPES_MAP = new HashMap<Integer, String>();
+    private final static Map<Integer, String> TYPES_MAP = new HashMap<>();
 
     static {
         Field[] typeFields = Types.class.getFields();
@@ -2593,15 +2593,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug61150() throws Exception {
-        Properties oldProps = getPropertiesFromTestsuiteUrl();
-
-        String host = oldProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        int port = Integer.parseInt(oldProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
         StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
-        if (host != null) {
-            newUrlToTestNoDB.append(host);
-        }
-        newUrlToTestNoDB.append(":").append(port).append("/");
+        newUrlToTestNoDB.append(getEncodedHostPortPairFromTestsuiteUrl()).append("/");
 
         Statement savedSt = this.stmt;
 

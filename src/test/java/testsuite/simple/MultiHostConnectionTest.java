@@ -136,7 +136,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
      */
     public void testFailoverConnection() throws Exception {
-        String hostPortPair = mainConnectionUrl.getMainHost().getHostPortPair();
+        String hostPortPair = getEncodedHostPortPairFromTestsuiteUrl();
         String noHost = "testfoconn-nohost:12345";
 
         StringBuilder testURL = new StringBuilder("jdbc:mysql://");
@@ -181,7 +181,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * Tests failover transitions in a default failover connection using three hosts.
      */
     public void testFailoverTransitions() throws Exception {
-        Set<String> downedHosts = new HashSet<String>();
+        Set<String> downedHosts = new HashSet<>();
 
         // from HOST_1 to HOST_2
         testFailoverTransition(HOST_1, HOST_2, null, null, HOST_1_OK, HOST_2_OK);
@@ -578,7 +578,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
      */
     public void testFailoverReadOnly() throws Exception {
-        Set<String> downedHosts = new HashSet<String>();
+        Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
 
         Properties props = new Properties();
@@ -861,7 +861,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
      */
     public void testFailoverAutoFallBack() throws Exception {
-        Set<String> downedHosts = new HashSet<String>();
+        Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
         downedHosts.add(HOST_3);
 
@@ -1020,7 +1020,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
      */
     public void testFailoverAutoReconnect() throws Exception {
-        Set<String> downedHosts = new HashSet<String>();
+        Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
         downedHosts.add(HOST_2);
 
@@ -1150,7 +1150,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
      */
     public void testFailoverConnectionSynchronization() throws Exception {
-        Set<String> downedHosts = new HashSet<String>();
+        Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
         downedHosts.add(HOST_3);
 

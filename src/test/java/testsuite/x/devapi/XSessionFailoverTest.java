@@ -73,7 +73,7 @@ public class XSessionFailoverTest extends InternalXBaseTestCase {
     public void setupFailoverTest() {
         if (this.isSetForXTests) {
             StringBuilder sb = new StringBuilder();
-            sb.append(getTestHost()).append(":").append(getTestPort());
+            sb.append(getEncodedTestHost()).append(":").append(getTestPort());
             this.testsHost = sb.toString();
         }
     }

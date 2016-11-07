@@ -39,7 +39,6 @@ import testsuite.x.internal.InternalXBaseTestCase;
  * Utilities for Dev API tests.
  */
 public class DevApiBaseTestCase extends InternalXBaseTestCase {
-
     /**
      * Session for use in tests.
      */

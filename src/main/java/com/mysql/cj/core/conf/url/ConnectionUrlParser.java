@@ -290,7 +290,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         try {
             URI uri = URI.create(DUMMY_SCHEMA + hostInfo);
             if (uri.getHost() != null) {
-                host = uri.getHost();
+                host = decode(uri.getHost());
             }
             if (uri.getPort() != -1) {
                 port = uri.getPort();

@@ -495,7 +495,7 @@ public class MetadataTest extends BaseTestCase {
         createTable("`t1-1`", "(c1 char(1))");
         createTable("`t1-2`", "(c1 char(1))");
         createTable("`t2`", "(c1 char(1))");
-        Set<String> tableNames = new HashSet<String>();
+        Set<String> tableNames = new HashSet<>();
         tableNames.add("t1-1");
         tableNames.add("t1-2");
         Properties props = new Properties();
@@ -538,7 +538,7 @@ public class MetadataTest extends BaseTestCase {
                 conn1 = getConnectionWithProps(props);
                 stmt1 = conn1.createStatement();
                 createTable("t1", "(c1 int)");
-                this.rs = stmt1.executeQuery("SELECT USER()");
+                this.rs = stmt1.executeQuery("SELECT CURRENT_USER()");
                 this.rs.next();
                 String user = this.rs.getString(1);
                 List<String> userHost = StringUtils.split(user, "@", false);

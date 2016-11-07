@@ -458,6 +458,26 @@ public abstract class BaseTestCase extends TestCase {
         props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
     }
 
+    protected String getHostFromTestsuiteUrl() throws SQLException {
+        String host = mainConnectionUrl.getMainHost().getHost();
+        return host;
+    }
+
+    protected int getPortFromTestsuiteUrl() throws SQLException {
+        int port = mainConnectionUrl.getMainHost().getPort();
+        return port;
+    }
+
+    protected String getEncodedHostFromTestsuiteUrl() throws SQLException {
+        return TestUtils.encodePercent(getHostFromTestsuiteUrl());
+    }
+
+    protected String getEncodedHostPortPairFromTestsuiteUrl() throws SQLException {
+        String hostPortPair = mainConnectionUrl.getMainHost().getHostPortPair();
+        hostPortPair = TestUtils.encodePercent(hostPortPair);
+        return hostPortPair;
+    }
+
     protected int getRowCount(String tableName) throws SQLException {
         ResultSet countRs = null;
 
@@ -575,7 +595,7 @@ public abstract class BaseTestCase extends TestCase {
     @Override
     public void setUp() throws Exception {
         Class.forName(this.dbClass).newInstance();
-        this.createdObjects = new ArrayList<String[]>();
+        this.createdObjects = new ArrayList<>();
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false"); // testsuite is built upon non-SSL default connection
@@ -1011,18 +1031,17 @@ public abstract class BaseTestCase extends TestCase {
 
     protected String getMasterSlaveUrl(String protocol) throws SQLException {
         HostInfo hostInfo = mainConnectionUrl.getMainHost();
-        return String.format("%s//%s,%s/", protocol, hostInfo.getHostPortPair(), hostInfo.getHostPortPair());
+        String hostPortPair = TestUtils.encodePercent(hostInfo.getHostPortPair());
+        return String.format("%s//%s,%s/", protocol, hostPortPair, hostPortPair);
     }
 
     protected Connection getLoadBalancedConnection(int customHostLocation, String customHost, Properties props) throws SQLException {
         if (customHostLocation > 3) {
             throw new IllegalArgumentException();
         }
-        HostInfo defaultHost = mainConnectionUrl.getMainHost();
-        Properties parsedProps = defaultHost.exposeAsProperties();
-        removeHostRelatedProps(parsedProps);
+        Properties urlProps = getHostFreePropertiesFromTestsuiteUrl();
         if (props != null) {
-            parsedProps.putAll(props);
+            urlProps.putAll(props);
         }
 
         /*
@@ -1032,16 +1051,16 @@ public abstract class BaseTestCase extends TestCase {
          */
         StringJoiner hostsString = new StringJoiner(",");
         if (customHostLocation > 1) {
-            hostsString.add(defaultHost.getHostPortPair());
+            hostsString.add(getEncodedHostPortPairFromTestsuiteUrl());
         }
         if (!isNullOrEmpty(customHost)) {
             hostsString.add(customHost);
         }
         if (customHostLocation < 3) {
-            hostsString.add(defaultHost.getHostPortPair());
+            hostsString.add(getEncodedHostPortPairFromTestsuiteUrl());
         }
 
-        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//" + hostsString, parsedProps);
+        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//" + hostsString, urlProps);
         return lbConn;
     }
 
@@ -1071,7 +1090,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected Connection getUnreliableMultiHostConnection(String haMode, String[] hostNames, Properties props, Set<String> downedHosts) throws Exception {
         if (downedHosts == null) {
-            downedHosts = new HashSet<String>();
+            downedHosts = new HashSet<>();
         }
 
         props = getHostFreePropertiesFromTestsuiteUrl(props);

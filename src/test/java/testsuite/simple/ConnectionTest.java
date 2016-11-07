@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.sql.CallableStatement;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -85,6 +87,7 @@ import com.mysql.jdbc.Driver;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
+import testsuite.TestUtils;
 
 /**
  * Tests java.sql.Connection functionality
@@ -1220,7 +1223,7 @@ public class ConnectionTest extends BaseTestCase {
 
         SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
 
-        List<LocalSocketAddressCheckThread> allChecks = new ArrayList<LocalSocketAddressCheckThread>();
+        List<LocalSocketAddressCheckThread> allChecks = new ArrayList<>();
 
         while (allInterfaces.hasMoreElements()) {
             NetworkInterface intf = allInterfaces.nextElement();
@@ -1266,7 +1269,7 @@ public class ConnectionTest extends BaseTestCase {
 
         assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
 
-        String hostname = mainConnectionUrl.getMainHost().getHost();
+        String hostname = getHostFromTestsuiteUrl();
 
         if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
 
@@ -1626,8 +1629,8 @@ public class ConnectionTest extends BaseTestCase {
         String password = parsedProps.getProperty(PropertyDefinitions.PNAME_password);
         String database = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
-        String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", host, port, user != null ? user : "",
-                password != null ? password : "", database);
+        String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", TestUtils.encodePercent(host), port,
+                user != null ? user : "", password != null ? password : "", database);
 
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
         props.remove(PropertyDefinitions.PNAME_user);
@@ -1733,30 +1736,40 @@ public class ConnectionTest extends BaseTestCase {
             // this test could work with MySQL 5.5 but requires specific server configuration, e.g. "--bind-address=::"
         }
 
-        Properties connProps = getPropertiesFromTestsuiteUrl();
+        Properties connProps = getHostFreePropertiesFromTestsuiteUrl();
 
-        String host = "::1"; // IPv6 loopback
-        int port = Integer.parseInt(connProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+        List<Inet6Address> ipv6List = TestUtils.getIpv6List();
+        List<String> ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
+        ipv6Hosts.add("::1"); // IPv6 loopback
+        int port = getPortFromTestsuiteUrl();
         String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
 
-        String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", host, port);
+        boolean atLeastOne = false;
+        for (String host : ipv6Hosts) {
+            if (TestUtils.serverListening(host, port)) {
+                atLeastOne = true;
+                String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", TestUtils.encodePercent(host), port);
 
-        Connection testConn = null;
-        Statement testStmt = null;
-        ResultSet testRS = null;
+                Connection testConn = null;
+                Statement testStmt = null;
+                ResultSet testRs = null;
 
-        connProps = getHostFreePropertiesFromTestsuiteUrl();
+                testConn = DriverManager.getConnection(ipv6Url, connProps);
+                testStmt = testConn.createStatement();
+                testRs = testStmt.executeQuery("SELECT USER()");
 
-        testConn = DriverManager.getConnection(ipv6Url, connProps);
-        testStmt = testConn.createStatement();
-        testRS = testStmt.executeQuery("SELECT USER()");
+                assertTrue(testRs.next());
+                assertTrue(testRs.getString(1).startsWith(username));
 
-        assertTrue(testRS.next());
-        assertTrue(testRS.getString(1).startsWith(username));
+                testRs.close();
+                testStmt.close();
+                testConn.close();
+            }
+        }
 
-        testRS.close();
-        testStmt.close();
-        testConn.close();
+        if (!atLeastOne) {
+            fail("None of the tested hosts have server sockets listening on the port " + port + ". This test requires a MySQL server running in local host.");
+        }
     }
 
     /**
@@ -1801,7 +1814,7 @@ public class ConnectionTest extends BaseTestCase {
      * - connect() properties precedence is implementation-defined.
      */
     public void testDriverConnectPropertiesPrecedence() throws Exception {
-        assertThrows(SQLException.class, "Access denied for user 'dummy'@'localhost' \\(using password: YES\\)", new Callable<Void>() {
+        assertThrows(SQLException.class, "Access denied for user 'dummy'@'[^']+' \\(using password: YES\\)", new Callable<Void>() {
             public Void call() throws Exception {
                 DriverManager.getConnection(BaseTestCase.dbUrl, "dummy", "dummy");
                 return null;

@@ -28,6 +28,8 @@ import static org.junit.Assert.fail;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.api.xdevapi.NodeSession;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
@@ -35,7 +37,10 @@ import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.x.io.XProtocol;
 import com.mysql.cj.x.io.XProtocolFactory;
+import com.mysql.cj.xdevapi.NodeSessionImpl;
 import com.mysql.cj.xdevapi.XSessionFactory;
+
+import testsuite.TestUtils;
 
 /**
  * Base class for tests of X DevAPI and X Protocol client internal components.
@@ -52,6 +57,8 @@ public class InternalXBaseTestCase {
     protected XSessionFactory fact = new XSessionFactory();
 
     public Properties testProperties = new Properties();
+
+    private ServerVersion mysqlVersion;
 
     public InternalXBaseTestCase() {
         if (this.isSetForXTests) {
@@ -81,6 +88,10 @@ public class InternalXBaseTestCase {
 
     public String getTestDatabase() {
         return this.testProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+    }
+
+    public String getEncodedTestHost() {
+        return TestUtils.encodePercent(getTestHost());
     }
 
     /**
@@ -150,5 +161,24 @@ public class InternalXBaseTestCase {
 
         // never reaches here
         return null;
+    }
+
+    /**
+     * Checks if the MySQL version we are connected to meets the minimum {@link ServerVersion} provided.
+     * 
+     * @param version
+     *            the minimum {@link ServerVersion} accepted
+     * @return true or false according to versions comparison
+     */
+    protected boolean mysqlVersionMeetsMinimum(ServerVersion version) {
+        if (this.isSetForXTests) {
+            if (this.mysqlVersion == null) {
+                NodeSession session = new NodeSessionImpl(this.testProperties);
+                this.mysqlVersion = ServerVersion.parseVersion(session.sql("SELECT version()").execute().fetchOne().getString(0));
+                session.close();
+            }
+            return this.mysqlVersion.meetsMinimum(version);
+        }
+        return false;
     }
 }
