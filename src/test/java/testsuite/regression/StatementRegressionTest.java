@@ -3242,6 +3242,8 @@ public class StatementRegressionTest extends BaseTestCase {
      * or if it is an existing deployment that is switching to client-side
      * prepared statements from server-side prepared statements.
      * 
+     * Note: The properties 'useJDBCCompliantTimezoneShift' and 'useSSPSCompatibleTimezoneShift' no longer exist in Connector/J 6.0.
+     * 
      * @throws Exception
      *             if the test fails
      */
@@ -3272,21 +3274,15 @@ public class StatementRegressionTest extends BaseTestCase {
             Statement s = conn2.createStatement();
             this.rs = s.executeQuery("SELECT t1 FROM testBug24344 ORDER BY i ASC");
 
-            Timestamp[] dates = new Timestamp[3];
+            Timestamp[] dates = new Timestamp[2];
 
             int i = 0;
-
             while (this.rs.next()) {
                 dates[i++] = this.rs.getTimestamp(1);
             }
 
             assertEquals("Number of rows should be 2.", 2, i);
             assertEquals(dates[0], dates[1]);
-            if (TimeZone.getDefault().getOffset(c.getTimeInMillis()) != 0) {
-                assertFalse("Should be different: " + dates[1] + "," + dates[2], dates[1].equals(dates[2]));
-            } else {
-                assertEquals(dates[1], dates[2]);
-            }
         } finally {
             if (conn2 != null) {
                 conn2.close();
@@ -5504,7 +5500,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class Bug39426Interceptor extends BaseStatementInterceptor {
-        public static List<Integer> vals = new ArrayList<Integer>();
+        public static List<Integer> vals = new ArrayList<>();
         String prevSql;
 
         @Override
@@ -8154,7 +8150,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     private void subTestBug68916ForConcurrency() throws Exception {
         ExecutorService executor = Executors.newCachedThreadPool();
-        CompletionService<String> complService = new ExecutorCompletionService<String>(executor);
+        CompletionService<String> complService = new ExecutorCompletionService<>(executor);
 
         String[] connectionProperties = new String[] { "", "holdResultsOpenOverStatementClose=true", "dontTrackOpenResources=true" };
         // overridesCloseOnCompletion[n] refers to the effect of connectionProperties[n] on
