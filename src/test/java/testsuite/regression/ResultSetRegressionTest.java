@@ -5392,27 +5392,41 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for Bug#24525461 - UPDATABLE RESULTSET FEATURE FAILS WHEN USESERVERPREPSTMTS=TRUE
      */
     public void testBug24525461() throws Exception {
-        createTable("testBug24525461",
-                "(id int primary key, f01 DECIMAL, f02 TINYINT, f03 BOOLEAN, f04 SMALLINT, f05 INT,"
-                        + " f06 FLOAT, f07 DOUBLE, f08 TIMESTAMP, f09 BIGINT, f10 MEDIUMINT, f11 DATE, f12 TIME, f13 DATETIME, f14 YEAR,"
-                        + " f15 VARCHAR(20) character set utf8, f16 VARBINARY(30), f17 BIT, f18 JSON, f19 ENUM('x','y','z'), f20 SET('a','b','c'),"
-                        + " f21 TINYBLOB, f22 TINYTEXT character set utf8, f23 MEDIUMBLOB, f24 MEDIUMTEXT character set utf8,"
-                        + " f25 LONGBLOB, f26 LONGTEXT character set utf8, f27 BLOB, f28 TEXT character set utf8,"
-                        + " f29 CHAR, f30 BINARY, f31 GEOMETRY, f32 GEOMETRY, f33 NATIONAL CHARACTER(10), f34 NATIONAL CHARACTER(10),"
-                        + " f35 TINYTEXT, f36 TINYTEXT, f37 TINYBLOB, f38 TINYBLOB, f39 MEDIUMTEXT, f40 MEDIUMTEXT, f41 MEDIUMTEXT,"
-                        + " f42 MEDIUMTEXT character set utf8, f43 MEDIUMTEXT character set utf8, f44 VARCHAR(10), f45 VARCHAR(255))");
+        boolean testJSON = versionMeetsMinimum(5, 7, 9);
 
-        tstBug24525461testBytes("useSSL=false"); // CSPS
-        tstBug24525461testBytes("useSSL=false,useServerPrepStmts=true"); // SSPS without cursor
-        tstBug24525461testBytes("useSSL=false,useCursorFetch=true,defaultFetchSize=1"); // SSPS with cursor
+        StringBuilder sb = new StringBuilder("(id int primary key, f01 DECIMAL, f02 TINYINT, f03 BOOLEAN, f04 SMALLINT, f05 INT,"
+                + " f06 FLOAT, f07 DOUBLE, f08 TIMESTAMP, f09 BIGINT, f10 MEDIUMINT, f11 DATE, f12 TIME, f13 DATETIME, f14 YEAR,"
+                + " f15 VARCHAR(20) character set utf8, f16 VARBINARY(30), f17 BIT, f18 ENUM('x','y','z'), f19 SET('a','b','c'),"
+                + " f20 TINYBLOB, f21 TINYTEXT character set utf8, f22 MEDIUMBLOB, f23 MEDIUMTEXT character set utf8,"
+                + " f24 LONGBLOB, f25 LONGTEXT character set utf8, f26 BLOB, f27 TEXT character set utf8,"
+                + " f28 CHAR, f29 BINARY, f30 GEOMETRY, f31 GEOMETRY, f32 NATIONAL CHARACTER(10), f33 NATIONAL CHARACTER(10),"
+                + " f34 TINYTEXT, f35 TINYTEXT, f36 TINYBLOB, f37 TINYBLOB, f38 MEDIUMTEXT, f39 MEDIUMTEXT, f40 MEDIUMTEXT,"
+                + " f41 MEDIUMTEXT character set utf8, f42 MEDIUMTEXT character set utf8, f43 VARCHAR(10), f44 VARCHAR(255)");
+        if (testJSON) {
+            sb.append(", f45 JSON");
+        }
+        sb.append(")");
+
+        createTable("testBug24525461", sb.toString());
+
+        tstBug24525461testBytes("useSSL=false", testJSON); // CSPS
+        tstBug24525461testBytes("useSSL=false,useServerPrepStmts=true", testJSON); // SSPS without cursor
+        tstBug24525461testBytes("useSSL=false,useCursorFetch=true,defaultFetchSize=1", testJSON); // SSPS with cursor
     }
 
-    private void tstBug24525461testBytes(String params) throws Exception {
+    private void tstBug24525461testBytes(String params, boolean testJSON) throws Exception {
         this.stmt.executeUpdate("truncate table testBug24525461");
-        this.stmt.executeUpdate(
-                "INSERT INTO testBug24525461 values(0, 1, 1, 1, 1, 1, 1, 1, '2000-01-01 00:00:00', 1, 1, '2000-01-01', '12:00:00', '2000-01-01 00:00:00', 2000,"
-                        + " 'aaa', 1, 1, '{\"key1\": \"value1\"}', 'x', 'a', 1, '1', 1 , '1', 1, '1', 1, '1', '1', 1, GeomFromText('POINT(1 1)'), GeomFromText('POINT(2 2)'),"
-                        + " _utf8 'aaa', _utf8 'aaa', 'aaa', 'aaa', 1, 1, 'aaa', 'aaa', 'aaa', _utf8 'aaa', _utf8 'aaa', '1', null)");
+
+        StringBuilder sb = new StringBuilder(
+                "INSERT INTO testBug24525461 values(0, 1, 1, 1, 1, 1, 1, 1, '2000-01-01 00:00:00', 1, 1, '2000-01-01', '12:00:00', '2000-01-01 00:00:00', 2000, 'aaa',"
+                        + " 1, 1, 'x', 'a', 1, '1', 1 , '1', 1, '1', 1, '1', '1', 1, GeomFromText('POINT(1 1)'), GeomFromText('POINT(2 2)'),"
+                        + " _utf8 'aaa', _utf8 'aaa', 'aaa', 'aaa', 1, 1, 'aaa', 'aaa', 'aaa', _utf8 'aaa', _utf8 'aaa', '1', null");
+        if (testJSON) {
+            sb.append(", '{\"key1\": \"value1\"}'");
+        }
+        sb.append(")");
+
+        this.stmt.executeUpdate(sb.toString());
 
         System.out.println(" with params = " + params);
         Connection con = getConnectionWithProps(params);
@@ -5424,7 +5438,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         // check that other fields are refreshed properly
         rs1.updateInt(2, 10);
         rs1.updateRow();
-        tstBug24525461assertResults1();
+        tstBug24525461assertResults1(testJSON);
 
         // check that all fields are set as expected
 
@@ -5449,49 +5463,52 @@ public class ResultSetRegressionTest extends BaseTestCase {
         rs1.updateNString(16, "bbb");
         rs1.updateBytes(17, new byte[] { 50 }); // f16 VARBINARY(30)
         rs1.updateByte(18, (byte) 0); // f17 BIT
-        rs1.updateObject(19, "{\"key2\": \"value2\"}"); // f18 JSON
-        rs1.updateString(20, "y");
-        rs1.updateString(21, "b");
-        rs1.updateBlob(22, new com.mysql.cj.jdbc.Blob("2".getBytes(), null));
-        rs1.updateClob(23, new com.mysql.cj.jdbc.Clob("2", null));
-        rs1.updateBlob(24, new ByteArrayInputStream(new byte[] { 50 }));
-        rs1.updateClob(25, new StringReader("2"));
-        rs1.updateBlob(26, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
-        rs1.updateClob(27, new StringReader("2222"), 1);
-        rs1.updateObject(28, "2", MysqlType.BLOB);
-        rs1.updateNClob(29, new com.mysql.cj.jdbc.NClob("2", null));
-        rs1.updateString(30, "2");
-        rs1.updateBytes(31, new byte[] { 50 });
+        rs1.updateString(19, "y");
+        rs1.updateString(20, "b");
+        rs1.updateBlob(21, new com.mysql.cj.jdbc.Blob("2".getBytes(), null));
+        rs1.updateClob(22, new com.mysql.cj.jdbc.Clob("2", null));
+        rs1.updateBlob(23, new ByteArrayInputStream(new byte[] { 50 }));
+        rs1.updateClob(24, new StringReader("2"));
+        rs1.updateBlob(25, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
+        rs1.updateClob(26, new StringReader("2222"), 1);
+        rs1.updateObject(27, "2", MysqlType.BLOB);
+        rs1.updateNClob(28, new com.mysql.cj.jdbc.NClob("2", null));
+        rs1.updateString(29, "2");
+        rs1.updateBytes(30, new byte[] { 50 });
 
-        Object p1 = rs1.getObject(32);
-        Object p2 = rs1.getObject(33);
-        rs1.updateObject(32, p2);
-        rs1.updateObject(33, p1);
+        Object p1 = rs1.getObject(31);
+        Object p2 = rs1.getObject(32);
+        rs1.updateObject(31, p2);
+        rs1.updateObject(32, p1);
 
-        rs1.updateNClob(34, new StringReader("bbb"));
-        rs1.updateNClob(35, new StringReader("bbbbbb"), 3);
-        rs1.updateAsciiStream(36, new ByteArrayInputStream("bbb".getBytes()));
-        rs1.updateAsciiStream(37, new ByteArrayInputStream("bbbbbb".getBytes()), 3);
-        rs1.updateBinaryStream(38, new ByteArrayInputStream(new byte[] { 50 }));
-        rs1.updateBinaryStream(39, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
-        rs1.updateCharacterStream(40, new StringReader("bbb"));
-        rs1.updateCharacterStream(41, new StringReader("bbbbbb"), 3);
-        rs1.updateCharacterStream(42, new StringReader("bbbbbb"), 3L);
-        rs1.updateNCharacterStream(43, new StringReader("bbb"));
-        rs1.updateNCharacterStream(44, new StringReader("bbbbbb"), 3);
-        rs1.updateNull(45);
+        rs1.updateNClob(33, new StringReader("bbb"));
+        rs1.updateNClob(34, new StringReader("bbbbbb"), 3);
+        rs1.updateAsciiStream(35, new ByteArrayInputStream("bbb".getBytes()));
+        rs1.updateAsciiStream(36, new ByteArrayInputStream("bbbbbb".getBytes()), 3);
+        rs1.updateBinaryStream(37, new ByteArrayInputStream(new byte[] { 50 }));
+        rs1.updateBinaryStream(38, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
+        rs1.updateCharacterStream(39, new StringReader("bbb"));
+        rs1.updateCharacterStream(40, new StringReader("bbbbbb"), 3);
+        rs1.updateCharacterStream(41, new StringReader("bbbbbb"), 3L);
+        rs1.updateNCharacterStream(42, new StringReader("bbb"));
+        rs1.updateNCharacterStream(43, new StringReader("bbbbbb"), 3);
+        rs1.updateNull(44);
 
         SQLXML xml = new MysqlSQLXML(null);
         xml.setString("<doc/>");
-        rs1.updateSQLXML(46, xml);
+        rs1.updateSQLXML(45, xml);
+
+        if (testJSON) {
+            rs1.updateObject(46, "{\"key2\": \"value2\"}"); // f18 JSON
+        }
 
         rs1.updateRow();
-        tstBug24525461assertResults2();
+        tstBug24525461assertResults2(testJSON);
 
     }
 
-    private void tstBug24525461assertResults1() throws Exception {
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f31), AsText(f32) FROM testBug24525461");
+    private void tstBug24525461assertResults1(boolean testJSON) throws Exception {
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f30), AsText(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
@@ -5513,47 +5530,54 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Blob blob = rs2.getBlob(17);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
         assertEquals(1, rs2.getInt(18));
-        assertEquals("{\"key1\": \"value1\"}", rs2.getString(19));
-        assertEquals("x", rs2.getString(20));
-        assertEquals("a", rs2.getString(21));
-        blob = rs2.getBlob(22);
+        assertEquals("x", rs2.getString(19));
+        assertEquals("a", rs2.getString(20));
+        blob = rs2.getBlob(21);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("1", rs2.getString(23));
-        blob = rs2.getBlob(24);
+        assertEquals("1", rs2.getString(22));
+        blob = rs2.getBlob(23);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("1", rs2.getString(25));
-        blob = rs2.getBlob(26);
+        assertEquals("1", rs2.getString(24));
+        blob = rs2.getBlob(25);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("1", rs2.getString(27));
-        blob = rs2.getBlob(28);
+        assertEquals("1", rs2.getString(26));
+        blob = rs2.getBlob(27);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("1", rs2.getString(28));
         assertEquals("1", rs2.getString(29));
-        assertEquals("1", rs2.getString(30));
-        blob = rs2.getBlob(31);
+        blob = rs2.getBlob(30);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("aaa", rs2.getString(33));
         assertEquals("aaa", rs2.getString(34));
         assertEquals("aaa", rs2.getString(35));
         assertEquals("aaa", rs2.getString(36));
-        assertEquals("aaa", rs2.getString(37));
+        blob = rs2.getBlob(37);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
         blob = rs2.getBlob(38);
         assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
-        blob = rs2.getBlob(39);
-        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("aaa", rs2.getString(39));
         assertEquals("aaa", rs2.getString(40));
         assertEquals("aaa", rs2.getString(41));
         assertEquals("aaa", rs2.getString(42));
         assertEquals("aaa", rs2.getString(43));
-        assertEquals("aaa", rs2.getString(44));
-        assertEquals("1", rs2.getString(45));
-        SQLXML xml = rs2.getSQLXML(46);
+        assertEquals("1", rs2.getString(44));
+        SQLXML xml = rs2.getSQLXML(45);
         assertEquals(null, xml.getString());
-        assertEquals("POINT(1 1)", rs2.getString(47));
-        assertEquals("POINT(2 2)", rs2.getString(48));
+
+        if (testJSON) {
+            assertEquals("{\"key1\": \"value1\"}", rs2.getString(46));
+            assertEquals("POINT(1 1)", rs2.getString(47));
+            assertEquals("POINT(2 2)", rs2.getString(48));
+        } else {
+            assertEquals("POINT(1 1)", rs2.getString(46));
+            assertEquals("POINT(2 2)", rs2.getString(47));
+        }
+
         assertFalse(rs2.next());
     }
 
-    private void tstBug24525461assertResults2() throws Exception {
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f31), AsText(f32) FROM testBug24525461");
+    private void tstBug24525461assertResults2(boolean testJSON) throws Exception {
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f30), AsText(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
@@ -5575,42 +5599,49 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Blob blob = rs2.getBlob(17);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
         assertEquals(0, rs2.getInt(18));
-        assertEquals("{\"key2\": \"value2\"}", rs2.getString(19));
-        assertEquals("y", rs2.getString(20));
-        assertEquals("b", rs2.getString(21));
-        blob = rs2.getBlob(22);
+        assertEquals("y", rs2.getString(19));
+        assertEquals("b", rs2.getString(20));
+        blob = rs2.getBlob(21);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("2", rs2.getString(23));
-        blob = rs2.getBlob(24);
+        assertEquals("2", rs2.getString(22));
+        blob = rs2.getBlob(23);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("2", rs2.getString(25));
-        blob = rs2.getBlob(26);
+        assertEquals("2", rs2.getString(24));
+        blob = rs2.getBlob(25);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
-        assertEquals("2", rs2.getString(27));
-        blob = rs2.getBlob(28);
+        assertEquals("2", rs2.getString(26));
+        blob = rs2.getBlob(27);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("2", rs2.getString(28));
         assertEquals("2", rs2.getString(29));
-        assertEquals("2", rs2.getString(30));
-        blob = rs2.getBlob(31);
+        blob = rs2.getBlob(30);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("bbb", rs2.getString(33));
         assertEquals("bbb", rs2.getString(34));
         assertEquals("bbb", rs2.getString(35));
         assertEquals("bbb", rs2.getString(36));
-        assertEquals("bbb", rs2.getString(37));
+        blob = rs2.getBlob(37);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
         blob = rs2.getBlob(38);
         assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
-        blob = rs2.getBlob(39);
-        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("bbb", rs2.getString(39));
         assertEquals("bbb", rs2.getString(40));
         assertEquals("bbb", rs2.getString(41));
         assertEquals("bbb", rs2.getString(42));
         assertEquals("bbb", rs2.getString(43));
-        assertEquals("bbb", rs2.getString(44));
-        assertEquals(null, rs2.getString(45));
-        SQLXML xml = rs2.getSQLXML(46);
+        assertEquals(null, rs2.getString(44));
+        SQLXML xml = rs2.getSQLXML(45);
         assertEquals("<doc/>", xml.getString());
-        assertEquals("POINT(2 2)", rs2.getString(47));
-        assertEquals("POINT(1 1)", rs2.getString(48));
+
+        if (testJSON) {
+            assertEquals("{\"key2\": \"value2\"}", rs2.getString(46));
+            assertEquals("POINT(2 2)", rs2.getString(47));
+            assertEquals("POINT(1 1)", rs2.getString(48));
+        } else {
+            assertEquals("POINT(2 2)", rs2.getString(46));
+            assertEquals("POINT(1 1)", rs2.getString(47));
+        }
+
         assertFalse(rs2.next());
     }
 
