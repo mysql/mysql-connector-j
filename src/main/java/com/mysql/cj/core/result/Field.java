@@ -414,4 +414,12 @@ public class Field {
     public void setMysqlType(MysqlType mysqlType) {
         this.mysqlType = mysqlType;
     }
+
+    public short getFlags() {
+        return colFlag;
+    }
+
+    public void setFlags(short colFlag) {
+        this.colFlag = colFlag;
+    }
 }

@@ -3360,8 +3360,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 case TINYINT_UNSIGNED:
                 case SMALLINT:
                 case SMALLINT_UNSIGNED:
+                case MEDIUMINT:
+                case MEDIUMINT_UNSIGNED:
                 case INT:
                 case INT_UNSIGNED:
+                case YEAR:
                     parameterAsNum = Integer.valueOf((String) parameterObj);
                     break;
 
@@ -3399,8 +3402,11 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             case TINYINT_UNSIGNED:
             case SMALLINT:
             case SMALLINT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
             case INT:
             case INT_UNSIGNED:
+            case YEAR:
                 setInt(parameterIndex, parameterAsNum.intValue());
                 break;
 
@@ -3610,6 +3616,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         case SMALLINT_UNSIGNED:
                         case INT:
                         case INT_UNSIGNED:
+                        case MEDIUMINT:
+                        case MEDIUMINT_UNSIGNED:
                         case BIGINT:
                         case BIGINT_UNSIGNED:
                         case FLOAT:
@@ -3657,7 +3665,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                             break;
 
                         case DATE:
+                        case DATETIME:
                         case TIMESTAMP:
+                        case YEAR:
 
                             java.util.Date parameterAsDate;
 
@@ -3680,6 +3690,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                                     break;
 
+                                case DATETIME:
                                 case TIMESTAMP:
 
                                     if (parameterAsDate instanceof java.sql.Timestamp) {
@@ -3688,6 +3699,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                                         setTimestamp(parameterIndex, new java.sql.Timestamp(parameterAsDate.getTime()));
                                     }
 
+                                    break;
+
+                                case YEAR:
+                                    Calendar cal = Calendar.getInstance();
+                                    cal.setTime(parameterAsDate);
+                                    setNumericObject(parameterIndex, cal.get(Calendar.YEAR), targetMysqlType, scaleOrLength);
                                     break;
 
                                 default:

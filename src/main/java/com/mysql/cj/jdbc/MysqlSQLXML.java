@@ -103,7 +103,7 @@ public class MysqlSQLXML implements SQLXML {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    protected MysqlSQLXML(ExceptionInterceptor exceptionInterceptor) {
+    public MysqlSQLXML(ExceptionInterceptor exceptionInterceptor) {
         this.fromResultSet = false;
         this.exceptionInterceptor = exceptionInterceptor;
     }

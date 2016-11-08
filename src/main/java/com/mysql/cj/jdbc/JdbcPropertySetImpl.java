@@ -71,7 +71,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         }
 
         if (getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()) {
-            // assume they want to use server-side prepared statements because they're required for this functionality
+            // assume server-side prepared statements are wanted because they're required for this functionality
             super.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
         }
     }

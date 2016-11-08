@@ -254,4 +254,30 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
         }
     }
 
+    @Override
+    public void addRow(Row row) {
+        // TODO consider to handle additional List<Row> addedRows along with fetchedRows
+        // they could be read by next() after all fetches are done
+    }
+
+    public void afterLast() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void beforeFirst() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void beforeLast() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void moveRowRelative(int rows) {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void setCurrentRow(int rowNumber) {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
 }

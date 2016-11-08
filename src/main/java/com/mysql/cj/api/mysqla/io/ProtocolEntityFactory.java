@@ -47,6 +47,10 @@ public interface ProtocolEntityFactory<T> {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 
+    default int getFetchSize() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
+    }
+
     /**
      * 
      * @param protocolEntity

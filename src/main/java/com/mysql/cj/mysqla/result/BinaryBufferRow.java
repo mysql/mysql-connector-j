@@ -34,6 +34,7 @@ import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaUtils;
 
@@ -68,6 +69,11 @@ public class BinaryBufferRow extends AbstractBufferRow {
         if (cd.getFields() != null) {
             setMetadata(cd);
         }
+    }
+
+    @Override
+    public boolean isBinaryEncoded() {
+        return true;
     }
 
     @Override
@@ -114,8 +120,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
                 if (length == 0) {
                     this.rowFromServer.skipBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
-                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (i + 1)
-                            + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"),
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, i + 1, this.metadata.getFields().length }),
                             this.exceptionInterceptor);
                 } else {
                     int curPosition = this.rowFromServer.getPosition();
@@ -152,8 +157,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
                 if (length == 0) {
                     return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
                 } else if (length == -1) {
-                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (index + 1)
-                            + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"),
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, index + 1, this.metadata.getFields().length }),
                             this.exceptionInterceptor);
                 } else {
                     return this.rowFromServer.readBytes(StringLengthDataType.STRING_FIXED, length);
@@ -226,10 +230,55 @@ public class BinaryBufferRow extends AbstractBufferRow {
         if (length == 0) {
             length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
         } else if (length == -1) {
-            throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + (columnIndex + 1)
-                    + Messages.getString("MysqlIO.99") + this.metadata.getFields().length + Messages.getString("MysqlIO.100"), this.exceptionInterceptor);
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, columnIndex + 1, this.metadata.getFields().length }),
+                    this.exceptionInterceptor);
         }
 
         return getValueFromBytes(columnIndex, this.rowFromServer.getByteBuffer(), this.rowFromServer.getPosition(), length, vf);
+    }
+
+    @Override
+    public void setBytes(int columnIndex, byte[] value) {
+
+        byte[] backup = null;
+        int backupLength = 0;
+
+        // backup the rest of bytes
+        if (columnIndex + 1 < this.metadata.getFields().length) {
+            findAndSeekToOffset(columnIndex + 1);
+            backupLength = this.rowFromServer.getPayloadLength() - this.rowFromServer.getPosition();
+            backup = new byte[backupLength];
+            System.arraycopy(this.rowFromServer.getByteBuffer(), this.rowFromServer.getPosition(), backup, 0, backupLength);
+        }
+
+        // write the replacement value
+        findAndSeekToOffset(columnIndex);
+        this.rowFromServer.setPayloadLength(this.rowFromServer.getPosition());
+
+        if (value == null) {
+            this.metadata.getFields()[columnIndex].setMysqlTypeId(MysqlaConstants.FIELD_TYPE_NULL);
+        } else {
+            int type = this.metadata.getFields()[columnIndex].getMysqlTypeId();
+
+            int length = MysqlaUtils.getBinaryEncodedLength(type);
+            if (length == 0) {
+                this.rowFromServer.writeBytes(StringSelfDataType.STRING_LENENC, value);
+            } else if (length == -1) {
+                throw ExceptionFactory.createException(
+                        Messages.getString("MysqlIO.97", new Object[] { type, columnIndex + 1, this.metadata.getFields().length }), this.exceptionInterceptor);
+            } else {
+                // write leading zeroes if value length < required length
+                if (length != value.length) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, "Value length doesn't match the expected one for type " + type,
+                            this.exceptionInterceptor);
+                }
+                // write value
+                this.rowFromServer.writeBytes(StringLengthDataType.STRING_FIXED, value);
+            }
+        }
+
+        if (backup != null) {
+            this.rowFromServer.writeBytes(StringLengthDataType.STRING_FIXED, backup);
+        }
     }
 }

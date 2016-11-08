@@ -29,7 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.JDBCType;
 import java.sql.NClob;
-import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLXML;
@@ -41,6 +40,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Constants;
@@ -83,7 +83,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private String insertSQL = null;
 
-    /** Is this result set updateable? */
+    /** Is this result set updatable? */
     private boolean isUpdatable = false;
 
     /** Reason the result set is not updatable */
@@ -116,6 +116,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private Map<String, Map<String, Map<String, Integer>>> databasesUsedToTablesUsed = null;
 
+    /** Are we on the insert row? */
+    private boolean onInsertRow = false;
+
+    /** Are we in the middle of doing updates to the current row? */
+    protected boolean doingUpdates = false;
+
     /**
      * Creates a new ResultSet object.
      * 
@@ -138,16 +144,40 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean absolute(int row) throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
         return super.absolute(row);
     }
 
     @Override
     public synchronized void afterLast() throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         super.afterLast();
     }
 
     @Override
     public synchronized void beforeFirst() throws SQLException {
+
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         super.beforeFirst();
     }
 
@@ -171,7 +201,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     /**
-     * Is this ResultSet updateable?
+     * Is this ResultSet updatable?
      * 
      * @throws SQLException
      */
@@ -514,11 +544,19 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean first() throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         return super.first();
     }
 
     /**
-     * Figure out whether or not this ResultSet is updateable, and if so,
+     * Figure out whether or not this ResultSet is updatable, and if so,
      * generate the PreparedStatements to support updates.
      * 
      * @throws SQLException
@@ -769,6 +807,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         Row resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
 
+        // inserter is always a client-side prepared statement, so it's safe to use it
+        // with ByteArrayRow for server-side prepared statement too
         refreshRow(this.inserter, resultSetRow);
 
         this.rowData.addRow(resultSetRow);
@@ -801,6 +841,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean last() throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         return super.last();
     }
 
@@ -895,6 +943,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean next() throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         return super.next();
     }
 
@@ -905,6 +961,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public synchronized boolean previous() throws SQLException {
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+
         return super.previous();
     }
 
@@ -1005,7 +1069,12 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.refresher = (PreparedStatement) this.getConnection().clientPrepareStatement(this.refreshSQL);
+            // We're going to copy bytes from refresher results to rowToRefresh, thus we need them to have the same protocol encoding
+            if (((ResultsetRow) this.thisRow).isBinaryEncoded()) {
+                this.refresher = (PreparedStatement) this.getConnection().serverPrepareStatement(this.refreshSQL);
+            } else {
+                this.refresher = (PreparedStatement) this.getConnection().clientPrepareStatement(this.refreshSQL);
+            }
         }
 
         this.refresher.clearParameters();
@@ -1120,11 +1189,11 @@ public class UpdatableResultSet extends ResultSetImpl {
     public void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
-        // TODO: FIXME: Issue warning when asked for updateable result set, but result set is not updatable
+        // TODO: FIXME: Issue warning when asked for updatable result set, but result set is not updatable
         //
         // if ((concurrencyFlag == CONCUR_UPDATABLE) && !isUpdatable()) {
         // java.sql.SQLWarning warning = new java.sql.SQLWarning(
-        // NotUpdatable.NOT_UPDATEABLE_MESSAGE);
+        // NotUpdatable.NOT_UPDATABLE_MESSAGE);
         // }
     }
 
@@ -1153,12 +1222,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         for (int i = 0; i < numFields; i++) {
             if (this.thisRow.getBytes(i) != null) {
-
-                if (fields[i].getValueNeedsQuoting()) {
-                    this.updater.setBytes(i + 1, this.thisRow.getBytes(i), fields[i].isBinary(), false);
-                } else {
-                    this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getBytes(i));
-                }
+                this.updater.setObject(i + 1, getObject(i + 1), fields[i].getMysqlType());
             } else {
                 this.updater.setNull(i + 1, 0);
             }
@@ -1698,95 +1762,235 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setAsciiStream(columnIndex, x);
+        } else {
+            this.inserter.setAsciiStream(columnIndex, x);
+            this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+        }
     }
 
     @Override
     public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setAsciiStream(columnIndex, x, length);
+        } else {
+            this.inserter.setAsciiStream(columnIndex, x, length);
+            this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+        }
     }
 
     @Override
     public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setBinaryStream(columnIndex, x);
+        } else {
+            this.inserter.setBinaryStream(columnIndex, x);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setBinaryStream(columnIndex, x, length);
+        } else {
+            this.inserter.setBinaryStream(columnIndex, x, length);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
+
+            this.updater.setBlob(columnIndex, inputStream);
+        } else {
+            this.inserter.setBlob(columnIndex, inputStream);
+
+            if (inputStream == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setBlob(columnIndex, inputStream, length);
+        } else {
+            this.inserter.setBlob(columnIndex, inputStream, length);
+
+            if (inputStream == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setCharacterStream(columnIndex, x);
+        } else {
+            this.inserter.setCharacterStream(columnIndex, x);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
 
+            this.updater.setCharacterStream(columnIndex, x, length);
+        } else {
+            this.inserter.setCharacterStream(columnIndex, x, length);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateClob(int columnIndex, Reader reader) throws SQLException {
-        throw SQLError.notUpdatable();
-
+        updateCharacterStream(columnIndex, reader);
     }
 
     @Override
     public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
+        updateCharacterStream(columnIndex, reader, length);
     }
 
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-        throw SQLError.notUpdatable();
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.16"));
+        }
 
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
+
+            this.updater.setNCharacterStream(columnIndex, x);
+        } else {
+            this.inserter.setNCharacterStream(columnIndex, x);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        updateNCharacterStream(columnIndex, x, (int) length);
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.16"));
+        }
 
+        if (!this.onInsertRow) {
+            if (!this.doingUpdates) {
+                this.doingUpdates = true;
+                syncUpdate();
+            }
+
+            this.updater.setNCharacterStream(columnIndex, x, length);
+        } else {
+            this.inserter.setNCharacterStream(columnIndex, x, length);
+
+            if (x == null) {
+                this.thisRow.setBytes(columnIndex - 1, null);
+            } else {
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
+        }
     }
 
     @Override
     public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-        throw SQLError.notUpdatable();
-
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.17"));
+        }
+        updateCharacterStream(columnIndex, reader);
     }
 
     @Override
     public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-        throw SQLError.notUpdatable();
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.17"));
+        }
+        updateCharacterStream(columnIndex, reader, length);
     }
 
     @Override
     public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateRowId(int columnIndex, RowId x) throws SQLException {
-        throw SQLError.notUpdatable();
+        updateString(columnIndex, ((MysqlSQLXML) xmlObject).getString());
     }
 
     @Override
@@ -2003,16 +2207,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public String getNString(String columnName) throws SQLException {
         return getNString(findColumn(columnName));
-    }
-
-    @Override
-    public RowId getRowId(int columnIndex) throws SQLException {
-        throw SQLError.createSQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public RowId getRowId(String columnLabel) throws SQLException {
-        return getRowId(findColumn(columnLabel));
     }
 
     @Override

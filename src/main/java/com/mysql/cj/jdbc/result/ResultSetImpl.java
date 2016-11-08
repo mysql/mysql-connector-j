@@ -137,9 +137,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     /** The current row #, -1 == before start of result set */
     protected int currentRow = -1; // Cursor to current row;
 
-    /** Are we in the middle of doing updates to the current row? */
-    protected boolean doingUpdates = false;
-
     protected ProfilerEventHandler eventSink = null;
 
     Calendar fastDefaultCal = null;
@@ -159,9 +156,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
     /** Has this result set been closed? */
     protected boolean isClosed = false;
-
-    /** Are we on the insert row? */
-    protected boolean onInsertRow = false;
 
     /** The statement that created us */
     private com.mysql.cj.jdbc.StatementImpl owningStatement;
@@ -379,14 +373,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             if (this.rowData.size() == 0) {
                 b = false;
             } else {
-                if (this.onInsertRow) {
-                    this.onInsertRow = false;
-                }
-
-                if (this.doingUpdates) {
-                    this.doingUpdates = false;
-                }
-
                 if (row == 0) {
                     beforeFirst();
                     b = false;
@@ -426,14 +412,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public void afterLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            if (this.onInsertRow) {
-                this.onInsertRow = false;
-            }
-
-            if (this.doingUpdates) {
-                this.doingUpdates = false;
-            }
-
             if (this.rowData.size() != 0) {
                 this.rowData.afterLast();
                 this.thisRow = null;
@@ -445,14 +423,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
     public void beforeFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-
-            if (this.onInsertRow) {
-                this.onInsertRow = false;
-            }
-
-            if (this.doingUpdates) {
-                this.doingUpdates = false;
-            }
 
             if (this.rowData.size() == 0) {
                 return;
@@ -618,15 +588,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             if (this.rowData.isEmpty()) {
                 b = false;
             } else {
-
-                if (this.onInsertRow) {
-                    this.onInsertRow = false;
-                }
-
-                if (this.doingUpdates) {
-                    this.doingUpdates = false;
-                }
-
                 this.rowData.beforeFirst();
                 this.thisRow = this.rowData.next();
             }
@@ -1703,15 +1664,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             if (this.rowData.size() == 0) {
                 b = false;
             } else {
-
-                if (this.onInsertRow) {
-                    this.onInsertRow = false;
-                }
-
-                if (this.doingUpdates) {
-                    this.doingUpdates = false;
-                }
-
                 this.rowData.beforeLast();
                 this.thisRow = this.rowData.next();
             }
@@ -1732,14 +1684,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
     public boolean next() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-
-            if (this.onInsertRow) {
-                this.onInsertRow = false;
-            }
-
-            if (this.doingUpdates) {
-                this.doingUpdates = false;
-            }
 
             boolean b;
 
@@ -1813,14 +1757,6 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
     public boolean previous() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.onInsertRow) {
-                this.onInsertRow = false;
-            }
-
-            if (this.doingUpdates) {
-                this.doingUpdates = false;
-            }
-
             return prev();
         }
     }
@@ -2350,11 +2286,11 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     }
 
     public void updateRowId(int columnIndex, RowId x) throws SQLException {
-        throw SQLError.notUpdatable();
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public void updateRowId(String columnName, RowId x) throws SQLException {
-        updateRowId(findColumn(columnName), x);
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public int getHoldability() throws SQLException {
@@ -2366,7 +2302,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     }
 
     public RowId getRowId(String columnLabel) throws SQLException {
-        return getRowId(findColumn(columnLabel));
+        throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     public SQLXML getSQLXML(int columnIndex) throws SQLException {

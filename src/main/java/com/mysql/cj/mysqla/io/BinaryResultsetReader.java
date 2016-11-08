@@ -62,23 +62,21 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset> {
             // Build a result set with rows.
 
             // Read in the column information
-            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadata));
+            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new MergingColumnDefinitionFactory(columnCount, metadata));
 
             boolean isCursorPosible = this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
-                    && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY;
+                    && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY && resultSetFactory.getFetchSize() > 0;
 
             // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set;
             // if we asked to use cursor then there should be an OK packet here
-            if (!this.protocol.getServerSession().isEOFDeprecated() || isCursorPosible) {
+            if (isCursorPosible || !this.protocol.getServerSession().isEOFDeprecated()) {
                 this.protocol.readServerStatusForResultSets(this.protocol.readPacket(this.protocol.getReusablePacket()), true);
             }
 
             ResultsetRows rows = null;
 
-            if (isCursorPosible) {
-                if (this.protocol.getServerSession().cursorExists()) {
-                    rows = new ResultsetRowsCursor(this.protocol, cdef);
-                }
+            if (isCursorPosible && this.protocol.getServerSession().cursorExists()) {
+                rows = new ResultsetRowsCursor(this.protocol, cdef);
 
             } else if (!streamResults) {
                 BinaryRowFactory brf = new BinaryRowFactory(this.protocol, cdef, resultSetFactory.getResultSetConcurrency(), false);

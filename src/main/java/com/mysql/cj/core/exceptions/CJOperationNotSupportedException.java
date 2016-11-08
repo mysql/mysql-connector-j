@@ -31,4 +31,8 @@ public class CJOperationNotSupportedException extends CJException {
         super();
     }
 
+    public CJOperationNotSupportedException(String message) {
+        super(message);
+    }
+
 }

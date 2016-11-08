@@ -181,6 +181,21 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
         return this.currentPositionInFetchedRows < 0;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return this.wasEmpty;
+    }
+
+    @Override
+    public boolean isFirst() {
+        return this.currentPositionInFetchedRows == 0;
+    }
+
+    @Override
+    public boolean isLast() {
+        return !isBeforeFirst() && !isAfterLast() && this.noMoreRows;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Row next() {
@@ -243,6 +258,26 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
             throw cjEx;
         }
+    }
+
+    public void afterLast() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void beforeFirst() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void beforeLast() {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void moveRowRelative(int rows) {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+    }
+
+    public void setCurrentRow(int rowNumber) {
+        throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
 }

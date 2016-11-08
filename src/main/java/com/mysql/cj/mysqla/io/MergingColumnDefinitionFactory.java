@@ -23,41 +23,38 @@
 
 package com.mysql.cj.mysqla.io;
 
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 
-public class ColumnDefinitionFactory implements ProtocolEntityFactory<ColumnDefinition> {
+// We need to merge metadata from COM_STMT_PREPARE and COM_STMT_EXECUTE:
+// 1. some field flags do exist in metadata returned by COM_STMT_PREPARE but are missed after COM_STMT_EXECUTE
+// 2. COM_STMT_EXECUTE returns metadata with actual field data types, they may mismatch those from COM_STMT_PREPARE
+public class MergingColumnDefinitionFactory extends ColumnDefinitionFactory implements ProtocolEntityFactory<ColumnDefinition> {
 
-    protected long columnCount;
-    protected ColumnDefinition columnDefinitionFromCache;
-
-    public ColumnDefinitionFactory(long columnCount, ColumnDefinition columnDefinitionFromCache) {
-        this.columnCount = columnCount;
-        this.columnDefinitionFromCache = columnDefinitionFromCache;
-    }
-
-    public long getColumnCount() {
-        return this.columnCount;
-    }
-
-    public ColumnDefinition getColumnDefinitionFromCache() {
-        return this.columnDefinitionFromCache;
+    public MergingColumnDefinitionFactory(long columnCount, ColumnDefinition columnDefinitionFromCache) {
+        super(columnCount, columnDefinitionFromCache);
     }
 
     @Override
-    public ColumnDefinition createFromPacketPayload(PacketPayload packetPayload) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public boolean mergeColumnDefinitions() {
-        return false;
+        return true;
     }
 
+    @Override
     public ColumnDefinition createFromFields(Field[] fields) {
+        if (this.columnDefinitionFromCache != null) {
+            if (fields.length != this.columnCount) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, "Wrong number of ColumnDefinition fields.");
+            }
+            Field[] f = this.columnDefinitionFromCache.getFields();
+            for (int i = 0; i < fields.length; i++) {
+                fields[i].setFlags(f[i].getFlags());
+            }
+        }
         return new MysqlaColumnDefinition(fields);
     }
 }

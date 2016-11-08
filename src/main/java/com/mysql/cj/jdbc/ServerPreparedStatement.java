@@ -286,8 +286,8 @@ public class ServerPreparedStatement extends PreparedStatement {
     /** Field-level metadata for parameters */
     private Field[] parameterFields;
 
-    /** Field-level metadata for result sets. */
-    private Field[] resultFields;
+    /** Field-level metadata for result sets. It's got from statement prepare. */
+    private ColumnDefinition resultFields;
 
     /** Do we need to send/resend types to the server? */
     private boolean sendTypesToServer = false;
@@ -834,11 +834,11 @@ public class ServerPreparedStatement extends PreparedStatement {
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
-            if (this.resultFields == null) {
+            if (this.resultFields == null || this.resultFields.getFields() == null) {
                 return null;
             }
 
-            return new ResultSetMetaData(this.session, this.resultFields,
+            return new ResultSetMetaData(this.session, this.resultFields.getFields(),
                     this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
                     this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), getExceptionInterceptor());
         }
@@ -985,19 +985,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    @Override
-    boolean isCursorRequired() throws SQLException {
-        // we only create cursor-backed result sets if
-        // a) The query is a SELECT
-        // b) The server supports it
-        // c) We know it is forward-only (note this doesn't preclude updatable result sets)
-        // d) The user has set a fetch size
-        //return this.resultFields != null && this.connection.isCursorFetchEnabled() && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
-        //        && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
-        return this.resultFields != null && this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
-                && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY && getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY && getFetchSize() > 0;
-    }
-
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
@@ -1092,7 +1079,8 @@ public class ServerPreparedStatement extends PreparedStatement {
             // b) The server supports it
             // c) We know it is forward-only (note this doesn't preclude updatable result sets)
             // d) The user has set a fetch size
-            if (this.resultFields != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY && getFetchSize() > 0) {
+            if (this.resultFields != null && this.resultFields.getFields() != null && this.useCursorFetch && getResultSetType() == ResultSet.TYPE_FORWARD_ONLY
+                    && getFetchSize() > 0) {
                 packet.writeInteger(IntegerDataType.INT1, OPEN_CURSOR_FLAG);
             } else {
                 packet.writeInteger(IntegerDataType.INT1, 0); // placeholder for flags
@@ -1257,7 +1245,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 com.mysql.cj.api.jdbc.result.ResultSetInternalMethods rs = this.session.getProtocol().readAllResults(maxRowsToRetrieve,
-                        createStreamingResultSet, resultPacket, true, metadata, this.resultSetFactory);
+                        createStreamingResultSet, resultPacket, true, metadata != null ? metadata : this.resultFields, this.resultSetFactory);
 
                 if (this.session.shouldIntercept()) {
                     ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
@@ -1440,7 +1428,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     //if (checkEOF) { // Skip the following EOF packet.
                     //    this.session.readPacket();
                     //}
-                    this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.fieldCount, null)).getFields();
+                    this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.fieldCount, null));
                 }
             } catch (IOException ioEx) {
                 throw SQLError.createCommunicationsException(this.session.getProtocol().getConnection(),
@@ -1613,6 +1601,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             binding.value = x;
         }
+    }
+
+    @Override
+    public void setBytes(int parameterIndex, byte[] x, boolean checkForIntroducer, boolean escapeForMBChars) throws SQLException {
+        setBytes(parameterIndex, x);
+    }
+
+    @Override
+    public void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
+        setBytes(parameterIndex, parameterAsBytes);
     }
 
     @Override

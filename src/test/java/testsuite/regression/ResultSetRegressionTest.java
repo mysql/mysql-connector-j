@@ -23,11 +23,15 @@
 
 package testsuite.regression;
 
+import java.io.ByteArrayInputStream;
 import java.io.Reader;
+import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -38,7 +42,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
@@ -49,6 +55,7 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -66,16 +73,23 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl.ExceptionInterceptorChain;
+import com.mysql.cj.jdbc.MysqlSQLXML;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.jdbc.result.UpdatableResultSet;
+import com.mysql.cj.mysqla.result.MysqlaResultset;
+import com.mysql.cj.mysqla.result.ResultsetRowsCursor;
 
 import testsuite.BaseTestCase;
 
@@ -3203,6 +3217,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Statement stmtRead = null;
 
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
 
@@ -5207,10 +5222,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
             return;
         }
 
-        createTable("testBug23197238", "(id INT AUTO_INCREMENT PRIMARY KEY, doc JSON DEFAULT NULL)");
+        createTable("testBug23197238", "(id INT AUTO_INCREMENT PRIMARY KEY, doc JSON DEFAULT NULL, field3 int DEFAULT 10)");
 
-        String[] docs = new String[] { "{\"key1\": \"value1\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
+        String[] docs = new String[] { "{\"key10\": \"value10\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
         Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -5218,7 +5234,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testStmt.execute("INSERT INTO testBug23197238 (doc) VALUES ('" + docs[2] + "')");
         testStmt.close();
 
-        testBug23197238Assert(new String[] { docs[2] });
+        testBug23197238AssertDoc(new String[] { docs[2] });
 
         testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
         this.rs = testStmt.executeQuery("SELECT * FROM testBug23197238");
@@ -5230,32 +5246,41 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.insertRow();
         testStmt.close();
 
-        testBug23197238Assert(new String[] { docs[1], docs[1] });
+        testBug23197238AssertDoc(new String[] { docs[1], docs[1] });
+        testBug23197238AssertId(new int[] { 1, 2 });
 
-        // TODO Next code fails because of Bug#24525461, UPDATABLE RESULTSET FEATURE FAILS WHEN USESERVERPREPSTMTS=TRUE"
-        /*
-         * PreparedStatement testPstmt = testConn.prepareStatement("SELECT * FROM testBug23197238 WHERE id = ?", ResultSet.TYPE_FORWARD_ONLY,
-         * ResultSet.CONCUR_UPDATABLE);
-         * testPstmt.setObject(1, 1, Types.INTEGER);
-         * testPstmt.setFetchSize(1);
-         * this.rs = testPstmt.executeQuery();
-         * assertTrue(this.rs.next());
-         * this.rs.updateObject(2, docs[0]);
-         * this.rs.updateRow();
-         * this.rs.moveToInsertRow();
-         * this.rs.updateObject(2, docs[2]);
-         * this.rs.insertRow();
-         * testPstmt.close();
-         *
-         * testBug23197238Assert(docs);
-         */
+        PreparedStatement testPstmt = testConn.prepareStatement("SELECT * FROM testBug23197238 WHERE id = ?", ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE);
+        testPstmt.setObject(1, 1, Types.INTEGER);
+        testPstmt.setFetchSize(1);
+        this.rs = testPstmt.executeQuery();
+        assertTrue(this.rs.next());
+        this.rs.updateObject(2, docs[0]);
+        this.rs.updateRow();
+        assertEquals(1, this.rs.getInt(1));
+        this.rs.moveToInsertRow();
+        this.rs.updateObject(2, docs[2]);
+        this.rs.insertRow();
+        testPstmt.close();
+
+        testBug23197238AssertDoc(docs);
+        testBug23197238AssertId(new int[] { 1, 2, 3 });
 
         testConn.close();
     }
 
-    private void testBug23197238Assert(String[] expected) throws Exception {
+    private void testBug23197238AssertId(int[] expectedId) throws Exception {
         this.rs = this.stmt.executeQuery("SELECT * FROM testBug23197238");
-        for (String e : expected) {
+        for (int id : expectedId) {
+            assertTrue(this.rs.next());
+            assertEquals(id, this.rs.getInt(1));
+        }
+        assertFalse(this.rs.next());
+    }
+
+    private void testBug23197238AssertDoc(String[] expectedDoc) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug23197238");
+        for (String e : expectedDoc) {
             assertTrue(this.rs.next());
             assertEquals(e, this.rs.getString(2));
         }
@@ -5361,5 +5386,320 @@ public class ResultSetRegressionTest extends BaseTestCase {
             TimeZone.setDefault(savedTz);
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#24525461 - UPDATABLE RESULTSET FEATURE FAILS WHEN USESERVERPREPSTMTS=TRUE
+     */
+    public void testBug24525461() throws Exception {
+        createTable("testBug24525461",
+                "(id int primary key, f01 DECIMAL, f02 TINYINT, f03 BOOLEAN, f04 SMALLINT, f05 INT,"
+                        + " f06 FLOAT, f07 DOUBLE, f08 TIMESTAMP, f09 BIGINT, f10 MEDIUMINT, f11 DATE, f12 TIME, f13 DATETIME, f14 YEAR,"
+                        + " f15 VARCHAR(20) character set utf8, f16 VARBINARY(30), f17 BIT, f18 JSON, f19 ENUM('x','y','z'), f20 SET('a','b','c'),"
+                        + " f21 TINYBLOB, f22 TINYTEXT character set utf8, f23 MEDIUMBLOB, f24 MEDIUMTEXT character set utf8,"
+                        + " f25 LONGBLOB, f26 LONGTEXT character set utf8, f27 BLOB, f28 TEXT character set utf8,"
+                        + " f29 CHAR, f30 BINARY, f31 GEOMETRY, f32 GEOMETRY, f33 NATIONAL CHARACTER(10), f34 NATIONAL CHARACTER(10),"
+                        + " f35 TINYTEXT, f36 TINYTEXT, f37 TINYBLOB, f38 TINYBLOB, f39 MEDIUMTEXT, f40 MEDIUMTEXT, f41 MEDIUMTEXT,"
+                        + " f42 MEDIUMTEXT character set utf8, f43 MEDIUMTEXT character set utf8, f44 VARCHAR(10), f45 VARCHAR(255))");
+
+        tstBug24525461testBytes("useSSL=false"); // CSPS
+        tstBug24525461testBytes("useSSL=false,useServerPrepStmts=true"); // SSPS without cursor
+        tstBug24525461testBytes("useSSL=false,useCursorFetch=true,defaultFetchSize=1"); // SSPS with cursor
+    }
+
+    private void tstBug24525461testBytes(String params) throws Exception {
+        this.stmt.executeUpdate("truncate table testBug24525461");
+        this.stmt.executeUpdate(
+                "INSERT INTO testBug24525461 values(0, 1, 1, 1, 1, 1, 1, 1, '2000-01-01 00:00:00', 1, 1, '2000-01-01', '12:00:00', '2000-01-01 00:00:00', 2000,"
+                        + " 'aaa', 1, 1, '{\"key1\": \"value1\"}', 'x', 'a', 1, '1', 1 , '1', 1, '1', 1, '1', '1', 1, GeomFromText('POINT(1 1)'), GeomFromText('POINT(2 2)'),"
+                        + " _utf8 'aaa', _utf8 'aaa', 'aaa', 'aaa', 1, 1, 'aaa', 'aaa', 'aaa', _utf8 'aaa', _utf8 'aaa', '1', null)");
+
+        System.out.println(" with params = " + params);
+        Connection con = getConnectionWithProps(params);
+
+        PreparedStatement testPstmt = con.prepareStatement("SELECT * FROM testBug24525461", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs1 = testPstmt.executeQuery();
+        assertTrue(rs1.next());
+
+        // check that other fields are refreshed properly
+        rs1.updateInt(2, 10);
+        rs1.updateRow();
+        tstBug24525461assertResults1();
+
+        // check that all fields are set as expected
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(2002, 01, 02, 10, 30, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        rs1.updateBigDecimal(2, BigDecimal.valueOf(20));
+        rs1.updateInt(3, 2);
+        rs1.updateBoolean(4, false);
+        rs1.updateShort(5, (short) 2);
+        rs1.updateInt(6, 2);
+        rs1.updateFloat(7, 2);
+        rs1.updateDouble(8, 2);
+        rs1.updateTimestamp(9, new Timestamp(cal.getTimeInMillis())); // f08 TIMESTAMP
+        rs1.updateLong(10, 2L);
+        rs1.updateInt(11, 2);
+        rs1.updateDate(12, new Date(cal.getTimeInMillis())); // f11 DATE
+        rs1.updateTime(13, new Time(cal.getTimeInMillis())); // f12 TIME
+        rs1.updateTimestamp(14, new Timestamp(cal.getTimeInMillis())); // f13 DATETIME
+        rs1.updateInt(15, 2002); // f14 YEAR
+        rs1.updateNString(16, "bbb");
+        rs1.updateBytes(17, new byte[] { 50 }); // f16 VARBINARY(30)
+        rs1.updateByte(18, (byte) 0); // f17 BIT
+        rs1.updateObject(19, "{\"key2\": \"value2\"}"); // f18 JSON
+        rs1.updateString(20, "y");
+        rs1.updateString(21, "b");
+        rs1.updateBlob(22, new com.mysql.cj.jdbc.Blob("2".getBytes(), null));
+        rs1.updateClob(23, new com.mysql.cj.jdbc.Clob("2", null));
+        rs1.updateBlob(24, new ByteArrayInputStream(new byte[] { 50 }));
+        rs1.updateClob(25, new StringReader("2"));
+        rs1.updateBlob(26, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
+        rs1.updateClob(27, new StringReader("2222"), 1);
+        rs1.updateObject(28, "2", MysqlType.BLOB);
+        rs1.updateNClob(29, new com.mysql.cj.jdbc.NClob("2", null));
+        rs1.updateString(30, "2");
+        rs1.updateBytes(31, new byte[] { 50 });
+
+        Object p1 = rs1.getObject(32);
+        Object p2 = rs1.getObject(33);
+        rs1.updateObject(32, p2);
+        rs1.updateObject(33, p1);
+
+        rs1.updateNClob(34, new StringReader("bbb"));
+        rs1.updateNClob(35, new StringReader("bbbbbb"), 3);
+        rs1.updateAsciiStream(36, new ByteArrayInputStream("bbb".getBytes()));
+        rs1.updateAsciiStream(37, new ByteArrayInputStream("bbbbbb".getBytes()), 3);
+        rs1.updateBinaryStream(38, new ByteArrayInputStream(new byte[] { 50 }));
+        rs1.updateBinaryStream(39, new ByteArrayInputStream(new byte[] { 50, 51, 52 }), 1);
+        rs1.updateCharacterStream(40, new StringReader("bbb"));
+        rs1.updateCharacterStream(41, new StringReader("bbbbbb"), 3);
+        rs1.updateCharacterStream(42, new StringReader("bbbbbb"), 3L);
+        rs1.updateNCharacterStream(43, new StringReader("bbb"));
+        rs1.updateNCharacterStream(44, new StringReader("bbbbbb"), 3);
+        rs1.updateNull(45);
+
+        SQLXML xml = new MysqlSQLXML(null);
+        xml.setString("<doc/>");
+        rs1.updateSQLXML(46, xml);
+
+        rs1.updateRow();
+        tstBug24525461assertResults2();
+
+    }
+
+    private void tstBug24525461assertResults1() throws Exception {
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f31), AsText(f32) FROM testBug24525461");
+        assertTrue(rs2.next());
+
+        assertEquals(0, rs2.getInt(1));
+        assertEquals(BigDecimal.valueOf(10), rs2.getBigDecimal(2));
+        assertEquals(1, rs2.getInt(3));
+        assertTrue(rs2.getBoolean(4));
+        assertEquals(1, rs2.getInt(5));
+        assertEquals(1, rs2.getInt(6));
+        assertEquals(Float.valueOf(1), rs2.getFloat(7));
+        assertEquals(Double.valueOf(1), rs2.getDouble(8));
+        assertEquals("2000-01-01 00:00:00.0", rs2.getTimestamp(9).toString());
+        assertEquals(BigDecimal.valueOf(1), rs2.getBigDecimal(10));
+        assertEquals(1, rs2.getInt(11));
+        assertEquals("2000-01-01", rs2.getDate(12).toString());
+        assertEquals("12:00:00", rs2.getTime(13).toString());
+        assertEquals("2000-01-01 00:00:00.0", rs2.getTimestamp(14).toString());
+        assertEquals("2000-01-01", rs2.getDate(15).toString());
+        assertEquals("aaa", rs2.getString(16));
+        Blob blob = rs2.getBlob(17);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals(1, rs2.getInt(18));
+        assertEquals("{\"key1\": \"value1\"}", rs2.getString(19));
+        assertEquals("x", rs2.getString(20));
+        assertEquals("a", rs2.getString(21));
+        blob = rs2.getBlob(22);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("1", rs2.getString(23));
+        blob = rs2.getBlob(24);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("1", rs2.getString(25));
+        blob = rs2.getBlob(26);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("1", rs2.getString(27));
+        blob = rs2.getBlob(28);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("1", rs2.getString(29));
+        assertEquals("1", rs2.getString(30));
+        blob = rs2.getBlob(31);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("aaa", rs2.getString(34));
+        assertEquals("aaa", rs2.getString(35));
+        assertEquals("aaa", rs2.getString(36));
+        assertEquals("aaa", rs2.getString(37));
+        blob = rs2.getBlob(38);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        blob = rs2.getBlob(39);
+        assertTrue(Arrays.equals(new byte[] { 49 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("aaa", rs2.getString(40));
+        assertEquals("aaa", rs2.getString(41));
+        assertEquals("aaa", rs2.getString(42));
+        assertEquals("aaa", rs2.getString(43));
+        assertEquals("aaa", rs2.getString(44));
+        assertEquals("1", rs2.getString(45));
+        SQLXML xml = rs2.getSQLXML(46);
+        assertEquals(null, xml.getString());
+        assertEquals("POINT(1 1)", rs2.getString(47));
+        assertEquals("POINT(2 2)", rs2.getString(48));
+        assertFalse(rs2.next());
+    }
+
+    private void tstBug24525461assertResults2() throws Exception {
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f31), AsText(f32) FROM testBug24525461");
+        assertTrue(rs2.next());
+
+        assertEquals(0, rs2.getInt(1));
+        assertEquals(BigDecimal.valueOf(20), rs2.getBigDecimal(2));
+        assertEquals(2, rs2.getInt(3));
+        assertFalse(rs2.getBoolean(4));
+        assertEquals(2, rs2.getInt(5));
+        assertEquals(2, rs2.getInt(6));
+        assertEquals(Float.valueOf(2), rs2.getFloat(7));
+        assertEquals(Double.valueOf(2), rs2.getDouble(8));
+        assertEquals("2002-02-02 10:30:00.0", rs2.getTimestamp(9).toString());
+        assertEquals(BigDecimal.valueOf(2), rs2.getBigDecimal(10));
+        assertEquals(2, rs2.getInt(11));
+        assertEquals("2002-02-02", rs2.getDate(12).toString());
+        assertEquals("10:30:00", rs2.getTime(13).toString());
+        assertEquals("2002-02-02 10:30:00.0", rs2.getTimestamp(14).toString());
+        assertEquals("2002-01-01", rs2.getDate(15).toString());
+        assertEquals("bbb", rs2.getString(16));
+        Blob blob = rs2.getBlob(17);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals(0, rs2.getInt(18));
+        assertEquals("{\"key2\": \"value2\"}", rs2.getString(19));
+        assertEquals("y", rs2.getString(20));
+        assertEquals("b", rs2.getString(21));
+        blob = rs2.getBlob(22);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("2", rs2.getString(23));
+        blob = rs2.getBlob(24);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("2", rs2.getString(25));
+        blob = rs2.getBlob(26);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("2", rs2.getString(27));
+        blob = rs2.getBlob(28);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("2", rs2.getString(29));
+        assertEquals("2", rs2.getString(30));
+        blob = rs2.getBlob(31);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("bbb", rs2.getString(34));
+        assertEquals("bbb", rs2.getString(35));
+        assertEquals("bbb", rs2.getString(36));
+        assertEquals("bbb", rs2.getString(37));
+        blob = rs2.getBlob(38);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        blob = rs2.getBlob(39);
+        assertTrue(Arrays.equals(new byte[] { 50 }, blob.getBytes(1, (int) blob.length())));
+        assertEquals("bbb", rs2.getString(40));
+        assertEquals("bbb", rs2.getString(41));
+        assertEquals("bbb", rs2.getString(42));
+        assertEquals("bbb", rs2.getString(43));
+        assertEquals("bbb", rs2.getString(44));
+        assertEquals(null, rs2.getString(45));
+        SQLXML xml = rs2.getSQLXML(46);
+        assertEquals("<doc/>", xml.getString());
+        assertEquals("POINT(2 2)", rs2.getString(47));
+        assertEquals("POINT(1 1)", rs2.getString(48));
+        assertFalse(rs2.next());
+    }
+
+    /**
+     * Tests fix for Bug#24527173 - QUERY EXECUTION USING PREPARED STMT FAILS WHEN USECURSORFETCH=TRUE
+     */
+    public void testBug24527173() throws Exception {
+
+        createTable("testBug24527173", "(a tinyint auto_increment primary key)");
+        this.stmt.execute("insert into testBug24527173 (a) values (101),(102),(103),(104)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "2");
+        Connection con = getConnectionWithProps(props);
+
+        PreparedStatement ps = con.prepareStatement("select * from testBug24527173");
+        testBug24527173Results(ps, ResultSetImpl.class);
+
+        ps = con.prepareStatement("select * from testBug24527173", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        testBug24527173Results(ps, UpdatableResultSet.class);
+    }
+
+    private void testBug24527173Results(PreparedStatement ps, Class<?> expectedResultClass) throws Exception {
+
+        assertEquals(ServerPreparedStatement.class, ps.getClass());
+
+        final ResultSet rs1 = ps.executeQuery();
+
+        assertEquals(expectedResultClass, rs1.getClass());
+
+        // ensure that cursor exists
+        Field f = MysqlaResultset.class.getDeclaredField("rowData");
+        f.setAccessible(true);
+        assertTrue(f.get(rs1).getClass().isAssignableFrom(ResultsetRowsCursor.class));
+
+        int i = 101;
+        while (rs1.next()) {
+            assertEquals(i++, rs1.getInt("a"));
+        }
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.absolute(1);
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.afterLast();
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.beforeFirst();
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.first();
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.last();
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.previous();
+                return null;
+            }
+        });
+
+        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.relative(1);
+                return null;
+            }
+        });
     }
 }

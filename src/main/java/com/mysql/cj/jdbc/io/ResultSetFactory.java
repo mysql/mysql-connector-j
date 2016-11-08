@@ -67,6 +67,15 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl> {
     }
 
     @Override
+    public int getFetchSize() {
+        try {
+            return this.stmt.getFetchSize();
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
     public ResultSetImpl createFromProtocolEntity(ProtocolEntity protocolEntity) {
         try {
             if (protocolEntity instanceof OkPacket) {

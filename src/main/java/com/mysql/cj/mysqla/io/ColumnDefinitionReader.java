@@ -31,7 +31,6 @@ import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
-import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 
 public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefinition> {
 
@@ -49,7 +48,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
         long columnCount = cdf.getColumnCount();
         ColumnDefinition cdef = cdf.getColumnDefinitionFromCache();
 
-        if (cdef != null) {
+        if (cdef != null && !cdf.mergeColumnDefinitions()) {
             for (int i = 0; i < columnCount; i++) {
                 this.protocol.skipPacket();
             }
@@ -73,8 +72,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
             fields[i] = unpackField(fieldPacket, this.protocol.getServerSession().getCharacterSetMetadata());
         }
 
-        // TODO do it via ColumnDefinitionFactory
-        return new MysqlaColumnDefinition(fields);
+        return cdf.createFromFields(fields);
     }
 
     /**

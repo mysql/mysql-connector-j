@@ -140,8 +140,7 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
         } else if (len > 0) {
             unpackedRowData[columnIndex] = binaryData.readBytes(StringLengthDataType.STRING_FIXED, len);
         } else {
-            throw ExceptionFactory.createException(Messages.getString("MysqlIO.97") + type + Messages.getString("MysqlIO.98") + columnIndex
-                    + Messages.getString("MysqlIO.99") + fields.length + Messages.getString("MysqlIO.100"));
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, columnIndex, fields.length }));
         }
     }
 }

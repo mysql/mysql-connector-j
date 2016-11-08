@@ -26,6 +26,7 @@ package com.mysql.cj.mysqla.result;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.ValueDecoder;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.core.io.MysqlBinaryValueDecoder;
 import com.mysql.cj.core.io.MysqlTextValueDecoder;
 
 /**
@@ -47,6 +48,11 @@ public class ByteArrayRow extends AbstractResultsetRow {
 
         this.internalRowData = internalRowData;
         this.valueDecoder = new MysqlTextValueDecoder();
+    }
+
+    @Override
+    public boolean isBinaryEncoded() {
+        return this.valueDecoder instanceof MysqlBinaryValueDecoder;
     }
 
     @Override

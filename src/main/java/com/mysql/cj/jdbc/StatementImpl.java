@@ -2501,8 +2501,7 @@ public class StatementImpl implements Statement {
 
     private boolean useServerFetch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return this.useCursorFetch && this.fetchSize > 0 && this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
-                    && this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
+            return this.useCursorFetch && this.fetchSize > 0 && this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
         }
     }
 
@@ -2708,10 +2707,6 @@ public class StatementImpl implements Statement {
 
     public long getServerStatementId() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("Statement.65"));
-    }
-
-    boolean isCursorRequired() throws SQLException {
-        return false;
     }
 
     public ResultSetFactory getResultSetFactory() {
