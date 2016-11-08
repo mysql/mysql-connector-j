@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.api.MysqlConnection;
@@ -618,8 +619,8 @@ public class XProtocol implements Protocol {
     @SuppressWarnings("unchecked")
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, Object args, String metadataCharacterSet, TimeZone defaultTimeZone) {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        com.mysql.cj.api.x.io.MessageListener l = new SqlResultMessageListener(f,
-                (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), defaultTimeZone);
+        com.mysql.cj.api.x.io.MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet),
+                defaultTimeZone);
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f,
                 () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
@@ -706,8 +707,25 @@ public class XProtocol implements Protocol {
         this.writer.write(Close.getDefaultInstance());
     }
 
-    public String getPluginVersion() {
-        return this.capabilities.get("plugin.version").getScalar().getVString().getValue().toStringUtf8();
+    public String getNodeType() {
+        return this.capabilities.get("node_type").getScalar().getVString().getValue().toStringUtf8();
+    }
+
+    public boolean getTls() {
+        return this.capabilities.get("tls").getScalar().getVBool();
+    }
+
+    public boolean getClientPwdExpireOk() {
+        return this.capabilities.get("client.pwd_expire_ok").getScalar().getVBool();
+    }
+
+    public List<String> getAuthenticationMechanisms() {
+        return this.capabilities.get("authentication.mechanisms").getArray().getValueList().stream()
+                .map(v -> v.getScalar().getVString().getValue().toStringUtf8()).collect(Collectors.toList());
+    }
+
+    public String getDocFormats() {
+        return this.capabilities.get("doc.formats").getScalar().getVString().getValue().toStringUtf8();
     }
 
     public void sendCreateCollectionIndex(String schemaName, String collectionName, CreateIndexParams params) {

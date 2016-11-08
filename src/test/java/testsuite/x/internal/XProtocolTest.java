@@ -506,6 +506,10 @@ public class XProtocolTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.protocol.getPluginVersion();
+        assertEquals("mysql", this.protocol.getNodeType());
+        assertFalse(this.protocol.getTls());
+        assertFalse(this.protocol.getClientPwdExpireOk());
+        assertTrue(this.protocol.getAuthenticationMechanisms().contains("MYSQL41"));
+        assertEquals("text", this.protocol.getDocFormats());
     }
 }
