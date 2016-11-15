@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.41
 
+  - Fix for Bug#69526 (17035755), 'Abandoned connection cleanup thread' at mysql-connector-java-5.1.25.
+
   - Fix for Bug#82826 (24942672), Unneeded version requirement for javax.net.ssl Import-Package on OSGi MANIFEST.MF.
 
 09-30-16 - Version 5.1.40

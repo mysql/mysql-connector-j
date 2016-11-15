@@ -101,9 +101,11 @@ public class NonRegisteringDriver implements java.sql.Driver {
     }
 
     static {
-        AbandonedConnectionCleanupThread referenceThread = new AbandonedConnectionCleanupThread();
-        referenceThread.setDaemon(true);
-        referenceThread.start();
+        try {
+            Class.forName(AbandonedConnectionCleanupThread.class.getName());
+        } catch (ClassNotFoundException e) {
+            // ignore
+        }
     }
 
     /**
