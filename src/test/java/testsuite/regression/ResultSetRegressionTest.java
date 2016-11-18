@@ -86,6 +86,7 @@ import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.mysqla.result.MysqlaResultset;
@@ -5732,5 +5733,22 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    /**
+     * Tests fix for BUG#23702040 - JDBCDATEVALUEFACTORY FAILS TO PARSE SOME DATES.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug23702040() throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("Europe/Bucharest"));
+        sdf.setLenient(false);
+
+        java.util.Date expected = sdf.parse("1994-03-27");
+        Date fromFactory = new JdbcDateValueFactory(TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
+
+        assertEquals(expected.getTime(), fromFactory.getTime());
     }
 }

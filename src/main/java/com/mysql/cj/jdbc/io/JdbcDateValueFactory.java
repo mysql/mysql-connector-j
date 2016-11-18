@@ -62,7 +62,8 @@ public class JdbcDateValueFactory extends DefaultValueFactory<Date> {
                 throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
             }
 
-            this.cal.set(year, month - 1, day, 0, 0, 0);
+            this.cal.clear();
+            this.cal.set(year, month - 1, day);
             long ms = this.cal.getTimeInMillis();
             return new Date(ms);
         }
