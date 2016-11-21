@@ -5733,4 +5733,36 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         });
     }
+
+    /**
+     * Tests fix for Bug#82707, WRONG MILLI SECOND VALUE RETURNED FROM TIMESTAMP COLUMN.
+     */
+    public void testBug82707() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return; // fractional seconds are not supported in previous versions
+        }
+
+        List<String> ts = new ArrayList<>();
+        ts.add("2016-08-24 07:47:46.057000");
+        ts.add("2016-08-24 16:53:10.056000");
+        ts.add("2016-08-24 16:53:20.000000");
+        ts.add("2016-08-24 16:53:28.000450");
+        ts.add("2016-08-24 16:53:29.000000");
+        ts.add("2016-08-24 16:53:30.002300");
+
+        createTable("testBug82707", "(Started  TIMESTAMP(6))");
+        for (String string : ts) {
+            this.stmt.executeUpdate("insert into testBug82707 values('" + string + "')");
+        }
+
+        this.rs = this.stmt.executeQuery("select Started from testBug82707");
+        int id = 0;
+        while (this.rs.next()) {
+            String expected = ts.get(id++) + "000";
+            if (expected.endsWith(".000000000")) {
+                expected = expected.replace(".000000000", "");
+            }
+            assertEquals(expected, this.rs.getString("Started"));
+        }
+    }
 }
