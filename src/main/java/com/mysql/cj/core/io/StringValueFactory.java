@@ -56,7 +56,7 @@ public class StringValueFactory implements ValueFactory<String> {
      */
     public String createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (nanos > 0) {
-            return String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, nanos);
+            return String.format("%02d:%02d:%02d.%09d", hours, minutes, seconds, nanos);
         }
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
