@@ -137,7 +137,7 @@ public class ColumnImpl implements Column {
     }
 
     public boolean isNumberSigned() {
-        return !this.field.isUnsigned();
+        return MysqlType.isSigned(this.field.getMysqlType());
     }
 
     public String getCollationName() {

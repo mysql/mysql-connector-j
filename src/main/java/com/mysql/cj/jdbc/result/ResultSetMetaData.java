@@ -29,6 +29,7 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -589,22 +590,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      *             if a database access error occurs
      */
     public boolean isSigned(int column) throws SQLException {
-        Field f = getField(column);
-
-        switch (f.getMysqlType()) {
-            case DECIMAL:
-            case TINYINT:
-            case SMALLINT:
-            case INT:
-            case BIGINT:
-            case MEDIUMINT:
-            case FLOAT:
-            case DOUBLE:
-                return true;
-
-            default:
-                return false;
-        }
+        return MysqlType.isSigned(getField(column).getMysqlType());
     }
 
     /**
