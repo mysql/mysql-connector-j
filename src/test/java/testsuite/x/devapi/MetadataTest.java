@@ -75,7 +75,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.STRING, idCol.getType());
         assertEquals(32, idCol.getLength());
         assertEquals(0, idCol.getFractionalDigits());
-        assertEquals(true, idCol.isNumberSigned()); // odd default
+        assertEquals(false, idCol.isNumberSigned()); // odd default
         assertEquals("latin1_swedish_ci", idCol.getCollationName());
         assertEquals("latin1", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
@@ -94,7 +94,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.STRING, nameCol.getType());
         assertEquals(20, nameCol.getLength());
         assertEquals(0, nameCol.getFractionalDigits());
-        assertEquals(true, nameCol.isNumberSigned());
+        assertEquals(false, nameCol.isNumberSigned());
         assertEquals("latin1_swedish_ci", nameCol.getCollationName());
         assertEquals("latin1", nameCol.getCharacterSetName());
         assertEquals(false, nameCol.isPadded());
@@ -113,7 +113,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.DATE, birthdayCol.getType());
         assertEquals(10, birthdayCol.getLength());
         assertEquals(0, birthdayCol.getFractionalDigits());
-        assertEquals(true, birthdayCol.isNumberSigned());
+        assertEquals(false, birthdayCol.isNumberSigned());
         assertEquals(null, birthdayCol.getCollationName());
         assertEquals(null, birthdayCol.getCharacterSetName());
         assertEquals(false, birthdayCol.isPadded());
@@ -162,7 +162,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.STRING, idCol.getType());
         assertEquals(32, idCol.getLength());
         assertEquals(0, idCol.getFractionalDigits());
-        assertEquals(true, idCol.isNumberSigned());
+        assertEquals(false, idCol.isNumberSigned());
         assertEquals("latin1_swedish_ci", idCol.getCollationName());
         assertEquals("latin1", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
@@ -225,7 +225,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.STRING, idCol.getType());
         assertEquals(128, idCol.getLength());
         assertEquals(0, idCol.getFractionalDigits());
-        assertEquals(true, idCol.isNumberSigned());
+        assertEquals(false, idCol.isNumberSigned());
         assertEquals("utf8mb4_general_ci", idCol.getCollationName());
         assertEquals("utf8mb4", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
@@ -244,7 +244,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.JSON, docCol.getType());
         assertEquals(4294967295L, docCol.getLength());
         assertEquals(0, docCol.getFractionalDigits());
-        assertEquals(true, docCol.isNumberSigned());
+        assertEquals(false, docCol.isNumberSigned());
         assertEquals("binary", docCol.getCollationName());
         assertEquals("binary", docCol.getCharacterSetName());
         assertEquals(false, docCol.isPadded());
@@ -280,7 +280,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.BIT, c.getType());
         assertEquals(1, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals(null, c.getCollationName());
         assertEquals(null, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -299,7 +299,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.STRING, c.getType());
         assertEquals(20, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals("latin1_swedish_ci", c.getCollationName());
         assertEquals("latin1", c.getCharacterSetName());
         assertEquals(true, c.isPadded());
@@ -413,7 +413,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.TIME, c.getType());
         assertEquals(10, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals(null, c.getCollationName());
         assertEquals(null, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -432,7 +432,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.DATETIME, c.getType());
         assertEquals(19, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals(null, c.getCollationName());
         assertEquals(null, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -451,7 +451,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.TIMESTAMP, c.getType());
         assertEquals(19, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals(null, c.getCollationName());
         assertEquals(null, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -470,7 +470,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.DATE, c.getType());
         assertEquals(10, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals(null, c.getCollationName());
         assertEquals(null, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -489,7 +489,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.SET, c.getType());
         assertEquals(3, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals("latin1_swedish_ci", c.getCollationName());
         assertEquals("latin1", c.getCharacterSetName());
         assertEquals(false, c.isPadded());
@@ -508,7 +508,7 @@ public class MetadataTest extends TableTest {
         assertEquals(Type.ENUM, c.getType());
         assertEquals(1, c.getLength());
         assertEquals(0, c.getFractionalDigits());
-        assertEquals(true, c.isNumberSigned());
+        assertEquals(false, c.isNumberSigned());
         assertEquals("latin1_swedish_ci", c.getCollationName());
         assertEquals("latin1", c.getCharacterSetName());
         assertEquals(false, c.isPadded());

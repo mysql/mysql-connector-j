@@ -843,6 +843,22 @@ public enum MysqlType implements SQLType {
         }
     }
 
+    public static boolean isSigned(MysqlType type) {
+        switch (type) {
+            case DECIMAL:
+            case TINYINT:
+            case SMALLINT:
+            case INT:
+            case BIGINT:
+            case MEDIUMINT:
+            case FLOAT:
+            case DOUBLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private final String name;
     protected int jdbcType;
     protected final Class<?> javaClass;
