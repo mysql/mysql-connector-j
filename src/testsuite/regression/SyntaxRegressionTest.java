@@ -336,14 +336,35 @@ public class SyntaxRegressionTest extends BaseTestCase {
             createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
             this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
-            if (versionMeetsMinimum(5, 7, 4)) {
+
+            // Using Statement, with and without validation.
+            if (versionMeetsMinimum(5, 7, 5)) {
+                this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+                this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
+            } else if (versionMeetsMinimum(5, 7, 4)) {
                 this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             } else {
+                this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
                 this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             }
 
-            if (versionMeetsMinimum(5, 7, 4)) {
+            // Using Client PreparedStatement, with validation.
+            if (versionMeetsMinimum(5, 7, 5)) {
+                this.pstmt = this.conn
+                        .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+            } else if (versionMeetsMinimum(5, 7, 4)) {
                 this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+            } else {
+                this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+            }
+            assertEquals(Util.isJdbc4() ? Class.forName(Util.isJdbc42() ? "com.mysql.jdbc.JDBC42PreparedStatement" : "com.mysql.jdbc.JDBC4PreparedStatement")
+                    : com.mysql.jdbc.PreparedStatement.class, this.pstmt.getClass());
+            this.pstmt.executeUpdate();
+
+            // Using Client PreparedStatement, without validation.
+            if (versionMeetsMinimum(5, 7, 5)) {
+                this.pstmt = this.conn
+                        .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
             } else {
                 this.pstmt = this.conn
                         .prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
@@ -355,11 +376,29 @@ public class SyntaxRegressionTest extends BaseTestCase {
             Connection testConn = null;
             try {
                 testConn = getConnectionWithProps("useServerPrepStmts=true,emulateUnsupportedPstmts=false");
-                if (versionMeetsMinimum(5, 7, 4)) {
+
+                // Using Server PreparedStatement, with validation.
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    this.pstmt = testConn
+                            .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+                } else if (versionMeetsMinimum(5, 7, 4)) {
                     this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
                 } else {
                     this.pstmt = testConn
                             .prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+
+                }
+                assertEquals(Util.isJdbc4()
+                        ? Class.forName(Util.isJdbc42() ? "com.mysql.jdbc.JDBC42ServerPreparedStatement" : "com.mysql.jdbc.JDBC4ServerPreparedStatement")
+                        : com.mysql.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
+                this.pstmt.executeUpdate();
+
+                // Using Server PreparedStatement, without validation.
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    this.pstmt = testConn
+                            .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
+                } else {
+                    this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 
                 }
                 assertEquals(Util.isJdbc4()
