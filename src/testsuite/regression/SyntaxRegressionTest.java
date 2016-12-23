@@ -1278,4 +1278,67 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertEquals(processesHint ? 1 : 0, this.rs.getInt(1));
         assertFalse(this.rs.next());
     }
+
+    /**
+     * WL#6205 - InnoDB: Implement CREATE TABLESPACE for general use.
+     * 
+     * Tests support for new CREATE TABLESPACE syntax that extends this feature to InnoDB.
+     * 
+     * CREATE TABLESPACE tablespace_name ADD DATAFILE 'file_name' [FILE_BLOCK_SIZE = value] [ENGINE [=] engine_name]
+     */
+    public void testCreateTablespace() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        try {
+            this.stmt.execute("CREATE TABLESPACE testTs1 ADD DATAFILE 'testTs1.ibd'");
+            this.stmt.execute("CREATE TABLESPACE testTs2 ADD DATAFILE 'testTs2.ibd'");
+
+            testCreateTablespaceCheckTablespaces(2);
+
+            createTable("testTs1Tbl1", "(id INT) TABLESPACE testTs1");
+            createTable("testTs1Tbl2", "(id INT) TABLESPACE testTs1");
+            createTable("testTs2Tbl1", "(id INT) TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTables("testTs1", 2);
+            testCreateTablespaceCheckTables("testTs2", 1);
+
+            this.stmt.execute("ALTER TABLE testTs1Tbl2 TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTables("testTs1", 1);
+            testCreateTablespaceCheckTables("testTs2", 2);
+
+            dropTable("testTs1Tbl1");
+            dropTable("testTs1Tbl2");
+            dropTable("testTs2Tbl1");
+
+            testCreateTablespaceCheckTables("testTs1", 0);
+            testCreateTablespaceCheckTables("testTs2", 0);
+
+        } finally {
+            // Make sure the tables are dropped before the tablespaces.
+            dropTable("testTs1Tbl1");
+            dropTable("testTs1Tbl2");
+            dropTable("testTs2Tbl1");
+
+            this.stmt.execute("DROP TABLESPACE testTs1");
+            this.stmt.execute("DROP TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTablespaces(0);
+        }
+    }
+
+    private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tablespaces WHERE name LIKE 'testTs_'");
+        assertTrue(this.rs.next());
+        assertEquals(expectedTsCount, this.rs.getInt(1));
+    }
+
+    private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tables a, information_schema.innodb_sys_tablespaces b "
+                + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
+        assertTrue(this.rs.next());
+        assertEquals(expectedTblCount, this.rs.getInt(1));
+    }
 }
