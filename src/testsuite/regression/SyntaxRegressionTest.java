@@ -34,6 +34,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -1340,5 +1342,62 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
         assertTrue(this.rs.next());
         assertEquals(expectedTblCount, this.rs.getInt(1));
+    }
+
+    /**
+     * WL#6747 - InnoDB: make fill factor settable.
+     * 
+     * Tests support for new syntax for setting indices MERGE_THRESHOLD on CREATE TABLE.
+     * 
+     * index_option:
+     * COMMENT 'MERGE_THRESHOLD=n'
+     */
+    public void testSetMergeThreshold() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Map<String, Integer> keyMergeThresholds = new HashMap<String, Integer>();
+        keyMergeThresholds.put("k2", 45);
+        keyMergeThresholds.put("k3", 40);
+        keyMergeThresholds.put("k23", 35);
+        keyMergeThresholds.put("k24", 30);
+        int tableMergeThreshold = 25;
+
+        // Create table with both table and per index merge thresholds.
+        createTable("testSetMergeThreshold",
+                "(c1 INT, c2 INT, c3 INT, c4 INT, KEY k1 (c1), KEY k2 (c2) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k2")
+                        + "', KEY k3 (c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k3") + "', KEY k23 (c2, c3) COMMENT 'MERGE_THRESHOLD="
+                        + keyMergeThresholds.get("k23") + "', KEY k24 (c2, c4) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k24")
+                        + "') COMMENT 'MERGE_THRESHOLD=" + tableMergeThreshold + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Change table's merge threshold.
+        tableMergeThreshold++;
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold COMMENT 'MERGE_THRESHOLD=" + tableMergeThreshold + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Change index' merge threshold.
+        keyMergeThresholds.put("k3", 41);
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold DROP KEY k3");
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold ADD KEY k3 (c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k3") + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Add new index with a non-default merge threshold value.
+        keyMergeThresholds.put("k123", 15);
+        this.stmt.execute("CREATE INDEX k123 ON testSetMergeThreshold (c1, c2, c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k123") + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+    }
+
+    private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_sys_indexes WHERE table_id = "
+                + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+
+        while (this.rs.next()) {
+            int expected = keyMergeThresholds.containsKey(this.rs.getString(1)) ? keyMergeThresholds.get(this.rs.getString(1)) : defaultMergeThreshold;
+            assertEquals("MERGE_THRESHOLD for index " + this.rs.getString(1), expected, this.rs.getInt(2));
+        }
+        assertTrue(this.rs.last());
+        assertTrue(this.rs.getRow() >= keyMergeThresholds.size());
     }
 }
