@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -1718,5 +1719,51 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 assertFalse("Query should return exactly one row.", this.rs.next());
             }
         }
+    }
+
+    /**
+     * WL#8252 - GCS Replication: Plugin [SERVER CHANGES]
+     * 
+     * Test syntax for GCS Replication commands:
+     * - START GROUP_REPLICATION
+     * - STOP GROUP_REPLICATION
+     */
+    public void testGcsReplicationCmds() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+        String expectedErrMsg = "The server is not configured properly to be an active member of the group\\. Please see more details on error log\\.";
+        final Statement testStmt = this.stmt;
+        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt.execute("START GROUP_REPLICATION");
+                return null;
+            }
+        });
+        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt.execute("STOP GROUP_REPLICATION");
+                return null;
+            }
+        });
+
+        Connection spsConn = getConnectionWithProps("useServerPrepStmts=true");
+        for (Connection testConn : new Connection[] { this.conn, spsConn }) {
+            final PreparedStatement testPstmt1 = testConn.prepareStatement("START GROUP_REPLICATION");
+            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmt1.execute();
+                    return null;
+                }
+            });
+            final PreparedStatement testPstmt2 = testConn.prepareStatement("STOP GROUP_REPLICATION");
+            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmt2.execute();
+                    return null;
+                }
+            });
+        }
+        spsConn.close();
     }
 }
