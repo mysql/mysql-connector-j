@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
@@ -1765,5 +1766,70 @@ public class SyntaxRegressionTest extends BaseTestCase {
             });
         }
         spsConn.close();
+    }
+
+    /**
+     * WL#6054 - Temporarily disablement of users
+     * 
+     * Test user account locking syntax:
+     * 
+     * CREATE|ALTER USER (...)
+     * - lock_option: { ACCOUNT LOCK | ACCOUNT UNLOCK }
+     */
+    public void testUserAccountLocking() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        final String user = "testAccLck";
+        final String pwd = "testAccLck";
+        final Properties props = new Properties();
+        props.setProperty("user", user);
+        props.setProperty("password", pwd);
+
+        for (String accLock : new String[] { "/* default */", "ACCOUNT UNLOCK", "ACCOUNT LOCK" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "' " + accLock);
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            if (accLock.equals("ACCOUNT LOCK")) {
+                assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                getConnectionWithProps(props);
+                                return null;
+                            }
+                        });
+                this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
+            }
+
+            final Connection testConn1 = getConnectionWithProps(props);
+            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT LOCK");
+            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next()); // Previous authentication still valid.
+
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            ((MySQLConnection) testConn1).changeUser(user, pwd);
+                            return null;
+                        }
+                    });
+            assertFalse("Test case: " + accLock + ",", testConn1.isClosed());
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testConn1.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+            assertTrue("Test case: " + accLock + ",", testConn1.isClosed());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
+            Connection testConn2 = getConnectionWithProps(props);
+            assertTrue("Test case: " + accLock + ",", testConn2.createStatement().executeQuery("SELECT 1").next());
+            testConn2.close();
+
+            dropUser("'" + user + "'@'%'");
+        }
     }
 }
