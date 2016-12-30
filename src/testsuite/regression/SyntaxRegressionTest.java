@@ -1832,4 +1832,75 @@ public class SyntaxRegressionTest extends BaseTestCase {
             dropUser("'" + user + "'@'%'");
         }
     }
+
+    /**
+     * WL#7131 - Add timestamp in mysql.user on the last time the password was changed
+     * 
+     * Test user account password expiration syntax:
+     * 
+     * CREATE|ALTER USER (...)
+     * - password_option: { PASSWORD EXPIRE | PASSWORD EXPIRE DEFAULT | PASSWORD EXPIRE NEVER | PASSWORD EXPIRE INTERVAL N DAY }
+     */
+    public void testUserAccountPwdExpiration() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        final String user = "testAccPwdExp";
+        final String pwd = "testAccPwdExp";
+        final Properties props = new Properties();
+        props.setProperty("user", user);
+        props.setProperty("password", pwd);
+
+        // CREATE USER syntax.
+        for (String accPwdExp : new String[] { "/* default */", "PASSWORD EXPIRE", "PASSWORD EXPIRE DEFAULT", "PASSWORD EXPIRE NEVER",
+                "PASSWORD EXPIRE INTERVAL 365 DAY" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "' " + accPwdExp);
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            if (accPwdExp.equals("PASSWORD EXPIRE")) {
+                assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                getConnectionWithProps(props);
+                                return null;
+                            }
+                        });
+            } else {
+                Connection testConn = getConnectionWithProps(props);
+                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+                testConn.close();
+            }
+
+            dropUser("'" + user + "'@'%'");
+        }
+
+        // ALTER USER syntax.
+        for (String accPwdExp : new String[] { "PASSWORD EXPIRE", "PASSWORD EXPIRE DEFAULT", "PASSWORD EXPIRE NEVER", "PASSWORD EXPIRE INTERVAL 365 DAY" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "'");
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            final Connection testConn = getConnectionWithProps(props);
+            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' " + accPwdExp);
+            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+
+            if (accPwdExp.equals("PASSWORD EXPIRE")) {
+                assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                ((MySQLConnection) testConn).changeUser(user, pwd);
+                                return null;
+                            }
+                        });
+            } else {
+                ((MySQLConnection) testConn).changeUser(user, pwd);
+                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+            }
+
+            testConn.close();
+            dropUser("'" + user + "'@'%'");
+        }
+    }
 }
