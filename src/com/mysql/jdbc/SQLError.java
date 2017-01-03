@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,7 +55,7 @@ public class SQLError {
     // SQL-92
     public static final String SQL_STATE_WARNING = "01000";
     public static final String SQL_STATE_DISCONNECT_ERROR = "01002";
-    public static final String SQL_STATE_DATE_TRUNCATED = "01004";
+    public static final String SQL_STATE_DATA_TRUNCATED = "01004";
     public static final String SQL_STATE_PRIVILEGE_NOT_REVOKED = "01006";
     public static final String SQL_STATE_NO_DATA = "02000";
     public static final String SQL_STATE_WRONG_NO_OF_PARAMETERS = "07001";
@@ -160,7 +160,7 @@ public class SQLError {
 
         sqlStateMessages = new HashMap<String, String>();
         sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages.getString("SQLError.35"));
-        sqlStateMessages.put(SQL_STATE_DATE_TRUNCATED, Messages.getString("SQLError.36"));
+        sqlStateMessages.put(SQL_STATE_DATA_TRUNCATED, Messages.getString("SQLError.36"));
         sqlStateMessages.put(SQL_STATE_PRIVILEGE_NOT_REVOKED, Messages.getString("SQLError.37"));
         sqlStateMessages.put(SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, Messages.getString("SQLError.38"));
         sqlStateMessages.put(SQL_STATE_ERROR_IN_ROW, Messages.getString("SQLError.39"));
