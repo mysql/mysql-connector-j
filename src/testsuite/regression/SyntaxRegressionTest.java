@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1901,6 +1901,69 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
             testConn.close();
             dropUser("'" + user + "'@'%'");
+        }
+    }
+
+    /**
+     * WL#8548 - InnoDB: Transparent data encryption.
+     * WL#8821 - Innodb tablespace encryption key rotation SQL commands.
+     * 
+     * Test new syntax:
+     * - CREATE|ALTER TABLE (...) ENCRYPTION [=] {'Y' | 'N'}
+     * - ALTER INSTANCE ROTATE INNODB MASTER KEY
+     */
+    public void testInnodbTablespaceEncryption() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 11)) {
+            return;
+        }
+
+        boolean keyringPluginIsActive = false;
+        this.rs = this.stmt.executeQuery("SELECT (PLUGIN_STATUS='ACTIVE') AS `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME LIKE 'keyring_file'");
+        if (this.rs.next()) {
+            keyringPluginIsActive = this.rs.getBoolean(1);
+        }
+
+        if (keyringPluginIsActive) {
+            createTable("testInnodbTablespaceEncryption", "(id INT, txt VARCHAR(100)) ENCRYPTION='y'");
+
+            this.stmt.executeUpdate("INSERT INTO testInnodbTablespaceEncryption VALUES (123, 'this is a test')");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("ALTER TABLE testInnodbTablespaceEncryption ENCRYPTION='n'");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+        } else { // Syntax can still be tested by with different outcome.
+            System.out.println("Although not required it is recommended that the 'keyring_file' plugin is properly installed and configured to run this test.");
+
+            final Statement testStmt = this.conn.createStatement();
+            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.execute("CREATE TABLE testInnodbTablespaceEncryption (id INT) ENCRYPTION='y'");
+                    testStmt.execute("DROP TABLE testInnodbTablespaceEncryption");
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
+                    return null;
+                }
+            });
         }
     }
 }
