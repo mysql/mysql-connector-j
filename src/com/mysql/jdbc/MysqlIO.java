@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2486,17 +2486,13 @@ public class MysqlIO {
 
                     this.sendPacket.writeByte((byte) command);
 
-                    if ((command == MysqlDefs.INIT_DB) || (command == MysqlDefs.CREATE_DB) || (command == MysqlDefs.DROP_DB) || (command == MysqlDefs.QUERY)
-                            || (command == MysqlDefs.COM_PREPARE)) {
+                    if ((command == MysqlDefs.INIT_DB) || (command == MysqlDefs.QUERY) || (command == MysqlDefs.COM_PREPARE)) {
                         if (extraDataCharEncoding == null) {
                             this.sendPacket.writeStringNoNull(extraData);
                         } else {
                             this.sendPacket.writeStringNoNull(extraData, extraDataCharEncoding, this.connection.getServerCharset(),
                                     this.connection.parserKnowsUnicode(), this.connection);
                         }
-                    } else if (command == MysqlDefs.PROCESS_KILL) {
-                        long id = Long.parseLong(extraData);
-                        this.sendPacket.writeLong(id);
                     }
 
                     send(this.sendPacket, this.sendPacket.getPosition());
