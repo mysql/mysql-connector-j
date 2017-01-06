@@ -4973,7 +4973,9 @@ public class MysqlIO {
 
     protected void setSocketTimeout(int milliseconds) throws SQLException {
         try {
-            this.mysqlConnection.setSoTimeout(milliseconds);
+            if (this.mysqlConnection != null) {
+                this.mysqlConnection.setSoTimeout(milliseconds);
+            }
         } catch (SocketException e) {
             SQLException sqlEx = SQLError.createSQLException("Invalid socket timeout value or state", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());

@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.41
 
+  - Fix for Bug#75615 (21181249), Incorrect implementation of Connection.setNetworkTimeout().
+
   - Fix for Bug#81706 (23535001), NullPointerException in driver.
 
   - Fix for Bug#81108 (23264511), FabricMySQLConnectionProxy.setShardTable method logic miss.

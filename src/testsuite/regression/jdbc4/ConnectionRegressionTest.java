@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -261,8 +261,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
-     * @throws Exception
+     * Tests fix for Bug#56122 - JDBC4 functionality failure when using replication connections.
      */
     public void testBug56122() throws Exception {
         for (final Connection testConn : new Connection[] { this.conn, getFailoverConnection(), getLoadBalancedConnection(),

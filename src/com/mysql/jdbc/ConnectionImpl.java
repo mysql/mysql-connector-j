@@ -25,6 +25,7 @@ package com.mysql.jdbc;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -5521,19 +5522,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             checkClosed();
-            final MysqlIO mysqlIo = this.io;
-
-            executor.execute(new Runnable() {
-
-                public void run() {
-                    try {
-                        setSocketTimeout(milliseconds); // for re-connects
-                        mysqlIo.setSocketTimeout(milliseconds);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+            executor.execute(new NetworkTimeoutSetter(this, this.io, milliseconds));
         }
     }
 
@@ -5551,5 +5540,34 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
         this.eventSink = h;
+    }
+
+    private static class NetworkTimeoutSetter implements Runnable {
+        private final WeakReference<ConnectionImpl> connImplRef;
+        private final WeakReference<MysqlIO> mysqlIoRef;
+        private final int milliseconds;
+
+        public NetworkTimeoutSetter(ConnectionImpl conn, MysqlIO io, int milliseconds) {
+            this.connImplRef = new WeakReference<ConnectionImpl>(conn);
+            this.mysqlIoRef = new WeakReference<MysqlIO>(io);
+            this.milliseconds = milliseconds;
+        }
+
+        public void run() {
+            try {
+                ConnectionImpl conn = this.connImplRef.get();
+                if (conn != null) {
+                    synchronized (conn.getConnectionMutex()) {
+                        conn.setSocketTimeout(this.milliseconds); // for re-connects
+                        MysqlIO io = this.mysqlIoRef.get();
+                        if (io != null) {
+                            io.setSocketTimeout(this.milliseconds);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
