@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -60,7 +60,10 @@ public class HashShardMapping extends ShardMapping {
 
     @Override
     protected ShardIndex getShardIndexForKey(String stringKey) {
-        String hashedKey = new BigInteger(/* unsigned/positive */1, md5Hasher.digest(stringKey.getBytes())).toString(16).toUpperCase();
+        String hashedKey;
+        synchronized (md5Hasher) {
+            hashedKey = new BigInteger(/* unsigned/positive */1, md5Hasher.digest(stringKey.getBytes())).toString(16).toUpperCase();
+        }
 
         // pad out to 32 digits
         for (int i = 0; i < (32 - hashedKey.length()); ++i) {

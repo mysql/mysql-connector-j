@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,8 +23,16 @@
 
 package testsuite.fabric;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.mysql.fabric.HashShardMapping;
 import com.mysql.fabric.RangeShardMapping;
@@ -118,6 +126,68 @@ public class TestShardMapping extends TestCase {
         // test a random set of values. we should never return null
         for (int i = 0; i < 1000; ++i) {
             assertNotNull(mapping.getGroupNameForKey("" + i));
+        }
+    }
+
+    /**
+     * Tests fix for Bug#82203 - com.mysql.fabric.HashShardMapping is not thread safe.
+     * 
+     * This test is non-deterministic but most runs used to fail before 5 to 10 seconds. This test runs at most for 30 seconds.
+     */
+    public void testBug82203() throws Throwable {
+        int numberOfThreads = 2;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        List<Future<?>> resultList = new ArrayList<Future<?>>();
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            resultList.add(executorService.submit(new TestBug82203RunnableMock(30)));
+        }
+
+        for (Future<?> f : resultList) {
+            try {
+                f.get();
+            } catch (ExecutionException e) {
+                if (e.getCause() != null) {
+                    throw e.getCause();
+                }
+                throw e;
+            }
+        }
+        executorService.shutdown();
+    }
+
+    private static class TestBug82203RunnableMock extends HashShardMapping implements Runnable {
+        private static volatile boolean run = true;
+        private long time;
+
+        public TestBug82203RunnableMock(int secs) {
+            super(0, null, null, null, Collections.singleton(new ShardIndex("", 1, "")));
+            this.time = TimeUnit.SECONDS.toMillis(secs);
+        }
+
+        public void run() {
+            try {
+                long now = System.currentTimeMillis();
+                while (run && System.currentTimeMillis() - now < this.time) {
+                    int id = ((int) (Math.random() * 100)) % 100 + 1;
+                    String key = makeKey(id);
+                    getShardIndexForKey(key);
+                }
+            } catch (Exception e) {
+                fail("Due to: " + e);
+            } finally {
+                run = false;
+            }
+        }
+
+        private String makeKey(int len) {
+            char[] chars = new char[len];
+            for (int i = 0; i < len; i++) {
+                int r = ((int) (Math.random() * 100)) % 52;
+                chars[i] = (char) (r < 26 ? 'a' + r : 'A' + r - 26);
+            }
+            return String.valueOf(chars);
         }
     }
 }
