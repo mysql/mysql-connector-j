@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.41
 
+  - Fix for Bug#83052 (25048543), static method in com.mysql.jdbc.Util relies on null object.
+
   - Fix for Bug#82203 (24289730), com.mysql.fabric.HashShardMapping is not thread safe.
 
   - Fix for Bug#69526 (17035755), 'Abandoned connection cleanup thread' at mysql-connector-java-5.1.25.

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -583,7 +583,7 @@ public class Util {
 
         if (clazz.isInterface()) {
             try {
-                if (isJdbcPackage(clazz.getPackage().getName())) {
+                if (isJdbcPackage(Util.getPackageName(clazz))) {
                     Util.isJdbcInterfaceCache.putIfAbsent(clazz, true);
                     return true;
                 }
@@ -615,8 +615,8 @@ public class Util {
     private static final String MYSQL_JDBC_PACKAGE_ROOT;
 
     static {
-        String packageName = MultiHostConnectionProxy.class.getPackage().getName();
-        // assume that packageName includes "jdbc"
+        String packageName = Util.getPackageName(MultiHostConnectionProxy.class);
+        // assume that packageName contains "jdbc"
         MYSQL_JDBC_PACKAGE_ROOT = packageName.substring(0, packageName.indexOf("jdbc") + 4);
     }
 
@@ -698,5 +698,22 @@ public class Util {
             intArray[i] = longArray[i] > Integer.MAX_VALUE ? Integer.MAX_VALUE : longArray[i] < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longArray[i];
         }
         return intArray;
+    }
+
+    /**
+     * Returns the package name of the given class.
+     * Using clazz.getPackage().getName() is not an alternative because under some class loaders the method getPackage() just returns null.
+     * 
+     * @param clazz
+     *            the Class from which to get the package name
+     * @return the package name
+     */
+    public static String getPackageName(Class<?> clazz) {
+        String fqcn = clazz.getName();
+        int classNameStartsAt = fqcn.lastIndexOf('.');
+        if (classNameStartsAt > 0) {
+            return fqcn.substring(0, classNameStartsAt);
+        }
+        return "";
     }
 }
