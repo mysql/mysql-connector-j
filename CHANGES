@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.6
 
+  - Updated collations map.
+
   - Fix for Bug#24350526, UNEXPECTED BEHAVIOUR OF IS_NUMBER_SIGNED API IN C/JAVA.
 
   - Fix for Bug#82707 (24512766), WRONG MILLI SECOND VALUE RETURNED FROM TIMESTAMP COLUMN.

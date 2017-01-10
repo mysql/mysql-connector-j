@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,14 +38,14 @@ import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateTableStatement;
+import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.api.xdevapi.ForeignKeyDefinition.ChangeMode;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
 import com.mysql.cj.api.xdevapi.XSession;
-import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
-import com.mysql.cj.api.xdevapi.ForeignKeyDefinition.ChangeMode;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.XDevAPIError;
@@ -264,7 +264,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                 .addColumn(new ColumnDef("f07", Type.DOUBLE, 5).decimals(2)) //
                 .addColumn(new ColumnDef("f08", Type.JSON)) //
                 .addColumn(new ColumnDef("f09", Type.STRING, 100).charset("sjis").collation("sjis_japanese_ci")) //
-                .addColumn(new ColumnDef("f10", Type.STRING, 100).charset("sjis").collation("sjis_japanese_ci").binary()) //
+                .addColumn(new ColumnDef("f10", Type.STRING, 100).charset("sjis").binary()) //
                 .addColumn(new ColumnDef("f11", Type.BYTES, 100)) //
                 .addColumn(new ColumnDef("f12", Type.GEOMETRY)) //
                 .addColumn(new ColumnDef("f13", Type.TIME).notNull().setDefault("'12:00'")) //
@@ -280,6 +280,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                 .addUniqueIndex("f09_idx", "f09") //
                 .setInitialAutoIncrement(0) //
                 .setComment("some table comment");
+        System.out.println("Parsed to:");
         System.out.println(func);
         Table t1 = func.execute();
 
@@ -332,6 +333,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                 .addForeignKey("fk_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
                 .addForeignKey("fk_film_language_original",
                         new ForeignKeyDef().fields("original_language_id").refersTo(tableName1, "language_id").onUpdate(ChangeMode.CASCADE));
+        System.out.println("Parsed to:");
         System.out.println(func);
         Table t2 = func.execute();
 
@@ -374,6 +376,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                 .setDefaultCollation("utf8_spanish_ci") //
                 .setComment("with generated columns") //
                 .as("SELECT film_id, title, language_id from " + tableName2);
+        System.out.println("Parsed to:");
         System.out.println(func);
         func.execute();
 
@@ -412,6 +415,10 @@ public class SchemaTest extends DevApiBaseTestCase {
         row = rows.next();
         String t2 = row.getString(1).substring(22 + name.length()); // skip CREATE TABLE `name_check` "
 
+        System.out.println("Expected:");
+        System.out.println(t2);
+        System.out.println("Actual:");
+        System.out.println(t1);
         assertEquals(t2, t1);
 
         // restore original table
