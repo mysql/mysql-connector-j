@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -749,6 +749,16 @@ public class StatementImpl implements Statement {
 
             resetCancelledState();
 
+            implicitlyCloseAllOpenResults();
+
+            if (sql.charAt(0) == '/') {
+                if (sql.startsWith(PING_MARKER)) {
+                    doPingInstead();
+
+                    return true;
+                }
+            }
+
             char firstNonWsChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
             boolean maybeSelect = firstNonWsChar == 'S';
 
@@ -778,16 +788,6 @@ public class StatementImpl implements Statement {
                         sql = (String) escapedSqlResult;
                     } else {
                         sql = ((EscapeProcessorResult) escapedSqlResult).escapedSql;
-                    }
-                }
-
-                implicitlyCloseAllOpenResults();
-
-                if (sql.charAt(0) == '/') {
-                    if (sql.startsWith(PING_MARKER)) {
-                        doPingInstead();
-
-                        return true;
                     }
                 }
 
@@ -1295,9 +1295,19 @@ public class StatementImpl implements Statement {
 
             this.retrieveGeneratedKeys = false;
 
+            checkNullOrEmptyQuery(sql);
+
             resetCancelledState();
 
-            checkNullOrEmptyQuery(sql);
+            implicitlyCloseAllOpenResults();
+
+            if (sql.charAt(0) == '/') {
+                if (sql.startsWith(PING_MARKER)) {
+                    doPingInstead();
+
+                    return this.results;
+                }
+            }
 
             setupStreamingTimeout(locallyScopedConn);
 
@@ -1313,17 +1323,7 @@ public class StatementImpl implements Statement {
 
             char firstStatementChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
 
-            if (sql.charAt(0) == '/') {
-                if (sql.startsWith(PING_MARKER)) {
-                    doPingInstead();
-
-                    return this.results;
-                }
-            }
-
             checkForDml(sql, firstStatementChar);
-
-            implicitlyCloseAllOpenResults();
 
             CachedResultSetMetaData cachedMetaData = null;
 

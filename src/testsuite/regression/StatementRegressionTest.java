@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -8063,5 +8063,81 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(testCase, expectedPrepCount, actualPrepCount);
         assertEquals(testCase, expectedExecCount, actualExecCount);
         assertEquals(testCase, expectedCloseCount, actualCloseCount);
+    }
+
+    /**
+     * Test fix for Bug#81706 - NullPointerException in driver.
+     */
+    public void testBug81706() throws Exception {
+        boolean useSPS = false;
+        boolean cacheRsMd = false;
+        boolean readOnly = false;
+
+        do {
+            final String testCase = String.format("Case [SPS: %s, CacheRsMd: %s, Read-only: %s]", useSPS ? "Y" : "N", cacheRsMd ? "Y" : "N",
+                    readOnly ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            props.setProperty("cacheResultSetMetadata", Boolean.toString(cacheRsMd));
+            props.setProperty("statementInterceptors", TestBug81706StatementInterceptor.class.getName());
+
+            Connection testConn = getConnectionWithProps(props);
+            testConn.setReadOnly(readOnly);
+            Statement testStmt;
+            PreparedStatement testPstmt;
+
+            TestBug81706StatementInterceptor.isActive = true;
+            TestBug81706StatementInterceptor.testCase = testCase;
+
+            // Statement.executeQuery();
+            testStmt = testConn.createStatement();
+            testStmt.setFetchSize(Integer.MIN_VALUE);
+            testStmt.executeQuery("/* ping */");
+            testStmt.close();
+
+            // Statemente.execute();
+            testStmt = testConn.createStatement();
+            testStmt.setFetchSize(Integer.MIN_VALUE);
+            testStmt.execute("/* ping */");
+            testStmt.close();
+
+            // PreparedStatement.executeQuery();
+            testPstmt = testConn.prepareStatement("/* ping */");
+            assertFalse(testCase + ": Not the right Statement type.", testPstmt instanceof ServerPreparedStatement);
+            testPstmt.setFetchSize(Integer.MIN_VALUE);
+            testPstmt.executeQuery();
+            testPstmt.close();
+
+            // PreparedStatement.execute();
+            testPstmt = testConn.prepareStatement("/* ping */");
+            assertFalse(testCase + ": Not the right Statement type.", testPstmt instanceof ServerPreparedStatement);
+            testPstmt.setFetchSize(Integer.MIN_VALUE);
+            testPstmt.execute();
+            testPstmt.close();
+
+            TestBug81706StatementInterceptor.isActive = false;
+            testConn.close();
+
+        } while ((useSPS = !useSPS) || (cacheRsMd = !cacheRsMd) || (readOnly = !readOnly)); // Cycle through all possible combinations.
+    }
+
+    public static class TestBug81706StatementInterceptor extends BaseStatementInterceptor {
+        public static boolean isActive = false;
+        public static String testCase = "";
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            if (isActive) {
+                String query = sql;
+                if (query == null && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+                    query = interceptedStatement.toString();
+                    query = query.substring(query.indexOf(':') + 2);
+                }
+                fail(testCase + ": Unexpected query executed - " + query);
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -822,11 +822,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         detectFractionalSecondsSupport();
         this.originalSql = sql;
 
-        if (this.originalSql.startsWith(PING_MARKER)) {
-            this.doPingInstead = true;
-        } else {
-            this.doPingInstead = false;
-        }
+        this.doPingInstead = this.originalSql.startsWith(PING_MARKER);
 
         this.dbmd = this.connection.getMetaData();
 
@@ -1134,14 +1130,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             MySQLConnection locallyScopedConn = this.connection;
 
-            if (!checkReadOnlySafeStatement()) {
+            if (!this.doPingInstead && !checkReadOnlySafeStatement()) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") + Messages.getString("PreparedStatement.21"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             ResultSetInternalMethods rs = null;
-
-            CachedResultSetMetaData cachedMetadata = null;
 
             this.lastQueryIsOnDupKeyUpdate = false;
 
@@ -1149,11 +1143,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 this.lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
             }
 
+            this.batchedGeneratedKeys = null;
+
+            resetCancelledState();
+
+            implicitlyCloseAllOpenResults();
+
             clearWarnings();
 
-            setupStreamingTimeout(locallyScopedConn);
+            if (this.doPingInstead) {
+                doPingInstead();
 
-            this.batchedGeneratedKeys = null;
+                return true;
+            }
+
+            setupStreamingTimeout(locallyScopedConn);
 
             Buffer sendPacket = fillSendPacket();
 
@@ -1167,6 +1171,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // Check if we have cached metadata for this query...
             //
+            CachedResultSetMetaData cachedMetadata = null;
             if (locallyScopedConn.getCacheResultSetMetadata()) {
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
@@ -1507,7 +1512,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             try {
                 try {
                     batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
-                    prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
+                            prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 
                     if (locallyScopedConn.getEnableQueryTimeouts() && batchTimeout != 0 && locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
                         timeoutTask = new CancelTask(batchedStatement);
@@ -1832,17 +1837,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         synchronized (checkClosed().getConnectionMutex()) {
             try {
 
-                resetCancelledState();
-
                 MySQLConnection locallyScopedConnection = this.connection;
 
                 this.numberOfExecutions++;
-
-                if (this.doPingInstead) {
-                    doPingInstead();
-
-                    return this.results;
-                }
 
                 ResultSetInternalMethods rs;
 
@@ -1925,17 +1922,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             checkForDml(this.originalSql, this.firstCharOfStmt);
 
-            CachedResultSetMetaData cachedMetadata = null;
+            this.batchedGeneratedKeys = null;
+
+            resetCancelledState();
+
+            implicitlyCloseAllOpenResults();
 
             clearWarnings();
 
-            this.batchedGeneratedKeys = null;
+            if (this.doPingInstead) {
+                doPingInstead();
+
+                return this.results;
+            }
 
             setupStreamingTimeout(locallyScopedConn);
 
             Buffer sendPacket = fillSendPacket();
-
-            implicitlyCloseAllOpenResults();
 
             String oldCatalog = null;
 
@@ -1947,6 +1950,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             //
             // Check if we have cached metadata for this query...
             //
+            CachedResultSetMetaData cachedMetadata = null;
             if (locallyScopedConn.getCacheResultSetMetadata()) {
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
@@ -2044,6 +2048,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             if ((this.firstCharOfStmt == 'S') && isSelectQuery()) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.37"), "01S03", getExceptionInterceptor());
             }
+
+            resetCancelledState();
 
             implicitlyCloseAllOpenResults();
 
@@ -2589,8 +2595,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         return ((c == 'y') && (n == 2)) ? 'X'
                 : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
                         : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H'
-                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                                ? 'H' : ((c == 'H') ? 'm'
+                                        : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 
     /**
