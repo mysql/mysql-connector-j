@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.41
 
+  - Fix for Bug#81108 (23264511), FabricMySQLConnectionProxy.setShardTable method logic miss.
+
   - Fix for Bug#83052 (25048543), static method in com.mysql.jdbc.Util relies on null object.
 
   - Fix for Bug#82203 (24289730), com.mysql.fabric.HashShardMapping is not thread safe.
