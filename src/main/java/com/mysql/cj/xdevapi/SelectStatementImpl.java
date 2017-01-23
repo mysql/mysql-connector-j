@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,39 +28,40 @@ import java.util.concurrent.CompletableFuture;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SelectStatement;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
-    private TableImpl table;
+    private MysqlxSession mysqlxSession;
     private FindParams findParams;
 
-    /* package private */ SelectStatementImpl(TableImpl table, String projection) {
-        super(new TableFindParams(table.getSchema().getName(), table.getName()));
+    /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String projection) {
+        super(new TableFindParams(schema, table));
         this.findParams = (TableFindParams) this.filterParams;
-        this.table = table;
+        this.mysqlxSession = mysqlxSession;
         if (projection != null && projection.length() > 0) {
             this.findParams.setFields(projection);
         }
     }
 
-    /* package private */ SelectStatementImpl(TableImpl table, String... projection) {
-        super(new TableFindParams(table.getSchema().getName(), table.getName()));
+    /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String... projection) {
+        super(new TableFindParams(schema, table));
         this.findParams = (TableFindParams) this.filterParams;
-        this.table = table;
+        this.mysqlxSession = mysqlxSession;
         if (projection != null && projection.length > 0) {
             this.findParams.setFields(projection);
         }
     }
 
     public RowResultImpl execute() {
-        return this.table.getSession().getMysqlxSession().selectRows(this.findParams);
+        return this.mysqlxSession.selectRows(this.findParams);
     }
 
     public CompletableFuture<RowResult> executeAsync() {
-        return this.table.getSession().getMysqlxSession().asyncSelectRows(this.findParams);
+        return this.mysqlxSession.asyncSelectRows(this.findParams);
     }
 
     public <R> CompletableFuture<R> executeAsync(R id, Reducer<Row, R> reducer) {
-        return this.table.getSession().getMysqlxSession().asyncSelectRowsReduce(this.findParams, id, reducer);
+        return this.mysqlxSession.asyncSelectRowsReduce(this.findParams, id, reducer);
     }
 
     @Override

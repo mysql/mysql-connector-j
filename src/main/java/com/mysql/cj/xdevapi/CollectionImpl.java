@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,12 +38,15 @@ import com.mysql.cj.api.xdevapi.RemoveStatement;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class CollectionImpl implements Collection {
+    private MysqlxSession mysqlxSession;
     private SchemaImpl schema;
     private String name;
 
-    /* package private */ CollectionImpl(SchemaImpl schema, String name) {
+    /* package private */ CollectionImpl(MysqlxSession mysqlxSession, SchemaImpl schema, String name) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = schema;
         this.name = name;
     }
@@ -61,7 +64,7 @@ public class CollectionImpl implements Collection {
     }
 
     public DbObjectStatus existsInDatabase() {
-        if (this.schema.getSession().getMysqlxSession().tableExists(this.schema.getName(), this.name)) {
+        if (this.mysqlxSession.tableExists(this.schema.getName(), this.name)) {
             return DbObjectStatus.EXISTS;
         }
         return DbObjectStatus.NOT_EXISTS;
@@ -86,11 +89,11 @@ public class CollectionImpl implements Collection {
 
     @Override
     public AddStatement add(DbDoc doc) {
-        return new AddStatementImpl(this, doc);
+        return new AddStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, doc);
     }
 
     public AddStatement add(DbDoc... docs) {
-        return new AddStatementImpl(this, docs);
+        return new AddStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, docs);
     }
 
     public FindStatement find() {
@@ -98,7 +101,7 @@ public class CollectionImpl implements Collection {
     }
 
     public FindStatement find(String searchCondition) {
-        return new FindStatementImpl(this, searchCondition);
+        return new FindStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
     }
 
     public ModifyStatement modify() {
@@ -106,7 +109,7 @@ public class CollectionImpl implements Collection {
     }
 
     public ModifyStatement modify(String searchCondition) {
-        return new ModifyStatementImpl(this, searchCondition);
+        return new ModifyStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
     }
 
     public RemoveStatement remove() {
@@ -114,19 +117,19 @@ public class CollectionImpl implements Collection {
     }
 
     public RemoveStatement remove(String searchCondition) {
-        return new RemoveStatementImpl(this, searchCondition);
+        return new RemoveStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
     }
 
     public CreateCollectionIndexStatement createIndex(String indexName, boolean isUnique) {
-        return new CreateCollectionIndexStatementImpl(this, indexName, isUnique);
+        return new CreateCollectionIndexStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, indexName, isUnique);
     }
 
     public DropCollectionIndexStatement dropIndex(String indexName) {
-        return new DropCollectionIndexStatementImpl(this, indexName);
+        return new DropCollectionIndexStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, indexName);
     }
 
     public long count() {
-        return this.schema.getSession().getMysqlxSession().tableCount(this.schema.getName(), this.name);
+        return this.mysqlxSession.tableCount(this.schema.getName(), this.name);
     }
 
     public DbDoc newDoc() {
@@ -135,14 +138,8 @@ public class CollectionImpl implements Collection {
 
     @Override
     public boolean equals(Object other) {
-        if (other != null && other.getClass() == CollectionImpl.class) {
-            if (((CollectionImpl) other).schema.equals(this.schema)) {
-                if (((CollectionImpl) other).schema.getSession() == this.schema.getSession()) {
-                    return this.name.equals(((CollectionImpl) other).name);
-                }
-            }
-        }
-        return false;
+        return other != null && other.getClass() == CollectionImpl.class && ((CollectionImpl) other).schema.equals(this.schema)
+                && ((CollectionImpl) other).mysqlxSession == this.mysqlxSession && this.name.equals(((CollectionImpl) other).name);
     }
 
     @Override

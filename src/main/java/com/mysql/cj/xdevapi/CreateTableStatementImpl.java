@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,19 +31,21 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.ColumnDefinition;
+import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableFullStatement;
+import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableLikeStatement;
+import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.api.xdevapi.ForeignKeyDefinition;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableFullStatement;
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableLikeStatement;
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 
 public class CreateTableStatementImpl implements CreateTableSplitStatement, CreateTableFullStatement, CreateTableLikeStatement {
 
+    private MysqlxSession mysqlxSession;
     private Schema schema;
     private String table;
     private String likeTable;
@@ -60,12 +62,14 @@ public class CreateTableStatementImpl implements CreateTableSplitStatement, Crea
     private boolean temporary = false;
     private String as;
 
-    public CreateTableStatementImpl(Schema sch, String tableName) {
+    public CreateTableStatementImpl(MysqlxSession mysqlxSession, Schema sch, String tableName) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.table = tableName;
     }
 
-    public CreateTableStatementImpl(Schema sch, String tableName, boolean reuseExistingObject) {
+    public CreateTableStatementImpl(MysqlxSession mysqlxSession, Schema sch, String tableName, boolean reuseExistingObject) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.table = tableName;
         this.reuseExistingObject = reuseExistingObject;
@@ -154,7 +158,7 @@ public class CreateTableStatementImpl implements CreateTableSplitStatement, Crea
     public Table execute() {
         try {
             // TODO implement using specific X Protocol message when available
-            this.schema.getSession().getMysqlxSession().executeSql(toString(), null);
+            this.mysqlxSession.executeSql(toString(), null);
         } catch (XDevAPIError ex) {
             if (ex.getErrorCode() != MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR || !this.reuseExistingObject) {
                 throw ex;

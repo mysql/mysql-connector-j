@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,26 +27,27 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.RemoveStatement;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Result> implements RemoveStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
 
-    public RemoveStatementImpl(CollectionImpl collection, String criteria) {
-        super(collection.getSchema().getName(), collection.getName(), false);
-        this.collection = collection;
+    public RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
+        super(schema, collection, false);
+        this.mysqlxSession = mysqlxSession;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
         }
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().deleteDocs(this.filterParams);
+        StatementExecuteOk ok = this.mysqlxSession.deleteDocs(this.filterParams);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncDeleteDocs(this.filterParams);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncDeleteDocs(this.filterParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }

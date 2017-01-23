@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,10 +23,14 @@
 
 package testsuite.x.devapi;
 
+import java.lang.reflect.Field;
+
 import com.mysql.cj.api.xdevapi.NodeSession;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.xdevapi.AbstractSession;
 import com.mysql.cj.xdevapi.NodeSessionImpl;
 
 import testsuite.x.internal.InternalXBaseTestCase;
@@ -64,13 +68,20 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     }
 
     protected void sqlUpdate(String sql) {
-        this.session.getMysqlxSession().update(sql);
+        try {
+            Field f = AbstractSession.class.getDeclaredField("session");
+            f.setAccessible(true);
+            ((MysqlxSession) f.get(this.session)).update(sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     protected void dropCollection(String collectionName) {
         if (this.isSetForXTests) {
             try {
-                this.session.dropCollection(schema.getName(), collectionName);
+                this.session.dropCollection(this.schema.getName(), collectionName);
             } catch (XDevAPIError ex) {
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
                     throw ex;

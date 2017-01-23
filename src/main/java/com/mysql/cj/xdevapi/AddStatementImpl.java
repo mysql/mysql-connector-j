@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,23 +35,30 @@ import com.mysql.cj.api.xdevapi.AddStatement;
 import com.mysql.cj.api.xdevapi.JsonValue;
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 /**
  * @todo
  */
 public class AddStatementImpl implements AddStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
+    private String schemaName;
+    private String collectionName;
     private List<DbDoc> newDocs;
 
-    /* package private */ AddStatementImpl(CollectionImpl collection, DbDoc newDoc) {
-        this.collection = collection;
+    /* package private */ AddStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, DbDoc newDoc) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.collectionName = collection;
         this.newDocs = new ArrayList<>();
         this.newDocs.add(newDoc);
     }
 
-    /* package private */ AddStatementImpl(CollectionImpl collection, DbDoc[] newDocs) {
-        this.collection = collection;
+    /* package private */ AddStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, DbDoc[] newDocs) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.collectionName = collection;
         this.newDocs = new ArrayList<>();
         this.newDocs.addAll(Arrays.asList(newDocs));
     }
@@ -87,20 +94,18 @@ public class AddStatementImpl implements AddStatement {
     }
 
     public Result execute() {
-        if (this.newDocs.size() == 0) { // according to dev api sec, this is a no-op. we create an empty Result
+        if (this.newDocs.size() == 0) { // according to X DevAPI specification, this is a no-op. we create an empty Result
             StatementExecuteOk ok = new StatementExecuteOk(0, null, new ArrayList<>());
             return new UpdateResult(ok, new ArrayList<>());
         }
         List<String> newIds = assignIds();
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().addDocs(this.collection.getSchema().getName(), this.collection.getName(),
-                serializeDocs());
+        StatementExecuteOk ok = this.mysqlxSession.addDocs(this.schemaName, this.collectionName, serializeDocs());
         return new UpdateResult(ok, newIds);
     }
 
     public CompletableFuture<Result> executeAsync() {
         final List<String> newIds = assignIds();
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncAddDocs(this.collection.getSchema().getName(),
-                this.collection.getName(), serializeDocs());
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncAddDocs(this.schemaName, this.collectionName, serializeDocs());
         return okF.thenApply(ok -> new UpdateResult(ok, newIds));
     }
 }

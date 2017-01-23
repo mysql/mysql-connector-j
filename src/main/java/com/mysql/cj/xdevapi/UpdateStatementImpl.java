@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,24 +28,25 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.UpdateStatement;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Result> implements UpdateStatement {
-    private TableImpl table;
+    private MysqlxSession mysqlxSession;
     private UpdateParams updateParams = new UpdateParams();
 
-    /* package private */ UpdateStatementImpl(TableImpl table) {
-        super(table.getSchema().getName(), table.getName(), true);
-        this.table = table;
+    /* package private */ UpdateStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
+        super(schema, table, true);
+        this.mysqlxSession = mysqlxSession;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.table.getSession().getMysqlxSession().updateRows(this.filterParams, this.updateParams);
+        StatementExecuteOk ok = this.mysqlxSession.updateRows(this.filterParams, this.updateParams);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession().asyncUpdateRows(this.filterParams, this.updateParams);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncUpdateRows(this.filterParams, this.updateParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 

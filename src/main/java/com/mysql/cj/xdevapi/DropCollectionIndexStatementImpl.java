@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,26 +27,29 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.DropCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class DropCollectionIndexStatementImpl implements DropCollectionIndexStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
+    private String schemaName;
+    private String collectionName;
     private String indexName;
 
-    /* package private */ DropCollectionIndexStatementImpl(CollectionImpl collection, String indexName) {
-        this.collection = collection;
+    /* package private */ DropCollectionIndexStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String indexName) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.collectionName = collection;
         this.indexName = indexName;
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().dropCollectionIndex(this.collection.getSchema().getName(),
-                this.collection.getName(), this.indexName);
+        StatementExecuteOk ok = this.mysqlxSession.dropCollectionIndex(this.schemaName, this.collectionName, this.indexName);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
-                .asyncDropCollectionIndex(this.collection.getSchema().getName(), this.collection.getName(), this.indexName);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncDropCollectionIndex(this.schemaName, this.collectionName, this.indexName);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }

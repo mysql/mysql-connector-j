@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,31 +29,36 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.InsertStatement;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class InsertStatementImpl implements InsertStatement {
-    private TableImpl table;
+    private MysqlxSession mysqlxSession;
+    private String schemaName;
+    private String tableName;
     private InsertParams insertParams = new InsertParams();
 
-    /* package private */ InsertStatementImpl(TableImpl table, String[] fields) {
-        this.table = table;
+    /* package private */ InsertStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String[] fields) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.tableName = table;
         this.insertParams.setProjection(fields);
     }
 
-    /* package private */ InsertStatementImpl(TableImpl table, Map<String, Object> fieldsAndValues) {
-        this.table = table;
+    /* package private */ InsertStatementImpl(MysqlxSession mysqlxSession, String schema, String table, Map<String, Object> fieldsAndValues) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.tableName = table;
         this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.table.getSession().getMysqlxSession().insertRows(this.table.getSchema().getName(), this.table.getName(),
-                this.insertParams);
+        StatementExecuteOk ok = this.mysqlxSession.insertRows(this.schemaName, this.tableName, this.insertParams);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.table.getSession().getMysqlxSession().asyncInsertRows(this.table.getSchema().getName(),
-                this.table.getName(), this.insertParams);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncInsertRows(this.schemaName, this.tableName, this.insertParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 

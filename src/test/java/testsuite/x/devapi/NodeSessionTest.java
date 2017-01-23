@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 
 import org.junit.After;
@@ -40,6 +41,7 @@ import com.mysql.cj.api.xdevapi.SqlStatement;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.xdevapi.AbstractSession;
 import com.mysql.cj.xdevapi.XSessionFactory;
 
 public class NodeSessionTest extends DevApiBaseTestCase {
@@ -150,8 +152,14 @@ public class NodeSessionTest extends DevApiBaseTestCase {
         // 1. Ensure both XSession and NodeSession share the same router connection
         XSession xsess = new XSessionFactory().getSession(this.testProperties);
         NodeSession nsess = xsess.bindToDefaultShard();
-
-        assertEquals(xsess.getMysqlxSession(), nsess.getMysqlxSession()); // server channel is shared for both xsess and nsess
+        try {
+            Field f = AbstractSession.class.getDeclaredField("session");
+            f.setAccessible(true);
+            assertEquals(f.get(xsess), f.get(nsess)); // server channel is shared for both xsess and nsess
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
         // 2. select and close NodeSession
         SqlStatement stmt = nsess.sql("SELECT * FROM virtualNodeSession1 RIGHT JOIN virtualNodeSession2 ON virtualNodeSession1._id = virtualNodeSession2._id");

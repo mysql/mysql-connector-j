@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -62,12 +62,12 @@ public abstract class AbstractSession implements BaseSession {
 
     public List<Schema> getSchemas() {
         Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
-        Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this, n));
+        Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this.session, this, n));
         return this.session.query("select schema_name from information_schema.schemata", rowToSchema, Collectors.toList());
     }
 
     public Schema getSchema(String schemaName) {
-        return new SchemaImpl(this, schemaName);
+        return new SchemaImpl(this.session, this, schemaName);
     }
 
     public String getDefaultSchemaName() {
@@ -78,7 +78,7 @@ public abstract class AbstractSession implements BaseSession {
         if (this.defaultSchemaName == null) {
             throw new WrongArgumentException("Default schema not provided");
         }
-        return new SchemaImpl(this, this.defaultSchemaName);
+        return new SchemaImpl(this.session, this, this.defaultSchemaName);
     }
 
     public Schema createSchema(String schemaName) {
@@ -156,10 +156,6 @@ public abstract class AbstractSession implements BaseSession {
 
     public void close() {
         this.session.close();
-    }
-
-    public MysqlxSession getMysqlxSession() {
-        return this.session;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,25 +31,26 @@ import java.util.concurrent.CompletableFuture;
 import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.api.xdevapi.SqlStatement;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Any;
 
 public class SqlStatementImpl implements SqlStatement {
-    private NodeSessionImpl session;
+    private MysqlxSession mysqlxSession;
     private String sql;
     // we use raw protobuf objects here. don't expose them outside of here
     private List<Any> args = new ArrayList<>();
 
-    public SqlStatementImpl(NodeSessionImpl session, String sql) {
-        this.session = session;
+    public SqlStatementImpl(MysqlxSession mysqlxSession, String sql) {
+        this.mysqlxSession = mysqlxSession;
         this.sql = sql;
     }
 
     public SqlResult execute() {
-        return this.session.getMysqlxSession().executeSql(this.sql, /* as Object */ this.args);
+        return this.mysqlxSession.executeSql(this.sql, /* as Object */ this.args);
     }
 
     public CompletableFuture<SqlResult> executeAsync() {
-        return this.session.getMysqlxSession().asyncExecuteSql(this.sql, this.args);
+        return this.mysqlxSession.asyncExecuteSql(this.sql, this.args);
     }
 
     public SqlStatement clearBindings() {
@@ -58,8 +59,7 @@ public class SqlStatementImpl implements SqlStatement {
     }
 
     public SqlStatement bind(List<Object> values) {
-        values.stream().map(ExprUtil::argObjectToScalarAny)
-                .forEach(a -> this.args.add(a));
+        values.stream().map(ExprUtil::argObjectToScalarAny).forEach(a -> this.args.add(a));
         return this;
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,19 +28,22 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.BaseSession;
 import com.mysql.cj.api.xdevapi.Collection;
+import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 
 public class SchemaImpl implements Schema {
+    private MysqlxSession mysqlxSession;
     private BaseSession session;
     private String name;
 
-    /* package private */ SchemaImpl(BaseSession session, String name) {
+    /* package private */ SchemaImpl(MysqlxSession mysqlxSession, BaseSession session, String name) {
+        this.mysqlxSession = mysqlxSession;
         this.session = session;
         this.name = name;
     }
@@ -58,40 +61,36 @@ public class SchemaImpl implements Schema {
     }
 
     public DbObjectStatus existsInDatabase() {
-        if (this.session.getMysqlxSession().schemaExists(this.name)) {
-            return DbObjectStatus.EXISTS;
-        }
-        return DbObjectStatus.NOT_EXISTS;
+        return this.mysqlxSession.schemaExists(this.name) ? DbObjectStatus.EXISTS : DbObjectStatus.NOT_EXISTS;
     }
 
     public List<Collection> getCollections() {
-        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, DbObjectType.COLLECTION).stream().map(this::getCollection)
-                .collect(Collectors.toList());
+        return this.mysqlxSession.getObjectNamesOfType(this.name, DbObjectType.COLLECTION).stream().map(this::getCollection).collect(Collectors.toList());
     }
 
     public List<Collection> getCollections(String pattern) {
-        return this.session.getMysqlxSession().getObjectNamesOfType(this.name, DbObjectType.COLLECTION, pattern).stream().map(this::getCollection)
+        return this.mysqlxSession.getObjectNamesOfType(this.name, DbObjectType.COLLECTION, pattern).stream().map(this::getCollection)
                 .collect(Collectors.toList());
     }
 
     public List<Table> getTables() {
-        return this.session.getMysqlxSession().listObjects(this.name).stream()
+        return this.mysqlxSession.listObjects(this.name).stream()
                 .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
                 .collect(Collectors.toList());
     }
 
     public List<Table> getTables(String pattern) {
-        return this.session.getMysqlxSession().listObjects(this.name, pattern).stream()
+        return this.mysqlxSession.listObjects(this.name, pattern).stream()
                 .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
                 .collect(Collectors.toList());
     }
 
     public Collection getCollection(String collectionName) {
-        return new CollectionImpl(this, collectionName);
+        return new CollectionImpl(this.mysqlxSession, this, collectionName);
     }
 
     public Collection getCollection(String collectionName, boolean requireExists) {
-        CollectionImpl coll = new CollectionImpl(this, collectionName);
+        CollectionImpl coll = new CollectionImpl(this.mysqlxSession, this, collectionName);
         if (requireExists && coll.existsInDatabase() != DbObjectStatus.EXISTS) {
             throw new WrongArgumentException(coll.toString() + " doesn't exist");
         }
@@ -103,15 +102,15 @@ public class SchemaImpl implements Schema {
     }
 
     public Table getTable(String tableName) {
-        return new TableImpl(this, tableName);
+        return new TableImpl(this.mysqlxSession, this, tableName);
     }
 
     /* package private */ Table getTable(DatabaseObjectDescription descr) {
-        return new TableImpl(this, descr);
+        return new TableImpl(this.mysqlxSession, this, descr);
     }
 
     public Table getTable(String tableName, boolean requireExists) {
-        TableImpl table = new TableImpl(this, tableName);
+        TableImpl table = new TableImpl(this.mysqlxSession, this, tableName);
         if (requireExists && table.existsInDatabase() != DbObjectStatus.EXISTS) {
             throw new WrongArgumentException(table.toString() + " doesn't exist");
         }
@@ -119,8 +118,8 @@ public class SchemaImpl implements Schema {
     }
 
     public Collection createCollection(String collectionName) {
-        this.session.getMysqlxSession().createCollection(this.name, collectionName);
-        return new CollectionImpl(this, collectionName);
+        this.mysqlxSession.createCollection(this.name, collectionName);
+        return new CollectionImpl(this.mysqlxSession, this, collectionName);
     }
 
     public Collection createCollection(String collectionName, boolean reuseExistingObject) {
@@ -136,22 +135,18 @@ public class SchemaImpl implements Schema {
 
     @Override
     public CreateTableSplitStatement createTable(String tableName) {
-        return new CreateTableStatementImpl(this, tableName);
+        return new CreateTableStatementImpl(this.mysqlxSession, this, tableName);
     }
 
     @Override
     public CreateTableSplitStatement createTable(String tableName, boolean reuseExistingObject) {
-        return new CreateTableStatementImpl(this, tableName, reuseExistingObject);
+        return new CreateTableStatementImpl(this.mysqlxSession, this, tableName, reuseExistingObject);
     }
 
     @Override
     public boolean equals(Object other) {
-        if (other != null && other.getClass() == SchemaImpl.class) {
-            if (((SchemaImpl) other).session == this.session) {
-                return this.name.equals(((SchemaImpl) other).name);
-            }
-        }
-        return false;
+        return other != null && other.getClass() == SchemaImpl.class && ((SchemaImpl) other).session == this.session
+                && ((SchemaImpl) other).mysqlxSession == this.mysqlxSession && this.name.equals(((SchemaImpl) other).name);
     }
 
     @Override

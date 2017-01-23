@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,30 +28,31 @@ import java.util.concurrent.CompletableFuture;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Expression;
 import com.mysql.cj.api.xdevapi.FindStatement;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
     private DocFindParams findParams;
 
-    /* package private */ FindStatementImpl(CollectionImpl collection, String criteria) {
-        super(new DocFindParams(collection.getSchema().getName(), collection.getName()));
+    /* package private */ FindStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
+        super(new DocFindParams(schema, collection));
         this.findParams = (DocFindParams) this.filterParams;
-        this.collection = collection;
+        this.mysqlxSession = mysqlxSession;
         if (criteria != null && criteria.length() > 0) {
             this.findParams.setCriteria(criteria);
         }
     }
 
     public DocResultImpl execute() {
-        return this.collection.getSession().getMysqlxSession().findDocs(this.findParams);
+        return this.mysqlxSession.findDocs(this.findParams);
     }
 
     public CompletableFuture<DocResult> executeAsync() {
-        return this.collection.getSession().getMysqlxSession().asyncFindDocs(this.findParams);
+        return this.mysqlxSession.asyncFindDocs(this.findParams);
     }
 
     public <R> CompletableFuture<R> executeAsync(R id, Reducer<DbDoc, R> reducer) {
-        return this.collection.getSession().getMysqlxSession().asyncFindDocsReduce(this.findParams, id, reducer);
+        return this.mysqlxSession.asyncFindDocsReduce(this.findParams, id, reducer);
     }
 
     @Override

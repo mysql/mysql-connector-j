@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,15 +33,16 @@ import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.UpdateType;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
     private List<UpdateSpec> updates = new ArrayList<>();
 
-    /* package private */ ModifyStatementImpl(CollectionImpl collection, String criteria) {
-        super(collection.getSchema().getName(), collection.getName(), false);
-        this.collection = collection;
+    /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
+        super(schema, collection, false);
+        this.mysqlxSession = mysqlxSession;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
         }
@@ -49,13 +50,13 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
 
     @Override
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().updateDocs(this.filterParams, this.updates);
+        StatementExecuteOk ok = this.mysqlxSession.updateDocs(this.filterParams, this.updates);
         return new UpdateResult(ok, null);
     }
 
     @Override
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession().asyncUpdateDocs(this.filterParams, this.updates);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncUpdateDocs(this.filterParams, this.updates);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 

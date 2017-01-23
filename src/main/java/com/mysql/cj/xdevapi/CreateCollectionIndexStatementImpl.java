@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,14 +27,19 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
 public class CreateCollectionIndexStatementImpl implements CreateCollectionIndexStatement {
-    private CollectionImpl collection;
+    private MysqlxSession mysqlxSession;
+    private String schemaName;
+    private String collectionName;
     private CreateIndexParams createIndexParams;
 
-    /* package private */ CreateCollectionIndexStatementImpl(CollectionImpl collection, String indexName, boolean unique) {
-        this.collection = collection;
+    /* package private */ CreateCollectionIndexStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String indexName, boolean unique) {
+        this.mysqlxSession = mysqlxSession;
+        this.schemaName = schema;
+        this.collectionName = collection;
         this.createIndexParams = new CreateIndexParams(indexName, unique);
     }
 
@@ -44,14 +49,12 @@ public class CreateCollectionIndexStatementImpl implements CreateCollectionIndex
     }
 
     public Result execute() {
-        StatementExecuteOk ok = this.collection.getSession().getMysqlxSession().createCollectionIndex(this.collection.getSchema().getName(),
-                this.collection.getName(), this.createIndexParams);
+        StatementExecuteOk ok = this.mysqlxSession.createCollectionIndex(this.schemaName, this.collectionName, this.createIndexParams);
         return new UpdateResult(ok, null);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.collection.getSession().getMysqlxSession()
-                .asyncCreateCollectionIndex(this.collection.getSchema().getName(), this.collection.getName(), this.createIndexParams);
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncCreateCollectionIndex(this.schemaName, this.collectionName, this.createIndexParams);
         return okF.thenApply(ok -> new UpdateResult(ok, null));
     }
 }
