@@ -1720,6 +1720,13 @@ public class MysqlIO {
                 }
 
                 if (challenge.isOKPacket()) {
+                    // get the server status from the challenge packet.
+                    challenge.newReadLength(); // affected_rows
+                    challenge.newReadLength(); // last_insert_id
+
+                    this.oldServerStatus = this.serverStatus;
+                    this.serverStatus = challenge.readInt();
+
                     // if OK packet then finish handshake
                     plugin.destroy();
                     break;

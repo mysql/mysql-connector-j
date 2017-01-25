@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -9807,7 +9807,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Connection testConn = getConnectionWithProps(props);
 
             assertEquals(testCase, useLocTransSt, ((ConnectionProperties) testConn).getUseLocalTransactionState());
-            assertEquals(testCase, useElideSetAC, ((ConnectionProperties) testConn).getElideSetAutoCommits());
+            // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+            assertFalse(testCase, ((ConnectionProperties) testConn).getElideSetAutoCommits());
+            // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+            // assertEquals(testCase, useElideSetAC, ((ConnectionProperties) testConn).getElideSetAutoCommits());
 
             testConn.close();
         } while ((useLocTransSt = !useLocTransSt) || (useElideSetAC = !useElideSetAC));
@@ -9848,5 +9851,65 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(testCase, 1, this.rs.getInt(1));
         } while (useLocTransSt = !useLocTransSt);
+    }
+
+    /**
+     * Tests fix for Bug#70785 - MySQL Connector/J inconsistent init state for autocommit.
+     */
+    public void testBug70785() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+        this.rs = this.stmt.executeQuery("SELECT @@global.init_connect");
+        this.rs.next();
+        String originalInitConnect = this.rs.getString(1);
+        this.stmt.execute("SET @@global.init_connect='SET @testBug70785=1'"); // Server variable init_connect cannot be empty for this test.
+
+        this.rs = this.stmt.executeQuery("SELECT @@global.autocommit");
+        this.rs.next();
+        boolean originalAutoCommit = this.rs.getBoolean(1);
+        boolean autoCommit = originalAutoCommit;
+
+        int n = 0;
+        try {
+            do {
+                this.stmt.execute("SET @@global.autocommit=" + (autoCommit ? 1 : 0));
+
+                boolean cacheServerConf = false;
+                boolean useLocTransSt = false;
+                boolean elideSetAutoCommit = false;
+                do {
+                    final String testCase = String.format("Case: [AutoCommit: %s, CacheSrvConf: %s, LocTransSt: %s, ElideSetAC: %s ]", autoCommit ? "Y" : "N",
+                            cacheServerConf ? "Y" : "N", useLocTransSt ? "Y" : "N", elideSetAutoCommit ? "Y" : "N");
+                    final Properties props = new Properties();
+                    props.setProperty("cacheServerConfiguration", Boolean.toString(cacheServerConf));
+                    props.setProperty("useLocalTransactionState", Boolean.toString(useLocTransSt));
+                    props.setProperty("elideSetAutoCommits", Boolean.toString(elideSetAutoCommit));
+
+                    if (cacheServerConf) {
+                        n++;
+                    }
+                    String uniqueUrl = dbUrl + "&testBug70785=" + n; // Make sure that the first connection will be a cache miss and the second a cache hit.
+                    Connection testConn1 = getConnectionWithProps(uniqueUrl, props);
+                    Connection testConn2 = getConnectionWithProps(uniqueUrl, props);
+
+                    assertTrue(testCase, testConn1.getAutoCommit());
+                    this.rs = testConn1.createStatement().executeQuery("SELECT @@session.autocommit");
+                    this.rs.next();
+                    assertTrue(testCase, this.rs.getBoolean(1));
+
+                    assertTrue(testCase, testConn2.getAutoCommit());
+                    this.rs = testConn2.createStatement().executeQuery("SELECT @@session.autocommit");
+                    this.rs.next();
+                    assertTrue(testCase, this.rs.getBoolean(1));
+
+                    testConn1.close();
+                    testConn2.close();
+                } while ((cacheServerConf = !cacheServerConf) || (useLocTransSt = !useLocTransSt) || (elideSetAutoCommit = !elideSetAutoCommit));
+            } while ((autoCommit = !autoCommit) != originalAutoCommit);
+        } finally {
+            this.stmt.execute("SET @@global.init_connect='" + originalInitConnect + "'");
+            this.stmt.execute("SET @@global.autocommit=" + (originalAutoCommit ? 1 : 0));
+        }
     }
 }

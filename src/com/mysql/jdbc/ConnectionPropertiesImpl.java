@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1767,7 +1767,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
      * @see com.mysql.jdbc.IConnectionProperties#getElideSetAutoCommits()
      */
     public boolean getElideSetAutoCommits() {
-        return this.elideSetAutoCommits.getValueAsBoolean();
+        // Server Bug#66884 (SERVER_STATUS is always initiated with SERVER_STATUS_AUTOCOMMIT=1) invalidates this feature.
+        return false;
+        // TODO Turn this feature back on as soon as the server bug is fixed. Consider making it version specific.
+        // return this.elideSetAutoCommits.getValueAsBoolean();
     }
 
     /*

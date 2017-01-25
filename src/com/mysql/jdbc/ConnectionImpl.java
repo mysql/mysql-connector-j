@@ -3355,8 +3355,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
         }
 
-        boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
-
         configureClientCharacterSet(false);
 
         try {
@@ -3371,16 +3369,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         if (versionMeetsMinimum(3, 23, 15)) {
             this.transactionsSupported = true;
-
-            if (!overrideDefaultAutocommit) {
-                try {
-                    setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
-                } catch (SQLException ex) {
-                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                        throw ex;
-                    }
-                }
-            }
+            handleAutoCommitDefaults();
         } else {
             this.transactionsSupported = false;
         }
@@ -3462,18 +3451,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * Has the default autocommit value of 0 been changed on the server
-     * via init_connect?
-     * 
-     * @return true if autocommit is not the default of '0' on the server.
-     * 
-     * @throws SQLException
+     * Has the default auto-commit value of 0 been changed on the server via init_connect? If so reset it as required by JDBC specification.
      */
-    private boolean isAutoCommitNonDefaultOnServer() throws SQLException {
-        boolean overrideDefaultAutocommit = false;
+    private void handleAutoCommitDefaults() throws SQLException {
+        boolean resetAutoCommitDefault = false;
 
         String initConnectValue = this.serverVariables.get("init_connect");
-
         if (versionMeetsMinimum(4, 1, 2) && initConnectValue != null && initConnectValue.length() > 0) {
             if (!getElideSetAutoCommits()) {
                 // auto-commit might have changed
@@ -3482,16 +3465,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 try {
                     stmt = getMetadataSafeStatement();
-
                     rs = stmt.executeQuery("SELECT @@session.autocommit");
-
                     if (rs.next()) {
                         this.autoCommit = rs.getBoolean(1);
-                        if (this.autoCommit != true) {
-                            overrideDefaultAutocommit = true;
-                        }
+                        resetAutoCommitDefault = !this.autoCommit;
                     }
-
                 } finally {
                     if (rs != null) {
                         try {
@@ -3500,7 +3478,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             // do nothing
                         }
                     }
-
                     if (stmt != null) {
                         try {
                             stmt.close();
@@ -3509,16 +3486,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         }
                     }
                 }
-            } else {
-                if (this.getIO().isSetNeededForAutoCommitMode(true)) {
-                    // we're not in standard autocommit=true mode
-                    this.autoCommit = false;
-                    overrideDefaultAutocommit = true;
-                }
+            } else if (this.getIO().isSetNeededForAutoCommitMode(true)) {
+                // we're not in standard autocommit=true mode
+                this.autoCommit = false;
+                resetAutoCommitDefault = true;
             }
         }
 
-        return overrideDefaultAutocommit;
+        if (resetAutoCommitDefault) {
+            try {
+                setAutoCommit(true); // required by JDBC spec
+            } catch (SQLException ex) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+                    throw ex;
+                }
+            }
+        }
     }
 
     public boolean isClientTzUTC() {
@@ -4781,7 +4764,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * If a connection is in auto-commit mode, than all its SQL statements will
      * be executed and committed as individual transactions. Otherwise, its SQL
      * statements are grouped into transactions that are terminated by either
-     * commit() or rollback(). By default, new connections are in auto- commit
+     * commit() or rollback(). By default, new connections are in auto-commit
      * mode. The commit occurs when the statement completes or the next execute
      * occurs, whichever comes first. In the case of statements returning a
      * ResultSet, the statement completes when the last row of the ResultSet has
@@ -4789,12 +4772,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * single statement may return multiple results as well as output parameter
      * values. Here the commit occurs when all results and output param values
      * have been retrieved.
-     * <p>
-     * <b>Note:</b> MySQL does not support transactions, so this method is a no-op.
-     * </p>
      * 
      * @param autoCommitFlag
-     *            -
      *            true enables auto-commit; false disables it
      * @exception SQLException
      *                if a database access error occurs
