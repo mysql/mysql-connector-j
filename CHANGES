@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.41
 
+  - Fix for Bug#25438355, Improper automatic deserialization of binary data.
+
   - Fix for Bug#70785 (17756825), MySQL Connector/J inconsistent init state for autocommit.
 
   - Fix for Bug#75615 (21181249), Incorrect implementation of Connection.setNetworkTimeout().

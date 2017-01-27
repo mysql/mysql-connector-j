@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -3429,24 +3429,26 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                         byte[] data = getBytes(columnIndex);
                         Object obj = data;
 
-                        if ((data != null) && (data.length >= 2)) {
-                            if ((data[0] == -84) && (data[1] == -19)) {
-                                // Serialized object?
-                                try {
-                                    ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
-                                    ObjectInputStream objIn = new ObjectInputStream(bytesIn);
-                                    obj = objIn.readObject();
-                                    objIn.close();
-                                    bytesIn.close();
-                                } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
-                                } catch (IOException ex) {
-                                    obj = data; // not serialized?
+                        if (this.connection.getAutoDeserialize()) {
+                            if ((data != null) && (data.length >= 2)) {
+                                if ((data[0] == -84) && (data[1] == -19)) {
+                                    // Serialized object?
+                                    try {
+                                        ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
+                                        ObjectInputStream objIn = new ObjectInputStream(bytesIn);
+                                        obj = objIn.readObject();
+                                        objIn.close();
+                                        bytesIn.close();
+                                    } catch (ClassNotFoundException cnfe) {
+                                        throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
+                                                + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
+                                    } catch (IOException ex) {
+                                        obj = data; // not serialized?
+                                    }
                                 }
-                            }
 
-                            return obj.toString();
+                                return obj.toString();
+                            }
                         }
 
                         return extractStringFromNativeColumn(columnIndex, mysqlType);
