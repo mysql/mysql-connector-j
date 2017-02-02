@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -194,6 +194,22 @@ public final class Mysqlx {
        * <code>EXPECT_CLOSE = 25;</code>
        */
       EXPECT_CLOSE(13, 25),
+      /**
+       * <code>CRUD_CREATE_VIEW = 30;</code>
+       */
+      CRUD_CREATE_VIEW(14, 30),
+      /**
+       * <code>CRUD_MODIFY_VIEW = 31;</code>
+       */
+      CRUD_MODIFY_VIEW(15, 31),
+      /**
+       * <code>CRUD_DROP_VIEW = 32;</code>
+       */
+      CRUD_DROP_VIEW(16, 32),
+      /**
+       * <code>CRUD_FIND_V2 = 33;</code>
+       */
+      CRUD_FIND_V2(17, 33),
       ;
 
       /**
@@ -252,6 +268,22 @@ public final class Mysqlx {
        * <code>EXPECT_CLOSE = 25;</code>
        */
       public static final int EXPECT_CLOSE_VALUE = 25;
+      /**
+       * <code>CRUD_CREATE_VIEW = 30;</code>
+       */
+      public static final int CRUD_CREATE_VIEW_VALUE = 30;
+      /**
+       * <code>CRUD_MODIFY_VIEW = 31;</code>
+       */
+      public static final int CRUD_MODIFY_VIEW_VALUE = 31;
+      /**
+       * <code>CRUD_DROP_VIEW = 32;</code>
+       */
+      public static final int CRUD_DROP_VIEW_VALUE = 32;
+      /**
+       * <code>CRUD_FIND_V2 = 33;</code>
+       */
+      public static final int CRUD_FIND_V2_VALUE = 33;
 
 
       public final int getNumber() { return value; }
@@ -272,6 +304,10 @@ public final class Mysqlx {
           case 20: return CRUD_DELETE;
           case 24: return EXPECT_OPEN;
           case 25: return EXPECT_CLOSE;
+          case 30: return CRUD_CREATE_VIEW;
+          case 31: return CRUD_MODIFY_VIEW;
+          case 32: return CRUD_DROP_VIEW;
+          case 33: return CRUD_FIND_V2;
           default: return null;
         }
       }
@@ -452,7 +488,7 @@ public final class Mysqlx {
                 com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.class, com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.ClientMessages.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -970,7 +1006,7 @@ public final class Mysqlx {
                 com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.class, com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.ServerMessages.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1363,7 +1399,7 @@ public final class Mysqlx {
                 com.mysql.cj.x.protobuf.Mysqlx.Ok.class, com.mysql.cj.x.protobuf.Mysqlx.Ok.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.Ok.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.Mysqlx.Ok.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2109,7 +2145,7 @@ public final class Mysqlx {
                 com.mysql.cj.x.protobuf.Mysqlx.Error.class, com.mysql.cj.x.protobuf.Mysqlx.Error.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.Mysqlx.Error.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.Mysqlx.Error.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2515,7 +2551,7 @@ public final class Mysqlx {
       "\032\026mysqlx_resultset.proto\032\021mysqlx_crud.pr" +
       "oto\032\024mysqlx_session.proto\032\027mysqlx_connec" +
       "tion.proto\032\023mysqlx_expect.proto\032\023mysqlx_" +
-      "notice.proto\"\264\002\n\016ClientMessages\"\241\002\n\004Type" +
+      "notice.proto\"\206\003\n\016ClientMessages\"\363\002\n\004Type" +
       "\022\030\n\024CON_CAPABILITIES_GET\020\001\022\030\n\024CON_CAPABI" +
       "LITIES_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n\027SESS_AUTH" +
       "ENTICATE_START\020\004\022\036\n\032SESS_AUTHENTICATE_CO" +
@@ -2523,20 +2559,22 @@ public final class Mysqlx {
       "\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r\n\tCRUD_FIND\020\021\022\017\n",
       "\013CRUD_INSERT\020\022\022\017\n\013CRUD_UPDATE\020\023\022\017\n\013CRUD_" +
       "DELETE\020\024\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014EXPECT_CLOS" +
-      "E\020\031\"\342\002\n\016ServerMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022" +
-      "\t\n\005ERROR\020\001\022\025\n\021CONN_CAPABILITIES\020\002\022\036\n\032SES" +
-      "S_AUTHENTICATE_CONTINUE\020\003\022\030\n\024SESS_AUTHEN" +
-      "TICATE_OK\020\004\022\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_COL" +
-      "UMN_META_DATA\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RE" +
-      "SULTSET_FETCH_DONE\020\016\022\035\n\031RESULTSET_FETCH_" +
-      "SUSPENDED\020\017\022(\n$RESULTSET_FETCH_DONE_MORE" +
-      "_RESULTSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(",
-      "\n$RESULTSET_FETCH_DONE_MORE_OUT_PARAMS\020\022" +
-      "\"\021\n\002Ok\022\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010severit" +
-      "y\030\001 \001(\0162\026.Mysqlx.Error.Severity:\005ERROR\022\014" +
-      "\n\004code\030\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003" +
-      " \002(\t\" \n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001B\036" +
-      "\n\034com.mysql.cj.mysqlx.protobuf"
+      "E\020\031\022\024\n\020CRUD_CREATE_VIEW\020\036\022\024\n\020CRUD_MODIFY" +
+      "_VIEW\020\037\022\022\n\016CRUD_DROP_VIEW\020 \022\020\n\014CRUD_FIND" +
+      "_V2\020!\"\342\002\n\016ServerMessages\"\317\002\n\004Type\022\006\n\002OK\020" +
+      "\000\022\t\n\005ERROR\020\001\022\025\n\021CONN_CAPABILITIES\020\002\022\036\n\032S" +
+      "ESS_AUTHENTICATE_CONTINUE\020\003\022\030\n\024SESS_AUTH" +
+      "ENTICATE_OK\020\004\022\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_C" +
+      "OLUMN_META_DATA\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024" +
+      "RESULTSET_FETCH_DONE\020\016\022\035\n\031RESULTSET_FETC",
+      "H_SUSPENDED\020\017\022(\n$RESULTSET_FETCH_DONE_MO" +
+      "RE_RESULTSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021" +
+      "\022(\n$RESULTSET_FETCH_DONE_MORE_OUT_PARAMS" +
+      "\020\022\"\021\n\002Ok\022\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010sever" +
+      "ity\030\001 \001(\0162\026.Mysqlx.Error.Severity:\005ERROR" +
+      "\022\014\n\004code\030\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg" +
+      "\030\003 \002(\t\" \n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001" +
+      "B\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

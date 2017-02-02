@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -514,7 +514,7 @@ public final class MysqlxSql {
                 com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.class, com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecute.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1303,7 +1303,7 @@ public final class MysqlxSql {
                 com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk.class, com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSql.StmtExecuteOk.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1424,8 +1424,8 @@ public final class MysqlxSql {
       "atatypes.proto\"y\n\013StmtExecute\022\026\n\tnamespa" +
       "ce\030\003 \001(\t:\003sql\022\014\n\004stmt\030\001 \002(\014\022#\n\004args\030\002 \003(" +
       "\0132\025.Mysqlx.Datatypes.Any\022\037\n\020compact_meta" +
-      "data\030\004 \001(\010:\005false\"\017\n\rStmtExecuteOkB\036\n\034co" +
-      "m.mysql.cj.mysqlx.protobuf"
+      "data\030\004 \001(\010:\005false\"\017\n\rStmtExecuteOkB\031\n\027co" +
+      "m.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

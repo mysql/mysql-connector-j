@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -395,7 +395,7 @@ public final class MysqlxConnection {
                 com.mysql.cj.x.protobuf.MysqlxConnection.Capability.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capability.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capability.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1038,7 +1038,7 @@ public final class MysqlxConnection {
                 com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Capabilities.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1651,7 +1651,7 @@ public final class MysqlxConnection {
                 com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesGet.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2045,7 +2045,7 @@ public final class MysqlxConnection {
                 com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxConnection.CapabilitiesSet.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2516,7 +2516,7 @@ public final class MysqlxConnection {
                 com.mysql.cj.x.protobuf.MysqlxConnection.Close.class, com.mysql.cj.x.protobuf.MysqlxConnection.Close.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxConnection.Close.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Close.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2655,8 +2655,8 @@ public final class MysqlxConnection {
       "lities\030\001 \003(\0132\035.Mysqlx.Connection.Capabil" +
       "ity\"\021\n\017CapabilitiesGet\"H\n\017CapabilitiesSe" +
       "t\0225\n\014capabilities\030\001 \002(\0132\037.Mysqlx.Connect" +
-      "ion.Capabilities\"\007\n\005CloseB\036\n\034com.mysql.c" +
-      "j.mysqlx.protobuf"
+      "ion.Capabilities\"\007\n\005CloseB\031\n\027com.mysql.c" +
+      "j.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

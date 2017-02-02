@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,41 +24,38 @@
 package com.mysql.cj.api.xdevapi;
 
 /**
- * A client-side representation of X Plugin server object, e.g. table, collection, etc.
+ * Handles the altering of a View.
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * // Creates the view through the Schema object
+ * Schema schema = session.getSchema('sakila');
+ * Table table = db.getTable("actor");
+ * Table view = db.createView("actor_list")
+ *              .definedAs(table.select("concat(first_name, \" \", last_name) as name, age").orderBy("name ASC"))
+ *              .execute();
+ * 
+ * // Retrieves the view through getTable()
+ * Table actors = db.getTable("actor_list");
+ * actors.isView() // Returns true
+ * actors.select("*").execute();
+ * 
+ * // Alters the view
+ * Table view = db.alterView("actor_list")
+ *              .definedAs(table.select("concat(first_name, \" \", last_name) as full_name"))
+ *              .execute();
+ * 
+ * // Dropping the view
+ * db.dropView("actor_list").ifExists().execute();
+ * </pre>
  */
-public interface DatabaseObject {
+public interface ViewUpdate extends ViewDDL<ViewUpdate, ViewUpdate> {
 
     /**
-     * Type of database objects.
+     * Execute the View update operation.
+     * 
+     * @return
      */
-    enum DbObjectType {
-        COLLECTION, TABLE, VIEW, COLLECTION_VIEW
-    };
-
-    /**
-     * Existence states of database objects.
-     */
-    enum DbObjectStatus {
-        EXISTS, NOT_EXISTS, UNKNOWN
-    };
-
-    /**
-     * Retrieve the session owning the given schema object.
-     */
-    BaseSession getSession();
-
-    /**
-     * Retrieve the schema owning this database object.
-     */
-    Schema getSchema();
-
-    /**
-     * Retrieve the name of the database object represented by the Java object.
-     */
-    String getName();
-
-    /**
-     * Query the existence of this database object.
-     */
-    DbObjectStatus existsInDatabase();
+    Table execute();
 }

@@ -53,7 +53,7 @@ public class TableImpl implements Table {
         this.mysqlxSession = mysqlxSession;
         this.schema = schema;
         this.name = descr.getObjectName();
-        this.isView = descr.getObjectType() == DbObjectType.VIEW;
+        this.isView = descr.getObjectType() == DbObjectType.VIEW || descr.getObjectType() == DbObjectType.COLLECTION_VIEW;
     }
 
     public BaseSession getSession() {
@@ -136,7 +136,7 @@ public class TableImpl implements Table {
                 return false;
             }
             // objects should contain exactly one element with matching this.name
-            this.isView = objects.get(0).getObjectType() == DbObjectType.VIEW;
+            this.isView = objects.get(0).getObjectType() == DbObjectType.VIEW || objects.get(0).getObjectType() == DbObjectType.COLLECTION_VIEW;
         }
         return this.isView;
     }

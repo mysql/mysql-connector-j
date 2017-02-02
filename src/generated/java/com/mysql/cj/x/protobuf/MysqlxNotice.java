@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -479,7 +479,7 @@ public final class MysqlxNotice {
                 com.mysql.cj.x.protobuf.MysqlxNotice.Frame.class, com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Frame.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxNotice.Frame.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1224,7 +1224,7 @@ public final class MysqlxNotice {
                 com.mysql.cj.x.protobuf.MysqlxNotice.Warning.class, com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxNotice.Warning.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1890,7 +1890,7 @@ public final class MysqlxNotice {
                 com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged.class, com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionVariableChanged.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2734,7 +2734,7 @@ public final class MysqlxNotice {
                 com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.class, com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxNotice.SessionStateChanged.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3071,8 +3071,8 @@ public final class MysqlxNotice {
       "RT_ID\020\003\022\021\n\rROWS_AFFECTED\020\004\022\016\n\nROWS_FOUND" +
       "\020\005\022\020\n\014ROWS_MATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022" +
       "\022\n\016TRX_ROLLEDBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020" +
-      "\n\022\026\n\022CLIENT_ID_ASSIGNED\020\013B\036\n\034com.mysql.c" +
-      "j.mysqlx.protobuf"
+      "\n\022\026\n\022CLIENT_ID_ASSIGNED\020\013B\031\n\027com.mysql.c" +
+      "j.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

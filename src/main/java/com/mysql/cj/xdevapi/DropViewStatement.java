@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,44 +21,30 @@
 
  */
 
-package com.mysql.cj.api.xdevapi;
+package com.mysql.cj.xdevapi;
 
-/**
- * A client-side representation of X Plugin server object, e.g. table, collection, etc.
- */
-public interface DatabaseObject {
+import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.ViewDrop;
 
-    /**
-     * Type of database objects.
-     */
-    enum DbObjectType {
-        COLLECTION, TABLE, VIEW, COLLECTION_VIEW
-    };
+public class DropViewStatement implements ViewDrop {
 
-    /**
-     * Existence states of database objects.
-     */
-    enum DbObjectStatus {
-        EXISTS, NOT_EXISTS, UNKNOWN
-    };
+    private Schema schema;
+    private String viewName;
+    private boolean ifExists = false;
 
-    /**
-     * Retrieve the session owning the given schema object.
-     */
-    BaseSession getSession();
+    public DropViewStatement(Schema sch, String viewName) {
+        this.schema = sch;
+        this.viewName = viewName;
+    }
 
-    /**
-     * Retrieve the schema owning this database object.
-     */
-    Schema getSchema();
+    @Override
+    public ViewDrop ifExists() {
+        this.ifExists = true;
+        return this;
+    }
 
-    /**
-     * Retrieve the name of the database object represented by the Java object.
-     */
-    String getName();
-
-    /**
-     * Query the existence of this database object.
-     */
-    DbObjectStatus existsInDatabase();
+    @Override
+    public void execute() {
+        this.schema.getSession().getMysqlxSession().dropView(this.schema.getName(), this.viewName, this.ifExists);
+    }
 }

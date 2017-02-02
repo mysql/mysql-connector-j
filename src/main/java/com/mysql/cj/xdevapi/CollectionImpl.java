@@ -65,6 +65,7 @@ public class CollectionImpl implements Collection {
 
     public DbObjectStatus existsInDatabase() {
         if (this.mysqlxSession.tableExists(this.schema.getName(), this.name)) {
+            // TODO should also check that the table has a DbObjectType.COLLECTION type  
             return DbObjectStatus.EXISTS;
         }
         return DbObjectStatus.NOT_EXISTS;

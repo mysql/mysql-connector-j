@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -94,9 +94,9 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         this.session.createCollection(getTestDatabase(), collName);
         List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION);
         assertTrue(collNames.contains(collName));
-        collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION, "none%");
+        collNames = this.session.getObjectNamesOfType(getTestDatabase(), "none%", DbObjectType.COLLECTION);
         assertFalse(collNames.contains(collName));
-        collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION, "%get_obj%");
+        collNames = this.session.getObjectNamesOfType(getTestDatabase(), "%get_obj%", DbObjectType.COLLECTION);
         assertTrue(collNames.contains(collName));
         this.session.dropCollection(getTestDatabase(), collName);
     }

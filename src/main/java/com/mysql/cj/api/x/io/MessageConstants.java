@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,9 +37,12 @@ import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet;
 import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet;
+import com.mysql.cj.x.protobuf.MysqlxCrud.CreateView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Delete;
+import com.mysql.cj.x.protobuf.MysqlxCrud.DropView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert;
+import com.mysql.cj.x.protobuf.MysqlxCrud.ModifyView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged;
@@ -140,6 +143,9 @@ public class MessageConstants {
         messageClassToClientMessageType.put(Reset.class, ClientMessages.Type.SESS_RESET_VALUE);
         messageClassToClientMessageType.put(StmtExecute.class, ClientMessages.Type.SQL_STMT_EXECUTE_VALUE);
         messageClassToClientMessageType.put(Update.class, ClientMessages.Type.CRUD_UPDATE_VALUE);
+        messageClassToClientMessageType.put(CreateView.class, ClientMessages.Type.CRUD_CREATE_VIEW_VALUE);
+        messageClassToClientMessageType.put(ModifyView.class, ClientMessages.Type.CRUD_MODIFY_VIEW_VALUE);
+        messageClassToClientMessageType.put(DropView.class, ClientMessages.Type.CRUD_DROP_VIEW_VALUE);
         MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE = Collections.unmodifiableMap(messageClassToClientMessageType);
     }
 }

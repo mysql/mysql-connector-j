@@ -31,6 +31,9 @@ import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.api.xdevapi.ViewCreate;
+import com.mysql.cj.api.xdevapi.ViewDrop;
+import com.mysql.cj.api.xdevapi.ViewUpdate;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
@@ -69,20 +72,18 @@ public class SchemaImpl implements Schema {
     }
 
     public List<Collection> getCollections(String pattern) {
-        return this.mysqlxSession.getObjectNamesOfType(this.name, DbObjectType.COLLECTION, pattern).stream().map(this::getCollection)
+        return this.mysqlxSession.getObjectNamesOfType(this.name, pattern, DbObjectType.COLLECTION).stream().map(this::getCollection)
                 .collect(Collectors.toList());
     }
 
     public List<Table> getTables() {
-        return this.mysqlxSession.listObjects(this.name).stream()
-                .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
-                .collect(Collectors.toList());
+        return this.mysqlxSession.getObjectNamesOfType(this.name, DbObjectType.TABLE, DbObjectType.VIEW, DbObjectType.COLLECTION_VIEW).stream()
+                .map(this::getTable).collect(Collectors.toList());
     }
 
     public List<Table> getTables(String pattern) {
-        return this.mysqlxSession.listObjects(this.name, pattern).stream()
-                .filter(descr -> descr.getObjectType() == DbObjectType.TABLE || descr.getObjectType() == DbObjectType.VIEW).map(this::getTable)
-                .collect(Collectors.toList());
+        return this.mysqlxSession.getObjectNamesOfType(this.name, pattern, DbObjectType.TABLE, DbObjectType.VIEW, DbObjectType.COLLECTION_VIEW).stream()
+                .map(this::getTable).collect(Collectors.toList());
     }
 
     public Collection getCollection(String collectionName) {
@@ -161,5 +162,20 @@ public class SchemaImpl implements Schema {
         sb.append(ExprUnparser.quoteIdentifier(this.name));
         sb.append(")");
         return sb.toString();
+    }
+
+    @Override
+    public ViewCreate createView(String viewName, boolean replace) {
+        return new CreateViewStatement(this, viewName, replace);
+    }
+
+    @Override
+    public ViewUpdate alterView(String viewName) {
+        return new UpdateViewStatement(this, viewName);
+    }
+
+    @Override
+    public ViewDrop dropView(String viewName) {
+        return new DropViewStatement(this, viewName);
     }
 }

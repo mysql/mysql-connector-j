@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -39,19 +40,28 @@ import org.junit.Test;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateTableStatement;
 import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectType;
 import com.mysql.cj.api.xdevapi.ForeignKeyDefinition.ChangeMode;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.x.core.DatabaseObjectDescription;
+import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.xdevapi.AbstractSession;
 import com.mysql.cj.xdevapi.ColumnDef;
+import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.ForeignKeyDef;
 import com.mysql.cj.xdevapi.GeneratedColumnDef;
+import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.XSessionImpl;
 
 public class SchemaTest extends DevApiBaseTestCase {
@@ -425,4 +435,175 @@ public class SchemaTest extends DevApiBaseTestCase {
         sqlUpdate("drop table if exists " + name + "_check ");
         sqlUpdate("CREATE TABLE " + name + " " + ddl);
     }
+
+    @Test
+    public void testViewDDL() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        try {
+            sqlUpdate("drop table if exists collectionTestViewDDL");
+            sqlUpdate("drop table if exists tableTestViewDDL");
+            sqlUpdate("drop view if exists viewTestViewDDL");
+            sqlUpdate("create table tableTestViewDDL (first_name varchar(32), last_name varchar(32), age int, descr JSON)");
+
+            Collection col = this.schema.createCollection("collectionTestViewDDL");
+            col.add("{\"first_name\": \"Clifford\", \"last_name\": \"Simak\"}").add("{\"first_name\": \"Arthur\", \"last_name\": \"Clarke\"}").execute();
+
+            Table table = this.schema.getTable("tableTestViewDDL");
+            assertEquals(DbObjectStatus.EXISTS, table.existsInDatabase());
+            table.insert().values("Clifford", "Simak", "112", "{\"first_name\": \"Clifford\", \"last_name\": \"Simak\"}")
+                    .values("Arthur", "Clarke", "99", "{\"first_name\": \"Arthur\", \"last_name\": \"Clarke\"}").execute();
+
+            // 1. Create table view
+            Table view = this.schema.createView("viewTestViewDDL", false)
+                    .definedAs(table.select("concat(first_name, \" \", last_name) as name, age").orderBy("name ASC")).execute();
+
+            assertEquals(DbObjectStatus.EXISTS, view.existsInDatabase());
+            assertTrue(view.isView());
+
+            // check that the view is in proper list
+            assertTrue(this.schema.getTables().contains(view));
+            assertFalse(this.schema.getCollections().contains(view));
+
+            // 2. Retrieve the view
+            Table view2 = this.schema.getTable("viewTestViewDDL", true);
+            assertTrue(view2.isView());
+            assertFalse(view == view2);
+            assertTrue(view.equals(view2));
+
+            RowResult rows = view2.select("*").execute();
+            Row r = rows.next();
+            assertEquals("Arthur Clarke", r.getString("name"));
+            assertEquals(99, r.getInt("age"));
+            r = rows.next();
+            assertEquals("Clifford Simak", r.getString("name"));
+            assertEquals(112, r.getInt("age"));
+
+            // 3.1 Alter view with table.select
+            Table view3 = this.schema.alterView("viewTestViewDDL")
+                    .definedAs(table.select("concat(first_name, \" \", last_name) as full_name").orderBy("full_name DESC")).execute();
+            assertTrue(view3.isView());
+            rows = view3.select("*").execute();
+            List<String> colNames = rows.getColumnNames();
+            assertEquals(1, colNames.size());
+
+            r = rows.next();
+            assertEquals("Clifford Simak", r.getString("full_name"));
+            r = rows.next();
+            assertEquals("Arthur Clarke", r.getString("full_name"));
+
+            // 3.2 Alter view with getting a COLLECTION_VIEW
+            view3 = this.schema.alterView("viewTestViewDDL").definedAs(table.select("descr as doc")).execute();
+
+            // check that the actual type is COLLECTION_VIEW
+            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.COLLECTION_VIEW);
+
+            // checking the Table method
+            assertTrue(view3.isView());
+
+            // check that the view is in proper list
+            assertTrue(this.schema.getTables().contains(view));
+            assertFalse(this.schema.getCollections().contains(view));
+
+            // 3.3 Alter view with renaming "doc" column (getting a VIEW)
+            view3 = this.schema.alterView("viewTestViewDDL").columns("val").definedAs(table.select("descr as nodoc")).execute();
+
+            // check that the actual type is VIEW
+            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.VIEW);
+
+            // checking the Table method
+            assertTrue(view3.isView());
+
+            rows = view3.select("*").execute();
+            colNames = rows.getColumnNames();
+            assertEquals(1, colNames.size());
+            assertEquals("val", colNames.get(0));
+
+            // 4. Dropping the existing view
+            this.schema.dropView("viewTestViewDDL").ifExists().execute();
+            assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("viewTestViewDDL").existsInDatabase());
+
+            // Dropping the not existing view
+            try {
+                this.schema.dropView("notExistingViewDDL").execute();
+                fail("Exception should be thrown if trying to drop a not existing view without ifExists() set.");
+            } catch (XDevAPIError ex) {
+                // expected
+                assertEquals(MysqlErrorNumbers.ER_BAD_TABLE_ERROR, ex.getErrorCode());
+            }
+
+            this.schema.dropView("notExistingViewDDL").ifExists().execute(); // Notices are produced here but ignored
+            assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("notExistingViewDDL").existsInDatabase());
+
+            // 5. Create collection view (views that have one column which is "doc JSON" should be categorized as "COLLECTION_VIEW")
+            this.schema.createView("viewTestViewDDL", false).definedAs(table.select("descr as doc").orderBy("$.first_name ASC")).execute();
+            view = this.schema.getTable("viewTestViewDDL", true);
+
+            assertEquals(DbObjectStatus.EXISTS, view.existsInDatabase());
+            assertTrue(view.isView());
+
+            // check that the actual type is COLLECTION_VIEW
+            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.COLLECTION_VIEW);
+
+            rows = view.select("*").execute();
+            r = rows.next();
+            DbDoc doc = r.getDbDoc("doc");
+            assertEquals("Arthur", ((JsonString) doc.get("first_name")).getString());
+            assertEquals("Clarke", ((JsonString) doc.get("last_name")).getString());
+            r = rows.next();
+            doc = r.getDbDoc("doc");
+            assertEquals("Clifford", ((JsonString) doc.get("first_name")).getString());
+            assertEquals("Simak", ((JsonString) doc.get("last_name")).getString());
+
+            this.schema.dropView("viewTestViewDDL").ifExists().execute();
+
+            // 6. Define all fields
+            view = this.schema.createView("viewTestViewDDL", false).algorithm(ViewAlgorithm.MERGE).columns("n", "a")
+                    .definedAs(table.select("concat(first_name, \" \", last_name) as name, age").orderBy("name ASC")).definer("root")
+                    .security(ViewSqlSecurity.INVOKER).withCheckOption(ViewCheckOption.CASCADED).execute();
+            rows = view.select("*").execute();
+            r = rows.next();
+            assertEquals("Arthur Clarke", r.getString("n"));
+            assertEquals(99, r.getInt("a"));
+            r = rows.next();
+            assertEquals("Clifford Simak", r.getString("n"));
+            assertEquals(112, r.getInt("a"));
+
+            rows = this.session.sql("show create view `viewTestViewDDL`").execute();
+            r = rows.next();
+            String t2 = r.getString(1);
+
+            // TODO could cause problems on different server versions
+            assertEquals("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `viewTestViewDDL`"
+                    + " AS select concat(`tableTestViewDDL`.`first_name`,' ',`tableTestViewDDL`.`last_name`) AS `n`,"
+                    + "`tableTestViewDDL`.`age` AS `a` from `tableTestViewDDL`"
+                    + " order by concat(`tableTestViewDDL`.`first_name`,' ',`tableTestViewDDL`.`last_name`) WITH CASCADED CHECK OPTION", t2);
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            sqlUpdate("drop table if exists collectionTestViewDDL");
+            sqlUpdate("drop table if exists tableTestViewDDL");
+            sqlUpdate("drop view if exists viewTestViewDDL");
+        }
+    }
+
+    private DbObjectType getViewType(String schemaName, String view) {
+        try {
+            // check that the actual type is COLLECTION_VIEW
+            Field f = AbstractSession.class.getDeclaredField("session");
+            f.setAccessible(true);
+            List<DatabaseObjectDescription> objects = ((MysqlxSession) f.get(this.session)).listObjects(schemaName, view);
+            assertFalse(objects.isEmpty());
+            // objects should contain exactly one element with matching this.name
+            return objects.get(0).getObjectType();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
 }

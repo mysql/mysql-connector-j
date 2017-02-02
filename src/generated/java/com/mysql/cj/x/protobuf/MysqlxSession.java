@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -414,7 +414,7 @@ public final class MysqlxSession {
                 com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart.class, com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateStart.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -967,7 +967,7 @@ public final class MysqlxSession {
                 com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue.class, com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateContinue.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1381,7 +1381,7 @@ public final class MysqlxSession {
                 com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateOk.class, com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateOk.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.AuthenticateOk.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateOk.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1752,7 +1752,7 @@ public final class MysqlxSession {
                 com.mysql.cj.x.protobuf.MysqlxSession.Reset.class, com.mysql.cj.x.protobuf.MysqlxSession.Reset.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.Reset.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSession.Reset.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2075,7 +2075,7 @@ public final class MysqlxSession {
                 com.mysql.cj.x.protobuf.MysqlxSession.Close.class, com.mysql.cj.x.protobuf.MysqlxSession.Close.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxSession.Close.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxSession.Close.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2212,8 +2212,8 @@ public final class MysqlxSession {
       "\n\tauth_data\030\002 \001(\014\022\030\n\020initial_response\030\003 " +
       "\001(\014\")\n\024AuthenticateContinue\022\021\n\tauth_data" +
       "\030\001 \002(\014\"#\n\016AuthenticateOk\022\021\n\tauth_data\030\001 " +
-      "\001(\014\"\007\n\005Reset\"\007\n\005CloseB\036\n\034com.mysql.cj.my" +
-      "sqlx.protobuf"
+      "\001(\014\"\007\n\005Reset\"\007\n\005CloseB\031\n\027com.mysql.cj.x." +
+      "protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

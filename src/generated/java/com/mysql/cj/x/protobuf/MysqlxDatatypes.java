@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -723,7 +723,7 @@ public final class MysqlxDatatypes {
                   com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String.Builder.class);
         }
 
-        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.String.newBuilder()
+        // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String.newBuilder()
         private Builder() {
           maybeForceBuilderInitialization();
         }
@@ -1219,7 +1219,7 @@ public final class MysqlxDatatypes {
                   com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets.Builder.class);
         }
 
-        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.Octets.newBuilder()
+        // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets.newBuilder()
         private Builder() {
           maybeForceBuilderInitialization();
         }
@@ -1760,7 +1760,7 @@ public final class MysqlxDatatypes {
                 com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Scalar.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2919,7 +2919,7 @@ public final class MysqlxDatatypes {
                   com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField.Builder.class);
         }
 
-        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.ObjectField.newBuilder()
+        // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField.newBuilder()
         private Builder() {
           maybeForceBuilderInitialization();
         }
@@ -3428,7 +3428,7 @@ public final class MysqlxDatatypes {
                 com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Object.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -4124,7 +4124,7 @@ public final class MysqlxDatatypes {
                 com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Array.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -5058,7 +5058,7 @@ public final class MysqlxDatatypes {
                 com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.class, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxDatatypes.Any.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -5694,7 +5694,7 @@ public final class MysqlxDatatypes {
       "calar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Ob",
       "ject\022&\n\005array\030\004 \001(\0132\027.Mysqlx.Datatypes.A" +
       "rray\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005" +
-      "ARRAY\020\003B\036\n\034com.mysql.cj.mysqlx.protobuf"
+      "ARRAY\020\003B\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

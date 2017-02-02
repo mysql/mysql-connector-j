@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -936,7 +936,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.Expr.class, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Expr.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Expr.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2429,7 +2429,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.class, com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Identifier.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3247,7 +3247,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.class, com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.DocumentPathItem.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -4070,7 +4070,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.class, com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.ColumnIdentifier.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -5097,7 +5097,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall.class, com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.FunctionCall.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -5683,6 +5683,7 @@ public final class MysqlxExpr {
    *     * ``default``
    *   Unary
    *     * ``!``
+   *     * ``*``
    *     * ``sign_plus``
    *     * ``sign_minus``
    *     * ``~``
@@ -6079,6 +6080,7 @@ public final class MysqlxExpr {
      *     * ``default``
      *   Unary
      *     * ``!``
+     *     * ``*``
      *     * ``sign_plus``
      *     * ``sign_minus``
      *     * ``~``
@@ -6168,7 +6170,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.Operator.class, com.mysql.cj.x.protobuf.MysqlxExpr.Operator.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Operator.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Operator.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -7137,7 +7139,7 @@ public final class MysqlxExpr {
                   com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.class, com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder.class);
         }
 
-        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object.ObjectField.newBuilder()
+        // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.newBuilder()
         private Builder() {
           maybeForceBuilderInitialization();
         }
@@ -7646,7 +7648,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.Object.class, com.mysql.cj.x.protobuf.MysqlxExpr.Object.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Object.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Object.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -8342,7 +8344,7 @@ public final class MysqlxExpr {
                 com.mysql.cj.x.protobuf.MysqlxExpr.Array.class, com.mysql.cj.x.protobuf.MysqlxExpr.Array.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpr.Array.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpr.Array.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -8814,7 +8816,7 @@ public final class MysqlxExpr {
       "r.Object.ObjectField\032<\n\013ObjectField\022\013\n\003k" +
       "ey\030\001 \002(\t\022 \n\005value\030\002 \002(\0132\021.Mysqlx.Expr.Ex" +
       "pr\")\n\005Array\022 \n\005value\030\001 \003(\0132\021.Mysqlx.Expr",
-      ".ExprB\036\n\034com.mysql.cj.mysqlx.protobuf"
+      ".ExprB\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

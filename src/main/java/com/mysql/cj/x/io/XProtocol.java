@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -54,6 +54,9 @@ import com.mysql.cj.api.x.io.MessageWriter;
 import com.mysql.cj.api.x.io.ResultListener;
 import com.mysql.cj.api.x.io.XpluginStatementCommand;
 import com.mysql.cj.api.xdevapi.SqlResult;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
@@ -261,6 +264,10 @@ public class XProtocol implements Protocol {
     }
 
     public void readOk() {
+        while (this.reader.getNextMessageClass() == Frame.class) {
+            this.reader.read(Frame.class);
+            // TODO OkBuilder.addNotice(this.reader.read(Frame.class));
+        }
         this.reader.read(Ok.class);
     }
 
@@ -773,5 +780,20 @@ public class XProtocol implements Protocol {
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {
         this.writer.setMaxAllowedPacket(maxAllowedPacket);
+    }
+
+    public void sendCreateView(String schemaName, String collectionName, boolean replaceExisting, List<String> columns, ViewAlgorithm algorithm,
+            ViewSqlSecurity security, String definer, FindParams findParams, ViewCheckOption checkOpt) {
+        this.writer.write(
+                this.msgBuilder.buildCreateView(schemaName, collectionName, replaceExisting, columns, algorithm, security, definer, findParams, checkOpt));
+    }
+
+    public void sendModifyView(String schemaName, String collectionName, List<String> columns, ViewAlgorithm algorithm, ViewSqlSecurity security,
+            String definer, FindParams findParams, ViewCheckOption checkOpt) {
+        this.writer.write(this.msgBuilder.buildModifyView(schemaName, collectionName, columns, algorithm, security, definer, findParams, checkOpt));
+    }
+
+    public void sendDropView(String schemaName, String collectionName, boolean ifExists) {
+        this.writer.write(this.msgBuilder.buildDropView(schemaName, collectionName, ifExists));
     }
 }

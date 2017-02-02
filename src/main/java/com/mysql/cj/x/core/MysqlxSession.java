@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,7 @@ package com.mysql.cj.x.core;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +52,14 @@ import com.mysql.cj.api.x.core.ResultCtor;
 import com.mysql.cj.api.x.io.MetadataToRowToElement;
 import com.mysql.cj.api.x.io.ResultListener;
 import com.mysql.cj.api.x.io.ResultStreamer;
+import com.mysql.cj.api.xdevapi.DataStatement.Reducer;
 import com.mysql.cj.api.xdevapi.DatabaseObject;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.DataStatement.Reducer;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
+import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -338,6 +342,26 @@ public class MysqlxSession implements Session {
         return 1 == queryForLong(stmt.toString());
     }
 
+    public void createView(String schemaName, String collectionName, boolean replaceExisting, List<String> columns, ViewAlgorithm algorithm,
+            ViewSqlSecurity security, String definer, FindParams findParams, ViewCheckOption checkOpt) {
+        newCommand();
+        this.protocol.sendCreateView(schemaName, collectionName, replaceExisting, columns, algorithm, security, definer, findParams, checkOpt);
+        this.protocol.readOk();
+    }
+
+    public void modifyView(String schemaName, String collectionName, List<String> columns, ViewAlgorithm algorithm, ViewSqlSecurity security, String definer,
+            FindParams findParams, ViewCheckOption checkOpt) {
+        newCommand();
+        this.protocol.sendModifyView(schemaName, collectionName, columns, algorithm, security, definer, findParams, checkOpt);
+        this.protocol.readOk();
+    }
+
+    public void dropView(String schemaName, String collectionName, boolean ifExists) {
+        newCommand();
+        this.protocol.sendDropView(schemaName, collectionName, ifExists);
+        this.protocol.readOk();
+    }
+
     /**
      * Retrieve the list of objects in the given schema of the specified type. The type may be one of {COLLECTION, TABLE, VIEW}.
      *
@@ -347,8 +371,8 @@ public class MysqlxSession implements Session {
      *            type of objects to return
      * @return object names
      */
-    public List<String> getObjectNamesOfType(String schemaName, DatabaseObject.DbObjectType type) {
-        return getObjectNamesOfType(schemaName, type, null);
+    public List<String> getObjectNamesOfType(String schemaName, DatabaseObject.DbObjectType... type) {
+        return getObjectNamesOfType(schemaName, null, type);
     }
 
     /**
@@ -362,7 +386,7 @@ public class MysqlxSession implements Session {
      *            object name pattern
      * @return object names
      */
-    public List<String> getObjectNamesOfType(String schemaName, DatabaseObject.DbObjectType type, String pattern) {
+    public List<String> getObjectNamesOfType(String schemaName, String pattern, DatabaseObject.DbObjectType... type) {
         newCommand();
         if (pattern == null) {
             this.protocol.sendListObjects(schemaName);
@@ -372,15 +396,13 @@ public class MysqlxSession implements Session {
         // TODO: charactersetMetadata
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
+
         List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .filter(r -> r.getValue(1, new StringValueFactory()).equals(type.toString())).map(r -> r.getValue(0, new StringValueFactory()))
-                .collect(Collectors.toList());
+                .filter(r -> (Arrays.stream(type).map(DatabaseObject.DbObjectType::toString).collect(Collectors.toSet()))
+                        .contains(r.getValue(1, new StringValueFactory())))
+                .map(r -> r.getValue(0, new StringValueFactory())).collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objectNames;
-    }
-
-    public List<DatabaseObjectDescription> listObjects(String schemaName) {
-        return listObjects(schemaName, null);
     }
 
     public List<DatabaseObjectDescription> listObjects(String schemaName, String pattern) {

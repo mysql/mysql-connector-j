@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,7 +24,7 @@
 /**
  * Message classes used for serialization with Google Protocol Buffers to support X Protocol. Classes are generated using <i>protoc</i> like so:
  * <pre>
- * protoc --java_out=src/generated/java -I/PATH/TO/MYSQL/plugin/x/protocol /PATH/TO/MYSQL/plugin/x/protocol/*.proto
+ * protoc --java_out=PATH/src/generated/java -I=PATH_TO_MYSQL_REPO/rapid/plugin/x/protocol PATH_TO_MYSQL_REPO/rapid/plugin/x/protocol/*.proto
  * </pre>
  *
  * @since 6.0

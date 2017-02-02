@@ -74,4 +74,9 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         this.findParams.setGroupingCriteria(having);
         return this;
     }
+
+    @Override
+    public FindParams getFindParams() {
+        return this.findParams;
+    }
 }

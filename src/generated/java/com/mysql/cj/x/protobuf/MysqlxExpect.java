@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -726,7 +726,7 @@ public final class MysqlxExpect {
                   com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.class, com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.Builder.class);
         }
 
-        // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpect.Open.Condition.newBuilder()
+        // Construct using com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.newBuilder()
         private Builder() {
           maybeForceBuilderInitialization();
         }
@@ -1162,7 +1162,7 @@ public final class MysqlxExpect {
                 com.mysql.cj.x.protobuf.MysqlxExpect.Open.class, com.mysql.cj.x.protobuf.MysqlxExpect.Open.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpect.Open.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpect.Open.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1825,7 +1825,7 @@ public final class MysqlxExpect {
                 com.mysql.cj.x.protobuf.MysqlxExpect.Close.class, com.mysql.cj.x.protobuf.MysqlxExpect.Close.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxExpect.Close.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxExpect.Close.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1957,8 +1957,8 @@ public final class MysqlxExpect {
       "on:\rEXPECT_OP_SET\"<\n\022ConditionOperation\022" +
       "\021\n\rEXPECT_OP_SET\020\000\022\023\n\017EXPECT_OP_UNSET\020\001\"" +
       ">\n\014CtxOperation\022\030\n\024EXPECT_CTX_COPY_PREV\020",
-      "\000\022\024\n\020EXPECT_CTX_EMPTY\020\001\"\007\n\005CloseB\036\n\034com." +
-      "mysql.cj.mysqlx.protobuf"
+      "\000\022\024\n\020EXPECT_CTX_EMPTY\020\001\"\007\n\005CloseB\031\n\027com." +
+      "mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

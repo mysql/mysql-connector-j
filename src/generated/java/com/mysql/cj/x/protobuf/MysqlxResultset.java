@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -254,7 +254,7 @@ public final class MysqlxResultset {
                 com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreOutParams.class, com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreOutParams.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDoneMoreOutParams.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreOutParams.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -575,7 +575,7 @@ public final class MysqlxResultset {
                 com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreResultsets.class, com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreResultsets.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDoneMoreResultsets.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreResultsets.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -896,7 +896,7 @@ public final class MysqlxResultset {
                 com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone.class, com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxResultset.FetchDone.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1338,6 +1338,15 @@ public final class MysqlxResultset {
    *   DECIMAL 0x0001 unsigned
    *   BYTES   0x0001 rightpad
    *   ======= ====== ===========
+   *   ====== ================
+   *   value  description
+   *   ====== ================
+   *   0x0010 NOT_NULL
+   *   0x0020 PRIMARY_KEY
+   *   0x0040 UNIQUE_KEY
+   *   0x0080 MULTIPLE_KEY
+   *   0x0100 AUTO_INCREMENT
+   *   ====== ================
    *   default: 0
    * :param content_type:
    *   a hint about the higher-level encoding of a BYTES field
@@ -2288,6 +2297,15 @@ public final class MysqlxResultset {
      *   DECIMAL 0x0001 unsigned
      *   BYTES   0x0001 rightpad
      *   ======= ====== ===========
+     *   ====== ================
+     *   value  description
+     *   ====== ================
+     *   0x0010 NOT_NULL
+     *   0x0020 PRIMARY_KEY
+     *   0x0040 UNIQUE_KEY
+     *   0x0080 MULTIPLE_KEY
+     *   0x0100 AUTO_INCREMENT
+     *   ====== ================
      *   default: 0
      * :param content_type:
      *   a hint about the higher-level encoding of a BYTES field
@@ -2322,7 +2340,7 @@ public final class MysqlxResultset {
                 com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.class, com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxResultset.ColumnMetaData.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2980,7 +2998,8 @@ public final class MysqlxResultset {
    * <pre>
    *   Row in a Resultset
    *   a row is represented as a list of fields encoded as byte blobs.
-   *   Value of each field is encoded as sequence of bytes using encoding appropriate for the
+   *   Blob of size 0 represents the NULL value. Otherwise, if it contains at least
+   *   one byte, it encodes a non-null value of the field using encoding appropriate for the
    *   type of the value given by ``ColumnMetadata``, as specified
    *   in the :protobuf:msg:`Mysqlx.Resultset::ColumnMetaData` description.
    * </pre>
@@ -3227,7 +3246,8 @@ public final class MysqlxResultset {
      * <pre>
      *   Row in a Resultset
      *   a row is represented as a list of fields encoded as byte blobs.
-     *   Value of each field is encoded as sequence of bytes using encoding appropriate for the
+     *   Blob of size 0 represents the NULL value. Otherwise, if it contains at least
+     *   one byte, it encodes a non-null value of the field using encoding appropriate for the
      *   type of the value given by ``ColumnMetadata``, as specified
      *   in the :protobuf:msg:`Mysqlx.Resultset::ColumnMetaData` description.
      * </pre>
@@ -3248,7 +3268,7 @@ public final class MysqlxResultset {
                 com.mysql.cj.x.protobuf.MysqlxResultset.Row.class, com.mysql.cj.x.protobuf.MysqlxResultset.Row.Builder.class);
       }
 
-      // Construct using com.mysql.cj.mysqlx.protobuf.MysqlxResultset.Row.newBuilder()
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.Row.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3484,8 +3504,8 @@ public final class MysqlxResultset {
       "eldType\022\010\n\004SINT\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022" +
       "\t\n\005FLOAT\020\006\022\t\n\005BYTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATET" +
       "IME\020\014\022\007\n\003SET\020\017\022\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DEC" +
-      "IMAL\020\022\"\024\n\003Row\022\r\n\005field\030\001 \003(\014B\036\n\034com.mysq" +
-      "l.cj.mysqlx.protobuf"
+      "IMAL\020\022\"\024\n\003Row\022\r\n\005field\030\001 \003(\014B\031\n\027com.mysq" +
+      "l.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

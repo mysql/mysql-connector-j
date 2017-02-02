@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -129,4 +129,28 @@ public interface Schema extends DatabaseObject {
      */
     CreateTableSplitStatement createTable(String name, boolean reuseExistingObject);
 
+    /**
+     * Returns an instance of ViewCreate to handle the creation of a View.
+     * 
+     * @param name
+     * @param replace
+     * @return
+     */
+    ViewCreate createView(String name, boolean replace);
+
+    /**
+     * Returns an instance of ViewUpdate to handle updating an existing View.
+     * 
+     * @param name
+     * @return
+     */
+    ViewUpdate alterView(String name);
+
+    /**
+     * Returns an instance of a ViewDrop to handle dropping an existing View.
+     * 
+     * @param name
+     * @return
+     */
+    ViewDrop dropView(String name);
 }
