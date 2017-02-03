@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Spliterators;
 import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
@@ -46,6 +47,7 @@ import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.x.core.ResultCtor;
@@ -100,6 +102,7 @@ public class MysqlxSession implements Session {
     private int port;
     /* TODO: Need to expand options here. Force user to specify, given possible heterogenous configuration in sharded env? */
     private TimeZone defaultTimeZone = TimeZone.getDefault();
+    ValueFactory<String> svf = new StringValueFactory();
 
     public MysqlxSession(Properties properties) {
 
@@ -397,10 +400,9 @@ public class MysqlxSession implements Session {
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
 
+        Set<String> strTypes = Arrays.stream(type).map(DatabaseObject.DbObjectType::toString).collect(Collectors.toSet());
         List<String> objectNames = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .filter(r -> (Arrays.stream(type).map(DatabaseObject.DbObjectType::toString).collect(Collectors.toSet()))
-                        .contains(r.getValue(1, new StringValueFactory())))
-                .map(r -> r.getValue(0, new StringValueFactory())).collect(Collectors.toList());
+                .filter(r -> (strTypes).contains(r.getValue(1, this.svf))).map(r -> r.getValue(0, this.svf)).collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objectNames;
     }
@@ -416,8 +418,7 @@ public class MysqlxSession implements Session {
         ArrayList<Field> metadata = this.protocol.readMetadata("latin1");
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         List<DatabaseObjectDescription> objects = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false)
-                .map(r -> new DatabaseObjectDescription(r.getValue(0, new StringValueFactory()), r.getValue(1, new StringValueFactory())))
-                .collect(Collectors.toList());
+                .map(r -> new DatabaseObjectDescription(r.getValue(0, this.svf), r.getValue(1, this.svf))).collect(Collectors.toList());
         this.protocol.readStatementExecuteOk();
         return objects;
     }
