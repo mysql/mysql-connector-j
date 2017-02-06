@@ -1065,15 +1065,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11976() throws Exception {
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status is broken until MySQL-6.0
-        }
-
         Properties props = new Properties();
         props.setProperty("useConfigs", "maxPerformance");
 
         Connection maxPerfConn = getConnectionWithProps(props);
-        assertEquals(true, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
+        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+        assertEquals(false, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
+        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+        // assertEquals(true, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
     }
 
     /**
