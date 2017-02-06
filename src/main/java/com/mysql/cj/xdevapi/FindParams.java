@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,12 +27,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
 public abstract class FindParams extends FilterParams {
+    protected String[] groupBy;
     private List<Expr> grouping;
+    String having;
     private Expr groupingCriteria;
+    protected String[] projection;
     protected List<Projection> fields;
 
     public FindParams(String schemaName, String collectionName, boolean isRelational) {
@@ -43,6 +47,10 @@ public abstract class FindParams extends FilterParams {
         super(schemaName, collectionName, criteriaString, isRelational);
     }
 
+    protected FindParams(Collection coll, boolean isRelational) {
+        super(coll, isRelational);
+    }
+
     public abstract void setFields(String... projection);
 
     public Object getFields() {
@@ -50,6 +58,7 @@ public abstract class FindParams extends FilterParams {
     }
 
     public void setGrouping(String... groupBy) {
+        this.groupBy = groupBy;
         this.grouping = new ExprParser(Arrays.stream(groupBy).collect(Collectors.joining(", ")), isRelational()).parseExprList();
     }
 
@@ -58,10 +67,14 @@ public abstract class FindParams extends FilterParams {
     }
 
     public void setGroupingCriteria(String having) {
+        this.having = having;
         this.groupingCriteria = new ExprParser(having, isRelational()).parse();
     }
 
     public Object getGroupingCriteria() {
         return this.groupingCriteria;
     }
+
+    @Override
+    protected abstract FindParams clone();
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,12 +41,14 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  * @todo better documentation
  */
 public class FilterParams {
-    private Collection collection;
-    private Long limit;
-    private Long offset;
+    protected Collection collection;
+    protected Long limit;
+    protected Long offset;
+    protected String[] orderExpr;
     private List<Order> order;
+    protected String criteriaStr;
     private Expr criteria;
-    private Scalar[] args;
+    protected Scalar[] args;
     private Map<String, Integer> placeholderNameToPosition;
     protected boolean isRelational;
 
@@ -61,6 +63,11 @@ public class FilterParams {
         setCriteria(criteriaString);
     }
 
+    protected FilterParams(Collection coll, boolean isRelational) {
+        this.collection = coll;
+        this.isRelational = isRelational;
+    }
+
     public Object getCollection() {
         return this.collection;
     }
@@ -71,6 +78,7 @@ public class FilterParams {
     }
 
     public void setOrder(String... orderExpression) {
+        this.orderExpr = orderExpression;
         // TODO: does this support placeholders? how do we prevent it?
         this.order = new ExprParser(Arrays.stream(orderExpression).collect(Collectors.joining(", ")), this.isRelational).parseOrderSpec();
     }
@@ -96,6 +104,7 @@ public class FilterParams {
     }
 
     public void setCriteria(String criteriaString) {
+        this.criteriaStr = criteriaString;
         ExprParser parser = new ExprParser(criteriaString, this.isRelational);
         this.criteria = parser.parse();
         if (parser.getPositionalPlaceholderCount() > 0) {

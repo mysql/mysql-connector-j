@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,8 @@ package com.mysql.cj.xdevapi;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
+
 public class TableFindParams extends FindParams {
     public TableFindParams(String schemaName, String collectionName) {
         super(schemaName, collectionName, true);
@@ -35,8 +37,42 @@ public class TableFindParams extends FindParams {
         super(schemaName, collectionName, criteriaString, true);
     }
 
+    private TableFindParams(Collection coll, boolean isRelational) {
+        super(coll, isRelational);
+    }
+
     @Override
     public void setFields(String... projection) {
+        this.projection = projection;
         this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
+    }
+
+    @Override
+    public FindParams clone() {
+        FindParams newFindParams = new TableFindParams(this.collection, this.isRelational);
+        newFindParams.setLimit(this.limit);
+        newFindParams.setOffset(this.offset);
+        if (this.orderExpr != null) {
+            newFindParams.setOrder(this.orderExpr);
+        }
+        if (this.criteriaStr != null) {
+            newFindParams.setCriteria(this.criteriaStr);
+            if (this.args != null) {
+                // newFilterParams.args should already exist after setCriteria() call
+                for (int i = 0; i < this.args.length; i++) {
+                    newFindParams.args[i] = this.args[i];
+                }
+            }
+        }
+        if (this.groupBy != null) {
+            newFindParams.setGrouping(this.groupBy);
+        }
+        if (this.having != null) {
+            newFindParams.setGroupingCriteria(this.having);
+        }
+        if (this.projection != null) {
+            newFindParams.setFields(this.projection);
+        }
+        return newFindParams;
     }
 }

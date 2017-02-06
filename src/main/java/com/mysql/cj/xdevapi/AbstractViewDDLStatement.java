@@ -74,7 +74,7 @@ public abstract class AbstractViewDDLStatement<T extends ViewDDL<T, D>, D extend
 
     @Override
     public D definedAs(SelectStatement selectStatement) {
-        this.findParams = selectStatement != null ? selectStatement.getFindParams() : null;
+        this.findParams = selectStatement != null ? selectStatement.getFindParams().clone() : null;
         return selfDefined();
     }
 

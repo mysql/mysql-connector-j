@@ -45,11 +45,13 @@ import com.mysql.cj.api.xdevapi.ForeignKeyDefinition.ChangeMode;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
+import com.mysql.cj.api.xdevapi.ViewUpdate;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -481,9 +483,12 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Clifford Simak", r.getString("name"));
             assertEquals(112, r.getInt("age"));
 
-            // 3.1 Alter view with table.select
-            Table view3 = this.schema.alterView("viewTestViewDDL")
-                    .definedAs(table.select("concat(first_name, \" \", last_name) as full_name").orderBy("full_name DESC")).execute();
+            // 3.1 Alter view with table.select, ensure that changes made to SelectStatement after calling definedAs() do not affect view (Bug#25438176)
+            SelectStatement select = table.select("concat(first_name, \" \", last_name) as full_name").orderBy("full_name DESC"); // no .execute()!
+            ViewUpdate vu = this.schema.alterView("viewTestViewDDL").definedAs(select);
+            select = select.orderBy("full_name ASC");  // this will not affect the view definition
+            Table view3 = vu.execute();
+
             assertTrue(view3.isView());
             rows = view3.select("*").execute();
             List<String> colNames = rows.getColumnNames();
