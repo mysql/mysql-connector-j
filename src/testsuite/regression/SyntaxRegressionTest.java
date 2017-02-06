@@ -1670,7 +1670,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         gisFunctions.add(new GisFunction("MBRCoveredBy", 5, 7, 6, 0, 0, 0, "g1", "g2"));
         gisFunctions.add(new GisFunction("MBRCovers", 5, 7, 6, 0, 0, 0, "g1", "g2"));
         gisFunctions.add(new GisFunction("MBRDisjoint", 5, 5, 1, 0, 0, 0, "g1", "g2"));
-        gisFunctions.add(new GisFunction("MBREqual", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBREqual", 5, 5, 1, 5, 7, 6, "g1", "g2"));
         gisFunctions.add(new GisFunction("MBREquals", 5, 7, 6, 0, 0, 0, "g1", "g2"));
         gisFunctions.add(new GisFunction("MBRIntersects", 5, 5, 1, 0, 0, 0, "g1", "g2"));
         gisFunctions.add(new GisFunction("MBROverlaps", 5, 5, 1, 0, 0, 0, "g1", "g2"));
