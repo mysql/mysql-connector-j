@@ -1535,8 +1535,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug24706() throws Exception {
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status isn't there to support this feature
+        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+        boolean ignoreTest = true;
+        if (ignoreTest) {
+            return;
         }
 
         Properties props = new Properties();
@@ -1576,7 +1579,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (c != null) {
                 c.close();
             }
-
         }
     }
 
