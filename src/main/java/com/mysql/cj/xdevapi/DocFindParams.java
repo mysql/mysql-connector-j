@@ -64,7 +64,7 @@ public class DocFindParams extends FindParams {
         if (this.criteriaStr != null) {
             newFindParams.setCriteria(this.criteriaStr);
             if (this.args != null) {
-                // newFilterParams.args should already exist after setCriteria() call
+                // newFindParams.args should already exist after setCriteria() call
                 for (int i = 0; i < this.args.length; i++) {
                     newFindParams.args[i] = this.args[i];
                 }
