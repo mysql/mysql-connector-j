@@ -3451,14 +3451,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     /**
-     * Has the default auto-commit value of 0 been changed on the server via init_connect? If so reset it as required by JDBC specification.
+     * Resets a default auto-commit value of 0 to 1, as required by JDBC specification.
+     * Takes into account that the default auto-commit value of 0 may have been changed on the server via init_connect.
      */
     private void handleAutoCommitDefaults() throws SQLException {
         boolean resetAutoCommitDefault = false;
 
-        String initConnectValue = this.serverVariables.get("init_connect");
-        if (versionMeetsMinimum(4, 1, 2) && initConnectValue != null && initConnectValue.length() > 0) {
-            if (!getElideSetAutoCommits()) {
+        if (!getElideSetAutoCommits()) {
+            String initConnectValue = this.serverVariables.get("init_connect");
+            if (versionMeetsMinimum(4, 1, 2) && initConnectValue != null && initConnectValue.length() > 0) {
                 // auto-commit might have changed
                 java.sql.ResultSet rs = null;
                 java.sql.Statement stmt = null;
@@ -3486,11 +3487,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         }
                     }
                 }
-            } else if (this.getIO().isSetNeededForAutoCommitMode(true)) {
-                // we're not in standard autocommit=true mode
-                this.autoCommit = false;
+            } else {
+                // reset it anyway, the server may have been initialized with --autocommit=0
                 resetAutoCommitDefault = true;
             }
+        } else if (this.getIO().isSetNeededForAutoCommitMode(true)) {
+            // we're not in standard autocommit=true mode
+            this.autoCommit = false;
+            resetAutoCommitDefault = true;
         }
 
         if (resetAutoCommitDefault) {

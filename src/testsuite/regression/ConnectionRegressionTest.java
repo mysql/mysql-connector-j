@@ -9858,6 +9858,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Tests fix for Bug#70785 - MySQL Connector/J inconsistent init state for autocommit.
      */
     public void testBug70785() throws Exception {
+        // Make sure that both client and server have autocommit turned on.
+        assertTrue(this.conn.getAutoCommit());
+        this.rs = this.stmt.executeQuery("SELECT @@session.autocommit");
+        this.rs.next();
+        assertTrue(this.rs.getBoolean(1));
+
         if (!versionMeetsMinimum(5, 5)) {
             return;
         }
