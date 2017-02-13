@@ -644,7 +644,8 @@ public class CharsetMapping {
                     }
 
                     if (versionedProp == null || versionedProp.major < charset.major || versionedProp.minor < charset.minor
-                            || versionedProp.subminor < charset.subminor || versionedProp.priority < charset.priority) {
+                            || versionedProp.subminor < charset.subminor || (versionedProp.priority < charset.priority && versionedProp.major == charset.major
+                                    && versionedProp.minor == charset.minor && versionedProp.subminor == charset.subminor)) {
                         if (charset.isOkayForVersion(conn)) {
                             versionedProp = charset;
                         }
