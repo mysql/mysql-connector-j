@@ -2,6 +2,8 @@
 # $Id$
 02-28-17 - Version 5.1.41
 
+  - Fix for Bug#25517837, CONNECT PERFORMNACE DEGRADED BY 10% IN 5.1.41.
+
   - Fix for Bug#25504578, CONNECT FAILS WHEN CONNECTIONCOLLATION=ISO-8859-13.
 
   - Fix for Bug#25438355, Improper automatic deserialization of binary data.

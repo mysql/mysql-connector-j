@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -422,6 +422,14 @@ public class CharsetTest extends BaseTestCase {
         }
 
         return true;
+    }
+
+    public void testStaticCharsetMappingConsistency() {
+        for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
+            assertNotNull("Assertion failure: No mapping from charset index " + i + " to a mysql collation",
+                    CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i]);
+            assertNotNull("Assertion failure: No mapping from charset index " + i + " to a Java character set", CharsetMapping.COLLATION_INDEX_TO_CHARSET[i]);
+        }
     }
 
     /**

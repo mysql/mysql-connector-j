@@ -120,7 +120,7 @@ public class CharsetMapping {
     private static final String MYSQL_4_0_CHARSET_NAME_win1251 = "win1251";		// 4.1 =>	17	(removed)
     private static final String MYSQL_4_0_CHARSET_NAME_win1251ukr = "win1251ukr";	// 4.1 =>	23	cp1251		cp1251_ukrainian_ci
 
-    private static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
+    public static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
 
     public static final int MYSQL_COLLATION_INDEX_utf8 = 33;
     public static final int MYSQL_COLLATION_INDEX_binary = 63;
@@ -575,16 +575,6 @@ public class CharsetMapping {
             // Filling indexes of utf8mb4 collations
             if (charsetName.equals(MYSQL_CHARSET_NAME_utf8mb4)) {
                 tempUTF8MB4Indexes.add(i);
-            }
-        }
-
-        // Sanity check
-        for (int i = 1; i < MAP_SIZE; i++) {
-            if (COLLATION_INDEX_TO_COLLATION_NAME[i] == null) {
-                throw new RuntimeException("Assertion failure: No mapping from charset index " + i + " to a mysql collation");
-            }
-            if (COLLATION_INDEX_TO_COLLATION_NAME[i] == null) {
-                throw new RuntimeException("Assertion failure: No mapping from charset index " + i + " to a Java character set");
             }
         }
 
