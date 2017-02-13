@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -649,14 +649,14 @@ public class UtilsRegressionTest extends BaseTestCase {
         ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), new ExceptionInterceptor() {
             boolean alreadyIntercepted = false;
 
-            public void init(Connection conn, Properties props) throws SQLException {
+            public void init(Connection con, Properties props) throws SQLException {
                 this.alreadyIntercepted = false;
             }
 
             public void destroy() {
             }
 
-            public SQLException interceptException(SQLException sqlEx, Connection conn) {
+            public SQLException interceptException(SQLException sqlEx, Connection con) {
                 assertFalse(this.alreadyIntercepted);
                 this.alreadyIntercepted = true;
 
@@ -673,14 +673,14 @@ public class UtilsRegressionTest extends BaseTestCase {
         ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), new ExceptionInterceptor() {
             boolean alreadyIntercepted = false;
 
-            public void init(Connection conn, Properties props) throws SQLException {
+            public void init(Connection con, Properties props) throws SQLException {
                 this.alreadyIntercepted = false;
             }
 
             public void destroy() {
             }
 
-            public SQLException interceptException(SQLException sqlEx, Connection conn) {
+            public SQLException interceptException(SQLException sqlEx, Connection con) {
                 assertFalse(this.alreadyIntercepted);
                 this.alreadyIntercepted = true;
 

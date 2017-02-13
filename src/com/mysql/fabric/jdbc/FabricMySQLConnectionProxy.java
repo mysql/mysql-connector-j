@@ -138,6 +138,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
 
     private static final Class<?> JDBC4_NON_TRANSIENT_CONN_EXCEPTION;
+
     static {
         Class<?> clazz = null;
         try {
@@ -2957,6 +2958,10 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return getActiveMySQLConnectionPassive().lowerCaseTableNames();
     }
 
+    /**
+     * 
+     * @param stmt
+     */
     public void maxRowsChanged(com.mysql.jdbc.Statement stmt) {
     }
 
@@ -2998,6 +3003,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     public void unregisterStatement(com.mysql.jdbc.Statement stmt) {
     }
 
+    /**
+     * 
+     * @param stmt
+     * @throws SQLException
+     */
     public void unsetMaxRows(com.mysql.jdbc.Statement stmt) throws SQLException {
     }
 
@@ -3017,6 +3027,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
         return null;
     }
 
+    /**
+     * 
+     * @param name
+     * @return
+     */
     public String getClientInfo(String name) {
         return null;
     }
