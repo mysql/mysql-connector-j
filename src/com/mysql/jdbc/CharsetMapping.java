@@ -121,6 +121,7 @@ public class CharsetMapping {
     private static final String MYSQL_4_0_CHARSET_NAME_win1251ukr = "win1251ukr";	// 4.1 =>	23	cp1251		cp1251_ukrainian_ci
 
     public static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
+    public static final String COLLATION_NOT_DEFINED = "none";
 
     public static final int MYSQL_COLLATION_INDEX_utf8 = 33;
     public static final int MYSQL_COLLATION_INDEX_binary = 63;
@@ -560,7 +561,7 @@ public class CharsetMapping {
         Map<String, Integer> charsetNameToCollationPriorityMap = new TreeMap<String, Integer>();
         Set<Integer> tempUTF8MB4Indexes = new HashSet<Integer>();
 
-        Collation notUsedCollation = new Collation(0, "not_implemented", 0, NOT_USED);
+        Collation notUsedCollation = new Collation(0, COLLATION_NOT_DEFINED, 0, NOT_USED);
         for (int i = 1; i < MAP_SIZE; i++) {
             Collation coll = collation[i] != null ? collation[i] : notUsedCollation;
             COLLATION_INDEX_TO_COLLATION_NAME[i] = coll.collationName;

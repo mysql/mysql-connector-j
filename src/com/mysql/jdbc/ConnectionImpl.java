@@ -30,7 +30,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -58,7 +57,6 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.Timer;
-import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 
@@ -267,11 +265,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private static final Log NULL_LOGGER = new NullLogger(LOGGER_INSTANCE_NAME);
 
     protected static Map<?, ?> roundRobinStatsMap;
-
-    /**
-     * Actual collation index to collation name map for given server URLs.
-     */
-    private static final Map<String, Map<Long, String>> dynamicIndexToCollationMapByUrl = new HashMap<String, Map<Long, String>>();
 
     /**
      * Actual collation index to mysql charset name map of user defined charsets for given server URLs.
@@ -915,25 +908,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     private void buildCollationMapping() throws SQLException {
 
-        Map<Long, String> sortedCollationMap = null;
         Map<Integer, String> customCharset = null;
         Map<String, Integer> customMblen = null;
 
         if (getCacheServerConfiguration()) {
-            synchronized (dynamicIndexToCollationMapByUrl) {
-                sortedCollationMap = dynamicIndexToCollationMapByUrl.get(getURL());
+            synchronized (customIndexToCharsetMapByUrl) {
                 customCharset = customIndexToCharsetMapByUrl.get(getURL());
                 customMblen = customCharsetToMblenMapByUrl.get(getURL());
             }
         }
 
-        if (sortedCollationMap == null && getDetectCustomCollations() && versionMeetsMinimum(4, 1, 0)) {
+        if (customCharset == null && getDetectCustomCollations() && versionMeetsMinimum(4, 1, 0)) {
 
             java.sql.Statement stmt = null;
             java.sql.ResultSet results = null;
 
             try {
-                sortedCollationMap = new TreeMap<Long, String>();
                 customCharset = new HashMap<Integer, String>();
                 customMblen = new HashMap<String, Integer>();
 
@@ -942,8 +932,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 try {
                     results = stmt.executeQuery("SHOW COLLATION");
                     while (results.next()) {
-                        Object idx = results.getObject(3);
-                        sortedCollationMap.put(idx instanceof BigInteger ? ((BigInteger) idx).longValue() : (Long) idx, results.getString(2));
+                        int collationIndex = ((Number) results.getObject(3)).intValue();
+                        String charsetName = results.getString(2);
+
+                        // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
+                        if (collationIndex >= CharsetMapping.MAP_SIZE
+                                || !charsetName.equals(CharsetMapping.getMysqlCharsetNameForCollationIndex(collationIndex))) {
+                            customCharset.put(collationIndex, charsetName);
+                        }
+
+                        // if no static map for charsetName adding to custom map
+                        if (!CharsetMapping.CHARSET_NAME_TO_CHARSET.containsKey(charsetName)) {
+                            customMblen.put(charsetName, null);
+                        }
                     }
                 } catch (SQLException ex) {
                     if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
@@ -951,32 +952,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 }
 
-                for (Iterator<Map.Entry<Long, String>> indexIter = sortedCollationMap.entrySet().iterator(); indexIter.hasNext();) {
-                    Map.Entry<Long, String> indexEntry = indexIter.next();
-
-                    int collationIndex = indexEntry.getKey().intValue();
-                    String charsetName = indexEntry.getValue();
-
-                    // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
-                    if (collationIndex >= CharsetMapping.MAP_SIZE || !charsetName.equals(CharsetMapping.getMysqlCharsetNameForCollationIndex(collationIndex))) {
-                        customCharset.put(collationIndex, charsetName);
-                    }
-
-                    // if no static map for charsetName adding to custom map
-                    if (!CharsetMapping.CHARSET_NAME_TO_CHARSET.containsKey(charsetName)) {
-                        customMblen.put(charsetName, null);
-                    }
-                }
-
-                // replace unsupported charsets from static map with NOT_USED
-                for (int index = 1; index < CharsetMapping.MAP_SIZE; index++) {
-                    if (!sortedCollationMap.containsKey((long) index) && !customCharset.containsKey(index)) {
-                        customCharset.put(index, CharsetMapping.NOT_USED);
-                        customMblen.put(CharsetMapping.NOT_USED, null);
-                    }
-                }
-
-                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
+                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know their mblen
                 if (customMblen.size() > 0) {
                     try {
                         results = stmt.executeQuery("SHOW CHARACTER SET");
@@ -994,8 +970,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
 
                 if (getCacheServerConfiguration()) {
-                    synchronized (dynamicIndexToCollationMapByUrl) {
-                        dynamicIndexToCollationMapByUrl.put(getURL(), sortedCollationMap);
+                    synchronized (customIndexToCharsetMapByUrl) {
                         customIndexToCharsetMapByUrl.put(getURL(), customCharset);
                         customCharsetToMblenMapByUrl.put(getURL(), customMblen);
                     }
