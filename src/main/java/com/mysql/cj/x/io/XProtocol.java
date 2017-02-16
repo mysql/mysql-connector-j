@@ -366,13 +366,11 @@ public class XProtocol implements Protocol {
         for (String notice : notices) {
             abuilder.addValue(ExprUtil.buildAny(notice));
         }
-        this.writer
-                .write(this.msgBuilder
-                        .buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES,
-                                Any.newBuilder()
-                                        .setType(Any.Type.OBJECT).setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder().addFld(ObjectField
-                                                .newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
-                .build()));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_ENABLE_NOTICES,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
+                        .build()));
     }
 
     public void sendDisableNotices(String... notices) {
@@ -380,13 +378,11 @@ public class XProtocol implements Protocol {
         for (String notice : notices) {
             abuilder.addValue(ExprUtil.buildAny(notice));
         }
-        this.writer
-                .write(this.msgBuilder
-                        .buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES,
-                                Any.newBuilder()
-                                        .setType(Any.Type.OBJECT).setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder().addFld(ObjectField
-                                                .newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
-                .build()));
+        this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DISABLE_NOTICES,
+                Any.newBuilder().setType(Any.Type.OBJECT)
+                        .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+                                .addFld(ObjectField.newBuilder().setKey("notice").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder))))
+                        .build()));
     }
 
     public boolean hasMoreResults() {
@@ -628,7 +624,7 @@ public class XProtocol implements Protocol {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         com.mysql.cj.api.x.io.MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet),
                 defaultTimeZone);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f,
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f,
                 () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;
@@ -644,7 +640,7 @@ public class XProtocol implements Protocol {
      */
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(errorFuture,
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture,
                 () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildFind(findParams), resultHandler);
     }
@@ -652,7 +648,7 @@ public class XProtocol implements Protocol {
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
         final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<Long>(f,
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f,
                 () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
         return f;
@@ -712,6 +708,10 @@ public class XProtocol implements Protocol {
 
     public void sendSessionClose() {
         this.writer.write(Close.getDefaultInstance());
+    }
+
+    public boolean hasCapability(String name) {
+        return this.capabilities.containsKey(name);
     }
 
     public String getNodeType() {

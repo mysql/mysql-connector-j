@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -341,6 +341,11 @@ public class PropertyDefinitions {
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
 
     public static final String PNAME_useAsyncProtocol = "xdevapi.useAsyncProtocol";
+    public static final String PNAME_sslEnable = "xdevapi.ssl-enable";
+    public static final String PNAME_sslTrustStoreUrl = "xdevapi.ssl-truststore";
+    public static final String PNAME_sslTrustStoreType = "xdevapi.ssl-truststore-type";
+    public static final String PNAME_sslTrustStorePassword = "xdevapi.ssl-truststore-password";
+    public static final String PNAME_sslVerifyServerCertificate = "xdevapi.ssl-verify-server-certificate";
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
 
@@ -909,11 +914,21 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_useAsyncProtocol, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_sslEnable, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslEnable"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_sslTrustStoreUrl, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslTrustStoreUrl"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_sslTrustStoreType, "JKS", RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslTrustStoreType"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_sslTrustStorePassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PNAME_sslVerifyServerCertificate, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslVerifyServerCertificate"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
 
-        HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<String, PropertyDefinition<?>>();
+        HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<>();
         for (PropertyDefinition<?> pdef : pdefs) {
             String pname = pdef.getName();
             propertyNameToPropertyDefinitionMap.put(pname, pdef);
@@ -1120,8 +1135,8 @@ public class PropertyDefinitions {
     }
 
     static class XmlMap {
-        protected Map<Integer, Map<String, PropertyDefinition<?>>> ordered = new TreeMap<Integer, Map<String, PropertyDefinition<?>>>();
-        protected Map<String, PropertyDefinition<?>> alpha = new TreeMap<String, PropertyDefinition<?>>();
+        protected Map<Integer, Map<String, PropertyDefinition<?>>> ordered = new TreeMap<>();
+        protected Map<String, PropertyDefinition<?>> alpha = new TreeMap<>();
     }
 
     /**
@@ -1135,7 +1150,7 @@ public class PropertyDefinitions {
 
         int numCategories = PROPERTY_CATEGORIES.length;
 
-        Map<String, XmlMap> propertyListByCategory = new HashMap<String, XmlMap>();
+        Map<String, XmlMap> propertyListByCategory = new HashMap<>();
 
         for (int i = 0; i < numCategories; i++) {
             propertyListByCategory.put(PROPERTY_CATEGORIES[i], new XmlMap());
@@ -1154,12 +1169,12 @@ public class PropertyDefinitions {
                 CATEGORY_AUTH, Integer.MIN_VALUE + 2);
 
         XmlMap connectionSortMaps = propertyListByCategory.get(CATEGORY_AUTH);
-        TreeMap<String, PropertyDefinition<?>> userMap = new TreeMap<String, PropertyDefinition<?>>();
+        TreeMap<String, PropertyDefinition<?>> userMap = new TreeMap<>();
         userMap.put(userDef.getName(), userDef);
 
         connectionSortMaps.ordered.put(Integer.valueOf(userDef.getOrder()), userMap);
 
-        TreeMap<String, PropertyDefinition<?>> passwordMap = new TreeMap<String, PropertyDefinition<?>>();
+        TreeMap<String, PropertyDefinition<?>> passwordMap = new TreeMap<>();
         passwordMap.put(passwordDef.getName(), passwordDef);
 
         connectionSortMaps.ordered.put(new Integer(passwordDef.getOrder()), passwordMap);
@@ -1175,7 +1190,7 @@ public class PropertyDefinitions {
                 Map<String, PropertyDefinition<?>> orderMap = sortMaps.ordered.get(order);
 
                 if (orderMap == null) {
-                    orderMap = new TreeMap<String, PropertyDefinition<?>>();
+                    orderMap = new TreeMap<>();
                     sortMaps.ordered.put(order, orderMap);
                 }
 

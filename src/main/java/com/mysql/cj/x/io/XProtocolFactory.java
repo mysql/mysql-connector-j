@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,11 +41,13 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.x.io.MessageReader;
 import com.mysql.cj.api.x.io.MessageWriter;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
 
 /**
@@ -90,15 +92,33 @@ public class XProtocolFactory {
 
             XProtocol protocol = new XProtocol(messageReader, messageWriter, channel, propertySet);
 
+            ReadableProperty<Boolean> enableSSLProp = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_sslEnable);
+            ReadableProperty<String> trustStoreUrlProp = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl);
+            ReadableProperty<Boolean> verifyServerCertProp = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate);
+
+            boolean sslEnable = (enableSSLProp.isExplicitlySet() && enableSSLProp.getValue())
+                    || (!enableSSLProp.isExplicitlySet() && (!StringUtils.isNullOrEmpty(trustStoreUrlProp.getValue()) || verifyServerCertProp.getValue()));
+
             // switch to encrypted channel if requested
-            if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
-                // TODO also need to support the MY-299 X DevAPI properties, e.g. propertySet.get("mysqlx.ssl_enable")
+            if (sslEnable) {
+                if (!protocol.hasCapability("tls")) {
+                    throw new CJCommunicationsException(
+                            "Property " + PropertyDefinitions.PNAME_sslEnable + " was set but the server is not configured with SSL.");
+                }
 
                 // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
                 messageReader.stopAfterNextMessage();
 
                 protocol.setCapability("tls", true);
-                SSLContext sslContext = ExportControlled.getSSLContext(propertySet, null);
+
+                String trustStoreUrl = trustStoreUrlProp.getValue();
+                String trustStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue();
+                String trustStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue();
+                boolean verifyServerCert = (verifyServerCertProp.isExplicitlySet() && verifyServerCertProp.getValue())
+                        || (!verifyServerCertProp.isExplicitlySet() && !StringUtils.isNullOrEmpty(trustStoreUrl));
+
+                SSLContext sslContext = ExportControlled.getSSLContext(null, null, null, trustStoreUrl, trustStoreType, trustStorePassword, verifyServerCert,
+                        null);
                 SSLEngine sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
                 // TODO: setEnabledCipherSuites()

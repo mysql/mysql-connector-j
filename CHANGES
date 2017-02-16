@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 6.0.6
 
+  - Added Core TLS/SSL options for the mysqlx URI scheme.
+
   - Updated collations map.
 
   - Fix for Bug#24350526, UNEXPECTED BEHAVIOUR OF IS_NUMBER_SIGNED API IN C/JAVA.
