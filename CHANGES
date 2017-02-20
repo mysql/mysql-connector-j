@@ -4,9 +4,14 @@ mm-dd-yy - Version 5.1.42
 
 02-28-17 - Version 5.1.41
 
+  - Fix for Bug#25517837, CONNECT PERFORMNACE DEGRADED BY 10% IN 5.1.41.
+
+  - Fix for Bug#25504578, CONNECT FAILS WHEN CONNECTIONCOLLATION=ISO-8859-13.
+
   - Fix for Bug#25438355, Improper automatic deserialization of binary data.
 
   - Fix for Bug#70785 (17756825), MySQL Connector/J inconsistent init state for autocommit.
+    Property 'elideSetAutoCommits' is temporarily disabled due to Bug#66884. Defaults to 'false' until this bug is fixed.
 
   - Fix for Bug#75615 (21181249), Incorrect implementation of Connection.setNetworkTimeout().
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.ResultSetInternalMethods;
 
@@ -117,5 +118,19 @@ public class CharsetRegressionTest extends BaseTestCase {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#25504578, CONNECT FAILS WHEN CONNECTIONCOLLATION=ISO-8859-13
+     * 
+     * @throws Exception
+     */
+    public void testBug25504578() throws Exception {
+
+        Properties p = new Properties();
+        String cjCharset = CharsetMapping.getJavaEncodingForMysqlCharset("latin7");
+        p.setProperty("characterEncoding", cjCharset);
+
+        getConnectionWithProps(p);
     }
 }

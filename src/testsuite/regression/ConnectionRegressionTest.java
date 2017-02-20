@@ -1065,15 +1065,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11976() throws Exception {
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status is broken until MySQL-6.0
-        }
-
         Properties props = new Properties();
         props.setProperty("useConfigs", "maxPerformance");
 
         Connection maxPerfConn = getConnectionWithProps(props);
-        assertEquals(true, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
+        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+        assertEquals(false, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
+        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+        // assertEquals(true, ((com.mysql.jdbc.Connection) maxPerfConn).getElideSetAutoCommits());
     }
 
     /**
@@ -1536,8 +1535,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug24706() throws Exception {
-        if (!versionMeetsMinimum(6, 0)) {
-            return; // server status isn't there to support this feature
+        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+        boolean ignoreTest = true;
+        if (ignoreTest) {
+            return;
         }
 
         Properties props = new Properties();
@@ -1577,7 +1579,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (c != null) {
                 c.close();
             }
-
         }
     }
 
@@ -9857,6 +9858,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Tests fix for Bug#70785 - MySQL Connector/J inconsistent init state for autocommit.
      */
     public void testBug70785() throws Exception {
+        // Make sure that both client and server have autocommit turned on.
+        assertTrue(this.conn.getAutoCommit());
+        this.rs = this.stmt.executeQuery("SELECT @@session.autocommit");
+        this.rs.next();
+        assertTrue(this.rs.getBoolean(1));
+
         if (!versionMeetsMinimum(5, 5)) {
             return;
         }
