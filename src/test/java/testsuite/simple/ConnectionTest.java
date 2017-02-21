@@ -1745,12 +1745,12 @@ public class ConnectionTest extends BaseTestCase {
         connProps.setProperty(PropertyDefinitions.PNAME_password, testUser);
 
         List<Inet6Address> ipv6List = TestUtils.getIpv6List();
-        List<String> ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
-        ipv6Hosts.add("::1"); // IPv6 loopback
+        List<String> ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
+        ipv6Addrs.add("::1"); // IPv6 loopback
         int port = getPortFromTestsuiteUrl();
 
         boolean atLeastOne = false;
-        for (String host : ipv6Hosts) {
+        for (String host : ipv6Addrs) {
             if (TestUtils.serverListening(host, port)) {
                 atLeastOne = true;
                 String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", TestUtils.encodePercent(host), port);

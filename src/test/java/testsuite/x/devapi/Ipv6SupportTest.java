@@ -43,17 +43,17 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import testsuite.TestUtils;
 
 public class Ipv6SupportTest extends DevApiBaseTestCase {
-    List<String> ipv6Hosts;
+    List<String> ipv6Addrs;
     String testUser = "testIPv6User";
 
     @Before
     public void setupIpv6SupportTest() {
         if (setupTestSession()) {
             List<Inet6Address> ipv6List = TestUtils.getIpv6List();
-            this.ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
-            this.ipv6Hosts.add("::1"); // IPv6 loopback
+            this.ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
+            this.ipv6Addrs.add("::1"); // IPv6 loopback
 
-            this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED BY '" + this.testUser + "'").execute();
+            this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED WITH mysql_native_password BY '" + this.testUser + "'").execute();
             this.session.sql("GRANT ALL ON *.* TO '" + this.testUser + "'@'%'").execute();
         }
     }
@@ -83,7 +83,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
         int port = getTestPort();
 
         boolean atLeastOne = false;
-        for (String host : this.ipv6Hosts) {
+        for (String host : this.ipv6Addrs) {
             if (TestUtils.serverListening(host, port)) {
                 atLeastOne = true;
                 for (String url : urls) {
@@ -119,7 +119,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
         int port = getTestPort();
 
         boolean atLeastOne = false;
-        for (String host : this.ipv6Hosts) {
+        for (String host : this.ipv6Addrs) {
             if (TestUtils.serverListening(host, port)) {
                 atLeastOne = true;
                 for (String url : urls) {

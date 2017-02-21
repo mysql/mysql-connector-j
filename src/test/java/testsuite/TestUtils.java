@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -50,7 +50,7 @@ public class TestUtils {
     }
 
     /**
-     * Find all non-loopback IPv6 addesses defined in local network adapters.
+     * Get all IPv6 addresses defined in local network adapters.
      * 
      * @return a list of {@link Inet6Address}s
      */
@@ -61,7 +61,7 @@ public class TestUtils {
                 NetworkInterface ni = nis.nextElement();
                 for (Enumeration<InetAddress> ias2 = ni.getInetAddresses(); ias2.hasMoreElements();) {
                     InetAddress ia = ias2.nextElement();
-                    if (ia instanceof Inet6Address && !ia.isLoopbackAddress()) {
+                    if (ia instanceof Inet6Address) {
                         addresses.add((Inet6Address) ia);
                     }
                 }
