@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,7 @@ import java.net.Inet6Address;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -43,12 +44,26 @@ import testsuite.TestUtils;
 
 public class Ipv6SupportTest extends DevApiBaseTestCase {
     List<String> ipv6Hosts;
+    String testUser = "testIPv6User";
 
     @Before
     public void setupIpv6SupportTest() {
-        List<Inet6Address> ipv6List = TestUtils.getIpv6List();
-        this.ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
-        this.ipv6Hosts.add("::1"); // IPv6 loopback
+        if (setupTestSession()) {
+            List<Inet6Address> ipv6List = TestUtils.getIpv6List();
+            this.ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
+            this.ipv6Hosts.add("::1"); // IPv6 loopback
+
+            this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED BY '" + this.testUser + "'").execute();
+            this.session.sql("GRANT ALL ON *.* TO '" + this.testUser + "'@'%'").execute();
+        }
+    }
+
+    @After
+    public void teardownIpv6SupportTest() {
+        if (this.isSetForXTests && this.session.isOpen()) {
+            this.session.sql("DROP USER '" + this.testUser + "'@'%'").execute();
+            destroyTestSession();
+        }
     }
 
     /**
@@ -66,15 +81,13 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
                 "mysqlx://%s:%s@address=(host=%s)(port=%d)", "mysqlx://%s:%s@address=(host=[%s])(port=%d)" };
 
         int port = getTestPort();
-        String username = getTestUser();
-        String password = getTestPassword();
 
         boolean atLeastOne = false;
         for (String host : this.ipv6Hosts) {
             if (TestUtils.serverListening(host, port)) {
                 atLeastOne = true;
                 for (String url : urls) {
-                    String ipv6Url = String.format(url, username, password, TestUtils.encodePercent(host), port);
+                    String ipv6Url = String.format(url, this.testUser, this.testUser, TestUtils.encodePercent(host), port);
                     NodeSession nodeSession = this.fact.getNodeSession(ipv6Url);
                     Assert.assertFalse(nodeSession.getSchemas().isEmpty());
                     nodeSession.close();
@@ -104,15 +117,13 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
                 "mysqlx://%s:%s@address=(host=%s)(port=%d)", "mysqlx://%s:%s@address=(host=[%s])(port=%d)" };
 
         int port = getTestPort();
-        String username = getTestUser();
-        String password = getTestPassword();
 
         boolean atLeastOne = false;
         for (String host : this.ipv6Hosts) {
             if (TestUtils.serverListening(host, port)) {
                 atLeastOne = true;
                 for (String url : urls) {
-                    String ipv6Url = String.format(url, username, password, TestUtils.encodePercent(host), port);
+                    String ipv6Url = String.format(url, this.testUser, this.testUser, TestUtils.encodePercent(host), port);
                     XSession xSession = this.fact.getSession(ipv6Url);
                     Assert.assertFalse(xSession.getSchemas().isEmpty());
                     xSession.close();
