@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1736,13 +1736,18 @@ public class ConnectionTest extends BaseTestCase {
             // this test could work with MySQL 5.5 but requires specific server configuration, e.g. "--bind-address=::"
         }
 
+        String testUser = "testIPv6User";
+        createUser("'" + testUser + "'@'%'", "IDENTIFIED BY '" + testUser + "'");
+        this.stmt.execute("GRANT ALL ON *.* TO '" + testUser + "'@'%'");
+
         Properties connProps = getHostFreePropertiesFromTestsuiteUrl();
+        connProps.setProperty(PropertyDefinitions.PNAME_user, testUser);
+        connProps.setProperty(PropertyDefinitions.PNAME_password, testUser);
 
         List<Inet6Address> ipv6List = TestUtils.getIpv6List();
         List<String> ipv6Hosts = ipv6List.stream().map((e) -> e.getHostName()).collect(Collectors.toList());
         ipv6Hosts.add("::1"); // IPv6 loopback
         int port = getPortFromTestsuiteUrl();
-        String username = connProps.getProperty(PropertyDefinitions.PNAME_user);
 
         boolean atLeastOne = false;
         for (String host : ipv6Hosts) {
@@ -1759,7 +1764,7 @@ public class ConnectionTest extends BaseTestCase {
                 testRs = testStmt.executeQuery("SELECT USER()");
 
                 assertTrue(testRs.next());
-                assertTrue(testRs.getString(1).startsWith(username));
+                assertTrue(testRs.getString(1).startsWith(testUser));
 
                 testRs.close();
                 testStmt.close();
