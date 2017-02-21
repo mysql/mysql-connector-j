@@ -77,6 +77,7 @@ public class SchemaImpl implements Schema {
     }
 
     public List<Table> getTables() {
+        // TODO we need to consider lower_case_table_names server variable for some cases
         return this.mysqlxSession.getObjectNamesOfType(this.name, DbObjectType.TABLE, DbObjectType.VIEW, DbObjectType.COLLECTION_VIEW).stream()
                 .map(this::getTable).collect(Collectors.toList());
     }

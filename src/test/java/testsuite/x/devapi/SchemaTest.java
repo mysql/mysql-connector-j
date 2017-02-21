@@ -445,21 +445,21 @@ public class SchemaTest extends DevApiBaseTestCase {
         }
 
         try {
-            sqlUpdate("drop table if exists collectionTestViewDDL");
-            sqlUpdate("drop table if exists tableTestViewDDL");
-            sqlUpdate("drop view if exists viewTestViewDDL");
-            sqlUpdate("create table tableTestViewDDL (first_name varchar(32), last_name varchar(32), age int, descr JSON)");
+            sqlUpdate("drop table if exists collection_test_view_ddl");
+            sqlUpdate("drop table if exists table_test_view_ddl");
+            sqlUpdate("drop view if exists view_test_view_ddl");
+            sqlUpdate("create table table_test_view_ddl (first_name varchar(32), last_name varchar(32), age int, descr JSON)");
 
-            Collection col = this.schema.createCollection("collectionTestViewDDL");
+            Collection col = this.schema.createCollection("collection_test_view_ddl");
             col.add("{\"first_name\": \"Clifford\", \"last_name\": \"Simak\"}").add("{\"first_name\": \"Arthur\", \"last_name\": \"Clarke\"}").execute();
 
-            Table table = this.schema.getTable("tableTestViewDDL");
+            Table table = this.schema.getTable("table_test_view_ddl");
             assertEquals(DbObjectStatus.EXISTS, table.existsInDatabase());
             table.insert().values("Clifford", "Simak", "112", "{\"first_name\": \"Clifford\", \"last_name\": \"Simak\"}")
                     .values("Arthur", "Clarke", "99", "{\"first_name\": \"Arthur\", \"last_name\": \"Clarke\"}").execute();
 
             // 1. Create table view
-            Table view = this.schema.createView("viewTestViewDDL", false)
+            Table view = this.schema.createView("view_test_view_ddl", false)
                     .definedAs(table.select("concat(first_name, \" \", last_name) as name, age").orderBy("name ASC")).execute();
 
             assertEquals(DbObjectStatus.EXISTS, view.existsInDatabase());
@@ -470,7 +470,7 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertFalse(this.schema.getCollections().contains(view));
 
             // 2. Retrieve the view
-            Table view2 = this.schema.getTable("viewTestViewDDL", true);
+            Table view2 = this.schema.getTable("view_test_view_ddl", true);
             assertTrue(view2.isView());
             assertFalse(view == view2);
             assertTrue(view.equals(view2));
@@ -485,7 +485,7 @@ public class SchemaTest extends DevApiBaseTestCase {
 
             // 3.1 Alter view with table.select, ensure that changes made to SelectStatement after calling definedAs() do not affect view (Bug#25438176)
             SelectStatement select = table.select("concat(first_name, \" \", last_name) as full_name").orderBy("full_name DESC"); // no .execute()!
-            ViewUpdate vu = this.schema.alterView("viewTestViewDDL").definedAs(select);
+            ViewUpdate vu = this.schema.alterView("view_test_view_ddl").definedAs(select);
             select = select.orderBy("full_name ASC");  // this will not affect the view definition
             Table view3 = vu.execute();
 
@@ -500,10 +500,10 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Arthur Clarke", r.getString("full_name"));
 
             // 3.2 Alter view with getting a COLLECTION_VIEW
-            view3 = this.schema.alterView("viewTestViewDDL").definedAs(table.select("descr as doc")).execute();
+            view3 = this.schema.alterView("view_test_view_ddl").definedAs(table.select("descr as doc")).execute();
 
             // check that the actual type is COLLECTION_VIEW
-            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.COLLECTION_VIEW);
+            assertTrue(getViewType(this.schema.getName(), "view_test_view_ddl") == DbObjectType.COLLECTION_VIEW);
 
             // checking the Table method
             assertTrue(view3.isView());
@@ -513,10 +513,10 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertFalse(this.schema.getCollections().contains(view));
 
             // 3.3 Alter view with renaming "doc" column (getting a VIEW)
-            view3 = this.schema.alterView("viewTestViewDDL").columns("val").definedAs(table.select("descr as nodoc")).execute();
+            view3 = this.schema.alterView("view_test_view_ddl").columns("val").definedAs(table.select("descr as nodoc")).execute();
 
             // check that the actual type is VIEW
-            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.VIEW);
+            assertTrue(getViewType(this.schema.getName(), "view_test_view_ddl") == DbObjectType.VIEW);
 
             // checking the Table method
             assertTrue(view3.isView());
@@ -527,8 +527,8 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("val", colNames.get(0));
 
             // 4. Dropping the existing view
-            this.schema.dropView("viewTestViewDDL").ifExists().execute();
-            assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("viewTestViewDDL").existsInDatabase());
+            this.schema.dropView("view_test_view_ddl").ifExists().execute();
+            assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("view_test_view_ddl").existsInDatabase());
 
             // Dropping the not existing view
             try {
@@ -543,14 +543,14 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("notExistingViewDDL").existsInDatabase());
 
             // 5. Create collection view (views that have one column which is "doc JSON" should be categorized as "COLLECTION_VIEW")
-            this.schema.createView("viewTestViewDDL", false).definedAs(table.select("descr as doc").orderBy("$.first_name ASC")).execute();
-            view = this.schema.getTable("viewTestViewDDL", true);
+            this.schema.createView("view_test_view_ddl", false).definedAs(table.select("descr as doc").orderBy("$.first_name ASC")).execute();
+            view = this.schema.getTable("view_test_view_ddl", true);
 
             assertEquals(DbObjectStatus.EXISTS, view.existsInDatabase());
             assertTrue(view.isView());
 
             // check that the actual type is COLLECTION_VIEW
-            assertTrue(getViewType(this.schema.getName(), "viewTestViewDDL") == DbObjectType.COLLECTION_VIEW);
+            assertTrue(getViewType(this.schema.getName(), "view_test_view_ddl") == DbObjectType.COLLECTION_VIEW);
 
             rows = view.select("*").execute();
             r = rows.next();
@@ -562,10 +562,10 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Clifford", ((JsonString) doc.get("first_name")).getString());
             assertEquals("Simak", ((JsonString) doc.get("last_name")).getString());
 
-            this.schema.dropView("viewTestViewDDL").ifExists().execute();
+            this.schema.dropView("view_test_view_ddl").ifExists().execute();
 
             // 6. Define all fields
-            view = this.schema.createView("viewTestViewDDL", false).algorithm(ViewAlgorithm.MERGE).columns("n", "a")
+            view = this.schema.createView("view_test_view_ddl", false).algorithm(ViewAlgorithm.MERGE).columns("n", "a")
                     .definedAs(table.select("concat(first_name, \" \", last_name) as name, age").orderBy("name ASC")).definer("root")
                     .security(ViewSqlSecurity.INVOKER).withCheckOption(ViewCheckOption.CASCADED).execute();
             rows = view.select("*").execute();
@@ -576,23 +576,23 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Clifford Simak", r.getString("n"));
             assertEquals(112, r.getInt("a"));
 
-            rows = this.session.sql("show create view `viewTestViewDDL`").execute();
+            rows = this.session.sql("show create view `view_test_view_ddl`").execute();
             r = rows.next();
             String t2 = r.getString(1);
 
             // TODO could cause problems on different server versions
-            assertEquals("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `viewTestViewDDL`"
-                    + " AS select concat(`tableTestViewDDL`.`first_name`,' ',`tableTestViewDDL`.`last_name`) AS `n`,"
-                    + "`tableTestViewDDL`.`age` AS `a` from `tableTestViewDDL`"
-                    + " order by concat(`tableTestViewDDL`.`first_name`,' ',`tableTestViewDDL`.`last_name`) WITH CASCADED CHECK OPTION", t2);
+            assertEquals("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `view_test_view_ddl`"
+                    + " AS select concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) AS `n`,"
+                    + "`table_test_view_ddl`.`age` AS `a` from `table_test_view_ddl`"
+                    + " order by concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) WITH CASCADED CHECK OPTION", t2);
 
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
         } finally {
-            sqlUpdate("drop table if exists collectionTestViewDDL");
-            sqlUpdate("drop table if exists tableTestViewDDL");
-            sqlUpdate("drop view if exists viewTestViewDDL");
+            sqlUpdate("drop table if exists collection_test_view_ddl");
+            sqlUpdate("drop table if exists table_test_view_ddl");
+            sqlUpdate("drop view if exists view_test_view_ddl");
         }
     }
 
