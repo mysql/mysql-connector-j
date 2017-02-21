@@ -26,10 +26,12 @@ package com.mysql.cj.xdevapi;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.ViewCreate;
 import com.mysql.cj.api.xdevapi.ViewCreateDefined;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class CreateViewStatement extends AbstractViewDDLStatement<ViewCreate, ViewCreateDefined> implements ViewCreate {
 
-    public CreateViewStatement(Schema sch, String viewName, boolean replace) {
+    public CreateViewStatement(MysqlxSession mysqlxSession, Schema sch, String viewName, boolean replace) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.viewName = viewName;
         this.replace = replace;
@@ -42,7 +44,7 @@ public class CreateViewStatement extends AbstractViewDDLStatement<ViewCreate, Vi
 
     @Override
     ViewCreateDefined selfDefined() {
-        return new CreateViewDefinedStatement(this);
+        return new CreateViewDefinedStatement(this.mysqlxSession, this);
     }
 
 }

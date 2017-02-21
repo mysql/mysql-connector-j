@@ -30,9 +30,11 @@ import java.util.List;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.ViewDDL;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public abstract class AbstractViewDDLStatement<T extends ViewDDL<T, D>, D extends ViewDDL<D, D>> implements ViewDDL<T, D> {
 
+    protected MysqlxSession mysqlxSession;
     protected Schema schema;
     protected String viewName;
     protected boolean replace = false;

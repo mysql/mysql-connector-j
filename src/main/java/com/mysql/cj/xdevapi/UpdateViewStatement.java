@@ -26,10 +26,12 @@ package com.mysql.cj.xdevapi;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.ViewUpdate;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class UpdateViewStatement extends AbstractViewDDLStatement<ViewUpdate, ViewUpdate> implements ViewUpdate {
 
-    public UpdateViewStatement(Schema sch, String viewName) {
+    public UpdateViewStatement(MysqlxSession mysqlxSession, Schema sch, String viewName) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.viewName = viewName;
     }
@@ -46,8 +48,7 @@ public class UpdateViewStatement extends AbstractViewDDLStatement<ViewUpdate, Vi
 
     @Override
     public Table execute() {
-        this.schema.getSession().getMysqlxSession().modifyView(this.schema.getName(), this.viewName, this.columns, this.alg, this.sec, this.definer,
-                this.findParams, this.checkOpt);
+        this.mysqlxSession.modifyView(this.schema.getName(), this.viewName, this.columns, this.alg, this.sec, this.definer, this.findParams, this.checkOpt);
         return this.schema.getTable(this.viewName);
     }
 }

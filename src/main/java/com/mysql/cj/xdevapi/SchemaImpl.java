@@ -166,16 +166,16 @@ public class SchemaImpl implements Schema {
 
     @Override
     public ViewCreate createView(String viewName, boolean replace) {
-        return new CreateViewStatement(this, viewName, replace);
+        return new CreateViewStatement(this.mysqlxSession, this, viewName, replace);
     }
 
     @Override
     public ViewUpdate alterView(String viewName) {
-        return new UpdateViewStatement(this, viewName);
+        return new UpdateViewStatement(this.mysqlxSession, this, viewName);
     }
 
     @Override
     public ViewDrop dropView(String viewName) {
-        return new DropViewStatement(this, viewName);
+        return new DropViewStatement(this.mysqlxSession, this, viewName);
     }
 }

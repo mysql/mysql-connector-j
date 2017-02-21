@@ -25,14 +25,17 @@ package com.mysql.cj.xdevapi;
 
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.ViewDrop;
+import com.mysql.cj.x.core.MysqlxSession;
 
 public class DropViewStatement implements ViewDrop {
 
+    private MysqlxSession mysqlxSession;
     private Schema schema;
     private String viewName;
     private boolean ifExists = false;
 
-    public DropViewStatement(Schema sch, String viewName) {
+    public DropViewStatement(MysqlxSession mysqlxSession, Schema sch, String viewName) {
+        this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.viewName = viewName;
     }
@@ -45,6 +48,6 @@ public class DropViewStatement implements ViewDrop {
 
     @Override
     public void execute() {
-        this.schema.getSession().getMysqlxSession().dropView(this.schema.getName(), this.viewName, this.ifExists);
+        this.mysqlxSession.dropView(this.schema.getName(), this.viewName, this.ifExists);
     }
 }
