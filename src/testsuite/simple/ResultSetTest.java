@@ -63,7 +63,10 @@ public class ResultSetTest extends BaseTestCase {
         // build map of charsets supported by server
         Connection c = getConnectionWithProps("detectCustomCollations=true");
         Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
-        for (int index = 1; index < CharsetMapping.MAP_SIZE; index++) {
+        this.rs = this.stmt.executeQuery("SHOW COLLATION");
+        while (this.rs.next()) {
+            int index = ((Number) this.rs.getObject(3)).intValue();
+
             String charsetName = null;
             if (((ConnectionImpl) c).indexToCustomMysqlCharset != null) {
                 charsetName = ((ConnectionImpl) c).indexToCustomMysqlCharset.get(index);
@@ -88,6 +91,7 @@ public class ResultSetTest extends BaseTestCase {
 
         while (charsetNames.hasNext()) {
             String charsetName = charsetNames.next();
+            System.out.println(charsetName);
 
             if (charsetName.equalsIgnoreCase("LATIN7") || charsetName.equalsIgnoreCase("BINARY")) {
                 continue; // no mapping in Java
