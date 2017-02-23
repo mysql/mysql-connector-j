@@ -1,6 +1,7 @@
 # Changelog
-# $Id$
-mm-dd-yy - Version 6.0.6
+# https://dev.mysql.com/doc/relnotes/connector-j/6.0/en/
+
+Version 6.0.6
 
   - Added Core TLS/SSL options for the mysqlx URI scheme.
 
