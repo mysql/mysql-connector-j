@@ -247,7 +247,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     protected int resultSetConcurrency = 0;
 
     /** Are we scroll-sensitive/insensitive? */
-    protected int resultSetType = 0;
+    //protected int resultSetType = 0;
+    
+    // fixing bug #70726 http://bugs.mysql.com/bug.php?id=70726
+    protected int resultSetType = TYPE_FORWARD_ONLY;
 
     /** The actual rows */
     protected RowData rowData; // The results
@@ -2013,6 +2016,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             return getDateFromString(stringVal, columnIndex, cal);
         }
 
+        // bug fix #69788 http://bugs.mysql.com/bug.php?id=69788
+        checkRowPos();
         checkColumnBounds(columnIndex);
 
         int columnIndexMinusOne = columnIndex - 1;
