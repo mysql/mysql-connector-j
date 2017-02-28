@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1230,11 +1230,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                     }
 
                     if (gatherPerformanceMetrics) {
-                        this.connection.registerQueryExecutionTime(elapsedTime);
+                        this.session.registerQueryExecutionTime(elapsedTime);
                     }
                 }
 
-                this.connection.incrementNumberOfPreparedExecutes();
+                this.session.incrementNumberOfPreparedExecutes();
 
                 if (this.profileSQL) {
                     this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
@@ -1389,7 +1389,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.parameterBindings[i] = new BindValue();
                 }
 
-                this.connection.incrementNumberOfPrepares();
+                this.session.incrementNumberOfPrepares();
 
                 if (this.profileSQL) {
                     this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.getCurrentCatalog(), this.connectionId,

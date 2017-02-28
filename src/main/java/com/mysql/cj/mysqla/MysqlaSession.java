@@ -39,6 +39,7 @@ import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
@@ -60,6 +61,7 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
+import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.util.StringUtils;
@@ -87,6 +89,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     private HostInfo hostInfo = null;
 
     protected ModifiableProperty<Integer> socketTimeout;
+    private ReadableProperty<Boolean> gatherPerfMetrics;
 
     private boolean serverHasFracSecsSupport = true;
 
@@ -94,6 +97,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.propertySet = propSet;
 
         this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
+        this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
 
         this.hostInfo = hostInfo;
 
@@ -106,6 +110,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         //
         this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME,
                 getExceptionInterceptor());
+
+        this.metricsHolder = new BaseMetricsHolder();
     }
 
     public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout)
@@ -539,6 +545,38 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public void setLocalInfileInputStream(InputStream stream) {
         this.protocol.setLocalInfileInputStream(stream);
+    }
+
+    public void registerQueryExecutionTime(long queryTimeMs) {
+        this.metricsHolder.registerQueryExecutionTime(queryTimeMs);
+    }
+
+    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
+        this.metricsHolder.reportNumberOfTablesAccessed(numTablesAccessed);
+    }
+
+    public void incrementNumberOfPreparedExecutes() {
+        if (this.gatherPerfMetrics.getValue()) {
+            this.metricsHolder.incrementNumberOfPreparedExecutes();
+        }
+    }
+
+    public void incrementNumberOfPrepares() {
+        if (this.gatherPerfMetrics.getValue()) {
+            this.metricsHolder.incrementNumberOfPrepares();
+        }
+    }
+
+    public void incrementNumberOfResultSetsCreated() {
+        if (this.gatherPerfMetrics.getValue()) {
+            this.metricsHolder.incrementNumberOfResultSetsCreated();
+        }
+    }
+
+    public void reportMetrics() {
+        if (this.gatherPerfMetrics.getValue()) {
+
+        }
     }
 
 }

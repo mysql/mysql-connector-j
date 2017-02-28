@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1073,21 +1073,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void incrementNumberOfPreparedExecutes() {
-        this.mc.incrementNumberOfPreparedExecutes();
-    }
-
-    @Override
-    public void incrementNumberOfPrepares() {
-        this.mc.incrementNumberOfPrepares();
-    }
-
-    @Override
-    public void incrementNumberOfResultSetsCreated() {
-        this.mc.incrementNumberOfResultSetsCreated();
-    }
-
-    @Override
     public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {
         this.mc.initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
     }
@@ -1128,18 +1113,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void registerQueryExecutionTime(long queryTimeMs) {
-        this.mc.registerQueryExecutionTime(queryTimeMs);
-    }
-
-    @Override
     public void registerStatement(com.mysql.cj.api.jdbc.Statement stmt) {
         this.mc.registerStatement(stmt);
-    }
-
-    @Override
-    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
-        this.mc.reportNumberOfTablesAccessed(numTablesAccessed);
     }
 
     @Override

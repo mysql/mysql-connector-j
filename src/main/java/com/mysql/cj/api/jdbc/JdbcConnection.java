@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -375,11 +375,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     List<StatementInterceptor> getStatementInterceptorsInstances();
 
-    void incrementNumberOfPreparedExecutes();
+    //void incrementNumberOfPreparedExecutes();
 
-    void incrementNumberOfPrepares();
+    //void incrementNumberOfPrepares();
 
-    void incrementNumberOfResultSetsCreated();
+    //void incrementNumberOfResultSetsCreated();
 
     void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException;
 
@@ -397,11 +397,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection {
 
     void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException;
 
-    void registerQueryExecutionTime(long queryTimeMs);
+    //void registerQueryExecutionTime(long queryTimeMs);
 
     void registerStatement(Statement stmt);
 
-    void reportNumberOfTablesAccessed(int numTablesAccessed);
+    //void reportNumberOfTablesAccessed(int numTablesAccessed);
 
     void setReadInfoMsgEnabled(boolean flag);
 

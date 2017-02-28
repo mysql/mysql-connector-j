@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -294,18 +294,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().hasTriedMaster();
     }
 
-    public void incrementNumberOfPreparedExecutes() {
-        getActiveMySQLConnection().incrementNumberOfPreparedExecutes();
-    }
-
-    public void incrementNumberOfPrepares() {
-        getActiveMySQLConnection().incrementNumberOfPrepares();
-    }
-
-    public void incrementNumberOfResultSetsCreated() {
-        getActiveMySQLConnection().incrementNumberOfResultSetsCreated();
-    }
-
     public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {
         getActiveMySQLConnection().initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
     }
@@ -410,20 +398,12 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().decachePreparedStatement(pstmt);
     }
 
-    public void registerQueryExecutionTime(long queryTimeMs) {
-        getActiveMySQLConnection().registerQueryExecutionTime(queryTimeMs);
-    }
-
     public void registerStatement(com.mysql.cj.api.jdbc.Statement stmt) {
         getActiveMySQLConnection().registerStatement(stmt);
     }
 
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
         getActiveMySQLConnection().releaseSavepoint(arg0);
-    }
-
-    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
-        getActiveMySQLConnection().reportNumberOfTablesAccessed(numTablesAccessed);
     }
 
     public void reportQueryTime(long millisOrNanos) {
