@@ -61,7 +61,6 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
-import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.util.StringUtils;
@@ -110,8 +109,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         //
         this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME,
                 getExceptionInterceptor());
-
-        this.metricsHolder = new BaseMetricsHolder();
     }
 
     public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
@@ -543,28 +540,28 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     public void registerQueryExecutionTime(long queryTimeMs) {
-        this.metricsHolder.registerQueryExecutionTime(queryTimeMs);
+        this.protocol.getMetricsHolder().registerQueryExecutionTime(queryTimeMs);
     }
 
     public void reportNumberOfTablesAccessed(int numTablesAccessed) {
-        this.metricsHolder.reportNumberOfTablesAccessed(numTablesAccessed);
+        this.protocol.getMetricsHolder().reportNumberOfTablesAccessed(numTablesAccessed);
     }
 
     public void incrementNumberOfPreparedExecutes() {
         if (this.gatherPerfMetrics.getValue()) {
-            this.metricsHolder.incrementNumberOfPreparedExecutes();
+            this.protocol.getMetricsHolder().incrementNumberOfPreparedExecutes();
         }
     }
 
     public void incrementNumberOfPrepares() {
         if (this.gatherPerfMetrics.getValue()) {
-            this.metricsHolder.incrementNumberOfPrepares();
+            this.protocol.getMetricsHolder().incrementNumberOfPrepares();
         }
     }
 
     public void incrementNumberOfResultSetsCreated() {
         if (this.gatherPerfMetrics.getValue()) {
-            this.metricsHolder.incrementNumberOfResultSetsCreated();
+            this.protocol.getMetricsHolder().incrementNumberOfResultSetsCreated();
         }
     }
 

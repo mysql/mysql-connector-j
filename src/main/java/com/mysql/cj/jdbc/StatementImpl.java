@@ -356,7 +356,7 @@ public class StatementImpl implements Statement {
 
         this.connection = c;
         this.session = c.getSession();
-        this.connectionId = c.getId();
+        this.connectionId = this.session.getThreadId();
         this.exceptionInterceptor = c.getExceptionInterceptor();
         this.currentCatalog = catalog;
 
@@ -827,13 +827,6 @@ public class StatementImpl implements Statement {
                         getExceptionInterceptor());
             }
 
-            boolean readInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
-            if (returnGeneratedKeys && firstNonWsChar == 'R') {
-                // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
-                // generated.
-                locallyScopedConn.setReadInfoMsgEnabled(true);
-            }
-
             try {
                 setupStreamingTimeout(locallyScopedConn);
 
@@ -946,8 +939,6 @@ public class StatementImpl implements Statement {
 
                 return ((rs != null) && rs.hasRows());
             } finally {
-                locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
-
                 this.statementExecuting.set(false);
             }
         }
@@ -958,7 +949,7 @@ public class StatementImpl implements Statement {
         this.statementExecuting.set(true);
     }
 
-    public void resetCancelledState() throws SQLException {
+    public void resetCancelledState() {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.cancelTimeoutMutex == null) {
                 return;
@@ -1573,13 +1564,6 @@ public class StatementImpl implements Statement {
 
             String oldCatalog = null;
 
-            boolean readInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
-            if (returnGeneratedKeys && firstStatementChar == 'R') {
-                // If this is a 'REPLACE' query, we need to be able to parse the 'info' message returned from the server to determine the actual number of keys
-                // generated.
-                locallyScopedConn.setReadInfoMsgEnabled(true);
-            }
-
             try {
                 if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
                         && this.timeoutInMillis != 0) {
@@ -1630,8 +1614,6 @@ public class StatementImpl implements Statement {
                     }
                 }
             } finally {
-                locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
-
                 if (timeoutTask != null) {
                     timeoutTask.cancel();
 

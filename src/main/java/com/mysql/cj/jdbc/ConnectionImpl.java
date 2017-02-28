@@ -280,11 +280,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private CacheAdapter<String, Map<String, String>> serverConfigCache;
 
-    private long queryTimeCount;
-    private double queryTimeSum;
-    private double queryTimeSumSquares;
-    private double queryTimeMean;
-
     private transient Timer cancelTimer;
 
     private List<ConnectionLifecycleInterceptor> connectionLifecycleInterceptors;
@@ -371,9 +366,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** The point in time when this connection was created */
     private long connectionCreationTimeMillis = 0;
 
-    /** ID used when profiling */
-    private long connectionId;
-
     /** The database we're currently using (called Catalog in JDBC terms). */
     private String database = null;
 
@@ -425,9 +417,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** Properties for this connection specified by user */
     protected Properties props = null;
 
-    /** Should we retrieve 'info' messages from the server? */
-    private boolean readInfoMsg = false;
-
     /** Are we in read-only mode? */
     private boolean readOnly = false;
 
@@ -467,12 +456,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * For testing failover scenarios
      */
     private boolean hasTriedMasterFlag = false;
-
-    /**
-     * The comment (if any) that we'll prepend to all statements
-     * sent to the server (to show up in "SHOW PROCESSLIST")
-     */
-    private String statementComment = null;
 
     private boolean storesLowerCaseTableName;
 
@@ -1488,7 +1471,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 String oldCatalog;
 
                 synchronized (getConnectionMutex()) {
-                    this.connectionId = this.session.getThreadId();
                     this.isClosed = false;
 
                     // save state from old connection
@@ -1587,7 +1569,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             JdbcConnection c = getProxy();
             this.session.connect(c, this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
-            this.connectionId = this.session.getThreadId();
             this.isClosed = false;
 
             // save state from old connection
@@ -1893,16 +1874,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
     }
 
-    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
-        buf.append("/* conn id ");
-        buf.append(getId());
-        buf.append(" clock: ");
-        buf.append(System.currentTimeMillis());
-        buf.append(" */ ");
-
-        return buf;
-    }
-
     public int getActiveStatementCount() {
         return this.openStatements.size();
     }
@@ -1952,7 +1923,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public long getId() {
-        return this.connectionId;
+        return this.session.getThreadId();
     }
 
     /**
@@ -2387,10 +2358,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public boolean isNoBackslashEscapesSet() {
         return this.noBackslashEscapes;
-    }
-
-    public boolean isReadInfoMsgEnabled() {
-        return this.readInfoMsg;
     }
 
     /**
@@ -3046,15 +3013,17 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (this.useUsageAdvisor.getValue()) {
                     if (!calledExplicitly) {
-                        this.session.getProfilerEventHandler().consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(),
-                                -1, -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
+                        this.session.getProfilerEventHandler()
+                                .consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.session.getThreadId(), -1, -1,
+                                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
                     }
 
                     long connectionLifeTime = System.currentTimeMillis() - this.connectionCreationTimeMillis;
 
                     if (connectionLifeTime < 500) {
-                        this.session.getProfilerEventHandler().consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(),
-                                -1, -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.19")));
+                        this.session.getProfilerEventHandler()
+                                .consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.session.getThreadId(), -1, -1,
+                                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.19")));
                     }
                 }
 
@@ -3496,10 +3465,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.isInGlobalTx = flag;
     }
 
-    public void setReadInfoMsgEnabled(boolean flag) {
-        this.readInfoMsg = flag;
-    }
-
     /**
      * You can put a connection in read-only mode as a hint to enable database
      * optimizations <B>Note:</B> setReadOnly cannot be called while in the
@@ -3818,7 +3783,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *         sent to the server.
      */
     public String getStatementComment() {
-        return this.statementComment;
+        return this.session.getProtocol().getQueryComment();
     }
 
     /**
@@ -3831,28 +3796,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *            sent to the server.
      */
     public void setStatementComment(String comment) {
-        this.statementComment = comment;
-    }
-
-    public void reportQueryTime(long millisOrNanos) {
-        synchronized (getConnectionMutex()) {
-            this.queryTimeCount++;
-            this.queryTimeSum += millisOrNanos;
-            this.queryTimeSumSquares += (millisOrNanos * millisOrNanos);
-            this.queryTimeMean = ((this.queryTimeMean * (this.queryTimeCount - 1)) + millisOrNanos) / this.queryTimeCount;
-        }
-    }
-
-    public boolean isAbonormallyLongQuery(long millisOrNanos) {
-        synchronized (getConnectionMutex()) {
-            if (this.queryTimeCount < 15) {
-                return false; // need a minimum amount for this to make sense
-            }
-
-            double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
-
-            return millisOrNanos > (this.queryTimeMean + 5 * stddev);
-        }
+        this.session.getProtocol().setQueryComment(comment);
     }
 
     public void transactionBegun() {
@@ -4251,7 +4195,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public String getProcessHost() {
         try {
-            long threadId = this.getId();
+            long threadId = this.session.getThreadId();
             java.sql.Statement processListStmt = getMetadataSafeStatement();
             String processHost = null;
 

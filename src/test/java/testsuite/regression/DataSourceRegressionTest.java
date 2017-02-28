@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -531,7 +531,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
             final XAConnection xaConn = myDs.getXAConnection();
             final XAResource xaRes = xaConn.getXAResource();
             final Connection dbConn = xaConn.getConnection();
-            final long connId = ((MysqlConnection) ((MysqlConnection) dbConn).getConnectionMutex()).getId();
+            final long connId = ((MysqlConnection) ((MysqlConnection) dbConn).getConnectionMutex()).getSession().getThreadId();
 
             xaRes.start(xid, XAResource.TMNOFLAGS);
             xaRes.end(xid, XAResource.TMSUCCESS);

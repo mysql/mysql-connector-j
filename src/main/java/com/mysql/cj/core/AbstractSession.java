@@ -28,7 +28,6 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.log.NullLogger;
 
 public abstract class AbstractSession implements Session {
@@ -41,8 +40,6 @@ public abstract class AbstractSession implements Session {
 
     /** The logger we're going to use */
     protected transient Log log;
-
-    protected BaseMetricsHolder metricsHolder;
 
     /** Null logger shared by all connections at startup */
     protected static final Log NULL_LOGGER = new NullLogger(Log.LOGGER_INSTANCE_NAME);

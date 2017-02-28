@@ -66,6 +66,11 @@ public class BaseMetricsHolder {
 
     private int[] perfMetricsHistCounts;
 
+    private long queryTimeCount;
+    private double queryTimeSum;
+    private double queryTimeSumSquares;
+    private double queryTimeMean;
+
     private void createInitialHistogram(long[] breakpoints, long lowerBound, long upperBound) {
 
         double bucketSize = (((double) upperBound - (double) lowerBound) / HISTOGRAM_BUCKETS) * 1.25;
@@ -333,5 +338,22 @@ public class BaseMetricsHolder {
 
     public void incrementNumberOfResultSetsCreated() {
         this.numberOfResultSetsCreated++;
+    }
+
+    public void reportQueryTime(long millisOrNanos) {
+        this.queryTimeCount++;
+        this.queryTimeSum += millisOrNanos;
+        this.queryTimeSumSquares += (millisOrNanos * millisOrNanos);
+        this.queryTimeMean = ((this.queryTimeMean * (this.queryTimeCount - 1)) + millisOrNanos) / this.queryTimeCount;
+    }
+
+    public boolean isAbonormallyLongQuery(long millisOrNanos) {
+        if (this.queryTimeCount < 15) {
+            return false; // need a minimum amount for this to make sense
+        }
+
+        double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
+
+        return millisOrNanos > (this.queryTimeMean + 5 * stddev);
     }
 }

@@ -309,10 +309,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      */
     void shutdownServer() throws SQLException;
 
-    void reportQueryTime(long millisOrNanos);
-
-    boolean isAbonormallyLongQuery(long millisOrNanos);
-
     /**
      * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
      * or '1' if not.
@@ -360,8 +356,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
             ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException;
 
-    StringBuilder generateConnectionCommentBlock(StringBuilder buf);
-
     CachedResultSetMetaData getCachedMetaData(String sql);
 
     Timer getCancelTimer();
@@ -376,17 +370,9 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     List<StatementInterceptor> getStatementInterceptorsInstances();
 
-    //void incrementNumberOfPreparedExecutes();
-
-    //void incrementNumberOfPrepares();
-
-    //void incrementNumberOfResultSetsCreated();
-
     void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException;
 
     void initializeSafeStatementInterceptors() throws SQLException;
-
-    boolean isReadInfoMsgEnabled();
 
     boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
@@ -398,13 +384,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     void decachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException;
 
-    //void registerQueryExecutionTime(long queryTimeMs);
-
     void registerStatement(Statement stmt);
-
-    //void reportNumberOfTablesAccessed(int numTablesAccessed);
-
-    void setReadInfoMsgEnabled(boolean flag);
 
     void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException;
 

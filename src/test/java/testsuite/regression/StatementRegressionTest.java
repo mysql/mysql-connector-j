@@ -9252,7 +9252,7 @@ public class StatementRegressionTest extends BaseTestCase {
             future1.get(5, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // The connection hung, forcibly closing it releases resources.
-            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            this.stmt.execute("KILL CONNECTION " + testConn.getSession().getThreadId());
             fail("Connection hung after executeUpdate().");
         }
         this.pstmt.close();
@@ -9270,7 +9270,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs = future2.get(5, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // The connection hung, forcibly closing it releases resources.
-            this.stmt.execute("KILL CONNECTION " + testConn.getId());
+            this.stmt.execute("KILL CONNECTION " + testConn.getSession().getThreadId());
             fail("Connection hung after executeQuery().");
         }
         assertTrue(this.rs.next());
@@ -9352,7 +9352,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 future.get(10, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 // The connection hung, forcibly closing it releases resources.
-                this.stmt.executeQuery("KILL CONNECTION " + testConn.getId());
+                this.stmt.executeQuery("KILL CONNECTION " + testConn.getSession().getThreadId());
                 fail(testCase + ": Connection hung!");
             }
             executor.shutdownNow();

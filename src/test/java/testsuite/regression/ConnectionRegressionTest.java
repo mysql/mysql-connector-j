@@ -8148,7 +8148,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
 
         // Find Masters conn ID.
-        long connId = ((MysqlConnection) testConn).getId();
+        long connId = ((MysqlConnection) testConn).getSession().getThreadId();
 
         // Master server down.
         UnreliableSocketFactory.downHost(MASTER);
@@ -8190,7 +8190,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Find Slaves conn ID.
         testConn.setReadOnly(true);
-        connId = ((MysqlConnection) testConn).getId();
+        connId = ((MysqlConnection) testConn).getSession().getThreadId();
         testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
         testConn.setReadOnly(false);
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
@@ -8239,7 +8239,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Find Slaves conn ID.
         testConn.setReadOnly(true);
-        connId = ((MysqlConnection) testConn).getId();
+        connId = ((MysqlConnection) testConn).getSession().getThreadId();
         testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
         testConn.setReadOnly(false);
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);

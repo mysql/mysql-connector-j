@@ -335,7 +335,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         this.netBufferLength = this.session.getServerVariable("net_buffer_length", 16 * 1024);
 
-        String statementComment = this.connection.getStatementComment();
+        String statementComment = this.session.getProtocol().getQueryComment();
 
         this.originalSql = (statementComment == null) ? sql : "/* " + statementComment + " */ " + sql;
 
@@ -499,7 +499,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private void dumpCloseForTestcase() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             StringBuilder buf = new StringBuilder();
-            this.connection.generateConnectionCommentBlock(buf);
+            this.session.getProtocol().generateQueryCommentBlock(buf);
             buf.append("DEALLOCATE PREPARE debug_stmt_");
             buf.append(this.statementId);
             buf.append(";\n");
@@ -513,7 +513,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             StringBuilder buf = new StringBuilder();
 
             for (int i = 0; i < this.parameterCount; i++) {
-                this.connection.generateConnectionCommentBlock(buf);
+                this.session.getProtocol().generateQueryCommentBlock(buf);
 
                 buf.append("SET @debug_stmt_param");
                 buf.append(this.statementId);
@@ -530,7 +530,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 buf.append(";\n");
             }
 
-            this.connection.generateConnectionCommentBlock(buf);
+            this.session.getProtocol().generateQueryCommentBlock(buf);
 
             buf.append("EXECUTE debug_stmt_");
             buf.append(this.statementId);
@@ -560,7 +560,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             StringBuilder buf = new StringBuilder(this.originalSql.length() + 64);
 
-            this.connection.generateConnectionCommentBlock(buf);
+            this.session.getProtocol().generateQueryCommentBlock(buf);
 
             buf.append("PREPARE debug_stmt_");
             buf.append(this.statementId);
@@ -1204,9 +1204,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                         if (this.useAutoSlowLog) {
                             queryWasSlow = elapsedTime > this.slowQueryThresholdMillis.getValue();
                         } else {
-                            queryWasSlow = this.connection.isAbonormallyLongQuery(elapsedTime);
+                            queryWasSlow = this.session.getProtocol().getMetricsHolder().isAbonormallyLongQuery(elapsedTime);
 
-                            this.connection.reportQueryTime(elapsedTime);
+                            this.session.getProtocol().getMetricsHolder().reportQueryTime(elapsedTime);
                         }
                     }
 
@@ -1224,8 +1224,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                         mesgBuf.append("\n\n with parameters bound:\n\n");
                         mesgBuf.append(queryAsString);
 
-                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.getCurrentCatalog(), this.connection.getId(),
-                                getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null,
+                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", this.getCurrentCatalog(),
+                                this.session.getThreadId(), getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null,
                                 LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
                     }
 
@@ -1258,13 +1258,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (this.profileSQL) {
                     long fetchEndTime = this.session.getCurrentTimeNanosOrMillis();
 
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.getCurrentCatalog(), this.connection.getId(), getId(),
-                            0 /*
-                               * FIXME
-                               * rs.
-                               * resultId
-                               */, System.currentTimeMillis(), (fetchEndTime - queryEndTime), this.session.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), null));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", this.getCurrentCatalog(),
+                            this.connection.getSession().getThreadId(), getId(), rs.getResultId(), System.currentTimeMillis(), (fetchEndTime - queryEndTime),
+                            this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
                 }
 
                 if (queryWasSlow && this.explainSlowQueries.getValue()) {
@@ -1400,34 +1396,16 @@ public class ServerPreparedStatement extends PreparedStatement {
                 boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
 
                 if (this.parameterCount > 0) {
-                    //this.parameterFields = new Field[this.parameterCount];
-
-                    //PacketPayload metaDataPacket;
-                    //for (int i = 0; i < this.parameterCount; i++) {
-                    //    metaDataPacket = this.session.readPacket();
-                    //    this.parameterFields[i] = this.session.getResultsHandler().unpackField(metaDataPacket, this.connection.getCharacterSetMetadata());
-                    //}
                     if (checkEOF) { // Skip the following EOF packet.
                         this.session.readPacket();
                     }
 
                     this.parameterFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.parameterCount, null))
                             .getFields();
-
                 }
 
                 // Read in the result set column information
                 if (this.fieldCount > 0) {
-                    //this.resultFields = new Field[this.fieldCount];
-
-                    //PacketPayload fieldPacket;
-                    //for (int i = 0; i < this.fieldCount; i++) {
-                    //    fieldPacket = this.session.readPacket();
-                    //    this.resultFields[i] = this.session.getResultsHandler().unpackField(fieldPacket, this.connection.getCharacterSetMetadata());
-                    //}
-                    //if (checkEOF) { // Skip the following EOF packet.
-                    //    this.session.readPacket();
-                    //}
                     this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.fieldCount, null));
                 }
             } catch (IOException ioEx) {

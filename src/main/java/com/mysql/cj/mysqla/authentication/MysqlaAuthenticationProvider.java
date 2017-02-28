@@ -546,7 +546,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                 if (challenge.isOKPacket()) {
                     // read OK packet
-                    OkPacket ok = OkPacket.parse(challenge, false, null);
+                    OkPacket ok = OkPacket.parse(challenge, null);
                     sessState.setStatusFlags(ok.getStatusFlags(), true);
 
                     // if OK packet then finish handshake

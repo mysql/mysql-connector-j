@@ -1658,7 +1658,7 @@ public class StringUtils {
     }
 
     public static String toString(byte[] value, int offset, int length, String encoding) {
-        if (encoding == null) {
+        if (encoding == null || "null".equalsIgnoreCase(encoding)) {
             return new String(value, offset, length);
         }
         try {

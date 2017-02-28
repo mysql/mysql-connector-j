@@ -1144,13 +1144,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
             }
 
-            boolean oldInfoMsgState = false;
-
-            if (this.retrieveGeneratedKeys) {
-                oldInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
-                locallyScopedConn.setReadInfoMsgEnabled(true);
-            }
-
             //
             // Only apply max_rows to selects
             //
@@ -1167,7 +1160,6 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             }
 
             if (this.retrieveGeneratedKeys) {
-                locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
                 rs.setFirstCharOfQuery(this.firstCharOfStmt);
             }
 
@@ -2031,17 +2023,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             locallyScopedConn.setSessionMaxRows(-1);
 
-            boolean oldInfoMsgState = false;
-
-            if (this.retrieveGeneratedKeys) {
-                oldInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
-                locallyScopedConn.setReadInfoMsgEnabled(true);
-            }
-
             rs = executeInternal(-1, sendPacket, false, false, null, isReallyBatch);
 
             if (this.retrieveGeneratedKeys) {
-                locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
                 rs.setFirstCharOfQuery(this.firstCharOfStmt);
             }
 
@@ -2115,7 +2099,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             int ensurePacketSize = 0;
 
-            String statementComment = this.connection.getStatementComment();
+            String statementComment = this.session.getProtocol().getQueryComment();
 
             byte[] commentAsBytes = null;
 

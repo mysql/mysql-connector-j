@@ -639,20 +639,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.hasTriedMaster();
     }
 
-    public boolean isAbonormallyLongQuery(long millisOrNanos) {
-        return this.mc.isAbonormallyLongQuery(millisOrNanos);
-    }
-
     public boolean isNoBackslashEscapesSet() {
         return this.mc.isNoBackslashEscapesSet();
     }
 
     public boolean lowerCaseTableNames() {
         return this.mc.lowerCaseTableNames();
-    }
-
-    public void reportQueryTime(long millisOrNanos) {
-        this.mc.reportQueryTime(millisOrNanos);
     }
 
     public void resetServerState() throws SQLException {
@@ -1033,11 +1025,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
-        return this.mc.generateConnectionCommentBlock(buf);
-    }
-
-    @Override
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         return this.mc.getCachedMetaData(sql);
     }
@@ -1083,11 +1070,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public boolean isReadInfoMsgEnabled() {
-        return this.mc.isReadInfoMsgEnabled();
-    }
-
-    @Override
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
         return this.mc.isReadOnly(useSessionStatus);
     }
@@ -1115,11 +1097,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void registerStatement(com.mysql.cj.api.jdbc.Statement stmt) {
         this.mc.registerStatement(stmt);
-    }
-
-    @Override
-    public void setReadInfoMsgEnabled(boolean flag) {
-        this.mc.setReadInfoMsgEnabled(flag);
     }
 
     @Override

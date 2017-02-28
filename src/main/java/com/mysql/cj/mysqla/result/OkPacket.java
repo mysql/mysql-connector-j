@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,7 +39,7 @@ public class OkPacket implements ProtocolEntity {
     public OkPacket() {
     }
 
-    public static OkPacket parse(PacketPayload buf, boolean isReadInfoMsgEnabled, String errorMessageEncoding) {
+    public static OkPacket parse(PacketPayload buf, String errorMessageEncoding) {
         OkPacket ok = new OkPacket();
 
         buf.setPosition(1); // skips the 'last packet' flag (packet signature)
@@ -49,9 +49,7 @@ public class OkPacket implements ProtocolEntity {
         ok.setUpdateID(buf.readInteger(IntegerDataType.INT_LENENC)); // last_insert_id
         ok.setStatusFlags((int) buf.readInteger(IntegerDataType.INT2));
         ok.setWarningCount((int) buf.readInteger(IntegerDataType.INT2));
-        if (isReadInfoMsgEnabled) {
-            ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
-        }
+        ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
         return ok;
     }
 

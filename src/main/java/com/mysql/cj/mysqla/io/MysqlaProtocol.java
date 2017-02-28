@@ -94,6 +94,7 @@ import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.LogUtils;
@@ -179,7 +180,15 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     private InputStream localInfileInputStream;
 
+    private BaseMetricsHolder metricsHolder;
+
     private TransactionManager transactionManager;
+
+    /**
+     * The comment (if any) that we'll prepend to all statements
+     * sent to the server (to show up in "SHOW PROCESSLIST")
+     */
+    private String queryComment = null;
 
     /**
      * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
@@ -217,6 +226,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     public MysqlaProtocol(Log logger) {
         this.log = logger;
+        this.metricsHolder = new BaseMetricsHolder();
     }
 
     @Override
@@ -869,7 +879,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             long queryStartTime = 0;
             long queryEndTime = 0;
 
-            String statementComment = ((JdbcConnection) this.connection).getStatementComment();
+            String statementComment = this.queryComment;
 
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
                 statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
@@ -937,7 +947,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
 
                 StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
-                ((JdbcConnection) this.connection).generateConnectionCommentBlock(debugBuf);
+                generateQueryCommentBlock(debugBuf);
                 debugBuf.append(testcaseQuery);
                 debugBuf.append(';');
                 TestUtils.dumpTestcaseQuery(debugBuf.toString());
@@ -968,9 +978,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                     if (!this.useAutoSlowLog) {
                         logSlow = queryTime > this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
                     } else {
-                        logSlow = ((JdbcConnection) this.connection).isAbonormallyLongQuery(queryTime);
-
-                        ((JdbcConnection) this.connection).reportQueryTime(queryTime);
+                        logSlow = this.metricsHolder.isAbonormallyLongQuery(queryTime);
+                        this.metricsHolder.reportQueryTime(queryTime);
                     }
 
                     if (logSlow) {
@@ -1002,6 +1011,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
             T rs = readAllResults(maxRows, streamResults, resultPacket, false, cachedMetadata, resultSetFactory);
 
+            long threadId = getServerSession().getCapabilities().getThreadId();
+            int statementId = (callingStatement != null) ? callingStatement.getId() : 999;
+            int resultSetId = rs.getResultId();
+            long eventDuration = queryEndTime - queryStartTime;
+
             if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
                 StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
 
@@ -1012,10 +1026,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                        (int) (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
-                        mesgBuf.toString()));
+                eventSink.consumeEvent(
+                        new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId, System.currentTimeMillis(),
+                                eventDuration, this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
@@ -1027,44 +1040,37 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
             }
 
-            if (this.logSlowQueries) {
+            if (this.profileSQL || this.logSlowQueries) {
 
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
-                if (this.queryBadIndexUsed && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
-                            Messages.getString("Protocol.4") + profileQueryToLog));
+                String eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
+
+                if (this.logSlowQueries) {
+                    if (this.queryBadIndexUsed) {
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
+                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
+                                Messages.getString("Protocol.4") + profileQueryToLog));
+                    }
+                    if (this.queryNoIndexUsed) {
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
+                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
+                                Messages.getString("Protocol.5") + profileQueryToLog));
+                    }
+                    if (this.serverQueryWasSlow) {
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
+                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
+                                Messages.getString("Protocol.ServerSlowQuery") + profileQueryToLog));
+                    }
                 }
 
-                if (this.queryNoIndexUsed && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
-                            Messages.getString("Protocol.5") + profileQueryToLog));
-                }
-
-                if (this.serverQueryWasSlow && this.profileSQL) {
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, this.connection.getId(),
-                            (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                            (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()),
-                            Messages.getString("Protocol.ServerSlowQuery") + profileQueryToLog));
-                }
-            }
-
-            if (this.profileSQL) {
                 fetchEndTime = getCurrentTimeNanosOrMillis();
 
-                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, threadId, statementId, resultSetId,
+                        System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint, profileQueryToLog));
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                        (queryEndTime - queryStartTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId() : 999, rs.getResultId(), System.currentTimeMillis(),
-                        (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), null));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, threadId, statementId, resultSetId,
+                        System.currentTimeMillis(), (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, eventCreationPoint, null));
             }
 
             if (this.hadWarnings) {
@@ -1096,11 +1102,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                             cause = new OperationCancelledException();
                         }
 
-                        try {
-                            callingStatement.resetCancelledState();
-                        } catch (SQLException e) {
-                            throw ExceptionFactory.createException(e.getMessage(), e);
-                        }
+                        callingStatement.resetCancelledState();
 
                         throw cause;
                     }
@@ -1738,7 +1740,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             checkTransactionState();
         } else {
             // read OK packet
-            OkPacket ok = OkPacket.parse(rowPacket, ((JdbcConnection) this.connection).isReadInfoMsgEnabled(), this.serverSession.getErrorMessageEncoding());
+            OkPacket ok = OkPacket.parse(rowPacket, this.serverSession.getErrorMessageEncoding());
             result = (T) ok;
 
             this.serverSession.setStatusFlags(ok.getStatusFlags(), saveOldStatus);
@@ -1929,4 +1931,29 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             ResultSetUtil.convertShowWarningsToSQLWarnings(this.connection, getWarningCount(), true);
         }
     }
+
+    public StringBuilder generateQueryCommentBlock(StringBuilder buf) {
+        buf.append("/* conn id ");
+        buf.append(getServerSession().getCapabilities().getThreadId());
+        buf.append(" clock: ");
+        buf.append(System.currentTimeMillis());
+        buf.append(" */ ");
+
+        return buf;
+    }
+
+    public BaseMetricsHolder getMetricsHolder() {
+        return this.metricsHolder;
+    }
+
+    @Override
+    public String getQueryComment() {
+        return this.queryComment;
+    }
+
+    @Override
+    public void setQueryComment(String comment) {
+        this.queryComment = comment;
+    }
+
 }

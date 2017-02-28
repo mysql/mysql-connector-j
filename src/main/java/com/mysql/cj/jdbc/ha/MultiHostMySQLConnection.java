@@ -177,10 +177,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata);
     }
 
-    public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
-        return getActiveMySQLConnection().generateConnectionCommentBlock(buf);
-    }
-
     public int getActiveStatementCount() {
         return getActiveMySQLConnection().getActiveStatementCount();
     }
@@ -302,10 +298,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().initializeSafeStatementInterceptors();
     }
 
-    public boolean isAbonormallyLongQuery(long millisOrNanos) {
-        return getActiveMySQLConnection().isAbonormallyLongQuery(millisOrNanos);
-    }
-
     public boolean isInGlobalTx() {
         return getActiveMySQLConnection().isInGlobalTx();
     }
@@ -316,10 +308,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public boolean isNoBackslashEscapesSet() {
         return getActiveMySQLConnection().isNoBackslashEscapesSet();
-    }
-
-    public boolean isReadInfoMsgEnabled() {
-        return getActiveMySQLConnection().isReadInfoMsgEnabled();
     }
 
     public boolean isReadOnly() throws SQLException {
@@ -406,10 +394,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().releaseSavepoint(arg0);
     }
 
-    public void reportQueryTime(long millisOrNanos) {
-        getActiveMySQLConnection().reportQueryTime(millisOrNanos);
-    }
-
     public void resetServerState() throws SQLException {
         getActiveMySQLConnection().resetServerState();
     }
@@ -468,10 +452,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public void setProxy(JdbcConnection proxy) {
         getThisAsProxy().setProxy(proxy);
-    }
-
-    public void setReadInfoMsgEnabled(boolean flag) {
-        getActiveMySQLConnection().setReadInfoMsgEnabled(flag);
     }
 
     public void setReadOnly(boolean readOnlyFlag) throws SQLException {

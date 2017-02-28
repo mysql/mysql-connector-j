@@ -228,7 +228,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
-            this.connectionId = this.connection.getId();
+            this.connectionId = this.connection.getSession().getThreadId();
             this.padCharsWithSpace = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_padCharsWithSpace).getValue();
         }
     }
@@ -254,7 +254,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-            this.connectionId = this.connection.getId();
+            this.connectionId = this.session.getThreadId();
             this.profileSQL = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
             this.emptyStringsConvertToZero = this.connection.getPropertySet().getReadableProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero);
             this.emulateLocators = this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators);
