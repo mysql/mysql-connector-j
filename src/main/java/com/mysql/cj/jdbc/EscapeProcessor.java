@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,8 +37,8 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.EscapeTokenizer;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.util.TimeUtil;
 
 /**
  * EscapeProcessor performs all escape code processing as outlined in the JDBC spec by JavaSoft.

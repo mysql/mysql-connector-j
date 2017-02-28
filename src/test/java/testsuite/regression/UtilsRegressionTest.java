@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,8 +32,8 @@ import java.util.TimeZone;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.util.TimeUtil;
 
 import testsuite.BaseTestCase;
 
@@ -73,7 +73,7 @@ public class UtilsRegressionTest extends BaseTestCase {
          * alternative Time Zone designations to Standard Time Zones ID (IANA/Olson database). This data was generated from IANA Time Zone database v. 2015f
          * (http://www.iana.org/time-zones) and Unicode CLDR v.28 (http://cldr.unicode.org/)
          * 
-         * Both the file com/mysql/cj/jdbc/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
+         * Both the file com/mysql/cj/core/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
          */
 
         Map<String, String> tzMap = new HashMap<String, String>();

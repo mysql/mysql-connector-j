@@ -91,6 +91,7 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
@@ -99,7 +100,6 @@ import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
-import com.mysql.cj.jdbc.util.TimeUtil;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;

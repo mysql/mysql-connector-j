@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc.util;
+package com.mysql.cj.core.util;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -42,7 +42,7 @@ public class TimeUtil {
     static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
     // Mappings from TimeZone identifications (prefixed by type: Windows, TZ name, MetaZone, TZ alias, ...), to standard TimeZone Ids
-    private static final String TIME_ZONE_MAPPINGS_RESOURCE = "/com/mysql/cj/jdbc/util/TimeZoneMapping.properties";
+    private static final String TIME_ZONE_MAPPINGS_RESOURCE = "/com/mysql/cj/core/util/TimeZoneMapping.properties";
 
     private static Properties timeZoneMappings = null;
 

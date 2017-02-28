@@ -43,7 +43,6 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
@@ -65,8 +64,8 @@ import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.jdbc.StatementImpl;
-import com.mysql.cj.jdbc.util.TimeUtil;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
@@ -380,15 +379,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.setStatementInterceptors(statementInterceptors);
     }
 
-    public boolean isServerLocal(JdbcConnection conn) {
+    public boolean isServerLocal(MysqlConnection conn) {
         synchronized (conn.getConnectionMutex()) {
             SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
-
-            //if (factory instanceof SocketMetadata) {
             return ((SocketMetadata) factory).isLocallyConnected(conn);
-            //}
-            //this.log.logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
-            //return false;
         }
     }
 
