@@ -46,6 +46,7 @@ import java.util.Optional;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -178,6 +179,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     private InputStream localInfileInputStream;
 
+    private TransactionManager transactionManager;
+
     /**
      * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
      */
@@ -204,9 +207,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log) {
+    public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log,
+            TransactionManager transactionManager) {
         MysqlaProtocol protocol = new MysqlaProtocol(log);
-        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet);
+        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet,
+                transactionManager);
         return protocol;
     }
 
@@ -215,13 +220,15 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
 
         this.connection = conn;
         this.propertySet = propSet;
 
         this.socketConnection = phConnection;
         this.exceptionInterceptor = this.socketConnection.getExceptionInterceptor();
+
+        this.transactionManager = trManager;
 
         this.maintainTimeStats = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
         this.maxQuerySizeToLog = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog);
@@ -307,9 +314,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession,
                     this.getPacketSentTimeHolder().getLastPacketSentTime(), nae);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.getConnection().getPropertySet(), this.serverSession,
-                    this.getPacketSentTimeHolder().getLastPacketSentTime(), this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx,
-                    getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
+                    this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
         }
         // i/o streams were replaced, build new packet sender/reader
         this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
@@ -681,14 +687,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     public void checkTransactionState() {
         int transState = this.serverSession.getTransactionState();
-        try {
-            if (transState == ServerSession.TRANSACTION_COMPLETED) {
-                ((JdbcConnection) this.connection).transactionCompleted();
-            } else if (transState == ServerSession.TRANSACTION_STARTED) {
-                ((JdbcConnection) this.connection).transactionBegun();
-            }
-        } catch (SQLException e) {
-            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+        if (transState == ServerSession.TRANSACTION_COMPLETED) {
+            this.transactionManager.transactionCompleted();
+        } else if (transState == ServerSession.TRANSACTION_STARTED) {
+            this.transactionManager.transactionBegun();
         }
     }
 
@@ -1411,15 +1413,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
         this.authProvider.connect(this.serverSession, user, password, database);
 
-    }
-
-    @Override
-    public JdbcConnection getConnection() {
-        return (JdbcConnection) this.connection;
-    }
-
-    public void setConnection(JdbcConnection connection) {
-        this.connection = connection;
     }
 
     protected boolean isDataAvailable() {

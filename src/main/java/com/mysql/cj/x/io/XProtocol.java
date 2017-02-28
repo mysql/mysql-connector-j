@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -139,7 +140,7 @@ public class XProtocol implements Protocol {
         this.capabilities = getCapabilities();
     }
 
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propSet) {
+    public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propSet, TransactionManager transactionManager) {
         throw new NullPointerException("TODO: this implementation uses a constructor");
     }
 
@@ -160,10 +161,6 @@ public class XProtocol implements Protocol {
     }
 
     public MysqlConnection getConnection() {
-        throw new NullPointerException("TODO");
-    }
-
-    public void setConnection(MysqlConnection connection) {
         throw new NullPointerException("TODO");
     }
 

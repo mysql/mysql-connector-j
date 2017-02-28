@@ -37,6 +37,7 @@ import java.util.TimeZone;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
+import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -113,8 +114,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.metricsHolder = new BaseMetricsHolder();
     }
 
-    public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout)
-            throws IOException {
+    public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
+            TransactionManager transactionManager) throws IOException {
 
         this.hostInfo = hi;
 
@@ -129,7 +130,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
         // physical connection is responsible *only* for I/O streams
-        this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log);
+        this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log, transactionManager);
 
         // use protocol to create a -> session
         // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally

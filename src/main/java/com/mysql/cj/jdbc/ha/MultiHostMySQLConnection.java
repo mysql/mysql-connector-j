@@ -510,11 +510,11 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().throwConnectionClosedException();
     }
 
-    public void transactionBegun() throws SQLException {
+    public void transactionBegun() {
         getActiveMySQLConnection().transactionBegun();
     }
 
-    public void transactionCompleted() throws SQLException {
+    public void transactionCompleted() {
         getActiveMySQLConnection().transactionCompleted();
     }
 

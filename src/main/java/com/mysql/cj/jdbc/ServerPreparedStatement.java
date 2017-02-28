@@ -1431,8 +1431,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.fieldCount, null));
                 }
             } catch (IOException ioEx) {
-                throw SQLError.createCommunicationsException(this.session.getProtocol().getConnection(),
-                        this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
+                throw SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
                         this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.session.getExceptionInterceptor());
             } catch (SQLException | CJException sqlEx) {
                 SQLException ex = sqlEx instanceof SQLException ? (SQLException) sqlEx : SQLExceptionsMapping.translateException(sqlEx);

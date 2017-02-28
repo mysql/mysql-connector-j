@@ -1138,12 +1138,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void transactionBegun() throws SQLException {
+    public void transactionBegun() {
         this.mc.transactionBegun();
     }
 
     @Override
-    public void transactionCompleted() throws SQLException {
+    public void transactionCompleted() {
         this.mc.transactionCompleted();
     }
 

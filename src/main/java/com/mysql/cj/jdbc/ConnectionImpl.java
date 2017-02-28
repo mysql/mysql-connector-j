@@ -1478,8 +1478,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             try {
                 this.session.forceClose();
 
-                this.session.connect(getProxy(), this.origHostInfo, mergedProps, this.user, this.password, this.database,
-                        DriverManager.getLoginTimeout() * 1000);
+                JdbcConnection c = getProxy();
+                this.session.connect(c, this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
                 pingInternal(false, 0);
 
                 boolean oldAutoCommit;
@@ -1585,7 +1585,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         try {
 
-            this.session.connect(getProxy(), this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000);
+            JdbcConnection c = getProxy();
+            this.session.connect(c, this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
             this.connectionId = this.session.getThreadId();
             this.isClosed = false;
 
@@ -3854,36 +3855,44 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
     }
 
-    public void transactionBegun() throws SQLException {
+    public void transactionBegun() {
         synchronized (getConnectionMutex()) {
-            if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
-                        this.connectionLifecycleInterceptors.iterator()) {
+            try {
+                if (this.connectionLifecycleInterceptors != null) {
+                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                            this.connectionLifecycleInterceptors.iterator()) {
 
-                    @Override
-                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
-                        each.transactionBegun();
-                    }
-                };
+                        @Override
+                        void forEach(ConnectionLifecycleInterceptor each) {
+                            each.transactionBegun();
+                        }
+                    };
 
-                iter.doForAll();
+                    iter.doForAll();
+                }
+            } catch (SQLException e) {
+                throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
             }
         }
     }
 
-    public void transactionCompleted() throws SQLException {
+    public void transactionCompleted() {
         synchronized (getConnectionMutex()) {
-            if (this.connectionLifecycleInterceptors != null) {
-                IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
-                        this.connectionLifecycleInterceptors.iterator()) {
+            try {
+                if (this.connectionLifecycleInterceptors != null) {
+                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
+                            this.connectionLifecycleInterceptors.iterator()) {
 
-                    @Override
-                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
-                        each.transactionCompleted();
-                    }
-                };
+                        @Override
+                        void forEach(ConnectionLifecycleInterceptor each) {
+                            each.transactionCompleted();
+                        }
+                    };
 
-                iter.doForAll();
+                    iter.doForAll();
+                }
+            } catch (SQLException e) {
+                throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
             }
         }
     }

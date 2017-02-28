@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package com.mysql.cj.api.io;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -52,7 +53,7 @@ public interface Protocol {
      * 
      * @note MysqlConnection dependency will be removed.
      */
-    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet);
+    void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet, TransactionManager transactionManager);
 
     PropertySet getPropertySet();
 
@@ -66,10 +67,6 @@ public interface Protocol {
     ServerCapabilities readServerCapabilities();
 
     ServerSession getServerSession();
-
-    MysqlConnection getConnection();
-
-    void setConnection(MysqlConnection connection);
 
     SocketConnection getSocketConnection();
 
