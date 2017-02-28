@@ -27,6 +27,8 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.Struct;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -62,20 +64,45 @@ public class JDBC42ResultSet extends JDBC4ResultSet {
         }
 
         if (type.equals(LocalDate.class)) {
-            return type.cast(getDate(columnIndex).toLocalDate());
+            final Date date = getDate(columnIndex);
+            if (date == null) {
+                return null;
+            } else {
+                return type.cast(date.toLocalDate());
+            }
         } else if (type.equals(LocalDateTime.class)) {
-            return type.cast(getTimestamp(columnIndex).toLocalDateTime());
+            final Timestamp timestamp = getTimestamp(columnIndex);
+            if (timestamp == null) {
+                return null;
+            } else {
+                return type.cast(timestamp.toLocalDateTime());
+            }
         } else if (type.equals(LocalTime.class)) {
-            return type.cast(getTime(columnIndex).toLocalTime());
+            final Time time = getTime(columnIndex);
+            if (time == null) {
+                return null;
+            } else {
+                return type.cast(time.toLocalTime());
+            }
         } else if (type.equals(OffsetDateTime.class)) {
             try {
-                return type.cast(OffsetDateTime.parse(getString(columnIndex)));
+                final String string = getString(columnIndex)
+                if (string == null) {
+                    return null;
+                } else {
+                    return type.cast(OffsetDateTime.parse(string));
+                }
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
         } else if (type.equals(OffsetTime.class)) {
             try {
-                return type.cast(OffsetTime.parse(getString(columnIndex)));
+                final String string = getString(columnIndex)
+                if (string == null) {
+                    return null;
+                } else {
+                    return type.cast(OffsetTime.parse(string));
+                }
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
