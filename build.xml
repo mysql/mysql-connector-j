@@ -596,10 +596,10 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <property name="com.mysql.cj.build.meta-inf.crypto-imports" value="javax.net.ssl;javax.crypto;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jdbc4-imports"
                   value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql,javax.naming,javax.naming.spi,javax.transaction.xa" />
+        <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql;javax.naming;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jmx-imports" value="javax.management;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.integration-imports"
-                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.xdevapi-imports"
                   value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />

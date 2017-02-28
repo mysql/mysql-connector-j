@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -77,9 +77,9 @@ public class ResultSetTest extends BaseTestCase {
         // build map of charsets supported by server
         Connection c = getConnectionWithProps("detectCustomCollations=true");
         Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
-        Iterator<Integer> collationIndexes = ((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToMysqlCharset.keySet().iterator();
-        while (collationIndexes.hasNext()) {
-            Integer index = collationIndexes.next();
+        this.rs = this.stmt.executeQuery("SHOW COLLATION");
+        while (this.rs.next()) {
+            int index = ((Number) this.rs.getObject(3)).intValue();
             String charsetName = null;
             if (((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset != null) {
                 charsetName = ((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset.get(index);
@@ -104,6 +104,7 @@ public class ResultSetTest extends BaseTestCase {
 
         while (charsetNames.hasNext()) {
             String charsetName = charsetNames.next();
+            System.out.println(charsetName);
 
             if (charsetName.equalsIgnoreCase("LATIN7") || charsetName.equalsIgnoreCase("BINARY")) {
                 continue; // no mapping in Java

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.sql.SQLException;
@@ -628,17 +629,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                     this.sendPacket.setPosition(0);
                     this.sendPacket.writeInteger(IntegerDataType.INT1, command);
 
-                    if ((command == MysqlaConstants.COM_INIT_DB) || (command == MysqlaConstants.COM_CREATE_DB) || (command == MysqlaConstants.COM_DROP_DB)
-                            || (command == MysqlaConstants.COM_QUERY) || (command == MysqlaConstants.COM_STMT_PREPARE)) {
-
+                    if ((command == MysqlaConstants.COM_INIT_DB) || (command == MysqlaConstants.COM_QUERY) || (command == MysqlaConstants.COM_STMT_PREPARE)) {
                         this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(extraData, extraDataCharEncoding));
-
-                    } else if (command == MysqlaConstants.COM_PROCESS_KILL) {
-                        long id = Long.parseLong(extraData);
-                        this.sendPacket.writeInteger(IntegerDataType.INT4, id);
                     }
-
                     send(this.sendPacket, this.sendPacket.getPosition());
+
                 } else {
                     this.packetSequence = -1;
                     send(queryPacket, queryPacket.getPosition()); // packet passed by PreparedStatement
@@ -1394,7 +1389,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     public void setSocketTimeout(int milliseconds) {
         try {
-            this.socketConnection.getMysqlSocket().setSoTimeout(milliseconds);
+            Socket soc = this.socketConnection.getMysqlSocket();
+            if (soc != null) {
+                soc.setSoTimeout(milliseconds);
+            }
         } catch (SocketException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.8"), e, getExceptionInterceptor());
         }

@@ -96,7 +96,8 @@ public class CharsetMapping {
     private static final String MYSQL_CHARSET_NAME_utf8 = "utf8";
     private static final String MYSQL_CHARSET_NAME_utf8mb4 = "utf8mb4";
 
-    private static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
+    public static final String NOT_USED = MYSQL_CHARSET_NAME_latin1; // punting for not-used character sets
+    public static final String COLLATION_NOT_DEFINED = "none";
 
     public static final int MYSQL_COLLATION_INDEX_utf8 = 33;
     public static final int MYSQL_COLLATION_INDEX_binary = 63;
@@ -508,7 +509,7 @@ public class CharsetMapping {
         Map<String, Integer> charsetNameToCollationPriorityMap = new TreeMap<String, Integer>();
         Set<Integer> tempUTF8MB4Indexes = new HashSet<Integer>();
 
-        Collation notUsedCollation = new Collation(0, "not_implemented", 0, NOT_USED);
+        Collation notUsedCollation = new Collation(0, COLLATION_NOT_DEFINED, 0, NOT_USED);
         for (int i = 1; i < MAP_SIZE; i++) {
             Collation coll = collation[i] != null ? collation[i] : notUsedCollation;
             COLLATION_INDEX_TO_COLLATION_NAME[i] = coll.collationName;
@@ -523,16 +524,6 @@ public class CharsetMapping {
             // Filling indexes of utf8mb4 collations
             if (charsetName.equals(MYSQL_CHARSET_NAME_utf8mb4)) {
                 tempUTF8MB4Indexes.add(i);
-            }
-        }
-
-        // Sanity check
-        for (int i = 1; i < MAP_SIZE; i++) {
-            if (COLLATION_INDEX_TO_COLLATION_NAME[i] == null) {
-                throw new RuntimeException("Assertion failure: No mapping from charset index " + i + " to a mysql collation");
-            }
-            if (COLLATION_INDEX_TO_COLLATION_NAME[i] == null) {
-                throw new RuntimeException("Assertion failure: No mapping from charset index " + i + " to a Java character set");
             }
         }
 
@@ -560,7 +551,8 @@ public class CharsetMapping {
                     return charset.charsetName;
                 }
 
-                if (currentChoice == null || currentChoice.priority < charset.priority || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0) {
+                if (currentChoice == null || currentChoice.minimumVersion.compareTo(charset.minimumVersion) < 0
+                        || currentChoice.priority < charset.priority && currentChoice.minimumVersion.compareTo(charset.minimumVersion) == 0) {
                     if (charset.isOkayForVersion(version)) {
                         currentChoice = charset;
                     }

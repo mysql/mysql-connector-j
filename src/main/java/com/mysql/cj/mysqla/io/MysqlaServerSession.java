@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -81,8 +81,6 @@ public class MysqlaServerSession implements ServerSession {
 
     /** The map of server variables that we retrieve at connection init. */
     private Map<String, String> serverVariables = new HashMap<String, String>();
-
-    public Map<Integer, String> indexToMysqlCharset = new HashMap<Integer, String>();
 
     public Map<Integer, String> indexToCustomMysqlCharset = null;
 
@@ -375,8 +373,13 @@ public class MysqlaServerSession implements ServerSession {
 
         if (charsetIndex != MysqlaConstants.NO_CHARSET_INFO) {
             try {
-                if (this.indexToMysqlCharset.size() > 0) {
-                    javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(this.indexToMysqlCharset.get(charsetIndex), characterEncoding);
+                // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped
+                // to index from our static map key's diapason 
+                if (this.indexToCustomMysqlCharset != null) {
+                    String cs = this.indexToCustomMysqlCharset.get(charsetIndex);
+                    if (cs != null) {
+                        javaEncoding = CharsetMapping.getJavaEncodingForMysqlCharset(cs, characterEncoding);
+                    }
                 }
                 // checking against static maps if no custom charset found
                 if (javaEncoding == null) {

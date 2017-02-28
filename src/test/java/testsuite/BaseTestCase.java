@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -329,7 +329,7 @@ public abstract class BaseTestCase extends TestCase {
         return null;
     }
 
-    protected Connection getConnectionWithProps(String propsList) throws SQLException {
+    public Connection getConnectionWithProps(String propsList) throws SQLException {
         return getConnectionWithProps(dbUrl, propsList);
     }
 
@@ -896,36 +896,36 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
-        try {
-            testRoutine.call();
-        } catch (Throwable t) {
-            if (!throwable.isAssignableFrom(t.getClass())) {
-                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
-            }
+        return assertThrows("", throwable, null, testRoutine);
+    }
 
-            return throwable.cast(t);
-        }
-        fail("Expected exception of type '" + throwable.getName() + "'.");
-
-        // never reaches here
-        return null;
+    protected static <EX extends Throwable> EX assertThrows(String message, Class<EX> throwable, Callable<?> testRoutine) {
+        return assertThrows(message, throwable, null, testRoutine);
     }
 
     protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+        return assertThrows("", throwable, msgMatchesRegex, testRoutine);
+    }
+
+    protected static <EX extends Throwable> EX assertThrows(String message, Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+        if (message.length() > 0) {
+            message += " ";
+        }
         try {
             testRoutine.call();
         } catch (Throwable t) {
             if (!throwable.isAssignableFrom(t.getClass())) {
-                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+                fail(message + "expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName()
+                        + "' was thrown.");
             }
 
-            if (!t.getMessage().matches(msgMatchesRegex)) {
-                fail("The error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
+            if (msgMatchesRegex != null && !t.getMessage().matches(msgMatchesRegex)) {
+                fail(message + "the error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
             }
 
             return throwable.cast(t);
         }
-        fail("Expected exception of type '" + throwable.getName() + "'.");
+        fail(message + "expected exception of type '" + throwable.getName() + "'.");
 
         // never reaches here
         return null;

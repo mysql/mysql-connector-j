@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -136,6 +136,7 @@ public class ResultSetUtil {
      * @throws Exception
      *             if an error occurs
      */
+    // TODO not used ?
     public static Object readObject(java.sql.ResultSet resultSet, int index) throws IOException, SQLException, ClassNotFoundException {
         ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(index));
         Object obj = objIn.readObject();

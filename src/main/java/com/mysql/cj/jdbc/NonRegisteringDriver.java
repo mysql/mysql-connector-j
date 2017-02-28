@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -97,9 +97,11 @@ public class NonRegisteringDriver implements java.sql.Driver {
     }
 
     static {
-        AbandonedConnectionCleanupThread referenceThread = new AbandonedConnectionCleanupThread();
-        referenceThread.setDaemon(true);
-        referenceThread.start();
+        try {
+            Class.forName(AbandonedConnectionCleanupThread.class.getName());
+        } catch (ClassNotFoundException e) {
+            // ignore
+        }
     }
 
     /**

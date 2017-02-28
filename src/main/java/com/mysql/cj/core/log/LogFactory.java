@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.core.util.Util;
 
 /**
  * Creates instances of loggers for the driver to use.
@@ -62,7 +63,7 @@ public class LogFactory {
             try {
                 loggerClass = Class.forName(className);
             } catch (ClassNotFoundException nfe) {
-                loggerClass = Class.forName(LogFactory.class.getPackage().getName() + "." + className);
+                loggerClass = Class.forName(Util.getPackageName(LogFactory.class) + "." + className);
             }
 
             Constructor<?> constructor = loggerClass.getConstructor(new Class<?>[] { String.class });

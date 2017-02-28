@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -806,11 +806,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
         this.originalSql = sql;
 
-        if (this.originalSql.startsWith(PING_MARKER)) {
-            this.doPingInstead = true;
-        } else {
-            this.doPingInstead = false;
-        }
+        this.doPingInstead = this.originalSql.startsWith(PING_MARKER);
 
         this.dbmd = this.connection.getMetaData();
 
@@ -1099,14 +1095,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             JdbcConnection locallyScopedConn = this.connection;
 
-            if (!checkReadOnlySafeStatement()) {
+            if (!this.doPingInstead && !checkReadOnlySafeStatement()) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") + Messages.getString("PreparedStatement.21"),
                         SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             ResultSetInternalMethods rs = null;
-
-            CachedResultSetMetaData cachedMetadata = null;
 
             this.lastQueryIsOnDupKeyUpdate = false;
 
@@ -1114,11 +1108,21 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 this.lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
             }
 
+            this.batchedGeneratedKeys = null;
+
+            resetCancelledState();
+
+            implicitlyCloseAllOpenResults();
+
             clearWarnings();
 
-            setupStreamingTimeout(locallyScopedConn);
+            if (this.doPingInstead) {
+                doPingInstead();
 
-            this.batchedGeneratedKeys = null;
+                return true;
+            }
+
+            setupStreamingTimeout(locallyScopedConn);
 
             PacketPayload sendPacket = fillSendPacket();
 
@@ -1132,6 +1136,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             // Check if we have cached metadata for this query...
             //
+            CachedResultSetMetaData cachedMetadata = null;
+
             boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)
                     .getValue();
             if (cacheResultSetMetadata) {
@@ -1796,17 +1802,9 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         synchronized (checkClosed().getConnectionMutex()) {
             try {
 
-                resetCancelledState();
-
                 JdbcConnection locallyScopedConnection = this.connection;
 
                 this.numberOfExecutions++;
-
-                if (this.doPingInstead) {
-                    doPingInstead();
-
-                    return this.results;
-                }
 
                 ResultSetInternalMethods rs;
 
@@ -1890,17 +1888,23 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
             checkForDml(this.originalSql, this.firstCharOfStmt);
 
-            CachedResultSetMetaData cachedMetadata = null;
+            this.batchedGeneratedKeys = null;
+
+            resetCancelledState();
+
+            implicitlyCloseAllOpenResults();
 
             clearWarnings();
 
-            this.batchedGeneratedKeys = null;
+            if (this.doPingInstead) {
+                doPingInstead();
+
+                return this.results;
+            }
 
             setupStreamingTimeout(locallyScopedConn);
 
             PacketPayload sendPacket = fillSendPacket();
-
-            implicitlyCloseAllOpenResults();
 
             String oldCatalog = null;
 
@@ -1912,6 +1916,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             //
             // Check if we have cached metadata for this query...
             //
+            CachedResultSetMetaData cachedMetadata = null;
             boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata)
                     .getValue();
             if (cacheResultSetMetadata) {
@@ -2005,6 +2010,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             if ((this.firstCharOfStmt == 'S') && isSelectQuery()) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.37"), "01S03", getExceptionInterceptor());
             }
+
+            resetCancelledState();
 
             implicitlyCloseAllOpenResults();
 

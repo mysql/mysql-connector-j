@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1404,6 +1404,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug24706() throws Exception {
+        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
+        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
+        boolean ignoreTest = true;
+        if (ignoreTest) {
+            return;
+        }
+
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_elideSetAutoCommits, "true");
         props.setProperty(PropertyDefinitions.PNAME_logger, "StandardLogger");
@@ -1441,7 +1448,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (c != null) {
                 c.close();
             }
-
         }
     }
 
@@ -5620,7 +5626,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // test maxAllowedPacket below threshold and useServerPrepStmts=true
         assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
-            @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
                 getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + (maxPacketSizeThreshold - 1)).close();
                 return null;
@@ -5628,7 +5633,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         });
 
         assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
-            @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
                 getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + maxPacketSizeThreshold).close();
                 return null;
@@ -5923,7 +5927,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug71850() throws Exception {
         assertThrows(Exception.class, "ExceptionInterceptor.init\\(\\) called 1 time\\(s\\)", new Callable<Void>() {
-            @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
                 getConnectionWithProps(
                         "exceptionInterceptors=testsuite.regression.ConnectionRegressionTest$TestBug71850ExceptionInterceptor," + "user=unexistent_user");
@@ -6244,7 +6247,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 public void run() {
                     try {
                         // set socketTimeout so this thread doesn't hang if no exception is thrown after killing the connection at server side
-                        @SuppressWarnings("synthetic-access")
                         Connection testConn = getConnectionWithProps("socketTimeout=" + timeout);
                         Statement testStmt = testConn.createStatement();
                         try {
@@ -7930,8 +7932,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * 
-     * @throws Exception
+     * Tests fix for Bug#56122 - JDBC4 functionality failure when using replication connections.
      */
     public void testBug56122() throws Exception {
         for (final Connection testConn : new Connection[] { this.conn, getFailoverConnection(), getLoadBalancedConnection(),
@@ -9379,5 +9380,118 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(testCase, 1, this.rs.getInt(1));
         } while (useLocTransSt = !useLocTransSt);
+    }
+
+    /**
+     * Tests fix for Bug#75615 - Incorrect implementation of Connection.setNetworkTimeout().
+     * 
+     * Note: this test exploits a non deterministic race condition. Usually the failure was observed under 10 consecutive executions, as such the siginficant
+     * part of the test is run up to 25 times.
+     */
+    Future<?> testBug75615Future = null;
+
+    public void testBug75615() throws Exception {
+        // Main use case: although this could cause an exception due to a race condition in MysqlIO.mysqlConnection it is silently swallowed within the running
+        // thread.
+        final Connection testConn1 = getConnectionWithProps("");
+        testConn1.setNetworkTimeout(Executors.newSingleThreadExecutor(), 1000);
+        testConn1.close();
+
+        // Main use case simulation: this simulates the above by capturing an eventual exeption in the main thread. This is where this test would actually fail.
+        // This part is repeated several times to increase the chance of hitting the reported bug.
+        for (int i = 0; i < 25; i++) {
+            final ExecutorService execService = Executors.newSingleThreadExecutor();
+            final Connection testConn2 = getConnectionWithProps("");
+            testConn2.setNetworkTimeout(new Executor() {
+                public void execute(Runnable command) {
+                    // Attach the future to the parent object so that it can track the exception in the main thread.
+                    ConnectionRegressionTest.this.testBug75615Future = execService.submit(command);
+                }
+            }, 1000);
+            testConn2.close();
+            try {
+                this.testBug75615Future.get();
+            } catch (ExecutionException e) {
+                e.getCause().printStackTrace();
+                fail("Exception thrown in the thread that was setting the network timeout: " + e.getCause());
+            }
+            execService.shutdownNow();
+        }
+
+        // Test the expected exception on null executor.
+        assertThrows(SQLException.class, "Executor can not be null", new Callable<Void>() {
+            public Void call() throws Exception {
+                Connection testConn = getConnectionWithProps("");
+                testConn.setNetworkTimeout(null, 1000);
+                testConn.close();
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Tests fix for Bug#70785 - MySQL Connector/J inconsistent init state for autocommit.
+     */
+    public void testBug70785() throws Exception {
+        // Make sure that both client and server have autocommit turned on.
+        assertTrue(this.conn.getAutoCommit());
+        this.rs = this.stmt.executeQuery("SELECT @@session.autocommit");
+        this.rs.next();
+        assertTrue(this.rs.getBoolean(1));
+
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+        this.rs = this.stmt.executeQuery("SELECT @@global.init_connect");
+        this.rs.next();
+        String originalInitConnect = this.rs.getString(1);
+        this.stmt.execute("SET @@global.init_connect='SET @testBug70785=1'"); // Server variable init_connect cannot be empty for this test.
+
+        this.rs = this.stmt.executeQuery("SELECT @@global.autocommit");
+        this.rs.next();
+        boolean originalAutoCommit = this.rs.getBoolean(1);
+        boolean autoCommit = originalAutoCommit;
+
+        int n = 0;
+        try {
+            do {
+                this.stmt.execute("SET @@global.autocommit=" + (autoCommit ? 1 : 0));
+
+                boolean cacheServerConf = false;
+                boolean useLocTransSt = false;
+                boolean elideSetAutoCommit = false;
+                do {
+                    final String testCase = String.format("Case: [AutoCommit: %s, CacheSrvConf: %s, LocTransSt: %s, ElideSetAC: %s ]", autoCommit ? "Y" : "N",
+                            cacheServerConf ? "Y" : "N", useLocTransSt ? "Y" : "N", elideSetAutoCommit ? "Y" : "N");
+                    final Properties props = new Properties();
+                    props.setProperty(PropertyDefinitions.PNAME_cacheServerConfiguration, Boolean.toString(cacheServerConf));
+                    props.setProperty(PropertyDefinitions.PNAME_useLocalTransactionState, Boolean.toString(useLocTransSt));
+                    props.setProperty(PropertyDefinitions.PNAME_elideSetAutoCommits, Boolean.toString(elideSetAutoCommit));
+
+                    if (cacheServerConf) {
+                        n++;
+                    }
+                    String uniqueUrl = dbUrl + "&testBug70785=" + n; // Make sure that the first connection will be a cache miss and the second a cache hit.
+                    Connection testConn1 = getConnectionWithProps(uniqueUrl, props);
+                    Connection testConn2 = getConnectionWithProps(uniqueUrl, props);
+
+                    assertTrue(testCase, testConn1.getAutoCommit());
+                    this.rs = testConn1.createStatement().executeQuery("SELECT @@session.autocommit");
+                    this.rs.next();
+                    assertTrue(testCase, this.rs.getBoolean(1));
+
+                    assertTrue(testCase, testConn2.getAutoCommit());
+                    this.rs = testConn2.createStatement().executeQuery("SELECT @@session.autocommit");
+                    this.rs.next();
+                    assertTrue(testCase, this.rs.getBoolean(1));
+
+                    testConn1.close();
+                    testConn2.close();
+                } while ((cacheServerConf = !cacheServerConf) || (useLocTransSt = !useLocTransSt) || (elideSetAutoCommit = !elideSetAutoCommit));
+            } while ((autoCommit = !autoCommit) != originalAutoCommit);
+        } finally {
+            this.stmt.execute("SET @@global.init_connect='" + originalInitConnect + "'");
+            this.stmt.execute("SET @@global.autocommit=" + (originalAutoCommit ? 1 : 0));
+        }
     }
 }

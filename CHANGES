@@ -3,6 +3,27 @@
 
 Version 6.0.7
 
+  - Fix for Bug#25556597, RESULTSETTEST.TESTPADDING UNIT TEST IS FAILING IN 5.1.41 RELEASE PACKAGE.
+
+  - Fix for Bug#25517837, CONNECT PERFORMNACE DEGRADED BY 10% IN 5.1.41.
+
+  - Fix for Bug#25504578, CONNECT FAILS WHEN CONNECTIONCOLLATION=ISO-8859-13.
+
+  - Fix for Bug#25438355, Improper automatic deserialization of binary data.
+
+  - Fix for Bug#70785 (17756825), MySQL Connector/J inconsistent init state for autocommit.
+    Property 'elideSetAutoCommits' is temporarily disabled due to Bug#66884. Defaults to 'false' until this bug is fixed.
+
+  - Fix for Bug#75615 (21181249), Incorrect implementation of Connection.setNetworkTimeout().
+
+  - Fix for Bug#81706 (23535001), NullPointerException in driver.
+
+  - Fix for Bug#83052 (25048543), static method in com.mysql.jdbc.Util relies on null object.
+
+  - Fix for Bug#69526 (17035755), 'Abandoned connection cleanup thread' at mysql-connector-java-5.1.25.
+
+  - Fix for Bug#82826 (24942672), Unneeded version requirement for javax.net.ssl Import-Package on OSGi MANIFEST.MF.
+
 Version 6.0.6
 
   - Added Core TLS/SSL options for the mysqlx URI scheme.

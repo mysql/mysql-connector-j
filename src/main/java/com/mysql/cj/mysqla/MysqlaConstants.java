@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -61,15 +61,15 @@ public class MysqlaConstants {
     public static final int COM_QUIT = 1;
     public static final int COM_INIT_DB = 2;
     public static final int COM_QUERY = 3;
-    public static final int COM_FIELD_LIST = 4;
-    public static final int COM_CREATE_DB = 5;
-    public static final int COM_DROP_DB = 6;
-    public static final int COM_REFRESH = 7;
+    public static final int COM_FIELD_LIST = 4; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
+    public static final int COM_CREATE_DB = 5; // Not used; deprecated?
+    public static final int COM_DROP_DB = 6; // Not used; deprecated?
+    public static final int COM_REFRESH = 7; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
     public static final int COM_SHUTDOWN = 8;
     public static final int COM_STATISTICS = 9;
-    public static final int COM_PROCESS_INFO = 10;
+    public static final int COM_PROCESS_INFO = 10; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
     public static final int COM_CONNECT = 11;
-    public static final int COM_PROCESS_KILL = 12;
+    public static final int COM_PROCESS_KILL = 12; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
     public static final int COM_DEBUG = 13;
     public static final int COM_PING = 14;
     public static final int COM_TIME = 15;

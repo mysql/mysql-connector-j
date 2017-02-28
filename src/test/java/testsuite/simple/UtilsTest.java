@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,6 +36,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.ha.MultiHostConnectionProxy;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 
 import testsuite.BaseTestCase;
@@ -130,5 +131,13 @@ public class UtilsTest extends BaseTestCase {
         for (Class<?> clazz : new Class<?>[] { JdbcConnection.class, Serializable.class }) {
             assertTrue(ifacesList.contains(clazz));
         }
+    }
+
+    /**
+     * Tests Util.getPackageName()
+     */
+    public void testGetPackageName() {
+        assertEquals(MultiHostConnectionProxy.class.getPackage().getName(), Util.getPackageName(MultiHostConnectionProxy.class));
+        assertEquals(JdbcConnection.class.getPackage().getName(), Util.getPackageName(this.conn.getClass().getInterfaces()[0]));
     }
 }

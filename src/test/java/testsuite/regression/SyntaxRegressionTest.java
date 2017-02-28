@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,13 +30,20 @@ import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
 
@@ -337,14 +344,34 @@ public class SyntaxRegressionTest extends BaseTestCase {
         createTable("testExchangePartition2", "LIKE testExchangePartition1");
 
         this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
-        if (versionMeetsMinimum(5, 7, 4)) {
+
+        // Using Statement, with and without validation.
+        if (versionMeetsMinimum(5, 7, 5)) {
+            this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+            this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
+        } else if (versionMeetsMinimum(5, 7, 4)) {
             this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
         } else {
+            this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
         }
 
-        if (versionMeetsMinimum(5, 7, 4)) {
+        // Using Client PreparedStatement, with validation.
+        if (versionMeetsMinimum(5, 7, 5)) {
+            this.pstmt = this.conn
+                    .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+        } else if (versionMeetsMinimum(5, 7, 4)) {
             this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        } else {
+            this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+        }
+        assertEquals(com.mysql.cj.jdbc.PreparedStatement.class, this.pstmt.getClass());
+        this.pstmt.executeUpdate();
+
+        // Using Client PreparedStatement, without validation.
+        if (versionMeetsMinimum(5, 7, 5)) {
+            this.pstmt = this.conn
+                    .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
         } else {
             this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
         }
@@ -354,11 +381,27 @@ public class SyntaxRegressionTest extends BaseTestCase {
         Connection testConn = null;
         try {
             testConn = getConnectionWithProps("useServerPrepStmts=true,emulateUnsupportedPstmts=false");
-            if (versionMeetsMinimum(5, 7, 4)) {
+
+            // Using Server PreparedStatement, with validation.
+            if (versionMeetsMinimum(5, 7, 5)) {
+                this.pstmt = testConn
+                        .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITH VALIDATION");
+            } else if (versionMeetsMinimum(5, 7, 4)) {
                 this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
             } else {
                 this.pstmt = testConn
                         .prepareStatement("ALTER IGNORE TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+
+            }
+            assertEquals(com.mysql.cj.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
+            this.pstmt.executeUpdate();
+
+            // Using Server PreparedStatement, without validation.
+            if (versionMeetsMinimum(5, 7, 5)) {
+                this.pstmt = testConn
+                        .prepareStatement("ALTER TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2 WITHOUT VALIDATION");
+            } else {
+                this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 " + "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 
             }
             assertEquals(com.mysql.cj.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
@@ -379,13 +422,35 @@ public class SyntaxRegressionTest extends BaseTestCase {
         if (!versionMeetsMinimum(5, 6, 5)) {
             return;
         }
-        Connection c = null;
+
         String datadir = null;
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
+        this.rs.next();
+        datadir = this.rs.getString(2);
+        if (datadir != null) {
+            datadir = new File(datadir).getCanonicalPath();
+        }
+
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='secure_file_priv'");
+        this.rs.next();
+        String fileprivdir = this.rs.getString(2);
+        if ("NULL".equalsIgnoreCase(this.rs.getString(2))) {
+            fail("To run this test the server needs to be started with the option\"--secure-file-priv=\"");
+        } else if (fileprivdir.length() > 0) {
+            fileprivdir = new File(fileprivdir).getCanonicalPath();
+            if (!datadir.equals(fileprivdir)) {
+                fail("To run this test the server option\"--secure-file-priv=\" needs to be empty or to match the server's data directory.");
+            }
+        }
+
         Properties props = getPropertiesFromTestsuiteUrl();
         String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
 
         props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        Connection c = null;
+
+        boolean exceptionCaugth = false;
         try {
 
             this.stmt.executeUpdate("SET @old_default_storage_engine = @@default_storage_engine");
@@ -450,14 +515,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("UNLOCK TABLES");
 
             // Test LOAD
-            this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
-            this.rs.next();
-            datadir = this.rs.getString(2);
-
             if (dbname == null) {
                 fail("No database selected");
             } else {
-                File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+                File f = new File(datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt");
                 if (f.exists()) {
                     f.delete();
                 }
@@ -599,6 +660,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
             this.stmt.executeUpdate("SET @@default_storage_engine = @old_default_storage_engine");
 
+        } catch (SQLException e) {
+            exceptionCaugth = true;
+            fail(e.getMessage());
+
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testExplicitPartitions, testExplicitPartitions2, testExplicitPartitions3");
 
@@ -606,44 +671,14 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 c.close();
             }
             if (datadir != null) {
-                File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+                File f = new File(datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt");
                 if (f.exists()) {
                     f.deleteOnExit();
-                } else {
-                    fail("File " + datadir + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted."
+                } else if (!exceptionCaugth) {
+                    fail("File " + datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted."
                             + "You should run server and tests on the same filesystem.");
                 }
             }
-        }
-    }
-
-    /**
-     * WL#1326 - GIS: Precise spatial operations
-     * 
-     * GIS functions added in 5.6GA: ST_Intersection(g1 geometry, g2 geometry); ST_Difference(g1 geometry, g2 geometry);
-     * ST_Union(g1 geometry, g2 geometry); ST_SymDifference(g1 geometry, g2 geometry); ST_Buffer(g1 geometry, d
-     * numeric).
-     * 
-     * @throws SQLException
-     */
-    public void testGISPreciseSpatialFunctions() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-        }
-
-        String[] querySamples = new String[] {
-                "SELECT ST_AsText(ST_Intersection(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT ST_AsText(ST_Difference(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT ST_AsText(ST_Union(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT ST_AsText(ST_SymDifference(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
-                "SELECT ST_AsText(ST_Buffer(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), 0.5))",
-                "SELECT ST_Distance(ST_GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), ST_GeomFromText('POLYGON((0 10, 8 10, 4 16, 0 10))'))" };
-
-        for (String query : querySamples) {
-            this.rs = this.stmt.executeQuery(query);
-            assertTrue("Query should return  at least one row.", this.rs.next());
-            assertFalse("Query should return only one row.", this.rs.next());
-            this.rs.close();
         }
     }
 
@@ -1206,5 +1241,714 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertTrue(this.rs.next());
         assertEquals(processesHint ? 1 : 0, this.rs.getInt(1));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * WL#6205 - InnoDB: Implement CREATE TABLESPACE for general use.
+     * 
+     * Tests support for new CREATE TABLESPACE syntax that extends this feature to InnoDB.
+     * 
+     * CREATE TABLESPACE tablespace_name ADD DATAFILE 'file_name' [FILE_BLOCK_SIZE = value] [ENGINE [=] engine_name]
+     */
+    public void testCreateTablespace() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        try {
+            this.stmt.execute("CREATE TABLESPACE testTs1 ADD DATAFILE 'testTs1.ibd'");
+            this.stmt.execute("CREATE TABLESPACE testTs2 ADD DATAFILE 'testTs2.ibd'");
+
+            testCreateTablespaceCheckTablespaces(2);
+
+            createTable("testTs1Tbl1", "(id INT) TABLESPACE testTs1");
+            createTable("testTs1Tbl2", "(id INT) TABLESPACE testTs1");
+            createTable("testTs2Tbl1", "(id INT) TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTables("testTs1", 2);
+            testCreateTablespaceCheckTables("testTs2", 1);
+
+            this.stmt.execute("ALTER TABLE testTs1Tbl2 TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTables("testTs1", 1);
+            testCreateTablespaceCheckTables("testTs2", 2);
+
+            dropTable("testTs1Tbl1");
+            dropTable("testTs1Tbl2");
+            dropTable("testTs2Tbl1");
+
+            testCreateTablespaceCheckTables("testTs1", 0);
+            testCreateTablespaceCheckTables("testTs2", 0);
+
+        } finally {
+            // Make sure the tables are dropped before the tablespaces.
+            dropTable("testTs1Tbl1");
+            dropTable("testTs1Tbl2");
+            dropTable("testTs2Tbl1");
+
+            this.stmt.execute("DROP TABLESPACE testTs1");
+            this.stmt.execute("DROP TABLESPACE testTs2");
+
+            testCreateTablespaceCheckTablespaces(0);
+        }
+    }
+
+    private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tablespaces WHERE name LIKE 'testTs_'");
+        assertTrue(this.rs.next());
+        assertEquals(expectedTsCount, this.rs.getInt(1));
+    }
+
+    private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tables a, information_schema.innodb_sys_tablespaces b "
+                + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
+        assertTrue(this.rs.next());
+        assertEquals(expectedTblCount, this.rs.getInt(1));
+    }
+
+    /**
+     * WL#6747 - InnoDB: make fill factor settable.
+     * 
+     * Tests support for new syntax for setting indices MERGE_THRESHOLD on CREATE TABLE.
+     * 
+     * index_option:
+     * COMMENT 'MERGE_THRESHOLD=n'
+     */
+    public void testSetMergeThreshold() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Map<String, Integer> keyMergeThresholds = new HashMap<String, Integer>();
+        keyMergeThresholds.put("k2", 45);
+        keyMergeThresholds.put("k3", 40);
+        keyMergeThresholds.put("k23", 35);
+        keyMergeThresholds.put("k24", 30);
+        int tableMergeThreshold = 25;
+
+        // Create table with both table and per index merge thresholds.
+        createTable("testSetMergeThreshold",
+                "(c1 INT, c2 INT, c3 INT, c4 INT, KEY k1 (c1), KEY k2 (c2) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k2")
+                        + "', KEY k3 (c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k3") + "', KEY k23 (c2, c3) COMMENT 'MERGE_THRESHOLD="
+                        + keyMergeThresholds.get("k23") + "', KEY k24 (c2, c4) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k24")
+                        + "') COMMENT 'MERGE_THRESHOLD=" + tableMergeThreshold + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Change table's merge threshold.
+        tableMergeThreshold++;
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold COMMENT 'MERGE_THRESHOLD=" + tableMergeThreshold + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Change index' merge threshold.
+        keyMergeThresholds.put("k3", 41);
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold DROP KEY k3");
+        this.stmt.execute("ALTER TABLE testSetMergeThreshold ADD KEY k3 (c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k3") + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+
+        // Add new index with a non-default merge threshold value.
+        keyMergeThresholds.put("k123", 15);
+        this.stmt.execute("CREATE INDEX k123 ON testSetMergeThreshold (c1, c2, c3) COMMENT 'MERGE_THRESHOLD=" + keyMergeThresholds.get("k123") + "'");
+        testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
+    }
+
+    private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_sys_indexes WHERE table_id = "
+                + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+
+        while (this.rs.next()) {
+            int expected = keyMergeThresholds.containsKey(this.rs.getString(1)) ? keyMergeThresholds.get(this.rs.getString(1)) : defaultMergeThreshold;
+            assertEquals("MERGE_THRESHOLD for index " + this.rs.getString(1), expected, this.rs.getInt(2));
+        }
+        assertTrue(this.rs.last());
+        assertTrue(this.rs.getRow() >= keyMergeThresholds.size());
+    }
+
+    /**
+     * WL#7696 - InnoDB: Transparent page compression.
+     * 
+     * Tests COMPRESSION clause in CREATE|ALTER TABLE syntax.
+     * 
+     * table_option: (...) | COMPRESSION [=] {'ZLIB'|'LZ4'|'NONE'}
+     */
+    public void testTableCompression() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 8)) {
+            return;
+        }
+
+        // Create table with 'zlib' compression.
+        createTable("testTableCompression", "(c VARCHAR(15000)) COMPRESSION='ZLIB'");
+
+        this.rs = this.stmt.executeQuery("show create table testTableCompression");
+        assertTrue(this.rs.next());
+        assertTrue(StringUtils.indexOfIgnoreCase(this.rs.getString(2), "COMPRESSION='ZLIB'") >= 0);
+
+        // Alter table compression to 'lz4'.
+        this.stmt.execute("ALTER TABLE testTableCompression COMPRESSION='LZ4'");
+
+        this.rs = this.stmt.executeQuery("show create table testTableCompression");
+        assertTrue(this.rs.next());
+        assertTrue(StringUtils.indexOfIgnoreCase(this.rs.getString(2), "COMPRESSION='LZ4'") >= 0);
+
+        // Alter table compression to 'none'.
+        this.stmt.execute("ALTER TABLE testTableCompression COMPRESSION='NONE'");
+
+        this.rs = this.stmt.executeQuery("show create table testTableCompression");
+        assertTrue(this.rs.next());
+        assertTrue(StringUtils.indexOfIgnoreCase(this.rs.getString(2), "COMPRESSION='NONE'") >= 0);
+    }
+
+    /**
+     * WL#1326 - GIS: Precise spatial operations
+     * WL#8055 - Consistent naming scheme for GIS functions - Deprecation
+     * WL#8034 - More user friendly GIS functions
+     * WL#7541 - GIS MBR spatial operations enhancement
+     * (...)
+     * 
+     * Test syntax for all GIS functions.
+     */
+    public void testGisFunctions() throws Exception {
+        final String wktPoint = "'POINT(0 0)'";
+        final String wktLineString = "'LINESTRING(0 0, 8 0, 4 6, 0 0)'";
+        final String wktPolygon = "'POLYGON((0 0, 8 0, 4 6, 0 0), (4 1, 6 0, 5 3, 4 1))'";
+        final String wktMultiPoint = "'MULTIPOINT(0 0, 8 0, 4 6)'";
+        final String wktMultiLineString = "'MULTILINESTRING((0 0, 8 0, 4 6, 0 0), (4 1, 6 0, 5 3, 4 1))'";
+        final String wktMultiPolygon = "'MULTIPOLYGON(((0 0, 8 0, 4 6, 0 0), (4 1, 6 0, 5 3, 4 1)), ((0 3, 8 3, 4 9, 0 3)))'";
+        final String wktGeometryCollection = "'GEOMETRYCOLLECTION(POINT(8 0), LINESTRING(0 0, 8 0, 4 6, 0 0), POLYGON((0 3, 8 3, 4 9, 0 3)))'";
+
+        final String wkbPoint1 = "Point(0, 0)";
+        final String wkbPoint2 = "Point(8, 0)";
+        final String wkbPoint3 = "Point(4, 6)";
+        final String wkbPoint4 = "Point(4, 1)";
+        final String wkbPoint5 = "Point(6, 0)";
+        final String wkbPoint6 = "Point(5, 3)";
+        final String wkbPoint7 = "Point(0, 3)";
+        final String wkbPoint8 = "Point(8, 3)";
+        final String wkbPoint9 = "Point(4, 9)";
+        final String wkbLineString1 = String.format("LineString(%s, %s, %s, %s)", wkbPoint1, wkbPoint2, wkbPoint3, wkbPoint1);
+        final String wkbLineString2 = String.format("LineString(%s, %s, %s, %s)", wkbPoint4, wkbPoint5, wkbPoint6, wkbPoint4);
+        final String wkbLineString3 = String.format("LineString(%s, %s, %s, %s)", wkbPoint7, wkbPoint8, wkbPoint9, wkbPoint7);
+        final String wkbPolygon1 = String.format("Polygon(%s, %s)", wkbLineString1, wkbLineString2);
+        final String wkbPolygon2 = String.format("Polygon(%s)", wkbLineString3);
+        final String wkbMultiPoint = String.format("MultiPoint(%s, %s, %s)", wkbPoint1, wkbPoint2, wkbPoint3);
+        final String wkbMultiLineString = String.format("MultiLineString(%s, %s)", wkbLineString1, wkbLineString2);
+        final String wkbMultiPolygon = String.format("MultiPolygon(%s, %s)", wkbPolygon1, wkbPolygon2);
+        final String wkbGeometryCollection = String.format("GeometryCollection(%s, %s, %s)", wkbPoint2, wkbLineString1, wkbPolygon2);
+
+        final Map<String, String> args = new HashMap<String, String>();
+        args.put("gcWkt", wktGeometryCollection);
+        args.put("gWkt", wktGeometryCollection);
+        args.put("lsWkt", wktLineString);
+        args.put("mlsWkt", wktMultiLineString);
+        args.put("mptWkt", wktMultiPoint);
+        args.put("mplWkt", wktMultiPolygon);
+        args.put("ptWkt", wktPoint);
+        args.put("plWkt", wktPolygon);
+        args.put("gcWkb", wkbGeometryCollection);
+        args.put("gWkb", wkbGeometryCollection);
+        args.put("lsWkb", wkbLineString1);
+        args.put("mlsWkb", wkbMultiLineString);
+        args.put("mptWkb", wkbMultiPoint);
+        args.put("mplWkb", wkbMultiPolygon);
+        args.put("ptWkb", wkbPoint1);
+        args.put("plWkb", wkbPolygon1);
+        args.put("g1", wkbPolygon1);
+        args.put("g2", wkbPolygon2);
+        args.put("pt1", wkbPoint1);
+        args.put("pt2", wkbPoint2);
+        args.put("ls1", wkbLineString1);
+        args.put("ls2", wkbLineString2);
+        args.put("pl1", wkbPolygon1);
+        args.put("pl2", wkbPolygon2);
+        args.put("g", wkbGeometryCollection);
+        args.put("pt", wkbPoint3);
+        args.put("ls", wkbLineString1);
+        args.put("pl", wkbPolygon1);
+        args.put("mpl", wkbMultiPolygon);
+        args.put("gc", wkbGeometryCollection);
+        args.put("gh", "'s14f5h28wc04jsq093jd'");
+        args.put("js",
+                "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
+                        "{\"type\": \"Point\", \"coordinates\": [8, 0]}, " + //
+                        "{\"type\": \"LineString\", \"coordinates\": [[0, 0], [8, 0], [4, 6], [0, 0]]}, " + //
+                        "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
+
+        final class GisFunction {
+            String function;
+            int low_version_maj;
+            int low_version_min;
+            int low_version_sub;
+            int hi_version_maj;
+            int hi_version_min;
+            int hi_version_sub;
+            List<String> args;
+
+            GisFunction(String function, int low_version_maj, int low_version_min, int low_version_sub, int hi_version_maj, int hi_version_min,
+                    int hi_version_sub, String... args) {
+                this.function = function;
+                this.low_version_maj = low_version_maj;
+                this.low_version_min = low_version_min;
+                this.low_version_sub = low_version_sub;
+                this.hi_version_maj = hi_version_maj;
+                this.hi_version_min = hi_version_min;
+                this.hi_version_sub = hi_version_sub;
+                this.args = Arrays.asList(args);
+            }
+        }
+        final List<GisFunction> gisFunctions = new ArrayList<GisFunction>();
+        // Functions That Create Geometry Values from WKT Values
+        gisFunctions.add(new GisFunction("GeomCollFromText", 5, 5, 1, 5, 7, 6, "gcWkt"));
+        gisFunctions.add(new GisFunction("GeometryCollectionFromText", 5, 5, 1, 5, 7, 6, "gcWkt"));
+        gisFunctions.add(new GisFunction("GeomFromText", 5, 5, 1, 5, 7, 6, "gWkt"));
+        gisFunctions.add(new GisFunction("GeometryFromText", 5, 5, 1, 5, 7, 6, "gWkt"));
+        gisFunctions.add(new GisFunction("LineFromText", 5, 5, 1, 5, 7, 6, "lsWkt"));
+        gisFunctions.add(new GisFunction("LineStringFromText", 5, 5, 1, 5, 7, 6, "lsWkt"));
+        gisFunctions.add(new GisFunction("MLineFromText", 5, 5, 1, 5, 7, 6, "mlsWkt"));
+        gisFunctions.add(new GisFunction("MultiLineStringFromText", 5, 5, 1, 5, 7, 6, "mlsWkt"));
+        gisFunctions.add(new GisFunction("MPointFromText", 5, 5, 1, 5, 7, 6, "mptWkt"));
+        gisFunctions.add(new GisFunction("MultiPointFromText", 5, 5, 1, 5, 7, 6, "mptWkt"));
+        gisFunctions.add(new GisFunction("MPolyFromText", 5, 5, 1, 5, 7, 6, "mplWkt"));
+        gisFunctions.add(new GisFunction("MultiPolygonFromText", 5, 5, 1, 5, 7, 6, "mplWkt"));
+        gisFunctions.add(new GisFunction("PointFromText", 5, 5, 1, 5, 7, 6, "ptWkt"));
+        gisFunctions.add(new GisFunction("PolyFromText", 5, 5, 1, 5, 7, 6, "plWkt"));
+        gisFunctions.add(new GisFunction("PolygonFromText", 5, 5, 1, 5, 7, 6, "plWkt"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromText", 5, 6, 1, 0, 0, 0, "gcWkt"));
+        gisFunctions.add(new GisFunction("ST_GeometryCollectionFromText", 5, 6, 1, 0, 0, 0, "gcWkt"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromTxt", 5, 7, 6, 0, 0, 0, "gcWkt"));
+        gisFunctions.add(new GisFunction("ST_GeomFromText", 5, 6, 1, 0, 0, 0, "gWkt"));
+        gisFunctions.add(new GisFunction("ST_GeometryFromText", 5, 6, 1, 0, 0, 0, "gWkt"));
+        gisFunctions.add(new GisFunction("ST_LineFromText", 5, 6, 1, 0, 0, 0, "lsWkt"));
+        gisFunctions.add(new GisFunction("ST_LineStringFromText", 5, 6, 1, 0, 0, 0, "lsWkt"));
+        gisFunctions.add(new GisFunction("ST_MLineFromText", 5, 7, 6, 0, 0, 0, "mlsWkt"));
+        gisFunctions.add(new GisFunction("ST_MultiLineStringFromText", 5, 7, 6, 0, 0, 0, "mlsWkt"));
+        gisFunctions.add(new GisFunction("ST_MPointFromText", 5, 7, 6, 0, 0, 0, "mptWkt"));
+        gisFunctions.add(new GisFunction("ST_MultiPointFromText", 5, 7, 6, 0, 0, 0, "mptWkt"));
+        gisFunctions.add(new GisFunction("ST_MPolyFromText", 5, 7, 6, 0, 0, 0, "mplWkt"));
+        gisFunctions.add(new GisFunction("ST_MultiPolygonFromText", 5, 7, 6, 0, 0, 0, "mplWkt"));
+        gisFunctions.add(new GisFunction("ST_PointFromText", 5, 6, 1, 0, 0, 0, "ptWkt"));
+        gisFunctions.add(new GisFunction("ST_PolyFromText", 5, 6, 1, 0, 0, 0, "plWkt"));
+        gisFunctions.add(new GisFunction("ST_PolygonFromText", 5, 6, 1, 0, 0, 0, "plWkt"));
+        // Functions That Create Geometry Values from WKB Values
+        gisFunctions.add(new GisFunction("GeomCollFromWKB", 5, 5, 1, 5, 7, 6, "gcWkb"));
+        gisFunctions.add(new GisFunction("GeometryCollectionFromWKB", 5, 5, 1, 5, 7, 6, "gcWkb"));
+        gisFunctions.add(new GisFunction("GeomFromWKB", 5, 5, 1, 5, 7, 6, "gWkb"));
+        gisFunctions.add(new GisFunction("GeometryFromWKB", 5, 5, 1, 5, 7, 6, "gWkb"));
+        gisFunctions.add(new GisFunction("LineFromWKB", 5, 5, 1, 5, 7, 6, "lsWkb"));
+        gisFunctions.add(new GisFunction("LineStringFromWKB", 5, 5, 1, 5, 7, 6, "lsWkb"));
+        gisFunctions.add(new GisFunction("MLineFromWKB", 5, 5, 1, 5, 7, 6, "mlsWkb"));
+        gisFunctions.add(new GisFunction("MultiLineStringFromWKB", 5, 5, 1, 5, 7, 6, "mlsWkb"));
+        gisFunctions.add(new GisFunction("MPointFromWKB", 5, 5, 1, 5, 7, 6, "mptWkb"));
+        gisFunctions.add(new GisFunction("MultiPointFromWKB", 5, 5, 1, 5, 7, 6, "mptWkb"));
+        gisFunctions.add(new GisFunction("MPolyFromWKB", 5, 5, 1, 5, 7, 6, "mplWkb"));
+        gisFunctions.add(new GisFunction("MultiPolygonFromWKB", 5, 5, 1, 5, 7, 6, "mplWkb"));
+        gisFunctions.add(new GisFunction("PointFromWKB", 5, 5, 1, 5, 7, 6, "ptWkb"));
+        gisFunctions.add(new GisFunction("PolyFromWKB", 5, 5, 1, 5, 7, 6, "plWkb"));
+        gisFunctions.add(new GisFunction("PolygonFromWKB", 5, 5, 1, 5, 7, 6, "plWkb"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb"));
+        gisFunctions.add(new GisFunction("ST_GeometryCollectionFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb"));
+        gisFunctions.add(new GisFunction("ST_GeomFromWKB", 5, 6, 1, 0, 0, 0, "gWkb"));
+        gisFunctions.add(new GisFunction("ST_GeometryFromWKB", 5, 6, 1, 0, 0, 0, "gWkb"));
+        gisFunctions.add(new GisFunction("ST_LineFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb"));
+        gisFunctions.add(new GisFunction("ST_LineStringFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb"));
+        gisFunctions.add(new GisFunction("ST_MLineFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiLineStringFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb"));
+        gisFunctions.add(new GisFunction("ST_MPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb"));
+        gisFunctions.add(new GisFunction("ST_MPolyFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiPolygonFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb"));
+        gisFunctions.add(new GisFunction("ST_PointFromWKB", 5, 6, 1, 0, 0, 0, "ptWkb"));
+        gisFunctions.add(new GisFunction("ST_PolyFromWKB", 5, 6, 1, 0, 0, 0, "plWkb"));
+        gisFunctions.add(new GisFunction("ST_PolygonFromWKB", 5, 6, 1, 0, 0, 0, "plWkb"));
+        // MySQL-Specific Functions That Create Geometry Values
+        gisFunctions.add(new GisFunction("GeometryCollection", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("LineString", 5, 5, 1, 0, 0, 0, "pt1", "pt2"));
+        gisFunctions.add(new GisFunction("MultiLineString", 5, 5, 1, 0, 0, 0, "ls1", "ls2"));
+        gisFunctions.add(new GisFunction("MultiPoint", 5, 5, 1, 0, 0, 0, "pt1", "pt2"));
+        gisFunctions.add(new GisFunction("MultiPolygon", 5, 5, 1, 0, 0, 0, "pl1", "pl2"));
+        gisFunctions.add(new GisFunction("Point", 5, 5, 1, 0, 0, 0, "4", "6"));
+        gisFunctions.add(new GisFunction("Polygon", 5, 5, 1, 0, 0, 0, "ls1", "ls2"));
+        // Geometry Format Conversion Functions
+        gisFunctions.add(new GisFunction("AsBinary", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("AsWKB", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("AsText", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("AsWKT", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("ST_AsBinary", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_AsWKB", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_AsText", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_AsWKT", 5, 6, 1, 0, 0, 0, "g"));
+        // General Geometry Property Functions
+        gisFunctions.add(new GisFunction("Dimension", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("Envelope", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("GeometryType", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("IsEmpty", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("IsSimple", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("SRID", 5, 5, 1, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("ST_Dimension", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_Envelope", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_GeometryType", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_IsEmpty", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_IsSimple", 5, 6, 1, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_SRID", 5, 6, 1, 0, 0, 0, "g"));
+        // Point Property Functions
+        gisFunctions.add(new GisFunction("X", 5, 5, 1, 5, 7, 6, "pt"));
+        gisFunctions.add(new GisFunction("Y", 5, 5, 1, 5, 7, 6, "pt"));
+        gisFunctions.add(new GisFunction("ST_X", 5, 6, 1, 0, 0, 0, "pt"));
+        gisFunctions.add(new GisFunction("ST_Y", 5, 6, 1, 0, 0, 0, "pt"));
+        // LineString and MultiLineString Property Functions
+        gisFunctions.add(new GisFunction("EndPoint", 5, 5, 1, 5, 7, 6, "ls"));
+        gisFunctions.add(new GisFunction("GLength", 5, 5, 1, 5, 7, 6, "ls"));
+        gisFunctions.add(new GisFunction("IsClosed", 5, 5, 1, 5, 7, 6, "ls"));
+        gisFunctions.add(new GisFunction("NumPoints", 5, 5, 1, 5, 7, 6, "ls"));
+        gisFunctions.add(new GisFunction("PointN", 5, 5, 1, 5, 7, 6, "ls", "2"));
+        gisFunctions.add(new GisFunction("StartPoint", 5, 5, 1, 5, 7, 6, "ls"));
+        gisFunctions.add(new GisFunction("ST_EndPoint", 5, 6, 1, 0, 0, 0, "ls"));
+        gisFunctions.add(new GisFunction("ST_IsClosed", 5, 6, 1, 0, 0, 0, "ls"));
+        gisFunctions.add(new GisFunction("ST_Length", 5, 7, 6, 0, 0, 0, "ls"));
+        gisFunctions.add(new GisFunction("ST_NumPoints", 5, 6, 1, 0, 0, 0, "ls"));
+        gisFunctions.add(new GisFunction("ST_PointN", 5, 6, 1, 0, 0, 0, "ls", "2"));
+        gisFunctions.add(new GisFunction("ST_StartPoint", 5, 6, 1, 0, 0, 0, "ls"));
+        // Polygon and MultiPolygon Property Functions
+        gisFunctions.add(new GisFunction("Area", 5, 5, 1, 5, 7, 6, "pl"));
+        gisFunctions.add(new GisFunction("Centroid", 5, 5, 1, 5, 7, 6, "mpl"));
+        gisFunctions.add(new GisFunction("ExteriorRing", 5, 5, 1, 5, 7, 6, "pl"));
+        gisFunctions.add(new GisFunction("InteriorRingN", 5, 5, 1, 5, 7, 6, "pl", "1"));
+        gisFunctions.add(new GisFunction("NumInteriorRings", 5, 5, 1, 5, 7, 6, "pl"));
+        gisFunctions.add(new GisFunction("ST_Area", 5, 6, 1, 0, 0, 0, "pl"));
+        gisFunctions.add(new GisFunction("ST_Centroid", 5, 6, 1, 0, 0, 0, "mpl"));
+        gisFunctions.add(new GisFunction("ST_ExteriorRing", 5, 6, 1, 0, 0, 0, "pl"));
+        gisFunctions.add(new GisFunction("ST_InteriorRingN", 5, 6, 1, 0, 0, 0, "pl", "1"));
+        gisFunctions.add(new GisFunction("ST_NumInteriorRing", 5, 7, 8, 0, 0, 0, "pl"));
+        gisFunctions.add(new GisFunction("ST_NumInteriorRings ", 5, 6, 1, 0, 0, 0, "pl"));
+        // GeometryCollection Property Functions
+        gisFunctions.add(new GisFunction("GeometryN", 5, 5, 1, 5, 7, 6, "gc", "2"));
+        gisFunctions.add(new GisFunction("NumGeometries", 5, 5, 1, 5, 7, 6, "gc"));
+        gisFunctions.add(new GisFunction("ST_GeometryN", 5, 6, 1, 0, 0, 0, "gc", "2"));
+        gisFunctions.add(new GisFunction("ST_NumGeometries", 5, 6, 1, 0, 0, 0, "gc"));
+        // Spatial Operator Functions
+        gisFunctions.add(new GisFunction("Buffer", 5, 6, 1, 5, 7, 6, "g", "1"));
+        gisFunctions.add(new GisFunction("ConvexHull", 5, 7, 5, 5, 7, 6, "g"));
+        gisFunctions.add(new GisFunction("ST_Buffer", 5, 6, 1, 0, 0, 0, "g", "1"));
+        gisFunctions.add(new GisFunction("ST_Buffer_Strategy", 5, 7, 7, 0, 0, 0, "'point_circle'", "2"));
+        gisFunctions.add(new GisFunction("ST_ConvexHull", 5, 7, 5, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_Difference", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Intersection", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_SymDifference", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Union", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        // Spatial Relation Functions That Use Object Shapes
+        gisFunctions.add(new GisFunction("Crosses", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Distance", 5, 7, 5, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Touches", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Contains", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Crosses", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Disjoint", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Distance", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Equals", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Intersects", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Overlaps", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Touches", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("ST_Within", 5, 6, 1, 0, 0, 0, "g1", "g2"));
+        // Spatial Relation Functions That Use Minimum Bounding Rectangles (MBRs)
+        gisFunctions.add(new GisFunction("Contains", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Disjoint", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Equals", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Intersects", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Overlaps", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("Within", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRContains", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRCoveredBy", 5, 7, 6, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRCovers", 5, 7, 6, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRDisjoint", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBREqual", 5, 5, 1, 5, 7, 6, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBREquals", 5, 7, 6, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRIntersects", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBROverlaps", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRTouches", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        gisFunctions.add(new GisFunction("MBRWithin", 5, 5, 1, 0, 0, 0, "g1", "g2"));
+        // Spatial Geohash Functions
+        gisFunctions.add(new GisFunction("ST_GeoHash", 5, 7, 5, 0, 0, 0, "pt", "20"));
+        gisFunctions.add(new GisFunction("ST_LatFromGeoHash", 5, 7, 5, 0, 0, 0, "gh"));
+        gisFunctions.add(new GisFunction("ST_LongFromGeoHash", 5, 7, 5, 0, 0, 0, "gh"));
+        gisFunctions.add(new GisFunction("ST_PointFromGeoHash", 5, 7, 5, 0, 0, 0, "gh", "0"));
+        // Spatial GeoJSON Functions
+        gisFunctions.add(new GisFunction("ST_AsGeoJSON", 5, 7, 5, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_GeomFromGeoJSON", 5, 7, 5, 0, 0, 0, "js"));
+        // Spatial Convenience Functions
+        gisFunctions.add(new GisFunction("ST_Distance_Sphere", 5, 7, 6, 0, 0, 0, "pt1", "pt2"));
+        gisFunctions.add(new GisFunction("ST_IsValid", 5, 7, 6, 0, 0, 0, "g"));
+        gisFunctions.add(new GisFunction("ST_MakeEnvelope", 5, 7, 6, 0, 0, 0, "pt1", "pt2"));
+        gisFunctions.add(new GisFunction("ST_Simplify", 5, 7, 6, 0, 0, 0, "g", "1"));
+        gisFunctions.add(new GisFunction("ST_Validate", 5, 7, 6, 0, 0, 0, "g"));
+
+        for (GisFunction gf : gisFunctions) {
+            if (versionMeetsMinimum(gf.low_version_maj, gf.low_version_min, gf.low_version_sub)
+                    && (gf.hi_version_maj == 0 || !versionMeetsMinimum(gf.hi_version_maj, gf.hi_version_min, gf.hi_version_sub))) {
+                final StringBuilder sql = new StringBuilder("SELECT ");
+                sql.append(gf.function).append("(");
+                String sep = "";
+                for (String arg : gf.args) {
+                    sql.append(sep);
+                    sep = ", ";
+                    if (args.containsKey(arg)) {
+                        sql.append(args.get(arg));
+                    } else {
+                        sql.append(arg);
+                    }
+                }
+                sql.append(")");
+
+                this.rs = this.stmt.executeQuery(sql.toString());
+                assertTrue("Query should return one row.", this.rs.next());
+                assertFalse("Query should return exactly one row.", this.rs.next());
+
+                this.pstmt = this.conn.prepareStatement(sql.toString());
+                this.rs = this.pstmt.executeQuery();
+                assertTrue("Query should return one row.", this.rs.next());
+                assertFalse("Query should return exactly one row.", this.rs.next());
+            }
+        }
+    }
+
+    /**
+     * WL#8252 - GCS Replication: Plugin [SERVER CHANGES]
+     * 
+     * Test syntax for GCS Replication commands:
+     * - START GROUP_REPLICATION
+     * - STOP GROUP_REPLICATION
+     */
+    public void testGcsReplicationCmds() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+        String expectedErrMsg = "The server is not configured properly to be an active member of the group\\. Please see more details on error log\\.";
+        final Statement testStmt = this.stmt;
+        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt.execute("START GROUP_REPLICATION");
+                return null;
+            }
+        });
+        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt.execute("STOP GROUP_REPLICATION");
+                return null;
+            }
+        });
+
+        Connection spsConn = getConnectionWithProps("useServerPrepStmts=true");
+        for (Connection testConn : new Connection[] { this.conn, spsConn }) {
+            final PreparedStatement testPstmt1 = testConn.prepareStatement("START GROUP_REPLICATION");
+            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmt1.execute();
+                    return null;
+                }
+            });
+            final PreparedStatement testPstmt2 = testConn.prepareStatement("STOP GROUP_REPLICATION");
+            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmt2.execute();
+                    return null;
+                }
+            });
+        }
+        spsConn.close();
+    }
+
+    /**
+     * WL#6054 - Temporarily disablement of users
+     * 
+     * Test user account locking syntax:
+     * 
+     * CREATE|ALTER USER (...)
+     * - lock_option: { ACCOUNT LOCK | ACCOUNT UNLOCK }
+     */
+    public void testUserAccountLocking() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        final String user = "testAccLck";
+        final String pwd = "testAccLck";
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_user, user);
+        props.setProperty(PropertyDefinitions.PNAME_password, pwd);
+
+        for (String accLock : new String[] { "/* default */", "ACCOUNT UNLOCK", "ACCOUNT LOCK" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "' " + accLock);
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            if (accLock.equals("ACCOUNT LOCK")) {
+                assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                getConnectionWithProps(props);
+                                return null;
+                            }
+                        });
+                this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
+            }
+
+            final Connection testConn1 = getConnectionWithProps(props);
+            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT LOCK");
+            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next()); // Previous authentication still valid.
+
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            ((JdbcConnection) testConn1).changeUser(user, pwd);
+                            return null;
+                        }
+                    });
+            assertFalse("Test case: " + accLock + ",", testConn1.isClosed());
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testConn1.createStatement().executeQuery("SELECT 1");
+                    return null;
+                }
+            });
+            assertTrue("Test case: " + accLock + ",", testConn1.isClosed());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
+            Connection testConn2 = getConnectionWithProps(props);
+            assertTrue("Test case: " + accLock + ",", testConn2.createStatement().executeQuery("SELECT 1").next());
+            testConn2.close();
+
+            dropUser("'" + user + "'@'%'");
+        }
+    }
+
+    /**
+     * WL#7131 - Add timestamp in mysql.user on the last time the password was changed
+     * 
+     * Test user account password expiration syntax:
+     * 
+     * CREATE|ALTER USER (...)
+     * - password_option: { PASSWORD EXPIRE | PASSWORD EXPIRE DEFAULT | PASSWORD EXPIRE NEVER | PASSWORD EXPIRE INTERVAL N DAY }
+     */
+    public void testUserAccountPwdExpiration() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        final String user = "testAccPwdExp";
+        final String pwd = "testAccPwdExp";
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_user, user);
+        props.setProperty(PropertyDefinitions.PNAME_password, pwd);
+
+        // CREATE USER syntax.
+        for (String accPwdExp : new String[] { "/* default */", "PASSWORD EXPIRE", "PASSWORD EXPIRE DEFAULT", "PASSWORD EXPIRE NEVER",
+                "PASSWORD EXPIRE INTERVAL 365 DAY" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "' " + accPwdExp);
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            if (accPwdExp.equals("PASSWORD EXPIRE")) {
+                assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                getConnectionWithProps(props);
+                                return null;
+                            }
+                        });
+            } else {
+                Connection testConn = getConnectionWithProps(props);
+                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+                testConn.close();
+            }
+
+            dropUser("'" + user + "'@'%'");
+        }
+
+        // ALTER USER syntax.
+        for (String accPwdExp : new String[] { "PASSWORD EXPIRE", "PASSWORD EXPIRE DEFAULT", "PASSWORD EXPIRE NEVER", "PASSWORD EXPIRE INTERVAL 365 DAY" }) {
+            createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "'");
+            this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+            final Connection testConn = getConnectionWithProps(props);
+            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+
+            this.stmt.execute("ALTER USER '" + user + "'@'%' " + accPwdExp);
+            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+
+            if (accPwdExp.equals("PASSWORD EXPIRE")) {
+                assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                ((JdbcConnection) testConn).changeUser(user, pwd);
+                                return null;
+                            }
+                        });
+            } else {
+                ((JdbcConnection) testConn).changeUser(user, pwd);
+                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+            }
+
+            testConn.close();
+            dropUser("'" + user + "'@'%'");
+        }
+    }
+
+    /**
+     * WL#8548 - InnoDB: Transparent data encryption.
+     * WL#8821 - Innodb tablespace encryption key rotation SQL commands.
+     * 
+     * Test new syntax:
+     * - CREATE|ALTER TABLE (...) ENCRYPTION [=] {'Y' | 'N'}
+     * - ALTER INSTANCE ROTATE INNODB MASTER KEY
+     */
+    public void testInnodbTablespaceEncryption() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 11)) {
+            return;
+        }
+
+        boolean keyringPluginIsActive = false;
+        this.rs = this.stmt.executeQuery("SELECT (PLUGIN_STATUS='ACTIVE') AS `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME LIKE 'keyring_file'");
+        if (this.rs.next()) {
+            keyringPluginIsActive = this.rs.getBoolean(1);
+        }
+
+        if (keyringPluginIsActive) {
+            createTable("testInnodbTablespaceEncryption", "(id INT, txt VARCHAR(100)) ENCRYPTION='y'");
+
+            this.stmt.executeUpdate("INSERT INTO testInnodbTablespaceEncryption VALUES (123, 'this is a test')");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("ALTER TABLE testInnodbTablespaceEncryption ENCRYPTION='n'");
+            this.rs = this.stmt.executeQuery("SELECT * FROM testInnodbTablespaceEncryption");
+            assertTrue(this.rs.next());
+            assertEquals(123, this.rs.getInt(1));
+            assertEquals("this is a test", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+        } else { // Syntax can still be tested by with different outcome.
+            System.out.println("Although not required it is recommended that the 'keyring_file' plugin is properly installed and configured to run this test.");
+
+            final Statement testStmt = this.conn.createStatement();
+            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.execute("CREATE TABLE testInnodbTablespaceEncryption (id INT) ENCRYPTION='y'");
+                    testStmt.execute("DROP TABLE testInnodbTablespaceEncryption");
+                    return null;
+                }
+            });
+            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
+                    return null;
+                }
+            });
+        }
     }
 }

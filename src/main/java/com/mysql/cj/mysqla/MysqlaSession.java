@@ -1,5 +1,5 @@
 /*
-2  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
-import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -266,8 +265,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     @Override
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
-        return this.protocol.getServerSession().isSetNeededForAutoCommitMode(autoCommitFlag,
-                getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue());
+        // Server Bug#66884 (SERVER_STATUS is always initiated with SERVER_STATUS_AUTOCOMMIT=1) invalidates "elideSetAutoCommits" feature.
+        // TODO Turn this feature back on as soon as the server bug is fixed. Consider making it version specific.
+        //return this.protocol.getServerSession().isSetNeededForAutoCommitMode(autoCommitFlag,
+        //        getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue());
+        return this.protocol.getServerSession().isSetNeededForAutoCommitMode(autoCommitFlag, false);
     }
 
     /**
@@ -359,8 +361,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.hostInfo;
     }
 
-    public void setCharsetMaps(Map<Integer, String> indexToCharset, Map<Integer, String> customCharset, Map<String, Integer> customMblen) {
-        this.protocol.getServerSession().indexToMysqlCharset = Collections.unmodifiableMap(indexToCharset);
+    public void setCharsetMaps(Map<Integer, String> customCharset, Map<String, Integer> customMblen) {
         if (customCharset != null) {
             this.protocol.getServerSession().indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
         }
@@ -393,14 +394,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         sendCommand(MysqlaConstants.COM_SHUTDOWN, null, null, false, null, 0);
     }
 
-    public void setSocketTimeout(Executor executor, final int milliseconds) {
-        executor.execute(new Runnable() {
-
-            public void run() {
-                MysqlaSession.this.socketTimeout.setValue(milliseconds); // for re-connects
-                MysqlaSession.this.protocol.setSocketTimeout(milliseconds);
-            }
-        });
+    public void setSocketTimeout(int milliseconds) {
+        this.socketTimeout.setValue(milliseconds); // for re-connects
+        this.protocol.setSocketTimeout(milliseconds);
     }
 
     public int getSocketTimeout() {

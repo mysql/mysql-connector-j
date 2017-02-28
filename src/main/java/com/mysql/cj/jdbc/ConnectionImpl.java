@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,7 @@
 
 package com.mysql.cj.jdbc;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -51,7 +52,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Stack;
 import java.util.Timer;
-import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -104,7 +104,6 @@ import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
-import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.MysqlaUtils;
@@ -270,16 +269,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private static Map<String, Integer> mapTransIsolationNameToValue = null;
 
     protected static Map<?, ?> roundRobinStatsMap;
-
-    /**
-     * Actual collation index to collation name map for given server URLs.
-     */
-    private static final Map<String, Map<Number, String>> dynamicIndexToCollationMapByUrl = new HashMap<String, Map<Number, String>>();
-
-    /**
-     * Actual collation index to mysql charset name map for given server URLs.
-     */
-    private static final Map<String, Map<Integer, String>> dynamicIndexToCharsetMapByUrl = new HashMap<String, Map<Integer, String>>();
 
     /**
      * Actual collation index to mysql charset name map of user defined charsets for given server URLs.
@@ -712,55 +701,32 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     private void buildCollationMapping() throws SQLException {
 
-        Map<Integer, String> indexToCharset = null;
-        Map<Number, String> sortedCollationMap = null;
         Map<Integer, String> customCharset = null;
         Map<String, Integer> customMblen = null;
 
         if (this.cacheServerConfiguration.getValue()) {
-            synchronized (dynamicIndexToCharsetMapByUrl) {
-                indexToCharset = dynamicIndexToCharsetMapByUrl.get(getURL());
-                sortedCollationMap = dynamicIndexToCollationMapByUrl.get(getURL());
+            synchronized (customIndexToCharsetMapByUrl) {
                 customCharset = customIndexToCharsetMapByUrl.get(getURL());
                 customMblen = customCharsetToMblenMapByUrl.get(getURL());
             }
         }
 
-        if (indexToCharset == null) {
-            indexToCharset = new HashMap<Integer, String>();
+        if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
 
-            if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
+            java.sql.Statement stmt = null;
+            java.sql.ResultSet results = null;
 
-                java.sql.Statement stmt = null;
-                java.sql.ResultSet results = null;
+            try {
+                customCharset = new HashMap<Integer, String>();
+                customMblen = new HashMap<String, Integer>();
+
+                stmt = getMetadataSafeStatement();
 
                 try {
-                    sortedCollationMap = new TreeMap<Number, String>();
-                    customCharset = new HashMap<Integer, String>();
-                    customMblen = new HashMap<String, Integer>();
-
-                    stmt = getMetadataSafeStatement();
-
-                    try {
-                        results = stmt.executeQuery("SHOW COLLATION");
-                        ResultSetUtil.resultSetToMap(sortedCollationMap, results, 3, 2);
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
-
-                    for (Iterator<Map.Entry<Number, String>> indexIter = sortedCollationMap.entrySet().iterator(); indexIter.hasNext();) {
-                        Map.Entry<Number, String> indexEntry = indexIter.next();
-
-                        int collationIndex = indexEntry.getKey().intValue();
-                        String charsetName = indexEntry.getValue();
-
-                        indexToCharset.put(collationIndex, charsetName);
+                    results = stmt.executeQuery("SHOW COLLATION");
+                    while (results.next()) {
+                        int collationIndex = ((Number) results.getObject(3)).intValue();
+                        String charsetName = results.getString(2);
 
                         // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
                         if (collationIndex >= CharsetMapping.MAP_SIZE
@@ -773,74 +739,72 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             customMblen.put(charsetName, null);
                         }
                     }
-
-                    // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
-                    if (customMblen.size() > 0) {
-                        try {
-                            results = stmt.executeQuery("SHOW CHARACTER SET");
-                            while (results.next()) {
-                                String charsetName = results.getString("Charset");
-                                if (customMblen.containsKey(charsetName)) {
-                                    customMblen.put(charsetName, results.getInt("Maxlen"));
-                                }
-                            }
-                        } catch (PasswordExpiredException ex) {
-                            if (this.disconnectOnExpiredPasswords.getValue()) {
-                                throw ex;
-                            }
-                        } catch (SQLException ex) {
-                            if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                                throw ex;
-                            }
-                        }
+                } catch (PasswordExpiredException ex) {
+                    if (this.disconnectOnExpiredPasswords.getValue()) {
+                        throw ex;
                     }
-
-                    if (this.cacheServerConfiguration.getValue()) {
-                        synchronized (dynamicIndexToCharsetMapByUrl) {
-                            dynamicIndexToCharsetMapByUrl.put(getURL(), indexToCharset);
-                            dynamicIndexToCollationMapByUrl.put(getURL(), sortedCollationMap);
-                            customIndexToCharsetMapByUrl.put(getURL(), customCharset);
-                            customCharsetToMblenMapByUrl.put(getURL(), customMblen);
-                        }
-                    }
-
                 } catch (SQLException ex) {
-                    throw ex;
-                } catch (RuntimeException ex) {
-                    SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                    sqlEx.initCause(ex);
-                    throw sqlEx;
-                } finally {
-                    if (results != null) {
-                        try {
-                            results.close();
-                        } catch (java.sql.SQLException sqlE) {
-                            // ignore
-                        }
+                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
+                        throw ex;
                     }
+                }
 
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (java.sql.SQLException sqlE) {
-                            // ignore
+                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
+                if (customMblen.size() > 0) {
+                    try {
+                        results.close();
+                        results = stmt.executeQuery("SHOW CHARACTER SET");
+                        while (results.next()) {
+                            String charsetName = results.getString("Charset");
+                            if (customMblen.containsKey(charsetName)) {
+                                customMblen.put(charsetName, results.getInt("Maxlen"));
+                            }
+                        }
+                    } catch (PasswordExpiredException ex) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
+                        }
+                    } catch (SQLException ex) {
+                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
                         }
                     }
                 }
-            } else {
-                for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
-                    indexToCharset.put(i, CharsetMapping.getMysqlCharsetNameForCollationIndex(i));
-                }
+
                 if (this.cacheServerConfiguration.getValue()) {
-                    synchronized (dynamicIndexToCharsetMapByUrl) {
-                        dynamicIndexToCharsetMapByUrl.put(getURL(), indexToCharset);
+                    synchronized (customIndexToCharsetMapByUrl) {
+                        customIndexToCharsetMapByUrl.put(getURL(), customCharset);
+                        customCharsetToMblenMapByUrl.put(getURL(), customMblen);
+                    }
+                }
+
+            } catch (SQLException ex) {
+                throw ex;
+            } catch (RuntimeException ex) {
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                sqlEx.initCause(ex);
+                throw sqlEx;
+            } finally {
+                if (results != null) {
+                    try {
+                        results.close();
+                    } catch (java.sql.SQLException sqlE) {
+                        // ignore
+                    }
+                }
+
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (java.sql.SQLException sqlE) {
+                        // ignore
                     }
                 }
             }
 
         }
 
-        this.session.setCharsetMaps(indexToCharset, customCharset, customMblen);
+        this.session.setCharsetMaps(customCharset, customMblen);
 
     }
 
@@ -2438,23 +2402,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
-
         configureClientCharacterSet(false);
 
-        if (!overrideDefaultAutocommit) {
-            try {
-                setAutoCommit(true); // to override anything the server is set to...reqd by JDBC spec.
-            } catch (PasswordExpiredException ex) {
-                if (this.disconnectOnExpiredPasswords.getValue()) {
-                    throw ex;
-                }
-            } catch (SQLException ex) {
-                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                    throw ex;
-                }
-            }
-        }
+        handleAutoCommitDefaults();
 
         //
         // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
@@ -2473,63 +2423,63 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     /**
-     * Has the default autocommit value of 0 been changed on the server
-     * via init_connect?
-     * 
-     * @return true if autocommit is not the default of '0' on the server.
-     * 
-     * @throws SQLException
+     * Resets a default auto-commit value of 0 to 1, as required by JDBC specification.
+     * Takes into account that the default auto-commit value of 0 may have been changed on the server via init_connect.
      */
-    private boolean isAutoCommitNonDefaultOnServer() throws SQLException {
-        boolean overrideDefaultAutocommit = false;
+    private void handleAutoCommitDefaults() throws SQLException {
+        boolean resetAutoCommitDefault = false;
 
+        // Server Bug#66884 (SERVER_STATUS is always initiated with SERVER_STATUS_AUTOCOMMIT=1) invalidates "elideSetAutoCommits" feature.
+        // TODO Turn this feature back on as soon as the server bug is fixed. Consider making it version specific.
+        // if (!getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue()) {
         String initConnectValue = this.session.getServerVariable("init_connect");
-
         if (initConnectValue != null && initConnectValue.length() > 0) {
-            if (!getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue()) {
-                // auto-commit might have changed
-                java.sql.ResultSet rs = null;
-                java.sql.Statement stmt = null;
+            // auto-commit might have changed
+            java.sql.ResultSet rs = null;
+            java.sql.Statement stmt = null;
 
-                try {
-                    stmt = getMetadataSafeStatement();
-
-                    rs = stmt.executeQuery("SELECT @@session.autocommit");
-
-                    if (rs.next()) {
-                        this.autoCommit = rs.getBoolean(1);
-                        if (this.autoCommit != true) {
-                            overrideDefaultAutocommit = true;
-                        }
-                    }
-
-                } finally {
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (SQLException sqlEx) {
-                            // do nothing
-                        }
-                    }
-
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (SQLException sqlEx) {
-                            // do nothing
-                        }
+            try {
+                stmt = getMetadataSafeStatement();
+                rs = stmt.executeQuery("SELECT @@session.autocommit");
+                if (rs.next()) {
+                    this.autoCommit = rs.getBoolean(1);
+                    resetAutoCommitDefault = !this.autoCommit;
+                }
+            } finally {
+                if (rs != null) {
+                    try {
+                        rs.close();
+                    } catch (SQLException sqlEx) {
+                        // do nothing
                     }
                 }
-            } else {
-                if (getSession().isSetNeededForAutoCommitMode(true)) {
-                    // we're not in standard autocommit=true mode
-                    this.autoCommit = false;
-                    overrideDefaultAutocommit = true;
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException sqlEx) {
+                        // do nothing
+                    }
+                }
+            }
+        } else {
+            // reset it anyway, the server may have been initialized with --autocommit=0
+            resetAutoCommitDefault = true;
+        }
+        //} else if (getSession().isSetNeededForAutoCommitMode(true)) {
+        //    // we're not in standard autocommit=true mode
+        //    this.autoCommit = false;
+        //    resetAutoCommitDefault = true;
+        //}
+
+        if (resetAutoCommitDefault) {
+            try {
+                setAutoCommit(true); // required by JDBC spec
+            } catch (SQLException ex) {
+                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
+                    throw ex;
                 }
             }
         }
-
-        return overrideDefaultAutocommit;
     }
 
     public boolean isClosed() {
@@ -3710,7 +3660,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * If a connection is in auto-commit mode, than all its SQL statements will
      * be executed and committed as individual transactions. Otherwise, its SQL
      * statements are grouped into transactions that are terminated by either
-     * commit() or rollback(). By default, new connections are in auto- commit
+     * commit() or rollback(). By default, new connections are in auto-commit
      * mode. The commit occurs when the statement completes or the next execute
      * occurs, whichever comes first. In the case of statements returning a
      * ResultSet, the statement completes when the last row of the ResultSet has
@@ -3718,12 +3668,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * single statement may return multiple results as well as output parameter
      * values. Here the commit occurs when all results and output param values
      * have been retrieved.
-     * <p>
-     * <b>Note:</b> MySQL does not support transactions, so this method is a no-op.
-     * </p>
      * 
      * @param autoCommitFlag
-     *            -
      *            true enables auto-commit; false disables it
      * @exception SQLException
      *                if a database access error occurs
@@ -4390,7 +4336,27 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             checkClosed();
-            this.session.setSocketTimeout(executor, milliseconds);
+
+            executor.execute(new NetworkTimeoutSetter(this, milliseconds));
+        }
+    }
+
+    private static class NetworkTimeoutSetter implements Runnable {
+        private final WeakReference<JdbcConnection> connRef;
+        private final int milliseconds;
+
+        public NetworkTimeoutSetter(JdbcConnection conn, int milliseconds) {
+            this.connRef = new WeakReference<JdbcConnection>(conn);
+            this.milliseconds = milliseconds;
+        }
+
+        public void run() {
+            JdbcConnection conn = this.connRef.get();
+            if (conn != null) {
+                synchronized (conn.getConnectionMutex()) {
+                    conn.getSession().setSocketTimeout(this.milliseconds);
+                }
+            }
         }
     }
 

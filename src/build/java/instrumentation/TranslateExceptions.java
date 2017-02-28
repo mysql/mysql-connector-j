@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -208,7 +208,7 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("createNewIO", new CtClass[] { CtClass.booleanType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getMetaData", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("isAutoCommitNonDefaultOnServer", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("handleAutoCommitDefaults", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setSavepoint", new CtClass[] { ctMysqlSavepoint }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { CtClass.intType, CtClass.intType, CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
