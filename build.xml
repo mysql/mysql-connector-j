@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -174,7 +174,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <property name="com.mysql.cj.build.driver.version.major" value="6" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
-    <property name="com.mysql.cj.build.driver.version.subminor" value="6" />
+    <property name="com.mysql.cj.build.driver.version.subminor" value="7" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
     <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
