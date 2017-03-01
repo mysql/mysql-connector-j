@@ -36,16 +36,16 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -127,7 +127,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
         // physical connection is responsible *only* for I/O streams
-        this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log, transactionManager);
+        if (this.protocol == null) {
+            this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log, transactionManager);
+        } else {
+            this.protocol.init(conn, socketConnection, this.propertySet, transactionManager);
+        }
 
         // use protocol to create a -> session
         // protocol is responsible for building a session and authenticating (using AuthenticationProvider) internally
@@ -373,8 +377,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         }
     }
 
-    public void setStatementInterceptors(List<StatementInterceptor> statementInterceptors) {
-        this.protocol.setStatementInterceptors(statementInterceptors);
+    public void setQueryInterceptors(List<QueryInterceptor> queryInterceptors) {
+        this.protocol.setQueryInterceptors(queryInterceptors);
     }
 
     public boolean isServerLocal(MysqlConnection conn) {
@@ -404,7 +408,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     /**
      * Send a query stored in a packet directly to the server.
      * 
-     * @param callingStatement
+     * @param callingQuery
      * @param resultSetConcurrency
      * @param characterEncoding
      * @param queryPacket
@@ -419,10 +423,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * @throws IOException
      * 
      */
-    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
+    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingQuery, String query, String characterEncoding, PacketPayload queryPacket,
             int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
-        return this.protocol.sqlQueryDirect(callingStatement, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
+        return this.protocol.sqlQueryDirect(callingQuery, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
                 this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
     }
 
@@ -447,17 +451,16 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.dumpPacketRingBuffer();
     }
 
-    public <T extends Resultset> T invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
-        return this.protocol.invokeStatementInterceptorsPre(sql, interceptedStatement, forceExecute);
+    public <T extends Resultset> T invokeQueryInterceptorsPre(String sql, Query interceptedQuery, boolean forceExecute) {
+        return this.protocol.invokeQueryInterceptorsPre(sql, interceptedQuery, forceExecute);
     }
 
-    public <T extends Resultset> T invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, T originalResultSet, boolean forceExecute,
-            Exception statementException) {
-        return this.protocol.invokeStatementInterceptorsPost(sql, interceptedStatement, originalResultSet, forceExecute, statementException);
+    public <T extends Resultset> T invokeQueryInterceptorsPost(String sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
+        return this.protocol.invokeQueryInterceptorsPost(sql, interceptedQuery, originalResultSet, forceExecute);
     }
 
     public boolean shouldIntercept() {
-        return this.protocol.getStatementInterceptors() != null;
+        return this.protocol.getQueryInterceptors() != null;
     }
 
     public long getCurrentTimeNanosOrMillis() {
@@ -475,17 +478,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public String getQueryTimingUnits() {
         return this.protocol.getQueryTimingUnits();
-    }
-
-    /**
-     * Runs an 'EXPLAIN' on the given query and dumps the results to the log
-     * 
-     * @param querySQL
-     * @param truncatedQuery
-     * 
-     */
-    public void explainSlowQuery(byte[] querySQL, String truncatedQuery) {
-        this.protocol.explainSlowQuery(querySQL, truncatedQuery);
     }
 
     public boolean hadWarnings() {

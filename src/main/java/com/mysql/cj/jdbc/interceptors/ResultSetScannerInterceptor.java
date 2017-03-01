@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,8 +32,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
@@ -41,11 +42,11 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
-public class ResultSetScannerInterceptor implements StatementInterceptor {
+public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     protected Pattern regexP;
 
-    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+    public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         String regexFromUser = props.getProperty(PropertyDefinitions.PNAME_resultSetScannerRegex);
 
         if (regexFromUser == null || regexFromUser.length() == 0) {
@@ -63,8 +64,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
-            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         // requirement of anonymous class
         final T finalResultSet = originalResultSet;
@@ -92,7 +92,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
         // we don't care about this event
 
         return null;

@@ -43,10 +43,10 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -257,8 +257,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getStatementComment();
     }
 
-    public List<StatementInterceptor> getStatementInterceptorsInstances() {
-        return getActiveMySQLConnection().getStatementInterceptorsInstances();
+    public List<QueryInterceptor> getQueryInterceptorsInstances() {
+        return getActiveMySQLConnection().getQueryInterceptorsInstances();
     }
 
     public int getTransactionIsolation() throws SQLException {
@@ -294,8 +294,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
     }
 
-    public void initializeSafeStatementInterceptors() throws SQLException {
-        getActiveMySQLConnection().initializeSafeStatementInterceptors();
+    public void initializeSafeQueryInterceptors() throws SQLException {
+        getActiveMySQLConnection().initializeSafeQueryInterceptors();
     }
 
     public boolean isInGlobalTx() {
@@ -502,8 +502,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         getActiveMySQLConnection().unregisterStatement(stmt);
     }
 
-    public void unSafeStatementInterceptors() throws SQLException {
-        getActiveMySQLConnection().unSafeStatementInterceptors();
+    public void unSafeQueryInterceptors() throws SQLException {
+        getActiveMySQLConnection().unSafeQueryInterceptors();
     }
 
     public boolean useAnsiQuotedIdentifiers() {

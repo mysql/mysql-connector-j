@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,22 +23,22 @@
 
 package testsuite;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
-public class BaseStatementInterceptor implements StatementInterceptor {
+public class BaseQueryInterceptor implements QueryInterceptor {
 
-    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+    public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         return this;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
         return null;
     }
 
@@ -49,8 +49,7 @@ public class BaseStatementInterceptor implements StatementInterceptor {
     public void destroy() {
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
-            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         return originalResultSet;
     }
 

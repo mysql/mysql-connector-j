@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,23 +21,23 @@
 
  */
 
-package com.mysql.cj.api.jdbc.interceptors;
+package com.mysql.cj.api.interceptors;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
 /**
  * Implement this interface to be placed "in between" query execution, so that you can influence it.
  * 
- * StatementInterceptors are "chainable" when configured by the user, the results returned by the "current" interceptor will be passed on to the next on in the
- * chain, from left-to-right order, as specified by the user in the JDBC configuration property "statementInterceptors".
+ * QueryInterceptors are "chainable" when configured by the user, the results returned by the "current" interceptor will be passed on to the next on in the
+ * chain, from left-to-right order, as specified by the user in the driver configuration property "queryInterceptors".
  */
-public interface StatementInterceptor {
+public interface QueryInterceptor {
 
     /**
      * Called once per connection that wants to use the interceptor
@@ -51,19 +51,13 @@ public interface StatementInterceptor {
      *            configuration values as passed to the connection. Note that
      *            in order to support javax.sql.DataSources, configuration properties specific
      *            to an interceptor <strong>must</strong> be passed via setURL() on the
-     *            DataSource. StatementInterceptor properties are not exposed via
+     *            DataSource. QueryInterceptor properties are not exposed via
      *            accessor/mutator methods on DataSources.
-     * 
-     * @throws SQLException
-     *             should be thrown if the the StatementInterceptor
-     *             can not initialize itself.
      */
-
-    StatementInterceptor init(MysqlConnection conn, Properties props, Log log);
+    QueryInterceptor init(MysqlConnection conn, Properties props, Log log);
 
     /**
-     * Called before the given statement is going to be sent to the
-     * server for processing.
+     * Called before the given query is going to be sent to the server for processing.
      * 
      * Interceptors are free to return a result set (which must implement the
      * interface {@link Resultset}), and if so,
@@ -74,24 +68,15 @@ public interface StatementInterceptor {
      * it will only be called from one thread at a time.
      * 
      * @param sql
-     *            the SQL representation of the statement
-     * @param interceptedStatement
-     *            the actual statement instance being intercepted
-     * @param connection
-     *            the connection the statement is using (passed in to make
-     *            thread-safe implementations straightforward)
+     *            the SQL representation of the query
+     * @param interceptedQuery
+     *            the actual {@link Query} instance being intercepted
      * 
-     * @return a result set that should be returned to the application instead
+     * @return a {@link Resultset} that should be returned to the application instead
      *         of results that are created from actual execution of the intercepted
-     *         statement.
-     * 
-     * @throws SQLException
-     *             if an error occurs during execution
-     * 
-     * @see {@link Resultset}
+     *         query.
      */
-
-    <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException;
+    <T extends Resultset> T preProcess(String sql, Query interceptedQuery);
 
     /**
      * Should the driver execute this interceptor only for the
@@ -115,35 +100,27 @@ public interface StatementInterceptor {
     void destroy();
 
     /**
-     * Called after the given statement has been sent to the server
-     * for processing, instead of the StatementAware postProcess() of the earlier
-     * api.
+     * Called after the given query has been sent to the server for processing.
      * 
      * Interceptors are free to inspect the "original" result set, and if a
      * different result set is returned by the interceptor, it is used in place
-     * of the "original" result set. (the result set returned by the interceptor
-     * must implement the interface {@link Resultset}).
+     * of the "original" result set.
      * 
      * This method will be called while the connection-level mutex is held, so
      * it will only be called from one thread at a time.
      * 
      * @param sql
-     *            the SQL representation of the statement
-     * @param interceptedStatement
-     *            the actual statement instance being intercepted
-     * @param connection
-     *            the connection the statement is using (passed in to make
-     *            thread-safe implementations straightforward)
+     *            the SQL representation of the query
+     * @param interceptedQuery
+     *            the actual {@link Query} instance being intercepted
+     * @param originalResultSet
+     *            a {@link Resultset} created from query execution
+     * @param serverSession
+     *            {@link ServerSession} object after the query execution
      * 
-     * @return a result set that should be returned to the application instead
+     * @return a {@link Resultset} that should be returned to the application instead
      *         of results that are created from actual execution of the intercepted
-     *         statement.
-     * 
-     * @throws SQLException
-     *             if an error occurs during execution
-     * 
-     * @see {@link Resultset}
+     *         query.
      */
-    <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
-            boolean noGoodIndexUsed, Exception statementException) throws SQLException;
+    <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession);
 }

@@ -122,7 +122,7 @@ public class UtilsTest extends BaseTestCase {
         assertEquals(ifaces[0], java.sql.Statement.class);
 
         ifaces = Util.getImplementedInterfaces(StatementImpl.class);
-        assertEquals(1, ifaces.length);
+        assertEquals(2, ifaces.length);
         assertEquals(ifaces[0], Statement.class);
 
         ifaces = Util.getImplementedInterfaces(ConnectionImpl.class);

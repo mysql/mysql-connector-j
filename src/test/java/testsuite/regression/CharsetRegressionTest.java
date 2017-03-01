@@ -28,11 +28,13 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 
-import testsuite.BaseStatementInterceptor;
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 
 public class CharsetRegressionTest extends BaseTestCase {
@@ -59,7 +61,7 @@ public class CharsetRegressionTest extends BaseTestCase {
                 && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerVariable("character_set_server"))) {
             Properties p = new Properties();
             p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
-            p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug73663StatementInterceptor.class.getName());
+            p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug73663QueryInterceptor.class.getName());
 
             getConnectionWithProps(p);
             // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
@@ -72,11 +74,11 @@ public class CharsetRegressionTest extends BaseTestCase {
     /**
      * Statement interceptor used to implement preceding test.
      */
-    public static class Bug73663StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug73663QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
-                throw new SQLException("Character set statement issued: " + sql);
+                throw ExceptionFactory.createException("Character set statement issued: " + sql);
             }
             return null;
         }

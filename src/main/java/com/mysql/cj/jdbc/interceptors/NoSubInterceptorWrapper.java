@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,24 +23,24 @@
 
 package com.mysql.cj.jdbc.interceptors;
 
-import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
 
 /**
- * Wraps statement interceptors during driver startup so that they don't produce different result sets than we expect.
+ * Wraps query interceptors during driver startup so that they don't produce different result sets than we expect.
  */
-public class NoSubInterceptorWrapper implements StatementInterceptor {
+public class NoSubInterceptorWrapper implements QueryInterceptor {
 
-    private final StatementInterceptor underlyingInterceptor;
+    private final QueryInterceptor underlyingInterceptor;
 
-    public NoSubInterceptorWrapper(StatementInterceptor underlyingInterceptor) {
+    public NoSubInterceptorWrapper(QueryInterceptor underlyingInterceptor) {
         if (underlyingInterceptor == null) {
             throw new RuntimeException(Messages.getString("NoSubInterceptorWrapper.0"));
         }
@@ -56,25 +56,24 @@ public class NoSubInterceptorWrapper implements StatementInterceptor {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
-    public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+    public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         this.underlyingInterceptor.init(conn, props, log);
         return this;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
-            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
-        this.underlyingInterceptor.postProcess(sql, interceptedStatement, originalResultSet, warningCount, noIndexUsed, noGoodIndexUsed, statementException);
+    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+        this.underlyingInterceptor.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
 
         return null; // don't allow result set substitution
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
-        this.underlyingInterceptor.preProcess(sql, interceptedStatement);
+    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        this.underlyingInterceptor.preProcess(sql, interceptedQuery);
 
         return null; // don't allow result set substitution
     }
 
-    public StatementInterceptor getUnderlyingInterceptor() {
+    public QueryInterceptor getUnderlyingInterceptor() {
         return this.underlyingInterceptor;
     }
 }

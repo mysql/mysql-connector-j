@@ -43,10 +43,10 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -1055,8 +1055,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public List<StatementInterceptor> getStatementInterceptorsInstances() {
-        return this.mc.getStatementInterceptorsInstances();
+    public List<QueryInterceptor> getQueryInterceptorsInstances() {
+        return this.mc.getQueryInterceptorsInstances();
     }
 
     @Override
@@ -1065,8 +1065,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void initializeSafeStatementInterceptors() throws SQLException {
-        this.mc.initializeSafeStatementInterceptors();
+    public void initializeSafeQueryInterceptors() throws SQLException {
+        this.mc.initializeSafeQueryInterceptors();
     }
 
     @Override
@@ -1130,8 +1130,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void unSafeStatementInterceptors() throws SQLException {
-        this.mc.unSafeStatementInterceptors();
+    public void unSafeQueryInterceptors() throws SQLException {
+        this.mc.unSafeQueryInterceptors();
     }
 
     @Override

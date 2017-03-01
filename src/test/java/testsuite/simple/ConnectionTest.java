@@ -60,6 +60,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.io.PacketReader;
 import com.mysql.cj.api.mysqla.io.PacketSender;
@@ -67,6 +68,7 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
@@ -85,7 +87,7 @@ import com.mysql.cj.mysqla.io.TracingPacketReader;
 import com.mysql.cj.mysqla.io.TracingPacketSender;
 import com.mysql.jdbc.Driver;
 
-import testsuite.BaseStatementInterceptor;
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.TestUtils;
 
@@ -1877,7 +1879,7 @@ public class ConnectionTest extends BaseTestCase {
      * Test the new connection property 'enableEscapeProcessing', as well as the old connection property 'processEscapeCodesForPrepStmts' and interrelation
      * between both.
      * 
-     * This test uses a StatementInterceptor to capture the query sent to the server and assert whether escape processing has been done in the client side or if
+     * This test uses a QueryInterceptor to capture the query sent to the server and assert whether escape processing has been done in the client side or if
      * the query is sent untouched and escape processing will be done at server side, according to provided connection properties and type of Statement objects
      * in use.
      */
@@ -1904,7 +1906,7 @@ public class ConnectionTest extends BaseTestCase {
             boolean useServerPrepStmts = (tst & 0x4) != 0;
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestEnableEscapeProcessingStatementInterceptor.class.getName());
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestEnableEscapeProcessingQueryInterceptor.class.getName());
             props.setProperty(PropertyDefinitions.PNAME_enableEscapeProcessing, Boolean.toString(enableEscapeProcessing));
             props.setProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts, Boolean.toString(processEscapeCodesForPrepStmts));
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
@@ -1936,11 +1938,15 @@ public class ConnectionTest extends BaseTestCase {
         }
     }
 
-    public static class TestEnableEscapeProcessingStatementInterceptor extends BaseStatementInterceptor {
+    public static class TestEnableEscapeProcessingQueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
-            if (sql == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+            if (sql == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                try {
+                    sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                } catch (SQLException ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                }
             }
 
             int p;
@@ -1949,7 +1955,7 @@ public class ConnectionTest extends BaseTestCase {
                 boolean enableEscapeProcessing = (tst & 0x1) != 0;
                 boolean processEscapeCodesForPrepStmts = (tst & 0x2) != 0;
                 boolean useServerPrepStmts = (tst & 0x4) != 0;
-                boolean isPreparedStatement = interceptedStatement instanceof PreparedStatement;
+                boolean isPreparedStatement = interceptedQuery instanceof PreparedStatement;
 
                 String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
                         processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-",
@@ -1959,7 +1965,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone
                         || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
-            return super.preProcess(sql, interceptedStatement);
+            return super.preProcess(sql, interceptedQuery);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,6 +46,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
@@ -56,7 +57,7 @@ import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
-import testsuite.BaseStatementInterceptor;
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 
 import junit.framework.ComparisonFailure;
@@ -2652,7 +2653,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug61332() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
-        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, StatementInterceptorBug61332.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, QueryInterceptorBug61332.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
 
         createDatabase("dbbug61332");
@@ -2668,11 +2669,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class StatementInterceptorBug61332 extends BaseStatementInterceptor {
+    public static class QueryInterceptorBug61332 extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
-            if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+            if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getPreparedSql();
                 assertTrue("Assereet failed on: " + sql,
                         StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME LIKE ?") > -1);
             }

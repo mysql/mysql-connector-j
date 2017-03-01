@@ -69,6 +69,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
@@ -115,7 +116,7 @@ import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
  * If arbitrary parameter type conversions are required, then the setObject method should be used with a target SQL type.
  * </p>
  */
-public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement {
+public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement, Query {
 
     public class BatchParams {
         public boolean[] isNull = null;

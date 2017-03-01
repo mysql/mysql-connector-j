@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,15 +29,17 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 
-public class ServerStatusDiffInterceptor implements StatementInterceptor {
+public class ServerStatusDiffInterceptor implements QueryInterceptor {
 
     private Map<String, String> preExecuteValues = new HashMap<String, String>();
 
@@ -47,46 +49,49 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
     private Log log;
 
-    public StatementInterceptor init(MysqlConnection conn, Properties props, Log l) {
+    public QueryInterceptor init(MysqlConnection conn, Properties props, Log l) {
         this.connection = (JdbcConnection) conn;
         this.log = l;
         return this;
     }
 
     @Override
-    public <T extends Resultset> T postProcess(String sql, Statement interceptedStatement, T originalResultSet, int warningCount, boolean noIndexUsed,
-            boolean noGoodIndexUsed, Exception statementException) throws SQLException {
+    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         populateMapWithSessionStatusValues(this.postExecuteValues);
 
-        this.log.logInfo("Server status change for statement:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
+        this.log.logInfo("Server status change for query:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
 
         return null; // we don't actually modify a result set
 
     }
 
-    private void populateMapWithSessionStatusValues(Map<String, String> toPopulate) throws SQLException {
+    private void populateMapWithSessionStatusValues(Map<String, String> toPopulate) {
         java.sql.Statement stmt = null;
         java.sql.ResultSet rs = null;
 
         try {
-            toPopulate.clear();
+            try {
+                toPopulate.clear();
 
-            stmt = this.connection.createStatement();
-            rs = stmt.executeQuery("SHOW SESSION STATUS");
-            ResultSetUtil.resultSetToMap(toPopulate, rs);
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
+                stmt = this.connection.createStatement();
+                rs = stmt.executeQuery("SHOW SESSION STATUS");
+                ResultSetUtil.resultSetToMap(toPopulate, rs);
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
 
-            if (stmt != null) {
-                stmt.close();
+                if (stmt != null) {
+                    stmt.close();
+                }
             }
+        } catch (SQLException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
         }
     }
 
-    public <T extends Resultset> T preProcess(String sql, Statement interceptedStatement) throws SQLException {
+    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
 
         populateMapWithSessionStatusValues(this.preExecuteValues);
 
@@ -98,6 +103,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
     }
 
     public void destroy() {
-
+        this.connection = null;
+        this.log = null;
     }
 }

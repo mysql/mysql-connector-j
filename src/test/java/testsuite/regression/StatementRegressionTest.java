@@ -80,10 +80,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -91,6 +93,7 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
@@ -101,7 +104,7 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 
-import testsuite.BaseStatementInterceptor;
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
@@ -5499,15 +5502,15 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class Bug39426Interceptor extends BaseStatementInterceptor {
+    public static class Bug39426Interceptor extends BaseQueryInterceptor {
         public static List<Integer> vals = new ArrayList<>();
         String prevSql;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
 
-            if (interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                String asSql = interceptedStatement.toString();
+            if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                String asSql = interceptedQuery.toString();
                 int firstColon = asSql.indexOf(":");
                 asSql = asSql.substring(firstColon + 2);
 
@@ -5515,22 +5518,25 @@ public class StatementRegressionTest extends BaseTestCase {
                     throw new RuntimeException("Previous statement matched current: " + sql);
                 }
                 this.prevSql = asSql;
-                ParameterBindings b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).getParameterBindings();
-                vals.add(new Integer(b.getInt(1)));
+                try {
+                    ParameterBindings b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getParameterBindings();
+                    vals.add(new Integer(b.getInt(1)));
+                } catch (SQLException ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                }
             }
             return null;
         }
     }
 
     /**
-     * Bug #39426 - executeBatch passes most recent PreparedStatement params to
-     * StatementInterceptor
+     * Bug #39426 - executeBatch passes most recent PreparedStatement params to StatementInterceptor
      */
     public void testBug39426() throws Exception {
         Connection c = null;
         try {
             createTable("testBug39426", "(x int)");
-            c = getConnectionWithProps("statementInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor,useServerPrepStmts=false");
+            c = getConnectionWithProps("queryInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor,useServerPrepStmts=false");
             PreparedStatement ps = c.prepareStatement("insert into testBug39426 values (?)");
             ps.setInt(1, 1);
             ps.addBatch();
@@ -5697,9 +5703,9 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public void testBug51666() throws Exception {
-        Connection testConn = getConnectionWithProps("statementInterceptors=" + TestBug51666StatementInterceptor.class.getName());
-        createTable("testStatementInterceptorCount", "(field1 int)");
-        this.stmt.executeUpdate("INSERT INTO testStatementInterceptorCount VALUES (0)");
+        Connection testConn = getConnectionWithProps("queryInterceptors=" + TestBug51666QueryInterceptor.class.getName());
+        createTable("testQueryInterceptorCount", "(field1 int)");
+        this.stmt.executeUpdate("INSERT INTO testQueryInterceptorCount VALUES (0)");
         ResultSet testRs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'");
         testRs.next();
         int s = testRs.getInt(2);
@@ -5710,24 +5716,33 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
-    public static class TestBug51666StatementInterceptor extends BaseStatementInterceptor {
+    public static class TestBug51666QueryInterceptor extends BaseQueryInterceptor {
 
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.equals("SELECT 1")) {
-                java.sql.Statement test = this.connection.createStatement();
-                return (T) test.executeQuery("/* execute this, not the original */ SELECT 1");
+                try {
+                    java.sql.Statement test = this.connection.createStatement();
+                    return (T) test.executeQuery("/* execute this, not the original */ SELECT 1");
+                } catch (SQLException ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                }
             }
             return null;
+        }
+
+        @Override
+        public void destroy() {
+            this.connection = null;
         }
     }
 
@@ -5735,7 +5750,7 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testReversalOfScanFlags", "(field1 int)");
         this.stmt.executeUpdate("INSERT INTO testReversalOfScanFlags VALUES (1),(2),(3)");
 
-        Connection scanningConn = getConnectionWithProps("statementInterceptors=" + ScanDetectingInterceptor.class.getName());
+        Connection scanningConn = getConnectionWithProps("queryInterceptors=" + ScanDetectingInterceptor.class.getName());
 
         try {
             this.rs = scanningConn.createStatement().executeQuery("SELECT field1 FROM testReversalOfScanFlags");
@@ -5747,18 +5762,18 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
-    public static class ScanDetectingInterceptor extends BaseStatementInterceptor {
+    public static class ScanDetectingInterceptor extends BaseQueryInterceptor {
         static boolean hasSeenScan = false;
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public <T extends Resultset> T postProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement, T originalResultSet, int warningCount,
-                boolean noIndexUsed, boolean noGoodIndexUsed, Exception statementException) throws SQLException {
-            if (noIndexUsed) {
+        public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+
+            if (serverSession.noIndexUsed()) {
                 hasSeenScan = true;
             }
 
-            if (noGoodIndexUsed) {
+            if (serverSession.noGoodIndexUsed()) {
                 hasSeenBadIndex = true;
             }
 
@@ -8879,7 +8894,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     useServerPrepStmts ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77449StatementInterceptor.class.getName());
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug77449QueryInterceptor.class.getName());
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
             props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, Boolean.toString(sendFractionalSeconds));
 
@@ -8956,21 +8971,21 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class TestBug77449StatementInterceptor extends BaseStatementInterceptor {
+    public static class TestBug77449QueryInterceptor extends BaseQueryInterceptor {
         private boolean sendFracSecs = false;
 
         @Override
-        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_sendFractionalSeconds));
             return this;
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
-            if (!(interceptedStatement instanceof ServerPreparedStatement)) {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+            if (!(interceptedQuery instanceof ServerPreparedStatement)) {
                 String query = sql;
-                if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                    query = interceptedStatement.toString();
+                if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                    query = interceptedQuery.toString();
                     query = query.substring(query.indexOf(':') + 2);
                 }
 
@@ -8981,7 +8996,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     }
                 }
             }
-            return super.preProcess(sql, interceptedStatement);
+            return super.preProcess(sql, interceptedQuery);
         }
 
     }
@@ -8992,14 +9007,14 @@ public class StatementRegressionTest extends BaseTestCase {
      * When using 'rewriteBatchedStatements=true' we rewrite several batched statements into one single query by extending its VALUES clause. Although INSERT
      * REPLACE have the same syntax, this wasn't happening for REPLACE statements.
      * 
-     * This tests the number of queries actually sent to server when rewriteBatchedStatements is used and not by using a StatementInterceptor. The test is
+     * This tests the number of queries actually sent to server when rewriteBatchedStatements is used and not by using a QueryInterceptor. The test is
      * repeated for server side prepared statements. Without the fix, this test fails while checking the number of expected REPLACE queries.
      */
     public void testBug77681() throws Exception {
         createTable("testBug77681", "(id INT, txt VARCHAR(50), PRIMARY KEY (id))");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug77681StatementInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug77681QueryInterceptor.class.getName());
 
         for (int tst = 0; tst < 4; tst++) {
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString((tst & 0x1) != 0));
@@ -9059,7 +9074,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class TestBug77681StatementInterceptor extends BaseStatementInterceptor {
+    public static class TestBug77681QueryInterceptor extends BaseQueryInterceptor {
         private static final char[] expectedNonRWBS = new char[] { 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'R', 'R' };
         private static final char[] expectedRWBS = new char[] { 'I', 'R', 'I', 'R' };
 
@@ -9067,7 +9082,7 @@ public class StatementRegressionTest extends BaseTestCase {
         private int execCounter = 0;
 
         @Override
-        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             // TODO Auto-generated method stub
             super.init(conn, props, log);
             System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts) + " | rewriteBatchedStatements: "
@@ -9078,10 +9093,10 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             String query = sql;
-            if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                query = interceptedStatement.toString();
+            if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                query = interceptedQuery.toString();
                 query = query.substring(query.indexOf(':') + 2);
             }
             if (query != null && query.indexOf("testBug77681") != -1) {
@@ -9091,7 +9106,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
                 assertEquals("Wrong statement at execution number " + this.execCounter, this.expected[this.execCounter++], query.charAt(0));
             }
-            return super.preProcess(sql, interceptedStatement);
+            return super.preProcess(sql, interceptedQuery);
         }
 
     }
@@ -9573,15 +9588,15 @@ public class StatementRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
             props.setProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata, Boolean.toString(cacheRsMd));
-            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, TestBug81706StatementInterceptor.class.getName());
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug81706QueryInterceptor.class.getName());
 
             Connection testConn = getConnectionWithProps(props);
             testConn.setReadOnly(readOnly);
             Statement testStmt;
             PreparedStatement testPstmt;
 
-            TestBug81706StatementInterceptor.isActive = true;
-            TestBug81706StatementInterceptor.testCase = testCase;
+            TestBug81706QueryInterceptor.isActive = true;
+            TestBug81706QueryInterceptor.testCase = testCase;
 
             // Statement.executeQuery();
             testStmt = testConn.createStatement();
@@ -9609,27 +9624,27 @@ public class StatementRegressionTest extends BaseTestCase {
             testPstmt.execute();
             testPstmt.close();
 
-            TestBug81706StatementInterceptor.isActive = false;
+            TestBug81706QueryInterceptor.isActive = false;
             testConn.close();
 
         } while ((useSPS = !useSPS) || (cacheRsMd = !cacheRsMd) || (readOnly = !readOnly)); // Cycle through all possible combinations.
     }
 
-    public static class TestBug81706StatementInterceptor extends BaseStatementInterceptor {
+    public static class TestBug81706QueryInterceptor extends BaseQueryInterceptor {
         public static boolean isActive = false;
         public static String testCase = "";
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (isActive) {
                 String query = sql;
-                if (query == null && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                    query = interceptedStatement.toString();
+                if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                    query = interceptedQuery.toString();
                     query = query.substring(query.indexOf(':') + 2);
                 }
                 fail(testCase + ": Unexpected query executed - " + query);
             }
-            return super.preProcess(sql, interceptedStatement);
+            return super.preProcess(sql, interceptedQuery);
         }
     }
 }

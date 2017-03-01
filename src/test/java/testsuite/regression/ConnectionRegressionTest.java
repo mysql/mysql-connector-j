@@ -95,13 +95,14 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -146,7 +147,7 @@ import com.mysql.cj.mysqla.authentication.MysqlOldPasswordPlugin;
 import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.mysqla.io.Buffer;
 
-import testsuite.BaseStatementInterceptor;
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
@@ -4537,7 +4538,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testStackOverflowOnMissingInterceptor() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, "fooBarBaz");
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, "fooBarBaz");
 
             getConnectionWithProps(props).close();
         } catch (Exception e) {
@@ -5770,18 +5771,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties p = new Properties();
         p.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
         p.setProperty(PropertyDefinitions.PNAME_detectCustomCollations, "false");
-        p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug71038StatementInterceptor.class.getName());
+        p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug71038QueryInterceptor.class.getName());
 
         JdbcConnection c = (JdbcConnection) getConnectionWithProps(p);
-        Bug71038StatementInterceptor si = (Bug71038StatementInterceptor) c.getStatementInterceptorsInstances().get(0);
+        Bug71038QueryInterceptor si = (Bug71038QueryInterceptor) c.getQueryInterceptorsInstances().get(0);
         assertTrue("SHOW COLLATION was issued when detectCustomCollations=false", si.cnt == 0);
         c.close();
 
         p.setProperty(PropertyDefinitions.PNAME_detectCustomCollations, "true");
-        p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug71038StatementInterceptor.class.getName());
+        p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug71038QueryInterceptor.class.getName());
 
         c = (JdbcConnection) getConnectionWithProps(p);
-        si = (Bug71038StatementInterceptor) c.getStatementInterceptorsInstances().get(0);
+        si = (Bug71038QueryInterceptor) c.getQueryInterceptorsInstances().get(0);
         assertTrue("SHOW COLLATION wasn't issued when detectCustomCollations=true", si.cnt > 0);
         c.close();
     }
@@ -5789,11 +5790,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Counts the number of issued "SHOW COLLATION" statements.
      */
-    public static class Bug71038StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug71038QueryInterceptor extends BaseQueryInterceptor {
         int cnt = 0;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.contains("SHOW COLLATION")) {
                 this.cnt++;
             }
@@ -6015,7 +6016,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties p = new Properties();
         p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "cp1252");
         p.setProperty(PropertyDefinitions.PNAME_characterSetResults, "cp1252");
-        p.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug72712StatementInterceptor.class.getName());
+        p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug72712QueryInterceptor.class.getName());
 
         getConnectionWithProps(p);
         // exception will be thrown from the statement interceptor if any SET statements are issued
@@ -6024,11 +6025,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Statement interceptor used to implement preceding test.
      */
-    public static class Bug72712StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug72712QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
-                throw new SQLException("Wrongt statement issued: " + sql);
+                throw ExceptionFactory.createException("Wrongt statement issued: " + sql);
             }
             return null;
         }
@@ -6664,7 +6665,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug75168() throws Exception {
         final Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker, Bug75168LoadBalanceExceptionChecker.class.getName());
-        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug75168StatementInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug75168QueryInterceptor.class.getName());
 
         Connection connTest = getLoadBalancedConnection(2, null, props); // get a load balancing connection with two default servers
         for (int i = 0; i < 3; i++) {
@@ -6719,31 +6720,36 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class Bug75168StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug75168QueryInterceptor extends BaseQueryInterceptor {
         static Connection previousConnection = null;
 
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }
 
         @Override
         public void destroy() {
+            this.connection = null;
             if (previousConnection == null) {
                 fail("Test testBug75168 didn't run as expected.");
             }
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql == null) {
                 sql = "";
             }
-            if (sql.length() == 0 && interceptedStatement instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedStatement).asSql();
+            if (sql.length() == 0 && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                try {
+                    sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                } catch (SQLException ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                }
             }
             if (sql.indexOf("nonexistent_table") >= 0) {
                 assertTrue("Different connection expected.", !this.connection.equals(previousConnection));
@@ -6911,7 +6917,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug75592() throws Exception {
         if (versionMeetsMinimum(5, 0, 3)) {
 
-            JdbcConnection con = (JdbcConnection) getConnectionWithProps("statementInterceptors=" + Bug75592StatementInterceptor.class.getName());
+            JdbcConnection con = (JdbcConnection) getConnectionWithProps("queryInterceptors=" + Bug75592QueryInterceptor.class.getName());
 
             // reference values
             Map<String, String> serverVariables = new HashMap<>();
@@ -6965,11 +6971,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Statement interceptor for preceding testBug75592().
      */
-    public static class Bug75592StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug75592QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.contains("SHOW VARIABLES WHERE")) {
-                throw new SQLException("'SHOW VARIABLES WHERE' statement issued: " + sql);
+                throw ExceptionFactory.createException("'SHOW VARIABLES WHERE' statement issued: " + sql);
             }
             return null;
         }
@@ -7795,7 +7801,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String hostSlave = "slave:" + port;
 
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_statementInterceptors, Bug56100StatementInterceptor.class.getName());
+        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug56100QueryInterceptor.class.getName());
 
         final ReplicationConnection testConn = getUnreliableReplicationConnection(new String[] { "master", "slave" }, props);
 
@@ -7857,22 +7863,31 @@ public class ConnectionRegressionTest extends BaseTestCase {
         this.rs.close();
     }
 
-    public static class Bug56100StatementInterceptor extends BaseStatementInterceptor {
+    public static class Bug56100QueryInterceptor extends BaseQueryInterceptor {
         private JdbcConnection connection;
 
         @Override
-        public StatementInterceptor init(MysqlConnection conn, Properties props, Log log) {
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             this.connection = (JdbcConnection) conn;
             return this;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, com.mysql.cj.api.jdbc.Statement interceptedStatement) throws SQLException {
+        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
             if (sql.contains("<HOST_NAME>")) {
-                return (T) interceptedStatement.executeQuery(sql.replace("<HOST_NAME>", this.connection.getHost()));
+                try {
+                    return (T) ((Statement) interceptedQuery).executeQuery(sql.replace("<HOST_NAME>", this.connection.getHost()));
+                } catch (SQLException ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                }
             }
-            return super.preProcess(sql, interceptedStatement);
+            return super.preProcess(sql, interceptedQuery);
+        }
+
+        @Override
+        public void destroy() {
+            this.connection = null;
         }
     }
 

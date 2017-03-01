@@ -62,12 +62,12 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
@@ -459,7 +459,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private boolean storesLowerCaseTableName;
 
-    private List<StatementInterceptor> statementInterceptors;
+    private List<QueryInterceptor> queryInterceptors;
 
     /**
      * If a CharsetEncoder is required for escaping. Needed for SJIS and related
@@ -556,7 +556,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             this.dbmd = getMetaData(false, false);
 
-            initializeSafeStatementInterceptors();
+            initializeSafeQueryInterceptors();
 
         } catch (CJException e1) {
             throw SQLExceptionsMapping.translateException(e1, getExceptionInterceptor());
@@ -565,7 +565,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         try {
             createNewIO(false);
 
-            unSafeStatementInterceptors();
+            unSafeQueryInterceptors();
 
             NonRegisteringDriver.trackConnection(this);
         } catch (SQLException ex) {
@@ -586,26 +586,25 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     }
 
-    public void unSafeStatementInterceptors() throws SQLException {
-        this.statementInterceptors = this.statementInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
+    public void unSafeQueryInterceptors() throws SQLException {
+        this.queryInterceptors = this.queryInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
                 .collect(Collectors.toList());
 
         if (this.session != null) {
-            this.session.setStatementInterceptors(this.statementInterceptors);
+            this.session.setQueryInterceptors(this.queryInterceptors);
         }
     }
 
-    public void initializeSafeStatementInterceptors() throws SQLException {
+    public void initializeSafeQueryInterceptors() throws SQLException {
         this.isClosed = false;
-        this.statementInterceptors = Util
-                .<StatementInterceptor> loadClasses(
-                        getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_statementInterceptors).getStringValue(),
-                        "MysqlIo.BadStatementInterceptor", getExceptionInterceptor())
+        this.queryInterceptors = Util
+                .<QueryInterceptor> loadClasses(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
+                        "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
 
-    public List<StatementInterceptor> getStatementInterceptorsInstances() {
-        return this.statementInterceptors;
+    public List<QueryInterceptor> getQueryInterceptorsInstances() {
+        return this.queryInterceptors;
     }
 
     /**
@@ -1479,7 +1478,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     oldReadOnly = isReadOnly(false);
                     oldCatalog = getCatalog();
 
-                    this.session.setStatementInterceptors(this.statementInterceptors);
+                    this.session.setQueryInterceptors(this.queryInterceptors);
                 }
 
                 // Server properties might be different from previous connection, so initialize again...
@@ -1577,7 +1576,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             boolean oldReadOnly = isReadOnly(false);
             String oldCatalog = getCatalog();
 
-            this.session.setStatementInterceptors(this.statementInterceptors);
+            this.session.setQueryInterceptors(this.queryInterceptors);
 
             // Server properties might be different from previous connection, so initialize again...
             initializePropsFromServer();
@@ -1760,21 +1759,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * @exception SQLException
      *                if a database error occurs
      */
-
-    // ResultSet execSQL(Statement callingStatement, String sql,
-    // int maxRowsToRetreive, String catalog) throws SQLException {
-    // return execSQL(callingStatement, sql, maxRowsToRetreive, null,
-    // java.sql.ResultSet.TYPE_FORWARD_ONLY,
-    // DEFAULT_RESULT_SET_CONCURRENCY, catalog);
-    // }
-    // ResultSet execSQL(Statement callingStatement, String sql, int maxRows,
-    // int resultSetType, int resultSetConcurrency, boolean streamResults,
-    // boolean queryIsSelectOnly, String catalog, boolean unpackFields) throws
-    // SQLException {
-    // return execSQL(callingStatement, sql, maxRows, null, resultSetType,
-    // resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
-    // unpackFields);
-    // }
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata) throws SQLException {
         return execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, false);
@@ -3038,9 +3022,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.session.forceClose();
             }
 
-            if (this.statementInterceptors != null) {
-                for (int i = 0; i < this.statementInterceptors.size(); i++) {
-                    this.statementInterceptors.get(i).destroy();
+            if (this.queryInterceptors != null) {
+                for (int i = 0; i < this.queryInterceptors.size(); i++) {
+                    this.queryInterceptors.get(i).destroy();
                 }
             }
 
@@ -3051,7 +3035,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             ProfilerEventHandlerFactory.removeInstance(this.session);
 
             this.openStatements.clear();
-            this.statementInterceptors = null;
+            this.queryInterceptors = null;
             this.exceptionInterceptor = null;
             this.nullStatementResultSetFactory = null;
 

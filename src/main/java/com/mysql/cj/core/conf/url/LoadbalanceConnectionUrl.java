@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,7 +24,7 @@
 package com.mysql.cj.core.conf.url;
 
 import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold;
-import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_statementInterceptors;
+import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_queryInterceptors;
 import static com.mysql.cj.core.conf.PropertyDefinitions.PNAME_useLocalSessionState;
 
 import java.util.Collection;
@@ -97,11 +97,11 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
             try {
                 int autoCommitSwapThreshold = Integer.parseInt(props.get(PNAME_loadBalanceAutoCommitStatementThreshold));
                 if (autoCommitSwapThreshold > 0) {
-                    String statementInterceptors = props.get(PNAME_statementInterceptors);
-                    if (StringUtils.isNullOrEmpty(statementInterceptors)) {
-                        props.put(PNAME_statementInterceptors, LoadBalancedAutoCommitInterceptor.class.getName());
+                    String queryInterceptors = props.get(PNAME_queryInterceptors);
+                    if (StringUtils.isNullOrEmpty(queryInterceptors)) {
+                        props.put(PNAME_queryInterceptors, LoadBalancedAutoCommitInterceptor.class.getName());
                     } else {
-                        props.put(PNAME_statementInterceptors, statementInterceptors + "," + LoadBalancedAutoCommitInterceptor.class.getName());
+                        props.put(PNAME_queryInterceptors, queryInterceptors + "," + LoadBalancedAutoCommitInterceptor.class.getName());
                     }
                 }
             } catch (Throwable t) {

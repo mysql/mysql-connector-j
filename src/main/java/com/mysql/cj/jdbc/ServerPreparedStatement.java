@@ -1015,7 +1015,7 @@ public class ServerPreparedStatement extends PreparedStatement {
     private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
-                ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPre(this.originalSql, this, true);
+                ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPre(this.originalSql, this, true);
 
                 if (interceptedResults != null) {
                     return interceptedResults;
@@ -1248,7 +1248,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         createStreamingResultSet, resultPacket, true, metadata != null ? metadata : this.resultFields, this.resultSetFactory);
 
                 if (this.session.shouldIntercept()) {
-                    ResultSetInternalMethods interceptedResults = this.session.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
+                    ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPost(this.originalSql, this, rs, true);
 
                     if (interceptedResults != null) {
                         rs = interceptedResults;
@@ -1264,7 +1264,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (queryWasSlow && this.explainSlowQueries.getValue()) {
-                    this.session.explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
+                    this.session.getProtocol().explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
                 }
 
                 this.sendTypesToServer = false;
@@ -1280,7 +1280,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
             } catch (SQLException | CJException sqlEx) {
                 if (this.session.shouldIntercept()) {
-                    this.session.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);
+                    this.session.invokeQueryInterceptorsPost(this.originalSql, this, null, true);
                 }
 
                 throw sqlEx;

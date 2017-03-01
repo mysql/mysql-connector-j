@@ -46,19 +46,19 @@ import java.util.Optional;
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Query;
 import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.conf.RuntimeProperty;
 import com.mysql.cj.api.conf.RuntimeProperty.RuntimePropertyListener;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
@@ -82,13 +82,11 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
-import com.mysql.cj.core.exceptions.CJTimeoutException;
 import com.mysql.cj.core.exceptions.ClosedOnExpiredPasswordException;
 import com.mysql.cj.core.exceptions.DataTruncationException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.exceptions.OperationCancelledException;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -103,7 +101,6 @@ import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.PreparedStatement;
-import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -159,9 +156,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     protected boolean hadWarnings = false;
     private int warningCount = 0;
-    private boolean queryBadIndexUsed = false;
-    private boolean queryNoIndexUsed = false;
-    private boolean serverQueryWasSlow = false;
 
     protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> PROTOCOL_ENTITY_CLASS_TO_TEXT_READER;
     protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity>> PROTOCOL_ENTITY_CLASS_TO_BINARY_READER;
@@ -173,7 +167,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     protected boolean platformDbCharsetMatches = true; // changed once we've connected.
 
     private int statementExecutionDepth = 0;
-    private List<StatementInterceptor> statementInterceptors;
+    private List<QueryInterceptor> queryInterceptors;
 
     private ReadableProperty<Boolean> maintainTimeStats;
     private ReadableProperty<Integer> maxQuerySizeToLog;
@@ -219,8 +213,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log,
             TransactionManager transactionManager) {
         MysqlaProtocol protocol = new MysqlaProtocol(log);
-        protocol.init(conn, propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue(), socketConnection, propertySet,
-                transactionManager);
+        protocol.init(conn, socketConnection, propertySet, transactionManager);
         return protocol;
     }
 
@@ -230,7 +223,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
+    public void init(MysqlConnection conn, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
 
         this.connection = conn;
         this.propertySet = propSet;
@@ -610,10 +603,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             this.hadWarnings = false;
             this.setWarningCount(0);
 
-            this.queryNoIndexUsed = false;
-            this.queryBadIndexUsed = false;
-            this.serverQueryWasSlow = false;
-
             //
             // Compressed input stream needs cleared at beginning of each command execution...
             //
@@ -849,7 +838,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     /**
      * Send a query stored in a packet directly to the server.
      * 
-     * @param callingStatement
+     * @param callingQuery
      * @param resultSetConcurrency
      * @param characterEncoding
      * @param queryPacket
@@ -862,14 +851,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
      * @throws IOException
      * 
      */
-    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingStatement, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
+    public final <T extends Resultset> T sqlQueryDirect(Query callingQuery, String query, String characterEncoding, PacketPayload queryPacket, int maxRows,
+            boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
             GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
         this.statementExecutionDepth++;
 
         try {
-            if (this.statementInterceptors != null) {
-                T interceptedResults = invokeStatementInterceptorsPre(query, callingStatement, false);
+            if (this.queryInterceptors != null) {
+                T interceptedResults = invokeQueryInterceptorsPre(query, callingQuery, false);
 
                 if (interceptedResults != null) {
                     return interceptedResults;
@@ -1012,11 +1001,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             T rs = readAllResults(maxRows, streamResults, resultPacket, false, cachedMetadata, resultSetFactory);
 
             long threadId = getServerSession().getCapabilities().getThreadId();
-            int statementId = (callingStatement != null) ? callingStatement.getId() : 999;
+            int queryId = (callingQuery != null) ? callingQuery.getId() : 999;
             int resultSetId = rs.getResultId();
             long eventDuration = queryEndTime - queryStartTime;
 
-            if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
+            if (queryWasSlow && !this.serverSession.queryWasSlow() /* don't log slow queries twice */) {
                 StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
 
                 mesgBuf.append(Messages.getString("Protocol.SlowQuery",
@@ -1027,7 +1016,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
                 eventSink.consumeEvent(
-                        new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId, System.currentTimeMillis(),
+                        new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
                                 eventDuration, this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
@@ -1047,18 +1036,18 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 String eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
 
                 if (this.logSlowQueries) {
-                    if (this.queryBadIndexUsed) {
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
-                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
-                                Messages.getString("Protocol.4") + profileQueryToLog));
+                    if (this.serverSession.noGoodIndexUsed()) {
+                        eventSink.consumeEvent(
+                                new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
+                                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, Messages.getString("Protocol.4") + profileQueryToLog));
                     }
-                    if (this.queryNoIndexUsed) {
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
-                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
-                                Messages.getString("Protocol.5") + profileQueryToLog));
+                    if (this.serverSession.noIndexUsed()) {
+                        eventSink.consumeEvent(
+                                new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
+                                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, Messages.getString("Protocol.5") + profileQueryToLog));
                     }
-                    if (this.serverQueryWasSlow) {
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, statementId, resultSetId,
+                    if (this.serverSession.queryWasSlow()) {
+                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId,
                                 System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
                                 Messages.getString("Protocol.ServerSlowQuery") + profileQueryToLog));
                     }
@@ -1066,19 +1055,19 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
                 fetchEndTime = getCurrentTimeNanosOrMillis();
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, threadId, statementId, resultSetId,
-                        System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint, profileQueryToLog));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
+                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, profileQueryToLog));
 
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, threadId, statementId, resultSetId,
-                        System.currentTimeMillis(), (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, eventCreationPoint, null));
+                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
+                        (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, eventCreationPoint, null));
             }
 
             if (this.hadWarnings) {
                 scanForAndThrowDataTruncation();
             }
 
-            if (this.statementInterceptors != null) {
-                T interceptedResults = invokeStatementInterceptorsPost(query, callingStatement, rs, false, null);
+            if (this.queryInterceptors != null) {
+                T interceptedResults = invokeQueryInterceptorsPost(query, callingQuery, rs, false);
 
                 if (interceptedResults != null) {
                     rs = interceptedResults;
@@ -1087,26 +1076,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
             return rs;
         } catch (SQLException | CJException sqlEx) {
-            if (this.statementInterceptors != null) {
-                invokeStatementInterceptorsPost(query, callingStatement, null, false, sqlEx); // we don't do anything with the result set in this case
+            if (this.queryInterceptors != null) {
+                invokeQueryInterceptorsPost(query, callingQuery, null, false); // we don't do anything with the result set in this case
             }
 
-            if (callingStatement != null) {
-                synchronized (callingStatement.cancelTimeoutMutex) {
-                    if (callingStatement.wasCancelled) {
-                        CJException cause = null;
-
-                        if (callingStatement.wasCancelledByTimeout) {
-                            cause = new CJTimeoutException();
-                        } else {
-                            cause = new OperationCancelledException();
-                        }
-
-                        callingStatement.resetCancelledState();
-
-                        throw cause;
-                    }
-                }
+            if (callingQuery != null) {
+                callingQuery.checkCancelTimeout();
             }
 
             if (sqlEx instanceof CJException) {
@@ -1119,11 +1094,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    public <T extends Resultset> T invokeStatementInterceptorsPre(String sql, Statement interceptedStatement, boolean forceExecute) {
+    public <T extends Resultset> T invokeQueryInterceptorsPre(String sql, Query interceptedQuery, boolean forceExecute) {
         T previousResultSet = null;
 
-        for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptor interceptor = this.statementInterceptors.get(i);
+        for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
+            QueryInterceptor interceptor = this.queryInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
@@ -1131,19 +1106,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             if (shouldExecute) {
                 String sqlToInterceptor = sql;
 
-                //if (interceptedStatement instanceof PreparedStatement) {
-                //  sqlToInterceptor = ((PreparedStatement) interceptedStatement)
-                //          .asSql();
-                //}
+                T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedQuery);
 
-                try {
-                    T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedStatement);
-
-                    if (interceptedResultSet != null) {
-                        previousResultSet = interceptedResultSet;
-                    }
-                } catch (SQLException ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                if (interceptedResultSet != null) {
+                    previousResultSet = interceptedResultSet;
                 }
             }
         }
@@ -1151,11 +1117,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         return previousResultSet;
     }
 
-    public <T extends Resultset> T invokeStatementInterceptorsPost(String sql, Statement interceptedStatement, T originalResultSet, boolean forceExecute,
-            Exception statementException) {
+    public <T extends Resultset> T invokeQueryInterceptorsPost(String sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
 
-        for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
-            StatementInterceptor interceptor = this.statementInterceptors.get(i);
+        for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
+            QueryInterceptor interceptor = this.queryInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
@@ -1163,15 +1128,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             if (shouldExecute) {
                 String sqlToInterceptor = sql;
 
-                try {
-                    T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedStatement, originalResultSet, this.getWarningCount(),
-                            this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
+                T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedQuery, originalResultSet, this.serverSession);
 
-                    if (interceptedResultSet != null) {
-                        originalResultSet = interceptedResultSet;
-                    }
-                } catch (SQLException ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                if (interceptedResultSet != null) {
+                    originalResultSet = interceptedResultSet;
                 }
             }
         }
@@ -1360,13 +1320,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    public void setServerSlowQueryFlags() {
-        ServerSession state = this.serverSession;
-        this.queryBadIndexUsed = state.noGoodIndexUsed();
-        this.queryNoIndexUsed = state.noIndexUsed();
-        this.serverQueryWasSlow = state.queryWasSlow();
-    }
-
     protected boolean useNanosForElapsedTime() {
         return this.useNanosForElapsedTime;
     }
@@ -1383,12 +1336,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         return this.commandCount;
     }
 
-    public void setStatementInterceptors(List<StatementInterceptor> statementInterceptors) {
-        this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
+    public void setQueryInterceptors(List<QueryInterceptor> queryInterceptors) {
+        this.queryInterceptors = queryInterceptors.isEmpty() ? null : queryInterceptors;
     }
 
-    public List<StatementInterceptor> getStatementInterceptors() {
-        return this.statementInterceptors;
+    public List<QueryInterceptor> getQueryInterceptors() {
+        return this.queryInterceptors;
     }
 
     public void setSocketTimeout(int milliseconds) {
@@ -1751,7 +1704,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
             }
         }
-        setServerSlowQueryFlags();
         return result;
     }
 

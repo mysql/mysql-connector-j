@@ -140,7 +140,7 @@ public class XProtocol implements Protocol {
         this.capabilities = getCapabilities();
     }
 
-    public void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propSet, TransactionManager transactionManager) {
+    public void init(MysqlConnection conn, SocketConnection socketConnection, PropertySet propSet, TransactionManager transactionManager) {
         throw new NullPointerException("TODO: this implementation uses a constructor");
     }
 

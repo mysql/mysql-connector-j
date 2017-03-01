@@ -29,7 +29,7 @@ import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.TransactionManager;
-import com.mysql.cj.api.jdbc.interceptors.StatementInterceptor;
+import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -368,11 +368,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     ServerVersion getServerVersion();
 
-    List<StatementInterceptor> getStatementInterceptorsInstances();
+    List<QueryInterceptor> getQueryInterceptorsInstances();
 
     void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException;
 
-    void initializeSafeStatementInterceptors() throws SQLException;
+    void initializeSafeQueryInterceptors() throws SQLException;
 
     boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
@@ -394,7 +394,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     void unregisterStatement(Statement stmt);
 
-    void unSafeStatementInterceptors() throws SQLException;
+    void unSafeQueryInterceptors() throws SQLException;
 
     boolean useAnsiQuotedIdentifiers();
 

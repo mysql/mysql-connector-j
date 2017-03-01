@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,7 +37,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 
 /**
- * Interface to allow PreparedStatement implementations to expose their parameter bindings to StatementInterceptors.
+ * Interface to allow PreparedStatement implementations to expose their parameter bindings to QueryInterceptors.
  */
 public interface ParameterBindings {
 
