@@ -280,13 +280,22 @@ public class MysqlaServerSession implements ServerSession {
         return this.getServerVersion().equals(version);
     }
 
+    /**
+     * Should SET AUTOCOMMIT be sent to server if we're going to set autoCommitFlag in driver
+     * 
+     * @param autoCommitFlag
+     *            autocommit status we're going to set in driver
+     * @param elideSetAutoCommitsFlag
+     * @return true if SET AUTOCOMMIT to be sent
+     */
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag, boolean elideSetAutoCommitsFlag) {
         if (elideSetAutoCommitsFlag) {
             boolean autoCommitModeOnServer = isAutocommit();
 
-            if (!autoCommitFlag) {
-                // Just to be safe, check if a transaction is in progress on the server....
-                // if so, then we must be in autoCommit == false
+            if (autoCommitModeOnServer && !autoCommitFlag) {
+                // When trying to set autoCommit == false and SERVER_STATUS_AUTOCOMMIT = true we need to check
+                // SERVER_STATUS_IN_TRANS flag, because SERVER_STATUS_AUTOCOMMIT isn't always correct.
+                // If a transaction is in progress on the server, then we must be already in autoCommit == false
                 // therefore return the opposite of transaction status
                 return !inTransactionOnServer();
             }

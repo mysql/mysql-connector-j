@@ -161,10 +161,6 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: I don't need your stinkin exception interceptor");
     }
 
-    public boolean characterSetNamesMatches(String mysqlEncodingName) {
-        throw new NullPointerException("TODO: don't implement this method here");
-    }
-
     public boolean inTransactionOnServer() {
         throw new NullPointerException("TODO: who wants to know? Also, check NEW tx state in OK packet extensions");
     }
@@ -580,18 +576,6 @@ public class MysqlxSession implements Session {
     }
 
     @Override
-    public int getServerDefaultCollationIndex() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public Log getLog() {
         // TODO Auto-generated method stub
         return null;
@@ -619,12 +603,6 @@ public class MysqlxSession implements Session {
     public String getErrorMessageEncoding() {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public void setErrorMessageEncoding(String errorMessageEncoding) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

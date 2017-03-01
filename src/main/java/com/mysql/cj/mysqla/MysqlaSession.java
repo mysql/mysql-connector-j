@@ -27,8 +27,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -42,22 +47,26 @@ import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
+import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.AbstractSession;
+import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NetworkResources;
 import com.mysql.cj.core.log.LogFactory;
@@ -87,14 +96,26 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     protected ModifiableProperty<Integer> socketTimeout;
     private ReadableProperty<Boolean> gatherPerfMetrics;
+    private ModifiableProperty<String> characterEncoding;
+    private ReadableProperty<Boolean> useOldUTF8Behavior;
+    private ReadableProperty<Boolean> disconnectOnExpiredPasswords;
 
     private boolean serverHasFracSecsSupport = true;
+
+    /**
+     * If a CharsetEncoder is required for escaping. Needed for SJIS and related
+     * problems with \u00A5.
+     */
+    private boolean requiresEscapingEncoder;
 
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.propertySet = propSet;
 
         this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
         this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
+        this.characterEncoding = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
+        this.useOldUTF8Behavior = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior);
+        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
 
         this.hostInfo = hostInfo;
 
@@ -138,7 +159,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.serverHasFracSecsSupport = this.protocol.versionMeetsMinimum(5, 6, 4);
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
-        setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
+        this.protocol.getServerSession().setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
     }
 
     // TODO: this method should be removed after implementation of MYSQLCONNJ-478 "Bind Extension interface to Session instead of Connection"
@@ -154,24 +175,21 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.changeUser(userName, password, database);
     }
 
-    @Override
-    public boolean characterSetNamesMatches(String mysqlEncodingName) {
-        return this.protocol.getServerSession().characterSetNamesMatches(mysqlEncodingName);
-    }
-
+    // TODO remove ?
     @Override
     public String getServerVariable(String name) {
         return this.protocol.getServerSession().getServerVariable(name);
     }
 
+    // TODO remove ?
     @Override
     public int getServerVariable(String variableName, int fallbackValue) {
 
         try {
-            return Integer.valueOf(getServerVariable(variableName));
+            return Integer.valueOf(this.protocol.getServerSession().getServerVariable(variableName));
         } catch (NumberFormatException nfe) {
-            getLog().logWarn(
-                    Messages.getString("Connection.BadValueInServerVariables", new Object[] { variableName, getServerVariable(variableName), fallbackValue }));
+            getLog().logWarn(Messages.getString("Connection.BadValueInServerVariables",
+                    new Object[] { variableName, this.protocol.getServerSession().getServerVariable(variableName), fallbackValue }));
 
         }
         return fallbackValue;
@@ -182,16 +200,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.protocol.getServerSession().inTransactionOnServer();
     }
 
-    @Override
-    public int getServerDefaultCollationIndex() {
-        return this.protocol.getServerSession().getServerDefaultCollationIndex();
-    }
-
-    @Override
-    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
-        this.protocol.getServerSession().setServerDefaultCollationIndex(serverDefaultCollationIndex);
-    }
-
+    // TODO remove ?
     @Override
     public Map<String, String> getServerVariables() {
         return this.protocol.getServerSession().getServerVariables();
@@ -285,10 +294,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      *             mapped to a Java timezone.
      */
     public void configureTimezone() {
-        String configuredTimeZoneOnServer = getServerVariable("time_zone");
+        String configuredTimeZoneOnServer = this.protocol.getServerSession().getServerVariable("time_zone");
 
         if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-            configuredTimeZoneOnServer = getServerVariable("system_time_zone");
+            configuredTimeZoneOnServer = this.protocol.getServerSession().getServerVariable("system_time_zone");
         }
 
         String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
@@ -328,11 +337,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.protocol.getServerSession().getErrorMessageEncoding();
     }
 
-    @Override
-    public void setErrorMessageEncoding(String errorMessageEncoding) {
-        this.protocol.getServerSession().setErrorMessageEncoding(errorMessageEncoding);
-    }
-
+    // TODO remove ?
     /**
      * Returns the server's character set
      * 
@@ -410,7 +415,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      * @param callingQuery
      * @param query
-     * @param characterEncoding
+     * @param charEncoding
      * @param maxRows
      * @param streamResults
      * @param catalog
@@ -419,10 +424,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * @return
      * @throws IOException
      */
-    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
+    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String charEncoding, int maxRows, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
-        return this.protocol.sendQueryString(callingQuery, query, characterEncoding, maxRows, streamResults, catalog, cachedMetadata,
+        return this.protocol.sendQueryString(callingQuery, query, charEncoding, maxRows, streamResults, catalog, cachedMetadata,
                 this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
     }
 
@@ -572,6 +577,361 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         if (this.gatherPerfMetrics.getValue()) {
 
         }
+    }
+
+    /**
+     * Configures client-side properties for character set information.
+     */
+    private void configureCharsetProperties() {
+        if (this.characterEncoding.getValue() != null) {
+            // Attempt to use the encoding, and bail out if it can't be used
+            try {
+                String testString = "abc";
+                StringUtils.getBytes(testString, this.characterEncoding.getValue());
+            } catch (WrongArgumentException waEx) {
+                // Try the MySQL character encoding, then....
+                String oldEncoding = this.characterEncoding.getValue();
+
+                this.characterEncoding.setValue(CharsetMapping.getJavaEncodingForMysqlCharset(oldEncoding));
+
+                if (this.characterEncoding.getValue() == null) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.5", new Object[] { oldEncoding }),
+                            getExceptionInterceptor());
+                }
+
+                String testString = "abc";
+                StringUtils.getBytes(testString, this.characterEncoding.getValue());
+            }
+        }
+    }
+
+    /**
+     * Sets up client character set. This must be done before any further communication with the server!
+     * 
+     * @return true if this routine actually configured the client character
+     *         set, or false if the driver needs to use 'older' methods to
+     *         detect the character set, as it is connected to a MySQL server
+     *         older than 4.1.0
+     * @throws CJException
+     *             if an exception happens while sending 'SET NAMES' to the
+     *             server, or the server sends character set information that
+     *             the client doesn't know about.
+     */
+    public boolean configureClientCharacterSet(boolean dontCheckServerMatch) {
+        String realJavaEncoding = this.characterEncoding.getValue();
+        ModifiableProperty<String> characterSetResults = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_characterSetResults);
+        boolean characterSetAlreadyConfigured = false;
+
+        try {
+            characterSetAlreadyConfigured = true;
+
+            configureCharsetProperties();
+            realJavaEncoding = this.characterEncoding.getValue(); // we need to do this again to grab this for versions > 4.1.0
+
+            try {
+
+                // Fault injection for testing server character set indices
+                /*
+                 * if (this.props != null && this.props.getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex) != null) {
+                 * this.session.setServerDefaultCollationIndex(
+                 * Integer.parseInt(this.props.getProperty(PropertyDefinitions.PNAME_testsuite_faultInjection_serverCharsetIndex)));
+                 * }
+                 */
+
+                String serverEncodingToSet = CharsetMapping.getJavaEncodingForCollationIndex(this.protocol.getServerSession().getServerDefaultCollationIndex());
+
+                if (serverEncodingToSet == null || serverEncodingToSet.length() == 0) {
+                    if (realJavaEncoding != null) {
+                        // user knows best, try it
+                        this.characterEncoding.setValue(realJavaEncoding);
+                    } else {
+                        throw ExceptionFactory.createException(
+                                Messages.getString("Connection.6", new Object[] { this.protocol.getServerSession().getServerDefaultCollationIndex() }),
+                                getExceptionInterceptor());
+                    }
+                }
+
+                // "latin1" on MySQL-4.1.0+ is actually CP1252, not ISO8859_1
+                if ("ISO8859_1".equalsIgnoreCase(serverEncodingToSet)) {
+                    serverEncodingToSet = "Cp1252";
+                }
+                if ("UnicodeBig".equalsIgnoreCase(serverEncodingToSet) || "UTF-16".equalsIgnoreCase(serverEncodingToSet)
+                        || "UTF-16LE".equalsIgnoreCase(serverEncodingToSet) || "UTF-32".equalsIgnoreCase(serverEncodingToSet)) {
+                    serverEncodingToSet = "UTF-8";
+                }
+
+                this.characterEncoding.setValue(serverEncodingToSet);
+
+            } catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
+                if (realJavaEncoding != null) {
+                    // user knows best, try it
+                    this.characterEncoding.setValue(realJavaEncoding);
+                } else {
+                    throw ExceptionFactory.createException(
+                            Messages.getString("Connection.6", new Object[] { this.protocol.getServerSession().getServerDefaultCollationIndex() }),
+                            getExceptionInterceptor());
+                }
+            }
+
+            if (this.characterEncoding.getValue() == null) {
+                // punt?
+                this.characterEncoding.setValue("ISO8859_1");
+            }
+
+            if (realJavaEncoding != null) {
+
+                //
+                // Now, inform the server what character set we will be using from now-on...
+                //
+                if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
+                    // charset names are case-sensitive
+
+                    boolean useutf8mb4 = CharsetMapping.UTF8MB4_INDEXES.contains(this.protocol.getServerSession().getServerDefaultCollationIndex());
+
+                    if (!this.useOldUTF8Behavior.getValue()) {
+                        if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
+                                || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4"))) {
+
+                            PacketPayload packet = getSharedSendPacket();
+                            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8")));
+                            sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                            this.protocol.getServerSession().getServerVariables().put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
+                            this.protocol.getServerSession().getServerVariables().put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
+                        }
+                    } else {
+                        PacketPayload packet = getSharedSendPacket();
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES latin1"));
+                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                        this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
+                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
+                    }
+
+                    this.characterEncoding.setValue(realJavaEncoding);
+                } /* not utf-8 */else {
+                    String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), getServerVersion());
+
+                    if (mysqlCharsetName != null) {
+
+                        if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName)) {
+                            PacketPayload packet = getSharedSendPacket();
+                            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + mysqlCharsetName));
+                            sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                            this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
+                            this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
+                        }
+                    }
+
+                    // Switch driver's encoding now, since the server knows what we're sending...
+                    //
+                    this.characterEncoding.setValue(realJavaEncoding);
+                }
+            } else if (this.characterEncoding.getValue() != null) {
+                // Tell the server we'll use the server default charset to send our queries from now on....
+                String mysqlCharsetName = getServerCharset();
+
+                if (this.useOldUTF8Behavior.getValue()) {
+                    mysqlCharsetName = "latin1";
+                }
+
+                boolean ucs2 = false;
+                if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
+                        || "utf32".equalsIgnoreCase(mysqlCharsetName)) {
+                    mysqlCharsetName = "utf8";
+                    ucs2 = true;
+                    if (characterSetResults.getValue() == null) {
+                        characterSetResults.setValue("UTF-8");
+                    }
+                }
+
+                if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName) || ucs2) {
+                    try {
+                        PacketPayload packet = getSharedSendPacket();
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + mysqlCharsetName));
+                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                        this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
+                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
+                    } catch (PasswordExpiredException ex) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
+                        }
+                    }
+                }
+
+                realJavaEncoding = this.characterEncoding.getValue();
+            }
+
+            //
+            // We know how to deal with any charset coming back from the database, so tell the server not to do conversion if the user hasn't 'forced' a
+            // result-set character set
+            //
+
+            String onServer = null;
+            boolean isNullOnServer = false;
+
+            if (this.protocol.getServerSession().getServerVariables() != null) {
+                onServer = this.protocol.getServerSession().getServerVariable("character_set_results");
+
+                isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
+            }
+
+            if (characterSetResults.getValue() == null) {
+
+                //
+                // Only send if needed, if we're caching server variables we -have- to send, because we don't know what it was before we cached them.
+                //
+                if (!isNullOnServer) {
+                    try {
+                        PacketPayload packet = getSharedSendPacket();
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET character_set_results = NULL"));
+                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                    } catch (PasswordExpiredException ex) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
+                        }
+                    }
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
+                } else {
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                }
+            } else {
+
+                if (this.useOldUTF8Behavior.getValue()) {
+                    try {
+                        PacketPayload packet = getSharedSendPacket();
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES latin1"));
+                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                        this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
+                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
+                    } catch (PasswordExpiredException ex) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
+                        }
+                    }
+                }
+                String charsetResults = characterSetResults.getValue();
+                String mysqlEncodingName = null;
+
+                if ("UTF-8".equalsIgnoreCase(charsetResults) || "UTF8".equalsIgnoreCase(charsetResults)) {
+                    mysqlEncodingName = "utf8";
+                } else if ("null".equalsIgnoreCase(charsetResults)) {
+                    mysqlEncodingName = "NULL";
+                } else {
+                    mysqlEncodingName = CharsetMapping.getMysqlCharsetForJavaEncoding(charsetResults.toUpperCase(Locale.ENGLISH), getServerVersion());
+                }
+
+                //
+                // Only change the value if needed
+                //
+
+                if (mysqlEncodingName == null) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.7", new Object[] { charsetResults }),
+                            getExceptionInterceptor());
+                }
+
+                if (!mysqlEncodingName.equalsIgnoreCase(this.protocol.getServerSession().getServerVariable("character_set_results"))) {
+                    StringBuilder setBuf = new StringBuilder("SET character_set_results = ".length() + mysqlEncodingName.length());
+                    setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
+
+                    try {
+                        PacketPayload packet = getSharedSendPacket();
+                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(setBuf.toString()));
+                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                    } catch (PasswordExpiredException ex) {
+                        if (this.disconnectOnExpiredPasswords.getValue()) {
+                            throw ex;
+                        }
+                    }
+
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
+
+                    // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
+                    this.protocol.getServerSession().setErrorMessageEncoding(charsetResults);
+
+                } else {
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                }
+            }
+
+            String connectionCollation = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
+            if (connectionCollation != null) {
+                StringBuilder setBuf = new StringBuilder("SET collation_connection = ".length() + connectionCollation.length());
+                setBuf.append("SET collation_connection = ").append(connectionCollation);
+
+                try {
+                    PacketPayload packet = getSharedSendPacket();
+                    packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                    packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(setBuf.toString()));
+                    sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                } catch (PasswordExpiredException ex) {
+                    if (this.disconnectOnExpiredPasswords.getValue()) {
+                        throw ex;
+                    }
+                }
+            }
+        } finally {
+            // Failsafe, make sure that the driver's notion of character encoding matches what the user has specified.
+            //
+            this.characterEncoding.setValue(realJavaEncoding);
+        }
+
+        /**
+         * Check if we need a CharsetEncoder for escaping codepoints that are
+         * transformed to backslash (0x5c) in the connection encoding.
+         */
+        try {
+            CharsetEncoder enc = Charset.forName(this.characterEncoding.getValue()).newEncoder();
+            CharBuffer cbuf = CharBuffer.allocate(1);
+            ByteBuffer bbuf = ByteBuffer.allocate(1);
+
+            cbuf.put("\u00a5");
+            cbuf.position(0);
+            enc.encode(cbuf, bbuf, true);
+            if (bbuf.get(0) == '\\') {
+                this.requiresEscapingEncoder = true;
+            } else {
+                cbuf.clear();
+                bbuf.clear();
+
+                cbuf.put("\u20a9");
+                cbuf.position(0);
+                enc.encode(cbuf, bbuf, true);
+                if (bbuf.get(0) == '\\') {
+                    this.requiresEscapingEncoder = true;
+                }
+            }
+        } catch (java.nio.charset.UnsupportedCharsetException ucex) {
+            // fallback to String API
+            byte bbuf[] = StringUtils.getBytes("\u00a5", this.characterEncoding.getValue());
+            if (bbuf[0] == '\\') {
+                this.requiresEscapingEncoder = true;
+            } else {
+                bbuf = StringUtils.getBytes("\u20a9", this.characterEncoding.getValue());
+                if (bbuf[0] == '\\') {
+                    this.requiresEscapingEncoder = true;
+                }
+            }
+        }
+
+        return characterSetAlreadyConfigured;
+    }
+
+    public boolean getRequiresEscapingEncoder() {
+        return this.requiresEscapingEncoder;
     }
 
 }

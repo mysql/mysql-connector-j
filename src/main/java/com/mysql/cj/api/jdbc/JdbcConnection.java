@@ -381,8 +381,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     java.sql.Statement getMetadataSafeStatement() throws SQLException;
 
-    boolean getRequiresEscapingEncoder();
-
     ServerVersion getServerVersion();
 
     List<QueryInterceptor> getQueryInterceptorsInstances();

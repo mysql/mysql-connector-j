@@ -815,7 +815,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
         initializeFromParseInfo();
 
-        if (conn.getRequiresEscapingEncoder()) {
+        if (this.session.getRequiresEscapingEncoder()) {
             this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
                     .newEncoder();
         }
@@ -852,9 +852,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
         initializeFromParseInfo();
 
-        if (conn.getRequiresEscapingEncoder()) {
-            this.charsetEncoder = Charset.forName(conn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue())
-                    .newEncoder();
+        if (this.session.getRequiresEscapingEncoder()) {
+            this.charsetEncoder = Charset.forName(this.charEncoding).newEncoder();
         }
     }
 

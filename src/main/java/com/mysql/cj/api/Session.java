@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -58,8 +58,6 @@ public interface Session {
 
     void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor);
 
-    boolean characterSetNamesMatches(String mysqlEncodingName); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
-
     boolean inTransactionOnServer();
 
     /**
@@ -75,19 +73,6 @@ public interface Session {
     Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
     void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
-
-    /**
-     * 
-     * @return Collation index which server provided in handshake greeting packet
-     */
-    int getServerDefaultCollationIndex();
-
-    /**
-     * Stores collation index which server provided in handshake greeting packet.
-     * 
-     * @param serverDefaultCollationIndex
-     */
-    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * Clobbers the physical network connection and marks this session as closed.
@@ -136,8 +121,6 @@ public interface Session {
     TimeZone getDefaultTimeZone();
 
     String getErrorMessageEncoding();
-
-    void setErrorMessageEncoding(String errorMessageEncoding);
 
     int getMaxBytesPerChar(String javaCharsetName);
 

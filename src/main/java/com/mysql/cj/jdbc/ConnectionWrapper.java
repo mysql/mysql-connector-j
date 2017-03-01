@@ -1039,11 +1039,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public boolean getRequiresEscapingEncoder() {
-        return this.mc.getRequiresEscapingEncoder();
-    }
-
-    @Override
     public ServerVersion getServerVersion() {
         return this.mc.getServerVersion();
     }

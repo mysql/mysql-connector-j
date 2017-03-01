@@ -236,10 +236,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().getProperties();
     }
 
-    public boolean getRequiresEscapingEncoder() {
-        return getActiveMySQLConnection().getRequiresEscapingEncoder();
-    }
-
     public ServerVersion getServerVersion() {
         return getActiveMySQLConnection().getServerVersion();
     }
