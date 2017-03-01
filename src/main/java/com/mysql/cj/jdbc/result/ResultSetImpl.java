@@ -83,6 +83,12 @@ import com.mysql.cj.core.io.FloatValueFactory;
 import com.mysql.cj.core.io.FloatingPointBoundsEnforcer;
 import com.mysql.cj.core.io.IntegerBoundsEnforcer;
 import com.mysql.cj.core.io.IntegerValueFactory;
+import com.mysql.cj.core.io.SqlDateValueFactory;
+import com.mysql.cj.core.io.SqlTimeValueFactory;
+import com.mysql.cj.core.io.SqlTimestampValueFactory;
+import com.mysql.cj.core.io.LocalDateTimeValueFactory;
+import com.mysql.cj.core.io.LocalDateValueFactory;
+import com.mysql.cj.core.io.LocalTimeValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.ShortValueFactory;
 import com.mysql.cj.core.io.StringConverter;
@@ -103,12 +109,6 @@ import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
-import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
-import com.mysql.cj.jdbc.io.JdbcLocalDateTimeValueFactory;
-import com.mysql.cj.jdbc.io.JdbcLocalDateValueFactory;
-import com.mysql.cj.jdbc.io.JdbcLocalTimeValueFactory;
-import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
-import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
@@ -273,16 +273,16 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         this.binaryStreamValueFactory = new BinaryStreamValueFactory();
 
         this.zeroDateTimeBehavior = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
-        this.defaultDateValueFactory = decorateDateTimeValueFactory(new JdbcDateValueFactory(this.session.getDefaultTimeZone(), this),
+        this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(this.session.getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
-        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new JdbcTimeValueFactory(this.session.getDefaultTimeZone(), this),
+        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(this.session.getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
-        this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(this.session.getDefaultTimeZone()),
+        this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new SqlTimestampValueFactory(this.session.getDefaultTimeZone()),
                 this.zeroDateTimeBehavior);
 
-        this.defaultLocalDateValueFactory = decorateDateTimeValueFactory(new JdbcLocalDateValueFactory(this), this.zeroDateTimeBehavior);
-        this.defaultLocalTimeValueFactory = decorateDateTimeValueFactory(new JdbcLocalTimeValueFactory(this), this.zeroDateTimeBehavior);
-        this.defaultLocalDateTimeValueFactory = decorateDateTimeValueFactory(new JdbcLocalDateTimeValueFactory(), this.zeroDateTimeBehavior);
+        this.defaultLocalDateValueFactory = decorateDateTimeValueFactory(new LocalDateValueFactory(this), this.zeroDateTimeBehavior);
+        this.defaultLocalTimeValueFactory = decorateDateTimeValueFactory(new LocalTimeValueFactory(this), this.zeroDateTimeBehavior);
+        this.defaultLocalDateTimeValueFactory = decorateDateTimeValueFactory(new LocalDateTimeValueFactory(), this.zeroDateTimeBehavior);
 
         // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
         if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getInitialValue()) {
@@ -791,7 +791,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new JdbcDateValueFactory(cal.getTimeZone());
+        ValueFactory<Date> vf = new SqlDateValueFactory(cal.getTimeZone());
         return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -921,7 +921,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Time> vf = new JdbcTimeValueFactory(cal.getTimeZone());
+        ValueFactory<Time> vf = new SqlTimeValueFactory(cal.getTimeZone());
         return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -970,7 +970,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         if (this.customTsVf != null && cal.getTimeZone() == this.lastTsCustomTz) {
             return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
         }
-        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new JdbcTimestampValueFactory(cal.getTimeZone()), this.zeroDateTimeBehavior);
+        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(cal.getTimeZone()), this.zeroDateTimeBehavior);
         this.lastTsCustomTz = cal.getTimeZone();
         this.customTsVf = vf;
         return getDateOrTimestampValueFromRow(columnIndex, vf);

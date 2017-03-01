@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc.io;
+package com.mysql.cj.core.io;
 
 import java.sql.Time;
 import java.util.Calendar;
@@ -31,25 +31,24 @@ import java.util.TimeZone;
 import com.mysql.cj.api.WarningListener;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.core.io.DefaultValueFactory;
 
 /**
  * JdbcTimeValueFactory is a value factory to create {@link java.sql.Time} instances. As with other date/time types, a time zone is necessary to interpret the
  * time values returned from the server.
  */
-public class JdbcTimeValueFactory extends DefaultValueFactory<Time> {
+public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
     private TimeZone tz;
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
-    public JdbcTimeValueFactory(TimeZone tz) {
+    public SqlTimeValueFactory(TimeZone tz) {
         this.tz = tz;
         this.cal = Calendar.getInstance(this.tz, Locale.US);
         this.cal.setLenient(false);
     }
 
-    public JdbcTimeValueFactory(TimeZone tz, WarningListener warningListener) {
+    public SqlTimeValueFactory(TimeZone tz, WarningListener warningListener) {
         this(tz);
         this.warningListener = warningListener;
     }

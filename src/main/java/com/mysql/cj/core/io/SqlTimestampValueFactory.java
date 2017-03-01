@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,52 +21,77 @@
 
  */
 
-package com.mysql.cj.jdbc.io;
+package com.mysql.cj.core.io;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.core.io.DefaultValueFactory;
 
 /**
- * Value factory to create {@link LocalDateTime} instances.
+ * Value factory to create {@link java.sql.Timestamp} instances. Timestamp instances are created from fields returned from the db without a timezone. In order
+ * to create a <i>point-in-time</i>, a time zone must be provided to interpret the fields.
  */
-public class JdbcLocalDateTimeValueFactory extends DefaultValueFactory<LocalDateTime> {
+public class SqlTimestampValueFactory extends DefaultValueFactory<Timestamp> {
+    private TimeZone tz;
+    // cached per instance to avoid re-creation on every create*() call
+    private Calendar cal;
 
-    public JdbcLocalDateTimeValueFactory() {
+    /**
+     * @param tz
+     *            The time zone used to interpret the fields.
+     */
+    public SqlTimestampValueFactory(TimeZone tz) {
+        this.tz = tz;
+        this.cal = Calendar.getInstance(this.tz, Locale.US);
+        this.cal.setLenient(false);
+    }
+
+    public TimeZone getTimeZone() {
+        return this.tz;
     }
 
     /**
-     * Create a LocalDateTime from a DATE value.
+     * Create a Timestamp from a DATE value.
      *
-     * @return a LocalDateTime at midnight on the day given by the DATE value
+     * @return a timestamp at midnight on the day given by the DATE value
+     * @see java.sql.ResultSet.getTimestamp(int)
      */
     @Override
-    public LocalDateTime createFromDate(int year, int month, int day) {
+    public Timestamp createFromDate(int year, int month, int day) {
         return createFromTimestamp(year, month, day, 0, 0, 0, 0);
     }
 
     /**
-     * Create a LocalDateTime from a TIME value.
+     * Create a Timestamp from a TIME value.
      *
-     * @return a LocalDateTime at the given time on 1970 Jan 1.
+     * @return a timestamp at the given time on 1970 Jan 1.
      */
     @Override
-    public LocalDateTime createFromTime(int hours, int minutes, int seconds, int nanos) {
+    public Timestamp createFromTime(int hours, int minutes, int seconds, int nanos) {
         if (hours < 0 || hours >= 24) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
         }
+
         return createFromTimestamp(1970, 1, 1, hours, minutes, seconds, nanos);
     }
 
     @Override
-    public LocalDateTime createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public Timestamp createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (year == 0 && month == 0 && day == 0) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
-        return LocalDateTime.of(year, month, day, hours, minutes, seconds, nanos);
+
+        synchronized (this.cal) {
+            // this method is HUGEly faster than Java 8's Calendar.Builder()
+            this.cal.set(year, month - 1, day, hours, minutes, seconds);
+            Timestamp ts = new Timestamp(this.cal.getTimeInMillis());
+            ts.setNanos(nanos);
+            return ts;
+        }
     }
 
     public String getTargetTypeName() {

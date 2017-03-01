@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc.io;
+package com.mysql.cj.core.io;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,18 +30,20 @@ import java.util.TimeZone;
 
 import org.junit.Test;
 
+import com.mysql.cj.core.io.SqlTimestampValueFactory;
+
 /**
  * Tests for JDBC {@link java.sql.Timestamp} creation.
  * <p/>
  * Note: Timestamp.toString() is not locale-specific and is appropriate for use in these tests.
  */
-public class JdbcTimestampValueFactoryTest {
+public class SqlTimestampValueFactoryTest {
     /**
      * Test basic timestamp creation.
      */
     @Test
     public void testBasicTimestamp() {
-        JdbcTimestampValueFactory vf = new JdbcTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
         Timestamp ts = vf.createFromTimestamp(2015, 05, 01, 12, 20, 02, 4);
         // should be the same (in system timezone)
         assertEquals("2015-05-01 12:20:02.000000004", ts.toString());
@@ -52,7 +54,7 @@ public class JdbcTimestampValueFactoryTest {
      */
     @Test
     public void testTimestampFromTime() {
-        JdbcTimestampValueFactory vf = new JdbcTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
         Timestamp ts = vf.createFromTime(12, 20, 02, 4);
         assertEquals("1970-01-01 12:20:02.000000004", ts.toString());
     }
@@ -62,7 +64,7 @@ public class JdbcTimestampValueFactoryTest {
      */
     @Test
     public void testTimestampFromDate() {
-        JdbcTimestampValueFactory vf = new JdbcTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
         Timestamp ts = vf.createFromDate(2015, 5, 1); // May 1st
         // verify a midnight on may 1st timestamp
         assertEquals("2015-05-01 00:00:00.0", ts.toString());

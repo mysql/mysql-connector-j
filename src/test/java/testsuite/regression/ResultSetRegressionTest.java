@@ -77,6 +77,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
+import com.mysql.cj.core.io.SqlDateValueFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.MysqlSQLXML;
@@ -86,7 +87,6 @@ import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.mysqla.result.MysqlaResultset;
@@ -5747,7 +5747,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         sdf.setLenient(false);
 
         java.util.Date expected = sdf.parse("1994-03-27");
-        Date fromFactory = new JdbcDateValueFactory(TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
+        Date fromFactory = new SqlDateValueFactory(TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
 
         assertEquals(expected.getTime(), fromFactory.getTime());
     }

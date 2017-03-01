@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,10 +39,10 @@ import com.mysql.cj.core.io.ByteValueFactory;
 import com.mysql.cj.core.io.DoubleValueFactory;
 import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
+import com.mysql.cj.core.io.SqlDateValueFactory;
+import com.mysql.cj.core.io.SqlTimeValueFactory;
+import com.mysql.cj.core.io.SqlTimestampValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
-import com.mysql.cj.jdbc.io.JdbcDateValueFactory;
-import com.mysql.cj.jdbc.io.JdbcTimeValueFactory;
-import com.mysql.cj.jdbc.io.JdbcTimestampValueFactory;
 
 // TODO rid off JdbcDateValueFactory, JdbcTimeValueFactory, JdbcTimestampValueFactory
 
@@ -103,7 +103,7 @@ public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     }
 
     public Date getDate(int pos) {
-        return this.row.getValue(pos, new JdbcDateValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlDateValueFactory(this.defaultTimeZone));
     }
 
     public DbDoc getDbDoc(String fieldName) {
@@ -152,7 +152,7 @@ public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     }
 
     public Time getTime(int pos) {
-        return this.row.getValue(pos, new JdbcTimeValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimeValueFactory(this.defaultTimeZone));
     }
 
     public Timestamp getTimestamp(String fieldName) {
@@ -160,6 +160,6 @@ public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     }
 
     public Timestamp getTimestamp(int pos) {
-        return this.row.getValue(pos, new JdbcTimestampValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimestampValueFactory(this.defaultTimeZone));
     }
 }

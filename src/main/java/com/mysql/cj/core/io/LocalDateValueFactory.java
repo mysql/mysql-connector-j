@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,25 +21,24 @@
 
  */
 
-package com.mysql.cj.jdbc.io;
+package com.mysql.cj.core.io;
 
 import java.time.LocalDate;
 
 import com.mysql.cj.api.WarningListener;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
-import com.mysql.cj.core.io.DefaultValueFactory;
 
 /**
  * A value factory for creating {@link LocalDate} values.
  */
-public class JdbcLocalDateValueFactory extends DefaultValueFactory<LocalDate> {
+public class LocalDateValueFactory extends DefaultValueFactory<LocalDate> {
     private WarningListener warningListener;
 
-    public JdbcLocalDateValueFactory() {
+    public LocalDateValueFactory() {
     }
 
-    public JdbcLocalDateValueFactory(WarningListener warningListener) {
+    public LocalDateValueFactory(WarningListener warningListener) {
         this();
         this.warningListener = warningListener;
     }
