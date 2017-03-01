@@ -1498,6 +1498,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 connectionGood = true;
 
                 break;
+            } catch (UnableToConnectException rejEx) {
+                close();
+                this.session.getProtocol().getSocketConnection().forceClose();
+
             } catch (Exception EEE) {
                 connectionException = EEE;
                 connectionGood = false;
@@ -1593,6 +1597,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 setReadOnly(oldReadOnly);
             }
             return;
+
+        } catch (UnableToConnectException rejEx) {
+            close();
+            this.session.getProtocol().getSocketConnection().forceClose();
 
         } catch (Exception EEE) {
 

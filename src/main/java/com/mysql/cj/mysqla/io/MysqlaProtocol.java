@@ -37,7 +37,9 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.sql.DataTruncation;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +65,6 @@ import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
 import com.mysql.cj.api.mysqla.io.PacketHeader;
@@ -75,6 +76,7 @@ import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.Resultset.Type;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
@@ -95,10 +97,10 @@ import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
-import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.io.IntegerValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -109,8 +111,8 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
@@ -334,18 +336,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
     }
 
-    // TODO: find a better place for method?
-    @Override
-    public void rejectConnection(String message) {
-        try {
-            ((JdbcConnection) this.connection).close();
-        } catch (SQLException e) {
-            throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
-        }
-        this.socketConnection.forceClose();
-        throw ExceptionFactory.createException(UnableToConnectException.class, message, getExceptionInterceptor());
-    }
-
     @Override
     public void rejectProtocol(PacketPayload buf) {
         try {
@@ -556,12 +546,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
-            // TODO: we can't cleanly handle OOM and we shouldn't even try. we should remove ALL of these except for the one allocating the large buffer for sending a file (iirc)
-            try {
-                ((JdbcConnection) this.connection).realClose(false, false, true, oom);
-            } catch (Exception ex) {
-            }
-            throw oom;
+            throw ExceptionFactory.createException(oom.getMessage(), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
         }
     }
 
@@ -1088,7 +1073,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             }
 
             return rs;
-        } catch (SQLException | CJException sqlEx) {
+        } catch (CJException sqlEx) {
             if (this.queryInterceptors != null) {
                 invokeQueryInterceptorsPost(query, callingQuery, null, false); // we don't do anything with the result set in this case
             }
@@ -1097,11 +1082,15 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 callingQuery.checkCancelTimeout();
             }
 
-            if (sqlEx instanceof CJException) {
-                // don't wrap CJException
-                throw (CJException) sqlEx;
-            }
-            throw ExceptionFactory.createException(sqlEx.getMessage(), sqlEx);
+            /*
+             * if (sqlEx instanceof CJException) {
+             * // don't wrap CJException
+             * throw (CJException) sqlEx;
+             * }
+             * throw ExceptionFactory.createException(sqlEx.getMessage(), sqlEx);
+             */
+            throw sqlEx;
+
         } finally {
             this.statementExecutionDepth--;
         }
@@ -1194,7 +1183,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 appendResultSetSlashGStyle(explainResults, rs);
 
                 this.log.logWarn(explainResults.toString());
-            } catch (SQLException | CJException sqlEx) {
+            } catch (CJException sqlEx) {
+                throw sqlEx;
+
             } catch (Exception ex) {
                 throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
             }
@@ -1218,13 +1209,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
-        } catch (OutOfMemoryError oom) {
-            // TODO: we can't cleanly handle OOM and we shouldn't even try. we should remove ALL of these except for the one allocating the large buffer for sending a file (iirc)
-            try {
-                ((JdbcConnection) this.connection).realClose(false, false, true, oom);
-            } catch (Exception ex) {
-            }
-            throw oom;
         }
     }
 
@@ -1628,7 +1612,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
      * @param isBinaryEncoded
      * @param resultSetFactory
      * @return
-     * @throws SQLException
+     * @throws IOException
      */
     public <T extends ProtocolEntity> T readNextResultset(T currentProtocolEntity, int maxRows, boolean streamResults, boolean isBinaryEncoded,
             ProtocolEntityFactory<T> resultSetFactory) throws IOException {
@@ -1845,23 +1829,19 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     public void checkForOutstandingStreamingData() {
-        try {
-            if (this.streamingData != null) {
-                boolean shouldClobber = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
+        if (this.streamingData != null) {
+            boolean shouldClobber = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
 
-                if (!shouldClobber) {
-                    throw SQLError.createSQLException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
-                            + Messages.getString("MysqlIO.41") + Messages.getString("MysqlIO.42"), this.exceptionInterceptor);
-                }
-
-                // Close the result set
-                this.streamingData.getOwner().closeOwner(false);
-
-                // clear any pending data....
-                clearInputStream();
+            if (!shouldClobber) {
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
+                        + Messages.getString("MysqlIO.41") + Messages.getString("MysqlIO.42"), this.exceptionInterceptor);
             }
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
+
+            // Close the result set
+            this.streamingData.getOwner().closeOwner(false);
+
+            // clear any pending data....
+            clearInputStream();
         }
     }
 
@@ -1878,10 +1858,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         this.streamingData = null;
     }
 
-    public void scanForAndThrowDataTruncation() throws SQLException {
+    public void scanForAndThrowDataTruncation() {
         if ((this.streamingData == null) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
                 && getWarningCount() > 0) {
-            ResultSetUtil.convertShowWarningsToSQLWarnings(this.connection, getWarningCount(), true);
+            convertShowWarningsToSQLWarnings(getWarningCount(), true);
         }
     }
 
@@ -1998,7 +1978,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    private StringBuilder appendResultSetSlashGStyle(StringBuilder appendTo, Resultset rs) throws SQLException {
+    private StringBuilder appendResultSetSlashGStyle(StringBuilder appendTo, Resultset rs) {
         Field[] fields = rs.getColumnDefinition().getFields();
         int maxWidth = 0;
         for (int i = 0; i < fields.length; i++) {
@@ -2026,5 +2006,92 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             appendTo.append("\n");
         }
         return appendTo;
+    }
+
+    /**
+     * Turns output of 'SHOW WARNINGS' into JDBC SQLWarning instances.
+     * 
+     * If 'forTruncationOnly' is true, only looks for truncation warnings, and
+     * actually throws DataTruncation as an exception.
+     * 
+     * @param warningCountIfKnown
+     *            the warning count (if known), otherwise set it to 0.
+     * @param forTruncationOnly
+     *            if this method should only scan for data truncation warnings
+     * 
+     * @return the SQLWarning chain (or null if no warnings)
+     * 
+     * @throws SQLException
+     *             if the warnings could not be retrieved, or if data truncation
+     *             is being scanned for and truncations were found.
+     */
+    public SQLWarning convertShowWarningsToSQLWarnings(int warningCountIfKnown, boolean forTruncationOnly) {
+        SQLWarning currentWarning = null;
+        ResultsetRows rows = null;
+
+        try {
+            /*
+             * +---------+------+---------------------------------------------+
+             * | Level ..| Code | Message ....................................|
+             * +---------+------+---------------------------------------------+
+             * | Warning | 1265 | Data truncated for column 'field1' at row 1 |
+             * +---------+------+---------------------------------------------+
+             */
+            PacketPayload packet = getSharedSendPacket();
+            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW WARNINGS"));
+            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+            Resultset warnRs = readAllResults(-1, warningCountIfKnown > 99 /* stream large warning counts */, resultPacket, false, null,
+                    new ResultsetFactory(Type.FORWARD_ONLY, Concurrency.READ_ONLY));
+
+            int codeFieldIndex = warnRs.getColumnDefinition().findColumn("Code", false) - 1;
+            int messageFieldIndex = warnRs.getColumnDefinition().findColumn("Message", false) - 1;
+            String enc = warnRs.getColumnDefinition().getFields()[messageFieldIndex].getEncoding();
+
+            ValueFactory<String> svf = new StringValueFactory(enc);
+            ValueFactory<Integer> ivf = new IntegerValueFactory();
+
+            rows = warnRs.getRows();
+            Row r;
+            while ((r = rows.next()) != null) {
+
+                int code = r.getValue(codeFieldIndex, ivf);
+
+                if (forTruncationOnly) {
+                    if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
+                        DataTruncation newTruncation = new MysqlDataTruncation(r.getValue(messageFieldIndex, svf), 0, false, false, 0, 0, code);
+
+                        if (currentWarning == null) {
+                            currentWarning = newTruncation;
+                        } else {
+                            currentWarning.setNextWarning(newTruncation);
+                        }
+                    }
+                } else {
+                    //String level = warnRs.getString("Level"); 
+                    String message = r.getValue(messageFieldIndex, svf);
+
+                    SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code), code);
+                    if (currentWarning == null) {
+                        currentWarning = newWarning;
+                    } else {
+                        currentWarning.setNextWarning(newWarning);
+                    }
+                }
+            }
+
+            if (forTruncationOnly && (currentWarning != null)) {
+                throw ExceptionFactory.createException(currentWarning.getMessage(), currentWarning);
+            }
+
+            return currentWarning;
+        } catch (IOException ex) {
+            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        } finally {
+            if (rows != null) {
+                rows.close();
+            }
+        }
     }
 }

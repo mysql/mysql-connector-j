@@ -48,6 +48,7 @@ import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -135,7 +136,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             this.seed = newSeed.toString();
         } else {
             // TODO: better messaging
-            this.protocol.rejectConnection("CLIENT_SECURE_CONNECTION is required");
+            throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_SECURE_CONNECTION is required", getExceptionInterceptor());
+
         }
 
         if (((capabilityFlags & MysqlaServerSession.CLIENT_COMPRESS) != 0)
@@ -164,7 +166,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         // check SSL availability
         if (((capabilityFlags & MysqlaServerSession.CLIENT_SSL) == 0) && useSSL.getValue()) {
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_requireSSL).getValue()) {
-                this.protocol.rejectConnection(Messages.getString("MysqlIO.15"));
+                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
             }
 
             useSSL.setValue(false);
@@ -205,7 +207,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             proceedHandshakeWithPluggableAuthentication(sessState, user, password, database, buf);
         } else {
             // TODO: better messaging
-            this.protocol.rejectConnection("CLIENT_PLUGIN_AUTH is required");
+            throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_PLUGIN_AUTH is required", getExceptionInterceptor());
         }
 
     }

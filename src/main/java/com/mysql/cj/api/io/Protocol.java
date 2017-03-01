@@ -89,8 +89,6 @@ public interface Protocol {
 
     void negotiateSSLConnection(int packLength);
 
-    void rejectConnection(String message);
-
     void beforeHandshake();
 
     void afterHandshake();

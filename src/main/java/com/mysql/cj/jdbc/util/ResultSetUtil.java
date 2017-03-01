@@ -25,17 +25,9 @@ package com.mysql.cj.jdbc.util;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.sql.DataTruncation;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLWarning;
 import java.util.Map;
-
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Utilities for dealing with result sets (used in testcases and profiler).
@@ -79,130 +71,6 @@ public class ResultSetUtil {
         objIn.close();
 
         return obj;
-    }
-
-    /**
-     * Turns output of 'SHOW WARNINGS' into JDBC SQLWarning instances.
-     * 
-     * If 'forTruncationOnly' is true, only looks for truncation warnings, and
-     * actually throws DataTruncation as an exception.
-     * 
-     * @param connection
-     *            the connection to use for getting warnings.
-     * 
-     * @return the SQLWarning chain (or null if no warnings)
-     * 
-     * @throws SQLException
-     *             if the warnings could not be retrieved
-     */
-    public static SQLWarning convertShowWarningsToSQLWarnings(MysqlConnection connection) throws SQLException {
-        return convertShowWarningsToSQLWarnings(connection, 0, false);
-    }
-
-    /**
-     * Turns output of 'SHOW WARNINGS' into JDBC SQLWarning instances.
-     * 
-     * If 'forTruncationOnly' is true, only looks for truncation warnings, and
-     * actually throws DataTruncation as an exception.
-     * 
-     * @param connection
-     *            the connection to use for getting warnings.
-     * @param warningCountIfKnown
-     *            the warning count (if known), otherwise set it to 0.
-     * @param forTruncationOnly
-     *            if this method should only scan for data truncation warnings
-     * 
-     * @return the SQLWarning chain (or null if no warnings)
-     * 
-     * @throws SQLException
-     *             if the warnings could not be retrieved, or if data truncation
-     *             is being scanned for and truncations were found.
-     */
-    public static SQLWarning convertShowWarningsToSQLWarnings(MysqlConnection connection, int warningCountIfKnown, boolean forTruncationOnly)
-            throws SQLException {
-        java.sql.Statement stmt = null;
-        java.sql.ResultSet warnRs = null;
-
-        SQLWarning currentWarning = null;
-
-        try {
-            if (warningCountIfKnown < 100) {
-                stmt = ((JdbcConnection) connection).createStatement();
-
-                if (stmt.getMaxRows() != 0) {
-                    stmt.setMaxRows(0);
-                }
-            } else {
-                // stream large warning counts
-                stmt = ((JdbcConnection) connection).createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
-                stmt.setFetchSize(Integer.MIN_VALUE);
-            }
-
-            /*
-             * +---------+------+---------------------------------------------+ |
-             * Level | Code | Message |
-             * +---------+------+---------------------------------------------+ |
-             * Warning | 1265 | Data truncated for column 'field1' at row 1 |
-             * +---------+------+---------------------------------------------+
-             */
-            warnRs = stmt.executeQuery("SHOW WARNINGS");
-
-            while (warnRs.next()) {
-                int code = warnRs.getInt("Code");
-
-                if (forTruncationOnly) {
-                    if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
-                        DataTruncation newTruncation = new MysqlDataTruncation(warnRs.getString("Message"), 0, false, false, 0, 0, code);
-
-                        if (currentWarning == null) {
-                            currentWarning = newTruncation;
-                        } else {
-                            currentWarning.setNextWarning(newTruncation);
-                        }
-                    }
-                } else {
-                    //String level = warnRs.getString("Level"); 
-                    String message = warnRs.getString("Message");
-
-                    SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code), code);
-
-                    if (currentWarning == null) {
-                        currentWarning = newWarning;
-                    } else {
-                        currentWarning.setNextWarning(newWarning);
-                    }
-                }
-            }
-
-            if (forTruncationOnly && (currentWarning != null)) {
-                throw currentWarning;
-            }
-
-            return currentWarning;
-        } finally {
-            SQLException reThrow = null;
-
-            if (warnRs != null) {
-                try {
-                    warnRs.close();
-                } catch (SQLException sqlEx) {
-                    reThrow = sqlEx;
-                }
-            }
-
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException sqlEx) {
-                    // ideally, we'd use chained exceptions here, but we still support JDK-1.2.x with this driver which doesn't have them....
-                    reThrow = sqlEx;
-                }
-            }
-
-            if (reThrow != null) {
-                throw reThrow;
-            }
-        }
     }
 
 }

@@ -1401,7 +1401,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.parameterCount > 0) {
                     if (checkEOF) { // Skip the following EOF packet.
-                        this.session.readPacket();
+                        this.session.getProtocol().skipPacket();
                     }
 
                     this.parameterFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.parameterCount, null))

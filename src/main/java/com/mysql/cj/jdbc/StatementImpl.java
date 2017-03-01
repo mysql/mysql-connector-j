@@ -76,7 +76,6 @@ import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
-import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
@@ -2163,7 +2162,7 @@ public class StatementImpl implements Statement, Query {
                 return null;
             }
 
-            SQLWarning pendingWarningsFromServer = ResultSetUtil.convertShowWarningsToSQLWarnings(this.connection);
+            SQLWarning pendingWarningsFromServer = this.session.getProtocol().convertShowWarningsToSQLWarnings(0, false);
 
             if (this.warningChain != null) {
                 this.warningChain.setNextWarning(pendingWarningsFromServer);

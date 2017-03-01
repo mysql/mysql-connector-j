@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.SocketAddress;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -391,7 +390,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * Used by MiniAdmin to shutdown a MySQL server
      * 
      */
-    public void shutdownServer() throws SQLException {
+    public void shutdownServer() {
         PacketPayload packet = getSharedSendPacket();
         packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SHUTDOWN);
         sendCommand(MysqlaConstants.COM_SHUTDOWN, packet, false, 0);
@@ -502,10 +501,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public void clearInputStream() {
         this.protocol.clearInputStream();
-    }
-
-    public final PacketPayload readPacket() {
-        return this.protocol.readPacket(null);
     }
 
     public NetworkResources getNetworkResources() {

@@ -231,10 +231,6 @@ public class XProtocol implements Protocol {
         throw new NullPointerException("TODO: SSL is not yet supported in this X Protocol client");
     }
 
-    public void rejectConnection(String message) {
-        throw new NullPointerException("TODO");
-    }
-
     public void beforeHandshake() {
         throw new NullPointerException("TODO");
     }
