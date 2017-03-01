@@ -350,9 +350,26 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     JdbcConnection duplicate() throws SQLException;
 
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
-            ColumnDefinition cachedMetadata) throws SQLException;
-
+    /**
+     * Send a query to the server. Returns one of the ResultSet objects. This is
+     * synchronized, so Statement's queries will be serialized.
+     * 
+     * @param callingStatement
+     * @param sql
+     * 
+     * @param callingStatement
+     * @param sql
+     *            the SQL statement to be executed
+     * @param maxRows
+     * @param packet
+     * @param streamResults
+     * @param catalog
+     * @param cachedMetadata
+     * @param isBatch
+     * @return a ResultSet holding the results
+     * @throws SQLException
+     *             if a database error occurs
+     */
     ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
             ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException;
 

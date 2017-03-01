@@ -70,6 +70,7 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.CharsetMapping;
@@ -1740,30 +1741,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return new ConnectionImpl(this.origHostInfo);
     }
 
-    /**
-     * Send a query to the server. Returns one of the ResultSet objects. This is
-     * synchronized, so Statement's queries will be serialized.
-     * 
-     * @param callingStatement
-     * @param sql
-     *            the SQL statement to be executed
-     * @param maxRows
-     * @param packet
-     * @param resultSetType
-     * @param resultSetConcurrency
-     * @param streamResults
-     * @param queryIsSelectOnly
-     * @param catalog
-     * @param unpackFields
-     * @return a ResultSet holding the results
-     * @exception SQLException
-     *                if a database error occurs
-     */
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata) throws SQLException {
-        return execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, false);
-    }
-
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
         synchronized (getConnectionMutex()) {
@@ -1799,11 +1776,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 if (packet == null) {
                     String encoding = this.characterEncoding.getValue();
 
-                    return this.session.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, streamResults, catalog, cachedMetadata,
+                    return this.session.sendQueryString(callingStatement, sql, encoding, maxRows, streamResults, catalog, cachedMetadata,
                             callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
                 }
 
-                return this.session.sqlQueryDirect(callingStatement, null, null, packet, maxRows, streamResults, catalog, cachedMetadata,
+                return this.session.sendQueryPacket(callingStatement, packet, maxRows, streamResults, catalog, cachedMetadata,
                         callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
             } catch (CJException sqlE) {
                 // don't clobber SQL exceptions
@@ -2744,7 +2721,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             throw SQLError.createSQLException(Messages.getString("Connection.exceededConnectionLifetime"), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE,
                     getExceptionInterceptor());
         }
-        this.session.sendCommand(MysqlaConstants.COM_PING, null, null, false, null, timeoutMillis);
+        PacketPayload packet = this.session.getSharedSendPacket();
+        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_PING);
+        this.session.sendCommand(MysqlaConstants.COM_PING, packet, false, timeoutMillis);
     }
 
     /**

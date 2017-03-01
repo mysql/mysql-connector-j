@@ -80,16 +80,11 @@ public interface NativeProtocol extends Protocol {
      * 
      * @param command
      *            the MySQL protocol 'command' from MysqlDefs
-     * @param extraData
-     *            any 'string' data for the command
      * @param queryPacket
      *            a packet pre-loaded with data for the protocol (i.e.
      *            from a client-side prepared statement).
      * @param skipCheck
      *            do not call checkErrorPacket() if true
-     * @param extraDataCharEncoding
-     *            the character encoding of the extraData
-     *            parameter.
      * 
      * @return the response packet from the server
      * 
@@ -97,7 +92,7 @@ public interface NativeProtocol extends Protocol {
      *             if an I/O error or SQL error occurs
      */
 
-    PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding, int timeoutMillis);
+    PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis);
 
     /**
      * Basic protocol data types as they are defined in http://dev.mysql.com/doc/internals/en/integer.html

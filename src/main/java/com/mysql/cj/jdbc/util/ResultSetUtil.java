@@ -25,86 +25,22 @@ package com.mysql.cj.jdbc.util;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.sql.DataTruncation;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.SQLError;
-import com.mysql.cj.jdbc.io.ResultSetFactory;
-import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
  * Utilities for dealing with result sets (used in testcases and profiler).
  */
 public class ResultSetUtil {
-
-    public static StringBuilder appendResultSetSlashGStyle(StringBuilder appendTo, ResultSet rs) throws SQLException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-
-        int numFields = rsmd.getColumnCount();
-        int maxWidth = 0;
-
-        String[] fieldNames = new String[numFields];
-
-        for (int i = 0; i < numFields; i++) {
-            fieldNames[i] = rsmd.getColumnLabel(i + 1);
-
-            if (fieldNames[i].length() > maxWidth) {
-                maxWidth = fieldNames[i].length();
-            }
-        }
-
-        int rowCount = 1;
-
-        while (rs.next()) {
-            appendTo.append("*************************** ");
-            appendTo.append(rowCount++);
-            appendTo.append(". row ***************************\n");
-
-            for (int i = 0; i < numFields; i++) {
-                int leftPad = maxWidth - fieldNames[i].length();
-
-                for (int j = 0; j < leftPad; j++) {
-                    appendTo.append(" ");
-                }
-
-                appendTo.append(fieldNames[i]);
-                appendTo.append(": ");
-
-                String stringVal = rs.getString(i + 1);
-
-                if (stringVal != null) {
-                    appendTo.append(stringVal);
-                } else {
-                    appendTo.append("NULL");
-                }
-
-                appendTo.append("\n");
-            }
-
-            appendTo.append("\n");
-        }
-
-        return appendTo;
-    }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void resultSetToMap(Map mappedValues, ResultSet rs) throws SQLException {
@@ -265,103 +201,6 @@ public class ResultSetUtil {
 
             if (reThrow != null) {
                 throw reThrow;
-            }
-        }
-    }
-
-    public static void appendDeadlockStatusInformation(MysqlConnection connection, String xOpen, StringBuilder errorBuf) {
-        MysqlaSession session = (MysqlaSession) connection.getSession();
-        MysqlaProtocol protocol = session.getProtocol();
-        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
-                && (xOpen.startsWith("40") || xOpen.startsWith("41")) && protocol.getStreamingData() == null) {
-            ResultSet rs = null;
-
-            try {
-                rs = protocol.sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
-                        session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), null, -1, false,
-                        ((JdbcConnection) connection).getCatalog(), null, session::getProfilerEventHandlerInstanceFunction,
-                        new ResultSetFactory((JdbcConnection) connection, null));
-
-                if (rs.next()) {
-                    errorBuf.append("\n\n");
-                    errorBuf.append(rs.getString("Status"));
-                } else {
-                    errorBuf.append("\n\n");
-                    errorBuf.append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
-                }
-            } catch (IOException | SQLException | CJException ex) {
-                errorBuf.append("\n\n");
-                errorBuf.append(Messages.getString("MysqlIO.InnoDBStatusFailed"));
-                errorBuf.append("\n\n");
-                errorBuf.append(Util.stackTraceToString(ex));
-            } finally {
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (SQLException ex) {
-                        throw ExceptionFactory.createException(ex.getMessage(), ex);
-                    }
-                }
-            }
-        }
-
-        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
-            errorBuf.append("\n\n*** Java threads running at time of deadlock ***\n\n");
-
-            ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
-            long[] threadIds = threadMBean.getAllThreadIds();
-
-            ThreadInfo[] threads = threadMBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
-            List<ThreadInfo> activeThreads = new ArrayList<ThreadInfo>();
-
-            for (ThreadInfo info : threads) {
-                if (info != null) {
-                    activeThreads.add(info);
-                }
-            }
-
-            for (ThreadInfo threadInfo : activeThreads) {
-                // "Thread-60" daemon prio=1 tid=0x093569c0 nid=0x1b99 in Object.wait()
-
-                errorBuf.append('"');
-                errorBuf.append(threadInfo.getThreadName());
-                errorBuf.append("\" tid=");
-                errorBuf.append(threadInfo.getThreadId());
-                errorBuf.append(" ");
-                errorBuf.append(threadInfo.getThreadState());
-
-                if (threadInfo.getLockName() != null) {
-                    errorBuf.append(" on lock=" + threadInfo.getLockName());
-                }
-                if (threadInfo.isSuspended()) {
-                    errorBuf.append(" (suspended)");
-                }
-                if (threadInfo.isInNative()) {
-                    errorBuf.append(" (running in native)");
-                }
-
-                StackTraceElement[] stackTrace = threadInfo.getStackTrace();
-
-                if (stackTrace.length > 0) {
-                    errorBuf.append(" in ");
-                    errorBuf.append(stackTrace[0].getClassName());
-                    errorBuf.append(".");
-                    errorBuf.append(stackTrace[0].getMethodName());
-                    errorBuf.append("()");
-                }
-
-                errorBuf.append("\n");
-
-                if (threadInfo.getLockOwnerName() != null) {
-                    errorBuf.append("\t owned by " + threadInfo.getLockOwnerName() + " Id=" + threadInfo.getLockOwnerId());
-                    errorBuf.append("\n");
-                }
-
-                for (int j = 0; j < stackTrace.length; j++) {
-                    StackTraceElement ste = stackTrace[j];
-                    errorBuf.append("\tat " + ste.toString());
-                    errorBuf.append("\n");
-                }
             }
         }
     }

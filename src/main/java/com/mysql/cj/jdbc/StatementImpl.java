@@ -884,7 +884,7 @@ public class StatementImpl implements Statement, Query {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData);
+                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData, false);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1413,7 +1413,7 @@ public class StatementImpl implements Statement, Query {
 
                 statementBegins();
 
-                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData);
+                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData, false);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {

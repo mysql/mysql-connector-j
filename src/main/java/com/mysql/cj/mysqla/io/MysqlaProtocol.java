@@ -29,12 +29,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -58,6 +62,7 @@ import com.mysql.cj.api.io.PacketReceivedTimeHolder;
 import com.mysql.cj.api.io.PacketSentTimeHolder;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.io.SocketConnection;
+import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol;
@@ -70,8 +75,10 @@ import com.mysql.cj.api.mysqla.io.ProtocolEntityReader;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ProtocolEntity;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.Resultset.Type;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
 import com.mysql.cj.api.mysqla.result.ResultsetRows;
+import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
@@ -92,18 +99,20 @@ import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.AbstractProtocol;
 import com.mysql.cj.core.io.ExportControlled;
+import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.log.BaseMetricsHolder;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
+import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.mysqla.MysqlaConstants;
+import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.cj.mysqla.result.OkPacket;
 
@@ -123,7 +132,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     /** Track this to manually shut down. */
     protected CompressedPacketSender compressedPacketSender;
 
-    private PacketPayload sendPacket = null;
+    //private PacketPayload sendPacket = null;
     protected PacketPayload sharedSendPacket = null;
     /** Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway */
     protected PacketPayload reusablePacket = null;
@@ -139,7 +148,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     protected boolean useCompression = false;
     private ReadableProperty<Integer> maxAllowedPacket;
 
-    private boolean needToGrabQueryFromPacket;
+    //private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
 
     /** Does the server support long column info? */
@@ -179,7 +188,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     private TransactionManager transactionManager;
 
     /**
-     * The comment (if any) that we'll prepend to all statements
+     * The comment (if any) that we'll prepend to all queries
      * sent to the server (to show up in "SHOW PROCESSLIST")
      */
     private String queryComment = null;
@@ -242,12 +251,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         this.autoGenerateTestcaseScript = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
 
         this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
-        this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
+        //this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
 
         this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
         this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
 
-        this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
+        //this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
         if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
             this.useNanosForElapsedTime = true;
@@ -512,11 +521,21 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
 
         try {
-            sendCommand(MysqlaConstants.COM_INIT_DB, database, null, false, null, 0);
+            PacketPayload packet = getSharedSendPacket();
+            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_INIT_DB);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(database));
+            sendCommand(MysqlaConstants.COM_INIT_DB, packet, false, 0);
         } catch (CJException ex) {
             if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue()) {
-                sendCommand(MysqlaConstants.COM_QUERY, "CREATE DATABASE IF NOT EXISTS " + database, null, false, null, 0);
-                sendCommand(MysqlaConstants.COM_INIT_DB, database, null, false, null, 0);
+                PacketPayload packet = getSharedSendPacket();
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("CREATE DATABASE IF NOT EXISTS " + database));
+                sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                packet = getSharedSendPacket();
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_INIT_DB);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(database));
+                sendCommand(MysqlaConstants.COM_INIT_DB, packet, false, 0);
             } else {
                 throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession,
                         this.getPacketSentTimeHolder().getLastPacketSentTime(), this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ex,
@@ -575,8 +594,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public final PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding,
-            int timeoutMillis) {
+    public final PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
         this.commandCount++;
 
         this.packetReader.resetPacketSequence();
@@ -616,33 +634,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
             try {
                 clearInputStream();
+                this.packetSequence = -1;
+                send(queryPacket, queryPacket.getPosition());
 
-                //
-                // PreparedStatements construct their own packets, for efficiency's sake.
-                //
-                // If this is a generic query, we need to re-use the sending packet.
-                //
-                if (queryPacket == null) {
-                    int packLength = COMP_HEADER_LENGTH + 1 + ((extraData != null) ? extraData.length() : 0) + 2;
-
-                    if (this.sendPacket == null) {
-                        this.sendPacket = new Buffer(packLength);
-                    }
-
-                    this.packetSequence = -1;
-
-                    this.sendPacket.setPosition(0);
-                    this.sendPacket.writeInteger(IntegerDataType.INT1, command);
-
-                    if ((command == MysqlaConstants.COM_INIT_DB) || (command == MysqlaConstants.COM_QUERY) || (command == MysqlaConstants.COM_STMT_PREPARE)) {
-                        this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(extraData, extraDataCharEncoding));
-                    }
-                    send(this.sendPacket, this.sendPacket.getPosition());
-
-                } else {
-                    this.packetSequence = -1;
-                    send(queryPacket, queryPacket.getPosition()); // packet passed by PreparedStatement
-                }
             } catch (CJException ex) {
                 // don't wrap CJExceptions
                 throw ex;
@@ -785,7 +779,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
             }
 
-            ResultSetUtil.appendDeadlockStatusInformation(this.connection, xOpen, errorBuf);
+            appendDeadlockStatusInformation(this.connection, xOpen, errorBuf);
 
             if (xOpen != null) {
                 if (xOpen.startsWith("22")) {
@@ -836,27 +830,103 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     /**
-     * Send a query stored in a packet directly to the server.
+     * Build a query packet from the given string and send it to the server.
      * 
      * @param callingQuery
-     * @param resultSetConcurrency
+     * @param query
      * @param characterEncoding
-     * @param queryPacket
      * @param maxRows
-     * @param conn
      * @param streamResults
      * @param catalog
-     * @param unpackFieldInfo
-     *            should we read MYSQL_FIELD info (if available)?
+     * @param cachedMetadata
+     * @param getProfilerEventHandlerInstanceFunction
+     * @param resultSetFactory
+     * @return
      * @throws IOException
-     * 
      */
-    public final <T extends Resultset> T sqlQueryDirect(Query callingQuery, String query, String characterEncoding, PacketPayload queryPacket, int maxRows,
-            boolean streamResults, String catalog, ColumnDefinition cachedMetadata,
-            GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
+    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
+            String catalog, ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
+            ProtocolEntityFactory<T> resultSetFactory) throws IOException {
+        String statementComment = this.queryComment;
+
+        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
+            statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
+        }
+
+        // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with UTF-8, the max is 4, so pad it
+        // (4 * query) + space for headers
+        int packLength = 1 + (query.length() * 4) + 2;
+
+        byte[] commentAsBytes = null;
+
+        if (statementComment != null) {
+            commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
+
+            packLength += commentAsBytes.length;
+            packLength += 6; // for /*[space] [space]*/
+        }
+
+        // TODO decide how to safely use the shared this.sendPacket
+        //if (this.sendPacket == null) {
+        PacketPayload sendPacket = new Buffer(packLength);
+        //}
+
+        sendPacket.setPosition(0);
+
+        sendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+
+        if (commentAsBytes != null) {
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+        }
+
+        if (!this.platformDbCharsetMatches && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query));
+        } else {
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
+        }
+
+        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, catalog, cachedMetadata, getProfilerEventHandlerInstanceFunction,
+                resultSetFactory);
+    }
+
+    /**
+     * Send a query stored in a packet to the server.
+     * 
+     * @param callingQuery
+     * @param queryPacket
+     * @param maxRows
+     * @param streamResults
+     * @param catalog
+     * @param cachedMetadata
+     * @param getProfilerEventHandlerInstanceFunction
+     * @param resultSetFactory
+     * @return
+     * @throws IOException
+     */
+    public final <T extends Resultset> T sendQueryPacket(Query callingQuery, PacketPayload queryPacket, int maxRows, boolean streamResults, String catalog,
+            ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
+            ProtocolEntityFactory<T> resultSetFactory) throws IOException {
         this.statementExecutionDepth++;
 
+        byte[] queryBuf = null;
+        int oldPacketPosition = 0;
+        long queryStartTime = 0;
+        long queryEndTime = 0;
+
+        //if (this.needToGrabQueryFromPacket) {
+        queryBuf = queryPacket.getByteBuffer();
+
+        // save the packet position
+        oldPacketPosition = queryPacket.getPosition();
+
+        queryStartTime = getCurrentTimeNanosOrMillis();
+        //}
+        String query = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
+
         try {
+
             if (this.queryInterceptors != null) {
                 T interceptedResults = invokeQueryInterceptorsPre(query, callingQuery, false);
 
@@ -865,75 +935,18 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
             }
 
-            long queryStartTime = 0;
-            long queryEndTime = 0;
-
-            String statementComment = this.queryComment;
-
-            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
-                statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
-            }
-
-            if (query != null) {
-                // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with Unicode, the max is 2, so pad it
-                // (2 * query) + space for headers
-                int packLength = 1 + (query.length() * 3) + 2;
-
-                byte[] commentAsBytes = null;
-
-                if (statementComment != null) {
-                    commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
-
-                    packLength += commentAsBytes.length;
-                    packLength += 6; // for /*[space] [space]*/
-                }
-
-                if (this.sendPacket == null) {
-                    this.sendPacket = new Buffer(packLength);
-                }
-                this.sendPacket.setPosition(0);
-
-                this.sendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-
-                if (commentAsBytes != null) {
-                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
-                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
-                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
-                }
-
-                if (!this.platformDbCharsetMatches && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
-                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query));
-                } else {
-                    this.sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
-                }
-
-                queryPacket = this.sendPacket;
-            }
-
-            byte[] queryBuf = null;
-            int oldPacketPosition = 0;
-
-            if (this.needToGrabQueryFromPacket) {
-                queryBuf = queryPacket.getByteBuffer();
-
-                // save the packet position
-                oldPacketPosition = queryPacket.getPosition();
-
-                queryStartTime = getCurrentTimeNanosOrMillis();
-            }
-
             if (this.autoGenerateTestcaseScript) {
                 String testcaseQuery = null;
 
-                if (query != null) {
-                    if (statementComment != null) {
-                        testcaseQuery = "/* " + statementComment + " */ " + query;
-                    } else {
-                        testcaseQuery = query;
-                    }
-                } else {
-                    testcaseQuery = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
-                }
+                //                if (query != null) {
+                //                    if (statementComment != null) {
+                //                        testcaseQuery = "/* " + statementComment + " */ " + query;
+                //                    } else {
+                //                        testcaseQuery = query;
+                //                    }
+                //                } else {
+                testcaseQuery = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
+                //                }
 
                 StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
                 generateQueryCommentBlock(debugBuf);
@@ -943,7 +956,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             }
 
             // Send query command and sql query string
-            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, null, queryPacket, false, null, 0);
+            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, queryPacket, false, 0);
 
             long fetchBeginTime = 0;
             long fetchEndTime = 0;
@@ -1022,7 +1035,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
                         queryPacket.setPosition(1); // skip first byte 
-                        explainSlowQuery(queryPacket.readBytes(StringLengthDataType.STRING_FIXED, oldPacketPosition - 1), profileQueryToLog);
+                        explainSlowQuery(query, profileQueryToLog);
                     } else {
                         this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
                     }
@@ -1162,40 +1175,28 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
      * @param truncatedQuery
      * 
      */
-    public void explainSlowQuery(byte[] querySQL, String truncatedQuery) {
+    public void explainSlowQuery(String query, String truncatedQuery) {
         if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
                 || (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
 
-            PreparedStatement stmt = null;
-            java.sql.ResultSet rs = null;
-
             try {
-                stmt = (PreparedStatement) ((JdbcConnection) this.connection).clientPrepareStatement("EXPLAIN ?");
-                stmt.setBytesNoEscapeNoQuotes(1, querySQL);
-                rs = stmt.executeQuery();
+                PacketPayload packet = getSharedSendPacket();
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("EXPLAIN " + query));
+                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
                 StringBuilder explainResults = new StringBuilder(Messages.getString("Protocol.6"));
                 explainResults.append(truncatedQuery);
                 explainResults.append(Messages.getString("Protocol.7"));
 
-                ResultSetUtil.appendResultSetSlashGStyle(explainResults, rs);
+                appendResultSetSlashGStyle(explainResults, rs);
 
                 this.log.logWarn(explainResults.toString());
             } catch (SQLException | CJException sqlEx) {
             } catch (Exception ex) {
                 throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
-            } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-
-                    if (stmt != null) {
-                        stmt.close();
-                    }
-                } catch (SQLException ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex);
-                }
             }
         }
     }
@@ -1908,4 +1909,122 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         this.queryComment = comment;
     }
 
+    private void appendDeadlockStatusInformation(MysqlConnection conn, String xOpen, StringBuilder errorBuf) {
+        MysqlaSession session = (MysqlaSession) conn.getSession();
+        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
+                && (xOpen.startsWith("40") || xOpen.startsWith("41")) && getStreamingData() == null) {
+
+            try {
+                PacketPayload packet = getSharedSendPacket();
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW ENGINE INNODB STATUS"));
+                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+
+                Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+
+                int colIndex = 0;
+                Field f = null;
+                for (int i = 0; i < rs.getColumnDefinition().getFields().length; i++) {
+                    f = rs.getColumnDefinition().getFields()[i];
+                    if ("Status".equals(f.getName())) {
+                        colIndex = i;
+                        break;
+                    }
+                }
+
+                ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
+
+                Row r;
+                if ((r = rs.getRows().next()) != null) {
+                    errorBuf.append("\n\n").append(r.getValue(colIndex, vf));
+                } else {
+                    errorBuf.append("\n\n").append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
+                }
+            } catch (IOException | CJException ex) {
+                errorBuf.append("\n\n").append(Messages.getString("MysqlIO.InnoDBStatusFailed")).append("\n\n").append(Util.stackTraceToString(ex));
+            }
+        }
+
+        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
+            errorBuf.append("\n\n*** Java threads running at time of deadlock ***\n\n");
+
+            ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
+            long[] threadIds = threadMBean.getAllThreadIds();
+
+            ThreadInfo[] threads = threadMBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+            List<ThreadInfo> activeThreads = new ArrayList<ThreadInfo>();
+
+            for (ThreadInfo info : threads) {
+                if (info != null) {
+                    activeThreads.add(info);
+                }
+            }
+
+            for (ThreadInfo threadInfo : activeThreads) {
+                // "Thread-60" daemon prio=1 tid=0x093569c0 nid=0x1b99 in Object.wait()
+
+                errorBuf.append('"').append(threadInfo.getThreadName()).append("\" tid=").append(threadInfo.getThreadId()).append(" ")
+                        .append(threadInfo.getThreadState());
+
+                if (threadInfo.getLockName() != null) {
+                    errorBuf.append(" on lock=").append(threadInfo.getLockName());
+                }
+                if (threadInfo.isSuspended()) {
+                    errorBuf.append(" (suspended)");
+                }
+                if (threadInfo.isInNative()) {
+                    errorBuf.append(" (running in native)");
+                }
+
+                StackTraceElement[] stackTrace = threadInfo.getStackTrace();
+
+                if (stackTrace.length > 0) {
+                    errorBuf.append(" in ");
+                    errorBuf.append(stackTrace[0].getClassName()).append(".");
+                    errorBuf.append(stackTrace[0].getMethodName()).append("()");
+                }
+
+                errorBuf.append("\n");
+
+                if (threadInfo.getLockOwnerName() != null) {
+                    errorBuf.append("\t owned by ").append(threadInfo.getLockOwnerName()).append(" Id=").append(threadInfo.getLockOwnerId()).append("\n");
+                }
+
+                for (int j = 0; j < stackTrace.length; j++) {
+                    StackTraceElement ste = stackTrace[j];
+                    errorBuf.append("\tat ").append(ste.toString()).append("\n");
+                }
+            }
+        }
+    }
+
+    private StringBuilder appendResultSetSlashGStyle(StringBuilder appendTo, Resultset rs) throws SQLException {
+        Field[] fields = rs.getColumnDefinition().getFields();
+        int maxWidth = 0;
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].getColumnLabel().length() > maxWidth) {
+                maxWidth = fields[i].getColumnLabel().length();
+            }
+        }
+
+        int rowCount = 1;
+        Row r;
+        while ((r = rs.getRows().next()) != null) {
+            appendTo.append("*************************** ");
+            appendTo.append(rowCount++);
+            appendTo.append(". row ***************************\n");
+
+            for (int i = 0; i < fields.length; i++) {
+                int leftPad = maxWidth - fields[i].getColumnLabel().length();
+                for (int j = 0; j < leftPad; j++) {
+                    appendTo.append(" ");
+                }
+                appendTo.append(fields[i].getColumnLabel()).append(": ");
+                String stringVal = r.getValue(i, new StringValueFactory(fields[i].getEncoding()));
+                appendTo.append(stringVal != null ? stringVal : "NULL").append("\n");
+            }
+            appendTo.append("\n");
+        }
+        return appendTo;
+    }
 }

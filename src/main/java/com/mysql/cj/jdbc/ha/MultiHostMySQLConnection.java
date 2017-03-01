@@ -172,11 +172,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, isBatch);
     }
 
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata) throws SQLException {
-        return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata);
-    }
-
     public int getActiveStatementCount() {
         return getActiveMySQLConnection().getActiveStatementCount();
     }

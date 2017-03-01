@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -44,7 +44,7 @@ public class Buffer implements PacketPayload {
 
     private int position = 0;
 
-    static final int MAX_BYTES_TO_DUMP = 512;
+    static final int MAX_BYTES_TO_DUMP = 1024;
 
     @Override
     public String toString() {

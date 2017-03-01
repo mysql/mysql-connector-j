@@ -1009,12 +1009,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata) throws SQLException {
-        return this.mc.execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata);
-    }
-
-    @Override
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
         return this.mc.execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, isBatch);
     }

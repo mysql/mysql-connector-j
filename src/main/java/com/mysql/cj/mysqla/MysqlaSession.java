@@ -65,7 +65,6 @@ import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TimeUtil;
-import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
@@ -254,7 +253,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
         buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
         buf.writeInteger(IntegerDataType.INT2, 0);
-        sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
+        sendCommand(MysqlaConstants.COM_SET_OPTION, buf, false, 0);
     }
 
     public void disableMultiQueries() {
@@ -262,7 +261,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
         buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
         buf.writeInteger(IntegerDataType.INT2, 1);
-        sendCommand(MysqlaConstants.COM_SET_OPTION, null, buf, false, null, 0);
+        sendCommand(MysqlaConstants.COM_SET_OPTION, buf, false, 0);
     }
 
     @Override
@@ -393,7 +392,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      */
     public void shutdownServer() throws SQLException {
-        sendCommand(MysqlaConstants.COM_SHUTDOWN, null, null, false, null, 0);
+        PacketPayload packet = getSharedSendPacket();
+        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SHUTDOWN);
+        sendCommand(MysqlaConstants.COM_SHUTDOWN, packet, false, 0);
     }
 
     public void setSocketTimeout(int milliseconds) {
@@ -406,27 +407,43 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     /**
-     * Send a query stored in a packet directly to the server.
+     * Build a query packet from the given string and send it to the server.
      * 
      * @param callingQuery
-     * @param resultSetConcurrency
+     * @param query
      * @param characterEncoding
-     * @param queryPacket
      * @param maxRows
-     * @param conn
-     * @param resultSetType
-     * @param resultSetConcurrency
      * @param streamResults
      * @param catalog
-     * @param unpackFieldInfo
-     *            should we read MYSQL_FIELD info (if available)?
+     * @param cachedMetadata
+     * @param resultSetFactory
+     * @return
      * @throws IOException
-     * 
      */
-    public final <T extends Resultset> T sqlQueryDirect(StatementImpl callingQuery, String query, String characterEncoding, PacketPayload queryPacket,
-            int maxRows, boolean streamResults, String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
+    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
+            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
 
-        return this.protocol.sqlQueryDirect(callingQuery, query, characterEncoding, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
+        return this.protocol.sendQueryString(callingQuery, query, characterEncoding, maxRows, streamResults, catalog, cachedMetadata,
+                this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
+    }
+
+    /**
+     * Send a query stored in a packet to the server.
+     * 
+     * @param callingQuery
+     * @param queryPacket
+     * @param maxRows
+     * @param streamResults
+     * @param catalog
+     * @param cachedMetadata
+     * @param resultSetFactory
+     * @return
+     * @throws IOException
+     */
+    public final <T extends Resultset> T sendQueryPacket(Query callingQuery, PacketPayload queryPacket, int maxRows, boolean streamResults, String catalog,
+            ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
+
+        return this.protocol.sendQueryPacket(callingQuery, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
                 this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
     }
 
@@ -467,9 +484,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.protocol.getCurrentTimeNanosOrMillis();
     }
 
-    public final PacketPayload sendCommand(int command, String extraData, PacketPayload queryPacket, boolean skipCheck, String extraDataCharEncoding,
-            int timeoutMillis) {
-        return this.protocol.sendCommand(command, extraData, queryPacket, skipCheck, extraDataCharEncoding, timeoutMillis);
+    public final PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
+        return this.protocol.sendCommand(command, queryPacket, skipCheck, timeoutMillis);
     }
 
     public long getSlowQueryThreshold() {

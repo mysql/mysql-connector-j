@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -231,7 +231,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                 sharedSendPacket.writeInteger(IntegerDataType.INT4, this.owner.getOwningStatementServerId());
                 sharedSendPacket.writeInteger(IntegerDataType.INT4, numRowsToFetch);
 
-                this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, null, sharedSendPacket, true, null, 0);
+                this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, sharedSendPacket, true, 0);
 
                 Row row = null;
 

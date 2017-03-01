@@ -90,6 +90,7 @@ import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -4760,6 +4761,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
             @Override
             public void setNextResultset(Resultset nextResultset) {
+            }
+
+            @Override
+            public ResultsetRows getRows() {
+                return null;
             }
         };
 

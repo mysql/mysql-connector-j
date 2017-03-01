@@ -905,7 +905,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                             packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_CLOSE);
                             packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
-                            this.session.sendCommand(MysqlaConstants.COM_STMT_CLOSE, null, packet, true, null, 0);
+                            this.session.sendCommand(MysqlaConstants.COM_STMT_CLOSE, packet, true, 0);
                         } catch (CJException sqlEx) {
                             exceptionDuringClose = sqlEx;
                         }
@@ -1159,7 +1159,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 statementBegins();
 
-                PacketPayload resultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, null, packet, false, null, 0);
+                PacketPayload resultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_EXECUTE, packet, false, 0);
 
                 long queryEndTime = 0L;
 
@@ -1264,7 +1264,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (queryWasSlow && this.explainSlowQueries.getValue()) {
-                    this.session.getProtocol().explainSlowQuery(StringUtils.getBytes(queryAsString), queryAsString);
+                    this.session.getProtocol().explainSlowQuery(queryAsString, queryAsString);
                 }
 
                 this.sendTypesToServer = false;
@@ -1331,7 +1331,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 packet.writeBytes(StringLengthDataType.STRING_FIXED, (byte[]) longData.value);
 
-                this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
             } else if (value instanceof InputStream) {
                 storeStream(parameterIndex, packet, (InputStream) value);
             } else if (value instanceof java.sql.Blob) {
@@ -1371,7 +1371,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                     characterEncoding = connectionEncoding;
                 }
 
-                PacketPayload prepareResultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_PREPARE, sql, null, false, characterEncoding, 0);
+                PacketPayload packet = this.session.getSharedSendPacket();
+                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_PREPARE);
+                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(sql, characterEncoding));
+
+                PacketPayload prepareResultPacket = this.session.sendCommand(MysqlaConstants.COM_STMT_PREPARE, packet, false, 0);
 
                 // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
                 prepareResultPacket.setPosition(1);
@@ -1458,7 +1462,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             packet.writeInteger(IntegerDataType.INT4, this.serverStatementId);
 
             try {
-                this.session.sendCommand(MysqlaConstants.COM_STMT_RESET, null, packet, false, null, 0);
+                this.session.sendCommand(MysqlaConstants.COM_STMT_RESET, packet, false, 0);
             } finally {
                 this.session.clearInputStream();
             }
@@ -2025,7 +2029,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                        this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
 
                         bytesInPacket = 0;
                         packet.setPosition(0);
@@ -2036,11 +2040,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
                 }
 
                 if (!readAny) {
-                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") + ioEx.toString(),
@@ -2092,7 +2096,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     if (bytesInPacket >= packetIsFullAt) {
                         bytesReadAtLastSend = totalBytesRead;
 
-                        this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                        this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
 
                         bytesInPacket = 0;
                         packet.setPosition(0);
@@ -2103,11 +2107,11 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
 
                 if (totalBytesRead != bytesReadAtLastSend) {
-                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
                 }
 
                 if (!readAny) {
-                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, null, packet, true, null, 0);
+                    this.session.sendCommand(MysqlaConstants.COM_STMT_SEND_LONG_DATA, packet, true, 0);
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") + ioEx.toString(),
