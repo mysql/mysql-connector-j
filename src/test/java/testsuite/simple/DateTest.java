@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -38,7 +38,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 import testsuite.BaseTestCase;
 
@@ -161,7 +161,7 @@ public class DateTest extends BaseTestCase {
             try {
                 this.rs.getTimestamp(1);
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testNanosParsing");
@@ -248,28 +248,28 @@ public class DateTest extends BaseTestCase {
                 this.rs.getDate(1);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getTimestamp(1);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getDate(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getTimestamp(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             PreparedStatement exceptionPrepStmt = exceptionConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
@@ -280,7 +280,7 @@ public class DateTest extends BaseTestCase {
                 this.rs.getDate(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
         } finally {

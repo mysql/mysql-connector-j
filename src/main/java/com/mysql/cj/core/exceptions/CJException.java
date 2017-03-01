@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,12 @@ package com.mysql.cj.core.exceptions;
 public class CJException extends RuntimeException {
 
     private static final long serialVersionUID = -8618536991444733607L;
+
+    /**
+     * We can't override the {@link Throwable#detailMessage} directly because it has a private accessibility,
+     * thus for that need we use this protected variable and override {@link #getMessage()}
+     */
+    protected String exceptionMessage;
 
     /**
      * @serial
@@ -79,10 +85,23 @@ public class CJException extends RuntimeException {
     }
 
     public boolean isTransient() {
-        return isTransient;
+        return this.isTransient;
     }
 
     public void setTransient(boolean isTransient) {
         this.isTransient = isTransient;
+    }
+
+    @Override
+    public String getMessage() {
+        return this.exceptionMessage != null ? this.exceptionMessage : super.getMessage();
+    }
+
+    public void appendMessage(String messageToAppend) {
+        String origMessage = getMessage();
+        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
+        messageBuf.append(origMessage);
+        messageBuf.append(messageToAppend);
+        this.exceptionMessage = messageBuf.toString();
     }
 }

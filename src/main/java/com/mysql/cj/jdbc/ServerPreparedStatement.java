@@ -47,6 +47,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
@@ -60,6 +61,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
@@ -579,7 +581,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") + Messages.getString("ServerPreparedStatement.3"),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             clearWarnings();
@@ -690,6 +692,21 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
+    private static SQLException appendMessageToException(SQLException sqlEx, String messageToAppend, ExceptionInterceptor interceptor) {
+        String origMessage = sqlEx.getMessage();
+        String sqlState = sqlEx.getSQLState();
+        int vendorErrorCode = sqlEx.getErrorCode();
+
+        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
+        messageBuf.append(origMessage);
+        messageBuf.append(messageToAppend);
+
+        SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(messageBuf.toString(), sqlState, vendorErrorCode, interceptor);
+        sqlExceptionWithNewMessage.setStackTrace(sqlEx.getStackTrace());
+
+        return sqlExceptionWithNewMessage;
+    }
+
     @Override
     protected com.mysql.cj.api.jdbc.result.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, PacketPayload sendPacket,
             boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
@@ -712,7 +729,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     messageBuf.append(extractedSql);
                     messageBuf.append("\n\n");
 
-                    sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
+                    sqlEx = appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
                 }
 
                 throw sqlEx;
@@ -721,7 +738,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     this.session.dumpPacketRingBuffer();
                 }
 
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
 
                 if (this.dumpQueriesOnException.getValue()) {
                     String extractedSql = toString();
@@ -730,7 +747,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     messageBuf.append(extractedSql);
                     messageBuf.append("\n\n");
 
-                    sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
+                    sqlEx = appendMessageToException(sqlEx, messageBuf.toString(), getExceptionInterceptor());
                 }
 
                 throw sqlEx;
@@ -763,7 +780,7 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
 
             if (this.parameterBindings.length == 0) {
-                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.8"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.8"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
 
@@ -771,7 +788,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if ((parameterIndex < 0) || (parameterIndex >= this.parameterBindings.length)) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1)
-                        + Messages.getString("ServerPreparedStatement.10") + this.parameterBindings.length, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                        + Messages.getString("ServerPreparedStatement.10") + this.parameterBindings.length, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
 
@@ -1032,7 +1049,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                         if (firstFound && boundTimeToCheck != this.parameterBindings[i].boundBeforeExecutionNum) {
                             throw SQLError.createSQLException(
                                     Messages.getString("ServerPreparedStatement.11") + Messages.getString("ServerPreparedStatement.12"),
-                                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                         }
                         firstFound = true;
                         boundTimeToCheck = this.parameterBindings[i].boundBeforeExecutionNum;
@@ -1049,7 +1066,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 if (!this.parameterBindings[i].isSet) {
                     throw SQLError.createSQLException(
                             Messages.getString("ServerPreparedStatement.13") + (i + 1) + Messages.getString("ServerPreparedStatement.14"),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
             }
 
@@ -1340,7 +1357,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 storeReader(parameterIndex, packet, (Reader) value);
             } else {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'",
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
     }
@@ -1423,7 +1440,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     messageBuf.append("\n\nQuery being prepared when exception was thrown:\n\n");
                     messageBuf.append(this.originalSql);
 
-                    ex = ConnectionImpl.appendMessageToException(ex, messageBuf.toString(), getExceptionInterceptor());
+                    ex = appendMessageToException(ex, messageBuf.toString(), getExceptionInterceptor());
                 }
 
                 throw ex;
@@ -1670,7 +1687,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (!this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
                     && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-                throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.64", new Object[] { x }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
 
             }
@@ -1918,7 +1935,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 throw SQLError.createSQLException(
                         Messages.getString("ServerPreparedStatement.22")
                                 + this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() + "'",
-                        SQLError.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, uEE, getExceptionInterceptor());
             }
         }
     }
@@ -2048,7 +2065,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.24") + ioEx.toString(),
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
@@ -2115,7 +2132,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 }
             } catch (IOException ioEx) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.25") + ioEx.toString(),
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                 sqlEx.initCause(ioEx);
 
                 throw sqlEx;
@@ -2373,7 +2390,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 return pstmt;
             } catch (UnsupportedEncodingException e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), SQLError.SQL_STATE_GENERAL_ERROR,
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         getExceptionInterceptor());
                 sqlEx.initCause(e);
 

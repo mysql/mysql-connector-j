@@ -25,7 +25,7 @@ package com.mysql.cj.core.io;
 
 import java.util.LinkedList;
 
-import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -37,7 +37,7 @@ import com.mysql.cj.api.log.Log;
 
 public abstract class AbstractProtocol implements Protocol {
 
-    protected MysqlConnection connection;
+    protected Session session;
     protected SocketConnection socketConnection;
 
     protected PropertySet propertySet;

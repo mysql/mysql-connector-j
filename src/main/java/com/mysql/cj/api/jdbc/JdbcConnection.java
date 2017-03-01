@@ -31,11 +31,8 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
-import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaSession;
 
@@ -344,34 +341,9 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     void abortInternal() throws SQLException;
 
-    void checkClosed();
-
     boolean isProxySet();
 
     JdbcConnection duplicate() throws SQLException;
-
-    /**
-     * Send a query to the server. Returns one of the ResultSet objects. This is
-     * synchronized, so Statement's queries will be serialized.
-     * 
-     * @param callingStatement
-     * @param sql
-     * 
-     * @param callingStatement
-     * @param sql
-     *            the SQL statement to be executed
-     * @param maxRows
-     * @param packet
-     * @param streamResults
-     * @param catalog
-     * @param cachedMetadata
-     * @param isBatch
-     * @return a ResultSet holding the results
-     * @throws SQLException
-     *             if a database error occurs
-     */
-    ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults, String catalog,
-            ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException;
 
     CachedResultSetMetaData getCachedMetaData(String sql);
 
@@ -419,4 +391,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * Non standard methods:
      */
     ClientInfoProvider getClientInfoProviderImpl() throws SQLException;
+
+    void cleanup(Throwable whyCleanedUp);
 }

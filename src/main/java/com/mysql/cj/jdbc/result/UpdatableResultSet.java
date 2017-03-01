@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -49,6 +49,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
 import com.mysql.cj.core.result.Field;
@@ -226,7 +227,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.catalog = fields[0].getDatabaseName();
 
                 if ((this.catalog == null) || (this.catalog.length() == 0)) {
-                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
             }
@@ -1144,7 +1145,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
                 }
             } else {
-                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                        getExceptionInterceptor());
             }
         } finally {
             if (rs != null) {
@@ -1586,7 +1588,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetType),
-                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
 
@@ -2233,7 +2235,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 asString = new String(asBytes, forcedEncoding);
             }
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
@@ -2259,7 +2261,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
     }
 

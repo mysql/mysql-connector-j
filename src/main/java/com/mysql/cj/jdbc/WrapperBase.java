@@ -31,8 +31,8 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Base class for all wrapped instances created by LogicalHandle
@@ -50,7 +50,7 @@ abstract class WrapperBase {
      */
     protected void checkAndFireConnectionError(SQLException sqlEx) throws SQLException {
         if (this.pooledConnection != null) {
-            if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+            if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                 this.pooledConnection.callConnectionEventListeners(MysqlPooledConnection.CONNECTION_ERROR_EVENT, sqlEx);
             }
         }

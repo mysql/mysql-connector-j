@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,7 @@ import java.sql.Savepoint;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
@@ -84,7 +85,7 @@ public class MysqlSavepoint implements Savepoint {
      */
     MysqlSavepoint(String name, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (name == null || name.length() == 0) {
-            throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         this.savepointName = name;
@@ -96,7 +97,7 @@ public class MysqlSavepoint implements Savepoint {
      * @see java.sql.Savepoint#getSavepointId()
      */
     public int getSavepointId() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
     }
 
     /**

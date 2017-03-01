@@ -23,8 +23,8 @@
 
 package com.mysql.cj.api.io;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
@@ -53,7 +53,7 @@ public interface Protocol {
      * 
      * @note MysqlConnection dependency will be removed.
      */
-    void init(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, TransactionManager transactionManager);
+    void init(Session session, SocketConnection socketConnection, PropertySet propertySet, TransactionManager transactionManager);
 
     PropertySet getPropertySet();
 

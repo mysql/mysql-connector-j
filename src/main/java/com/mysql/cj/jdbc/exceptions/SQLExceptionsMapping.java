@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,6 +37,7 @@ import com.mysql.cj.core.exceptions.DataConversionException;
 import com.mysql.cj.core.exceptions.DataReadException;
 import com.mysql.cj.core.exceptions.DataTruncationException;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.NumberOutOfRange;
 import com.mysql.cj.core.exceptions.OperationCancelledException;
 import com.mysql.cj.core.exceptions.SSLParamsException;
@@ -60,36 +61,36 @@ public class SQLExceptionsMapping {
             return new ConnectionFeatureNotAvailableException(ex.getMessage(), ex);
 
         } else if (ex instanceof SSLParamsException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_BAD_SSL_PARAMS, 0, false, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_BAD_SSL_PARAMS, 0, false, ex, interceptor);
 
         } else if (ex instanceof ConnectionIsClosedException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN, ex, interceptor);
 
         } else if (ex instanceof InvalidConnectionAttributeException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, ex, interceptor);
 
         } else if (ex instanceof UnableToConnectException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, ex, interceptor);
 
         } else if (ex instanceof StatementIsClosedException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof WrongArgumentException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof StringIndexOutOfBoundsException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof NumberOutOfRange) {
             // must come before DataReadException as it's more specific
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, ex, interceptor);
 
         } else if (ex instanceof DataConversionException) {
             // must come before DataReadException as it's more specific
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, ex, interceptor);
 
         } else if (ex instanceof DataReadException) {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
 
         } else if (ex instanceof DataTruncationException) {
             return new MysqlDataTruncation(((DataTruncationException) ex).getMessage(), ((DataTruncationException) ex).getIndex(),
@@ -116,7 +117,7 @@ public class SQLExceptionsMapping {
                     ((CJException) ex).isTransient(), interceptor);
 
         } else {
-            return SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_GENERAL_ERROR, ex, interceptor);
+            return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex, interceptor);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,6 +29,7 @@ import com.mysql.cj.api.exceptions.StreamingNotifiable;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 /**
  * An exception to represent communications errors with the database.
@@ -68,7 +69,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
      */
     @Override
     public String getSQLState() {
-        return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
+        return MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE;
     }
 
     public void setWasStreamingResults() {

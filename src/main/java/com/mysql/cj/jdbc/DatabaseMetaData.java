@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -192,7 +192,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         TypeDescriptor(String typeInfo, String nullabilityInfo) throws SQLException {
             if (typeInfo == null) {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.0"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             this.mysqlType = MysqlType.getByName(typeInfo);
@@ -907,7 +908,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default:
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.1"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                        getExceptionInterceptor());
         }
 
         row[12] = null;
@@ -1298,7 +1300,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, final String table, int scope, boolean nullable) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         Field[] fields = new Field[8];
@@ -1381,7 +1384,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             }
                         }
                     } catch (SQLException sqlEx) {
-                        if (!SQLError.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
+                        if (!MysqlErrorNumbers.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
                             throw sqlEx;
                         }
                     } finally {
@@ -1424,7 +1427,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 parameterNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.3"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -1513,7 +1517,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue()
                         && (procedureDef == null || procedureDef.length() == 0)) {
-                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.4"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.4"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                            getExceptionInterceptor());
                 }
 
                 try {
@@ -1571,7 +1576,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     if ((openParenIndex == -1) || (endOfParamDeclarationIndex == -1)) {
                         // parse error?
-                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR,
+                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                 getExceptionInterceptor());
                     }
 
@@ -1638,7 +1643,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
                         }
                     } else if (possibleParamName.equalsIgnoreCase("INOUT")) {
@@ -1648,7 +1653,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
                         }
                     } else if (possibleParamName.equalsIgnoreCase("IN")) {
@@ -1658,7 +1663,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (declarationTok.hasMoreTokens()) {
                             paramName = declarationTok.nextToken();
                         } else {
-                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), SQLError.SQL_STATE_GENERAL_ERROR,
+                            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.6"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                     getExceptionInterceptor());
                         }
                     } else {
@@ -1682,7 +1687,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         typeDesc = new TypeDescriptor(typeInfo, "YES");
                     } else {
-                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.7"), SQLError.SQL_STATE_GENERAL_ERROR,
+                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.7"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                 getExceptionInterceptor());
                     }
 
@@ -1700,7 +1705,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         resultRows.add(row);
                     }
                 } else {
-                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.8"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.8"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                            getExceptionInterceptor());
                 }
             }
         } else {
@@ -1745,7 +1751,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
             } else {
                 // we should always get closed paren of some sort
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                        getExceptionInterceptor());
             }
         }
 
@@ -1811,7 +1818,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // We can't parse it.
 
-        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.5"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     }
 
     /**
@@ -2071,7 +2078,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -2246,7 +2254,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     if (realOrdinal != null) {
                                         rowVal[16] = realOrdinal.toString().getBytes();
                                     } else {
-                                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.10"), SQLError.SQL_STATE_GENERAL_ERROR,
+                                        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.10"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                                                 getExceptionInterceptor());
                                     }
                                 }
@@ -2340,7 +2348,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable, final String foreignCatalog,
             final String foreignSchema, final String foreignTable) throws SQLException {
         if (primaryTable == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -2565,7 +2574,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getExportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -2715,7 +2725,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         Field[] fields = createFkMetadataFields();
@@ -3159,7 +3170,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "PK_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
 
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         final ArrayList<Row> rows = new ArrayList<Row>();
@@ -3317,7 +3329,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 // "User does not have access to metadata required to determine " +
                 // "stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
                 // "to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-                // SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                // MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             } else {
                 Collections.sort(procsOrFuncsToExtractList);
             }
@@ -3408,7 +3420,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -3553,7 +3566,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         if (parsedInfo.localColumnsList.size() != parsedInfo.referencedColumnsList.size()) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.12"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.12"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         Iterator<String> localColumnNames = parsedInfo.localColumnsList.iterator();
@@ -3720,7 +3733,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -3833,7 +3847,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -3877,7 +3892,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic) + " LIKE "
                                     + StringUtils.quoteIdentifier(tableNamePat, "'", true));
                         } catch (SQLException sqlEx) {
-                            if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+                            if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                                 throw sqlEx;
                             }
 
@@ -4312,7 +4327,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
 
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         Field[] fields = new Field[8];
@@ -4366,7 +4382,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             }
                         }
                     } catch (SQLException sqlEx) {
-                        if (!SQLError.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
+                        if (!MysqlErrorNumbers.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
                             throw sqlEx;
                         }
                     } finally {
@@ -4557,7 +4573,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfOpenParenLocalColumns == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.14"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.14"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String constraintName = StringUtils.unQuoteIdentifier(keysComment.substring(0, indexOfOpenParenLocalColumns).trim(), this.quotedId);
@@ -4569,7 +4585,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenLocalColumns == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.15"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.15"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String localColumnNamesString = keysCommentTrimmed.substring(1, indexOfCloseParenLocalColumns);
@@ -4577,14 +4593,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfRefer == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.16"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.16"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         int indexOfOpenParenReferCol = StringUtils.indexOfIgnoreCase(indexOfRefer, keysCommentTrimmed, "(", this.quotedId, this.quotedId,
                 StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfOpenParenReferCol == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.17"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.17"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referCatalogTableString = keysCommentTrimmed.substring(indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
@@ -4592,7 +4608,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referCatalogTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfSlash == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.18"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.18"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referCatalog = StringUtils.unQuoteIdentifier(referCatalogTableString.substring(0, indexOfSlash), this.quotedId);
@@ -4602,7 +4618,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 StringUtils.SEARCH_MODE__ALL);
 
         if (indexOfCloseParenRefer == -1) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.19"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.19"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         String referColumnNamesString = keysCommentTrimmed.substring(indexOfOpenParenReferCol + 1, indexOfCloseParenRefer);
@@ -5166,18 +5182,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
                     return true;
                 }
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
 
             case ResultSet.TYPE_FORWARD_ONLY:
                 if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
                     return true;
                 }
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
 
             case ResultSet.TYPE_SCROLL_SENSITIVE:
                 return false;
             default:
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
         }
 
     }
@@ -5559,7 +5578,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
         }
     }
 

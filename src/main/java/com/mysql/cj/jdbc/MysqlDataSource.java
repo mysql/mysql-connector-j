@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,6 +41,7 @@ import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
@@ -412,7 +413,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
         if (connUrl.getType() == null) {
             throw SQLError.createSQLException(Messages.getString("MysqlDataSource.BadUrl", new Object[] { jdbcUrlToUse }),
-                    SQLError.SQL_STATE_CONNECTION_FAILURE, null);
+                    MysqlErrorNumbers.SQL_STATE_CONNECTION_FAILURE, null);
         }
         Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);

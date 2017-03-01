@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,7 @@ import com.mysql.cj.api.Session;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
@@ -73,7 +74,8 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private void checkAvailable() throws SQLException {
         if (this.metadata == null || this.metadata.getFields() == null) {
-            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE,
+                    this.exceptionInterceptor);
         }
     }
 
@@ -155,13 +157,13 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private void checkBounds(int paramNumber) throws SQLException {
         if (paramNumber < 1) {
-            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.1", new Object[] { paramNumber }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.1", new Object[] { paramNumber }),
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (paramNumber > this.parameterCount) {
             throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.2", new Object[] { paramNumber, this.parameterCount }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 
         }
     }
@@ -183,7 +185,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 }

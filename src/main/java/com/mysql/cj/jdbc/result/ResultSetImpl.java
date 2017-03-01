@@ -74,6 +74,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.BigDecimalValueFactory;
 import com.mysql.cj.core.io.BinaryStreamValueFactory;
 import com.mysql.cj.core.io.BooleanValueFactory;
@@ -450,7 +451,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
 
         if (c == null) {
             throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         return c;
@@ -471,12 +472,12 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
                                 new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if ((columnIndex > this.columnDefinition.getFields().length)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_high",
                                 new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.profileSQL || this.useUsageAdvisor) {
@@ -496,7 +497,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         checkClosed();
 
         if (!this.onValidRow) {
-            throw SQLError.createSQLException(this.invalidRowReason, SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(this.invalidRowReason, MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
     }
 
@@ -573,7 +574,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             if (index == -1) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column____112") + columnName + Messages.getString("ResultSet.___not_found._113"),
-                        SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
             }
 
             return index;
@@ -839,7 +840,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
                     Messages.getString("ResultSet.Bad_format_for_BigInteger", new Object[] { Integer.valueOf(columnIndex), stringVal }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -1033,7 +1034,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
                 asString = new String(asBytes, forcedEncoding);
             }
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
@@ -1060,7 +1061,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     }
 
     public String getCursorName() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("ResultSet.Positioned_Update_not_supported"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
+        throw SQLError.createSQLException(Messages.getString("ResultSet.Positioned_Update_not_supported"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE,
                 getExceptionInterceptor());
     }
 
@@ -1184,7 +1185,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
                     } catch (NumberFormatException ex) {
                         throw SQLError.createSQLException(
                                 Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
                 }
                 return null;
@@ -1274,7 +1275,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     @SuppressWarnings("unchecked")
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         if (type == null) {
-            throw SQLError.createSQLException("Type parameter can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException("Type parameter can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         if (type.equals(String.class)) {
@@ -1371,15 +1372,15 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             try {
                 return (T) getObject(columnIndex);
             } catch (ClassCastException cce) {
-                SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 sqlEx.initCause(cce);
 
                 throw sqlEx;
             }
         }
 
-        throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+        throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                 getExceptionInterceptor());
 
     }
@@ -1459,7 +1460,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
                     } catch (NumberFormatException ex) {
                         throw SQLError.createSQLException(
                                 Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
-                                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     return val;
@@ -1569,7 +1570,8 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             }
 
         } catch (SQLException sqlEx) {
-            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                    getExceptionInterceptor());
         }
 
     }
@@ -1600,7 +1602,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         try {
             return new URL(val);
         } catch (MalformedURLException mfe) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____104") + val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____104") + val + "'", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
     }
@@ -1615,7 +1617,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         try {
             return new URL(val);
         } catch (MalformedURLException mfe) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____107") + val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____107") + val + "'", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
     }
@@ -1688,8 +1690,8 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             boolean b;
 
             if (!hasRows()) {
-                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (this.rowData.size() == 0) {
@@ -1946,8 +1948,8 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public void setFetchDirection(int direction) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE) && (direction != FETCH_UNKNOWN)) {
-                throw SQLError.createSQLException(Messages.getString("ResultSet.Illegal_value_for_fetch_direction_64"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.fetchDirection = direction;
@@ -1958,7 +1960,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         synchronized (checkClosed().getConnectionMutex()) {
             if (rows < 0) { /* || rows > getMaxRows() */
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.fetchSize = rows;
@@ -2479,7 +2481,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 

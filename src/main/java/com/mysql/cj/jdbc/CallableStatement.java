@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -58,6 +58,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
@@ -249,7 +250,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             if ((paramIndex < 0) || (localParamIndex >= this.numParameters)) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.11", new Object[] { paramIndex, this.numParameters }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -368,7 +369,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 return iface.cast(this);
             } catch (ClassCastException cce) {
                 throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
     }
@@ -592,8 +593,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 paramDescriptor.isIn = true;
                 paramDescriptor.inOutModifier = java.sql.DatabaseMetaData.procedureColumnInOut;
             } else if (!paramDescriptor.isOut) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.9", new Object[] { paramIndex }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.9", new Object[] { paramIndex }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.hasOutputParams = true;
@@ -622,7 +623,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      */
     private void checkStreamability() throws SQLException {
         if (this.hasOutputParams && createStreamingResultSet()) {
-            throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE,
+                    getExceptionInterceptor());
         }
     }
 
@@ -881,7 +883,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             return nameBuf.toString();
         }
 
-        throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+        throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     }
 
     /**
@@ -902,7 +904,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             }
 
             if (this.noAccessToProcedureBodies) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.23"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.23"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             return mangleParameterName(paramNameIn);
@@ -1325,23 +1328,24 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.noAccessToProcedureBodies) {
                 throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if ((paramName == null) || (paramName.length() == 0)) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             if (this.paramInfo == null) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.3", new Object[] { paramName }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.3", new Object[] { paramName }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             CallableStatementParam namedParamInfo = this.paramInfo.getParameter(paramName);
 
             if (forOut && !namedParamInfo.isOut) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.5", new Object[] { paramName }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.5", new Object[] { paramName }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.placeholderToParameterIndexMap == null) {
@@ -1354,8 +1358,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 }
             }
 
-            throw SQLError.createSQLException(Messages.getString("CallableStatement.6", new Object[] { paramName }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("CallableStatement.6", new Object[] { paramName }),
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -1466,10 +1470,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             if (this.outputParameterResults == null) {
                 if (this.paramInfo.numberOfParameters() == 0) {
-                    throw SQLError.createSQLException(Messages.getString("CallableStatement.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                    throw SQLError.createSQLException(Messages.getString("CallableStatement.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                        getExceptionInterceptor());
             }
 
             return this.outputParameterResults;
@@ -1745,8 +1750,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             int rsIndex = this.parameterIndexToRsIndex[localParamIndex];
 
             if (rsIndex == NOT_OUTPUT_PARAMETER_INDICATOR) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[] { paramIndex }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[] { paramIndex }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             return rsIndex + 1;
@@ -1764,7 +1769,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             registerOutParameter(parameterIndex, mt);
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
-                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
 
@@ -1802,7 +1807,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             registerOutParameter(parameterIndex, mt, typeName);
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(sqlType),
-                    SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
 
@@ -2179,7 +2184,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                             if (!found) {
                                 throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[] { outParamInfo.paramName }),
-                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                             }
                         }
 
@@ -2601,8 +2606,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     @Override
     public long[] executeLargeBatch() throws SQLException {
         if (this.hasOutputParams) {
-            throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
+            throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters",
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         return super.executeLargeBatch();

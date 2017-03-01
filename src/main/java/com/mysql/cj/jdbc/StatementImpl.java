@@ -353,7 +353,7 @@ public class StatementImpl implements Statement, Query {
      */
     public StatementImpl(JdbcConnection c, String catalog) throws SQLException {
         if ((c == null) || c.isClosed()) {
-            throw SQLError.createSQLException(Messages.getString("Statement.0"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null);
+            throw SQLError.createSQLException(Messages.getString("Statement.0"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN, null);
         }
 
         this.connection = c;
@@ -520,7 +520,7 @@ public class StatementImpl implements Statement, Query {
                     || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DELETE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DROP")
                     || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "CREATE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")
                     || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "TRUNCATE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "RENAME")) {
-                throw SQLError.createSQLException(Messages.getString("Statement.57"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
     }
@@ -536,11 +536,11 @@ public class StatementImpl implements Statement, Query {
      */
     protected void checkNullOrEmptyQuery(String sql) throws SQLException {
         if (sql == null) {
-            throw SQLError.createSQLException(Messages.getString("Statement.59"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Statement.59"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         if (sql.length() == 0) {
-            throw SQLError.createSQLException(Messages.getString("Statement.61"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Statement.61"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -825,8 +825,8 @@ public class StatementImpl implements Statement, Query {
             this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys && firstNonWsChar == 'I' && containsOnDuplicateKeyInString(sql);
 
             if (!maybeSelect && locallyScopedConn.isReadOnly()) {
-                throw SQLError.createSQLException(Messages.getString("Statement.27") + Messages.getString("Statement.28"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.27") + Messages.getString("Statement.28"),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             try {
@@ -883,7 +883,8 @@ public class StatementImpl implements Statement, Query {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData, false);
+                        rs = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, this.maxRows, null, createStreamingResultSet(),
+                                getResultSetFactory(), this.currentCatalog, cachedMetaData, false);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1007,8 +1008,8 @@ public class StatementImpl implements Statement, Query {
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (locallyScopedConn.isReadOnly()) {
-                throw SQLError.createSQLException(Messages.getString("Statement.34") + Messages.getString("Statement.35"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.34") + Messages.getString("Statement.35"),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             implicitlyCloseAllOpenResults();
@@ -1412,7 +1413,8 @@ public class StatementImpl implements Statement, Query {
 
                 statementBegins();
 
-                this.results = locallyScopedConn.execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), this.currentCatalog, cachedMetaData, false);
+                this.results = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, this.maxRows, null, createStreamingResultSet(),
+                        getResultSetFactory(), this.currentCatalog, cachedMetaData, false);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
@@ -1477,7 +1479,7 @@ public class StatementImpl implements Statement, Query {
                 } catch (SQLException e) {
                     throw e;
                 } catch (Exception e) {
-                    throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, e, getExceptionInterceptor());
+                    throw SQLError.createSQLException(e.getMessage(), MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, e, getExceptionInterceptor());
                 }
             } else {
                 this.connection.ping();
@@ -1504,7 +1506,7 @@ public class StatementImpl implements Statement, Query {
     }
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
-        c.execSQL(this, nonQuery, -1, null, false, this.currentCatalog, null, false).close();
+        c.getSession().execSQL(c, this, nonQuery, -1, null, false, getResultSetFactory(), this.currentCatalog, null, false).close();
     }
 
     /**
@@ -1550,8 +1552,8 @@ public class StatementImpl implements Statement, Query {
             }
 
             if (locallyScopedConn.isReadOnly(false)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.42") + Messages.getString("Statement.43"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.42") + Messages.getString("Statement.43"),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) {
@@ -1586,7 +1588,8 @@ public class StatementImpl implements Statement, Query {
                 statementBegins();
 
                 // null catalog: force read of field info on DML
-                rs = locallyScopedConn.execSQL(this, sql, -1, null, false, this.currentCatalog, null, isBatch);
+                rs = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, -1, null, false, getResultSetFactory(), this.currentCatalog, null,
+                        isBatch);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
@@ -1710,7 +1713,7 @@ public class StatementImpl implements Statement, Query {
     public java.sql.ResultSet getGeneratedKeys() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.retrieveGeneratedKeys) {
-                throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
 
@@ -1956,7 +1959,8 @@ public class StatementImpl implements Statement, Query {
                     break;
 
                 default:
-                    throw SQLError.createSQLException(Messages.getString("Statement.19"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("Statement.19"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
             }
 
             this.results = nextResultSet;
@@ -2299,7 +2303,7 @@ public class StatementImpl implements Statement, Query {
                 break;
 
             default:
-                throw SQLError.createSQLException(Messages.getString("Statement.5"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.5"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2320,7 +2324,7 @@ public class StatementImpl implements Statement, Query {
     public void setFetchSize(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (((rows < 0) && (rows != Integer.MIN_VALUE)) || ((this.maxRows > 0) && (rows > this.getMaxRows()))) {
-                throw SQLError.createSQLException(Messages.getString("Statement.7"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.fetchSize = rows;
@@ -2349,14 +2353,14 @@ public class StatementImpl implements Statement, Query {
     public void setMaxFieldSize(int max) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (max < 0) {
-                throw SQLError.createSQLException(Messages.getString("Statement.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             int maxBuf = this.maxAllowedPacket.getValue();
 
             if (max > maxBuf) {
                 throw SQLError.createSQLException(Messages.getString("Statement.13", new Object[] { Long.valueOf(maxBuf) }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.maxFieldSize = max;
@@ -2391,7 +2395,7 @@ public class StatementImpl implements Statement, Query {
     public void setQueryTimeout(int seconds) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (seconds < 0) {
-                throw SQLError.createSQLException(Messages.getString("Statement.21"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.21"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.timeoutInMillis = seconds * 1000;
@@ -2528,7 +2532,7 @@ public class StatementImpl implements Statement, Query {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2673,8 +2677,8 @@ public class StatementImpl implements Statement, Query {
     public void setLargeMaxRows(long max) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if ((max > MAX_ROWS) || (max < 0)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.15") + max + " > " + MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Statement.15") + max + " > " + MAX_ROWS + ".",
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (max == 0) {

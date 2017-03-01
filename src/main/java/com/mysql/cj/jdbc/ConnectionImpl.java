@@ -63,9 +63,6 @@ import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
@@ -97,9 +94,7 @@ import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
-import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.MysqlaUtils;
 
 /**
  * A Connection represents a session with a specific database. Within the context of a Connection, SQL statements are executed and results are returned.
@@ -226,21 +221,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         mapTransIsolationNameToValue.put("SERIALIZABLE", TRANSACTION_SERIALIZABLE);
     }
 
-    protected static SQLException appendMessageToException(SQLException sqlEx, String messageToAppend, ExceptionInterceptor interceptor) {
-        String origMessage = sqlEx.getMessage();
-        String sqlState = sqlEx.getSQLState();
-        int vendorErrorCode = sqlEx.getErrorCode();
-
-        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
-        messageBuf.append(origMessage);
-        messageBuf.append(messageToAppend);
-
-        SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(messageBuf.toString(), sqlState, vendorErrorCode, interceptor);
-        sqlExceptionWithNewMessage.setStackTrace(sqlEx.getStackTrace());
-
-        return sqlExceptionWithNewMessage;
-    }
-
     public Timer getCancelTimer() {
         synchronized (getConnectionMutex()) {
             if (this.cancelTimer == null) {
@@ -286,14 +266,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return s1 != null && s1.equals(s2);
     }
 
-    /** Are we in autoCommit mode? */
-    private boolean autoCommit = true;
-
     /** A cache of SQL to parsed prepared statement parameters. */
     private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
-
-    /** The point in time when this connection was created */
-    private long connectionCreationTimeMillis = 0;
 
     /** The database we're currently using (called Catalog in JDBC terms). */
     private String database = null;
@@ -315,17 +289,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** isolation level */
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
-    /** When did the last query finish? */
-    private long lastQueryFinishedTime = 0;
-
     /** Is the server configured to use lower-case table names only? */
     private boolean lowerCaseTableNames = false;
 
     /** When did the master fail? */
     //	private long masterFailTimeMillis = 0L;
-
-    /** Does this connection need to be tested? */
-    private boolean needsPing = false;
 
     private boolean noBackslashEscapes = false;
 
@@ -390,16 +358,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private List<QueryInterceptor> queryInterceptors;
 
-    private ModifiableProperty<String> characterEncoding;
     private ReadableProperty<Boolean> autoReconnectForPools;
     private ReadableProperty<Boolean> cachePrepStmts;
     private ModifiableProperty<Boolean> autoReconnect;
     private ModifiableProperty<Boolean> profileSQL;
     private ReadableProperty<Boolean> useUsageAdvisor;
     private ReadableProperty<Boolean> reconnectAtTxEnd;
-    private ReadableProperty<Boolean> maintainTimeStats;
     private ReadableProperty<Boolean> emulateUnsupportedPstmts;
-    private ReadableProperty<Boolean> gatherPerfMetrics;
     private ReadableProperty<Boolean> ignoreNonTxTables;
     private ReadableProperty<Boolean> pedantic;
     private ReadableProperty<Integer> prepStmtCacheSqlLimit;
@@ -431,8 +396,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public ConnectionImpl(HostInfo hostInfo) throws SQLException {
 
         try {
-            this.connectionCreationTimeMillis = System.currentTimeMillis();
-
             // Stash away for later, used to clone this connection for Statement.cancel and Statement.setQueryTimeout().
             this.origHostInfo = hostInfo;
             this.origHostToConnectTo = hostInfo.getHost();
@@ -443,16 +406,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.session = new MysqlaSession(hostInfo, getPropertySet());
 
             // we can't cache fixed values here because properties are still not initialized with user provided values
-            this.characterEncoding = getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
             this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
             this.cachePrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
             this.autoReconnect = getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
             this.profileSQL = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_profileSQL);
             this.useUsageAdvisor = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor);
             this.reconnectAtTxEnd = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd);
-            this.maintainTimeStats = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
             this.emulateUnsupportedPstmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
-            this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
             this.ignoreNonTxTables = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
             this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic);
             this.prepStmtCacheSqlLimit = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
@@ -500,7 +460,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
                                     : Messages.getString("Connection.1",
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
-                    SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
 
     }
@@ -712,7 +672,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public void throwConnectionClosedException() throws SQLException {
-        SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+        SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
+                getExceptionInterceptor());
 
         if (this.forceClosedReason != null) {
             ex.initCause(this.forceClosedReason);
@@ -756,7 +717,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * @param fromWhere
      * @param whyCleanedUp
      */
-    private void cleanup(Throwable whyCleanedUp) {
+    @Override
+    public void cleanup(Throwable whyCleanedUp) {
         try {
             if (this.session != null) {
                 if (isClosed()) {
@@ -890,6 +852,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
     }
 
+    @Override
+    public void closeNormal() {
+        try {
+            close();
+        } catch (SQLException e) {
+            ExceptionFactory.createException(e.getMessage(), e);
+        }
+    }
+
     /**
      * Closes all currently open statements.
      * 
@@ -960,7 +931,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 }
 
-                if (this.autoCommit) {
+                if (this.session.isAutoCommit()) {
                     throw SQLError.createSQLException(Messages.getString("Connection.3"), getExceptionInterceptor());
                 }
                 if (this.useLocalTransactionState.getValue()) {
@@ -969,16 +940,16 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 }
 
-                execSQL(null, "commit", -1, null, false, this.database, null, false);
+                this.session.execSQL(this, null, "commit", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
             } catch (SQLException sqlException) {
-                if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.4"), SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
+                if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.4"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
                             getExceptionInterceptor());
                 }
 
                 throw sqlException;
             } finally {
-                this.needsPing = this.reconnectAtTxEnd.getValue();
+                this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
         }
         return;
@@ -1028,7 +999,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.session.forceClose();
 
                 JdbcConnection c = getProxy();
-                this.session.connect(c, this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
+                this.session.connect(this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
                 pingInternal(false, 0);
 
                 boolean oldAutoCommit;
@@ -1091,7 +1062,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             SQLException chainedEx = SQLError.createSQLException(
                     Messages.getString("Connection.UnableToConnectWithRetries",
                             new Object[] { getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue() }),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
             throw chainedEx;
         }
 
@@ -1138,7 +1109,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         try {
 
             JdbcConnection c = getProxy();
-            this.session.connect(c, this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
+            this.session.connect(this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
             this.isClosed = false;
 
             // save state from old connection
@@ -1155,11 +1126,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             if (isForReconnect) {
                 // Restore state from old connection
                 setAutoCommit(oldAutoCommit);
-
                 setTransactionIsolation(oldIsolationLevel);
-
                 setCatalog(oldCatalog);
-
                 setReadOnly(oldReadOnly);
             }
             return;
@@ -1195,7 +1163,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             SQLException chainedEx = SQLError.createSQLException(Messages.getString("Connection.UnableToConnect"),
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
             chainedEx.initCause(connectionNotEstablishedBecause);
 
             throw chainedEx;
@@ -1303,7 +1271,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
         }
@@ -1313,100 +1281,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public JdbcConnection duplicate() throws SQLException {
         return new ConnectionImpl(this.origHostInfo);
-    }
-
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
-        synchronized (getConnectionMutex()) {
-            //
-            // Fall-back if the master is back online if we've issued queriesBeforeRetryMaster queries since we failed over
-            //
-
-            long queryStartTime = 0;
-
-            int endOfQueryPacketPosition = 0;
-
-            if (packet != null) {
-                endOfQueryPacketPosition = packet.getPosition();
-            }
-
-            if (this.gatherPerfMetrics.getValue()) {
-                queryStartTime = System.currentTimeMillis();
-            }
-
-            this.lastQueryFinishedTime = 0; // we're busy!
-
-            if ((this.autoReconnect.getValue()) && (this.autoCommit || this.autoReconnectForPools.getValue()) && this.needsPing && !isBatch) {
-                try {
-                    pingInternal(false, 0);
-
-                    this.needsPing = false;
-                } catch (Exception Ex) {
-                    createNewIO(true);
-                }
-            }
-
-            try {
-                if (packet == null) {
-                    String encoding = this.characterEncoding.getValue();
-
-                    return this.session.sendQueryString(callingStatement, sql, encoding, maxRows, streamResults, catalog, cachedMetadata,
-                            callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
-                }
-
-                return this.session.sendQueryPacket(callingStatement, packet, maxRows, streamResults, catalog, cachedMetadata,
-                        callingStatement != null ? callingStatement.getResultSetFactory() : this.nullStatementResultSetFactory);
-            } catch (CJException sqlE) {
-                // don't clobber SQL exceptions
-
-                SQLException cause = SQLExceptionsMapping.translateException(sqlE, getExceptionInterceptor());
-
-                if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
-                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition,
-                            getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
-                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
-                    messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
-                    messageBuf.append(extractedSql);
-                    messageBuf.append("\n\n");
-
-                    cause = appendMessageToException(cause, messageBuf.toString(), getExceptionInterceptor());
-                }
-
-                if ((this.autoReconnect.getValue())) {
-                    this.needsPing = true;
-                } else {
-                    String sqlState = cause.getSQLState();
-
-                    if ((sqlState != null) && sqlState.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
-                        cleanup(cause);
-                    }
-                }
-
-                throw cause;
-            } catch (Exception ex) {
-                if (this.autoReconnect.getValue()) {
-                    this.needsPing = true;
-                    //} else if (ex instanceof IOException) {
-                    //    cleanup(ex);
-                }
-
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnexpectedException"), SQLError.SQL_STATE_GENERAL_ERROR,
-                        getExceptionInterceptor());
-                sqlEx.initCause(ex);
-
-                throw sqlEx;
-            } finally {
-                if (this.maintainTimeStats.getValue()) {
-                    this.lastQueryFinishedTime = System.currentTimeMillis();
-                }
-
-                if (this.gatherPerfMetrics.getValue()) {
-                    long queryTime = System.currentTimeMillis() - queryStartTime;
-
-                    this.session.registerQueryExecutionTime(queryTime);
-                }
-            }
-        }
     }
 
     public int getActiveStatementCount() {
@@ -1423,7 +1297,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public boolean getAutoCommit() throws SQLException {
         synchronized (getConnectionMutex()) {
-            return this.autoCommit;
+            return this.session.isAutoCommit();
         }
     }
 
@@ -1471,14 +1345,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public long getIdleFor() {
         synchronized (getConnectionMutex()) {
-            if (this.lastQueryFinishedTime == 0) {
-                return 0;
-            }
-
-            long now = System.currentTimeMillis();
-            long idleTime = now - this.lastQueryFinishedTime;
-
-            return idleTime;
+            return this.session.getIdleFor();
         }
     }
 
@@ -1550,10 +1417,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     if (intTI != null) {
                         return intTI.intValue();
                     }
-                    throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), SQLError.SQL_STATE_GENERAL_ERROR,
+                    throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                             getExceptionInterceptor());
                 }
-                throw SQLError.createSQLException(Messages.getString("Connection.13"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.13"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.isolationLevel;
@@ -1699,7 +1566,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         try {
             LicenseConfiguration.checkLicenseType(this.session.getServerVariables());
         } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+            throw SQLError.createSQLException(e.getMessage(), MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
         }
 
         String lowerCaseTables = this.session.getServerVariable("lower_case_table_names");
@@ -1728,7 +1595,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (allowedBlobSendChunkSize <= 0) {
                     throw SQLError.createSQLException(Messages.getString("Connection.15", new Object[] { packetHeaderSize }),
-                            SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
+                            MysqlErrorNumbers.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
                 }
 
                 blobSendChunkSize.setValue(allowedBlobSendChunkSize);
@@ -1786,8 +1653,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             String s = this.session.queryServerVariable("@@session.autocommit");
             if (s != null) {
-                this.autoCommit = Boolean.parseBoolean(s);
-                if (this.autoCommit != true) {
+                this.session.setAutoCommit(Boolean.parseBoolean(s));
+                if (!this.session.isAutoCommit()) {
                     resetAutoCommitDefault = true;
                 }
             }
@@ -1798,7 +1665,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
         //} else if (getSession().isSetNeededForAutoCommitMode(true)) {
         //    // we're not in standard autocommit=true mode
-        //    this.autoCommit = false;
+        //    this.session.setAutoCommit(false);
         //    resetAutoCommitDefault = true;
         //}
 
@@ -1874,7 +1741,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 }
             } catch (PasswordExpiredException ex) {
                 if (this.disconnectOnExpiredPasswords.getValue()) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("Connection.16"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex,
+                            getExceptionInterceptor());
                 }
             }
         }
@@ -2000,24 +1868,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     @Override
     public void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException {
-        if (checkForClosedConnection) {
-            checkClosed();
-        }
-
-        long pingMillisLifetime = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
-        int pingMaxOperations = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
-
-        if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
-                || (pingMaxOperations > 0 && pingMaxOperations <= this.session.getCommandCount())) {
-
-            close(); // TODO: do it via Listeners
-
-            throw SQLError.createSQLException(Messages.getString("Connection.exceededConnectionLifetime"), SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE,
-                    getExceptionInterceptor());
-        }
-        PacketPayload packet = this.session.getSharedSendPacket();
-        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_PING);
-        this.session.sendCommand(MysqlaConstants.COM_PING, packet, false, timeoutMillis);
+        this.session.ping(this, checkForClosedConnection, timeoutMillis);
     }
 
     /**
@@ -2080,7 +1931,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -2214,7 +2065,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -2275,7 +2126,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                                         System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
                     }
 
-                    long connectionLifeTime = System.currentTimeMillis() - this.connectionCreationTimeMillis;
+                    long connectionLifeTime = System.currentTimeMillis() - this.session.getConnectionCreationTimeMillis();
 
                     if (connectionLifeTime < 500) {
                         this.session.getProfilerEventHandler()
@@ -2406,28 +2257,29 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                         return;
                     }
                 }
-                if (this.autoCommit) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.20"), SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+                if (this.session.isAutoCommit()) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.20"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
+                            getExceptionInterceptor());
                 }
                 try {
                     rollbackNoChecks();
                 } catch (SQLException sqlEx) {
                     // We ignore non-transactional tables if told to do so
-                    if (this.ignoreNonTxTables.getInitialValue() && (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+                    if (this.ignoreNonTxTables.getInitialValue() && (sqlEx.getErrorCode() == MysqlErrorNumbers.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
                         return;
                     }
                     throw sqlEx;
 
                 }
             } catch (SQLException sqlException) {
-                if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.21"), SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
+                if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.21"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
                             getExceptionInterceptor());
                 }
 
                 throw sqlException;
             } finally {
-                this.needsPing = this.reconnectAtTxEnd.getValue();
+                this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
         }
     }
@@ -2479,18 +2331,18 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                             if (indexOfError153 != -1) {
                                 throw SQLError.createSQLException(Messages.getString("Connection.22", new Object[] { savepoint.getSavepointName() }),
-                                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
+                                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
                             }
                         }
                     }
 
                     // We ignore non-transactional tables if told to do so
-                    if (this.ignoreNonTxTables.getValue() && (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+                    if (this.ignoreNonTxTables.getValue() && (sqlEx.getErrorCode() != MysqlErrorNumbers.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
                         throw sqlEx;
                     }
 
-                    if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
-                        throw SQLError.createSQLException(Messages.getString("Connection.23"), SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
+                    if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+                        throw SQLError.createSQLException(Messages.getString("Connection.23"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
                                 getExceptionInterceptor());
                     }
 
@@ -2499,7 +2351,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     closeStatement(stmt);
                 }
             } finally {
-                this.needsPing = this.reconnectAtTxEnd.getValue();
+                this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
         }
     }
@@ -2511,7 +2363,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        execSQL(null, "rollback", -1, null, false, this.database, null, false);
+        this.session.execSQL(this, null, "rollback", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
@@ -2543,7 +2395,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -2615,7 +2467,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             try {
                 boolean needsSetOnServer = true;
 
-                if (this.useLocalSessionState.getValue() && this.autoCommit == autoCommitFlag) {
+                if (this.useLocalSessionState.getValue() && this.session.isAutoCommit() == autoCommitFlag) {
                     needsSetOnServer = false;
                 } else if (!this.autoReconnect.getValue()) {
                     needsSetOnServer = getSession().isSetNeededForAutoCommitMode(autoCommitFlag);
@@ -2624,10 +2476,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 // this internal value must be set first as failover depends on it being set to true to fail over (which is done by most app servers and
                 // connection pools at the end of a transaction), and the driver issues an implicit set based on this value when it (re)-connects to a
                 // server so the value holds across connections
-                this.autoCommit = autoCommitFlag;
+                this.session.setAutoCommit(autoCommitFlag);
 
                 if (needsSetOnServer) {
-                    execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.database, null, false);
+                    this.session.execSQL(this, null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false,
+                            this.nullStatementResultSetFactory, this.database, null, false);
                 }
             } finally {
                 if (this.autoReconnectForPools.getValue()) {
@@ -2657,7 +2510,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             checkClosed();
 
             if (catalog == null) {
-                throw SQLError.createSQLException("Catalog can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException("Catalog can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.connectionLifecycleInterceptors != null) {
@@ -2700,7 +2553,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             StringBuilder query = new StringBuilder("USE ");
             query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic.getValue()));
 
-            execSQL(null, query.toString(), -1, null, false, this.database, null, false);
+            this.session.execSQL(this, null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
 
             this.database = catalog;
         }
@@ -2742,7 +2595,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         // note this this is safe even inside a transaction
         if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
             if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
-                execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false, this.database, null, false);
+                this.session.execSQL(this, null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false,
+                        this.nullStatementResultSetFactory, this.database, null, false);
             }
         }
 
@@ -2839,11 +2693,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                         break;
 
                     default:
-                        throw SQLError.createSQLException(Messages.getString("Connection.25", new Object[] { level }), SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
-                                getExceptionInterceptor());
+                        throw SQLError.createSQLException(Messages.getString("Connection.25", new Object[] { level }),
+                                MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 }
 
-                execSQL(null, sql, -1, null, false, this.database, null, false);
+                this.session.execSQL(this, null, sql, -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
 
                 this.isolationLevel = level;
             }
@@ -2883,7 +2737,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 commandBuf.append("STRICT_TRANS_TABLES'");
 
-                execSQL(null, commandBuf.toString(), -1, null, false, this.database, null, false);
+                this.session.execSQL(this, null, commandBuf.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
 
                 jdbcCompliantTruncation.setValue(false); // server's handling this for us now
             } else if (strictTransTablesIsSet) {
@@ -2904,7 +2758,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.session.shutdownServer();
         } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
-                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
             sqlEx.initCause(ex);
 
@@ -3109,8 +2963,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.session.getSessionMaxRows() != max) {
                 this.session.setSessionMaxRows(max);
-                execSQL(null, "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()), -1, null,
-                        false, this.database, null, false);
+                this.session.execSQL(this, null,
+                        "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()), -1, null, false,
+                        this.nullStatementResultSetFactory, this.database, null, false);
             }
         }
     }
@@ -3168,7 +3023,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
 
         if (executor == null) {
-            throw SQLError.createSQLException(Messages.getString("Connection.26"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         executor.execute(new Runnable() {
@@ -3192,7 +3047,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (executor == null) {
-                throw SQLError.createSQLException(Messages.getString("Connection.26"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             checkClosed();
@@ -3314,7 +3169,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 } catch (ClassCastException cce) {
                     throw SQLError.createSQLException(Messages.getString("Connection.ClientInfoNotImplemented", new Object[] { clientInfoProvider }),
-                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
 
                 this.infoProvider.initialize(this, this.props);
@@ -3388,7 +3243,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             // anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
     }
 

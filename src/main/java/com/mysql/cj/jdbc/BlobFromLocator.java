@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,6 +34,7 @@ import java.util.List;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
@@ -141,7 +142,7 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     private void notEnoughInformationInQuery() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("Blob.8"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("Blob.8"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     /**
@@ -213,7 +214,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -315,7 +316,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -398,7 +399,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -459,7 +460,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -517,7 +518,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return ((com.mysql.cj.jdbc.result.ResultSetImpl) blobRs).getBytes(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -552,16 +553,16 @@ public class BlobFromLocator implements java.sql.Blob {
             if (pos + len > blobLength) {
                 throw SQLError.createSQLException(
                         Messages.getString("Blob.invalidStreamLength", new Object[] { Long.valueOf(blobLength), Long.valueOf(pos), Long.valueOf(len) }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
             }
 
             if (pos < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         BlobFromLocator.this.exceptionInterceptor);
             }
 
             if (pos > blobLength) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         BlobFromLocator.this.exceptionInterceptor);
             }
         }

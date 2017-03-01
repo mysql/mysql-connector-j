@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,6 +26,7 @@ package com.mysql.cj.jdbc.exceptions;
 import java.sql.SQLException;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 /**
  * Thrown when a result sate is not updatable
@@ -57,6 +58,6 @@ public class NotUpdatable extends SQLException {
      */
     public NotUpdatable(String reason) {
         super(reason + Messages.getString("NotUpdatable.1") + Messages.getString("NotUpdatable.2") + Messages.getString("NotUpdatable.3")
-                + Messages.getString("NotUpdatable.4") + Messages.getString("NotUpdatable.5"), SQLError.SQL_STATE_GENERAL_ERROR);
+                + Messages.getString("NotUpdatable.4") + Messages.getString("NotUpdatable.5"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
     }
 }

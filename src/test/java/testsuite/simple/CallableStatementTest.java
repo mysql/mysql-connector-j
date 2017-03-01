@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,8 +33,8 @@ import java.sql.Types;
 import java.util.Properties;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.log.StandardLogger;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 
 import testsuite.BaseTestCase;
 
@@ -173,7 +173,7 @@ public class CallableStatementTest extends BaseTestCase {
             storedProc.registerOutParameter("x", Types.INTEGER);
             assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
         } catch (SQLException sqlEx) {
-            if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
+            if (!MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
             }
         }
@@ -182,7 +182,7 @@ public class CallableStatementTest extends BaseTestCase {
             storedProc.getInt("x");
             assertTrue("Should not be able to retreive an out parameter on a non-out parameter", true);
         } catch (SQLException sqlEx) {
-            if (!SQLError.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
+            if (!MysqlErrorNumbers.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
             }
         }
@@ -191,7 +191,7 @@ public class CallableStatementTest extends BaseTestCase {
             storedProc.registerOutParameter(1, Types.INTEGER);
             assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
         } catch (SQLException sqlEx) {
-            if (!SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
+            if (!MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
             }
         }

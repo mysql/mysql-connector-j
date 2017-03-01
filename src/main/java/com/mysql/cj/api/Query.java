@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api;
 
+import com.mysql.cj.jdbc.io.ResultSetFactory;
+
 public interface Query {
 
     /**
@@ -32,4 +34,5 @@ public interface Query {
 
     void checkCancelTimeout();
 
+    ResultSetFactory getResultSetFactory();
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -132,7 +132,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         if (group != null) {
@@ -163,7 +163,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
                     Messages.getString("LoadBalancedConnectionProxy.badValueForRetriesAllDown", new Object[] { retriesAllDownAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String blacklistTimeoutAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout, "0");
@@ -172,7 +172,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
                     Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { blacklistTimeoutAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String hostRemovalGracePeriodAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "15000");
@@ -180,7 +180,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             this.hostRemovalGracePeriod = Integer.parseInt(hostRemovalGracePeriodAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceHostRemovalGracePeriod",
-                    new Object[] { hostRemovalGracePeriodAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    new Object[] { hostRemovalGracePeriodAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String strategy = props.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
@@ -196,8 +196,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     this.balancer = (BalanceStrategy) Class.forName(strategy).newInstance();
             }
         } catch (Throwable t) {
-            throw SQLError.createSQLException(Messages.getString("InvalidLoadBalanceStrategy", new Object[] { strategy }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    t, null);
+            throw SQLError.createSQLException(Messages.getString("InvalidLoadBalanceStrategy", new Object[] { strategy }),
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t, null);
         }
 
         String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
@@ -205,7 +205,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceAutoCommitStatementThreshold",
-                    new Object[] { autoCommitSwapThresholdAsString }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    new Object[] { autoCommitSwapThresholdAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
@@ -215,7 +215,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             } catch (Exception e) {
                 throw SQLError.createSQLException(
                         Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex", new Object[] { autoCommitSwapRegex }),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
             }
         }
 
@@ -344,11 +344,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
                 if (this.currentConnection != null) {
                     if (pingBeforeReturn) {
-                        if (pingTimeout == 0) {
-                            newConn.ping();
-                        } else {
-                            newConn.pingInternal(true, pingTimeout);
-                        }
+                        newConn.pingInternal(true, pingTimeout);
                     }
 
                     syncSessionState(this.currentConnection, newConn);
@@ -508,7 +504,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
                 for (Class<?> excls : method.getExceptionTypes()) {
                     if (SQLException.class.isAssignableFrom(excls)) {
-                        throw SQLError.createSQLException(reason, SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to an interceptor here... */);
+                        throw SQLError.createSQLException(reason, MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
+                                null /* no access to an interceptor here... */);
                     }
                 }
                 throw ExceptionFactory.createException(CJCommunicationsException.class, reason);
@@ -860,7 +857,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             SQLException exceptionToThrow = SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.unusableConnection"),
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION, true, null);
+                    MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION, true, null);
             Class<?>[] declaredException = method.getExceptionTypes();
             for (Class<?> declEx : declaredException) {
                 if (declEx.isAssignableFrom(exceptionToThrow.getClass())) {

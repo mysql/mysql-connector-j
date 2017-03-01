@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -101,7 +101,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String allowMasterDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "false");
@@ -110,7 +110,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         } catch (Exception e) {
             throw SQLError.createSQLException(
                     Messages.getString("ReplicationConnectionProxy.badValueForAllowMasterDownConnections", new Object[] { enableJMXAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String allowSlaveDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "false");
@@ -119,7 +119,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         } catch (Exception e) {
             throw SQLError.createSQLException(
                     Messages.getString("ReplicationConnectionProxy.badValueForAllowSlaveDownConnections", new Object[] { allowSlaveDownConnectionsAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String readFromMasterWhenNoSlavesAsString = props.getProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves);
@@ -129,7 +129,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         } catch (Exception e) {
             throw SQLError.createSQLException(
                     Messages.getString("ReplicationConnectionProxy.badValueForReadFromMasterWhenNoSlaves", new Object[] { readFromMasterWhenNoSlavesAsString }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
         String group = props.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
@@ -182,7 +182,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     throw exCaught;
                 }
                 throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.initializationWithEmptyHostsLists"),
-                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
             }
         }
     }
@@ -297,7 +297,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                 if (invokeAgain) {
                     invokeAgain = false;
                 } else if (e.getCause() != null && e.getCause() instanceof SQLException
-                        && ((SQLException) e.getCause()).getSQLState() == SQLError.SQL_STATE_INVALID_TRANSACTION_STATE
+                        && ((SQLException) e.getCause()).getSQLState() == MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE
                         && ((SQLException) e.getCause()).getErrorCode() == MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION) {
                     try {
                         // Try to re-establish the connection with the last known read-only state.
@@ -322,7 +322,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     private void checkConnectionCapabilityForMethod(Method method) throws Throwable {
         if (this.masterHosts.isEmpty() && this.slaveHosts.isEmpty() && !ReplicationConnection.class.isAssignableFrom(method.getDeclaringClass())) {
             throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.noHostsInconsistentState"),
-                    SQLError.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS, true, null);
+                    MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS, true, null);
         }
     }
 

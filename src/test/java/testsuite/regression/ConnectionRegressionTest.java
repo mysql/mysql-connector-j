@@ -5872,13 +5872,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             s.executeUpdate("truncate non_existing_table");
             fail("executeUpdate should not be allowed in read-only mode");
         } catch (SQLException ex) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
         try {
             s.execute("truncate non_existing_table");
             fail("executeUpdate should not be allowed in read-only mode");
         } catch (SQLException ex) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
         rs1 = s.executeQuery("select CONNECTION_ID()");
         assertTrue(rs1.next());
@@ -5986,8 +5986,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         public SQLException interceptException(Exception sqlEx) {
             if (!(sqlEx instanceof SQLException)) {
-                return SQLError.createSQLException("SQLException expected, but got " + sqlEx.getClass().getName(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx,
-                        null);
+                return SQLError.createSQLException("SQLException expected, but got " + sqlEx.getClass().getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        sqlEx, null);
             }
             if (((SQLException) sqlEx).getErrorCode() == 1295
                     || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
@@ -7513,7 +7513,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 fail("ER_LOCK_WAIT_TIMEOUT should be thrown.");
             } catch (SQLTransientException ex) {
                 assertEquals(MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT, ex.getErrorCode());
-                assertEquals(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, ex.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE, ex.getSQLState());
                 assertEquals("Lock wait timeout exceeded; try restarting transaction", ex.getMessage());
             }
         } finally {

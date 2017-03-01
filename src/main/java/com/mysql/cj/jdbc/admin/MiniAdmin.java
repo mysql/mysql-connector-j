@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -48,11 +49,11 @@ public class MiniAdmin {
      */
     public MiniAdmin(java.sql.Connection conn) throws SQLException {
         if (conn == null) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), SQLError.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, null);
         }
 
         if (!(conn instanceof JdbcConnection)) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), SQLError.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                     ((com.mysql.cj.jdbc.ConnectionImpl) conn).getExceptionInterceptor());
         }
 

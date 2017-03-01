@@ -77,6 +77,7 @@ import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.io.SqlDateValueFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.Util;
@@ -86,7 +87,6 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.mysqla.result.MysqlaResultset;
@@ -327,7 +327,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'foo'");
             System.out.println(this.rs.getInt(1));
         } catch (SQLException sqlEx) {
-            assertTrue("Correct exception not thrown", SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue("Correct exception not thrown", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
     }
 
@@ -806,7 +806,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -814,7 +814,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -822,7 +822,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -830,7 +830,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -838,7 +838,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -846,7 +846,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -854,7 +854,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -862,7 +862,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -870,7 +870,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -878,7 +878,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -886,7 +886,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -894,7 +894,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -902,7 +902,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
 
         try {
@@ -910,7 +910,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } catch (NullPointerException npEx) {
             fail("Should not catch NullPointerException here");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR.equals(sqlEx.getSQLState()));
         }
     }
 
@@ -987,7 +987,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.getTimestamp(1);
             fail("Invalid timestamp throws an exception");
         } catch (SQLException ex) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
 
     }
@@ -2352,43 +2352,43 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(0, this.rs.getByte(1));
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getShort(1));
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getInt(1));
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getLong(1));
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getFloat(1), 0.1);
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getDouble(1), 0.1);
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getBigDecimal(1).intValue());
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
     }
 
@@ -2909,7 +2909,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.getTime(1);
             fail("Expected exception");
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         }
 
         // no longer tested as of C/J 6.0. recent server versions don't accept "92" as a valid seconds value under STRICT mode and C/J no longer tries to parse
@@ -3266,13 +3266,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             this.rs.getTime(1);
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
 
         try {
             this.rs.getTimestamp(1);
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
         }
     }
 
@@ -3309,7 +3309,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     if (ex != null && ex instanceof SQLException) {
                         SQLException sqlEx = (SQLException) ex;
 
-                        assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+                        assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
 
                         messageLowBound = sqlEx.getMessage();
                     } else {
@@ -3327,7 +3327,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     if (ex != null && ex instanceof SQLException) {
                         SQLException sqlEx = (SQLException) ex;
 
-                        assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+                        assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
 
                         messageHighBound = sqlEx.getMessage();
                     } else {
@@ -3588,7 +3588,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             this.rs.getTimestamp(1); // fails
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
         }
     }
 
@@ -3664,7 +3664,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.next();
             this.rs.getTime(1);
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         }
     }
 

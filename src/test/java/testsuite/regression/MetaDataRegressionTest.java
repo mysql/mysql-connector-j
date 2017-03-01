@@ -52,10 +52,10 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -859,21 +859,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
             dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, Integer.MIN_VALUE);
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
 
         try {
             assertTrue(dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, Integer.MIN_VALUE));
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
 
         try {
             assertTrue(dbmd.supportsResultSetConcurrency(Integer.MIN_VALUE, Integer.MIN_VALUE));
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
     }
 
@@ -1411,7 +1411,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             assertEquals(0, psMeta.getParameterType(1));
         } catch (SQLException sqlEx) {
-            assertEquals(SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
         }
 
         this.pstmt.close();

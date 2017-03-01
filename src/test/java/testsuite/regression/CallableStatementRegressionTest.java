@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,7 +39,7 @@ import java.sql.Types;
 import java.util.Properties;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 import testsuite.BaseTestCase;
 
@@ -217,7 +217,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
                 fail("Should've thrown an exception");
             } catch (SQLException sqlEx) {
-                assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
             cstmt = db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?) }");

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -64,6 +64,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 public class MysqlSQLXML implements SQLXML {
@@ -139,7 +140,7 @@ public class MysqlSQLXML implements SQLXML {
 
     private synchronized void checkWorkingWithResult() throws SQLException {
         if (this.workingWithResult) {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.1"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.1"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 
@@ -211,7 +212,7 @@ public class MysqlSQLXML implements SQLXML {
 
                 return (T) new DOMSource(builder.parse(inputSource));
             } catch (Throwable t) {
-                SQLException sqlEx = SQLError.createSQLException(t.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
+                SQLException sqlEx = SQLError.createSQLException(t.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
                 throw sqlEx;
             }
 
@@ -237,12 +238,12 @@ public class MysqlSQLXML implements SQLXML {
 
                 return (T) new StAXSource(this.inputFactory.createXMLStreamReader(reader));
             } catch (XMLStreamException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
+                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
                 throw sqlEx;
             }
         } else {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.2", new Object[] { clazz.toString() }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.2", new Object[] { clazz.toString() }),
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 
@@ -310,12 +311,12 @@ public class MysqlSQLXML implements SQLXML {
 
                 return (T) new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
             } catch (XMLStreamException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
+                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
                 throw sqlEx;
             }
         } else {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.3", new Object[] { clazz.toString() }), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                    this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.3", new Object[] { clazz.toString() }),
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 
@@ -366,7 +367,7 @@ public class MysqlSQLXML implements SQLXML {
                 buf.append(charBuf, 0, charsRead);
             }
         } catch (IOException ioEx) {
-            SQLException sqlEx = SQLError.createSQLException(ioEx.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ioEx, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(ioEx.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ioEx, this.exceptionInterceptor);
             throw sqlEx;
         }
 
@@ -411,7 +412,7 @@ public class MysqlSQLXML implements SQLXML {
 
             return stringOut.toString();
         } catch (Throwable t) {
-            SQLException sqlEx = SQLError.createSQLException(t.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
+            SQLException sqlEx = SQLError.createSQLException(t.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
             throw sqlEx;
         }
     }

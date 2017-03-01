@@ -50,4 +50,8 @@ public interface MysqlConnection {
     String getUser();
 
     ExceptionInterceptor getExceptionInterceptor();
+
+    void checkClosed();
+
+    void closeNormal();
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,6 +31,7 @@ import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -65,7 +66,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -118,7 +120,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 columnNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -288,7 +291,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     public java.sql.ResultSet getCrossReference(String primaryCatalog, String primarySchema, String primaryTable, String foreignCatalog, String foreignSchema,
             String foreignTable) throws SQLException {
         if (primaryTable == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         if (primaryCatalog == null) {
@@ -350,7 +354,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // TODO: Can't determine actions using INFORMATION_SCHEMA yet...
 
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         if (catalog == null) {
@@ -419,7 +424,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         if (catalog == null) {
@@ -517,7 +523,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
@@ -561,7 +568,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -622,7 +630,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 procedureNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -733,7 +742,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 tableNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -842,7 +852,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
@@ -897,7 +908,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 functionNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -1027,7 +1039,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (this.nullNamePatternMatchesAll) {
                 functionNamePattern = "%";
             } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.22"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.22"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 

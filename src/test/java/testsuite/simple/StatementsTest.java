@@ -61,10 +61,10 @@ import com.mysql.cj.api.jdbc.ParameterBindings;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
 
 import testsuite.BaseTestCase;
@@ -887,7 +887,7 @@ public class StatementsTest extends BaseTestCase {
                 this.conn.setAutoCommit(false);
                 this.stmt.execute("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
             } catch (SQLException sqlEx) {
-                assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase(SQLError.SQL_STATE_ILLEGAL_ARGUMENT));
+                assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT));
             } finally {
                 this.conn.setAutoCommit(autoCommit);
             }
@@ -1652,21 +1652,21 @@ public class StatementsTest extends BaseTestCase {
             this.rs.getByte(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getShort(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getInt(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         this.rs = this.stmt.executeQuery("SELECT '" + Double.MAX_VALUE + "'");
@@ -1677,35 +1677,35 @@ public class StatementsTest extends BaseTestCase {
             this.rs.getByte(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getShort(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getInt(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getLong(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         try {
             this.rs.getLong(1);
             fail("Should've thrown an out-of-range exception");
         } catch (SQLException sqlEx) {
-            assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
         }
 
         PreparedStatement pStmt = null;
@@ -1727,21 +1727,21 @@ public class StatementsTest extends BaseTestCase {
                 this.rs.getByte(1);
                 fail("Should've thrown an out-of-range exception");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getInt(2);
                 fail("Should've thrown an out-of-range exception");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getLong(3);
                 fail("Should've thrown an out-of-range exception");
             } catch (SQLException sqlEx) {
-                assertTrue(SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE.equals(sqlEx.getSQLState()));
             }
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testTruncationOnRead");

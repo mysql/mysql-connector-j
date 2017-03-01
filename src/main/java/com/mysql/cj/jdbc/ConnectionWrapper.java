@@ -48,8 +48,6 @@ import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -109,7 +107,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public void setAutoCommit(boolean autoCommit) throws SQLException {
 
         if (autoCommit && isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -216,7 +214,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public java.sql.Savepoint setSavepoint() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -231,7 +229,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -307,7 +305,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void commit() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -479,7 +477,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void rollback() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -492,7 +490,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     public void rollback(Savepoint arg0) throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
         }
 
@@ -951,7 +949,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return iface.cast(cachedUnwrapped);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 
@@ -1000,12 +998,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public JdbcConnection duplicate() throws SQLException {
         return this.mc.duplicate();
-    }
-
-    @Override
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
-        return this.mc.execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, isBatch);
     }
 
     @Override
@@ -1136,6 +1128,16 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getHostPortPair() {
         return this.mc.getHostPortPair();
+    }
+
+    @Override
+    public void closeNormal() {
+        this.mc.closeNormal();
+    }
+
+    @Override
+    public void cleanup(Throwable whyCleanedUp) {
+        this.mc.cleanup(whyCleanedUp);
     }
 
 }

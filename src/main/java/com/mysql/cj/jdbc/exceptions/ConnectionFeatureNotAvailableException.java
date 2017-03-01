@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package com.mysql.cj.jdbc.exceptions;
 
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 /**
  * Thrown when a client requests a connection-level feature that isn't available for this particular distribution of Connector/J (currently only used by code
@@ -49,6 +50,6 @@ public class ConnectionFeatureNotAvailableException extends CommunicationsExcept
 
     @Override
     public String getSQLState() {
-        return SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;
+        return MysqlErrorNumbers.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;
     }
 }

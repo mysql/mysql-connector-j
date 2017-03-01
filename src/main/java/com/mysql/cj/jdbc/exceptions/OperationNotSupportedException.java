@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2004, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,16 +26,17 @@ package com.mysql.cj.jdbc.exceptions;
 import java.sql.SQLException;
 
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 
 public class OperationNotSupportedException extends SQLException {
 
     static final long serialVersionUID = 474918612056813430L;
 
     public OperationNotSupportedException() {
-        super(Messages.getString("RowDataDynamic.10"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+        super(Messages.getString("RowDataDynamic.10"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
     }
 
     public OperationNotSupportedException(String message) {
-        super(message, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+        super(message, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
     }
 }

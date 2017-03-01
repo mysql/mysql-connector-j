@@ -49,10 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Query;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.TransactionManager;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
@@ -112,9 +112,7 @@ import com.mysql.cj.core.util.TestUtils;
 import com.mysql.cj.core.util.TimeUtil;
 import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
-import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.MysqlaAuthenticationProvider;
 import com.mysql.cj.mysqla.result.OkPacket;
 
@@ -221,10 +219,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    public static MysqlaProtocol getInstance(MysqlConnection conn, SocketConnection socketConnection, PropertySet propertySet, Log log,
+    public static MysqlaProtocol getInstance(Session session, SocketConnection socketConnection, PropertySet propertySet, Log log,
             TransactionManager transactionManager) {
         MysqlaProtocol protocol = new MysqlaProtocol(log);
-        protocol.init(conn, socketConnection, propertySet, transactionManager);
+        protocol.init(session, socketConnection, propertySet, transactionManager);
         return protocol;
     }
 
@@ -234,9 +232,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public void init(MysqlConnection conn, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
+    public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
 
-        this.connection = conn;
+        this.session = sess;
         this.propertySet = propSet;
 
         this.socketConnection = phConnection;
@@ -359,9 +357,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         errorBuf.append(serverErrorMessage);
         errorBuf.append("\"");
 
-        String xOpen = SQLError.mysqlToSqlState(errno);
+        String xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
 
-        throw ExceptionFactory.createException(SQLError.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, false, null, getExceptionInterceptor());
+        throw ExceptionFactory.createException(MysqlErrorNumbers.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, false, null, getExceptionInterceptor());
     }
 
     @Override
@@ -546,7 +544,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder().getLastPacketSentTime(),
                     this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
-            throw ExceptionFactory.createException(oom.getMessage(), SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
+            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
+                    this.exceptionInterceptor);
         }
     }
 
@@ -741,20 +740,20 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                     serverErrorMessage = serverErrorMessage.substring(6);
 
                     if (xOpen.equals("HY000")) {
-                        xOpen = SQLError.mysqlToSqlState(errno);
+                        xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
                     }
                 } else {
-                    xOpen = SQLError.mysqlToSqlState(errno);
+                    xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
                 }
             } else {
-                xOpen = SQLError.mysqlToSqlState(errno);
+                xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
             }
 
             clearInputStream();
 
             StringBuilder errorBuf = new StringBuilder();
 
-            String xOpenErrorMessage = SQLError.get(xOpen);
+            String xOpenErrorMessage = MysqlErrorNumbers.get(xOpen);
 
             boolean useOnlyServerErrorMessages = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).getValue();
             if (!useOnlyServerErrorMessages) {
@@ -772,7 +771,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
             }
 
-            appendDeadlockStatusInformation(this.connection, xOpen, errorBuf);
+            appendDeadlockStatusInformation(this.session, xOpen, errorBuf);
 
             if (xOpen != null) {
                 if (xOpen.startsWith("22")) {
@@ -1762,7 +1761,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 this.loadFileBufRef = new SoftReference<PacketPayload>(filePacket);
             } catch (OutOfMemoryError oom) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.111", new Object[] { packetLength }),
-                        SQLError.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
             }
         }
 
@@ -1924,9 +1923,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         this.queryComment = comment;
     }
 
-    private void appendDeadlockStatusInformation(MysqlConnection conn, String xOpen, StringBuilder errorBuf) {
-        MysqlaSession session = (MysqlaSession) conn.getSession();
-        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
+    private void appendDeadlockStatusInformation(Session sess, String xOpen, StringBuilder errorBuf) {
+        if (sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
                 && (xOpen.startsWith("40") || xOpen.startsWith("41")) && getStreamingData() == null) {
 
             try {
@@ -1960,7 +1958,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             }
         }
 
-        if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
+        if (sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
             errorBuf.append("\n\n*** Java threads running at time of deadlock ***\n\n");
 
             ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
@@ -2107,7 +2105,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                     //String level = warnRs.getString("Level"); 
                     String message = r.getValue(messageFieldIndex, svf);
 
-                    SQLWarning newWarning = new SQLWarning(message, SQLError.mysqlToSqlState(code), code);
+                    SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlState(code), code);
                     if (currentWarning == null) {
                         currentWarning = newWarning;
                     } else {

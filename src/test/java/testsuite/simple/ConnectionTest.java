@@ -70,11 +70,11 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.io.DebugBufferingPacketReader;
 import com.mysql.cj.mysqla.io.DebugBufferingPacketSender;
 import com.mysql.cj.mysqla.io.MultiPacketReader;
@@ -241,7 +241,7 @@ public class ConnectionTest extends BaseTestCase {
             //
             // Check whether the driver thinks it really is deadlock...
             //
-            assertTrue(SQLError.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE.equals(sqlEx.getSQLState()));
             assertTrue(sqlEx.getErrorCode() == 1205);
             // Make sure INNODB Status is getting dumped into error message
 
@@ -806,7 +806,7 @@ public class ConnectionTest extends BaseTestCase {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
             } catch (SQLException sqlEx) {
-                assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
             }
 
             assertFalse(loadConn.createStatement().executeQuery("SELECT * FROM testLocalInfileDisabled").next());

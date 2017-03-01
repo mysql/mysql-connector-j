@@ -35,6 +35,7 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.util.EscapeTokenizer;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TimeUtil;
@@ -204,7 +205,7 @@ class EscapeProcessor {
                                 newSql.append(dateString);
                             } catch (java.util.NoSuchElementException e) {
                                 throw SQLError.createSQLException(Messages.getString("EscapeProcessor.1", new Object[] { argument }),
-                                        SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+                                        MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
@@ -319,7 +320,7 @@ class EscapeProcessor {
                 }
                 newSql.append("'");
             } catch (java.util.NoSuchElementException e) {
-                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), SQLError.SQL_STATE_SYNTAX_ERROR,
+                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
                         exceptionInterceptor);
             }
         }
@@ -352,7 +353,7 @@ class EscapeProcessor {
                 newSql.append('\'');
             } catch (IllegalArgumentException illegalArgumentException) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }),
-                        SQLError.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+                        MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
                 sqlEx.initCause(illegalArgumentException);
 
                 throw sqlEx;
@@ -401,21 +402,21 @@ class EscapeProcessor {
         int firstIndexOfParen = functionToken.indexOf("(");
 
         if (firstIndexOfParen == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.4", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.4", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
                     exceptionInterceptor);
         }
 
         int indexOfComma = functionToken.lastIndexOf(",");
 
         if (indexOfComma == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.5", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.5", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
                     exceptionInterceptor);
         }
 
         int indexOfCloseParen = functionToken.indexOf(')', indexOfComma);
 
         if (indexOfCloseParen == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.6", new Object[] { functionToken }), SQLError.SQL_STATE_SYNTAX_ERROR,
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.6", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
                     exceptionInterceptor);
 
         }
@@ -434,7 +435,7 @@ class EscapeProcessor {
         newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
         if (newType == null) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.7", new Object[] { type.trim() }), SQLError.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.7", new Object[] { type.trim() }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                     exceptionInterceptor);
         }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,6 +30,7 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.mysqla.MysqlaConstants;
@@ -112,7 +113,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             try {
                 javaName = CharsetMapping.getJavaEncodingForMysqlCharset(mysqlName);
             } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
                 sqlEx.initCause(ex);
                 throw sqlEx;
             }
@@ -291,7 +292,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      */
     protected Field getField(int columnIndex) throws SQLException {
         if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
-            throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), MysqlErrorNumbers.SQL_STATE_INVALID_COLUMN_NUMBER,
+                    this.exceptionInterceptor);
         }
 
         return this.fields[columnIndex - 1];
@@ -644,7 +646,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 

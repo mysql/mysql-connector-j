@@ -48,12 +48,10 @@ import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
-import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.mysqla.MysqlaSession;
@@ -165,11 +163,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public JdbcConnection duplicate() throws SQLException {
         return getActiveMySQLConnection().duplicate();
-    }
-
-    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, boolean isBatch) throws SQLException {
-        return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, streamResults, catalog, cachedMetadata, isBatch);
     }
 
     public int getActiveStatementCount() {
@@ -592,7 +585,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -634,5 +627,15 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     @Override
     public String getHostPortPair() {
         return getActiveMySQLConnection().getHostPortPair();
+    }
+
+    @Override
+    public void closeNormal() {
+        getActiveMySQLConnection().closeNormal();
+    }
+
+    @Override
+    public void cleanup(Throwable whyCleanedUp) {
+        getActiveMySQLConnection().cleanup(whyCleanedUp);
     }
 }

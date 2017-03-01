@@ -57,6 +57,7 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.io.ValueFactory;
+import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
@@ -72,9 +73,11 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.HostInfo;
+import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.IntegerValueFactory;
@@ -114,6 +117,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     private ReadableProperty<Boolean> useOldUTF8Behavior;
     private ReadableProperty<Boolean> disconnectOnExpiredPasswords;
     private ReadableProperty<Boolean> cacheServerConfiguration;
+    private ModifiableProperty<Boolean> autoReconnect;
+    private ReadableProperty<Boolean> autoReconnectForPools;
+    private ReadableProperty<Boolean> maintainTimeStats;
 
     private boolean serverHasFracSecsSupport = true;
 
@@ -135,7 +141,21 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      */
     private boolean requiresEscapingEncoder;
 
+    /** When did the last query finish? */
+    private long lastQueryFinishedTime = 0;
+
+    /** Does this connection need to be tested? */
+    private boolean needsPing = false;
+
+    /** Are we in autoCommit mode? */
+    private boolean autoCommit = true;
+
+    /** The point in time when this connection was created */
+    private long connectionCreationTimeMillis = 0;
+
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
+        this.connectionCreationTimeMillis = System.currentTimeMillis();
+
         this.propertySet = propSet;
 
         this.socketTimeout = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
@@ -144,9 +164,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.useOldUTF8Behavior = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior);
         this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
         this.cacheServerConfiguration = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheServerConfiguration);
+        this.autoReconnect = getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
+        this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
+        this.maintainTimeStats = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
 
         this.hostInfo = hostInfo;
-
         //
         // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
         // place as early as possible...this.log points to 'NullLogger' for every connection at startup to avoid NPEs and the overhead of checking for NULL at
@@ -158,7 +180,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 Log.LOGGER_INSTANCE_NAME);
     }
 
-    public void connect(MysqlConnection conn, HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
+    public void connect(HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
             TransactionManager transactionManager) throws IOException {
 
         this.hostInfo = hi;
@@ -175,9 +197,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         // this configuration places no knowledge of protocol or session on physical connection.
         // physical connection is responsible *only* for I/O streams
         if (this.protocol == null) {
-            this.protocol = MysqlaProtocol.getInstance(conn, socketConnection, this.propertySet, this.log, transactionManager);
+            this.protocol = MysqlaProtocol.getInstance(this, socketConnection, this.propertySet, this.log, transactionManager);
         } else {
-            this.protocol.init(conn, socketConnection, this.propertySet, transactionManager);
+            this.protocol.init(this, socketConnection, this.propertySet, transactionManager);
         }
 
         // use protocol to create a -> session
@@ -1330,4 +1352,148 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             throw ExceptionFactory.createException(e.getMessage(), e);
         }
     }
+
+    /**
+     * Send a query to the server. Returns one of the ResultSet objects. This is
+     * synchronized, so Statement's queries will be serialized.
+     * 
+     * @param conn
+     * @param callingStatement
+     * @param sql
+     *            the SQL statement to be executed
+     * @param maxRows
+     * @param packet
+     * @param streamResults
+     * @param catalog
+     * @param cachedMetadata
+     * @param isBatch
+     * @return a ResultSet holding the results
+     */
+    public <T extends Resultset> T execSQL(MysqlConnection conn, Query callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
+            ProtocolEntityFactory<T> resultSetFactory, String catalog, ColumnDefinition cachedMetadata, boolean isBatch) {
+        synchronized (conn.getConnectionMutex()) {
+
+            long queryStartTime = 0;
+            int endOfQueryPacketPosition = 0;
+            if (packet != null) {
+                endOfQueryPacketPosition = packet.getPosition();
+            }
+
+            if (this.gatherPerfMetrics.getValue()) {
+                queryStartTime = System.currentTimeMillis();
+            }
+
+            this.lastQueryFinishedTime = 0; // we're busy!
+
+            if ((this.autoReconnect.getValue()) && (this.autoCommit || this.autoReconnectForPools.getValue()) && this.needsPing && !isBatch) {
+                try {
+                    ping(conn, false, 0);
+
+                    this.needsPing = false;
+                } catch (Exception Ex) {
+                    ((JdbcConnection) conn).createNewIO(true);
+                }
+            }
+
+            try {
+                if (packet == null) {
+                    String encoding = this.characterEncoding.getValue();
+                    return sendQueryString(callingStatement, sql, encoding, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+                }
+                return sendQueryPacket(callingStatement, packet, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+
+            } catch (CJException sqlE) {
+                if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
+                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition,
+                            getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
+                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
+                    messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
+                    messageBuf.append(extractedSql);
+                    messageBuf.append("\n\n");
+                    sqlE.appendMessage(messageBuf.toString());
+                }
+
+                if ((this.autoReconnect.getValue())) {
+                    this.needsPing = true;
+                } else if (sqlE instanceof CJCommunicationsException) {
+                    ((JdbcConnection) conn).cleanup(sqlE);
+                }
+                throw sqlE;
+
+            } catch (Throwable ex) {
+                if (this.autoReconnect.getValue()) {
+                    this.needsPing = true;
+                }
+                throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
+
+            } finally {
+                if (this.maintainTimeStats.getValue()) {
+                    this.lastQueryFinishedTime = System.currentTimeMillis();
+                }
+
+                if (this.gatherPerfMetrics.getValue()) {
+                    long queryTime = System.currentTimeMillis() - queryStartTime;
+
+                    registerQueryExecutionTime(queryTime);
+                }
+            }
+        }
+    }
+
+    public long getIdleFor() {
+        if (this.lastQueryFinishedTime == 0) {
+            return 0;
+        }
+
+        long now = System.currentTimeMillis();
+        long idleTime = now - this.lastQueryFinishedTime;
+
+        return idleTime;
+    }
+
+    public boolean isNeedsPing() {
+        return this.needsPing;
+    }
+
+    public void setNeedsPing(boolean needsPing) {
+        this.needsPing = needsPing;
+    }
+
+    public boolean isAutoCommit() {
+        return this.autoCommit;
+    }
+
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
+    }
+
+    public void ping(MysqlConnection conn, boolean checkForClosedConnection, int timeoutMillis) {
+        if (checkForClosedConnection) {
+            conn.checkClosed();
+        }
+
+        long pingMillisLifetime = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
+        int pingMaxOperations = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
+
+        if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
+                || (pingMaxOperations > 0 && pingMaxOperations <= getCommandCount())) {
+
+            conn.closeNormal(); // TODO: do it via Listeners
+
+            throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
+                    MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
+        }
+        PacketPayload packet = getSharedSendPacket();
+        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_PING);
+        sendCommand(MysqlaConstants.COM_PING, packet, false, timeoutMillis);
+    }
+
+    public long getConnectionCreationTimeMillis() {
+        return this.connectionCreationTimeMillis;
+    }
+
+    public void setConnectionCreationTimeMillis(long connectionCreationTimeMillis) {
+        this.connectionCreationTimeMillis = connectionCreationTimeMillis;
+    }
+
 }
