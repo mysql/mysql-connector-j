@@ -582,6 +582,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     public final PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
         this.commandCount++;
 
+        if (this.queryInterceptors != null) {
+            PacketPayload interceptedPacketPayload = invokeQueryInterceptorsPre(queryPacket, false);
+
+            if (interceptedPacketPayload != null) {
+                return interceptedPacketPayload;
+            }
+        }
+
         this.packetReader.resetPacketSequence();
 
         int oldTimeout = 0;
@@ -1117,6 +1125,33 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
 
         return previousResultSet;
+    }
+
+    /**
+     * 
+     * @param queryPacket
+     * @param forceExecute
+     * @return
+     */
+    public PacketPayload invokeQueryInterceptorsPre(PacketPayload queryPacket, boolean forceExecute) {
+        PacketPayload previousPacketPayload = null;
+
+        for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
+            QueryInterceptor interceptor = this.queryInterceptors.get(i);
+
+            // TODO how to handle executeTopLevelOnly in such case ?
+            //            boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
+            //            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
+            //            if (shouldExecute) {
+
+            PacketPayload interceptedPacketPayload = interceptor.preProcess(queryPacket);
+            if (interceptedPacketPayload != null) {
+                previousPacketPayload = interceptedPacketPayload;
+            }
+            //            }
+        }
+
+        return previousPacketPayload;
     }
 
     public <T extends Resultset> T invokeQueryInterceptorsPost(String sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {

@@ -29,6 +29,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.Resultset;
 
 /**
@@ -77,6 +78,24 @@ public interface QueryInterceptor {
      *         query.
      */
     <T extends Resultset> T preProcess(String sql, Query interceptedQuery);
+
+    /**
+     * Called before the given query packet is going to be sent to the server for processing.
+     * 
+     * Interceptors are free to return a PacketPayload, and if so,
+     * the server will not execute the query, and the given PacketPayload will be
+     * returned to the application instead.
+     * 
+     * This method will be called while the connection-level mutex is held, so
+     * it will only be called from one thread at a time.
+     * 
+     * @param command
+     * @param queryPacket
+     * @return
+     */
+    default PacketPayload preProcess(PacketPayload queryPacket) {
+        return null;
+    }
 
     /**
      * Should the driver execute this interceptor only for the

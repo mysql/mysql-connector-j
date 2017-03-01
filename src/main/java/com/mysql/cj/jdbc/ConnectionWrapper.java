@@ -968,11 +968,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public String getProcessHost() {
-        return this.mc.getProcessHost();
-    }
-
-    @Override
     public MysqlaSession getSession() {
         return this.mc.getSession();
     }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,7 +31,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.core.Messages;
 
@@ -215,7 +215,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
         return this.namedPipeSocket;
     }
 
-    public boolean isLocallyConnected(MysqlConnection conn) {
+    public boolean isLocallyConnected(Session sess) {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }

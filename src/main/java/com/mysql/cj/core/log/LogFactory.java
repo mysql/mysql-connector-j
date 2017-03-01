@@ -26,7 +26,6 @@ package com.mysql.cj.core.log;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -47,14 +46,14 @@ public class LogFactory {
      *            the instance name
      * @return a logger instance
      */
-    public static Log getLogger(String className, String instanceName, ExceptionInterceptor exceptionInterceptor) {
+    public static Log getLogger(String className, String instanceName) {
 
         if (className == null) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Logger class can not be NULL", exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, "Logger class can not be NULL");
         }
 
         if (instanceName == null) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Logger instance name can not be NULL", exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, "Logger instance name can not be NULL");
         }
 
         try {
@@ -70,23 +69,22 @@ public class LogFactory {
 
             return (Log) constructor.newInstance(new Object[] { instanceName });
         } catch (ClassNotFoundException cnfe) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "Unable to load class for logger '" + className + "'", cnfe,
-                    exceptionInterceptor);
+            throw ExceptionFactory.createException(WrongArgumentException.class, "Unable to load class for logger '" + className + "'", cnfe);
         } catch (NoSuchMethodException nsme) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "Logger class does not have a single-arg constructor that takes an instance name", nsme, exceptionInterceptor);
+                    "Logger class does not have a single-arg constructor that takes an instance name", nsme);
         } catch (InstantiationException inse) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "Unable to instantiate logger class '" + className + "', exception in constructor?", inse, exceptionInterceptor);
+                    "Unable to instantiate logger class '" + className + "', exception in constructor?", inse);
         } catch (InvocationTargetException ite) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "Unable to instantiate logger class '" + className + "', exception in constructor?", ite, exceptionInterceptor);
+                    "Unable to instantiate logger class '" + className + "', exception in constructor?", ite);
         } catch (IllegalAccessException iae) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "Unable to instantiate logger class '" + className + "', constructor not public", iae, exceptionInterceptor);
+                    "Unable to instantiate logger class '" + className + "', constructor not public", iae);
         } catch (ClassCastException cce) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "Logger class '" + className + "' does not implement the '" + Log.class.getName() + "' interface", cce, exceptionInterceptor);
+                    "Logger class '" + className + "' does not implement the '" + Log.class.getName() + "' interface", cce);
         }
     }
 }

@@ -31,7 +31,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.NClob;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLPermission;
@@ -67,7 +66,6 @@ import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
@@ -77,6 +75,7 @@ import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
@@ -148,58 +147,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
 
-    public class ExceptionInterceptorChain implements ExceptionInterceptor {
-        List<ExceptionInterceptor> interceptors;
-
-        ExceptionInterceptorChain(String interceptorClasses) {
-            this.interceptors = Util.<ExceptionInterceptor> loadClasses(interceptorClasses, "Connection.BadExceptionInterceptor", this).stream()
-                    .map(o -> o.init(ConnectionImpl.this.props, ConnectionImpl.this.getSession().getLog())).collect(Collectors.toList());
-        }
-
-        void addRingZero(ExceptionInterceptor interceptor) throws SQLException {
-            this.interceptors.add(0, interceptor);
-        }
-
-        public Exception interceptException(Exception sqlEx) {
-            if (this.interceptors != null) {
-                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-                while (iter.hasNext()) {
-                    sqlEx = iter.next().interceptException(sqlEx);
-                }
-            }
-
-            return sqlEx;
-        }
-
-        public void destroy() {
-            if (this.interceptors != null) {
-                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-                while (iter.hasNext()) {
-                    iter.next().destroy();
-                }
-            }
-
-        }
-
-        public ExceptionInterceptor init(Properties properties, Log log) {
-            if (this.interceptors != null) {
-                Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-                while (iter.hasNext()) {
-                    iter.next().init(properties, log);
-                }
-            }
-            return this;
-        }
-
-        public List<ExceptionInterceptor> getInterceptors() {
-            return this.interceptors;
-        }
-
-    }
-
     /**
      * Used as a key for caching callable statements which (may) depend on
      * current catalog...In 5.0.x, they don't (currently), but stored procedure
@@ -261,18 +208,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private static Map<String, Integer> mapTransIsolationNameToValue = null;
 
     protected static Map<?, ?> roundRobinStatsMap;
-
-    /**
-     * Actual collation index to mysql charset name map of user defined charsets for given server URLs.
-     */
-    private static final Map<String, Map<Integer, String>> customIndexToCharsetMapByUrl = new HashMap<String, Map<Integer, String>>();
-
-    /**
-     * Actual mysql charset name to mblen map of user defined charsets for given server URLs.
-     */
-    private static final Map<String, Map<String, Integer>> customCharsetToMblenMapByUrl = new HashMap<String, Map<String, Integer>>();
-
-    private CacheAdapter<String, Map<String, String>> serverConfigCache;
 
     private transient Timer cancelTimer;
 
@@ -458,7 +393,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private ModifiableProperty<String> characterEncoding;
     private ReadableProperty<Boolean> autoReconnectForPools;
     private ReadableProperty<Boolean> cachePrepStmts;
-    private ReadableProperty<Boolean> cacheServerConfiguration;
     private ModifiableProperty<Boolean> autoReconnect;
     private ModifiableProperty<Boolean> profileSQL;
     private ReadableProperty<Boolean> useUsageAdvisor;
@@ -512,7 +446,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.characterEncoding = getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
             this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
             this.cachePrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
-            this.cacheServerConfiguration = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheServerConfiguration);
             this.autoReconnect = getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
             this.profileSQL = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_profileSQL);
             this.useUsageAdvisor = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor);
@@ -593,121 +526,122 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.queryInterceptors;
     }
 
-    /**
-     * Builds the map needed for 4.1.0 and newer servers that maps field-level
-     * charset/collation info to a java character encoding name.
-     * 
-     * @throws SQLException
-     */
-    private void buildCollationMapping() throws SQLException {
-
-        Map<Integer, String> customCharset = null;
-        Map<String, Integer> customMblen = null;
-
-        if (this.cacheServerConfiguration.getValue()) {
-            synchronized (customIndexToCharsetMapByUrl) {
-                customCharset = customIndexToCharsetMapByUrl.get(getURL());
-                customMblen = customCharsetToMblenMapByUrl.get(getURL());
-            }
-        }
-
-        if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
-
-            java.sql.Statement stmt = null;
-            java.sql.ResultSet results = null;
-
-            try {
-                customCharset = new HashMap<Integer, String>();
-                customMblen = new HashMap<String, Integer>();
-
-                stmt = getMetadataSafeStatement();
-
-                try {
-                    results = stmt.executeQuery("SHOW COLLATION");
-                    while (results.next()) {
-                        int collationIndex = ((Number) results.getObject(3)).intValue();
-                        String charsetName = results.getString(2);
-
-                        // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
-                        if (collationIndex >= CharsetMapping.MAP_SIZE
-                                || !charsetName.equals(CharsetMapping.getMysqlCharsetNameForCollationIndex(collationIndex))) {
-                            customCharset.put(collationIndex, charsetName);
-                        }
-
-                        // if no static map for charsetName adding to custom map
-                        if (!CharsetMapping.CHARSET_NAME_TO_CHARSET.containsKey(charsetName)) {
-                            customMblen.put(charsetName, null);
-                        }
-                    }
-                } catch (PasswordExpiredException ex) {
-                    if (this.disconnectOnExpiredPasswords.getValue()) {
-                        throw ex;
-                    }
-                } catch (SQLException ex) {
-                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                        throw ex;
-                    }
-                }
-
-                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
-                if (customMblen.size() > 0) {
-                    try {
-                        results.close();
-                        results = stmt.executeQuery("SHOW CHARACTER SET");
-                        while (results.next()) {
-                            String charsetName = results.getString("Charset");
-                            if (customMblen.containsKey(charsetName)) {
-                                customMblen.put(charsetName, results.getInt("Maxlen"));
-                            }
-                        }
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
-                }
-
-                if (this.cacheServerConfiguration.getValue()) {
-                    synchronized (customIndexToCharsetMapByUrl) {
-                        customIndexToCharsetMapByUrl.put(getURL(), customCharset);
-                        customCharsetToMblenMapByUrl.put(getURL(), customMblen);
-                    }
-                }
-
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                sqlEx.initCause(ex);
-                throw sqlEx;
-            } finally {
-                if (results != null) {
-                    try {
-                        results.close();
-                    } catch (java.sql.SQLException sqlE) {
-                        // ignore
-                    }
-                }
-
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (java.sql.SQLException sqlE) {
-                        // ignore
-                    }
-                }
-            }
-
-        }
-
-        this.session.setCharsetMaps(customCharset, customMblen);
-
-    }
-
+    //
+    //    /**
+    //     * Builds the map needed for 4.1.0 and newer servers that maps field-level
+    //     * charset/collation info to a java character encoding name.
+    //     * 
+    //     * @throws SQLException
+    //     */
+    //    private void buildCollationMapping() throws SQLException {
+    //
+    //        Map<Integer, String> customCharset = null;
+    //        Map<String, Integer> customMblen = null;
+    //
+    //        if (this.cacheServerConfiguration.getValue()) {
+    //            synchronized (customIndexToCharsetMapByUrl) {
+    //                customCharset = customIndexToCharsetMapByUrl.get(getURL());
+    //                customMblen = customCharsetToMblenMapByUrl.get(getURL());
+    //            }
+    //        }
+    //
+    //        if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
+    //
+    //            java.sql.Statement stmt = null;
+    //            java.sql.ResultSet results = null;
+    //
+    //            try {
+    //                customCharset = new HashMap<Integer, String>();
+    //                customMblen = new HashMap<String, Integer>();
+    //
+    //                stmt = getMetadataSafeStatement();
+    //
+    //                try {
+    //                    results = stmt.executeQuery("SHOW COLLATION");
+    //                    while (results.next()) {
+    //                        int collationIndex = ((Number) results.getObject(3)).intValue();
+    //                        String charsetName = results.getString(2);
+    //
+    //                        // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
+    //                        if (collationIndex >= CharsetMapping.MAP_SIZE
+    //                                || !charsetName.equals(CharsetMapping.getMysqlCharsetNameForCollationIndex(collationIndex))) {
+    //                            customCharset.put(collationIndex, charsetName);
+    //                        }
+    //
+    //                        // if no static map for charsetName adding to custom map
+    //                        if (!CharsetMapping.CHARSET_NAME_TO_CHARSET.containsKey(charsetName)) {
+    //                            customMblen.put(charsetName, null);
+    //                        }
+    //                    }
+    //                } catch (PasswordExpiredException ex) {
+    //                    if (this.disconnectOnExpiredPasswords.getValue()) {
+    //                        throw ex;
+    //                    }
+    //                } catch (SQLException ex) {
+    //                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
+    //                        throw ex;
+    //                    }
+    //                }
+    //
+    //                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
+    //                if (customMblen.size() > 0) {
+    //                    try {
+    //                        results.close();
+    //                        results = stmt.executeQuery("SHOW CHARACTER SET");
+    //                        while (results.next()) {
+    //                            String charsetName = results.getString("Charset");
+    //                            if (customMblen.containsKey(charsetName)) {
+    //                                customMblen.put(charsetName, results.getInt("Maxlen"));
+    //                            }
+    //                        }
+    //                    } catch (PasswordExpiredException ex) {
+    //                        if (this.disconnectOnExpiredPasswords.getValue()) {
+    //                            throw ex;
+    //                        }
+    //                    } catch (SQLException ex) {
+    //                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
+    //                            throw ex;
+    //                        }
+    //                    }
+    //                }
+    //
+    //                if (this.cacheServerConfiguration.getValue()) {
+    //                    synchronized (customIndexToCharsetMapByUrl) {
+    //                        customIndexToCharsetMapByUrl.put(getURL(), customCharset);
+    //                        customCharsetToMblenMapByUrl.put(getURL(), customMblen);
+    //                    }
+    //                }
+    //
+    //            } catch (SQLException ex) {
+    //                throw ex;
+    //            } catch (RuntimeException ex) {
+    //                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+    //                sqlEx.initCause(ex);
+    //                throw sqlEx;
+    //            } finally {
+    //                if (results != null) {
+    //                    try {
+    //                        results.close();
+    //                    } catch (java.sql.SQLException sqlE) {
+    //                        // ignore
+    //                    }
+    //                }
+    //
+    //                if (stmt != null) {
+    //                    try {
+    //                        stmt.close();
+    //                    } catch (java.sql.SQLException sqlE) {
+    //                        // ignore
+    //                    }
+    //                }
+    //            }
+    //
+    //        }
+    //
+    //        this.session.setCharsetMaps(customCharset, customMblen);
+    //
+    //    }
+    //
     private boolean canHandleAsServerPreparedStatement(String sql) throws SQLException {
         if (sql == null || sql.length() == 0) {
             return true;
@@ -764,7 +698,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             this.session.configureClientCharacterSet(true);
 
-            setSessionVariables();
+            this.session.setSessionVariables();
 
             setupServerForTruncationChecks();
         }
@@ -1282,7 +1216,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
 
                 this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), cacheSize,
-                        this.prepStmtCacheSqlLimit.getValue(), this.props);
+                        this.prepStmtCacheSqlLimit.getValue());
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
@@ -1609,52 +1543,17 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         synchronized (getConnectionMutex()) {
             if (!this.useLocalSessionState.getValue()) {
-                java.sql.Statement stmt = null;
-                java.sql.ResultSet rs = null;
+                String s = this.session.queryServerVariable("@@session.tx_isolation");
 
-                try {
-                    stmt = getMetadataSafeStatement();
-
-                    rs = stmt.executeQuery("SELECT @@session.tx_isolation");
-
-                    if (rs.next()) {
-                        String s = rs.getString(1);
-
-                        if (s != null) {
-                            Integer intTI = mapTransIsolationNameToValue.get(s);
-
-                            if (intTI != null) {
-                                return intTI.intValue();
-                            }
-                        }
-
-                        throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), SQLError.SQL_STATE_GENERAL_ERROR,
-                                getExceptionInterceptor());
+                if (s != null) {
+                    Integer intTI = mapTransIsolationNameToValue.get(s);
+                    if (intTI != null) {
+                        return intTI.intValue();
                     }
-
-                    throw SQLError.createSQLException(Messages.getString("Connection.13"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-
-                } finally {
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (Exception ex) {
-                            // ignore
-                        }
-
-                        rs = null;
-                    }
-
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (Exception ex) {
-                            // ignore
-                        }
-
-                        stmt = null;
-                    }
+                    throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), SQLError.SQL_STATE_GENERAL_ERROR,
+                            getExceptionInterceptor());
                 }
+                throw SQLError.createSQLException(Messages.getString("Connection.13"), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.isolationLevel;
@@ -1723,14 +1622,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private void initializeDriverProperties(Properties info) throws SQLException {
         getPropertySet().initializeProperties(info);
 
+        this.session.setLog(
+                LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME));
+
         String exceptionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
-
         if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
-            this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
+            this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses, this.props, this.session.getLog());
         }
-
-        this.session.setLog(LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
-                Log.LOGGER_INSTANCE_NAME, getExceptionInterceptor()));
 
         if (this.profileSQL.getValue() || this.useUsageAdvisor.getValue()) {
             ProfilerEventHandlerFactory.getInstance(this.session);
@@ -1783,7 +1681,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
         }
 
-        setSessionVariables();
+        this.session.setSessionVariables();
 
         //
         // Users can turn off detection of server-side prepared statements
@@ -1792,11 +1690,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.useServerPreparedStmts = true;
         }
 
-        loadServerVariables();
+        this.session.loadServerVariables(this, this.dbmd.getDriverVersion());
 
         this.autoIncrementIncrement = this.session.getServerVariable("auto_increment_increment", 1);
 
-        buildCollationMapping();
+        this.session.buildCollationMapping();
 
         try {
             LicenseConfiguration.checkLicenseType(this.session.getServerVariables());
@@ -1885,32 +1783,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         String initConnectValue = this.session.getServerVariable("init_connect");
         if (initConnectValue != null && initConnectValue.length() > 0) {
             // auto-commit might have changed
-            java.sql.ResultSet rs = null;
-            java.sql.Statement stmt = null;
 
-            try {
-                stmt = getMetadataSafeStatement();
-                rs = stmt.executeQuery("SELECT @@session.autocommit");
-                if (rs.next()) {
-                    this.autoCommit = rs.getBoolean(1);
-                    resetAutoCommitDefault = !this.autoCommit;
-                }
-            } finally {
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (SQLException sqlEx) {
-                        // do nothing
-                    }
-                }
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (SQLException sqlEx) {
-                        // do nothing
-                    }
+            String s = this.session.queryServerVariable("@@session.autocommit");
+            if (s != null) {
+                this.autoCommit = Boolean.parseBoolean(s);
+                if (this.autoCommit != true) {
+                    resetAutoCommitDefault = true;
                 }
             }
+
         } else {
             // reset it anyway, the server may have been initialized with --autocommit=0
             resetAutoCommitDefault = true;
@@ -1986,47 +1867,14 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
         if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
-            java.sql.Statement stmt = null;
-            java.sql.ResultSet rs = null;
-
             try {
-                try {
-                    stmt = getMetadataSafeStatement();
-
-                    rs = stmt.executeQuery("select @@session.tx_read_only");
-                    if (rs.next()) {
-                        return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
-                    }
-                } catch (PasswordExpiredException ex) {
-                    if (this.disconnectOnExpiredPasswords.getValue()) {
-                        throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
-                    }
-                } catch (SQLException ex1) {
-                    if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                        throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex1,
-                                getExceptionInterceptor());
-                    }
+                String s = this.session.queryServerVariable("@@session.tx_read_only");
+                if (s != null) {
+                    return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
                 }
-
-            } finally {
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
-
-                    rs = null;
-                }
-
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
-
-                    stmt = null;
+            } catch (PasswordExpiredException ex) {
+                if (this.disconnectOnExpiredPasswords.getValue()) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.16"), SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
                 }
             }
         }
@@ -2077,200 +1925,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             return false;
-        }
-    }
-
-    private void createConfigCacheIfNeeded() throws SQLException {
-        synchronized (getConnectionMutex()) {
-            if (this.serverConfigCache != null) {
-                return;
-            }
-
-            try {
-                Class<?> factoryClass;
-
-                factoryClass = Class.forName(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).getStringValue());
-
-                @SuppressWarnings("unchecked")
-                CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
-
-                this.serverConfigCache = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE, this.props);
-
-                ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
-
-                    public ExceptionInterceptor init(Properties config, Log log) {
-                        return this;
-                    }
-
-                    public void destroy() {
-                    }
-
-                    @SuppressWarnings("synthetic-access")
-                    public Exception interceptException(Exception sqlEx) {
-                        if (sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
-                                && ((SQLException) sqlEx).getSQLState().startsWith("08")) {
-                            ConnectionImpl.this.serverConfigCache.invalidate(getURL());
-                        }
-                        return null;
-                    }
-                };
-
-                if (this.exceptionInterceptor == null) {
-                    this.exceptionInterceptor = evictOnCommsError;
-                } else {
-                    ((ExceptionInterceptorChain) this.exceptionInterceptor).addRingZero(evictOnCommsError);
-                }
-            } catch (ClassNotFoundException e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
-                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }),
-                        getExceptionInterceptor());
-                sqlEx.initCause(e);
-
-                throw sqlEx;
-            } catch (InstantiationException | IllegalAccessException | CJException e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantLoadCacheFactory",
-                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
-                                PropertyDefinitions.PNAME_parseInfoCacheFactory }),
-                        getExceptionInterceptor());
-                sqlEx.initCause(e);
-
-                throw sqlEx;
-            }
-        }
-    }
-
-    private final static String SERVER_VERSION_STRING_VAR_NAME = "server_version_string";
-
-    /**
-     * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
-     * that the driver can configure itself.
-     * 
-     * @throws SQLException
-     *             if the 'SHOW VARIABLES' query fails for any reason.
-     */
-    private void loadServerVariables() throws SQLException {
-
-        if (this.cacheServerConfiguration.getValue()) {
-            createConfigCacheIfNeeded();
-
-            Map<String, String> cachedVariableMap = this.serverConfigCache.get(getURL());
-
-            if (cachedVariableMap != null) {
-                String cachedServerVersion = cachedVariableMap.get(SERVER_VERSION_STRING_VAR_NAME);
-
-                if (cachedServerVersion != null && getServerVersion() != null && cachedServerVersion.equals(getServerVersion().toString())) {
-                    this.session.setServerVariables(cachedVariableMap);
-
-                    return;
-                }
-
-                this.serverConfigCache.invalidate(getURL());
-            }
-        }
-
-        java.sql.Statement stmt = null;
-        java.sql.ResultSet results = null;
-
-        try {
-            stmt = getMetadataSafeStatement();
-
-            String version = this.dbmd.getDriverVersion();
-
-            if (version != null && version.indexOf('*') != -1) {
-                StringBuilder buf = new StringBuilder(version.length() + 10);
-
-                for (int i = 0; i < version.length(); i++) {
-                    char c = version.charAt(i);
-
-                    if (c == '*') {
-                        buf.append("[star]");
-                    } else {
-                        buf.append(c);
-                    }
-                }
-
-                version = buf.toString();
-            }
-
-            String versionComment = (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() || version == null) ? ""
-                    : "/* " + version + " */";
-
-            this.session.setServerVariables(new HashMap<String, String>());
-
-            try {
-                if (versionMeetsMinimum(5, 1, 0)) {
-                    StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
-                    queryBuf.append("  @@session.auto_increment_increment AS auto_increment_increment");
-                    queryBuf.append(", @@character_set_client AS character_set_client");
-                    queryBuf.append(", @@character_set_connection AS character_set_connection");
-                    queryBuf.append(", @@character_set_results AS character_set_results");
-                    queryBuf.append(", @@character_set_server AS character_set_server");
-                    queryBuf.append(", @@init_connect AS init_connect");
-                    queryBuf.append(", @@interactive_timeout AS interactive_timeout");
-                    if (!versionMeetsMinimum(5, 5, 0)) {
-                        queryBuf.append(", @@language AS language");
-                    }
-                    queryBuf.append(", @@license AS license");
-                    queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
-                    queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
-                    queryBuf.append(", @@net_buffer_length AS net_buffer_length");
-                    queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                    queryBuf.append(", @@query_cache_size AS query_cache_size");
-                    queryBuf.append(", @@query_cache_type AS query_cache_type");
-                    queryBuf.append(", @@sql_mode AS sql_mode");
-                    queryBuf.append(", @@system_time_zone AS system_time_zone");
-                    queryBuf.append(", @@time_zone AS time_zone");
-                    queryBuf.append(", @@tx_isolation AS tx_isolation");
-                    queryBuf.append(", @@wait_timeout AS wait_timeout");
-
-                    results = stmt.executeQuery(queryBuf.toString());
-                    if (results.next()) {
-                        ResultSetMetaData rsmd = results.getMetaData();
-                        for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                            this.session.getServerVariables().put(rsmd.getColumnLabel(i), results.getString(i));
-                        }
-                    }
-                } else {
-                    results = stmt.executeQuery(versionComment + "SHOW VARIABLES");
-                    while (results.next()) {
-                        this.session.getServerVariables().put(results.getString(1), results.getString(2));
-                    }
-                }
-
-                results.close();
-                results = null;
-            } catch (PasswordExpiredException ex) {
-                if (this.disconnectOnExpiredPasswords.getValue()) {
-                    throw ex;
-                }
-            } catch (SQLException ex) {
-                if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-                    throw ex;
-                }
-            }
-
-            if (this.cacheServerConfiguration.getValue()) {
-                this.session.getServerVariables().put(SERVER_VERSION_STRING_VAR_NAME, getServerVersion().toString());
-
-                this.serverConfigCache.put(getURL(), this.session.getServerVariables());
-            }
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (results != null) {
-                try {
-                    results.close();
-                } catch (SQLException sqlE) {
-                }
-            }
-
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException sqlE) {
-                }
-            }
         }
     }
 
@@ -3135,36 +2789,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
     }
 
-    private void setSessionVariables() throws SQLException {
-        String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
-        if (sessionVariables != null) {
-            List<String> variablesToSet = StringUtils.split(sessionVariables, ",", "\"'", "\"'", false);
-
-            int numVariablesToSet = variablesToSet.size();
-
-            java.sql.Statement stmt = null;
-
-            try {
-                stmt = getMetadataSafeStatement();
-
-                for (int i = 0; i < numVariablesToSet; i++) {
-                    String variableValuePair = variablesToSet.get(i);
-
-                    if (variableValuePair.startsWith("@")) {
-                        stmt.executeUpdate("SET " + variableValuePair);
-                    } else {
-                        stmt.executeUpdate("SET SESSION " + variableValuePair);
-                    }
-                }
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
-                }
-            }
-        }
-
-    }
-
     /**
      * @param level
      * @throws SQLException
@@ -3790,57 +3414,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         // This works for classes that aren't actually wrapping
         // anything
         return iface.isInstance(this);
-    }
-
-    public String getProcessHost() {
-        try {
-            long threadId = this.session.getThreadId();
-            java.sql.Statement processListStmt = getMetadataSafeStatement();
-            String processHost = null;
-
-            try {
-                processHost = findProcessHost(threadId, processListStmt);
-
-                if (processHost == null) {
-                    // http://bugs.mysql.com/bug.php?id=44167 - connection ids on the wire wrap at 4 bytes even though they're 64-bit numbers
-                    this.session.getLog().logWarn(String.format(
-                            "Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead", threadId));
-
-                    ResultSet rs = processListStmt.executeQuery("SELECT CONNECTION_ID()");
-                    if (rs.next()) {
-                        threadId = rs.getLong(1);
-                        processHost = findProcessHost(threadId, processListStmt);
-                    } else {
-                        this.session.getLog()
-                                .logError("No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
-                    }
-                }
-            } finally {
-                processListStmt.close();
-            }
-
-            if (processHost == null) {
-                this.session.getLog().logWarn(String.format(
-                        "Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected", threadId));
-            }
-            return processHost;
-        } catch (SQLException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
-        }
-    }
-
-    private static String findProcessHost(long threadId, java.sql.Statement processListStmt) throws SQLException {
-        String processHost = null;
-        ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
-        while (rs.next()) {
-            long id = rs.getLong(1);
-            if (threadId == id) {
-                processHost = rs.getString(3);
-                break;
-            }
-        }
-        return processHost;
-
     }
 
     @Override

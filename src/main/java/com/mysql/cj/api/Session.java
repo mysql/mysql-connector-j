@@ -148,4 +148,6 @@ public interface Session {
 
     boolean serverSupportsFracSecs();
 
+    String getProcessHost();
+
 }

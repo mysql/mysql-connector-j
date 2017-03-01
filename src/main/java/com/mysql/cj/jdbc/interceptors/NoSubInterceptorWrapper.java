@@ -30,6 +30,7 @@ import com.mysql.cj.api.Query;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.log.Log;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
 
@@ -71,6 +72,13 @@ public class NoSubInterceptorWrapper implements QueryInterceptor {
         this.underlyingInterceptor.preProcess(sql, interceptedQuery);
 
         return null; // don't allow result set substitution
+    }
+
+    @Override
+    public PacketPayload preProcess(PacketPayload queryPacket) {
+        this.underlyingInterceptor.preProcess(queryPacket);
+
+        return null; // don't allow PacketPayload substitution
     }
 
     public QueryInterceptor getUnderlyingInterceptor() {

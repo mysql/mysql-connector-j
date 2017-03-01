@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,7 +23,6 @@
 
 package com.mysql.cj.jdbc.util;
 
-import java.util.Properties;
 import java.util.Set;
 
 import com.mysql.cj.api.CacheAdapter;
@@ -34,8 +33,7 @@ import com.mysql.cj.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {
 
-    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize,
-            Properties connectionProperties) {
+    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize) {
 
         return new PerConnectionLRU(forConnection, cacheMaxSize, maxKeySize);
     }

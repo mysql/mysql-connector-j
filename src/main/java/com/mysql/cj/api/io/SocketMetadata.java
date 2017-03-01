@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -28,19 +28,19 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
-import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.core.Messages;
 
 public interface SocketMetadata {
 
-    default boolean isLocallyConnected(MysqlConnection conn) {
-        String processHost = conn.getProcessHost();
-        return isLocallyConnected(conn, processHost);
+    default boolean isLocallyConnected(Session sess) {
+        String processHost = sess.getProcessHost();
+        return isLocallyConnected(sess, processHost);
     }
 
-    default boolean isLocallyConnected(MysqlConnection conn, String processHost) {
+    default boolean isLocallyConnected(Session sess, String processHost) {
         if (processHost != null) {
-            conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.0", new Object[] { processHost }));
+            sess.getLog().logDebug(Messages.getString("SocketMetadata.0", new Object[] { processHost }));
 
             int endIndex = processHost.lastIndexOf(":");
             if (endIndex != -1) {
@@ -50,32 +50,32 @@ public interface SocketMetadata {
 
                     InetAddress[] whereMysqlThinksIConnectedFrom = InetAddress.getAllByName(processHost);
 
-                    SocketAddress remoteSocketAddr = conn.getSession().getRemoteSocketAddress();
+                    SocketAddress remoteSocketAddr = sess.getRemoteSocketAddress();
 
                     if (remoteSocketAddr instanceof InetSocketAddress) {
                         InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
 
                         for (InetAddress hostAddr : whereMysqlThinksIConnectedFrom) {
                             if (hostAddr.equals(whereIConnectedTo)) {
-                                conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
+                                sess.getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
                                 return true;
                             }
-                            conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
+                            sess.getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
                         }
 
                     } else {
-                        conn.getSession().getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
+                        sess.getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
                     }
 
                     return false;
                 } catch (UnknownHostException e) {
-                    conn.getSession().getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
+                    sess.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
 
                     return false;
                 }
 
             }
-            conn.getSession().getLog().logWarn(Messages.getString("SocketMetadata.4", new Object[] { processHost }));
+            sess.getLog().logWarn(Messages.getString("SocketMetadata.4", new Object[] { processHost }));
             return false;
         }
 

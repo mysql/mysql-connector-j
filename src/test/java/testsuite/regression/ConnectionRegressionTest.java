@@ -5794,7 +5794,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int cnt = 0;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public PacketPayload preProcess(PacketPayload queryPacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
             if (sql.contains("SHOW COLLATION")) {
                 this.cnt++;
             }

@@ -656,4 +656,10 @@ public class MysqlxSession implements Session {
     public boolean serverSupportsFracSecs() {
         return true;
     }
+
+    @Override
+    public String getProcessHost() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

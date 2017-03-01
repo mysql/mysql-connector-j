@@ -626,10 +626,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         }
     }
 
-    public String getProcessHost() {
-        return getActiveMySQLConnection().getProcessHost();
-    }
-
     @Override
     public JdbcPropertySet getPropertySet() {
         return getActiveMySQLConnection().getPropertySet();

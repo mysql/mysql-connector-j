@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,7 +24,6 @@
 package com.mysql.cj.core.util;
 
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -60,8 +59,7 @@ public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String
         }
     };
 
-    public CacheAdapter<String, Map<String, String>> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize,
-            Properties connectionProperties) {
+    public CacheAdapter<String, Map<String, String>> getInstance(MysqlConnection forConn, String url, int cacheMaxSize, int maxKeySize) {
         return serverConfigCache;
     }
 }
