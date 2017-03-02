@@ -415,7 +415,7 @@ public class MysqlaServerSession implements ServerSession {
         // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
         //
         // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
-        String characterSetResultsOnServerMysql = getServerVariable(JDBC_LOCAL_CHARACTER_SET_RESULTS);
+        String characterSetResultsOnServerMysql = getServerVariable(LOCAL_CHARACTER_SET_RESULTS);
 
         if (characterSetResultsOnServerMysql == null || StringUtils.startsWithIgnoreCaseAndWs(characterSetResultsOnServerMysql, "NULL")
                 || characterSetResultsOnServerMysql.length() == 0) {

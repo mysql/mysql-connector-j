@@ -23,7 +23,8 @@
 
 package com.mysql.cj.api;
 
-import com.mysql.cj.jdbc.io.ResultSetFactory;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.result.Resultset;
 
 public interface Query {
 
@@ -34,5 +35,5 @@ public interface Query {
 
     void checkCancelTimeout();
 
-    ResultSetFactory getResultSetFactory();
+    <T extends Resultset> ProtocolEntityFactory<T> getResultSetFactory();
 }

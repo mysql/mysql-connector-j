@@ -72,8 +72,6 @@ public interface Session {
 
     Map<String, String> getServerVariables(); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
-    void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
-
     /**
      * Clobbers the physical network connection and marks this session as closed.
      */

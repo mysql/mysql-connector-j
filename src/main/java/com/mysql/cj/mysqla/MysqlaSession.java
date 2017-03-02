@@ -57,7 +57,6 @@ import com.mysql.cj.api.io.SocketConnection;
 import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.io.ValueFactory;
-import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
@@ -128,12 +127,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     /**
      * Actual collation index to mysql charset name map of user defined charsets for given server URLs.
      */
-    private static final Map<String, Map<Integer, String>> customIndexToCharsetMapByUrl = new HashMap<String, Map<Integer, String>>();
+    private static final Map<String, Map<Integer, String>> customIndexToCharsetMapByUrl = new HashMap<>();
 
     /**
      * Actual mysql charset name to mblen map of user defined charsets for given server URLs.
      */
-    private static final Map<String, Map<String, Integer>> customCharsetToMblenMapByUrl = new HashMap<String, Map<String, Integer>>();
+    private static final Map<String, Map<String, Integer>> customCharsetToMblenMapByUrl = new HashMap<>();
 
     /**
      * If a CharsetEncoder is required for escaping. Needed for SJIS and related
@@ -254,12 +253,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     @Override
     public Map<String, String> getServerVariables() {
         return this.protocol.getServerSession().getServerVariables();
-    }
-
-    // TODO remove?
-    @Override
-    public void setServerVariables(Map<String, String> serverVariables) {
-        this.protocol.getServerSession().setServerVariables(serverVariables);
     }
 
     // TODO: we should examine the call flow here, we shouldn't have to know about the socket connection but this should be address in a wider scope.
@@ -815,21 +808,13 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             // result-set character set
             //
 
-            String onServer = null;
-            boolean isNullOnServer = false;
-
-            if (this.protocol.getServerSession().getServerVariables() != null) {
-                onServer = this.protocol.getServerSession().getServerVariable("character_set_results");
-
-                isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
-            }
-
+            String onServer = this.protocol.getServerSession().getServerVariable("character_set_results");
             if (characterSetResults.getValue() == null) {
 
                 //
                 // Only send if needed, if we're caching server variables we -have- to send, because we don't know what it was before we cached them.
                 //
-                if (!isNullOnServer) {
+                if (onServer != null && onServer.length() > 0 && !"NULL".equalsIgnoreCase(onServer)) {
                     try {
                         PacketPayload packet = getSharedSendPacket();
                         packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
@@ -841,9 +826,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                             throw ex;
                         }
                     }
-                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, null);
                 } else {
-                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, onServer);
                 }
             } else {
 
@@ -898,13 +883,13 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                         }
                     }
 
-                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
 
                     // We have to set errorMessageEncoding according to new value of charsetResults for server version 5.5 and higher
                     this.protocol.getServerSession().setErrorMessageEncoding(charsetResults);
 
                 } else {
-                    this.protocol.getServerSession().getServerVariables().put(ServerSession.JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+                    this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, onServer);
                 }
             }
 
@@ -1177,8 +1162,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         }
 
         if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
-            customCharset = new HashMap<Integer, String>();
-            customMblen = new HashMap<String, Integer>();
+            customCharset = new HashMap<>();
+            customMblen = new HashMap<>();
 
             ValueFactory<Integer> ivf = new IntegerValueFactory();
 
@@ -1391,7 +1376,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
                     this.needsPing = false;
                 } catch (Exception Ex) {
-                    ((JdbcConnection) conn).createNewIO(true);
+                    conn.createNewIO(true);
                 }
             }
 
@@ -1416,7 +1401,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 if ((this.autoReconnect.getValue())) {
                     this.needsPing = true;
                 } else if (sqlE instanceof CJCommunicationsException) {
-                    ((JdbcConnection) conn).cleanup(sqlE);
+                    conn.cleanup(sqlE);
                 }
                 throw sqlE;
 

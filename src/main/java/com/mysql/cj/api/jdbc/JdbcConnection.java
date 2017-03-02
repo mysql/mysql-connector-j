@@ -391,6 +391,4 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * Non standard methods:
      */
     ClientInfoProvider getClientInfoProviderImpl() throws SQLException;
-
-    void cleanup(Throwable whyCleanedUp);
 }

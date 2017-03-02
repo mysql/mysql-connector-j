@@ -49,6 +49,8 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
+import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
@@ -257,7 +259,7 @@ public class StatementImpl implements Statement, Query {
     public int maxRows = -1;
 
     /** Set of currently-open ResultSets */
-    protected Set<ResultSetInternalMethods> openResults = new HashSet<ResultSetInternalMethods>();
+    protected Set<ResultSetInternalMethods> openResults = new HashSet<>();
 
     /** Are we in pedantic mode? */
     protected boolean pedantic = false;
@@ -428,7 +430,7 @@ public class StatementImpl implements Statement, Query {
     public void addBatch(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.batchedArgs == null) {
-                this.batchedArgs = new ArrayList<Object>();
+                this.batchedArgs = new ArrayList<>();
             }
 
             if (sql != null) {
@@ -1037,7 +1039,7 @@ public class StatementImpl implements Statement, Query {
                     if (this.batchedArgs != null) {
                         int nbrCommands = this.batchedArgs.size();
 
-                        this.batchedGeneratedKeys = new ArrayList<Row>(this.batchedArgs.size());
+                        this.batchedGeneratedKeys = new ArrayList<>(this.batchedArgs.size());
 
                         boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries)
                                 .getValue();
@@ -1495,7 +1497,7 @@ public class StatementImpl implements Statement, Query {
             String encoding = this.session.getServerSession().getCharacterSetMetadata();
             int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
             Field[] fields = { new Field(null, "1", collationIndex, encoding, MysqlType.BIGINT, 1) };
-            ArrayList<Row> rows = new ArrayList<Row>();
+            ArrayList<Row> rows = new ArrayList<>();
             byte[] colVal = new byte[] { (byte) '1' };
 
             rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
@@ -1506,7 +1508,7 @@ public class StatementImpl implements Statement, Query {
     }
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
-        c.getSession().execSQL(c, this, nonQuery, -1, null, false, getResultSetFactory(), this.currentCatalog, null, false).close();
+        c.getSession().<ResultSetImpl> execSQL(c, this, nonQuery, -1, null, false, getResultSetFactory(), this.currentCatalog, null, false).close();
     }
 
     /**
@@ -1753,7 +1755,7 @@ public class StatementImpl implements Statement, Query {
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 
-            ArrayList<Row> rowSet = new ArrayList<Row>();
+            ArrayList<Row> rowSet = new ArrayList<>();
 
             long beginAt = getLastInsertID();
 
@@ -2697,8 +2699,9 @@ public class StatementImpl implements Statement, Query {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("Statement.65"));
     }
 
-    public ResultSetFactory getResultSetFactory() {
-        return this.resultSetFactory;
+    @SuppressWarnings("unchecked")
+    public <T extends Resultset> ProtocolEntityFactory<T> getResultSetFactory() {
+        return (ProtocolEntityFactory<T>) this.resultSetFactory;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,6 +55,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.api.conf.DatabaseUrlContainer;
 import com.mysql.cj.core.Messages;
@@ -65,7 +66,6 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.NamedPipeSocketFactory;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.Driver;
 
 /**
  * A container for a database URL and a collection of given connection arguments.
@@ -377,7 +377,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     public static Properties getPropertiesFromConfigFiles(String configFiles) {
         Properties configProps = new Properties();
         for (String configFile : configFiles.split(",")) {
-            try (InputStream configAsStream = Driver.class.getResourceAsStream("../configurations/" + configFile + ".properties")) {
+            try (InputStream configAsStream = Session.class.getResourceAsStream("../configurations/" + configFile + ".properties")) {
                 if (configAsStream == null) {
                     throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
                             Messages.getString("ConnectionString.10", new Object[] { configFile }));

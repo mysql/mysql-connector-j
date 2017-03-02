@@ -213,7 +213,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
 
     static {
-        mapTransIsolationNameToValue = new HashMap<String, Integer>(8);
+        mapTransIsolationNameToValue = new HashMap<>(8);
         mapTransIsolationNameToValue.put("READ-UNCOMMITED", TRANSACTION_READ_UNCOMMITTED);
         mapTransIsolationNameToValue.put("READ-UNCOMMITTED", TRANSACTION_READ_UNCOMMITTED);
         mapTransIsolationNameToValue.put("READ-COMMITTED", TRANSACTION_READ_COMMITTED);
@@ -301,7 +301,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * An array of currently open statements.
      * Copy-on-write used here to avoid ConcurrentModificationException when statements unregister themselves while we iterate over the list.
      */
-    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<Statement>();
+    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<>();
 
     private LRUCache parsedCallableStatementCache;
 
@@ -460,7 +460,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
                                     : Messages.getString("Connection.1",
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
-                    MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
+                            MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
 
     }
@@ -486,122 +486,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.queryInterceptors;
     }
 
-    //
-    //    /**
-    //     * Builds the map needed for 4.1.0 and newer servers that maps field-level
-    //     * charset/collation info to a java character encoding name.
-    //     * 
-    //     * @throws SQLException
-    //     */
-    //    private void buildCollationMapping() throws SQLException {
-    //
-    //        Map<Integer, String> customCharset = null;
-    //        Map<String, Integer> customMblen = null;
-    //
-    //        if (this.cacheServerConfiguration.getValue()) {
-    //            synchronized (customIndexToCharsetMapByUrl) {
-    //                customCharset = customIndexToCharsetMapByUrl.get(getURL());
-    //                customMblen = customCharsetToMblenMapByUrl.get(getURL());
-    //            }
-    //        }
-    //
-    //        if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
-    //
-    //            java.sql.Statement stmt = null;
-    //            java.sql.ResultSet results = null;
-    //
-    //            try {
-    //                customCharset = new HashMap<Integer, String>();
-    //                customMblen = new HashMap<String, Integer>();
-    //
-    //                stmt = getMetadataSafeStatement();
-    //
-    //                try {
-    //                    results = stmt.executeQuery("SHOW COLLATION");
-    //                    while (results.next()) {
-    //                        int collationIndex = ((Number) results.getObject(3)).intValue();
-    //                        String charsetName = results.getString(2);
-    //
-    //                        // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
-    //                        if (collationIndex >= CharsetMapping.MAP_SIZE
-    //                                || !charsetName.equals(CharsetMapping.getMysqlCharsetNameForCollationIndex(collationIndex))) {
-    //                            customCharset.put(collationIndex, charsetName);
-    //                        }
-    //
-    //                        // if no static map for charsetName adding to custom map
-    //                        if (!CharsetMapping.CHARSET_NAME_TO_CHARSET.containsKey(charsetName)) {
-    //                            customMblen.put(charsetName, null);
-    //                        }
-    //                    }
-    //                } catch (PasswordExpiredException ex) {
-    //                    if (this.disconnectOnExpiredPasswords.getValue()) {
-    //                        throw ex;
-    //                    }
-    //                } catch (SQLException ex) {
-    //                    if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-    //                        throw ex;
-    //                    }
-    //                }
-    //
-    //                // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
-    //                if (customMblen.size() > 0) {
-    //                    try {
-    //                        results.close();
-    //                        results = stmt.executeQuery("SHOW CHARACTER SET");
-    //                        while (results.next()) {
-    //                            String charsetName = results.getString("Charset");
-    //                            if (customMblen.containsKey(charsetName)) {
-    //                                customMblen.put(charsetName, results.getInt("Maxlen"));
-    //                            }
-    //                        }
-    //                    } catch (PasswordExpiredException ex) {
-    //                        if (this.disconnectOnExpiredPasswords.getValue()) {
-    //                            throw ex;
-    //                        }
-    //                    } catch (SQLException ex) {
-    //                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || this.disconnectOnExpiredPasswords.getValue()) {
-    //                            throw ex;
-    //                        }
-    //                    }
-    //                }
-    //
-    //                if (this.cacheServerConfiguration.getValue()) {
-    //                    synchronized (customIndexToCharsetMapByUrl) {
-    //                        customIndexToCharsetMapByUrl.put(getURL(), customCharset);
-    //                        customCharsetToMblenMapByUrl.put(getURL(), customMblen);
-    //                    }
-    //                }
-    //
-    //            } catch (SQLException ex) {
-    //                throw ex;
-    //            } catch (RuntimeException ex) {
-    //                SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-    //                sqlEx.initCause(ex);
-    //                throw sqlEx;
-    //            } finally {
-    //                if (results != null) {
-    //                    try {
-    //                        results.close();
-    //                    } catch (java.sql.SQLException sqlE) {
-    //                        // ignore
-    //                    }
-    //                }
-    //
-    //                if (stmt != null) {
-    //                    try {
-    //                        stmt.close();
-    //                    } catch (java.sql.SQLException sqlE) {
-    //                        // ignore
-    //                    }
-    //                }
-    //            }
-    //
-    //        }
-    //
-    //        this.session.setCharsetMaps(customCharset, customMblen);
-    //
-    //    }
-    //
     private boolean canHandleAsServerPreparedStatement(String sql) throws SQLException {
         if (sql == null || sql.length() == 0) {
             return true;
@@ -960,9 +844,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * 
      * @param isForReconnect
      *            is this request for a re-connect
-     * @return a new MysqlIO instance connected to a server
-     * @throws SQLException
-     *             if a database access error occurs
      * @throws CommunicationsException
      */
     public void createNewIO(boolean isForReconnect) {
@@ -1088,7 +969,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (statementObj instanceof ServerPreparedStatement) {
                     if (serverPreparedStatements == null) {
-                        serverPreparedStatements = new Stack<Statement>();
+                        serverPreparedStatements = new Stack<>();
                     }
 
                     serverPreparedStatements.add(statementObj);
@@ -1438,7 +1319,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.typeMap == null) {
-                this.typeMap = new HashMap<String, Class<?>>();
+                this.typeMap = new HashMap<>();
             }
 
             return this.typeMap;
@@ -3061,7 +2942,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         private final int milliseconds;
 
         public NetworkTimeoutSetter(JdbcConnection conn, int milliseconds) {
-            this.connRef = new WeakReference<JdbcConnection>(conn);
+            this.connRef = new WeakReference<>(conn);
             this.milliseconds = milliseconds;
         }
 

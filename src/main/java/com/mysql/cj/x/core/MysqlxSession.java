@@ -173,10 +173,6 @@ public class MysqlxSession implements Session {
         throw new NullPointerException("TODO: ");
     }
 
-    public void setServerVariables(Map<String, String> serverVariables) {
-        throw new NullPointerException("TODO: ");
-    }
-
     public void abortInternal() {
         throw new NullPointerException("TODO: REPLACE ME WITH close() unless there's different semantics here");
     }
@@ -494,7 +490,7 @@ public class MysqlxSession implements Session {
 
     private <RES_T> CompletableFuture<RES_T> asyncFindInternal(FindParams findParams, ResultCtor<? extends RES_T> resultCtor) {
         CompletableFuture<RES_T> f = new CompletableFuture<>();
-        ResultListener l = new ResultCreatingResultListener<RES_T>(resultCtor, f);
+        ResultListener l = new ResultCreatingResultListener<>(resultCtor, f);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);
@@ -510,8 +506,8 @@ public class MysqlxSession implements Session {
     }
 
     public <R> CompletableFuture<R> asyncFindDocsReduce(FindParams findParams, R id, Reducer<DbDoc, R> reducer) {
-        CompletableFuture<R> f = new CompletableFuture<R>();
-        ResultListener l = new RowWiseReducingResultListener<DbDoc, R>(id, reducer, f,
+        CompletableFuture<R> f = new CompletableFuture<>();
+        ResultListener l = new RowWiseReducingResultListener<>(id, reducer, f,
                 (ArrayList<Field> _ignored_metadata) -> r -> r.getValue(0, new DbDocValueFactory()));
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
@@ -520,9 +516,9 @@ public class MysqlxSession implements Session {
     }
 
     public <R> CompletableFuture<R> asyncSelectRowsReduce(FindParams findParams, R id, Reducer<com.mysql.cj.api.xdevapi.Row, R> reducer) {
-        CompletableFuture<R> f = new CompletableFuture<R>();
+        CompletableFuture<R> f = new CompletableFuture<>();
         MetadataToRowToElement<com.mysql.cj.api.xdevapi.Row> rowFactory = metadata -> new DevapiRowFactory(metadata, this.defaultTimeZone);
-        ResultListener l = new RowWiseReducingResultListener<com.mysql.cj.api.xdevapi.Row, R>(id, reducer, f, rowFactory);
+        ResultListener l = new RowWiseReducingResultListener<>(id, reducer, f, rowFactory);
         newCommand();
         // TODO: put characterSetMetadata somewhere useful
         this.protocol.asyncFind(findParams, "latin1", l, f);

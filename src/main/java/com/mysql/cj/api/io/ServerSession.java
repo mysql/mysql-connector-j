@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -54,7 +54,7 @@ public interface ServerSession {
      */
     public static int TRANSACTION_COMPLETED = 3;
 
-    public static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+    public static final String LOCAL_CHARACTER_SET_RESULTS = "local.character_set_results";
 
     ServerCapabilities getCapabilities();
 
