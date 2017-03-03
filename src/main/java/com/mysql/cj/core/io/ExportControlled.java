@@ -248,14 +248,12 @@ public class ExportControlled {
         if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
             InputStream ksIS = null;
             try {
-                if (!StringUtils.isNullOrEmpty(keyStoreType)) {
-                    KeyStore clientKeyStore = KeyStore.getInstance(keyStoreType);
-                    URL ksURL = new URL(keyStoreUrl);
-                    char[] password = (keyStorePassword == null) ? new char[0] : keyStorePassword.toCharArray();
-                    ksIS = ksURL.openStream();
-                    clientKeyStore.load(ksIS, password);
-                    kmf.init(clientKeyStore, password);
-                }
+                KeyStore clientKeyStore = KeyStore.getInstance(keyStoreType);
+                URL ksURL = new URL(keyStoreUrl);
+                char[] password = (keyStorePassword == null) ? new char[0] : keyStorePassword.toCharArray();
+                ksIS = ksURL.openStream();
+                clientKeyStore.load(ksIS, password);
+                kmf.init(clientKeyStore, password);
             } catch (UnrecoverableKeyException uke) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", uke,
                         exceptionInterceptor);
@@ -288,15 +286,13 @@ public class ExportControlled {
         if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
             InputStream ksIS = null;
             try {
-                if (!StringUtils.isNullOrEmpty(trustStoreType)) {
-                    KeyStore trustKeyStore = KeyStore.getInstance(trustStoreType);
-                    URL ksURL = new URL(trustStoreUrl);
+                KeyStore trustKeyStore = KeyStore.getInstance(trustStoreType);
+                URL ksURL = new URL(trustStoreUrl);
 
-                    char[] password = (trustStorePassword == null) ? new char[0] : trustStorePassword.toCharArray();
-                    ksIS = ksURL.openStream();
-                    trustKeyStore.load(ksIS, password);
-                    tmf.init(trustKeyStore);
-                }
+                char[] password = (trustStorePassword == null) ? new char[0] : trustStorePassword.toCharArray();
+                ksIS = ksURL.openStream();
+                trustKeyStore.load(ksIS, password);
+                tmf.init(trustKeyStore);
             } catch (NoSuchAlgorithmException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
                         exceptionInterceptor);
@@ -354,8 +350,6 @@ public class ExportControlled {
             throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
         } catch (KeyManagementException kme) {
             throw new SSLParamsException("KeyManagementException: " + kme.getMessage(), kme);
-        } catch (Exception e) {
-            throw new SSLParamsException("now what?", e);
         }
     }
 
