@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -197,6 +197,12 @@ public class ExprParser {
 
     /**
      * Does the next character equal the given character? (respects bounds)
+     * 
+     * @param i
+     *            The current position in the string
+     * @param c
+     *            character to compare with
+     * @return true if equals
      */
     boolean nextCharEquals(int i, char c) {
         return (i + 1 < this.string.length()) && this.string.charAt(i + 1) == c;
@@ -423,6 +429,11 @@ public class ExprParser {
 
     /**
      * Assert that the token at <i>pos</i> is of type <i>type</i>.
+     * 
+     * @param pos
+     *            The current position in the string
+     * @param type
+     *            {@link TokenType}
      */
     void assertTokenAt(int pos, TokenType type) {
         if (this.tokens.size() <= pos) {
@@ -435,6 +446,10 @@ public class ExprParser {
 
     /**
      * Does the current token have type `t'?
+     * 
+     * @param t
+     *            {@link TokenType}
+     * @return true if equals
      */
     boolean currentTokenTypeEquals(TokenType t) {
         return posTokenTypeEquals(this.tokenPos, t);
@@ -442,6 +457,10 @@ public class ExprParser {
 
     /**
      * Does the next token have type `t'?
+     * 
+     * @param t
+     *            {@link TokenType}
+     * @return true if equals
      */
     boolean nextTokenTypeEquals(TokenType t) {
         return posTokenTypeEquals(this.tokenPos + 1, t);
@@ -449,6 +468,12 @@ public class ExprParser {
 
     /**
      * Does the token at position `pos' have type `t'?
+     * 
+     * @param pos
+     *            The current position in the string
+     * @param t
+     *            {@link TokenType}
+     * @return true if equals
      */
     boolean posTokenTypeEquals(int pos, TokenType t) {
         return this.tokens.size() > pos && this.tokens.get(pos).type == t;
@@ -457,6 +482,8 @@ public class ExprParser {
     /**
      * Consume token.
      *
+     * @param t
+     *            {@link TokenType}
      * @return the string value of the consumed token
      */
     String consumeToken(TokenType t) {
@@ -505,6 +532,8 @@ public class ExprParser {
 
     /**
      * Parse an identifier for a function call: [schema.]name
+     * 
+     * @return {@link Identifier}
      */
     Identifier identifier() {
         Identifier.Builder builder = Identifier.newBuilder();
@@ -522,6 +551,8 @@ public class ExprParser {
 
     /**
      * Parse a document path member.
+     * 
+     * @return {@link DocumentPathItem}
      */
     DocumentPathItem docPathMember() {
         consumeToken(TokenType.DOT);
@@ -548,6 +579,8 @@ public class ExprParser {
 
     /**
      * Parse a document path array index.
+     * 
+     * @return {@link DocumentPathItem}
      */
     DocumentPathItem docPathArrayLoc() {
         DocumentPathItem.Builder builder = DocumentPathItem.newBuilder();
@@ -571,6 +604,8 @@ public class ExprParser {
 
     /**
      * Parse a JSON-style document path, like WL#7909, but prefix by @. instead of $.
+     * 
+     * @return list of {@link DocumentPathItem} objects
      */
     public List<DocumentPathItem> documentPath() {
         List<DocumentPathItem> items = new ArrayList<>();
@@ -597,6 +632,8 @@ public class ExprParser {
 
     /**
      * Parse a document field.
+     * 
+     * @return {@link Expr}
      */
     public Expr documentField() {
         ColumnIdentifier.Builder builder = ColumnIdentifier.newBuilder();
@@ -609,6 +646,8 @@ public class ExprParser {
 
     /**
      * Parse a column identifier (which may optionally include a JSON document path).
+     * 
+     * @return {@link Expr}
      */
     Expr columnIdentifier() {
         List<String> parts = new LinkedList<>();
@@ -657,6 +696,12 @@ public class ExprParser {
 
     /**
      * Build a unary operator expression.
+     * 
+     * @param name
+     *            operator name
+     * @param param
+     *            operator parameter
+     * @return {@link Expr}
      */
     Expr buildUnaryOp(String name, Expr param) {
         Operator op = Operator.newBuilder().setName(name).addParam(param).build();
@@ -665,6 +710,8 @@ public class ExprParser {
 
     /**
      * Parse an atomic expression. (c.f. grammar at top)
+     * 
+     * @return {@link Expr}
      */
     Expr atomicExpr() { // constant, identifier, variable, function call, etc
         if (this.tokenPos >= this.tokens.size()) {
@@ -814,7 +861,7 @@ public class ExprParser {
     }
 
     /**
-     * An expression parser. (used in {@link parseLeftAssocBinaryOpExpr(TokenType[], ParseExpr)})
+     * An expression parser. (used in {@link #parseLeftAssocBinaryOpExpr(TokenType[], ParseExpr)})
      */
     @FunctionalInterface
     static interface ParseExpr {
@@ -905,6 +952,10 @@ public class ExprParser {
 
     /**
      * Workaround for improper comparisons in the server. (lack of JSON_UNQUOTE())
+     * 
+     * @param e
+     *            {@link Expr}
+     * @return {@link Expr}
      */
     private Expr unquoteWorkaround(Expr e) {
         if (e.getType() == Expr.Type.IDENT && e.getIdentifier().getDocumentPathList().size() > 0) {
@@ -1030,6 +1081,8 @@ public class ExprParser {
 
     /**
      * Parse an ORDER BY specification which is a comma-separated list of expressions, each may be optionally suffixed by ASC/DESC.
+     * 
+     * @return list of {@link Order} objects
      */
     public List<Order> parseOrderSpec() {
         return parseCommaSeparatedList(() -> {
@@ -1048,6 +1101,8 @@ public class ExprParser {
 
     /**
      * Parse a SELECT projection which is a comma-separated list of expressions, each optionally suffixed with a target alias.
+     * 
+     * @return list of {@link Projection} objects
      */
     public List<Projection> parseTableSelectProjection() {
         return parseCommaSeparatedList(() -> {
@@ -1064,14 +1119,17 @@ public class ExprParser {
     /**
      * Parse an INSERT field name.
      * 
-     * @todo unit test
+     * @return {@link Column}
      */
+    // TODO unit test
     public Column parseTableInsertField() {
         return Column.newBuilder().setName(consumeToken(TokenType.IDENT)).build();
     }
 
     /**
      * Parse an UPDATE field which can include can document paths.
+     * 
+     * @return {@link ColumnIdentifier}
      */
     public ColumnIdentifier parseTableUpdateField() {
         return columnIdentifier().getIdentifier();
@@ -1079,6 +1137,8 @@ public class ExprParser {
 
     /**
      * Parse a document projection which is similar to SELECT but with document paths as the target alias.
+     * 
+     * @return list of {@link Projection} objects
      */
     public List<Projection> parseDocumentProjection() {
         this.allowRelationalColumns = false;
@@ -1094,6 +1154,8 @@ public class ExprParser {
 
     /**
      * Parse a list of expressions used for GROUP BY.
+     * 
+     * @return list of {@link Expr} objects
      */
     public List<Expr> parseExprList() {
         return parseCommaSeparatedList(this::expr);
@@ -1101,6 +1163,8 @@ public class ExprParser {
 
     /**
      * @return the number of positional placeholders in the expression.
+     * 
+     * @return the number of positional placeholders in the expression
      */
     public int getPositionalPlaceholderCount() {
         return this.positionalPlaceholderCount;

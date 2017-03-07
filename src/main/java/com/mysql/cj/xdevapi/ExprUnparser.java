@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -66,6 +66,10 @@ public class ExprUnparser {
 
     /**
      * Scalar to string.
+     * 
+     * @param e
+     *            {@link Scalar}
+     * @return scalar string
      */
     static String scalarToString(Scalar e) {
         switch (e.getType()) {
@@ -88,6 +92,10 @@ public class ExprUnparser {
 
     /**
      * JSON document path to string.
+     * 
+     * @param items
+     *            list of {@link DocumentPathItem} objects
+     * @return JSON document path string
      */
     static String documentPathToString(List<DocumentPathItem> items) {
         StringBuilder docPathString = new StringBuilder();
@@ -115,6 +123,10 @@ public class ExprUnparser {
 
     /**
      * Column identifier (or JSON path) to string.
+     * 
+     * @param e
+     *            {@link ColumnIdentifier}
+     * @return Column identifier or JSON path string.
      */
     static String columnIdentifierToString(ColumnIdentifier e) {
         if (e.hasName()) {
@@ -135,6 +147,10 @@ public class ExprUnparser {
 
     /**
      * Function call to string.
+     * 
+     * @param e
+     *            {@link FunctionCall}
+     * @return Function call string
      */
     static String functionCallToString(FunctionCall e) {
         Identifier i = e.getName();
@@ -153,6 +169,10 @@ public class ExprUnparser {
 
     /**
      * Create a string from a list of (already stringified) parameters. Surround by parens and separate by commas.
+     * 
+     * @param params
+     *            list of param strings
+     * @return param list string
      */
     static String paramListToString(List<String> params) {
         String s = "(";
@@ -169,6 +189,10 @@ public class ExprUnparser {
 
     /**
      * Convert an operator to a string. Includes special cases for chosen infix operators (AND, OR) and special forms such as LIKE and BETWEEN.
+     * 
+     * @param e
+     *            {@link Operator}
+     * @return Operator string
      */
     static String operatorToString(Operator e) {
         String name = e.getName();
@@ -214,13 +238,21 @@ public class ExprUnparser {
 
     /**
      * Escape a string literal.
+     * 
+     * @param s
+     *            literal
+     * @return escaped literal
      */
     public static String escapeLiteral(String s) {
         return s.replaceAll("\"", "\"\"");
     }
 
     /**
-     * Quote a named identifer.
+     * Quote a named identifier.
+     * 
+     * @param ident
+     *            identifier
+     * @return quoted identifier
      */
     public static String quoteIdentifier(String ident) {
         // TODO: make sure this is correct
@@ -243,6 +275,10 @@ public class ExprUnparser {
 
     /**
      * Serialize an expression to a string.
+     * 
+     * @param e
+     *            {@link Expr}
+     * @return string expression
      */
     public static String exprToString(Expr e) {
         switch (e.getType()) {

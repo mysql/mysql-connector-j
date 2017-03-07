@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,11 +23,15 @@
 
 package com.mysql.cj.api.x.io;
 
+import java.io.IOException;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.x.core.XDevAPIError;
 
 /**
  * Low-level message reader for X protocol. The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error
@@ -41,7 +45,7 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
  * 
  * </li>
  * <li>The next message type is not known and the caller must conditionally decided what to do based on the type of the next message. The {@link
- * getNextMessageClass()} method supports this use case. The caller will generally call the reader like so:
+ * #getNextMessageClass()} method supports this use case. The caller will generally call the reader like so:
  * 
  * <pre>
  * if (reader.getNextMessageClass() == MessageType1.class) {
@@ -55,12 +59,14 @@ import com.mysql.cj.core.exceptions.CJCommunicationsException;
  * 
  * </li>
  * </ul>
- * <p/>
- * If the <i>MessageReader</i> encounters an <i>Error</i> message, it will throw a {@link XDevAPIError} exception to indicate that an error was returned from the
+ * <p>
+ * If the <i>MessageReader</i> encounters an <i>Error</i> message, it will throw a {@link XDevAPIError} exception to indicate that an error was returned from
+ * the
  * server.
- * <p/>
+ * </p>
+ * <p>
  * All external interaction should only know about message <i>classes</i>. Message type tags are an implementation detail hidden in the <i>MessageReader</i>.
- * <p/>
+ * </p>
  * TODO: write about async usage
  */
 public interface MessageReader {
@@ -76,6 +82,8 @@ public interface MessageReader {
     /**
      * Synchronously read the next message in the stream. Block until the message is read fully.
      *
+     * @param <T>
+     *            message type extending {@link GeneratedMessage}
      * @param expectedClass
      *            the class of the expected message
      * @return the next message of type T

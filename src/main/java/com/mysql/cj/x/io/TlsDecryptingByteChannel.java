@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,9 +39,10 @@ import com.mysql.cj.core.exceptions.AssertionFailedException;
  * FilterInputStream-esque byte channel that decrypts incoming packets. We proxy calls to the read method from the caller. We replace the provided completion
  * handler with our own handler that decrypts the incoming message and an then delegates to the original handler.
  *
- * <p/>
+ * <p>
  * Note: This implementation does not support attachments for reads. They are not used in {@link AsyncMessageReader} which this class is in direct support
  * of.
+ * </p>
  */
 public class TlsDecryptingByteChannel implements AsynchronousByteChannel, CompletionHandler<Integer, Void> {
     private static final ByteBuffer emptyBuffer = ByteBuffer.allocate(0);
@@ -75,7 +76,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
     }
 
     /**
-     * Completion handler for a read. Prepare the buffer for decryption and continue with {@link decryptAndDispatch()}.
+     * Completion handler for a read. Prepare the buffer for decryption and continue with {@link #decryptAndDispatch()}.
      */
     public void completed(Integer result, Void attachment) {
         if (result < 0) {

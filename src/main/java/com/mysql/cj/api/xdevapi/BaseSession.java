@@ -31,57 +31,94 @@ import java.util.List;
 public interface BaseSession {
 
     /**
-     * Retrieve the set of Schema objects for which the current user has access.
+     * Retrieve the list of Schema objects for which the current user has access.
+     * 
+     * @return list of Schema objects
      */
     List<Schema> getSchemas();
 
     /**
      * Retrieve the Schema corresponding to name.
+     * 
+     * @param schemaName
+     *            name of schema to retrieve
+     * @return {@link Schema}
      */
     Schema getSchema(String schemaName);
 
     /**
      * Retrieve the default schema name which may be configured at connect time.
+     * 
+     * @return default schema name
      */
     String getDefaultSchemaName();
 
     /**
      * Retrieve the default schema which may be configured at connect time.
+     * 
+     * @return default {@link Schema}
      */
     Schema getDefaultSchema();
 
     /**
      * Create and return a new schema with the name given by name.
+     * 
+     * @param schemaName
+     *            name of schema to create
+     * @return {@link Schema} created
      */
     Schema createSchema(String schemaName);
 
     /**
      * Create and return a new schema with the name given by name. If the schema already exists, a reference to it is returned.
+     * 
+     * @param schemaName
+     *            name of schema to create
+     * @param reuseExistingObject
+     *            true to reuse
+     * @return {@link Schema} created
      */
     Schema createSchema(String schemaName, boolean reuseExistingObject);
 
     /**
      * Drop the existing schema with the name given by name.
+     * 
+     * @param schemaName
+     *            name of schema to drop
      */
     void dropSchema(String schemaName);
 
     /**
      * Drop the collection in given schema.
+     * 
+     * @param schemaName
+     *            schema name
+     * @param collectionName
+     *            name of collection to drop
      */
     void dropCollection(String schemaName, String collectionName);
 
     /**
      * Drop the table in given schema.
+     * 
+     * @param schemaName
+     *            schema name
+     * @param tableName
+     *            name of table to drop
      */
     void dropTable(String schemaName, String tableName);
 
     /**
      * Get the URL used to create this session.
+     * 
+     * @return URI
      */
     String getUri();
 
     /**
      * Is this session open?
+     * 
+     * @return true if session is open
      */
     boolean isOpen();
 

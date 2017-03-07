@@ -42,9 +42,6 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 
-/**
- * @todo
- */
 public abstract class AbstractSession implements BaseSession {
 
     protected MysqlxSession session;

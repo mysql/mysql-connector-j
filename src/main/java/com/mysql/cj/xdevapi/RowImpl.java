@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,6 +63,9 @@ public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     /**
      * Map a field name to it's index in the row.
      *
+     * @param fieldName
+     *            field name
+     * @return field index
      * @throws DataReadException
      *             if the field name is not in the row
      */

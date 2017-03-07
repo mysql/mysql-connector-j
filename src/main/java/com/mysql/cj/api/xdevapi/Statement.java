@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,16 +35,22 @@ import java.util.stream.IntStream;
 public interface Statement<STMT_T, RES_T> {
     /**
      * Execute the statement synchronously.
+     * 
+     * @return result of statement execution
      */
     RES_T execute();
 
     /**
      * Execute the statement asynchronously.
+     * 
+     * @return {@link CompletableFuture} for result
      */
     CompletableFuture<RES_T> executeAsync();
 
     /**
      * Clear the bindings for this statement.
+     * 
+     * @return this statement
      */
     default STMT_T clearBindings() {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
@@ -54,8 +60,10 @@ public interface Statement<STMT_T, RES_T> {
      * Bind the named argument to the given value.
      * 
      * @param argName
+     *            argument name
      * @param value
-     * @return
+     *            object to bind
+     * @return this statement
      */
     default STMT_T bind(String argName, Object value) {
         throw new UnsupportedOperationException("This statement doesn't support bound parameters");
@@ -63,6 +71,10 @@ public interface Statement<STMT_T, RES_T> {
 
     /**
      * Bind the set of arguments named by the keys in the map to the associated values in the map.
+     * 
+     * @param values
+     *            the map containing key-value pairs to bind
+     * @return this statement
      */
     @SuppressWarnings("unchecked")
     default STMT_T bind(Map<String, Object> values) {
@@ -73,6 +85,10 @@ public interface Statement<STMT_T, RES_T> {
 
     /**
      * Bind a list of objects numerically starting at 0.
+     * 
+     * @param values
+     *            list of objects to bind
+     * @return this statement
      */
     @SuppressWarnings("unchecked")
     default STMT_T bind(List<Object> values) {
@@ -83,6 +99,10 @@ public interface Statement<STMT_T, RES_T> {
 
     /**
      * Bind an array of objects numerically starting at 0.
+     * 
+     * @param values
+     *            one or more objects to bind
+     * @return this statement
      */
     default STMT_T bind(Object... values) {
         return bind(Arrays.asList(values));

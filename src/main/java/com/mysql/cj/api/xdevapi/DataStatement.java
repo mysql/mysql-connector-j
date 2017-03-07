@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -48,6 +48,8 @@ public interface DataStatement<STMT_T, RES_T, RES_ELEMENT_T> extends Statement<S
      *            the initial element passed to the accumulating function
      * @param accumulator
      *            the function which accepts a pair (element, accumulator value) for every element in the result
+     * @param <R>
+     *            identity type
      * @return a future which is completed with the accumulator value after all elements have been processed
      */
     <R> CompletableFuture<R> executeAsync(R identity, Reducer<RES_ELEMENT_T, R> accumulator);

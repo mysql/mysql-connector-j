@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,7 +47,7 @@ public class DocumentID {
      * <p>
      * X DevAPI Document ID: 4a383b7fcc8-94f3-11e6-48cb-5c99cdfe
      * 
-     * @return
+     * @return X DevAPI Document ID string
      */
     public static String generate() {
         UUID uuid = UUID.randomUUID();

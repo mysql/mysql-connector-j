@@ -55,7 +55,7 @@ public interface ViewUpdate extends ViewDDL<ViewUpdate, ViewUpdate> {
     /**
      * Execute the View update operation.
      * 
-     * @return
+     * @return {@link Table}
      */
     Table execute();
 }

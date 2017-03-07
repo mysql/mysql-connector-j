@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,11 +35,7 @@ import com.mysql.cj.core.result.Field;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
 
-/**
- * TODO: write unit tests once server interface stabilizes
- * 
- * @todo
- */
+// TODO: write unit tests once server interface stabilizes
 public class XProtocolRow implements com.mysql.cj.api.result.Row {
     private ArrayList<Field> metadata;
     private Row rowMessage;

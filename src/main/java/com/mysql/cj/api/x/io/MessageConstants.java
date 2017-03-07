@@ -71,9 +71,8 @@ public class MessageConstants {
 
     /**
      * Map of class to "ServerMessages" type tag for validation of parsed message class.
-     * 
-     * @todo Find a clever way to generate both maps with a single set of input pairs.
      */
+    // TODO Find a clever way to generate both maps with a single set of input pairs.
     public static final Map<Class<? extends GeneratedMessage>, Integer> MESSAGE_CLASS_TO_TYPE;
 
     /**

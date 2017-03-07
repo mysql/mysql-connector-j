@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,12 +33,21 @@ public class Expression {
         this.expressionString = expressionString;
     }
 
+    /**
+     * Get the string form of this expression
+     * 
+     * @return expression string
+     */
     public String getExpressionString() {
         return this.expressionString;
     }
 
     /**
      * Static method for static import to allow: <code>set("b", expr("a + 1"))</code>
+     * 
+     * @param expressionString
+     *            expression string
+     * @return {@link Expression}
      */
     public static Expression expr(String expressionString) {
         return new Expression(expressionString);

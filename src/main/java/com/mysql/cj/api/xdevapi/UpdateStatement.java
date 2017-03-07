@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,26 +31,48 @@ import java.util.Map;
 public interface UpdateStatement extends Statement<UpdateStatement, Result> {
     /**
      * Add the given set of updates to the statement.
+     * 
+     * @param fieldsAndValues
+     *            table name-value pairs
+     * @return {@link UpdateStatement}
      */
     UpdateStatement set(Map<String, Object> fieldsAndValues);
 
     /**
      * Add the given update to the statement setting field to value for all rows matching the search criteria.
+     * 
+     * @param field
+     *            field name
+     * @param value
+     *            value to set
+     * @return {@link UpdateStatement}
      */
     UpdateStatement set(String field, Object value);
 
     /**
      * Add/replace the search criteria for this statement.
+     * 
+     * @param searchCondition
+     *            search condition expression
+     * @return {@link UpdateStatement}
      */
     UpdateStatement where(String searchCondition);
 
     /**
      * Add/replace the order specification for this statement.
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link UpdateStatement}
      */
     UpdateStatement orderBy(String... sortFields);
 
     /**
      * Add/replace the row limit for this statement.
+     * 
+     * @param numberOfRows
+     *            limit
+     * @return {@link UpdateStatement}
      */
     UpdateStatement limit(long numberOfRows);
 }

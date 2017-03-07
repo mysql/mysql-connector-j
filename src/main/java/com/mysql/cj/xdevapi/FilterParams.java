@@ -37,8 +37,6 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
 /**
  * Filter parameters.
- * 
- * @todo better documentation
  */
 public class FilterParams {
     protected Collection collection;

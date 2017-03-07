@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -48,8 +48,11 @@ public interface Session {
      * Re-authenticates as the given user and password
      * 
      * @param userName
+     *            DB user name
      * @param password
+     *            DB user password
      * @param database
+     *            database name
      * 
      */
     void changeUser(String userName, String password, String database);
@@ -66,7 +69,8 @@ public interface Session {
      * Shortcut to {@link ServerSession#getServerVariable(String)}
      * 
      * @param name
-     * @return
+     *            server variable name
+     * @return server variable value
      */
     String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
@@ -77,8 +81,9 @@ public interface Session {
     void setServerVariables(Map<String, String> serverVariables); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
     /**
+     * Get Collation index which server provided in handshake greeting packet
      * 
-     * @return Collation index which server provided in handshake greeting packet
+     * @return collation index
      */
     int getServerDefaultCollationIndex();
 
@@ -86,6 +91,7 @@ public interface Session {
      * Stores collation index which server provided in handshake greeting packet.
      * 
      * @param serverDefaultCollationIndex
+     *            collation index
      */
     void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
@@ -104,6 +110,8 @@ public interface Session {
 
     /**
      * Get the version of the MySQL server we are talking to.
+     * 
+     * @return {@link ServerVersion}
      */
     ServerVersion getServerVersion();
 
@@ -112,8 +120,12 @@ public interface Session {
      * minimums?
      * 
      * @param major
+     *            major version number
      * @param minor
+     *            minor version number
      * @param subminor
+     *            sub-minor version number
+     * @return true if current server version equal or higher than provided one
      */
     boolean versionMeetsMinimum(int major, int minor, int subminor);
 
@@ -145,9 +157,10 @@ public interface Session {
 
     /**
      * Returns the Java character encoding name for the given MySQL server
-     * charset index
+     * collation index
      * 
-     * @param charsetIndex
+     * @param collationIndex
+     *            collation index
      * @return the Java character encoding name for the given MySQL server
      *         charset index
      */

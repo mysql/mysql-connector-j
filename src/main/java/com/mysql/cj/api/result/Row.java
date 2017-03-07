@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,7 +29,6 @@ import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.result.Field;
 
 /**
  * @todo
@@ -38,9 +37,11 @@ public interface Row {
     /**
      * Retrieve a value for the given column. This is the main facility to access values from the Row
      * involving {@link ValueDecoder} and {@link ValueFactory} chain. Metadata <i>must</i> be set via
-     * Row constructor or {@link #setMetadata(Field[])} call before calling this method to allow
+     * Row constructor or {@link #setMetadata(ColumnDefinition)} call before calling this method to allow
      * correct columnIndex boundaries check and data type recognition.
      *
+     * @param <T>
+     *            type to decode to
      * @param columnIndex
      *            index of column to retrieve value from (0-indexed, not JDBC 1-indexed)
      * @param vf
@@ -53,7 +54,8 @@ public interface Row {
      * Set metadata to enable getValue functionality.
      * 
      * @param columnDefinition
-     * @return
+     *            {@link ColumnDefinition}
+     * @return {@link Row}
      */
     default Row setMetadata(ColumnDefinition columnDefinition) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, Messages.getString("OperationNotSupportedException.0"));
@@ -96,6 +98,8 @@ public interface Row {
 
     /**
      * Was the last value retrieved a NULL value?
+     * 
+     * @return true if the last retrieved value was NULL.
      */
     boolean wasNull();
 }

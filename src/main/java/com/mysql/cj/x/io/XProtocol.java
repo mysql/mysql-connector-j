@@ -124,7 +124,6 @@ public class XProtocol implements Protocol {
     private MessageWriter writer;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
-    /** @TODO what is this */
     private PropertySet propertySet;
     private Map<String, Any> capabilities;
     /** Server-assigned client-id. */
@@ -210,7 +209,12 @@ public class XProtocol implements Protocol {
     }
 
     /**
-     * Set a capability of current session. Must be done before authentication ({@link changeUser(String, String, String)}).
+     * Set a capability of current session. Must be done before authentication ({@link #changeUser(String, String, String)}).
+     * 
+     * @param name
+     *            capability name
+     * @param value
+     *            capability value
      */
     public void setCapability(String name, Object value) {
         this.writer.write(this.msgBuilder.buildCapabilitiesSet(name, value));
@@ -310,9 +314,7 @@ public class XProtocol implements Protocol {
                         .build()));
     }
 
-    /**
-     * @todo this works for tables too
-     */
+    // TODO this works for tables too
     public void sendDropCollection(String schemaName, String collectionName) {
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION,
                 Any.newBuilder().setType(Any.Type.OBJECT)
@@ -332,6 +334,11 @@ public class XProtocol implements Protocol {
      * | some_view           | VIEW       |
      * | xprotocol_test_test | TABLE      |
      * </pre>
+     * 
+     * @param schemaName
+     *            schema name
+     * @param pattern
+     *            object name pattern
      */
     public void sendListObjects(String schemaName, String pattern) {
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS,
@@ -413,9 +420,7 @@ public class XProtocol implements Protocol {
         sendSqlStatement(statement, null);
     }
 
-    /**
-     * @todo option for brief metadata (types only)
-     */
+    // TODO option for brief metadata (types only)
     @SuppressWarnings("unchecked")
     public void sendSqlStatement(String statement, Object args) {
         this.writer.write(this.msgBuilder.buildSqlStatement(statement, (List<Any>) args));
@@ -537,6 +542,7 @@ public class XProtocol implements Protocol {
      *            the message from the server
      * @param characterSet
      *            the encoding of the strings in the message
+     * @return {@link Field}
      */
     private static Field columnMetaDataToField(PropertySet propertySet, ColumnMetaData col, String characterSet) {
         try {
@@ -624,8 +630,7 @@ public class XProtocol implements Protocol {
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         com.mysql.cj.api.x.io.MessageListener l = new SqlResultMessageListener(f, (col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet),
                 defaultTimeZone);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f,
-                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(this.msgBuilder.buildSqlStatement(sql, (List<Any>) args), resultHandler);
         return f;
     }
@@ -633,10 +638,13 @@ public class XProtocol implements Protocol {
     /**
      *
      * @param findParams
+     *            {@link FindParams}
      * @param metadataCharacterSet
+     *            charset name
      * @param callbacks
+     *            {@link ResultListener}
      * @param errorFuture
-     *            the future to complete exceptionally if the request fails
+     *            the {@link CompletableFuture} to complete exceptionally if the request fails
      */
     public void asyncFind(FindParams findParams, String metadataCharacterSet, ResultListener callbacks, CompletableFuture<?> errorFuture) {
         MessageListener l = new ResultMessageListener((col) -> columnMetaDataToField(this.propertySet, col, metadataCharacterSet), callbacks);
@@ -648,8 +656,7 @@ public class XProtocol implements Protocol {
     private CompletableFuture<StatementExecuteOk> asyncUpdate(MessageLite commandMessage) {
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
         final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f,
-                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
         ((AsyncMessageWriter) this.writer).writeAsync(commandMessage, resultHandler);
         return f;
     }
@@ -767,6 +774,8 @@ public class XProtocol implements Protocol {
 
     /**
      * Get the server-assigned client ID. Not initialized until the <code>AuthenticateOk</code> is read.
+     * 
+     * @return client id
      */
     public long getClientId() {
         return this.clientId;

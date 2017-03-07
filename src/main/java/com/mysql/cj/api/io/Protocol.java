@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,21 +37,29 @@ public interface Protocol {
     /**
      * Init method takes the place of constructor.
      *
-     * @note A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
-     * @note prefer instead
+     * A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
+     * prefer instead
      * 
-     *       <pre>
-     *       new MysqlaProtocol(conn, to, netConn);
-     *       </pre>
+     * <pre>
+     * new MysqlaProtocol(conn, to, netConn);
+     * </pre>
      * 
-     *       or
+     * or
      * 
-     *       <pre>
-     *       MysqlaProtocol.getInstance(conn, to, netConn);
-     *       </pre>
+     * <pre>
+     * MysqlaProtocol.getInstance(conn, to, netConn);
+     * </pre>
      * 
-     * @note MysqlConnection dependency will be removed.
+     * @param conn
+     *            {@link MysqlConnection}
+     * @param socketTimeout
+     *            socket timeout
+     * @param socketConnection
+     *            {@link SocketConnection}
+     * @param propertySet
+     *            {@link PropertySet}
      */
+    // TODO MysqlConnection dependency will be removed.
     void init(MysqlConnection conn, int socketTimeout, SocketConnection socketConnection, PropertySet propertySet);
 
     PropertySet getPropertySet();
@@ -61,7 +69,7 @@ public interface Protocol {
     /**
      * Retrieve ServerCapabilities from server.
      * 
-     * @return
+     * @return {@link ServerCapabilities}
      */
     ServerCapabilities readServerCapabilities();
 
@@ -87,6 +95,13 @@ public interface Protocol {
 
     /**
      * Create a new session. This generally happens once at the beginning of a connection.
+     * 
+     * @param user
+     *            DB user name
+     * @param password
+     *            DB user password
+     * @param database
+     *            database name
      */
     void connect(String user, String password, String database);
 
@@ -104,8 +119,11 @@ public interface Protocol {
      * Re-authenticates as the given user and password
      * 
      * @param user
+     *            DB user name
      * @param password
+     *            DB user password
      * @param database
+     *            database name
      * 
      */
     void changeUser(String user, String password, String database);

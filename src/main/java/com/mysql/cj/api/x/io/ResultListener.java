@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,26 +33,41 @@ import com.mysql.cj.x.io.XProtocolRow;
 public interface ResultListener {
     /**
      * Called when metadata is available.
+     * 
+     * @param metadata
+     *            list of {@link Field} objects
      */
     void onMetadata(ArrayList<Field> metadata);
 
     /**
      * Called when row is available.
+     * 
+     * @param r
+     *            {@link XProtocolRow}
      */
     void onRow(XProtocolRow r);
 
     /**
      * Called when result processing is complete. No additional notifications will be delivered.
+     * 
+     * @param ok
+     *            {@link StatementExecuteOk}
      */
     void onComplete(StatementExecuteOk ok);
 
     /**
      * Called when a server error is available. No additional notifications will be delivered.
+     * 
+     * @param error
+     *            {@link XDevAPIError}
      */
     void onError(XDevAPIError error);
 
     /**
      * Called when an exception occurs. No additional notifications will be delivered.
+     * 
+     * @param t
+     *            {@link Throwable}
      */
     void onException(Throwable t);
 }

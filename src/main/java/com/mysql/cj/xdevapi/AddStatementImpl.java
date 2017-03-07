@@ -38,9 +38,6 @@ import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
-/**
- * @todo
- */
 public class AddStatementImpl implements AddStatement {
     private MysqlxSession mysqlxSession;
     private String schemaName;

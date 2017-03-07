@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,7 @@ import com.google.protobuf.GeneratedMessage;
 /**
  * Sink for messages that are read asynchonously from the socket.
  *
- * @return whether the listener is done receiving messages.
+ * Return whether the listener is done receiving messages.
  */
 @FunctionalInterface
 public interface MessageListener extends BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, Boolean> {

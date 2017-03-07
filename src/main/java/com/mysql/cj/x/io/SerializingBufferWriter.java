@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,7 +46,7 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
     /**
      * Maintain a queue of pending writes.
      */
-    private Queue<ByteBuffer> pendingWrites = new LinkedList<ByteBuffer>();
+    private Queue<ByteBuffer> pendingWrites = new LinkedList<>();
 
     /**
      * Map the byte buffer identity (System.identityHashCode(ByteBuffer)) to the completion handler for each buffer's write. Identity is used as ByteBuffer's
@@ -79,6 +79,11 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
      * <li>The buffer list becomes empty after we check and miss writing to the channel.</li>
      * <li>LinkedList is not thread-safe.</li>
      * </ul>
+     * 
+     * @param buf
+     *            {@link ByteBuffer}
+     * @param callback
+     *            {@link CompletionHandler}
      */
     public void queueBuffer(ByteBuffer buf, CompletionHandler<Long, Void> callback) {
         if (callback != null) {
@@ -145,6 +150,9 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
     /**
      * Allow overwriting the channel once the writer has been established. Required for SSL/TLS connections when the encryption doesn't start until we send the
      * capability flag to X Plugin.
+     * 
+     * @param channel
+     *            {@link AsynchronousSocketChannel}
      */
     public void setChannel(AsynchronousSocketChannel channel) {
         this.channel = channel;
