@@ -26,7 +26,7 @@ package com.mysql.cj.api.xdevapi;
 /**
  * Handles the creation of a View.
  * <p>
- * View creation is only allowed if the {@link #definedAs(String)} or {@link #definedAs(SelectStatement)} function was called.
+ * View creation is only allowed if the {@link ViewCreate#definedAs(SelectStatement)} method was called.
  * <p>
  * Example:
  * 
@@ -57,7 +57,7 @@ public interface ViewCreateDefined extends ViewDDL<ViewCreateDefined, ViewCreate
     /**
      * Execute the View creation operation.
      * 
-     * @return
+     * @return {@link Table}
      */
     Table execute();
 }

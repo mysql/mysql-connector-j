@@ -91,16 +91,13 @@ import com.mysql.cj.xdevapi.SqlUpdateResult;
 import com.mysql.cj.xdevapi.UpdateParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
 
-/**
- * @todo
- */
 public class MysqlxSession implements Session {
 
     private XProtocol protocol;
     private ResultStreamer currentResult;
     private String host;
     private int port;
-    /* TODO: Need to expand options here. Force user to specify, given possible heterogenous configuration in sharded env? */
+    // TODO Need to expand options here. Force user to specify, given possible heterogenous configuration in sharded env?
     private TimeZone defaultTimeZone = TimeZone.getDefault();
     ValueFactory<String> svf = new StringValueFactory();
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,8 +41,6 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
 /**
  * Utilities to deal with Expr (and related) structures.
- *
- * @todo rename to ProtobufUtil(s)
  */
 public class ExprUtil {
     // Date formats for sending dates and times to the server as strings.
@@ -53,6 +51,8 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar NULL type.
+     * 
+     * @return {@link Expr}
      */
     public static Expr buildLiteralNullScalar() {
         return buildLiteralExpr(nullScalar());
@@ -60,6 +60,10 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type.
+     * 
+     * @param d
+     *            value
+     * @return {@link Expr}
      */
     public static Expr buildLiteralScalar(double d) {
         return buildLiteralExpr(scalarOf(d));
@@ -67,6 +71,10 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type.
+     * 
+     * @param l
+     *            value
+     * @return {@link Expr}
      */
     public static Expr buildLiteralScalar(long l) {
         return buildLiteralExpr(scalarOf(l));
@@ -74,6 +82,10 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type.
+     * 
+     * @param str
+     *            value
+     * @return {@link Expr}
      */
     public static Expr buildLiteralScalar(String str) {
         return buildLiteralExpr(scalarOf(str));
@@ -81,6 +93,10 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type.
+     * 
+     * @param bytes
+     *            value
+     * @return {@link Expr}
      */
     public static Expr buildLiteralScalar(byte[] bytes) {
         return buildLiteralExpr(scalarOf(bytes));
@@ -88,6 +104,10 @@ public class ExprUtil {
 
     /**
      * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type.
+     * 
+     * @param b
+     *            value
+     * @return {@link Expr}
      */
     public static Expr buildLiteralScalar(boolean b) {
         return buildLiteralExpr(scalarOf(b));
@@ -95,6 +115,10 @@ public class ExprUtil {
 
     /**
      * Wrap an Any value in a LITERAL expression.
+     * 
+     * @param scalar
+     *            {@link Scalar}
+     * @return {@link Expr}
      */
     public static Expr buildLiteralExpr(Scalar scalar) {
         return Expr.newBuilder().setType(Expr.Type.LITERAL).setLiteral(scalar).build();
@@ -128,6 +152,10 @@ public class ExprUtil {
 
     /**
      * Build an Any with a string value.
+     * 
+     * @param str
+     *            value
+     * @return {@link Any}
      */
     public static Any buildAny(String str) {
         // same as Expr

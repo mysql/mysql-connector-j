@@ -38,20 +38,16 @@ public interface Protocol {
     /**
      * Init method takes the place of constructor.
      *
-     * @note A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
-     * @note prefer instead
+     * A constructor should be used unless the encapsulation of ProtocolFactory is necessary.
      * 
-     *       <pre>
-     *       new MysqlaProtocol(conn, to, netConn);
-     *       </pre>
-     * 
-     *       or
-     * 
-     *       <pre>
-     *       MysqlaProtocol.getInstance(conn, to, netConn);
-     *       </pre>
-     * 
-     * @note MysqlConnection dependency will be removed.
+     * @param session
+     *            {@link Session}
+     * @param socketConnection
+     *            {@link SocketConnection}
+     * @param propertySet
+     *            {@link PropertySet}
+     * @param transactionManager
+     *            {@link TransactionManager}
      */
     void init(Session session, SocketConnection socketConnection, PropertySet propertySet, TransactionManager transactionManager);
 
@@ -62,7 +58,7 @@ public interface Protocol {
     /**
      * Retrieve ServerCapabilities from server.
      * 
-     * @return
+     * @return {@link ServerCapabilities}
      */
     ServerCapabilities readServerCapabilities();
 
@@ -84,6 +80,13 @@ public interface Protocol {
 
     /**
      * Create a new session. This generally happens once at the beginning of a connection.
+     * 
+     * @param user
+     *            DB user name
+     * @param password
+     *            DB user password
+     * @param database
+     *            database name
      */
     void connect(String user, String password, String database);
 
@@ -99,8 +102,11 @@ public interface Protocol {
      * Re-authenticates as the given user and password
      * 
      * @param user
+     *            DB user name
      * @param password
+     *            DB user password
      * @param database
+     *            database name
      * 
      */
     void changeUser(String user, String password, String database);

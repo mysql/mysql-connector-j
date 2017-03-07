@@ -123,7 +123,7 @@ public class MessageBuilder {
                                 .addFld(ObjectField.newBuilder().setKey("collection").setValue(ExprUtil.buildAny(collectionName)))
                                 .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))
 
-        ).build());
+                        ).build());
     }
 
     /**
@@ -133,6 +133,7 @@ public class MessageBuilder {
      *            the xplugin command to send
      * @param args
      *            the arguments to the command
+     * @return {@link StmtExecute}
      */
     public StmtExecute buildXpluginCommand(XpluginStatementCommand command, Any... args) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
@@ -147,6 +148,12 @@ public class MessageBuilder {
 
     /**
      * Build a <i>StmtExecute</i> message for a SQL statement.
+     * 
+     * @param statement
+     *            SQL statement string
+     * @param args
+     *            list of {@link Any} arguments
+     * @return {@link StmtExecute}
      */
     public StmtExecute buildSqlStatement(String statement, List<Any> args) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();

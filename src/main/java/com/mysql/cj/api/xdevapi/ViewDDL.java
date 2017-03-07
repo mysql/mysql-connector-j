@@ -32,12 +32,14 @@ public interface ViewDDL<T, D> {
         /**
          * MySQL chooses which algorithm to use
          */
-        UNDEFINED, /**
-                    * The text of a statement that refers to the view and the view definition are merged
-                    */
-        MERGE, /**
-                * The view are retrieved into a temporary table
-                */
+        UNDEFINED,
+        /**
+         * The text of a statement that refers to the view and the view definition are merged
+         */
+        MERGE,
+        /**
+         * The view are retrieved into a temporary table
+         */
         TEMPTABLE;
     };
 
@@ -49,9 +51,10 @@ public interface ViewDDL<T, D> {
         /**
          * The view WHERE clause is checked, but no underlying views are checked
          */
-        LOCAL, /**
-                * The view WHERE clause is checked, then checking recurses to underlying views
-                */
+        LOCAL,
+        /**
+         * The view WHERE clause is checked, then checking recurses to underlying views
+         */
         CASCADED;
     };
 
@@ -59,7 +62,8 @@ public interface ViewDDL<T, D> {
      * Defines the column names of the View.
      * 
      * @param columnStrLst
-     * @return
+     *            one or more column names
+     * @return {@link ViewDDL} implementation
      */
     T columns(String... columnStrLst);
 
@@ -67,7 +71,8 @@ public interface ViewDDL<T, D> {
      * Defines the View's algorithm.
      * 
      * @param algorithm
-     * @return
+     *            {@link ViewAlgorithm}
+     * @return {@link ViewDDL} implementation
      */
     T algorithm(ViewAlgorithm algorithm);
 
@@ -75,7 +80,8 @@ public interface ViewDDL<T, D> {
      * Defines the View's security scheme.
      * 
      * @param sqlSecurity
-     * @return
+     *            {@link ViewSqlSecurity}
+     * @return {@link ViewDDL} implementation
      */
     T security(ViewSqlSecurity sqlSecurity);
 
@@ -83,7 +89,8 @@ public interface ViewDDL<T, D> {
      * Defines the View's definer.
      * 
      * @param userStr
-     * @return
+     *            view's definer user name
+     * @return {@link ViewDDL} implementation
      */
     T definer(String userStr);
 
@@ -91,7 +98,8 @@ public interface ViewDDL<T, D> {
      * Defines the table select statement to generate the View.
      * 
      * @param selectStatement
-     * @return
+     *            {@link SelectStatement}
+     * @return {@link ViewDDL} implementation
      */
     D definedAs(SelectStatement selectStatement);
 
@@ -99,7 +107,8 @@ public interface ViewDDL<T, D> {
      * Set insert/update constraints on the View.
      * 
      * @param checkOption
-     * @return
+     *            {@link ViewCheckOption}
+     * @return {@link ViewDDL} implementation
      */
     T withCheckOption(ViewCheckOption checkOption);
 

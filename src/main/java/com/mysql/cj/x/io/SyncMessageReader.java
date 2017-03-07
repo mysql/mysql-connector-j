@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,7 +63,10 @@ public class SyncMessageReader implements MessageReader {
      * <p>
      * Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
      * bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session multiplexing is
-     * supported by the protocol. The protocol will be able to accomodate it but we will have to separate reading data after the header (size).
+     * supported by the protocol. The protocol will be able to accommodate it but we will have to separate reading data after the header (size).
+     * 
+     * @throws IOException
+     *             in case of reading error
      */
     private void readHeader() throws IOException {
         byte[] len = new byte[4];
@@ -84,6 +87,8 @@ public class SyncMessageReader implements MessageReader {
 
     /**
      * Get the message type of the next message, possibly blocking indefinitely until the message is received.
+     * 
+     * @return message type number
      */
     private int getNextMessageType() {
         if (!this.hasReadHeader) {
@@ -112,9 +117,6 @@ public class SyncMessageReader implements MessageReader {
         return messageClass;
     }
 
-    /**
-     * @todo
-     */
     private <T extends GeneratedMessage> T readAndParse(Parser<T> parser) {
         byte[] packet = new byte[this.payloadSize - 1];
 

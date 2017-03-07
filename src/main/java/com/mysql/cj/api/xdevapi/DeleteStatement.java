@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,16 +29,28 @@ package com.mysql.cj.api.xdevapi;
 public interface DeleteStatement extends Statement<DeleteStatement, Result> {
     /**
      * Add/replace the filter for the deletion.
+     * 
+     * @param searchCondition
+     *            condition expression
+     * @return {@link DeleteStatement}
      */
     DeleteStatement where(String searchCondition);
 
     /**
      * Add/replace the order by specification for the deletion.
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link DeleteStatement}
      */
     DeleteStatement orderBy(String... sortFields);
 
     /**
      * Add/replace the row limit for the deletion.
+     * 
+     * @param numberOfRows
+     *            limit
+     * @return {@link DeleteStatement}
      */
     DeleteStatement limit(long numberOfRows);
 }

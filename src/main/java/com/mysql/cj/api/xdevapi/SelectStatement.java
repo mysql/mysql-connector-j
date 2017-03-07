@@ -31,33 +31,62 @@ import com.mysql.cj.xdevapi.FindParams;
 public interface SelectStatement extends DataStatement<SelectStatement, RowResult, Row> {
     /**
      * Add/replace the search condition for this query.
+     * 
+     * @param searchCondition
+     *            search condition expression
+     * @return {@link SelectStatement}
      */
     SelectStatement where(String searchCondition);
 
     /**
      * Add/replace the aggregation fields for this query.
+     * 
+     * @param groupBy
+     *            groupBy expression
+     * @return {@link SelectStatement}
      */
     SelectStatement groupBy(String... groupBy);
 
     /**
      * Add/replace the aggregate criteria for this query.
+     * 
+     * @param having
+     *            having expression
+     * @return {@link SelectStatement}
      */
     SelectStatement having(String having);
 
     /**
      * Add/replace the order specification for this query.
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link SelectStatement}
      */
     SelectStatement orderBy(String... sortFields);
 
     /**
      * Add/replace the row limit for this query.
+     * 
+     * @param numberOfRows
+     *            limit
+     * @return {@link SelectStatement}
      */
     SelectStatement limit(long numberOfRows);
 
     /**
      * Add/replace the row offset for this query.
+     * 
+     * @param limitOffset
+     *            limit offset
+     * @return {@link SelectStatement}
      */
     SelectStatement offset(long limitOffset);
 
+    /**
+     * Return FindParams defined for this statement.
+     * 
+     * @return {@link FindParams}
+     */
     FindParams getFindParams();
 }

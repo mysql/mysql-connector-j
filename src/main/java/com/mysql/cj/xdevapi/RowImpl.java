@@ -63,6 +63,9 @@ public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     /**
      * Map a field name to it's index in the row.
      *
+     * @param fieldName
+     *            field name
+     * @return field index
      * @throws DataReadException
      *             if the field name is not in the row
      */

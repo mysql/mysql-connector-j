@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,6 +36,10 @@ public interface MessageWriter {
 
     /**
      * Lookup the "ClientMessages" type tag for a protobuf message class.
+     * 
+     * @param msgClass
+     *            message class extending {@link MessageLite}
+     * @return type tag for this message class
      */
     public static int getTypeForMessageClass(Class<? extends MessageLite> msgClass) {
         Integer tag = MessageConstants.MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE.get(msgClass);

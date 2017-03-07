@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,11 +31,19 @@ import com.mysql.cj.xdevapi.DbDoc;
 public interface AddStatement extends Statement<AddStatement, Result> {
     /**
      * Add a document as a JSON string.
+     * 
+     * @param jsonString
+     *            document as a JSON string
+     * @return {@link AddStatement}
      */
     AddStatement add(String jsonString);
 
     /**
      * Add a sequence of DbDocs.
+     * 
+     * @param documents
+     *            one or more {@link DbDoc} documents
+     * @return {@link AddStatement}
      */
     AddStatement add(DbDoc... documents);
 }

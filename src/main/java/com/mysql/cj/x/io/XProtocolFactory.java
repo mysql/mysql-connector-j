@@ -75,6 +75,14 @@ public class XProtocolFactory {
 
     /**
      * Create an async I/O connection. This enables use of async methods on {@link XProtocol}.
+     * 
+     * @param host
+     *            host name
+     * @param port
+     *            port number
+     * @param propertySet
+     *            {@link PropertySet}
+     * @return {@link XProtocol}
      */
     public static XProtocol getAsyncInstance(String host, int port, PropertySet propertySet) {
         try {
@@ -145,6 +153,13 @@ public class XProtocolFactory {
     /**
      * Perform the handshaking step of the TLS connection. We use the `sslEngine' along with the `channel' to exchange messages with the server to setup an
      * encrypted channel.
+     * 
+     * @param sslEngine
+     *            {@link SSLEngine}
+     * @param channel
+     *            {@link AsynchronousSocketChannel}
+     * @throws SSLException
+     *             in case of handshake error
      */
     private static void performTlsHandshake(SSLEngine sslEngine, AsynchronousSocketChannel channel) throws SSLException {
         sslEngine.beginHandshake();
@@ -185,6 +200,11 @@ public class XProtocolFactory {
 
     /**
      * Synchronously send data to the server. (Needed here for TLS handshake)
+     * 
+     * @param channel
+     *            {@link AsynchronousSocketChannel}
+     * @param data
+     *            {@link ByteBuffer}
      */
     private static void write(AsynchronousSocketChannel channel, ByteBuffer data) {
         CompletableFuture<Void> f = new CompletableFuture<>();
@@ -212,6 +232,11 @@ public class XProtocolFactory {
 
     /**
      * Synchronously read data from the server. (Needed here for TLS handshake)
+     * 
+     * @param channel
+     *            {@link AsynchronousSocketChannel}
+     * @param data
+     *            {@link ByteBuffer}
      */
     private static void read(AsynchronousSocketChannel channel, ByteBuffer data) {
         Future<Integer> f = channel.read(data);

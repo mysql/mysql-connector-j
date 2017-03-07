@@ -36,6 +36,8 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve the set of collections existing in this schema.
+     * 
+     * @return list of {@link Collection} objects
      */
     List<Collection> getCollections();
 
@@ -43,11 +45,15 @@ public interface Schema extends DatabaseObject {
      * Retrieve the set of collections existing in this schema and matching the given pattern.
      * 
      * @param pattern
+     *            match pattern
+     * @return list of {@link Collection} objects
      */
     List<Collection> getCollections(String pattern);
 
     /**
      * Retrieve the set of tables existing in this schema.
+     * 
+     * @return list of {@link Table} objects
      */
     List<Table> getTables();
 
@@ -55,6 +61,8 @@ public interface Schema extends DatabaseObject {
      * Retrieve the set of tables existing in this schema and matching the given pattern.
      * 
      * @param pattern
+     *            match pattern
+     * @return list of {@link Table} objects
      */
     List<Table> getTables(String pattern);
 
@@ -64,6 +72,8 @@ public interface Schema extends DatabaseObject {
      * Retrieve a reference to the named collection.
      * 
      * @param name
+     *            collection name
+     * @return {@link Collection}
      */
     Collection getCollection(String name);
 
@@ -71,7 +81,10 @@ public interface Schema extends DatabaseObject {
      * Retrieve a reference to the named collection hinting that an exception should be thrown if the collection is not known to the server.
      * 
      * @param name
+     *            collection name
      * @param requireExists
+     *            true if required to exist
+     * @return {@link Collection}
      */
     Collection getCollection(String name, boolean requireExists);
 
@@ -79,6 +92,8 @@ public interface Schema extends DatabaseObject {
      * Retrieve a reference to the named collection using the table API.
      * 
      * @param name
+     *            collection name
+     * @return {@link Table}
      */
     Table getCollectionAsTable(String name);
 
@@ -86,14 +101,19 @@ public interface Schema extends DatabaseObject {
      * Retrieve a reference to the named table.
      * 
      * @param name
+     *            table name
+     * @return {@link Table}
      */
     Table getTable(String name);
 
     /**
      * Retrieve a reference to the named table hinting that an exception should be thrown if the collection is not known to the server.
      * 
-     * @param name
+     * @param tableName
+     *            table name
      * @param requireExists
+     *            true if required to exist
+     * @return {@link Table}
      */
     Table getTable(String tableName, boolean requireExists);
 
@@ -103,6 +123,8 @@ public interface Schema extends DatabaseObject {
      * Create a new collection.
      * 
      * @param name
+     *            collection name
+     * @return {@link Collection}
      */
     Collection createCollection(String name);
 
@@ -110,7 +132,10 @@ public interface Schema extends DatabaseObject {
      * Create a new collection if it does not already exist on the server.
      * 
      * @param name
+     *            collection name
      * @param reuseExistingObject
+     *            true if allowed to reuse
+     * @return {@link Collection}
      */
     Collection createCollection(String name, boolean reuseExistingObject);
 
@@ -118,6 +143,8 @@ public interface Schema extends DatabaseObject {
      * Create a new table.
      * 
      * @param name
+     *            table name
+     * @return {@link CreateTableSplitStatement}
      */
     CreateTableSplitStatement createTable(String name);
 
@@ -125,7 +152,10 @@ public interface Schema extends DatabaseObject {
      * Create a new table if it does not already exist on the server.
      * 
      * @param name
+     *            table name
      * @param reuseExistingObject
+     *            true if allowed to reuse
+     * @return {@link CreateTableSplitStatement}
      */
     CreateTableSplitStatement createTable(String name, boolean reuseExistingObject);
 
@@ -133,8 +163,10 @@ public interface Schema extends DatabaseObject {
      * Returns an instance of ViewCreate to handle the creation of a View.
      * 
      * @param name
+     *            view name
      * @param replace
-     * @return
+     *            true if allowed to replace
+     * @return {@link ViewCreate}
      */
     ViewCreate createView(String name, boolean replace);
 
@@ -142,7 +174,8 @@ public interface Schema extends DatabaseObject {
      * Returns an instance of ViewUpdate to handle updating an existing View.
      * 
      * @param name
-     * @return
+     *            view name
+     * @return {@link ViewUpdate}
      */
     ViewUpdate alterView(String name);
 
@@ -150,7 +183,8 @@ public interface Schema extends DatabaseObject {
      * Returns an instance of a ViewDrop to handle dropping an existing View.
      * 
      * @param name
-     * @return
+     *            view name
+     * @return {@link ViewDrop}
      */
     ViewDrop dropView(String name);
 }

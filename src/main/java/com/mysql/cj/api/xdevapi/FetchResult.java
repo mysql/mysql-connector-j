@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,6 +36,8 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
     /**
      * Does this result have data? This indicates that the result was produced from a data-returning query. It does not indicate whether there are more than 0
      * rows in the result.
+     * 
+     * @return true if has data
      */
     default boolean hasData() {
         return true;
@@ -43,6 +45,8 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
 
     /**
      * Fetch the next element.
+     * 
+     * @return element of type T
      */
     default T fetchOne() {
         if (hasNext()) {
@@ -53,6 +57,8 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
 
     /**
      * Create an iterator over all elements of the result.
+     * 
+     * @return iterator over result items
      */
     default Iterator<T> iterator() {
         return fetchAll().iterator();
@@ -60,21 +66,29 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
 
     /**
      * How many items are in this result? This method forces internal buffering of the entire result.
+     * 
+     * @return number of elements in result
      */
     long count();
 
     /**
      * Create a list of all elements in the result forcing internal buffering.
+     * 
+     * @return list of result elements
      */
     List<T> fetchAll();
 
     /**
      * Count of warnings generated during statement execution. This method forces internal buffering of the result.
+     * 
+     * @return number of warnings
      */
     int getWarningsCount();
 
     /**
      * Warnings generated during statement execution. This method forces internal buffering of the result.
+     * 
+     * @return iterator over warnings
      */
     Iterator<Warning> getWarnings();
 }

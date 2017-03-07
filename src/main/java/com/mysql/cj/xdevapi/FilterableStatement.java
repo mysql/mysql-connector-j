@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,9 +25,6 @@ package com.mysql.cj.xdevapi;
 
 import com.mysql.cj.api.xdevapi.Statement;
 
-/**
- * @todo
- */
 public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<STMT_T, RES_T> {
     protected FilterParams filterParams;
 
@@ -73,6 +70,8 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
 
     /**
      * Is this a relational statement?
+     * 
+     * @return true if relational
      */
     public boolean isRelational() {
         return this.filterParams.isRelational();

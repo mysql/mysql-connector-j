@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -84,6 +84,10 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     /**
      * Is the array of buffers drained? (I.e. are we done writing?)
+     * 
+     * @param buffers
+     *            array of {@link ByteBuffer} objects
+     * @return true if we're done
      */
     private boolean isDrained(ByteBuffer[] buffers) {
         for (ByteBuffer b : buffers) {
@@ -147,6 +151,8 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     /**
      * Acquire a new buffer to use as the destination and subsequent transmission of encrypted data.
+     * 
+     * @return {@link ByteBuffer}
      */
     private ByteBuffer getCipherTextBuffer() {
         ByteBuffer buf = this.cipherTextBuffers.poll();
@@ -159,6 +165,9 @@ public class TlsEncryptingByteChannel extends AsynchronousSocketChannel {
 
     /**
      * Release a used buffer.
+     * 
+     * @param buf
+     *            {@link ByteBuffer}
      */
     private void putCipherTextBuffer(ByteBuffer buf) {
         if (this.cipherTextBuffers.size() < 10) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,16 +29,13 @@ import java.util.NoSuchElementException;
 import com.mysql.cj.api.result.RowList;
 import com.mysql.cj.core.result.Field;
 
-/**
- * @todo doc
- */
 public class XProtocolRowInputStream implements RowList {
     private ArrayList<Field> metadata;
     private XProtocol protocol;
     private boolean isDone = false;
     private int position = -1;
-    /** @todo doc */
-    private XProtocolRow next;
+    /** XProtocolRow */
+    private XProtocolRow next; // TODO document
 
     public XProtocolRowInputStream(ArrayList<Field> metadata, XProtocol protocol) {
         this.metadata = metadata;

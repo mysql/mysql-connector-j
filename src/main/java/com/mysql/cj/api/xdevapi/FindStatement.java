@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,26 +31,46 @@ import com.mysql.cj.xdevapi.DbDoc;
 public interface FindStatement extends DataStatement<FindStatement, DocResult, DbDoc> {
     /**
      * Add/replace the field projections defining the result.
+     * 
+     * @param projections
+     *            projection expression
+     * @return {@link FindStatement}
      */
     FindStatement fields(String... projections);
 
     /**
      * Add/replace the field projection defining the result.
+     * 
+     * @param docProjection
+     *            projection expression
+     * @return {@link FindStatement}
      */
     FindStatement fields(Expression docProjection);
 
     /**
      * Add/replace the aggregation fields for this query.
+     * 
+     * @param groupBy
+     *            groupBy expression
+     * @return {@link FindStatement}
      */
     FindStatement groupBy(String... groupBy);
 
     /**
      * Add/replace the aggregate criteria for this query.
+     * 
+     * @param having
+     *            having expression
+     * @return {@link FindStatement}
      */
     FindStatement having(String having);
 
     /**
      * Add/replace the order specification for this query.
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link FindStatement}
      */
     FindStatement orderBy(String... sortFields);
 
@@ -58,16 +78,28 @@ public interface FindStatement extends DataStatement<FindStatement, DocResult, D
      * Add/replace the order specification for this query.
      * <p>
      * Synonym for {@link #orderBy(String...)}
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link FindStatement}
      */
     FindStatement sort(String... sortFields);
 
     /**
      * Add/replace the document offset for this query.
+     * 
+     * @param limitOffset
+     *            number of documents to skip
+     * @return {@link FindStatement}
      */
     FindStatement skip(long limitOffset);
 
     /**
      * Add/replace the document limit for this query.
+     * 
+     * @param numberOfRows
+     *            limit
+     * @return {@link FindStatement}
      */
     FindStatement limit(long numberOfRows);
 }

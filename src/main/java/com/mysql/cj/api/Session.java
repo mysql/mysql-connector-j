@@ -48,8 +48,11 @@ public interface Session {
      * Re-authenticates as the given user and password
      * 
      * @param userName
+     *            DB user name
      * @param password
+     *            DB user password
      * @param database
+     *            database name
      * 
      */
     void changeUser(String userName, String password, String database);
@@ -64,7 +67,8 @@ public interface Session {
      * Shortcut to {@link ServerSession#getServerVariable(String)}
      * 
      * @param name
-     * @return
+     *            server variable name
+     * @return server variable value
      */
     String getServerVariable(String name); // TODO it's a temporary method, should be removed after resolving direct usages of ServerSession from Connection
 
@@ -87,6 +91,8 @@ public interface Session {
 
     /**
      * Get the version of the MySQL server we are talking to.
+     * 
+     * @return {@link ServerVersion}
      */
     ServerVersion getServerVersion();
 
@@ -95,8 +101,12 @@ public interface Session {
      * minimums?
      * 
      * @param major
+     *            major version number
      * @param minor
+     *            minor version number
      * @param subminor
+     *            sub-minor version number
+     * @return true if current server version equal or higher than provided one
      */
     boolean versionMeetsMinimum(int major, int minor, int subminor);
 
@@ -126,9 +136,10 @@ public interface Session {
 
     /**
      * Returns the Java character encoding name for the given MySQL server
-     * charset index
+     * collation index
      * 
-     * @param charsetIndex
+     * @param collationIndex
+     *            collation index
      * @return the Java character encoding name for the given MySQL server
      *         charset index
      */

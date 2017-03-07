@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -51,7 +51,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
     protected Supplier<StatementExecuteOk> completer;
     protected StatementExecuteOk ok;
     protected RowToElement<T> rowToData;
-    /** List of all elements. <code>null</code> until requested via {@link fetchAll()}. */
+    /** List of all elements. <code>null</code> until requested via {@link #fetchAll()}. */
     protected List<T> all;
 
     public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer, RowToElement<T> rowToData) {
@@ -103,8 +103,6 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
     /**
      * Finish the result streaming. This happens if a new command is started or the warnings/etc are requested. This is safe to call multiple times and only has
      * an effect the first time.
-     * 
-     * @todo better doc
      */
     public void finishStreaming() {
         if (this.ok == null) {

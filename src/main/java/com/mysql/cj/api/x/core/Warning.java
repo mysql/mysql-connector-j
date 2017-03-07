@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,17 +25,23 @@ package com.mysql.cj.api.x.core;
 
 public interface Warning {
     /**
-     * Warning level.
+     * Get warning level.
+     * 
+     * @return Warning level
      */
     int getLevel();
 
     /**
-     * Warning code.
+     * Get warning code.
+     * 
+     * @return Warning code
      */
     long getCode();
 
     /**
-     * Warning message.
+     * Get warning message.
+     * 
+     * @return Warning message
      */
     String getMessage();
 }

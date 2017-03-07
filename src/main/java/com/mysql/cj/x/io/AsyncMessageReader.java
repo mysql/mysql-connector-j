@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -71,7 +71,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      */
     private MessageListener currentMessageListener;
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
-    private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<MessageListener>();
+    private BlockingQueue<MessageListener> messageListenerQueue = new LinkedBlockingQueue<>();
 
     private CompletableFuture<Class<? extends GeneratedMessage>> pendingMsgClass;
     /** Lock to protect the pending message. */
@@ -82,7 +82,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /** Possible state of reading messages. */
     private static enum ReadingState {
         /** Waiting to read the header. */
-        READING_HEADER, /** Waiting to read the message body. */
+        READING_HEADER,
+        /** Waiting to read the message body. */
         READING_MESSAGE
     };
 
@@ -108,6 +109,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
     /**
      * Queue a {@link MessageListener} to receive messages.
+     * 
+     * @param l
+     *            {@link MessageListener}
      */
     public void pushMessageListener(MessageListener l) {
         if (!this.channel.isOpen()) {
@@ -150,7 +154,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /**
      * Consume the header data in {@link headerBuf} and initiate the reading of the message body.
      *
-     * @note This method is the only place <i>state</i> is changed.
+     * This method is the only place <i>state</i> is changed.
      */
     private void readHeader() {
         this.state = ReadingState.READING_HEADER;
@@ -222,6 +226,12 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
     /**
      * Parse a message.
+     * 
+     * @param messageClass
+     *            class extending {@link GeneratedMessage}
+     * @param buf
+     *            message buffer
+     * @return {@link GeneratedMessage}
      */
     private GeneratedMessage parseMessage(Class<? extends GeneratedMessage> messageClass, ByteBuffer buf) {
         try {
@@ -234,6 +244,11 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
     /**
      * Dispatch a message to a listener or "peek-er" once it has been read and parsed.
+     * 
+     * @param messageClass
+     *            class extending {@link GeneratedMessage}
+     * @param message
+     *            {@link GeneratedMessage}
      */
     private void dispatchMessage(Class<? extends GeneratedMessage> messageClass, GeneratedMessage message) {
         if (messageClass == Frame.class && ((Frame) message).getScope() == Frame.Scope.GLOBAL) {
@@ -402,8 +417,6 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      *
      * @param expectedClass
      *            The expected class of the message to read.
-     * @param T
-     *            the expected class of the message to read.
      * @return The message of type T
      * @throws WrongArgumentException
      *             if the message is of a different type
@@ -440,6 +453,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
         /**
          * Read the message and transform any error to a {@link XDevAPIError} and throw it as an exception.
+         * 
+         * @return message of type T
          */
         public T read() {
             try {
@@ -469,6 +484,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     /**
      * Allow overwriting the channel once the reader has been established. Required for SSL/TLS connections when the encryption doesn't start until we send the
      * capability flag to X Plugin.
+     * 
+     * @param channel
+     *            {@link AsynchronousByteChannel}
      */
     public void setChannel(AsynchronousByteChannel channel) {
         this.channel = channel;

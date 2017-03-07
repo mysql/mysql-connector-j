@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -79,6 +79,7 @@ public class AsyncMessageWriter implements MessageWriter {
      * Asynchronously write a message with a notification being delivered to <code>callback</code> upon completion of write of entire message.
      *
      * @param msg
+     *            message extending {@link MessageLite}
      * @param callback
      *            an optional callback to receive notification of when the message is completely written
      */
@@ -113,6 +114,9 @@ public class AsyncMessageWriter implements MessageWriter {
     /**
      * Allow overwriting the channel once the writer has been established. Required for SSL/TLS connections when the encryption doesn't start until we send the
      * capability flag to X Plugin.
+     * 
+     * @param channel
+     *            {@link AsynchronousSocketChannel}
      */
     public void setChannel(AsynchronousSocketChannel channel) {
         this.bufferWriter.setChannel(channel);

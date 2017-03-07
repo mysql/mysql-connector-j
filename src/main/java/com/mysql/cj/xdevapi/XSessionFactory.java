@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -59,6 +59,7 @@ public class XSessionFactory {
      * Creates {@link XSession} by given URL.
      * 
      * @param url
+     *            database URL
      * @return {@link XSession}
      */
     public XSession getSession(String url) {
@@ -81,6 +82,7 @@ public class XSessionFactory {
      * Creates {@link XSession} according to given properties.
      * 
      * @param properties
+     *            connection properties
      * @return {@link XSession}
      */
     public XSession getSession(Properties properties) {
@@ -91,6 +93,7 @@ public class XSessionFactory {
      * Creates {@link NodeSession} by given URL.
      * 
      * @param url
+     *            database URL
      * @return {@link NodeSession}
      */
     public NodeSession getNodeSession(String url) {
@@ -105,6 +108,7 @@ public class XSessionFactory {
      * Creates {@link NodeSession} according to given properties.
      * 
      * @param properties
+     *            connection properties
      * @return {@link NodeSession}
      */
     public NodeSession getNodeSession(Properties properties) {
