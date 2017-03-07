@@ -58,8 +58,6 @@ import com.mysql.cj.api.io.SocketFactory;
 import com.mysql.cj.api.io.SocketMetadata;
 import com.mysql.cj.api.io.ValueFactory;
 import com.mysql.cj.api.log.Log;
-import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
-import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
@@ -88,6 +86,7 @@ import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.TimeUtil;
+import com.mysql.cj.mysqla.io.CommandBuilder;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.MysqlaServerSession;
 import com.mysql.cj.mysqla.io.MysqlaSocketConnection;
@@ -151,6 +150,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     /** The point in time when this connection was created */
     private long connectionCreationTimeMillis = 0;
+
+    private CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.connectionCreationTimeMillis = System.currentTimeMillis();
@@ -301,19 +302,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     public void enableMultiQueries() {
-        PacketPayload buf = this.protocol.getSharedSendPacket();
-
-        buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
-        buf.writeInteger(IntegerDataType.INT2, 0);
-        sendCommand(MysqlaConstants.COM_SET_OPTION, buf, false, 0);
+        sendCommand(this.commandBuilder.buildComSetOption(this.protocol.getSharedSendPacket(), 0), false, 0);
     }
 
     public void disableMultiQueries() {
-        PacketPayload buf = this.protocol.getSharedSendPacket();
-
-        buf.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SET_OPTION);
-        buf.writeInteger(IntegerDataType.INT2, 1);
-        sendCommand(MysqlaConstants.COM_SET_OPTION, buf, false, 0);
+        sendCommand(this.commandBuilder.buildComSetOption(this.protocol.getSharedSendPacket(), 1), false, 0);
     }
 
     @Override
@@ -431,9 +424,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      */
     public void shutdownServer() {
-        PacketPayload packet = getSharedSendPacket();
-        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_SHUTDOWN);
-        sendCommand(MysqlaConstants.COM_SHUTDOWN, packet, false, 0);
+        sendCommand(this.commandBuilder.buildComShutdown(getSharedSendPacket()), false, 0);
     }
 
     public void setSocketTimeout(int milliseconds) {
@@ -443,47 +434,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public int getSocketTimeout() {
         return this.socketTimeout.getValue();
-    }
-
-    /**
-     * Build a query packet from the given string and send it to the server.
-     * 
-     * @param callingQuery
-     * @param query
-     * @param charEncoding
-     * @param maxRows
-     * @param streamResults
-     * @param catalog
-     * @param cachedMetadata
-     * @param resultSetFactory
-     * @return
-     * @throws IOException
-     */
-    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String charEncoding, int maxRows, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
-
-        return this.protocol.sendQueryString(callingQuery, query, charEncoding, maxRows, streamResults, catalog, cachedMetadata,
-                this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
-    }
-
-    /**
-     * Send a query stored in a packet to the server.
-     * 
-     * @param callingQuery
-     * @param queryPacket
-     * @param maxRows
-     * @param streamResults
-     * @param catalog
-     * @param cachedMetadata
-     * @param resultSetFactory
-     * @return
-     * @throws IOException
-     */
-    public final <T extends Resultset> T sendQueryPacket(Query callingQuery, PacketPayload queryPacket, int maxRows, boolean streamResults, String catalog,
-            ColumnDefinition cachedMetadata, ProtocolEntityFactory<T> resultSetFactory) throws IOException {
-
-        return this.protocol.sendQueryPacket(callingQuery, queryPacket, maxRows, streamResults, catalog, cachedMetadata,
-                this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
     }
 
     /**
@@ -523,8 +473,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.protocol.getCurrentTimeNanosOrMillis();
     }
 
-    public final PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
-        return this.protocol.sendCommand(command, queryPacket, skipCheck, timeoutMillis);
+    public final PacketPayload sendCommand(PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
+        return this.protocol.sendCommand(queryPacket, skipCheck, timeoutMillis);
     }
 
     public long getSlowQueryThreshold() {
@@ -727,19 +677,13 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                         if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
                                 || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4"))) {
 
-                            PacketPayload packet = getSharedSendPacket();
-                            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8")));
-                            sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                            sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8")), false, 0);
 
                             this.protocol.getServerSession().getServerVariables().put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
                             this.protocol.getServerSession().getServerVariables().put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
                         }
                     } else {
-                        PacketPayload packet = getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES latin1"));
-                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET NAMES latin1"), false, 0);
 
                         this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
                         this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
@@ -752,10 +696,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                     if (mysqlCharsetName != null) {
 
                         if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName)) {
-                            PacketPayload packet = getSharedSendPacket();
-                            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + mysqlCharsetName));
-                            sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                            sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET NAMES " + mysqlCharsetName), false, 0);
 
                             this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
                             this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
@@ -786,10 +727,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
                 if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName) || ucs2) {
                     try {
-                        PacketPayload packet = getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES " + mysqlCharsetName));
-                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET NAMES " + mysqlCharsetName), false, 0);
 
                         this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
                         this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
@@ -816,10 +754,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 //
                 if (onServer != null && onServer.length() > 0 && !"NULL".equalsIgnoreCase(onServer)) {
                     try {
-                        PacketPayload packet = getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET character_set_results = NULL"));
-                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET character_set_results = NULL"), false, 0);
 
                     } catch (PasswordExpiredException ex) {
                         if (this.disconnectOnExpiredPasswords.getValue()) {
@@ -834,10 +769,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
                 if (this.useOldUTF8Behavior.getValue()) {
                     try {
-                        PacketPayload packet = getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET NAMES latin1"));
-                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SET NAMES latin1"), false, 0);
 
                         this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
                         this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
@@ -872,10 +804,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                     setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
 
                     try {
-                        PacketPayload packet = getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(setBuf.toString()));
-                        sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), setBuf.toString()), false, 0);
 
                     } catch (PasswordExpiredException ex) {
                         if (this.disconnectOnExpiredPasswords.getValue()) {
@@ -899,10 +828,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 setBuf.append("SET collation_connection = ").append(connectionCollation);
 
                 try {
-                    PacketPayload packet = getSharedSendPacket();
-                    packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                    packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(setBuf.toString()));
-                    sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                    sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), setBuf.toString()), false, 0);
 
                 } catch (PasswordExpiredException ex) {
                     if (this.disconnectOnExpiredPasswords.getValue()) {
@@ -1082,10 +1008,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@tx_isolation AS tx_isolation");
                 queryBuf.append(", @@wait_timeout AS wait_timeout");
 
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(queryBuf.toString()));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), queryBuf.toString()), false, 0);
                 Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
                 Field[] f = rs.getColumnDefinition().getFields();
                 if (f.length > 0) {
@@ -1098,10 +1021,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                     }
                 }
             } else {
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(versionComment + "SHOW VARIABLES"));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), versionComment + "SHOW VARIABLES"), false, 0);
                 Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
                 ValueFactory<String> vf = new StringValueFactory(rs.getColumnDefinition().getFields()[0].getEncoding());
                 Row r;
@@ -1133,11 +1053,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             for (int i = 0; i < numVariablesToSet; i++) {
                 String variableValuePair = variablesToSet.get(i);
 
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED,
-                        StringUtils.getBytes(variableValuePair.startsWith("@") ? "SET " + variableValuePair : "SET SESSION " + variableValuePair));
-                sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(),
+                        variableValuePair.startsWith("@") ? "SET " + variableValuePair : "SET SESSION " + variableValuePair), false, 0);
             }
         }
 
@@ -1168,10 +1085,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             ValueFactory<Integer> ivf = new IntegerValueFactory();
 
             try {
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW COLLATION"));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHOW COLLATION"), false, 0);
                 Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
                 ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[1].getEncoding());
                 Row r;
@@ -1200,10 +1114,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             // if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
             if (customMblen.size() > 0) {
                 try {
-                    PacketPayload packet = getSharedSendPacket();
-                    packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                    packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW CHARACTER SET"));
-                    PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                    PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHOW CHARACTER SET"), false, 0);
                     Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
                     int charsetColumn = rs.getColumnDefinition().getColumnNameToIndex().get("Charset");
@@ -1253,10 +1164,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 this.log.logWarn(String.format(
                         "Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead", threadId));
 
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SELECT CONNECTION_ID()"));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SELECT CONNECTION_ID()"), false, 0);
                 Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
                 ValueFactory<Long> lvf = new LongValueFactory();
@@ -1283,10 +1191,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         try {
             String processHost = null;
 
-            PacketPayload packet = getSharedSendPacket();
-            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW PROCESSLIST"));
-            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+            PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHOW PROCESSLIST"), false, 0);
             Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
             ValueFactory<Long> lvf = new LongValueFactory();
@@ -1316,10 +1221,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     public String queryServerVariable(String varName) {
         try {
 
-            PacketPayload packet = getSharedSendPacket();
-            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SELECT " + varName));
-            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+            PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SELECT " + varName), false, 0);
             Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
             ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[0].getEncoding());
@@ -1343,8 +1245,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * synchronized, so Statement's queries will be serialized.
      * 
      * @param conn
-     * @param callingStatement
-     * @param sql
+     * @param callingQuery
+     * @param query
      *            the SQL statement to be executed
      * @param maxRows
      * @param packet
@@ -1354,7 +1256,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * @param isBatch
      * @return a ResultSet holding the results
      */
-    public <T extends Resultset> T execSQL(MysqlConnection conn, Query callingStatement, String sql, int maxRows, PacketPayload packet, boolean streamResults,
+    public <T extends Resultset> T execSQL(MysqlConnection conn, Query callingQuery, String query, int maxRows, PacketPayload packet, boolean streamResults,
             ProtocolEntityFactory<T> resultSetFactory, String catalog, ColumnDefinition cachedMetadata, boolean isBatch) {
         synchronized (conn.getConnectionMutex()) {
 
@@ -1383,13 +1285,15 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             try {
                 if (packet == null) {
                     String encoding = this.characterEncoding.getValue();
-                    return sendQueryString(callingStatement, sql, encoding, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+                    return this.protocol.sendQueryString(callingQuery, query, encoding, maxRows, streamResults, catalog, cachedMetadata,
+                            this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
                 }
-                return sendQueryPacket(callingStatement, packet, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+                return this.protocol.sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata,
+                        this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
 
             } catch (CJException sqlE) {
                 if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
-                    String extractedSql = MysqlaUtils.extractSqlFromPacket(sql, packet, endOfQueryPacketPosition,
+                    String extractedSql = MysqlaUtils.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
                             getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
                     StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                     messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
@@ -1468,9 +1372,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
                     MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
         }
-        PacketPayload packet = getSharedSendPacket();
-        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_PING);
-        sendCommand(MysqlaConstants.COM_PING, packet, false, timeoutMillis);
+        sendCommand(this.commandBuilder.buildComPing(getSharedSendPacket()), false, timeoutMillis);
     }
 
     public long getConnectionCreationTimeMillis() {

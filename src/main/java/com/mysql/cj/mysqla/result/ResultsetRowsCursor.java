@@ -26,8 +26,6 @@ package com.mysql.cj.mysqla.result;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset.Concurrency;
 import com.mysql.cj.api.mysqla.result.ResultsetRow;
@@ -35,8 +33,8 @@ import com.mysql.cj.api.mysqla.result.ResultsetRows;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.BinaryRowFactory;
+import com.mysql.cj.mysqla.io.CommandBuilder;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 
 /**
@@ -71,6 +69,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
      * Have we attempted to fetch any rows yet?
      */
     private boolean firstFetchCompleted = false;
+
+    protected CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
     /**
      * Creates a new cursor-backed row provider.
@@ -193,7 +193,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     private void fetchMoreRows() {
         if (this.lastRowFetched) {
-            this.fetchedRows = new ArrayList<Row>(0);
+            this.fetchedRows = new ArrayList<>(0);
             return;
         }
 
@@ -218,20 +218,15 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                 }
 
                 if (this.fetchedRows == null) {
-                    this.fetchedRows = new ArrayList<Row>(numRowsToFetch);
+                    this.fetchedRows = new ArrayList<>(numRowsToFetch);
                 } else {
                     this.fetchedRows.clear();
                 }
 
                 // TODO this is not the right place for this code, should be in protocol
-                PacketPayload sharedSendPacket = this.protocol.getSharedSendPacket();
-                sharedSendPacket.setPosition(0);
-
-                sharedSendPacket.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_STMT_FETCH);
-                sharedSendPacket.writeInteger(IntegerDataType.INT4, this.owner.getOwningStatementServerId());
-                sharedSendPacket.writeInteger(IntegerDataType.INT4, numRowsToFetch);
-
-                this.protocol.sendCommand(MysqlaConstants.COM_STMT_FETCH, sharedSendPacket, true, 0);
+                this.protocol.sendCommand(
+                        this.commandBuilder.buildComStmtFetch(this.protocol.getSharedSendPacket(), this.owner.getOwningStatementServerId(), numRowsToFetch),
+                        true, 0);
 
                 Row row = null;
 

@@ -28,9 +28,6 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.exceptions.StreamingNotifiable;
-import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
-import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.ProtocolEntity;
@@ -45,10 +42,9 @@ import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
-import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.BinaryRowFactory;
+import com.mysql.cj.mysqla.io.CommandBuilder;
 import com.mysql.cj.mysqla.io.MysqlaProtocol;
 import com.mysql.cj.mysqla.io.TextRowFactory;
 
@@ -75,6 +71,8 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
     private ExceptionInterceptor exceptionInterceptor;
 
     private ProtocolEntityFactory<T> resultSetFactory;
+
+    private CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
     /**
      * Creates a new RowDataDynamic object.
@@ -134,11 +132,10 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                     this.protocol.clearInputStream();
 
                     try {
-                        PacketPayload packet = this.protocol.getSharedSendPacket();
-                        packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                        packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SET net_write_timeout=" + oldValue,
-                                this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()));
-                        this.protocol.sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                        this.protocol.sendCommand(
+                                this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
+                                        this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
+                                false, 0);
                     } catch (Exception ex) {
                         throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                     }

@@ -198,6 +198,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
      */
     private static String jvmPlatformCharset = null;
 
+    private CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
+
     static {
         OutputStreamWriter outWriter = null;
 
@@ -451,7 +453,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
         if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
 
-            debugRingBuffer = new LinkedList<StringBuilder>();
+            debugRingBuffer = new LinkedList<>();
 
             sender = new DebugBufferingPacketSender(sender, debugRingBuffer,
                     this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
@@ -509,21 +511,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
 
         try {
-            PacketPayload packet = getSharedSendPacket();
-            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_INIT_DB);
-            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(database));
-            sendCommand(MysqlaConstants.COM_INIT_DB, packet, false, 0);
+            sendCommand(this.commandBuilder.buildComInitDb(getSharedSendPacket(), database), false, 0);
         } catch (CJException ex) {
             if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue()) {
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("CREATE DATABASE IF NOT EXISTS " + database));
-                sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "CREATE DATABASE IF NOT EXISTS " + database), false, 0);
 
-                packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_INIT_DB);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(database));
-                sendCommand(MysqlaConstants.COM_INIT_DB, packet, false, 0);
+                sendCommand(this.commandBuilder.buildComInitDb(getSharedSendPacket(), database), false, 0);
             } else {
                 throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession,
                         this.getPacketSentTimeHolder().getLastPacketSentTime(), this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ex,
@@ -578,7 +571,8 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public final PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
+    public final PacketPayload sendCommand(PacketPayload queryPacket, boolean skipCheck, int timeoutMillis) {
+        int command = queryPacket.getByteBuffer()[0];
         this.commandCount++;
 
         if (this.queryInterceptors != null) {
@@ -948,7 +942,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             }
 
             // Send query command and sql query string
-            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, queryPacket, false, 0);
+            PacketPayload resultPacket = sendCommand(queryPacket, false, 0);
 
             long fetchBeginTime = 0;
             long fetchEndTime = 0;
@@ -1203,10 +1197,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 || (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
 
             try {
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("EXPLAIN " + query));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "EXPLAIN " + query), false, 0);
 
                 Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
@@ -1266,10 +1257,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 this.log.logWarn("Caught while disconnecting...", ioEx);
             }
 
-            PacketPayload packet = new Buffer(6);
             this.packetSequence = -1;
-            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUIT);
-            send(packet, packet.getPosition());
+            PacketPayload packet = new Buffer(1);
+            send(this.commandBuilder.buildComQuit(packet), packet.getPosition());
         } finally {
             this.socketConnection.forceClose();
             this.localInfileInputStream = null;
@@ -1459,11 +1449,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
          */
         boolean isImplicitTemporaryTable = tableName.length() > 0 && tableName.toString().startsWith("#sql_");
 
-        boolean isOpaqueBinary = (isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary
-                && (mysqlTypeId == MysqlaConstants.FIELD_TYPE_STRING || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VAR_STRING
-                        || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VARCHAR)) ?
-                                // queries resolved by temp tables also have this 'signature', check for that
-                                !isImplicitTemporaryTable : "binary".equalsIgnoreCase(encoding);
+        boolean isOpaqueBinary = (isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && (mysqlTypeId == MysqlaConstants.FIELD_TYPE_STRING
+                || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VAR_STRING || mysqlTypeId == MysqlaConstants.FIELD_TYPE_VARCHAR)) ?
+        // queries resolved by temp tables also have this 'signature', check for that
+                        !isImplicitTemporaryTable : "binary".equalsIgnoreCase(encoding);
 
         switch (mysqlTypeId) {
             case MysqlaConstants.FIELD_TYPE_DECIMAL:
@@ -1758,7 +1747,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         if (filePacket == null) {
             try {
                 filePacket = new Buffer(packetLength);
-                this.loadFileBufRef = new SoftReference<PacketPayload>(filePacket);
+                this.loadFileBufRef = new SoftReference<>(filePacket);
             } catch (OutOfMemoryError oom) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.111", new Object[] { packetLength }),
                         MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
@@ -1928,10 +1917,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 && (xOpen.startsWith("40") || xOpen.startsWith("41")) && getStreamingData() == null) {
 
             try {
-                PacketPayload packet = getSharedSendPacket();
-                packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-                packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW ENGINE INNODB STATUS"));
-                PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+                PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHOW ENGINE INNODB STATUS"), false, 0);
 
                 Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
@@ -1965,7 +1951,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             long[] threadIds = threadMBean.getAllThreadIds();
 
             ThreadInfo[] threads = threadMBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
-            List<ThreadInfo> activeThreads = new ArrayList<ThreadInfo>();
+            List<ThreadInfo> activeThreads = new ArrayList<>();
 
             for (ThreadInfo info : threads) {
                 if (info != null) {
@@ -2070,10 +2056,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
              * | Warning | 1265 | Data truncated for column 'field1' at row 1 |
              * +---------+------+---------------------------------------------+
              */
-            PacketPayload packet = getSharedSendPacket();
-            packet.writeInteger(IntegerDataType.INT1, MysqlaConstants.COM_QUERY);
-            packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes("SHOW WARNINGS"));
-            PacketPayload resultPacket = sendCommand(MysqlaConstants.COM_QUERY, packet, false, 0);
+            PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHOW WARNINGS"), false, 0);
 
             Resultset warnRs = readAllResults(-1, warningCountIfKnown > 99 /* stream large warning counts */, resultPacket, false, null,
                     new ResultsetFactory(Type.FORWARD_ONLY, Concurrency.READ_ONLY));

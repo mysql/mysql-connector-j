@@ -80,6 +80,7 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.io.CommandBuilder;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
@@ -95,6 +96,8 @@ public class StatementImpl implements Statement, Query {
     protected static final String PING_MARKER = "/* ping */";
 
     protected static final String[] ON_DUPLICATE_KEY_UPDATE_CLAUSE = new String[] { "ON", "DUPLICATE", "KEY", "UPDATE" };
+
+    protected CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
     /**
      * Thread used to implement query timeouts...Eventually we could be more

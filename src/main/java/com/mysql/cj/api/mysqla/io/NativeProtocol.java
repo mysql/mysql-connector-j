@@ -72,17 +72,12 @@ public interface NativeProtocol extends Protocol {
     void send(PacketPayload packet, int packetLen);
 
     /**
-     * Send a command to the MySQL server If data is to be sent with command,
-     * it should be put in extraData.
+     * Send a command to the MySQL server.
      * 
-     * Raw packets can be sent by setting queryPacket to something other
-     * than null.
-     * 
-     * @param command
-     *            the MySQL protocol 'command' from MysqlDefs
      * @param queryPacket
-     *            a packet pre-loaded with data for the protocol (i.e.
-     *            from a client-side prepared statement).
+     *            a packet pre-loaded with data for the protocol (eg.
+     *            from a client-side prepared statement). The first byte of
+     *            this packet is the MySQL protocol 'command' from MysqlDefs
      * @param skipCheck
      *            do not call checkErrorPacket() if true
      * 
@@ -92,7 +87,7 @@ public interface NativeProtocol extends Protocol {
      *             if an I/O error or SQL error occurs
      */
 
-    PacketPayload sendCommand(int command, PacketPayload queryPacket, boolean skipCheck, int timeoutMillis);
+    PacketPayload sendCommand(PacketPayload queryPacket, boolean skipCheck, int timeoutMillis);
 
     /**
      * Basic protocol data types as they are defined in http://dev.mysql.com/doc/internals/en/integer.html
