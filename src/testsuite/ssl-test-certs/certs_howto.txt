@@ -3,45 +3,112 @@
 STEPS TO GENERATE TEST CERTIFICATES
 ===================================
 
-1. Create CA cert.
-==================
 
-$ openssl genrsa 2048 > ca-key.pem
+1. CA key and certficate
+========================
 
-$ openssl req -new -x509 -nodes -days 3650 -key ca-key.pem -out ca-cert.pem
-Country Name (2 letter code) [XX]:US
+(Generate the CA key)
+$ openssl genrsa -out ca-key.pem 2048
+
+(Generate a self-signed certificate for the CA)
+$ openssl req -new -x509 -nodes -sha256 -days 3650 -key ca-key.pem -out ca-cert.pem
+(...)
+Country Name (2 letter code) []:US
 State or Province Name (full name) []:California
-Locality Name (eg, city) [Default City]:Redwood
-Organization Name (eg, company) [Default Company Ltd]:Oracle
+Locality Name (eg, city) []:Redwood Shores
+Organization Name (eg, company) []:Oracle
 Organizational Unit Name (eg, section) []:MySQL
-Common Name (eg, your name or your server's hostname) []:localhost
-Email Address []:alexander.soklakov@oracle.com
+Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J CA
+Email Address []:mysql@oracle.com
 
 
-2. Create server cert.
-======================
+2. Server key and certificate
+=============================
 
-$ openssl req -newkey rsa:2048 -days 3650 -nodes -keyout server-key.pem -out server-req.pem
-Country Name (2 letter code) [XX]:US
+(Generate the server key)
+$ openssl genrsa -out server-key.pem 2048
+
+(Generate a certificate signing request for the server)
+$ openssl req -new -key server-key.pem -out server-csr.pem
+(...)
+Country Name (2 letter code) []:US
 State or Province Name (full name) []:California
-Locality Name (eg, city) [Default City]:Redwood
-Organization Name (eg, company) [Default Company Ltd]:Oracle
+Locality Name (eg, city) []:Redwood Shores
+Organization Name (eg, company) []:Oracle
 Organizational Unit Name (eg, section) []:MySQL
-Common Name (eg, your name or your server's hostname) []:localhost
-Email Address []:alexander.soklakov@oracle.com
-A challenge password []:password
-An optional company name []:password
+Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Server
+Email Address []:mysql@oracle.com
+(...)
+A challenge password []:
+An optional company name []:
 
-$ openssl rsa -in server-key.pem -out server-key.pem
-$ openssl x509 -req -in server-req.pem -days 3650 -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -out server-cert.pem
+(Sign the server certificate signing request)
+$ openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -days 3650 -sha256 -out server-cert.pem
 
-3. Create truststore
-====================
+(OPTIONAL: Delete the certificate signing request file)
+$ rm server-csr.pem
 
-$ keytool -importcert -alias mysqlservercacert -file ca-cert.pem -keystore test-cert-store
-Enter keystore password: password
-Re-enter new password: password
+(OPTIONAL: Verify the server certificate)
+$ openssl verify -CAfile ca-cert.pem server-cert.pem
+
+
+3. Client key and certificate
+=============================
+
+(Generate the client key)
+$ openssl genrsa -out client-key.pem 2048
+
+(Generate a certificate signing request for the client)
+$ openssl req -new -key client-key.pem -out client-csr.pem
+(...)
+Country Name (2 letter code) []:US
+State or Province Name (full name) []:California
+Locality Name (eg, city) []:Redwood Shores
+Organization Name (eg, company) []:Oracle
+Organizational Unit Name (eg, section) []:MySQL
+Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Client
+Email Address []:mysql@oracle.com
+(...)
+A challenge password []:
+An optional company name []:
+
+(Sign the client certificate signing request)
+$ openssl x509 -req -in client-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -days 3650 -sha256 -out client-cert.pem
+
+(OPTIONAL: Delete the certificate signing request file)
+$ rm client-csr.pem
+
+(OPTIONAL: Verify the client certificate)
+$ openssl verify -CAfile ca-cert.pem client-cert.pem
+
+
+4. CA truststore
+================
+
+(Create a truststore containing the CA certificate)
+$ keytool -importcert -alias mysqlcacert -file ca-cert.pem -keystore ca-truststore -storepass password
 Trust this certificate? [no]:  yes
+
+(OPTIONAL: List the contents of the truststore)
+$ keytool -list -keystore ca-truststore -storepass password
+
+
+5. Client key and certificate keystore
+======================================
+
+(Convert client key to pkcs12 format)
+$ openssl pkcs12 -export -in client-cert.pem -inkey client-key.pem -name "mysqlclient" -passout pass:password -out client-keystore.p12
+
+(Create a keystore containing the client key)
+$ keytool -importkeystore -srckeystore client-keystore.p12 -srcstoretype pkcs12 -srcstorepass password -destkeystore client-keystore -deststoretype JKS -deststorepass password
+
+(OPTIONAL: Delete the client key in pkcs12 format)
+$ rm client-keystore.p12
+
+(OPTIONAL: List the contents of the client keystore)
+$ keytool -list -keystore client-keystore -storepass password
+
+
 
 ==========================
 RUN SERVER WITH TEST CERTS

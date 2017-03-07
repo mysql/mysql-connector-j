@@ -1718,7 +1718,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         createProcedure("testBug25545", "() BEGIN SELECT 1; END");
 
-        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
 
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
@@ -1775,7 +1775,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.remove("trustCertificateKeyStorePassword");
 
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
-                    + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
+                    + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/ca-truststore&trustCertificateKeyStoreType=JKS"
                     + "&trustCertificateKeyStorePassword=password";
 
             _conn = DriverManager.getConnection(url, props);
@@ -3991,7 +3991,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
                 try {
-                    String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+                    String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
                     System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                     System.setProperty("javax.net.ssl.keyStorePassword", "password");
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -4042,7 +4042,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSha256PasswordPlugin() throws Exception {
-        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -5876,7 +5876,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
                 try {
-                    String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+                    String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
                     System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                     System.setProperty("javax.net.ssl.keyStorePassword", "password");
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -6475,7 +6475,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props.setProperty("useCompression", "true");
                 testBug18869381WithProperties(props);
 
-                String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+                String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
                 System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                 System.setProperty("javax.net.ssl.keyStorePassword", "password");
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -7444,7 +7444,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("useSSL", "true");
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "true");
-        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
 
@@ -7458,7 +7458,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "true");
 
-        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -8271,7 +8271,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // 3. Explicit useSSL=true
             props.setProperty("useSSL", "true");
-            props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+            props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
             props.setProperty("trustCertificateKeyStoreType", "JKS");
             props.setProperty("trustCertificateKeyStorePassword", "password");
             sslConn = getConnectionWithProps(props);
@@ -8404,7 +8404,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("allowPublicKeyRetrieval", "true");
         props.setProperty("useSSL", "true");
         props.setProperty("requireSSL", "true");
-        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
 

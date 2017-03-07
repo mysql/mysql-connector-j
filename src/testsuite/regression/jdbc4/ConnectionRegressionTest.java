@@ -157,7 +157,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("useSSL", "true");
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "true");
-        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/test-cert-store");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
         props.setProperty("trustCertificateKeyStoreType", "JKS");
         props.setProperty("trustCertificateKeyStorePassword", "password");
 
@@ -171,7 +171,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty("requireSSL", "true");
         props.setProperty("verifyServerCertificate", "true");
 
-        String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/testsuite/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);

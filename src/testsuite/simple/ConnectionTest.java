@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -53,6 +53,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.MySQLConnection;
@@ -1959,5 +1960,183 @@ public class ConnectionTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedStatement, connection);
         }
+    }
+
+    /**
+     * Test authentication with a user that requires an SSL connection.
+     * 
+     * This test requires the CA truststore and the client keystore available in testsuite/ssl-test-certs.
+     * The server needs to be configured with the CA and server certificates from testsuite/ssl-test-certs.
+     */
+    public void testUserRequireSSL() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Connection testConn;
+        Statement testStmt;
+
+        final String user = "testUserReqSSL";
+        final String password = "testUserReqSSL";
+
+        final Properties props = new Properties();
+        props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, user);
+        props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
+
+        createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE SSL");
+        this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+        /*
+         * No SSL.
+         */
+        props.setProperty("useSSL", "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: no server certificate validation & no client certificate.
+         */
+        props.setProperty("useSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: server certificate validation & no client certificate.
+         */
+        props.setProperty("verifyServerCertificate", "true");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
+        props.setProperty("trustCertificateKeyStoreType", "JKS");
+        props.setProperty("trustCertificateKeyStorePassword", "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: server certificate validation & client certificate.
+         */
+        props.setProperty("clientCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/client-keystore");
+        props.setProperty("clientCertificateKeyStoreType", "JKS");
+        props.setProperty("clientCertificateKeyStorePassword", "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: no server certificate validation & client certificate.
+         */
+        props.setProperty("verifyServerCertificate", "false");
+        props.remove("trustCertificateKeyStoreUrl");
+        props.remove("trustCertificateKeyStoreType");
+        props.remove("trustCertificateKeyStorePassword");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+    }
+
+    /**
+     * Test authentication with a user that requires an SSL connection and an authorized client certificate.
+     * 
+     * This test requires the CA truststore and the client keystore available in testsuite/ssl-test-certs.
+     * The server needs to be configured with the CA and server certificates from testsuite/ssl-test-certs.
+     */
+    public void testUserRequireX509() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Connection testConn;
+        Statement testStmt;
+
+        final String user = "testUserReqX509";
+        final String password = "testUserReqX509";
+
+        final Properties props = new Properties();
+        props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, user);
+        props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
+
+        createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE X509");
+        this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+        /*
+         * No SSL.
+         */
+        props.setProperty("useSSL", "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: no server certificate validation & no client certificate.
+         */
+        props.setProperty("useSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: server certificate validation & no client certificate.
+         */
+        props.setProperty("verifyServerCertificate", "true");
+        props.setProperty("trustCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/ca-truststore");
+        props.setProperty("trustCertificateKeyStoreType", "JKS");
+        props.setProperty("trustCertificateKeyStorePassword", "password");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: server certificate validation & client certificate.
+         */
+        props.setProperty("clientCertificateKeyStoreUrl", "file:src/testsuite/ssl-test-certs/client-keystore");
+        props.setProperty("clientCertificateKeyStoreType", "JKS");
+        props.setProperty("clientCertificateKeyStorePassword", "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: no server certificate validation & client certificate.
+         */
+        props.setProperty("verifyServerCertificate", "false");
+        props.remove("trustCertificateKeyStoreUrl");
+        props.remove("trustCertificateKeyStoreType");
+        props.remove("trustCertificateKeyStorePassword");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
     }
 }
