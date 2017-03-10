@@ -4981,31 +4981,35 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private void setSessionVariables() throws SQLException {
         if (this.versionMeetsMinimum(4, 0, 0) && getSessionVariables() != null) {
-            List<String> variablesToSet = StringUtils.split(getSessionVariables(), ",", "\"'", "\"'", false);
+            List<String> variablesToSet = new ArrayList<String>();
+            for (String part : StringUtils.split(getSessionVariables(), ",", "\"'", "\"'", true)) {
+                variablesToSet.addAll(StringUtils.split(part, ";", "\"'", "\"'", true));
+            }
 
-            int numVariablesToSet = variablesToSet.size();
-
-            java.sql.Statement stmt = null;
-
-            try {
-                stmt = getMetadataSafeStatement();
-
-                for (int i = 0; i < numVariablesToSet; i++) {
-                    String variableValuePair = variablesToSet.get(i);
-
-                    if (variableValuePair.startsWith("@")) {
-                        stmt.executeUpdate("SET " + variableValuePair);
-                    } else {
-                        stmt.executeUpdate("SET SESSION " + variableValuePair);
+            if (!variablesToSet.isEmpty()) {
+                java.sql.Statement stmt = null;
+                try {
+                    stmt = getMetadataSafeStatement();
+                    StringBuilder query = new StringBuilder("SET ");
+                    String separator = "";
+                    for (String variableToSet : variablesToSet) {
+                        if (variableToSet.length() > 0) {
+                            query.append(separator);
+                            if (!variableToSet.startsWith("@")) {
+                                query.append("SESSION ");
+                            }
+                            query.append(variableToSet);
+                            separator = ",";
+                        }
                     }
-                }
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
+                    stmt.executeUpdate(query.toString());
+                } finally {
+                    if (stmt != null) {
+                        stmt.close();
+                    }
                 }
             }
         }
-
     }
 
     /**

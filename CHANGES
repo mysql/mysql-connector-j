@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.42
 
+  - Fix for Bug#70808 (17757070), Set sessionVariables in a single query.
+
   - Fix for Bug#77192 (21170603), Description for the Property replicationConnetionGroup Missing from the Manual.
 
   - Fix for Bug#83834 (25101890), Typo in Connector/J error message.
