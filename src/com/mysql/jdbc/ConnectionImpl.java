@@ -3544,7 +3544,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 } catch (SQLException ex1) {
                     if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                        throw SQLError.createSQLException("Could not retrieve transation read-only status server", SQLError.SQL_STATE_GENERAL_ERROR, ex1,
+                        throw SQLError.createSQLException("Could not retrieve transaction read-only status from server", SQLError.SQL_STATE_GENERAL_ERROR, ex1,
                                 getExceptionInterceptor());
                     }
                 }
