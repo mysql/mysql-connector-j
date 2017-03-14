@@ -686,6 +686,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty autoClosePStmtStreams = new BooleanConnectionProperty("autoClosePStmtStreams", false,
             Messages.getString("ConnectionProperties.autoClosePstmtStreams"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
 
+    private StringConnectionProperty replicationConnectionGroup = new StringConnectionProperty("replicationConnectionGroup", null,
+            Messages.getString("ConnectionProperties.replicationConnectionGroup"), "5.1.27", HA_CATEGORY, Integer.MIN_VALUE);
+
     private BooleanConnectionProperty allowMasterDownConnections = new BooleanConnectionProperty("allowMasterDownConnections", false,
             Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", HA_CATEGORY, Integer.MAX_VALUE);
 
@@ -4811,6 +4814,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public boolean getDisconnectOnExpiredPasswords() {
         return this.disconnectOnExpiredPasswords.getValueAsBoolean();
+    }
+
+    public String getReplicationConnectionGroup() {
+        return this.replicationConnectionGroup.getValueAsString();
+    }
+
+    public void setReplicationConnectionGroup(String replicationConnectionGroup) {
+        this.replicationConnectionGroup.setValue(replicationConnectionGroup);
     }
 
     public boolean getAllowMasterDownConnections() {
