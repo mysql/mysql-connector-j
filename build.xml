@@ -1221,7 +1221,29 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     </filterset>
 
     <!-- *********************************** -->
-    <!-- ******** DEB PACKAGING ******** -->
+    <!-- ********** RPM PACKAGING ********** -->
+    <!-- *********************************** -->
+
+    <target name="create-rpm-spec">
+	<exec executable="sed"
+	      inputstring="${com.mysql.cj.build.driver.version.status}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}"
+	      outputproperty="rpmrelease_extra">
+	  <arg value="-e"/>
+	  <arg value="s/-/./g"/>
+	  <arg value="-e"/>
+	  <arg value="s/^\\([a-zA-Z0-9]\\)/.\\1/"/>
+	</exec>
+        <copy file="src/build/misc/rpm.spec.in"
+              tofile="mysql-connector-java.spec">
+            <filterset refid="packaging-common" />
+            <filterset>
+	      <filter token="MYSQL_CJ_RPMRELEASE_EXTRA" value="${rpmrelease_extra}" />
+            </filterset>
+        </copy>
+    </target>
+
+    <!-- *********************************** -->
+    <!-- ********** DEB PACKAGING ********** -->
     <!-- *********************************** -->
 
     <target name="prepare-debian-commercial-props" if="com.mysql.cj.build.commercial">

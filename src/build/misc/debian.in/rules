@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/J is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,8 +21,6 @@
 
 upstream_version := $(shell dpkg-parsechangelog | sed -n -e'/^Version: / { s/Version: //; s/-[^-]\+$$//; p }')
 base_version = $(shell echo $(upstream_version) | sed -e's/r[0-9]\+$$//')
-
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 ANT_COMMON_OPTIONS=\
   -Dcom.mysql.cj.build.dir.driver=build/driver \
@@ -64,22 +62,5 @@ override_dh_auto_build:
 	  $(ANT_COM_OPT) \
 	  full-package-no-sources
 
-# Do nothing; the test suite requires a sql server, so we can't run it
-# as part of the build.
-#override_dh_auto_test:
-
-# we should never need to run this for our plugin package; running it creates
-# a spurious shlibs file that shouldn't be there.
-#override_dh_shlibdeps:
-#	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
-
-#TMP_INSTDIR = $(CURDIR)/debian/tmp
-#
-#PRIVATE_BINDIR = /usr/lib/mysqlsh
-#TMP_PRIVATE_BINDIR = $(TMP_INSTDIR)$(PRIVATE_BINDIR)
-#
 override_dh_auto_clean:
 	$(ANT_CMD) clean
-#
-#override_dh_auto_install:
-#	dh_auto_install -- libdir=$(PRIVATE_BINDIR) DESTDIR=$(TMP_INSTDIR)

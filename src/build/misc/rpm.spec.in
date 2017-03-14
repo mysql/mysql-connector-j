@@ -1,0 +1,187 @@
+# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+#
+# The MySQL Connector/J is licensed under the terms of the GPLv2
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+# There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+# this software, see the FOSS License Exception
+# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+#
+# This program is free software; you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software Foundation; version 2
+# of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this
+# program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+# Floor, Boston, MA 02110-1301  USA
+
+# You can pass these options to "rpmbuild"
+#
+#    --define="rpm_release <num>"
+#    --define="commercial <nonempty>"
+#    --define="dist .<disttag>"        # Like .sles12
+#    --define="with_ant <path>"
+#    --define="with_java <path>"
+#    --define="with_jardeps <path>"
+#    --define="with_docs <path>"
+#    --define="with_product_suffix -<string>"
+#
+# The 'with_docs' option should have a path that points out
+#
+#  <docs-base>/en/html/connector-j.html
+#  <docs-base>/en/html/mvl.css (not really used)
+#  <docs-base>/en/pdf/connector-j.pdf
+#  <docs-base>/en/txt/connector-j.txt
+
+# Linux distributions doesn't set the "dist" macro. There is a
+# list how to identify dists here
+# https://en.opensuse.org/openSUSE:Build_Service_cross_distribution_howto
+
+%if 0%{?suse_version} == 1315
+%global dist            .sles12
+%endif
+
+%if 0%{?suse_version} == 1110
+%global dist            .sles11
+%endif
+
+%if 0%{?with_product_suffix:1}
+%global product_suffix %{with_product_suffix}
+%else
+%if 0%{?commercial:1}
+%global product_suffix -commercial
+%global name_suffix    -src
+%global lic_tag        Commercial
+%else
+%global product_suffix %{nil}
+%global name_suffix    %{nil}
+%global lic_tag        GPLv2
+%endif
+%endif
+
+Summary:        Standardized MySQL database driver for Java
+Name:           mysql-connector-java%{product_suffix}
+Version:        @MYSQL_CJ_VERSION@
+Release:        %{!?rpm_release:1}%{?rpm_release}%{?commercial:.1}@MYSQL_CJ_RPMRELEASE_EXTRA@%{?dist}
+License:        %{lic_tag}
+Group:          Development/Libraries
+URL:            http://dev.mysql.com/downloads/connector/j/
+Source0:        https://cdn.mysql.com/Downloads/Connector-J/%{name}%{name_suffix}-%{version}.tar.gz
+
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildArch:      noarch
+
+%if 0%{?commercial:1}
+Obsoletes:     mysql-connector-java < %{version}-%{release}
+Provides:      mysql-connector-java = %{version}-%{release}
+%endif
+
+%if 0%{!?with_ant:1}
+BuildRequires:  ant
+%endif
+
+%if 0%{!?with_java:1}
+BuildRequires:  java-devel >= 1:1.8.0
+%endif
+Requires:       java-headless >= 1:1.8.0
+
+%description
+MySQL provides connectivity for client applications developed in the
+Java programming language with MySQL Connector/J, a driver that
+implements the [Java Database Connectivity (JDBC) API]
+(http://www.oracle.com/technetwork/java/javase/jdbc/).
+
+MySQL Connector/J 6.0 is a JDBC Type 4 driver that is compatible with
+the [JDBC 4.2](http://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
+specification. The Type 4 designation means that the driver is a pure
+Java implementation of the MySQL protocol and does not rely on the
+MySQL client libraries.
+
+For detailed information please visit the official
+[MySQL Connector/J documentation]
+(http://dev.mysql.com/doc/connector-j/en/).
+
+%prep
+%setup -q -n %{name}%{name_suffix}-%{version}
+
+%build
+COMMON_OPTIONS="\
+  -Dcom.mysql.cj.build.dir.driver=build/driver
+  -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
+  -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
+  -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
+  -Dcom.mysql.cj.extra.libs=%{with_jardeps} \
+  -Dcom.mysql.cj.build.driver.extraName=%{product_suffix} \
+  -Djava.awt.headless=true"
+
+%if 0%{?with_ant:1}
+export ANT_HOME=%{with_ant}
+export ANT_CMD="${ANT_HOME}/bin/ant"
+%else
+export ANT_CMD="ant"
+%endif
+
+export ANT_OPTS=-Xmx512M
+
+%if 0%{?with_java:1}
+export JAVA_HOME=%{with_java}
+export PATH=${JAVA_HOME}/bin:$PATH
+COMMON_OPTIONS="${COMMON_OPTIONS} -Dcom.mysql.cj.build.jdk=${JAVA_HOME}"
+%endif
+
+%if 0%{?commercial:1}
+COMMON_OPTIONS="${COMMON_OPTIONS} -Dcom.mysql.cj.build.commercial=true"
+%endif
+
+${ANT_CMD} \
+   ${COMMON_OPTIONS} \
+   full-package-no-sources
+
+# We use the 'full-package-no-sources' as there are changes done only
+# when creating a package, 'dist' is not enough. To make it a bit easier
+# in the install step, we rename the directory with the content
+mv dist/toArchive/mysql-connector-java* package-content
+
+# The 'package' target doesn't copy the HTML or PDF doc like 'dist',
+# we copy it here
+%if 0%{?with_docs:1}
+mkdir -p package-content/docs
+cp %{with_docs}/en/html/connector-j.html package-content/docs/
+cp %{with_docs}/en/html/mvl.css          package-content/docs/
+cp %{with_docs}/en/pdf/connector-j.pdf   package-content/docs/
+cp %{with_docs}/en/txt/connector-j.txt   package-content/docs/
+%endif
+
+%install
+install -d -m 0755 %{buildroot}%{_javadir}
+install -p -m 0644 package-content/%{name}-%{version}-bin.jar %{buildroot}%{_javadir}/%{name}-%{version}-bin.jar
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%doc package-content/README
+%doc package-content/CHANGES
+# EL6 doesn't like 'license' macro here, so we use 'doc'
+%if 0%{?commercial:1}
+%doc package-content/LICENSE.mysql
+%else
+%doc package-content/COPYING
+%endif
+
+%if 0%{?with_docs:1}
+# README.txt is a rename of "connector-j.txt"
+%doc package-content/docs/connector-j.txt
+%doc package-content/docs/connector-j.pdf
+%doc package-content/docs/connector-j.html
+%doc package-content/docs/mvl.css
+%endif
+
+%{_javadir}/%{name}-%{version}-bin.jar
+
+%changelog
+* Tue Mar 14 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 6.0.7-1
+- initial package
