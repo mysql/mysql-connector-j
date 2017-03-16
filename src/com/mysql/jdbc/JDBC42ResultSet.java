@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,8 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.Struct;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -62,20 +64,25 @@ public class JDBC42ResultSet extends JDBC4ResultSet {
         }
 
         if (type.equals(LocalDate.class)) {
-            return type.cast(getDate(columnIndex).toLocalDate());
+            final Date date = getDate(columnIndex);
+            return date == null ? null : type.cast(date.toLocalDate());
         } else if (type.equals(LocalDateTime.class)) {
-            return type.cast(getTimestamp(columnIndex).toLocalDateTime());
+            final Timestamp timestamp = getTimestamp(columnIndex);
+            return timestamp == null ? null : type.cast(timestamp.toLocalDateTime());
         } else if (type.equals(LocalTime.class)) {
-            return type.cast(getTime(columnIndex).toLocalTime());
+            final Time time = getTime(columnIndex);
+            return time == null ? null : type.cast(time.toLocalTime());
         } else if (type.equals(OffsetDateTime.class)) {
             try {
-                return type.cast(OffsetDateTime.parse(getString(columnIndex)));
+                final String string = getString(columnIndex);
+                return string == null ? null : type.cast(OffsetDateTime.parse(string));
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
         } else if (type.equals(OffsetTime.class)) {
             try {
-                return type.cast(OffsetTime.parse(getString(columnIndex)));
+                final String string = getString(columnIndex);
+                return string == null? null : type.cast(OffsetTime.parse(string));
             } catch (DateTimeParseException e) {
                 // Let it continue and try by object deserialization.
             }
