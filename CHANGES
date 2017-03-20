@@ -3,6 +3,8 @@
 
 Version 6.0.7
 
+  - Added static mapping for utf8mb4_ja_0900_as_cs collation.
+
   - Fix for Bug#25575103, NPE FROM CREATETABLE() WHEN SOME OF THE INPUTS ARE NULL.
 
   - Fix for Bug#25575156, NPE FROM CREATEVIEW() WHEN SOME OF THE INPUTS ARE NULL.
