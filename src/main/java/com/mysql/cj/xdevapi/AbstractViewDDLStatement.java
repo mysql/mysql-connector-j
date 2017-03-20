@@ -24,13 +24,14 @@
 package com.mysql.cj.xdevapi;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.ViewDDL;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public abstract class AbstractViewDDLStatement<T extends ViewDDL<T, D>, D extends ViewDDL<D, D>> implements ViewDDL<T, D> {
 
@@ -52,7 +53,17 @@ public abstract class AbstractViewDDLStatement<T extends ViewDDL<T, D>, D extend
 
     @Override
     public T columns(String... columnStrLst) {
-        this.columns.addAll(Arrays.asList(columnStrLst));
+        if (columnStrLst == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "columnStrLst" }));
+        }
+
+        for (String c : columnStrLst) {
+            if (c == null) {
+                throw new XDevAPIError(Messages.getString("CreateTableStatement.1", new String[] { "columnStrLst" }));
+            }
+            this.columns.add(c);
+        }
+
         return self();
     }
 
@@ -76,7 +87,10 @@ public abstract class AbstractViewDDLStatement<T extends ViewDDL<T, D>, D extend
 
     @Override
     public D definedAs(SelectStatement selectStatement) {
-        this.findParams = selectStatement != null ? selectStatement.getFindParams().clone() : null;
+        if (selectStatement == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "selectStatement" }));
+        }
+        this.findParams = selectStatement.getFindParams().clone();
         return selfDefined();
     }
 

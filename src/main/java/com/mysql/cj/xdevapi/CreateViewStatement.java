@@ -26,11 +26,22 @@ package com.mysql.cj.xdevapi;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.ViewCreate;
 import com.mysql.cj.api.xdevapi.ViewCreateDefined;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class CreateViewStatement extends AbstractViewDDLStatement<ViewCreate, ViewCreateDefined> implements ViewCreate {
 
     public CreateViewStatement(MysqlxSession mysqlxSession, Schema sch, String viewName, boolean replace) {
+        if (mysqlxSession == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (sch == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "sch" }));
+        }
+        if (viewName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "viewName" }));
+        }
         this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.viewName = viewName;

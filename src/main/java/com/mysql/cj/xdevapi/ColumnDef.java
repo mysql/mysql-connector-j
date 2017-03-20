@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,9 +26,11 @@ package com.mysql.cj.xdevapi;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mysql.cj.api.xdevapi.Type;
 import com.mysql.cj.api.xdevapi.ColumnDefinition.StaticColumnDefinition;
+import com.mysql.cj.api.xdevapi.Type;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public final class ColumnDef extends AbstractColumnDef<StaticColumnDefinition> implements StaticColumnDefinition {
     protected String defaultExpr = null;
@@ -37,11 +39,23 @@ public final class ColumnDef extends AbstractColumnDef<StaticColumnDefinition> i
     protected Map<String, String[]> foreignKey = new HashMap<>();
 
     public ColumnDef(String columnName, Type columnType) {
+        if (columnName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "columnName" }));
+        }
+        if (columnType == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "columnType" }));
+        }
         this.name = columnName;
         this.type = columnType;
     }
 
     public ColumnDef(String columnName, Type columnType, int length) {
+        if (columnName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "columnName" }));
+        }
+        if (columnType == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "columnType" }));
+        }
         this.name = columnName;
         this.type = columnType;
         this.length = length;
@@ -67,6 +81,19 @@ public final class ColumnDef extends AbstractColumnDef<StaticColumnDefinition> i
 
     @Override
     public StaticColumnDefinition foreignKey(String tableName, String... foreignColumnName) {
+        if (tableName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "tableName" }));
+        }
+        if (foreignColumnName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "foreignColumnName" }));
+        }
+
+        for (String c : foreignColumnName) {
+            if (c == null) {
+                throw new XDevAPIError(Messages.getString("CreateTableStatement.1", new String[] { "foreignColumnName" }));
+            }
+        }
+
         this.foreignKey.put(tableName, foreignColumnName);
         return self();
     }
