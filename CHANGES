@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.42
 
+  - Added static mapping for utf8mb4_ja_0900_as_cs collation.
+
   - Fix for Bug#84189 (25250938), Allow null when extracting java.time.* classes from ResultSet.
     Thanks to Martin Desharnais for his contribution.
 
