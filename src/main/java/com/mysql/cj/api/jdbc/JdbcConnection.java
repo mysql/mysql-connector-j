@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.TransactionManager;
+import com.mysql.cj.api.TransactionEventHandler;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.core.ServerVersion;
@@ -42,7 +42,7 @@ import com.mysql.cj.mysqla.MysqlaSession;
  * For those looking further into the driver implementation, it is not an API that is used for plugability of implementations inside our driver
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
-public interface JdbcConnection extends java.sql.Connection, MysqlConnection, TransactionManager {
+public interface JdbcConnection extends java.sql.Connection, MysqlConnection, TransactionEventHandler {
 
     public JdbcPropertySet getPropertySet();
 

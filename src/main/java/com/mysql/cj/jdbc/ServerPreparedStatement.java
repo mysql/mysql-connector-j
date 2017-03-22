@@ -692,15 +692,10 @@ public class ServerPreparedStatement extends PreparedStatement {
     }
 
     private static SQLException appendMessageToException(SQLException sqlEx, String messageToAppend, ExceptionInterceptor interceptor) {
-        String origMessage = sqlEx.getMessage();
         String sqlState = sqlEx.getSQLState();
         int vendorErrorCode = sqlEx.getErrorCode();
 
-        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
-        messageBuf.append(origMessage);
-        messageBuf.append(messageToAppend);
-
-        SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(messageBuf.toString(), sqlState, vendorErrorCode, interceptor);
+        SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(sqlEx.getMessage() + messageToAppend, sqlState, vendorErrorCode, interceptor);
         sqlExceptionWithNewMessage.setStackTrace(sqlEx.getStackTrace());
 
         return sqlExceptionWithNewMessage;

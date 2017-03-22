@@ -53,7 +53,7 @@ public interface MysqlConnection {
 
     void checkClosed();
 
-    void closeNormal();
+    void normalClose();
 
     void cleanup(Throwable whyCleanedUp);
 }

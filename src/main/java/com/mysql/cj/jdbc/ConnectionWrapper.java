@@ -1131,8 +1131,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void closeNormal() {
-        this.mc.closeNormal();
+    public void normalClose() {
+        this.mc.normalClose();
     }
 
     @Override

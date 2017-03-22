@@ -25,7 +25,7 @@ package com.mysql.cj.api.io;
 
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.TransactionManager;
+import com.mysql.cj.api.TransactionEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -47,9 +47,9 @@ public interface Protocol {
      * @param propertySet
      *            {@link PropertySet}
      * @param transactionManager
-     *            {@link TransactionManager}
+     *            {@link TransactionEventHandler}
      */
-    void init(Session session, SocketConnection socketConnection, PropertySet propertySet, TransactionManager transactionManager);
+    void init(Session session, SocketConnection socketConnection, PropertySet propertySet, TransactionEventHandler transactionManager);
 
     PropertySet getPropertySet();
 

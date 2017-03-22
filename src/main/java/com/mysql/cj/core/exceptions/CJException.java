@@ -98,10 +98,6 @@ public class CJException extends RuntimeException {
     }
 
     public void appendMessage(String messageToAppend) {
-        String origMessage = getMessage();
-        StringBuilder messageBuf = new StringBuilder(origMessage.length() + messageToAppend.length());
-        messageBuf.append(origMessage);
-        messageBuf.append(messageToAppend);
-        this.exceptionMessage = messageBuf.toString();
+        this.exceptionMessage = getMessage() + messageToAppend;
     }
 }

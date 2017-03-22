@@ -724,12 +724,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public void close() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
-                new IterateBlock<ConnectionLifecycleInterceptor>(this.connectionLifecycleInterceptors.iterator()) {
-                    @Override
-                    void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
-                        each.close();
-                    }
-                }.doForAll();
+                for (ConnectionLifecycleInterceptor cli : this.connectionLifecycleInterceptors) {
+                    cli.close();
+                }
             }
 
             realClose(true, true, false, null);
@@ -737,7 +734,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     @Override
-    public void closeNormal() {
+    public void normalClose() {
         try {
             close();
         } catch (SQLException e) {
@@ -2763,42 +2760,16 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public void transactionBegun() {
         synchronized (getConnectionMutex()) {
-            try {
-                if (this.connectionLifecycleInterceptors != null) {
-                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
-                            this.connectionLifecycleInterceptors.iterator()) {
-
-                        @Override
-                        void forEach(ConnectionLifecycleInterceptor each) {
-                            each.transactionBegun();
-                        }
-                    };
-
-                    iter.doForAll();
-                }
-            } catch (SQLException e) {
-                throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+            if (this.connectionLifecycleInterceptors != null) {
+                this.connectionLifecycleInterceptors.stream().forEach(ConnectionLifecycleInterceptor::transactionBegun);
             }
         }
     }
 
     public void transactionCompleted() {
         synchronized (getConnectionMutex()) {
-            try {
-                if (this.connectionLifecycleInterceptors != null) {
-                    IterateBlock<ConnectionLifecycleInterceptor> iter = new IterateBlock<ConnectionLifecycleInterceptor>(
-                            this.connectionLifecycleInterceptors.iterator()) {
-
-                        @Override
-                        void forEach(ConnectionLifecycleInterceptor each) {
-                            each.transactionCompleted();
-                        }
-                    };
-
-                    iter.doForAll();
-                }
-            } catch (SQLException e) {
-                throw ExceptionFactory.createException(e.getMessage(), e, getExceptionInterceptor());
+            if (this.connectionLifecycleInterceptors != null) {
+                this.connectionLifecycleInterceptors.stream().forEach(ConnectionLifecycleInterceptor::transactionCompleted);
             }
         }
     }

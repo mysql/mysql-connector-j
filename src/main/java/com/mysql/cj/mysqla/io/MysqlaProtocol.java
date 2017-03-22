@@ -53,7 +53,7 @@ import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.TransactionManager;
+import com.mysql.cj.api.TransactionEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -185,7 +185,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
     private BaseMetricsHolder metricsHolder;
 
-    private TransactionManager transactionManager;
+    private TransactionEventHandler transactionManager;
 
     /**
      * The comment (if any) that we'll prepend to all queries
@@ -222,7 +222,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     public static MysqlaProtocol getInstance(Session session, SocketConnection socketConnection, PropertySet propertySet, Log log,
-            TransactionManager transactionManager) {
+            TransactionEventHandler transactionManager) {
         MysqlaProtocol protocol = new MysqlaProtocol(log);
         protocol.init(session, socketConnection, propertySet, transactionManager);
         return protocol;
@@ -234,7 +234,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     }
 
     @Override
-    public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionManager trManager) {
+    public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionEventHandler trManager) {
 
         this.session = sess;
         this.propertySet = propSet;
@@ -901,6 +901,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         long queryStartTime = 0;
         long queryEndTime = 0;
 
+        // TODO we don't need to extract every query from packet
         //if (this.needToGrabQueryFromPacket) {
         queryBuf = queryPacket.getByteBuffer();
 

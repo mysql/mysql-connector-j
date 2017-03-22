@@ -23,7 +23,7 @@
 
 package com.mysql.cj.api;
 
-public interface TransactionManager {
+public interface TransactionEventHandler {
 
     void transactionBegun();
 

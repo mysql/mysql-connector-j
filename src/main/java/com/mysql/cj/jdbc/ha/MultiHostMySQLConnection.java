@@ -630,8 +630,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     @Override
-    public void closeNormal() {
-        getActiveMySQLConnection().closeNormal();
+    public void normalClose() {
+        getActiveMySQLConnection().normalClose();
     }
 
     @Override

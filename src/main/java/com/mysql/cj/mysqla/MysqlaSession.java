@@ -46,7 +46,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.Session;
-import com.mysql.cj.api.TransactionManager;
+import com.mysql.cj.api.TransactionEventHandler;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
@@ -181,7 +181,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     public void connect(HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
-            TransactionManager transactionManager) throws IOException {
+            TransactionEventHandler transactionManager) throws IOException {
 
         this.hostInfo = hi;
 
@@ -212,7 +212,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.getServerSession().setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
     }
 
-    // TODO: this method should be removed after implementation of MYSQLCONNJ-478 "Bind Extension interface to Session instead of Connection"
+    // TODO: this method should not be used in user-level APIs
     public MysqlaProtocol getProtocol() {
         return this.protocol;
     }
@@ -1367,7 +1367,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
                 || (pingMaxOperations > 0 && pingMaxOperations <= getCommandCount())) {
 
-            conn.closeNormal(); // TODO: do it via Listeners
+            conn.normalClose(); // TODO: do it via Listeners
 
             throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
                     MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
