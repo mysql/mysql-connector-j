@@ -38,6 +38,7 @@ import com.mysql.cj.api.xdevapi.ForeignKeyDefinition;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.MysqlxSession;
@@ -63,12 +64,30 @@ public class CreateTableStatementImpl implements CreateTableSplitStatement, Crea
     private String as;
 
     public CreateTableStatementImpl(MysqlxSession mysqlxSession, Schema sch, String tableName) {
+        if (mysqlxSession == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (sch == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "sch" }));
+        }
+        if (tableName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "tableName" }));
+        }
         this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.table = tableName;
     }
 
     public CreateTableStatementImpl(MysqlxSession mysqlxSession, Schema sch, String tableName, boolean reuseExistingObject) {
+        if (mysqlxSession == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (sch == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "sch" }));
+        }
+        if (tableName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "tableName" }));
+        }
         this.mysqlxSession = mysqlxSession;
         this.schema = sch;
         this.table = tableName;
@@ -83,30 +102,69 @@ public class CreateTableStatementImpl implements CreateTableSplitStatement, Crea
 
     @Override
     public CreateTableFullStatement addColumn(ColumnDefinition<?> colDef) {
+        if (colDef == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "colDef" }));
+        }
         this.columns.add(colDef);
         return this;
     }
 
     @Override
     public CreateTableFullStatement addPrimaryKey(String... pk) {
-        this.primaryKeys.addAll(Arrays.asList(pk));
+        if (pk == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "pk" }));
+        }
+        for (String c : pk) {
+            if (c == null) {
+                throw new XDevAPIError(Messages.getString("CreateTableStatement.1", new String[] { "pk" }));
+            }
+            this.primaryKeys.add(c);
+        }
         return this;
     }
 
     @Override
     public CreateTableFullStatement addIndex(String name, String... column) {
+        if (name == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "name" }));
+        }
+        if (column == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "column" }));
+        }
+        for (String c : column) {
+            if (c == null) {
+                throw new XDevAPIError(Messages.getString("CreateTableStatement.1", new String[] { "column" }));
+            }
+        }
         this.indexes.put(name, column);
         return this;
     }
 
     @Override
     public CreateTableFullStatement addUniqueIndex(String name, String... column) {
+        if (name == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "name" }));
+        }
+        if (column == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "column" }));
+        }
+        for (String c : column) {
+            if (c == null) {
+                throw new XDevAPIError(Messages.getString("CreateTableStatement.1", new String[] { "column" }));
+            }
+        }
         this.uniqueIndexes.put(name, column);
         return this;
     }
 
     @Override
     public CreateTableFullStatement addForeignKey(String fkName, ForeignKeyDefinition fkSpec) {
+        if (fkName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "fkName" }));
+        }
+        if (fkSpec == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "fkSpec" }));
+        }
         this.foreignKeys.put(fkName, fkSpec.setName(fkName));
         return this;
     }

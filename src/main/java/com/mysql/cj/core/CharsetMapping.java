@@ -170,9 +170,9 @@ public class CharsetMapping {
                 new MysqlCharset(MYSQL_CHARSET_NAME_utf32, 4, 0, new String[] { "UTF-32" })
 
         };
-        HashMap<String, MysqlCharset> charsetNameToMysqlCharsetMap = new HashMap<String, MysqlCharset>();
-        HashMap<String, List<MysqlCharset>> javaUcToMysqlCharsetMap = new HashMap<String, List<MysqlCharset>>();
-        Set<String> tempMultibyteEncodings = new HashSet<String>(); // Character sets that we can't convert ourselves.
+        HashMap<String, MysqlCharset> charsetNameToMysqlCharsetMap = new HashMap<>();
+        HashMap<String, List<MysqlCharset>> javaUcToMysqlCharsetMap = new HashMap<>();
+        Set<String> tempMultibyteEncodings = new HashSet<>(); // Character sets that we can't convert ourselves.
         for (int i = 0; i < charset.length; i++) {
             String charsetName = charset[i].charsetName;
 
@@ -185,7 +185,7 @@ public class CharsetMapping {
                 // fill javaUcToMysqlCharsetMap
                 List<MysqlCharset> charsets = javaUcToMysqlCharsetMap.get(encUC);
                 if (charsets == null) {
-                    charsets = new ArrayList<MysqlCharset>();
+                    charsets = new ArrayList<>();
                     javaUcToMysqlCharsetMap.put(encUC, charsets);
                 }
                 charsets.add(charset[i]);
@@ -482,6 +482,8 @@ public class CharsetMapping {
 
         collation[300] = new Collation(300, "utf8mb4_vi_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4);
 
+        collation[303] = new Collation(303, "utf8mb4_ja_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4);
+
         collation[326] = new Collation(326, "utf8mb4_test_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[327] = new Collation(327, "utf16_test_ci", 0, MYSQL_CHARSET_NAME_utf16);
         collation[328] = new Collation(328, "utf8mb4_test_400_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
@@ -505,9 +507,9 @@ public class CharsetMapping {
 
         COLLATION_INDEX_TO_COLLATION_NAME = new String[MAP_SIZE];
         COLLATION_INDEX_TO_CHARSET = new MysqlCharset[MAP_SIZE];
-        Map<String, Integer> charsetNameToCollationIndexMap = new TreeMap<String, Integer>();
-        Map<String, Integer> charsetNameToCollationPriorityMap = new TreeMap<String, Integer>();
-        Set<Integer> tempUTF8MB4Indexes = new HashSet<Integer>();
+        Map<String, Integer> charsetNameToCollationIndexMap = new TreeMap<>();
+        Map<String, Integer> charsetNameToCollationPriorityMap = new TreeMap<>();
+        Set<Integer> tempUTF8MB4Indexes = new HashSet<>();
 
         Collation notUsedCollation = new Collation(0, COLLATION_NOT_DEFINED, 0, NOT_USED);
         for (int i = 1; i < MAP_SIZE; i++) {
@@ -652,7 +654,7 @@ class MysqlCharset {
     public final String charsetName;
     public final int mblen;
     public final int priority;
-    public final List<String> javaEncodingsUc = new ArrayList<String>();
+    public final List<String> javaEncodingsUc = new ArrayList<>();
 
     public final ServerVersion minimumVersion;
 

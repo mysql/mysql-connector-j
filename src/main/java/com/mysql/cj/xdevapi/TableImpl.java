@@ -33,8 +33,10 @@ import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.UpdateStatement;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class TableImpl implements Table {
 
@@ -44,12 +46,30 @@ public class TableImpl implements Table {
     private Boolean isView = null;
 
     /* package private */ TableImpl(MysqlxSession mysqlxSession, SchemaImpl schema, String name) {
+        if (mysqlxSession == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (schema == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schema" }));
+        }
+        if (name == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "name" }));
+        }
         this.mysqlxSession = mysqlxSession;
         this.schema = schema;
         this.name = name;
     }
 
     /* package private */ TableImpl(MysqlxSession mysqlxSession, SchemaImpl schema, DatabaseObjectDescription descr) {
+        if (mysqlxSession == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (schema == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schema" }));
+        }
+        if (descr == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "descr" }));
+        }
         this.mysqlxSession = mysqlxSession;
         this.schema = schema;
         this.name = descr.getObjectName();

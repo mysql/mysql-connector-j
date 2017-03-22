@@ -37,6 +37,10 @@ public class XDevAPIError extends CJException {
      */
     private Error msg;
 
+    public XDevAPIError(String message) {
+        super(message);
+    }
+
     public XDevAPIError(Error msg) {
         super(getFullErrorDescription(msg));
         this.msg = msg;
@@ -65,11 +69,11 @@ public class XDevAPIError extends CJException {
     }
 
     public int getErrorCode() {
-        return this.msg.getCode();
+        return this.msg == null ? super.getVendorCode() : this.msg.getCode();
     }
 
     @Override
     public String getSQLState() {
-        return this.msg.getSqlState();
+        return this.msg == null ? super.getSQLState() : this.msg.getSqlState();
     }
 }

@@ -611,4 +611,182 @@ public class SchemaTest extends DevApiBaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for BUG#25575103, NPE FROM CREATETABLE() WHEN SOME OF THE INPUTS ARE NULL
+     */
+    @Test
+    public void testBug25575103() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        assertThrows(XDevAPIError.class, "Parameter 'fkName' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addForeignKey(null, null);
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'fkSpec' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addForeignKey("some_fk", null);
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addUniqueIndex(null,
+                        (String[]) null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'column' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addUniqueIndex("some_ui",
+                        (String[]) null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'column' must not contain null values.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addUniqueIndex("some_ui", "",
+                        null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addIndex(null,
+                        (String[]) null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'column' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addIndex("", (String[]) null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'column' must not contain null values.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addIndex("", "", null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'pk' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addPrimaryKey((String[]) null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'pk' must not contain null values.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("a", Type.INT, 3)).addPrimaryKey("a", null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'colDef' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(null);
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'columnName' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef(null, Type.INT, 3));
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'columnType' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CreateTableStatement func = SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("col", null, 3));
+                func.execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                Table t1 = SchemaTest.this.schema.getCollectionAsTable(null);
+                t1.insert("doc").values("{\"_id\":105}").execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                Table t1 = SchemaTest.this.schema.getTable(null);
+                t1.existsInDatabase();
+                return null;
+            }
+        });
+
+    }
+
+    /**
+     * Tests fix for BUG#25575156, NPE FROM CREATEVIEW() WHEN SOME OF THE INPUTS ARE NULL
+     */
+    @Test
+    public void testBug25575156() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        try {
+            sqlUpdate("drop table if exists testBug25575156");
+            this.schema.createCollection("testBug25575156", true);
+            Table t1 = this.schema.getCollectionAsTable("testBug25575156");
+
+            assertThrows(XDevAPIError.class, "Parameter 'columnStrLst' must not be null.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    SchemaTest.this.schema.createView("view1", true).columns((String[]) null).definedAs(t1.select("*")).execute();
+                    return null;
+                }
+            });
+
+            assertThrows(XDevAPIError.class, "Parameter 'columnStrLst' must not contain null values.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    SchemaTest.this.schema.createView("view1", true).columns("col1", null).definedAs(t1.select("*")).execute();
+                    return null;
+                }
+            });
+
+            assertThrows(XDevAPIError.class, "Parameter 'viewName' must not be null.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    SchemaTest.this.schema.createView(null, true).columns("col1", "col2").definedAs(t1.select("c1, c2 as c1").where("c1>1")).execute();
+                    return null;
+                }
+            });
+
+            assertThrows(XDevAPIError.class, "Parameter 'selectStatement' must not be null.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    SchemaTest.this.schema.createView("view1", false).columns("c1", "c3").definedAs(null).execute();// --> NPE
+                    return null;
+                }
+            });
+        } finally {
+            sqlUpdate("drop table if exists testBug25575156");
+        }
+    }
 }
