@@ -2475,6 +2475,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         if (!this.isBinaryEncoded) {
             int columnIndexMinusOne = columnIndex - 1;
 
+            if (this.thisRow.isNull(columnIndexMinusOne)) {
+                this.wasNullFlag = true;
+                return 0;
+            }
+            this.wasNullFlag = false;
+
             if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
                 long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
 
@@ -2486,16 +2492,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             if (this.useFastIntParsing) {
-                if (this.thisRow.isNull(columnIndexMinusOne)) {
-                    this.wasNullFlag = true;
-                } else {
-                    this.wasNullFlag = false;
-                }
-
-                if (this.wasNullFlag) {
-                    return 0;
-                }
-
                 if (this.thisRow.length(columnIndexMinusOne) == 0) {
                     return convertToZeroWithEmptyCheck();
                 }
@@ -2522,32 +2518,31 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             String val = null;
-
             try {
                 val = getString(columnIndex);
+                if ((val == null)) {
+                    return 0;
+                }
 
-                if ((val != null)) {
-                    if (val.length() == 0) {
-                        return convertToZeroWithEmptyCheck();
-                    }
+                if (val.length() == 0) {
+                    return convertToZeroWithEmptyCheck();
+                }
 
-                    if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1) && (val.indexOf(".") == -1)) {
-                        int intVal = Integer.parseInt(val);
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1) && (val.indexOf(".") == -1)) {
+                    int intVal = Integer.parseInt(val);
 
-                        checkForIntegerTruncation(columnIndexMinusOne, null, intVal);
-
-                        return intVal;
-                    }
-
-                    // Convert floating point
-                    int intVal = parseIntAsDouble(columnIndex, val);
-
-                    checkForIntegerTruncation(columnIndex, null, intVal);
+                    checkForIntegerTruncation(columnIndexMinusOne, null, intVal);
 
                     return intVal;
                 }
 
-                return 0;
+                // Convert floating point
+                int intVal = parseIntAsDouble(columnIndex, val);
+
+                checkForIntegerTruncation(columnIndex, null, intVal);
+
+                return intVal;
+
             } catch (NumberFormatException nfe) {
                 try {
                     return parseIntAsDouble(columnIndex, val);
@@ -2662,21 +2657,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         if (!this.isBinaryEncoded) {
             int columnIndexMinusOne = columnIndex - 1;
 
+            if (this.thisRow.isNull(columnIndexMinusOne)) {
+                this.wasNullFlag = true;
+                return 0;
+            }
+            this.wasNullFlag = false;
+
             if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
                 return getNumericRepresentationOfSQLBitType(columnIndex);
             }
 
             if (this.useFastIntParsing) {
-                if (this.thisRow.isNull(columnIndexMinusOne)) {
-                    this.wasNullFlag = true;
-                } else {
-                    this.wasNullFlag = false;
-                }
-
-                if (this.wasNullFlag) {
-                    return 0;
-                }
-
                 if (this.thisRow.length(columnIndexMinusOne) == 0) {
                     return convertToZeroWithEmptyCheck();
                 }
@@ -2703,24 +2694,23 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             String val = null;
-
             try {
                 val = getString(columnIndex);
-
-                if ((val != null)) {
-                    if (val.length() == 0) {
-                        return convertToZeroWithEmptyCheck();
-                    }
-
-                    if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
-                        return parseLongWithOverflowCheck(columnIndexMinusOne, null, val, overflowCheck);
-                    }
-
-                    // Convert floating point
-                    return parseLongAsDouble(columnIndexMinusOne, val);
+                if (val == null) {
+                    return 0;
                 }
 
-                return 0; // for NULL
+                if (val.length() == 0) {
+                    return convertToZeroWithEmptyCheck();
+                }
+
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
+                    return parseLongWithOverflowCheck(columnIndexMinusOne, null, val, overflowCheck);
+                }
+
+                // Convert floating point
+                return parseLongAsDouble(columnIndexMinusOne, val);
+
             } catch (NumberFormatException nfe) {
                 try {
                     return parseLongAsDouble(columnIndexMinusOne, val);
@@ -4974,6 +4964,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         checkColumnBounds(columnIndex);
 
         if (!this.isBinaryEncoded) {
+            if (this.thisRow.isNull(columnIndex - 1)) {
+                this.wasNullFlag = true;
+                return 0;
+            }
+            this.wasNullFlag = false;
+
             if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
                 long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
 
@@ -4985,19 +4981,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             if (this.useFastIntParsing) {
-                Object value = this.thisRow.getColumnValue(columnIndex - 1);
-
-                if (value == null) {
-                    this.wasNullFlag = true;
-                } else {
-                    this.wasNullFlag = false;
-                }
-
-                if (this.wasNullFlag) {
-                    return 0;
-                }
-
-                byte[] shortAsBytes = (byte[]) value;
+                byte[] shortAsBytes = this.thisRow.getColumnValue(columnIndex - 1);
 
                 if (shortAsBytes.length == 0) {
                     return (short) convertToZeroWithEmptyCheck();
@@ -5031,25 +5015,23 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             }
 
             String val = null;
-
             try {
                 val = getString(columnIndex);
-
-                if ((val != null)) {
-
-                    if (val.length() == 0) {
-                        return (short) convertToZeroWithEmptyCheck();
-                    }
-
-                    if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1) && (val.indexOf(".") == -1)) {
-                        return parseShortWithOverflowCheck(columnIndex, null, val);
-                    }
-
-                    // Convert floating point
-                    return parseShortAsDouble(columnIndex, val);
+                if (val == null) {
+                    return 0;
                 }
 
-                return 0; // for NULL
+                if (val.length() == 0) {
+                    return (short) convertToZeroWithEmptyCheck();
+                }
+
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1) && (val.indexOf(".") == -1)) {
+                    return parseShortWithOverflowCheck(columnIndex, null, val);
+                }
+
+                // Convert floating point
+                return parseShortAsDouble(columnIndex, val);
+
             } catch (NumberFormatException nfe) {
                 try {
                     return parseShortAsDouble(columnIndex, val);

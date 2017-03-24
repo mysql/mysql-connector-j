@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -5271,5 +5271,41 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(e, this.rs.getString(2));
         }
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for Bug#83368 - 5.1.40 regression: wasNull not updated when calling getInt for a bit column.
+     */
+    public void testBug83368() throws Exception {
+        createTable("testBug83368", "(c1 VARCHAR(1), c2 BIT)");
+        this.stmt.execute("INSERT INTO testBug83368 VALUES (NULL, 1)");
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug83368");
+
+        assertTrue(this.rs.next());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals((byte) 1, this.rs.getByte(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals((short) 1, this.rs.getShort(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(1, this.rs.getInt(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(1L, this.rs.getLong(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(BigDecimal.valueOf(1), this.rs.getBigDecimal(2));
+        assertFalse(this.rs.wasNull());
     }
 }
