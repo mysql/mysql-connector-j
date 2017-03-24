@@ -38,6 +38,6 @@ public interface MessageListener extends BiFunction<Class<? extends GeneratedMes
     }
 
     default void error(Throwable ex) {
-        ex.printStackTrace();
+        ex.printStackTrace(); // TODO log error normally instead of sysout
     }
 }

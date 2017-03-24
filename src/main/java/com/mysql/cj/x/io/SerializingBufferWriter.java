@@ -119,7 +119,7 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
                         l.failed(ex, null);
                     } catch (Throwable ex2) {
                         // nothing we can do here
-                        ex2.printStackTrace();
+                        ex2.printStackTrace(); // TODO log error normally instead of sysout
                     }
                 }
             });

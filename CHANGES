@@ -64,6 +64,8 @@ Version 6.0.6
 
 10-21-16 - Version 6.0.5
 
+  - Fix for BUG#82896 (24613062), Unexpected behavior on attempt to connect to JDBC driver with unsupported URL.
+
   - Added client-side failover during XSession initialization for multi-router configuration.
 
   - Removed Extension interface. All extension classes now implement their specific interfaces.

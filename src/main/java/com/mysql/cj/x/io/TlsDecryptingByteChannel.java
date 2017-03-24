@@ -184,7 +184,7 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
 
                 public void failed(Throwable t, Void attachment) {
                     // There should be no way to get here as the read on empty buf will immediately direct control to the `completed' method
-                    t.printStackTrace();
+                    t.printStackTrace(); // TODO log error normally instead of sysout
                     h.failed(AssertionFailedException.shouldNotHappen(new Exception(t)), null);
                 }
             });
