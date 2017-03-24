@@ -5308,4 +5308,23 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(BigDecimal.valueOf(1), this.rs.getBigDecimal(2));
         assertFalse(this.rs.wasNull());
     }
+
+    /**
+     * Tests fix for Bug#83662 - NullPointerException while reading NULL boolean value from DB.
+     * 
+     * This fix was actually done in the patch for Bug#83368, as both are fixed in the same way.
+     */
+    public void testBug83662() throws Exception {
+        createTable("testBug83662", "(b BIT(1) NULL)");
+        this.stmt.executeUpdate("INSERT INTO testBug83662 VALUES (null)");
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug83662");
+        assertTrue(this.rs.next());
+        assertEquals((byte) 0, this.rs.getByte(1));
+        assertEquals((short) 0, this.rs.getShort(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertEquals(0L, this.rs.getLong(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertNull(this.rs.getBigDecimal(1));
+    }
 }
