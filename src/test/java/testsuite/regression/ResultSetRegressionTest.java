@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2016,7 +2016,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         int numCols = 1;
         StringBuilder createStatement = new StringBuilder("CREATE TABLE testAllTypes (");
-        List<Boolean> wasDatetimeTypeList = new ArrayList<Boolean>();
+        List<Boolean> wasDatetimeTypeList = new ArrayList<>();
 
         StringBuilder insertValues = new StringBuilder();
 
@@ -2997,7 +2997,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             // int[] maxRows = new int[] {1, 4, 5, 11, 12, 13, 16, 50, 51, 52, 100};
             int[] fetchSizes = new int[] { 1, 4, 10, 25, 100 };
-            List<Integer> maxRows = new ArrayList<Integer>();
+            List<Integer> maxRows = new ArrayList<>();
             maxRows.add(new Integer(1));
 
             for (int i = 0; i < fetchSizes.length; i++) {
@@ -5782,5 +5782,81 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
             assertEquals(expected, this.rs.getString("Started"));
         }
+    }
+
+    /**
+     * Tests fix for Bug#84084 (25215008), JAVA.LANG.ARRAYINDEXOUTOFBOUNDSEXCEPTION ON ATTEMPT TO GET VALUE FROM RESULTSET.
+     */
+    public void testBug25215008() throws Exception {
+
+        String VALUE_ONE = "bar";
+
+        createTable("testBug25215008",
+                "( `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, `val_one` VARCHAR(10), `val_blob` blob, `val_three` VARCHAR(10), PRIMARY KEY (`id`) )");
+        this.stmt.execute("INSERT INTO `testBug25215008`(`id`,`val_one`,`val_blob`, `val_three`) VALUES ( NULL,'" + VALUE_ONE + "',NULL,NULL)");
+
+        // test 1 - OK
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        Connection conn1 = getConnectionWithProps(props);
+        PreparedStatement pstm1 = conn1.prepareStatement("select id, val_one, val_blob, val_three from testBug25215008 where val_one = ?");
+        pstm1.setString(1, VALUE_ONE);
+        ResultSet rs1 = pstm1.executeQuery();
+        assertTrue(rs1.next());
+        assertEquals("1", rs1.getString("id"));
+        assertEquals("bar", rs1.getString("val_one"));
+        assertNull(rs1.getString("val_blob"));
+        assertNull(rs1.getString("val_three"));
+        rs1.close();
+
+        // then test with useServerPrepStmts=true
+
+        // - test 2 - OK
+        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        Connection conn2 = getConnectionWithProps(props);
+        PreparedStatement pstm2 = conn2.prepareStatement("select id, val_one, val_three from testBug25215008 where val_one = ?"); // let's not request val_blob for now
+        pstm2.setString(1, VALUE_ONE);
+        rs1 = pstm2.executeQuery();
+        assertTrue(rs1.next());
+        assertEquals("1", rs1.getString("id"));
+        assertEquals("bar", rs1.getString("val_one"));
+        assertNull(rs1.getString("val_three"));
+        rs1.close();
+
+        // test 3 - OK!
+        // let's call query to make sure value of a last column in a result set is not NULL  - val_one is not NULL and this is now last column in result set
+        PreparedStatement pstm3 = conn2.prepareStatement("select id, val_blob, val_three, val_one from testBug25215008 where val_one = ?");
+        pstm3.setString(1, VALUE_ONE);
+        rs1 = pstm3.executeQuery();
+        assertTrue(rs1.next());
+        assertEquals("1", rs1.getString("id"));
+        assertEquals("bar", rs1.getString("val_one"));
+        assertNull(rs1.getString("val_blob"));
+        assertNull(rs1.getString("val_three"));
+        rs1.close();
+
+        // test 4 - fails! Combination of three factors:
+        // 1. useServerPrepStmts=true
+        // 2. result set has column with mediumblob type
+        // 3. value of a last column in result set is NULL
+        PreparedStatement pstm4 = conn2.prepareStatement("select id, val_one, val_blob, val_three from testBug25215008 where val_one = ?");
+        pstm4.setString(1, VALUE_ONE);
+        rs1 = pstm4.executeQuery();
+        assertTrue(rs1.next());
+        assertEquals("1", rs1.getString("id"));
+        assertEquals("bar", rs1.getString("val_one"));
+        assertNull(rs1.getString("val_blob"));
+        assertNull(rs1.getString("val_three"));
+        rs1.close();
+
+        // simple case
+        createTable("testBug25215008_2", "(`c2` mediumblob)");
+        this.stmt.execute("INSERT INTO testBug25215008_2 values ()");
+
+        PreparedStatement pstm5 = conn2.prepareStatement("select * from testBug25215008_2");
+        rs1 = pstm5.executeQuery();
+        assertTrue(rs1.next());
+        assertNull(rs1.getString(1));
+        rs1.close();
     }
 }
