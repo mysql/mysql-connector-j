@@ -1520,7 +1520,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug25545() throws Exception {
         createProcedure("testBug25545", "() BEGIN SELECT 1; END");
 
-        String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
 
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
@@ -1569,7 +1569,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword);
 
             final String url = "jdbc:mysql://" + hostSpec + "/" + db + "?useSSL=true&requireSSL=true&verifyServerCertificate=true"
-                    + "&trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/test-cert-store&trustCertificateKeyStoreType=JKS"
+                    + "&trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore&trustCertificateKeyStoreType=JKS"
                     + "&trustCertificateKeyStorePassword=password";
 
             _conn = DriverManager.getConnection(url, props);
@@ -3699,7 +3699,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             try {
-                String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+                String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
                 System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                 System.setProperty("javax.net.ssl.keyStorePassword", "password");
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -3749,7 +3749,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testSha256PasswordPlugin() throws Exception {
-        String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -5556,7 +5556,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
 
                 try {
-                    String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+                    String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
                     System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                     System.setProperty("javax.net.ssl.keyStorePassword", "password");
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -6134,7 +6134,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props.setProperty(PropertyDefinitions.PNAME_useCompression, "true");
                 testBug18869381WithProperties(props);
 
-                String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+                String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
                 System.setProperty("javax.net.ssl.keyStore", trustStorePath);
                 System.setProperty("javax.net.ssl.keyStorePassword", "password");
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -6879,7 +6879,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/test-cert-store");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
 
@@ -6893,7 +6893,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
 
-        String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+        String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
@@ -7742,7 +7742,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // 3. Explicit useSSL=true
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/test-cert-store");
+            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
             props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
             props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
             sslConn = getConnectionWithProps(props);
@@ -7894,7 +7894,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
         props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/test-cert-store");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
         props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
 

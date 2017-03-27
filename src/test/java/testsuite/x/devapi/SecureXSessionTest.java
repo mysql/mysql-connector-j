@@ -37,8 +37,8 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
 public class SecureXSessionTest extends DevApiBaseTestCase {
-    String trustStoreUrl = "file:src/test/config/ssl-test-certs/test-cert-store";
-    String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+    String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
+    String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
     String trustStorePassword = "password";
 
     @Before
