@@ -8140,4 +8140,68 @@ public class StatementRegressionTest extends BaseTestCase {
             return super.preProcess(sql, interceptedStatement, connection);
         }
     }
+
+    /**
+     * Tests fix for Bug#66430 - setCatalog on connection leaves ServerPreparedStatement cache for old catalog.
+     */
+    public void testBug66430() throws Exception {
+        createDatabase("testBug66430DB1");
+        createTable("testBug66430DB1.testBug66430", "(id INT)");
+        this.stmt.executeUpdate("INSERT INTO testBug66430DB1.testBug66430 VALUES (1)");
+
+        createDatabase("testBug66430DB2");
+        createTable("testBug66430DB2.testBug66430", "(id INT)");
+        this.stmt.executeUpdate("INSERT INTO testBug66430DB2.testBug66430 VALUES (2)");
+
+        boolean useSPS = false;
+        boolean cachePS = false;
+        do {
+            final String testCase = String.format("Case: [useSPS: %s, cachePS: %s ]", useSPS ? "Y" : "N", cachePS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("cachePrepStmts", Boolean.toString(cachePS));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+
+            Connection testConn = getConnectionWithProps(props);
+
+            testConn.setCatalog("testBug66430DB1");
+            PreparedStatement testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
+            testPStmt.setInt(1, 0);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+            assertFalse(testCase, this.rs.next());
+            testPStmt.close();
+
+            testConn.setCatalog("testBug66430DB2");
+            testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
+            testPStmt.setInt(1, 0);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 2, this.rs.getInt(1));
+            assertFalse(testCase, this.rs.next());
+            testPStmt.close();
+
+            // Do it again to make sure cached prepared statements behave correctly.
+            testConn.setCatalog("testBug66430DB1");
+            testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
+            testPStmt.setInt(1, 0);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 1, this.rs.getInt(1));
+            assertFalse(testCase, this.rs.next());
+            testPStmt.close();
+
+            testConn.setCatalog("testBug66430DB2");
+            testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
+            testPStmt.setInt(1, 0);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, 2, this.rs.getInt(1));
+            assertFalse(testCase, this.rs.next());
+            testPStmt.close();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
 }
