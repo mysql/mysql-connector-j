@@ -273,9 +273,9 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
             props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
 
-            // 1. Allow only TLS_RSA_WITH_AES_128_CBC_SHA256 cipher
+            // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
             XSession xSession = this.fact.getSession(props);
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA256");
             assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
             xSession.close();
 
