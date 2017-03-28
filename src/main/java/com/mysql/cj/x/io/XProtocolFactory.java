@@ -28,6 +28,9 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -125,15 +128,36 @@ public class XProtocolFactory {
                 boolean verifyServerCert = (verifyServerCertProp.isExplicitlySet() && verifyServerCertProp.getValue())
                         || (!verifyServerCertProp.isExplicitlySet() && !StringUtils.isNullOrEmpty(trustStoreUrl));
 
-                SSLContext sslContext = ExportControlled.getSSLContext(null, null, null, trustStoreUrl, trustStoreType, trustStorePassword, verifyServerCert,
-                        null);
+                // TODO WL#9925 will redefine other SSL connection properties for X Protocol
+                String keyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
+                String keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
+                String keyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue();
+
+                SSLContext sslContext = ExportControlled.getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType,
+                        trustStorePassword, verifyServerCert, null);
                 SSLEngine sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
-                // TODO: setEnabledCipherSuites()
-                // TODO: setEnabledProtocols()
+
+                // check allowed cipher suites
+                String enabledSSLCipherSuites = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
+                boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
+
+                if (overrideCiphers) {
+                    // If "enabledSSLCipherSuites" is set we check that JVM allows provided values,
+                    List<String> allowedCiphers = new ArrayList<>();
+                    List<String> availableCiphers = Arrays.asList(sslEngine.getEnabledCipherSuites());
+                    for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
+                        if (availableCiphers.contains(cipher)) {
+                            allowedCiphers.add(cipher);
+                        }
+                    }
+
+                    // if some ciphers were filtered into allowedCiphers 
+                    sslEngine.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+                }
+
                 // TODO: how to differentiate servers that do and don't support TLSv1.2
-                sslEngine.setEnabledProtocols(new String[] { "TLSv1.1", "TLSv1" });
-                //sslEngine.setEnabledProtocols(new String[] {"TLSv1.2", "TLSv1.1", "TLSv1"});
+                sslEngine.setEnabledProtocols(new String[] { /* "TLSv1.2", */ "TLSv1.1", "TLSv1" });
 
                 performTlsHandshake(sslEngine, channel);
 

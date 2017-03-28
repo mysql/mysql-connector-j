@@ -28,7 +28,11 @@ import static org.junit.Assert.fail;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.junit.Assert;
+
 import com.mysql.cj.api.xdevapi.NodeSession;
+import com.mysql.cj.api.xdevapi.SqlResult;
+import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -196,5 +200,17 @@ public class InternalXBaseTestCase {
             return this.mysqlVersion.meetsMinimum(version);
         }
         return false;
+    }
+
+    protected void assertSessionStatusEquals(XSession xsession, String statusVariable, String expected) {
+        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
+        String cipher = rs.fetchOne().getString(1);
+        Assert.assertEquals(expected, cipher);
+    }
+
+    protected void assertSessionStatusNotEquals(XSession xsession, String statusVariable, String unexpected) {
+        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
+        String cipher = rs.fetchOne().getString(1);
+        Assert.assertNotEquals(unexpected, cipher);
     }
 }
