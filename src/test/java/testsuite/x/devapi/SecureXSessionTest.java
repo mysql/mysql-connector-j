@@ -264,7 +264,7 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
             Properties props = new Properties(this.testProperties);
             testSession = this.fact.getNodeSession(props);
 
-            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
+            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
 
             props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false");
             props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
