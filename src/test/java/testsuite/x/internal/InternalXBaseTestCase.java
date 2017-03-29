@@ -204,13 +204,13 @@ public class InternalXBaseTestCase {
 
     protected void assertSessionStatusEquals(XSession xsession, String statusVariable, String expected) {
         SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
-        String cipher = rs.fetchOne().getString(1);
-        Assert.assertEquals(expected, cipher);
+        String actual = rs.fetchOne().getString(1);
+        Assert.assertEquals(expected, actual);
     }
 
     protected void assertSessionStatusNotEquals(XSession xsession, String statusVariable, String unexpected) {
         SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
-        String cipher = rs.fetchOne().getString(1);
-        Assert.assertNotEquals(unexpected, cipher);
+        String actual = rs.fetchOne().getString(1);
+        Assert.assertNotEquals(unexpected, actual);
     }
 }
