@@ -228,7 +228,7 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureXSessionMissingTrustStore4() {
-        if (this.isSetForXTests) {
+        if (!this.isSetForXTests) {
             return;
         }
 
