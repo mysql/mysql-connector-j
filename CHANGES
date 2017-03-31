@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.42
 
+  - Fix for Bug#84783 (25490163), query timeout is not working(thread hang).
+
   - Fix for Bug#70704 (17653733), Deadlock using UpdatableResultSet.
 
   - Fix for Bug#66430 (16714868), setCatalog on connection leaves ServerPreparedStatement cache for old catalog.

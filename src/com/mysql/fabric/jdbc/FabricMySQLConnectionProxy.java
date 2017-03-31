@@ -466,15 +466,15 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
      * instead the {@link LoadBalancedConnectionProxy} for either the
      * master or slaves.
      */
-    protected MySQLConnection getActiveMySQLConnection() throws SQLException {
+    protected MySQLConnection getActiveMySQLConnectionChecked() throws SQLException {
         ReplicationConnection c = (ReplicationConnection) getActiveConnection();
         MySQLConnection mc = (MySQLConnection) c.getCurrentConnection();
         return mc;
     }
 
-    protected MySQLConnection getActiveMySQLConnectionPassive() {
+    public MySQLConnection getActiveMySQLConnection() {
         try {
-            return getActiveMySQLConnection();
+            return getActiveMySQLConnectionChecked();
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to determine active connection", ex);
         }
@@ -724,7 +724,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public MySQLConnection getMultiHostSafeProxy() {
-        return getActiveMySQLConnectionPassive();
+        return getActiveMySQLConnection();
     }
 
     ////////////////////////////////////////////////////////
@@ -891,30 +891,30 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
 
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata) throws SQLException {
-        return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
+        return getActiveMySQLConnectionChecked().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata);
     }
 
     public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType, int resultSetConcurrency,
             boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
-        return getActiveMySQLConnection().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
+        return getActiveMySQLConnectionChecked().execSQL(callingStatement, sql, maxRows, packet, resultSetType, resultSetConcurrency, streamResults, catalog,
                 cachedMetadata, isBatch);
     }
 
     public String extractSqlFromPacket(String possibleSqlQuery, Buffer queryPacket, int endOfQueryPacketPosition) throws SQLException {
-        return getActiveMySQLConnection().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
+        return getActiveMySQLConnectionChecked().extractSqlFromPacket(possibleSqlQuery, queryPacket, endOfQueryPacketPosition);
     }
 
     public StringBuilder generateConnectionCommentBlock(StringBuilder buf) {
-        return getActiveMySQLConnectionPassive().generateConnectionCommentBlock(buf);
+        return getActiveMySQLConnection().generateConnectionCommentBlock(buf);
     }
 
     public MysqlIO getIO() throws SQLException {
-        return getActiveMySQLConnection().getIO();
+        return getActiveMySQLConnectionChecked().getIO();
     }
 
     public Calendar getCalendarInstanceForSessionOrNew() {
-        return getActiveMySQLConnectionPassive().getCalendarInstanceForSessionOrNew();
+        return getActiveMySQLConnection().getCalendarInstanceForSessionOrNew();
     }
 
     /**
@@ -926,11 +926,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public String getServerCharset() {
-        return getActiveMySQLConnectionPassive().getServerCharset();
+        return getActiveMySQLConnection().getServerCharset();
     }
 
     public TimeZone getServerTimezoneTZ() {
-        return getActiveMySQLConnectionPassive().getServerTimezoneTZ();
+        return getActiveMySQLConnection().getServerTimezoneTZ();
     }
 
     /**
@@ -960,11 +960,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public String getCharacterSetMetadata() {
-        return getActiveMySQLConnectionPassive().getCharacterSetMetadata();
+        return getActiveMySQLConnection().getCharacterSetMetadata();
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
-        return getActiveMySQLConnection().getMetadataSafeStatement();
+        return getActiveMySQLConnectionChecked().getMetadataSafeStatement();
     }
 
     /**
@@ -2856,7 +2856,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public String getHostPortPair() {
-        return getActiveMySQLConnectionPassive().getHostPortPair();
+        return getActiveMySQLConnection().getHostPortPair();
     }
 
     public long getId() {
@@ -2955,7 +2955,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean lowerCaseTableNames() {
-        return getActiveMySQLConnectionPassive().lowerCaseTableNames();
+        return getActiveMySQLConnection().lowerCaseTableNames();
     }
 
     /**
@@ -2984,7 +2984,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean serverSupportsConvertFn() throws SQLException {
-        return getActiveMySQLConnection().serverSupportsConvertFn();
+        return getActiveMySQLConnectionChecked().serverSupportsConvertFn();
     }
 
     public void setReadInfoMsgEnabled(boolean flag) {
@@ -2994,7 +2994,7 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public boolean storesLowerCaseTableName() {
-        return getActiveMySQLConnectionPassive().storesLowerCaseTableName();
+        return getActiveMySQLConnection().storesLowerCaseTableName();
     }
 
     public void throwConnectionClosedException() throws SQLException {
@@ -3049,11 +3049,11 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl impleme
     }
 
     public SQLWarning getWarnings() throws SQLException {
-        return getActiveMySQLConnection().getWarnings();
+        return getActiveMySQLConnectionChecked().getWarnings();
     }
 
     public String nativeSQL(String sql) throws SQLException {
-        return getActiveMySQLConnection().nativeSQL(sql);
+        return getActiveMySQLConnectionChecked().nativeSQL(sql);
     }
 
     public ProfilerEventHandler getProfilerEventHandlerInstance() {

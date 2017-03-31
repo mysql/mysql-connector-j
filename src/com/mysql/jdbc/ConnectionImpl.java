@@ -125,6 +125,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         return this.getProxy();
     }
 
+    public MySQLConnection getActiveMySQLConnection() {
+        return this;
+    }
+
     public Object getConnectionMutex() {
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
@@ -363,23 +367,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public Timer getCancelTimer() {
         synchronized (getConnectionMutex()) {
             if (this.cancelTimer == null) {
-                boolean createdNamedTimer = false;
-
-                // Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named timer on older VMs.
-                try {
-                    Constructor<Timer> ctr = Timer.class.getConstructor(new Class[] { String.class, Boolean.TYPE });
-
-                    this.cancelTimer = ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE });
-                    createdNamedTimer = true;
-                } catch (Throwable t) {
-                    createdNamedTimer = false;
-                }
-
-                if (!createdNamedTimer) {
-                    this.cancelTimer = new Timer(true);
-                }
+                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", true);
             }
-
             return this.cancelTimer;
         }
     }
@@ -4654,7 +4643,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @see java.sql.Connection#prepareStatement(String)
      */
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
-
         String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
