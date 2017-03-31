@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -61,31 +61,33 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @throws SQLException
      */
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-        if (type == null) {
-            throw SQLError.createSQLException("Type parameter can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-        }
-
-        if (type.equals(LocalDate.class)) {
-            return type.cast(getDate(columnIndex).toLocalDate());
-        } else if (type.equals(LocalDateTime.class)) {
-            return type.cast(getTimestamp(columnIndex).toLocalDateTime());
-        } else if (type.equals(LocalTime.class)) {
-            return type.cast(getTime(columnIndex).toLocalTime());
-        } else if (type.equals(OffsetDateTime.class)) {
-            try {
-                return type.cast(OffsetDateTime.parse(getString(columnIndex)));
-            } catch (DateTimeParseException e) {
-                // Let it continue and try by object deserialization.
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (type == null) {
+                throw SQLError.createSQLException("Type parameter can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
-        } else if (type.equals(OffsetTime.class)) {
-            try {
-                return type.cast(OffsetTime.parse(getString(columnIndex)));
-            } catch (DateTimeParseException e) {
-                // Let it continue and try by object deserialization.
-            }
-        }
 
-        return super.getObject(columnIndex, type);
+            if (type.equals(LocalDate.class)) {
+                return type.cast(getDate(columnIndex).toLocalDate());
+            } else if (type.equals(LocalDateTime.class)) {
+                return type.cast(getTimestamp(columnIndex).toLocalDateTime());
+            } else if (type.equals(LocalTime.class)) {
+                return type.cast(getTime(columnIndex).toLocalTime());
+            } else if (type.equals(OffsetDateTime.class)) {
+                try {
+                    return type.cast(OffsetDateTime.parse(getString(columnIndex)));
+                } catch (DateTimeParseException e) {
+                    // Let it continue and try by object deserialization.
+                }
+            } else if (type.equals(OffsetTime.class)) {
+                try {
+                    return type.cast(OffsetTime.parse(getString(columnIndex)));
+                } catch (DateTimeParseException e) {
+                    // Let it continue and try by object deserialization.
+                }
+            }
+
+            return super.getObject(columnIndex, type);
+        }
     }
 
     /**
@@ -96,7 +98,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @throws SQLException
      */
     @Override
-    public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
+    public void updateObject(int columnIndex, Object x) throws SQLException {
         super.updateObject(columnIndex, JDBC42Helper.convertJavaTimeToJavaSql(x));
     }
 
@@ -109,7 +111,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @throws SQLException
      */
     @Override
-    public synchronized void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {
+    public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {
         super.updateObject(columnIndex, JDBC42Helper.convertJavaTimeToJavaSql(x), scaleOrLength);
     }
 
@@ -121,7 +123,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @throws SQLException
      */
     @Override
-    public synchronized void updateObject(String columnLabel, Object x) throws SQLException {
+    public void updateObject(String columnLabel, Object x) throws SQLException {
         super.updateObject(columnLabel, JDBC42Helper.convertJavaTimeToJavaSql(x));
     }
 
@@ -134,7 +136,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @throws SQLException
      */
     @Override
-    public synchronized void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {
+    public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {
         super.updateObject(columnLabel, JDBC42Helper.convertJavaTimeToJavaSql(x), scaleOrLength);
     }
 
@@ -147,7 +149,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @param targetSqlType
      * @throws SQLException
      */
-    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
         super.updateObjectInternal(columnIndex, JDBC42Helper.convertJavaTimeToJavaSql(x), translateAndCheckSqlType(targetSqlType), 0);
     }
 
@@ -161,7 +163,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @param scaleOrLength
      * @throws SQLException
      */
-    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         super.updateObjectInternal(columnIndex, JDBC42Helper.convertJavaTimeToJavaSql(x), translateAndCheckSqlType(targetSqlType), scaleOrLength);
     }
 
@@ -174,7 +176,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @param targetSqlType
      * @throws SQLException
      */
-    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
         super.updateObjectInternal(findColumn(columnLabel), JDBC42Helper.convertJavaTimeToJavaSql(x), translateAndCheckSqlType(targetSqlType), 0);
     }
 
@@ -188,7 +190,7 @@ public class JDBC42UpdatableResultSet extends JDBC4UpdatableResultSet {
      * @param scaleOrLength
      * @throws SQLException
      */
-    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         super.updateObjectInternal(findColumn(columnLabel), JDBC42Helper.convertJavaTimeToJavaSql(x), translateAndCheckSqlType(targetSqlType), scaleOrLength);
     }
 }

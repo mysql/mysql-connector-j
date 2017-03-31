@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -201,26 +201,28 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
      * @exception SQLException
      *                if a database-access error occurs
      */
-    public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNCharacterStream() when field's character set isn't UTF-8");
-        }
-
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException("Can not call updateNCharacterStream() when field's character set isn't UTF-8");
             }
 
-            ((com.mysql.jdbc.JDBC4PreparedStatement) this.updater).setNCharacterStream(columnIndex, x, length);
-        } else {
-            ((com.mysql.jdbc.JDBC4PreparedStatement) this.inserter).setNCharacterStream(columnIndex, x, length);
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                ((com.mysql.jdbc.JDBC4PreparedStatement) this.updater).setNCharacterStream(columnIndex, x, length);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                ((com.mysql.jdbc.JDBC4PreparedStatement) this.inserter).setNCharacterStream(columnIndex, x, length);
+
+                if (x == null) {
+                    this.thisRow.setColumnValue(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
+                }
             }
         }
     }
@@ -242,7 +244,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
      * @exception SQLException
      *                if a database-access error occurs
      */
-    public synchronized void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
+    public void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
         updateNCharacterStream(findColumn(columnName), reader, length);
     }
 
@@ -250,15 +252,17 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
      * @see ResultSet#updateNClob(int, NClob)
      */
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
-        }
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
+            }
 
-        if (nClob == null) {
-            updateNull(columnIndex);
-        } else {
-            updateNCharacterStream(columnIndex, nClob.getCharacterStream(), (int) nClob.length());
+            if (nClob == null) {
+                updateNull(columnIndex);
+            } else {
+                updateNCharacterStream(columnIndex, nClob.getCharacterStream(), (int) nClob.length());
+            }
         }
     }
 
@@ -283,27 +287,29 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
      * @exception SQLException
      *                if a database-access error occurs
      */
-    public synchronized void updateNString(int columnIndex, String x) throws SQLException {
-        String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
-        }
-
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateNString(int columnIndex, String x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.fields[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
             }
 
-            ((com.mysql.jdbc.JDBC4PreparedStatement) this.updater).setNString(columnIndex, x);
-        } else {
-            ((com.mysql.jdbc.JDBC4PreparedStatement) this.inserter).setNString(columnIndex, x);
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            if (x == null) {
-                this.thisRow.setColumnValue(columnIndex - 1, null);
+                ((com.mysql.jdbc.JDBC4PreparedStatement) this.updater).setNString(columnIndex, x);
             } else {
-                this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, this.connection.getServerCharset(),
-                        this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                ((com.mysql.jdbc.JDBC4PreparedStatement) this.inserter).setNString(columnIndex, x);
+
+                if (x == null) {
+                    this.thisRow.setColumnValue(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x, this.charConverter, fieldEncoding, this.connection.getServerCharset(),
+                            this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+                }
             }
         }
     }
@@ -322,7 +328,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
      * @exception SQLException
      *                if a database-access error occurs
      */
-    public synchronized void updateNString(String columnName, String x) throws SQLException {
+    public void updateNString(String columnName, String x) throws SQLException {
         updateNString(findColumn(columnName), x);
     }
 
@@ -526,7 +532,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
         return asString;
     }
 
-    public synchronized boolean isClosed() throws SQLException {
+    public boolean isClosed() throws SQLException {
         return this.isClosed;
     }
 
