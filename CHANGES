@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.42
 
+  - Fix for Bug#79561 (22333996), NullPointerException when calling a fully qualified stored procedure.
+
   - Fix for Bug#84783 (25490163), query timeout is not working(thread hang).
 
   - Fix for Bug#70704 (17653733), Deadlock using UpdatableResultSet.
