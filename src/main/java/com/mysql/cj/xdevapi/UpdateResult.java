@@ -24,7 +24,6 @@
 package com.mysql.cj.xdevapi;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.Result;
@@ -35,38 +34,29 @@ import com.mysql.cj.x.core.StatementExecuteOk;
  * A result from a statement that doesn't return a set of rows.
  */
 public class UpdateResult implements Result {
-    private StatementExecuteOk ok;
-    private List<String> lastDocIds;
+    protected StatementExecuteOk ok;
 
     /**
      * Create a new result.
      *
      * @param ok
      *            the response from the server
-     * @param lastDocIds
-     *            the (optional) IDs of the inserted documents
      */
-    public UpdateResult(StatementExecuteOk ok, List<String> lastDocIds) {
+    public UpdateResult(StatementExecuteOk ok) {
         this.ok = ok;
-        this.lastDocIds = lastDocIds;
     }
 
+    @Override
     public long getAffectedItemsCount() {
         return this.ok.getRowsAffected();
     }
 
-    public Long getAutoIncrementValue() {
-        return this.ok.getLastInsertId();
-    }
-
-    public List<String> getLastDocumentIds() {
-        return this.lastDocIds;
-    }
-
+    @Override
     public int getWarningsCount() {
         return this.ok.getWarnings().size();
     }
 
+    @Override
     public Iterator<Warning> getWarnings() {
         return this.ok.getWarnings().stream().map(w -> (Warning) new WarningImpl(w)).collect(Collectors.toList()).iterator();
     }

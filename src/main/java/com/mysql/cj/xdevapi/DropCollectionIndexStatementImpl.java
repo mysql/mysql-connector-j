@@ -45,11 +45,11 @@ public class DropCollectionIndexStatementImpl implements DropCollectionIndexStat
 
     public Result execute() {
         StatementExecuteOk ok = this.mysqlxSession.dropCollectionIndex(this.schemaName, this.collectionName, this.indexName);
-        return new UpdateResult(ok, null);
+        return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncDropCollectionIndex(this.schemaName, this.collectionName, this.indexName);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new UpdateResult(ok));
     }
 }

@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * A statement INSERTing new row(s) into a table.
  */
-public interface InsertStatement extends Statement<InsertStatement, Result> {
+public interface InsertStatement extends Statement<InsertStatement, InsertResult> {
     /**
      * Add a row (sequence of values) to this statement.
      * 

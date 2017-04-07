@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,30 +23,15 @@
 
 package com.mysql.cj.api.xdevapi;
 
-import java.util.Iterator;
-
 /**
- * Base result.
+ * A result from the table.insert() statement.
  */
-public interface Result {
-    /**
-     * Get the count of affected items from manipulation statements.
-     * 
-     * @return count
-     */
-    long getAffectedItemsCount();
+public interface InsertResult extends Result {
 
     /**
-     * Count of warnings generated during statement execution.
+     * Get the auto-increment value if one was generated from a row insert statement.
      * 
-     * @return count
+     * @return auto-increment value
      */
-    int getWarningsCount();
-
-    /**
-     * Warnings generated during statement execution.
-     * 
-     * @return iterator over warnings
-     */
-    Iterator<Warning> getWarnings();
+    Long getAutoIncrementValue();
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -53,6 +53,7 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         return this.currentResult;
     }
 
+    @Override
     public boolean nextResult() {
         if (this.currentResult == null) {
             return false;
@@ -69,60 +70,69 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
         return this.currentResult != null;
     }
 
+    @Override
     public void finishStreaming() {
         while (nextResult()) {
             ;
         }
     }
 
+    @Override
     public boolean hasData() {
         return getCurrentResult().hasData();
     }
 
+    @Override
     public long getAffectedItemsCount() {
         return getCurrentResult().getAffectedItemsCount();
     }
 
+    @Override
     public Long getAutoIncrementValue() {
         return getCurrentResult().getAutoIncrementValue();
     }
 
-    public List<String> getLastDocumentIds() {
-        return getCurrentResult().getLastDocumentIds();
-    }
-
+    @Override
     public int getWarningsCount() {
         return getCurrentResult().getWarningsCount();
     }
 
+    @Override
     public Iterator<Warning> getWarnings() {
         return getCurrentResult().getWarnings();
     }
 
+    @Override
     public int getColumnCount() {
         return getCurrentResult().getColumnCount();
     }
 
+    @Override
     public List<Column> getColumns() {
         return getCurrentResult().getColumns();
     }
 
+    @Override
     public List<String> getColumnNames() {
         return getCurrentResult().getColumnNames();
     }
 
+    @Override
     public long count() {
         return getCurrentResult().count();
     }
 
+    @Override
     public List<Row> fetchAll() {
         return getCurrentResult().fetchAll();
     }
 
+    @Override
     public Row next() {
         return getCurrentResult().next();
     }
 
+    @Override
     public boolean hasNext() {
         return getCurrentResult().hasNext();
     }

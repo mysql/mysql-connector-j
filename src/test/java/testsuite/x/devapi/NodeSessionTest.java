@@ -41,6 +41,7 @@ import com.mysql.cj.api.xdevapi.SqlStatement;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.AbstractSession;
 import com.mysql.cj.xdevapi.XSessionFactory;
 
@@ -71,6 +72,13 @@ public class NodeSessionTest extends DevApiBaseTestCase {
         assertEquals("2", r.getString("2"));
         assertEquals("3", r.getString("3"));
         assertFalse(res.hasNext());
+
+        assertThrows(XDevAPIError.class, "Method getAutoIncrementValue\\(\\) is allowed only for insert statements.", new Callable<Void>() {
+            public Void call() throws Exception {
+                assertEquals(null, res.getAutoIncrementValue());
+                return null;
+            }
+        });
     }
 
     @Test
@@ -211,5 +219,24 @@ public class NodeSessionTest extends DevApiBaseTestCase {
 
         sqlUpdate("drop table if exists virtualNodeSession1");
         sqlUpdate("drop table if exists virtualNodeSession2");
+    }
+
+    @Test
+    public void sqlInsertAutoIncrementValue() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        sqlUpdate("drop table if exists lastInsertId");
+        sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
+
+        SqlStatement stmt = this.session.sql("insert into lastInsertId values (null, 'a')");
+        SqlResult res = stmt.execute();
+
+        assertFalse(res.hasData());
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(0, res.getWarningsCount());
+        assertFalse(res.getWarnings().hasNext());
+        assertEquals(new Long(1), res.getAutoIncrementValue());
     }
 }

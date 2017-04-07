@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -29,7 +29,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.Table;
 
 /**
@@ -65,14 +64,12 @@ public class TableDeleteTest extends TableTest {
 
             Table table = this.schema.getTable("testDelete");
             assertEquals(3, table.count());
-            Result res = table.delete().orderBy("age", "name").where("age == 13").execute();
-            assertEquals(null, res.getAutoIncrementValue());
+            table.delete().orderBy("age", "name").where("age == 13").execute();
             assertEquals(2, table.count());
 
             Table view = this.schema.getTable("testDeleteView");
             assertEquals(2, view.count());
-            res = view.delete().where("age == 12").execute();
-            assertEquals(null, res.getAutoIncrementValue());
+            view.delete().where("age == 12").execute();
             assertEquals(1, view.count());
 
             table.delete().where("age = :age").bind("age", 14).execute();

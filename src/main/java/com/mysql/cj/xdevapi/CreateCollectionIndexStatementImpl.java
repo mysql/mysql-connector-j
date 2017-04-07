@@ -50,11 +50,11 @@ public class CreateCollectionIndexStatementImpl implements CreateCollectionIndex
 
     public Result execute() {
         StatementExecuteOk ok = this.mysqlxSession.createCollectionIndex(this.schemaName, this.collectionName, this.createIndexParams);
-        return new UpdateResult(ok, null);
+        return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncCreateCollectionIndex(this.schemaName, this.collectionName, this.createIndexParams);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new UpdateResult(ok));
     }
 }

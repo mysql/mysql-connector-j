@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.mysql.cj.api.xdevapi.InsertResult;
 import com.mysql.cj.api.xdevapi.InsertStatement;
-import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
 
@@ -52,14 +52,14 @@ public class InsertStatementImpl implements InsertStatement {
         this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
-    public Result execute() {
+    public InsertResult execute() {
         StatementExecuteOk ok = this.mysqlxSession.insertRows(this.schemaName, this.tableName, this.insertParams);
-        return new UpdateResult(ok, null);
+        return new InsertResultImpl(ok);
     }
 
-    public CompletableFuture<Result> executeAsync() {
+    public CompletableFuture<InsertResult> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncInsertRows(this.schemaName, this.tableName, this.insertParams);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new InsertResultImpl(ok));
     }
 
     public InsertStatement values(List<Object> row) {

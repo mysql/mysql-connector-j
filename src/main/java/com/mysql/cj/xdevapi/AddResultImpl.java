@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,37 +23,42 @@
 
 package com.mysql.cj.xdevapi;
 
-import java.util.ArrayList;
-import java.util.TimeZone;
-import java.util.function.Supplier;
+import java.util.List;
 
-import com.mysql.cj.api.result.RowList;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
-import com.mysql.cj.core.result.Field;
+import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.x.core.StatementExecuteOk;
 import com.mysql.cj.x.core.XDevAPIError;
 
 /**
- * SQL result with data. Implemented as a thin layer over {@link RowResultImpl}.
+ * A result from the collection.add() statement.
  */
-public class SqlDataResult extends RowResultImpl implements SqlResult {
-    public SqlDataResult(ArrayList<Field> metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(metadata, defaultTimeZone, rows, completer);
+public class AddResultImpl extends UpdateResult implements AddResult {
+    private List<String> lastDocIds;
+
+    /**
+     * Create a new result.
+     *
+     * @param ok
+     *            the response from the server
+     * @param lastDocIds
+     *            the (optional) IDs of the inserted documents
+     */
+    public AddResultImpl(StatementExecuteOk ok, List<String> lastDocIds) {
+        super(ok);
+        this.lastDocIds = lastDocIds;
     }
 
     @Override
-    public boolean nextResult() {
-        throw new FeatureNotAvailableException("Not a multi-result");
+    public List<String> getDocumentIds() {
+        return this.lastDocIds;
     }
 
     @Override
-    public long getAffectedItemsCount() {
-        return getStatementExecuteOk().getRowsAffected();
+    public String getDocumentId() {
+        if (this.lastDocIds.size() > 1) {
+            throw new XDevAPIError("Method getDocumentId() is allowed only for a single document add() result.");
+        }
+        return this.lastDocIds.get(this.lastDocIds.size() - 1);
     }
 
-    @Override
-    public Long getAutoIncrementValue() {
-        throw new XDevAPIError("Method getAutoIncrementValue() is allowed only for insert statements.");
-    }
 }

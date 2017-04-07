@@ -43,11 +43,11 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
 
     public Result execute() {
         StatementExecuteOk ok = this.mysqlxSession.deleteDocs(this.filterParams);
-        return new UpdateResult(ok, null);
+        return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncDeleteDocs(this.filterParams);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new UpdateResult(ok));
     }
 }

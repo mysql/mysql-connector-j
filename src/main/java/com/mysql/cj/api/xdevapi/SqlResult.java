@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,7 +26,7 @@ package com.mysql.cj.api.xdevapi;
 /**
  * A result from a SQL statement which may have several sets of data following by a DML result.
  */
-public interface SqlResult extends Result, RowResult {
+public interface SqlResult extends Result, InsertResult, RowResult {
     /**
      * Move to the next result. This method has no effect after returning <code>false</code> for the first time.
      *

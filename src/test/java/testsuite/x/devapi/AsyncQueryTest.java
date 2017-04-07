@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,9 +39,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.api.xdevapi.Table;
@@ -71,8 +71,9 @@ public class AsyncQueryTest extends CollectionTest {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(json).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         CompletableFuture<DocResult> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
         DocResult docs = docsF.get();
@@ -89,8 +90,9 @@ public class AsyncQueryTest extends CollectionTest {
         final int NUMBER_OF_QUERIES = 50;
 
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(json).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
@@ -157,9 +159,10 @@ public class AsyncQueryTest extends CollectionTest {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
-        CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
-            assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        CompletableFuture<AddResult> resF = this.collection.add(json).executeAsync();
+        CompletableFuture<DocResult> docF = resF.thenCompose((AddResult res) -> {
+            assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+            assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
             return this.collection.find("firstName like '%Fra%'").executeAsync();
         });
 

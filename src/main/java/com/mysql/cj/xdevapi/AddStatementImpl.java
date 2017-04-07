@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.api.xdevapi.AddStatement;
 import com.mysql.cj.api.xdevapi.JsonValue;
-import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
@@ -90,19 +90,19 @@ public class AddStatementImpl implements AddStatement {
         return this.newDocs.stream().map(DbDoc::toPackedString).collect(Collectors.toList());
     }
 
-    public Result execute() {
+    public AddResult execute() {
         if (this.newDocs.size() == 0) { // according to X DevAPI specification, this is a no-op. we create an empty Result
             StatementExecuteOk ok = new StatementExecuteOk(0, null, new ArrayList<>());
-            return new UpdateResult(ok, new ArrayList<>());
+            return new AddResultImpl(ok, new ArrayList<>());
         }
         List<String> newIds = assignIds();
         StatementExecuteOk ok = this.mysqlxSession.addDocs(this.schemaName, this.collectionName, serializeDocs());
-        return new UpdateResult(ok, newIds);
+        return new AddResultImpl(ok, newIds);
     }
 
-    public CompletableFuture<Result> executeAsync() {
+    public CompletableFuture<AddResult> executeAsync() {
         final List<String> newIds = assignIds();
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncAddDocs(this.schemaName, this.collectionName, serializeDocs());
-        return okF.thenApply(ok -> new UpdateResult(ok, newIds));
+        return okF.thenApply(ok -> new AddResultImpl(ok, newIds));
     }
 }

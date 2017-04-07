@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,14 +30,17 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonString;
 
@@ -60,8 +63,9 @@ public class CollectionAddTest extends CollectionTest {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(json).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("firstName like '%Fra%'").execute();
         DbDoc d = docs.next();
@@ -95,8 +99,9 @@ public class CollectionAddTest extends CollectionTest {
         DbDoc doc = new DbDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
-        Result res = this.collection.add(doc).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(doc).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("lastName like 'O\\'Kee%'").execute();
         DbDoc d = docs.next();
@@ -109,16 +114,30 @@ public class CollectionAddTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        Result res = this.collection.add(new DbDoc().add("f1", new JsonString().setValue("doc1")), new DbDoc().add("f1", new JsonString().setValue("doc2")))
+        AddResult res1 = this.collection.add(new DbDoc().add("f1", new JsonString().setValue("doc1")), new DbDoc().add("f1", new JsonString().setValue("doc2")))
                 .execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res1.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
+            public Void call() throws Exception {
+                res1.getDocumentId();
+                return null;
+            }
+        });
+
         DocResult docs = this.collection.find("f1 like 'doc%'").execute();
         assertEquals(2, docs.count());
 
-        res = this.collection
+        AddResult res2 = this.collection
                 .add(new DbDoc[] { new DbDoc().add("f1", new JsonString().setValue("doc3")), new DbDoc().add("f1", new JsonString().setValue("doc4")) })
                 .execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res2.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
+            public Void call() throws Exception {
+                res2.getDocumentId();
+                return null;
+            }
+        });
+
         docs = this.collection.find("f1 like 'doc%'").execute();
         assertEquals(4, docs.count());
     }
@@ -133,8 +152,9 @@ public class CollectionAddTest extends CollectionTest {
         doc.put("x", 1);
         doc.put("y", "this is y");
         doc.put("z", new BigDecimal("44.22"));
-        Result res = this.collection.add(doc).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(doc).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         DocResult docs = this.collection.find("z >= 44.22").execute();
         DbDoc d = docs.next();
@@ -149,10 +169,17 @@ public class CollectionAddTest extends CollectionTest {
         }
         String json1 = "{'_id': 'Id#1', 'name': 'assignedId'}".replaceAll("'", "\"");
         String json2 = "{'name': 'autoId'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json1).add(json2).execute();
+        AddResult res = this.collection.add(json1).add(json2).execute();
 
-        List<String> ids = res.getLastDocumentIds();
+        List<String> ids = res.getDocumentIds();
         assertEquals(2, ids.size());
+
+        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.getDocumentId();
+                return null;
+            }
+        });
 
         for (String strId : ids) {
             DocResult docs = this.collection.find("_id == '" + strId + "'").execute();
@@ -205,7 +232,6 @@ public class CollectionAddTest extends CollectionTest {
         }
         Result res = this.collection.add(new DbDoc[] {}).execute();
         assertEquals(0, res.getAffectedItemsCount());
-        assertEquals(null, res.getAutoIncrementValue());
         assertEquals(0, res.getWarningsCount());
     }
 }
