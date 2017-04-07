@@ -219,7 +219,21 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             while (paramTypesRs.next()) {
                 String paramName = paramTypesRs.getString(4);
-                int inOutModifier = paramTypesRs.getInt(5);
+                int inOutModifier;
+                switch (paramTypesRs.getInt(5)) {
+                    case DatabaseMetaData.procedureColumnIn:
+                        inOutModifier = ParameterMetaData.parameterModeIn;
+                        break;
+                    case DatabaseMetaData.procedureColumnInOut:
+                        inOutModifier = ParameterMetaData.parameterModeInOut;
+                        break;
+                    case DatabaseMetaData.procedureColumnOut:
+                    case DatabaseMetaData.procedureColumnReturn:
+                        inOutModifier = ParameterMetaData.parameterModeOut;
+                        break;
+                    default:
+                        inOutModifier = ParameterMetaData.parameterModeUnknown;
+                }
 
                 boolean isOutParameter = false;
                 boolean isInParameter = false;

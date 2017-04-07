@@ -2,6 +2,8 @@
 # $Id$
 mm-dd-yy - Version 5.1.42
 
+  - Fix for Bug#84324 (25321524), CallableStatement.extractProcedureName() not work when catalog name with dash.
+
   - Fix for Bug#79561 (22333996), NullPointerException when calling a fully qualified stored procedure.
 
   - Fix for Bug#84783 (25490163), query timeout is not working(thread hang).

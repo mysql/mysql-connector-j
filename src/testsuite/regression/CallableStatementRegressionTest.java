@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -1654,5 +1655,79 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 cstmt.close();
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#84324 - CallableStatement.extractProcedureName() not work when catalog name with dash.
+     */
+    public void testBug84324() throws Exception {
+        createDatabase("`testBug84324-db`");
+
+        /*
+         * Test procedure.
+         */
+        createProcedure("`testBug84324-db`.`testBug84324-proc`", "(IN a INT, INOUT b VARCHAR(100)) BEGIN SELECT a, b; END");
+
+        final CallableStatement cstmtP = this.conn.prepareCall("CALL testBug84324-db.testBug84324-proc(?, ?)");
+        ParameterMetaData pmd = cstmtP.getParameterMetaData();
+
+        assertEquals(2, pmd.getParameterCount());
+        // 1st parameter
+        assertEquals("INT", pmd.getParameterTypeName(1));
+        assertEquals(Types.INTEGER, pmd.getParameterType(1));
+        assertEquals(Integer.class.getName(), pmd.getParameterClassName(1));
+        assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(1));
+        // 2nd parameter
+        assertEquals("VARCHAR", pmd.getParameterTypeName(2));
+        assertEquals(Types.VARCHAR, pmd.getParameterType(2));
+        assertEquals(String.class.getName(), pmd.getParameterClassName(2));
+        assertEquals(ParameterMetaData.parameterModeInOut, pmd.getParameterMode(2));
+
+        cstmtP.setInt(1, 1);
+        cstmtP.setString(2, "foo");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                cstmtP.execute();
+                return null;
+            }
+        }); // Although the procedure metadata could be obtained, the end query actually fails due to syntax errors.
+        cstmtP.close();
+
+        /*
+         * Test function.
+         */
+        createFunction("`testBug84324-db`.`testBug84324-func`", "(a INT, b VARCHAR(123)) RETURNS INT BEGIN RETURN a + LENGTH(b); END");
+
+        final CallableStatement cstmtF = this.conn.prepareCall("{? = CALL testBug84324-db.testBug84324-func(?, ?)}");
+        pmd = cstmtF.getParameterMetaData();
+
+        assertEquals(3, pmd.getParameterCount());
+        // 1st parameter
+        assertEquals("INT", pmd.getParameterTypeName(1));
+        assertEquals(Types.INTEGER, pmd.getParameterType(1));
+        assertEquals(Integer.class.getName(), pmd.getParameterClassName(1));
+        assertEquals(ParameterMetaData.parameterModeOut, pmd.getParameterMode(1));
+        // 2nd parameter
+        assertEquals("INT", pmd.getParameterTypeName(2));
+        assertEquals(Types.INTEGER, pmd.getParameterType(2));
+        assertEquals(Integer.class.getName(), pmd.getParameterClassName(2));
+        assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(2));
+        // 3rd parameter
+        assertEquals("VARCHAR", pmd.getParameterTypeName(3));
+        assertEquals(Types.VARCHAR, pmd.getParameterType(3));
+        assertEquals(String.class.getName(), pmd.getParameterClassName(3));
+        assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(3));
+
+        cstmtF.registerOutParameter(1, Types.INTEGER);
+        cstmtF.setInt(2, 1);
+        cstmtF.setString(3, "foo");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                cstmtF.execute();
+                return null;
+            }
+        }); // Although the function metadata could be obtained, the end query actually fails due to syntax errors.
+        cstmtP.close();
+        cstmtF.close();
     }
 }

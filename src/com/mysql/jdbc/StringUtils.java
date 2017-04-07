@@ -1852,7 +1852,7 @@ public class StringUtils {
                         strBuilder.append('-');
 
                         if (currentChar != -1) {
-                            strBuilder.append(currentChar);
+                            strBuilder.append((char) currentChar);
                         }
 
                         continue;
