@@ -108,11 +108,13 @@ public class StringUtils {
 
     private static Method toPlainStringMethod;
 
-    static final int WILD_COMPARE_MATCH_NO_WILD = 0;
+    private static final int WILD_COMPARE_MATCH = 0;
+    private static final int WILD_COMPARE_CONTINUE_WITH_WILD = 1;
+    private static final int WILD_COMPARE_NO_MATCH = -1;
 
-    static final int WILD_COMPARE_MATCH_WITH_WILD = 1;
-
-    static final int WILD_COMPARE_NO_MATCH = -1;
+    static final char WILDCARD_MANY = '%';
+    static final char WILDCARD_ONE = '_';
+    static final char WILDCARD_ESCAPE = '\\';
 
     private static final ConcurrentHashMap<String, Charset> charsetsByAlias = new ConcurrentHashMap<String, Charset>();
 
@@ -1566,95 +1568,93 @@ public class StringUtils {
     }
 
     /**
-     * Compares searchIn against searchForWildcard with wildcards (heavily
-     * borrowed from strings/ctype-simple.c in the server sources)
+     * Compares searchIn against searchForWildcard with wildcards, in a case insensitive manner.
      * 
      * @param searchIn
      *            the string to search in
-     * @param searchForWildcard
-     *            the string to search for, using the 'standard' SQL wildcard
-     *            chars of '%' and '_'
-     * 
-     * @return WILD_COMPARE_MATCH_NO_WILD if matched, WILD_COMPARE_NO_MATCH if
-     *         not matched with wildcard, WILD_COMPARE_MATCH_WITH_WILD if
-     *         matched with wildcard
+     * @param searchFor
+     *            the string to search for, using the 'standard' SQL wildcard chars of '%' and '_'
      */
-    public static int wildCompare(String searchIn, String searchForWildcard) {
-        if ((searchIn == null) || (searchForWildcard == null)) {
+    public static boolean wildCompareIgnoreCase(String searchIn, String searchFor) {
+        return wildCompareInternal(searchIn, searchFor) == WILD_COMPARE_MATCH;
+    }
+
+    /**
+     * Compares searchIn against searchForWildcard with wildcards (heavily borrowed from strings/ctype-simple.c in the server sources)
+     * 
+     * This method does a single passage matching for normal characters and WILDCARD_ONE (_), and recursive matching for WILDCARD_MANY (%) which may be repeated
+     * for as many anchor chars are found.
+     * 
+     * @param searchIn
+     *            the string to search in
+     * @param searchFor
+     *            the string to search for, using the 'standard' SQL wildcard chars of '%' and '_'
+     * 
+     * @return WILD_COMPARE_MATCH if matched, WILD_COMPARE_NO_MATCH if not matched, WILD_COMPARE_CONTINUE_WITH_WILD if not matched yet, but it may in one of
+     *         following recursion rounds
+     */
+    private static int wildCompareInternal(String searchIn, String searchFor) {
+        if ((searchIn == null) || (searchFor == null)) {
             return WILD_COMPARE_NO_MATCH;
         }
 
-        if (searchForWildcard.equals("%")) {
-
-            return WILD_COMPARE_MATCH_WITH_WILD;
+        if (searchFor.equals("%")) {
+            return WILD_COMPARE_MATCH;
         }
 
-        int result = WILD_COMPARE_NO_MATCH; /* Not found, using wildcards */
-
-        char wildcardMany = '%';
-        char wildcardOne = '_';
-        char wildcardEscape = '\\';
-
         int searchForPos = 0;
-        int searchForEnd = searchForWildcard.length();
+        int searchForEnd = searchFor.length();
 
         int searchInPos = 0;
         int searchInEnd = searchIn.length();
 
-        while (searchForPos != searchForEnd) {
-            char wildstrChar = searchForWildcard.charAt(searchForPos);
+        int result = WILD_COMPARE_NO_MATCH; /* Not found, using wildcards */
 
-            while ((searchForWildcard.charAt(searchForPos) != wildcardMany) && (wildstrChar != wildcardOne)) {
-                if ((searchForWildcard.charAt(searchForPos) == wildcardEscape) && ((searchForPos + 1) != searchForEnd)) {
+        while (searchForPos != searchForEnd) {
+            while ((searchFor.charAt(searchForPos) != WILDCARD_MANY) && (searchFor.charAt(searchForPos) != WILDCARD_ONE)) {
+                if ((searchFor.charAt(searchForPos) == WILDCARD_ESCAPE) && ((searchForPos + 1) != searchForEnd)) {
                     searchForPos++;
                 }
 
                 if ((searchInPos == searchInEnd)
-                        || (Character.toUpperCase(searchForWildcard.charAt(searchForPos++)) != Character.toUpperCase(searchIn.charAt(searchInPos++)))) {
-                    return WILD_COMPARE_MATCH_WITH_WILD; /* No match */
+                        || (Character.toUpperCase(searchFor.charAt(searchForPos++)) != Character.toUpperCase(searchIn.charAt(searchInPos++)))) {
+                    return WILD_COMPARE_CONTINUE_WITH_WILD; /* No match */
                 }
 
                 if (searchForPos == searchForEnd) {
-                    return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD); /* Match if both are at end */
+                    return ((searchInPos != searchInEnd) ? WILD_COMPARE_CONTINUE_WITH_WILD : WILD_COMPARE_MATCH); /* Match if both are at end */
                 }
 
-                result = WILD_COMPARE_MATCH_WITH_WILD; /* Found an anchor char */
+                result = WILD_COMPARE_CONTINUE_WITH_WILD; /* Found an anchor char */
             }
 
-            if (searchForWildcard.charAt(searchForPos) == wildcardOne) {
+            if (searchFor.charAt(searchForPos) == WILDCARD_ONE) {
                 do {
                     if (searchInPos == searchInEnd) { /* Skip one char if possible */
-
-                        return (result);
+                        return result;
                     }
-
                     searchInPos++;
-                } while ((++searchForPos < searchForEnd) && (searchForWildcard.charAt(searchForPos) == wildcardOne));
+                } while ((++searchForPos < searchForEnd) && (searchFor.charAt(searchForPos) == WILDCARD_ONE));
 
                 if (searchForPos == searchForEnd) {
                     break;
                 }
             }
 
-            if (searchForWildcard.charAt(searchForPos) == wildcardMany) { /* Found w_many */
-
-                char cmp;
-
+            if (searchFor.charAt(searchForPos) == WILDCARD_MANY) { /* Found w_many */
                 searchForPos++;
 
                 /* Remove any '%' and '_' from the wild search string */
                 for (; searchForPos != searchForEnd; searchForPos++) {
-                    if (searchForWildcard.charAt(searchForPos) == wildcardMany) {
+                    if (searchFor.charAt(searchForPos) == WILDCARD_MANY) {
                         continue;
                     }
 
-                    if (searchForWildcard.charAt(searchForPos) == wildcardOne) {
-                        if (searchInPos == searchInEnd) {
-                            return (WILD_COMPARE_NO_MATCH);
+                    if (searchFor.charAt(searchForPos) == WILDCARD_ONE) {
+                        if (searchInPos == searchInEnd) { /* Skip one char if possible */
+                            return WILD_COMPARE_NO_MATCH;
                         }
-
                         searchInPos++;
-
                         continue;
                     }
 
@@ -1662,15 +1662,16 @@ public class StringUtils {
                 }
 
                 if (searchForPos == searchForEnd) {
-                    return WILD_COMPARE_MATCH_NO_WILD; /* Ok if w_many is last */
+                    return WILD_COMPARE_MATCH; /* Ok if w_many is last */
                 }
 
                 if (searchInPos == searchInEnd) {
                     return WILD_COMPARE_NO_MATCH;
                 }
 
-                if (((cmp = searchForWildcard.charAt(searchForPos)) == wildcardEscape) && ((searchForPos + 1) != searchForEnd)) {
-                    cmp = searchForWildcard.charAt(++searchForPos);
+                char cmp;
+                if (((cmp = searchFor.charAt(searchForPos)) == WILDCARD_ESCAPE) && ((searchForPos + 1) != searchForEnd)) {
+                    cmp = searchFor.charAt(++searchForPos);
                 }
 
                 searchForPos++;
@@ -1678,26 +1679,24 @@ public class StringUtils {
                 do {
                     while ((searchInPos != searchInEnd) && (Character.toUpperCase(searchIn.charAt(searchInPos)) != Character.toUpperCase(cmp))) {
                         searchInPos++;
-                    }
+                    } /* Searches for an anchor char */
 
                     if (searchInPos++ == searchInEnd) {
                         return WILD_COMPARE_NO_MATCH;
                     }
 
-                    {
-                        int tmp = wildCompare(searchIn, searchForWildcard);
-
-                        if (tmp <= 0) {
-                            return (tmp);
-                        }
+                    int tmp = wildCompareInternal(searchIn.substring(searchInPos), searchFor.substring(searchForPos));
+                    if (tmp <= 0) {
+                        return tmp;
                     }
-                } while ((searchInPos != searchInEnd) && (searchForWildcard.charAt(0) != wildcardMany));
+
+                } while (searchInPos != searchInEnd);
 
                 return WILD_COMPARE_NO_MATCH;
             }
         }
 
-        return ((searchInPos != searchInEnd) ? WILD_COMPARE_MATCH_WITH_WILD : WILD_COMPARE_MATCH_NO_WILD);
+        return ((searchInPos != searchInEnd) ? WILD_COMPARE_CONTINUE_WITH_WILD : WILD_COMPARE_MATCH);
     }
 
     static byte[] s2b(String s, MySQLConnection conn) throws SQLException {

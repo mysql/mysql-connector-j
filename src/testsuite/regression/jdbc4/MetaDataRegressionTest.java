@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Util;
@@ -858,5 +859,143 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#73775 - DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern
+     * 
+     * Test duplicated in testsuite.regression.MetaDataRegressionTest.
+     */
+    public void testBug73775() throws Exception {
+        createFunction("testBug73775f", "(param1 CHAR(20), param2 CHAR(20)) RETURNS CHAR(40) DETERMINISTIC RETURN CONCAT(param1, param2)");
+        createProcedure("testBug73775p", "(INOUT param1 CHAR(20), IN param2 CHAR(20)) BEGIN  SELECT CONCAT(param1, param2) INTO param1; END");
+
+        boolean useIS = false;
+        boolean inclFuncs = false;
+        do {
+            final String testCase = String.format("Case: [useIS: %s, inclFuncs: %s]", useIS ? "Y" : "N", inclFuncs ? "Y" : "N");
+
+            final Properties props = new Properties();
+            props.setProperty("useInformationSchema", Boolean.toString(useIS));
+            props.setProperty("getProceduresReturnsFunctions", Boolean.toString(inclFuncs));
+            final Connection testConn = getConnectionWithProps(props);
+            final DatabaseMetaData dbmd = testConn.getMetaData();
+
+            /*
+             * Test getProcedureColumns()
+             */
+            this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "%");
+            if (inclFuncs) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param1", this.rs.getString(4));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param2", this.rs.getString(4));
+            }
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+            assertEquals(testCase, "param1", this.rs.getString(4));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+            assertEquals(testCase, "param2", this.rs.getString(4));
+            assertFalse(testCase, this.rs.next());
+
+            for (String ptn : new String[] { "param1", "_____1", "%1", "p_r_m%1" }) {
+                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", ptn);
+                if (inclFuncs) {
+                    assertTrue(this.rs.next());
+                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                    assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                    assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                    assertTrue(testCase, this.rs.next());
+                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                    assertEquals(testCase, "param1", this.rs.getString(4));
+                }
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+                assertEquals(testCase, "param1", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
+                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "param2");
+                if (inclFuncs) {
+                    assertTrue(this.rs.next());
+                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                    assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                    assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                    assertTrue(testCase, this.rs.next());
+                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                    assertEquals(testCase, "param2", this.rs.getString(4));
+                }
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+                assertEquals(testCase, "param2", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "");
+            if (inclFuncs) {
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+            }
+            assertFalse(testCase, this.rs.next());
+
+            /*
+             * Test getFunctionColumns()
+             */
+            this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", "%");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+            assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "param1", this.rs.getString(4));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "param2", this.rs.getString(4));
+            assertFalse(testCase, this.rs.next());
+
+            for (String ptn : new String[] { "param1", "_____1", "%1", "p_r_m%1" }) {
+                this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", ptn);
+                assertTrue(this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param1", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
+                this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", "param2");
+                assertTrue(this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param2", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", "");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+            assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
+            assertFalse(testCase, this.rs.next());
+
+            testConn.close();
+        } while ((useIS = !useIS) || (inclFuncs = !inclFuncs));
     }
 }

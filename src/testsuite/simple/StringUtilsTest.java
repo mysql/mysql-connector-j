@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -816,5 +816,264 @@ public class StringUtilsTest extends BaseTestCase {
             assertEquals(i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting", identifiers[i],
                     StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "\""));
         }
+    }
+
+    /**
+     * Tests StringUtils.wildCompare()
+     */
+    public void testWildCompare() throws Exception {
+        // Null values.
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, null));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", null));
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, "abcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, "_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, "%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, "_%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(null, "%_"));
+
+        // Empty values.
+        assertTrue(StringUtils.wildCompareIgnoreCase("", ""));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", ""));
+        assertFalse(StringUtils.wildCompareIgnoreCase("", "abcxyz"));
+
+        // Different letter case.
+        assertTrue(StringUtils.wildCompareIgnoreCase("ABCxyz", "abcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcXYZ", "abcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("ABCXYZ", "abcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "ABCxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abcXYZ"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "ABCXYZ"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("ABCxyz", "ab%YZ"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcXYZ", "AB%yz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("ABCxyz", "ab__YZ"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcXYZ", "AB__yz"));
+
+        // Patterns without wildcards.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "zyxcba"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxy"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "bcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "aabcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyzz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abclmnxyz"));
+
+        // Patterns with wildcard %.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%abcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%abcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a%z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a%%%z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%%%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%cx%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%cx%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%abcxyz%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%abcxyz%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%b%y%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%b%%%y%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%a%b%c%x%y%z%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%a%%%b%%%c%%%x%%%y%%%z%%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz%z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz%%%z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a%abcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a%%%abcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab%cx%cx%yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab%%%cx%%%cx%%%yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%x"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%%%x"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "c%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "c%%%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%a%m%z%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%a%%%m%%%z%%%"));
+
+        // Patterns with wildcard _.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxy_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc___"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a_____"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_bcxyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "___xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_____z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "ab__yz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a____z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_bcxy_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "__cx__"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "a_c_y_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_b_x_z"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "______"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcxyz_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abc____"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a______"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_abcxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "____xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "______z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abc_xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab___yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a_____z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_bc_xy_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "__c_x__"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a_c_y__"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "__b_x_z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_______"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abcx_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "abc__"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a____"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_cxyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "__xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "____z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab_yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a___z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_cxy_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a_c__"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "__x_z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "_____"));
+
+        // Patterns with both wildcards.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc_%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc___%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc___%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%%%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%___"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "abc%%%___"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%___xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%___xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%%%_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "___%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "___%%%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_cx_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_cx_%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%__cx__%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%__cx__%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%cx%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%%%cx%%%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "__%cx%__"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "__%%%cx%%%__"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_b%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_b%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_____z%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_____z%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%y_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%y_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%a_____"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%a_____"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc%_%_%_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%abc%%%_%%%_%%%_%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_%_%_%xyz%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_%%%_%%%_%%%xyz%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%a%_%c%x%_%z%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%a%%%_%%%c%%%x%%%_%%%z%%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%_c%m%x_%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%%_c%%%m%%%x_%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a%a_c%_yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "a%%%a_c%%%_yz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab_%x_z%z"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "ab_%%%x_z%%%Z"));
+
+        // Patterns with wildcards only.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "_%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%___%___%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%___%%%___%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%_%_%_%_%_%_%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%_%%%_%%%_%%%_%%%_%%%_%%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%___%_%___%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%%%___%%%_%%%___%%%"));
+
+        // Escaped wildcards
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%%%", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%", "abc_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%%%", "abc___"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%", "abc\\%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%%%", "abc\\%\\%\\%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%", "abc%\\%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%%%", "abc%\\%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%", "abc\\%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc%%%", "abc\\%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc_", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc_", "abc_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc___"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc_", "abc\\_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc\\_\\_\\_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc\\_\\__"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc\\__\\_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abc___", "abc_\\_\\_"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%xyz", "%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%%%xyz", "%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%xyz", "_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%%%xyz", "___xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%xyz", "\\%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%%%xyz", "\\%\\%\\%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%xyz", "%\\%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%%%xyz", "%\\%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%xyz", "\\%%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%%%xyz", "\\%%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("_xyz", "%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "%xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("_xyz", "_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "___xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("_xyz", "\\_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "\\_\\_\\_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "\\_\\__xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "\\__\\_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("___xyz", "_\\_\\_xyz"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("%_%", "\\%\\_\\%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("_%_", "\\_\\%\\_"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc\\%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc%\\%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "\\%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%\\%%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc\\%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc%\\%%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc\\_%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc%\\_%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%\\_xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%\\_%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc\\_xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyz", "%abc%\\_%xyz%"));
+
+        // Values with repeated patterns.
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%abc"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%%%abc"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "abc%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%abc%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%%%abc%%%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "abc%abc"));
+        assertTrue(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "abc%%%abc"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("xyzxyzxyzxyzxyzabc", "%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("xyzxyzxyzxyzxyzabc", "%%%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzxyz", "xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzxyz", "xyz%%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%xyz%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcabcabcabcabcabc", "%%%xyz%%%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "abc%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "abc%%%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%abc"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%%%abc"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%xyz"));
+        assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%%%xyz"));
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1839,9 +1839,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         paramName = paramName.substring(1, paramName.length() - 1);
                     }
 
-                    int wildCompareRes = StringUtils.wildCompare(paramName, parameterNamePattern);
-
-                    if (wildCompareRes != StringUtils.WILD_COMPARE_NO_MATCH) {
+                    if (StringUtils.wildCompareIgnoreCase(paramName, parameterNamePattern)) {
                         ResultSetRow row = convertTypeDescriptorToProcedureRow(procNameAsBytes, procCatAsBytes, paramName, isOutParam, isInParam, false,
                                 typeDesc, forGetFunctionColumns, ordinal++);
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -4225,5 +4225,83 @@ public class MetaDataRegressionTest extends BaseTestCase {
             rsmd = this.pstmt.getMetaData();
             assertEquals(testCase, "id", rsmd.getColumnName(1));
         } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#73775 - DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern
+     * 
+     * Test duplicated in testsuite.regression.jdbc4.MetaDataRegressionTest.
+     */
+    public void testBug73775() throws Exception {
+        createFunction("testBug73775f", "(param1 CHAR(20), param2 CHAR(20)) RETURNS CHAR(40) DETERMINISTIC RETURN CONCAT(param1, param2)");
+        createProcedure("testBug73775p", "(INOUT param1 CHAR(20), IN param2 CHAR(20)) BEGIN  SELECT CONCAT(param1, param2) INTO param1; END");
+
+        boolean useIS = false;
+        do {
+            final String testCase = String.format("Case: [useIS: %s]", useIS ? "Y" : "N");
+
+            final Properties props = new Properties();
+            final Connection testConn = getConnectionWithProps(props);
+            props.setProperty("useInformationSchema", Boolean.toString(useIS));
+            final DatabaseMetaData dbmd = testConn.getMetaData();
+
+            this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "%");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+            assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "param1", this.rs.getString(4));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "param2", this.rs.getString(4));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+            assertEquals(testCase, "param1", this.rs.getString(4));
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+            assertEquals(testCase, "param2", this.rs.getString(4));
+            assertFalse(testCase, this.rs.next());
+
+            for (String ptn : new String[] { "param1", "_____1", "%1", "p_r_m%1" }) {
+                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", ptn);
+                assertTrue(this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param1", this.rs.getString(4));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+                assertEquals(testCase, "param1", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
+                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "param2");
+                assertTrue(this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+                assertEquals(testCase, "param2", this.rs.getString(4));
+                assertTrue(testCase, this.rs.next());
+                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
+                assertEquals(testCase, "param2", this.rs.getString(4));
+                assertFalse(testCase, this.rs.next());
+            }
+
+            this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "");
+            assertTrue(testCase, this.rs.next());
+            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
+            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+            assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+            assertFalse(testCase, this.rs.next());
+
+            testConn.close();
+        } while (useIS = !useIS);
     }
 }
