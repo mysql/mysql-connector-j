@@ -4978,8 +4978,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private void setSessionVariables() throws SQLException {
         if (this.versionMeetsMinimum(4, 0, 0) && getSessionVariables() != null) {
             List<String> variablesToSet = new ArrayList<String>();
-            for (String part : StringUtils.split(getSessionVariables(), ",", "\"'(", "\"')", true)) {
-                variablesToSet.addAll(StringUtils.split(part, ";", "\"'(", "\"')", true));
+            for (String part : StringUtils.split(getSessionVariables(), ",", "\"'(", "\"')", "\"'", true)) {
+                variablesToSet.addAll(StringUtils.split(part, ";", "\"'(", "\"')", "\"'", true));
             }
 
             if (!variablesToSet.isEmpty()) {

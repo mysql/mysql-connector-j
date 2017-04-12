@@ -1051,7 +1051,7 @@ public class StringUtils {
             int wc = 0;
             boolean match = true;
             while (++wc < searchForWordsCount && match) {
-                int positionOfNextWord = indexOfNextChar(startingPositionForNextWord, searchInLength - 1, searchIn, null, null, searchMode2);
+                int positionOfNextWord = indexOfNextChar(startingPositionForNextWord, searchInLength - 1, searchIn, null, null, null, searchMode2);
                 if (startingPositionForNextWord == positionOfNextWord || !startsWithIgnoreCase(searchIn, positionOfNextWord, searchForSequence[wc])) {
                     // either no gap between words or match failed
                     match = false;
@@ -1088,6 +1088,33 @@ public class StringUtils {
      */
     public static int indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers,
             Set<SearchMode> searchMode) {
+        return indexOfIgnoreCase(startingPosition, searchIn, searchFor, openingMarkers, closingMarkers, "", searchMode);
+    }
+
+    /**
+     * Finds the position of a substring within a string, ignoring case, with the option to skip text delimited by given markers or within comments.
+     * 
+     * @param startingPosition
+     *            the position to start the search from
+     * @param searchIn
+     *            the string to search in
+     * @param searchFor
+     *            the string to search for
+     * @param openingMarkers
+     *            characters which delimit the beginning of a text block to skip
+     * @param closingMarkers
+     *            characters which delimit the end of a text block to skip
+     * @param overridingMarkers
+     *            the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
+     *            <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
+     *            otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
+     * @param searchMode
+     *            a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+     *            behavior of the search
+     * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
+     */
+    public static int indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers,
+            String overridingMarkers, Set<SearchMode> searchMode) {
         if (searchIn == null || searchFor == null) {
             return -1;
         }
@@ -1100,9 +1127,18 @@ public class StringUtils {
             return -1;
         }
 
-        if (searchMode.contains(SearchMode.SKIP_BETWEEN_MARKERS)
-                && (openingMarkers == null || closingMarkers == null || openingMarkers.length() != closingMarkers.length())) {
-            throw new IllegalArgumentException(Messages.getString("StringUtils.15", new String[] { openingMarkers, closingMarkers }));
+        if (searchMode.contains(SearchMode.SKIP_BETWEEN_MARKERS)) {
+            if (openingMarkers == null || closingMarkers == null || openingMarkers.length() != closingMarkers.length()) {
+                throw new IllegalArgumentException(Messages.getString("StringUtils.15", new String[] { openingMarkers, closingMarkers }));
+            }
+            if (overridingMarkers == null) {
+                throw new IllegalArgumentException(Messages.getString("StringUtils.16", new String[] { overridingMarkers, openingMarkers }));
+            }
+            for (char c : overridingMarkers.toCharArray()) {
+                if (openingMarkers.indexOf(c) == -1) {
+                    throw new IllegalArgumentException(Messages.getString("StringUtils.16", new String[] { overridingMarkers, openingMarkers }));
+                }
+            }
         }
 
         // Some locales don't follow upper-case rule, so need to check both
@@ -1116,7 +1152,7 @@ public class StringUtils {
         }
 
         for (int i = startingPosition; i <= stopSearchingAt; i++) {
-            i = indexOfNextChar(i, stopSearchingAt, searchIn, openingMarkers, closingMarkers, searchMode);
+            i = indexOfNextChar(i, stopSearchingAt, searchIn, openingMarkers, closingMarkers, overridingMarkers, searchMode);
 
             if (i == -1) {
                 return -1;
@@ -1151,7 +1187,7 @@ public class StringUtils {
      * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
      */
     private static int indexOfNextChar(int startingPosition, int stopPosition, String searchIn, String openingMarkers, String closingMarkers,
-            Set<SearchMode> searchMode) {
+            String overridingMarkers, Set<SearchMode> searchMode) {
         if (searchIn == null) {
             return -1;
         }
@@ -1185,8 +1221,25 @@ public class StringUtils {
                 int nestedMarkersCount = 0;
                 char openingMarker = c0;
                 char closingMarker = closingMarkers.charAt(markerIndex);
+                boolean outerIsAnOverridingMarker = overridingMarkers.indexOf(openingMarker) != -1;
                 while (++i <= stopPosition && ((c0 = searchIn.charAt(i)) != closingMarker || nestedMarkersCount != 0)) {
-                    if (c0 == openingMarker) {
+                    if (!outerIsAnOverridingMarker && overridingMarkers.indexOf(c0) != -1) {
+                        // there is an overriding marker that needs to be consumed before returning to the previous marker
+                        int overridingMarkerIndex = openingMarkers.indexOf(c0); // overridingMarkers must be a sub-list of openingMarkers
+                        int overridingNestedMarkersCount = 0;
+                        char overridingOpeningMarker = c0;
+                        char overridingClosingMarker = closingMarkers.charAt(overridingMarkerIndex);
+                        while (++i <= stopPosition && ((c0 = searchIn.charAt(i)) != overridingClosingMarker || overridingNestedMarkersCount != 0)) {
+                            // do as before, but this marker can't be overridden
+                            if (c0 == overridingOpeningMarker) {
+                                overridingNestedMarkersCount++;
+                            } else if (c0 == overridingClosingMarker) {
+                                overridingNestedMarkersCount--;
+                            } else if (searchMode.contains(SearchMode.ALLOW_BACKSLASH_ESCAPE) && c0 == '\\') {
+                                i++; // next char is escaped, skip it
+                            }
+                        }
+                    } else if (c0 == openingMarker) {
                         nestedMarkersCount++;
                     } else if (c0 == closingMarker) {
                         nestedMarkersCount--;
@@ -1317,12 +1370,16 @@ public class StringUtils {
     }
 
     /**
-     * Splits stringToSplit into a list, using the given delimiter
+     * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
      * 
      * @param stringToSplit
      *            the string to split
      * @param delimiter
      *            the string to split on
+     * @param openingMarkers
+     *            characters which delimit the beginning of a text block to skip
+     * @param closingMarkers
+     *            characters which delimit the end of a text block to skip
      * @param trim
      *            should the split strings be whitespace trimmed?
      * 
@@ -1330,7 +1387,34 @@ public class StringUtils {
      * 
      * @throws IllegalArgumentException
      */
-    public static List<String> split(String stringToSplit, String delimiter, String markers, String markerCloses, boolean trim) {
+    public static List<String> split(String stringToSplit, String delimiter, String openingMarkers, String closingMarkers, boolean trim) {
+        return split(stringToSplit, delimiter, openingMarkers, closingMarkers, "", trim);
+    }
+
+    /**
+     * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
+     * 
+     * @param stringToSplit
+     *            the string to split
+     * @param delimiter
+     *            the string to split on
+     * @param openingMarkers
+     *            characters which delimit the beginning of a text block to skip
+     * @param closingMarkers
+     *            characters which delimit the end of a text block to skip
+     * @param overridingMarkers
+     *            the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
+     *            <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
+     *            otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
+     * @param trim
+     *            should the split strings be whitespace trimmed?
+     * 
+     * @return the list of strings, split by delimiter
+     * 
+     * @throws IllegalArgumentException
+     */
+    public static List<String> split(String stringToSplit, String delimiter, String openingMarkers, String closingMarkers, String overridingMarkers,
+            boolean trim) {
         if (stringToSplit == null) {
             return new ArrayList<String>();
         }
@@ -1344,7 +1428,8 @@ public class StringUtils {
 
         List<String> splitTokens = new ArrayList<String>();
 
-        while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, markers, markerCloses, SEARCH_MODE__MRK_COM_WS)) != -1) {
+        while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, openingMarkers, closingMarkers, overridingMarkers,
+                SEARCH_MODE__MRK_COM_WS)) != -1) {
             String token = stringToSplit.substring(currentPos, delimPos);
 
             if (trim) {

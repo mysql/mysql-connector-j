@@ -25,6 +25,7 @@ package testsuite.simple;
 
 import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -299,8 +300,8 @@ public class StringUtilsTest extends BaseTestCase {
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
 
         /*
-         * E. test indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers, Set<SearchMode>
-         * searchMode) illegal markers arguments
+         * E. test indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers[, String
+         * overridingMarkers], Set<SearchMode> searchMode) illegal markers arguments
          */
         assertThrows(IllegalArgumentException.class,
                 "Illegal argument value null for openingMarkers and/or - for closingMarkers. These cannot be null and must have the same length.",
@@ -331,6 +332,20 @@ public class StringUtilsTest extends BaseTestCase {
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-", "-!", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                        return null;
+                    }
+                });
+        assertThrows(IllegalArgumentException.class,
+                "Illegal argument value null for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                        return null;
+                    }
+                });
+        assertThrows(IllegalArgumentException.class,
+                "Illegal argument value ' for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", "'", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
                         return null;
                     }
                 });
@@ -819,7 +834,7 @@ public class StringUtilsTest extends BaseTestCase {
     }
 
     /**
-     * Tests StringUtils.wildCompare()
+     * Tests StringUtils.wildCompare() method.
      */
     public void testWildCompare() throws Exception {
         // Null values.
@@ -1075,5 +1090,76 @@ public class StringUtilsTest extends BaseTestCase {
         assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%%%abc"));
         assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%xyz"));
         assertFalse(StringUtils.wildCompareIgnoreCase("abcxyzxyzxyzxyzabc", "xyz%%%xyz"));
+    }
+
+    /**
+     * Tests StringUtils.split() methods.
+     */
+    public void testSplit() throws Exception {
+        String testString = "  abstract, (contents, table of \"['figure''s'],(tables\"),  introduction  , \"methods(), ()results\", ['discussion'']', conclusion]   ";
+        List<String> stringParts;
+
+        // non existing split char, trim
+        stringParts = StringUtils.split(testString, ";", true);
+        assertEquals(1, stringParts.size());
+        assertEquals(testString.trim(), stringParts.get(0));
+
+        // non existing split char, don't trim
+        stringParts = StringUtils.split(testString, ";", false);
+        assertEquals(1, stringParts.size());
+        assertEquals(testString, stringParts.get(0));
+
+        // full split, trim
+        stringParts = StringUtils.split(testString, ",", true);
+        assertEquals(9, stringParts.size());
+        assertEquals("abstract", stringParts.get(0));
+        assertEquals("(contents", stringParts.get(1));
+        assertEquals("table of \"['figure''s']", stringParts.get(2));
+        assertEquals("(tables\")", stringParts.get(3));
+        assertEquals("introduction", stringParts.get(4));
+        assertEquals("\"methods()", stringParts.get(5));
+        assertEquals("()results\"", stringParts.get(6));
+        assertEquals("['discussion'']'", stringParts.get(7));
+        assertEquals("conclusion]", stringParts.get(8));
+
+        // full split, don't trim
+        stringParts = StringUtils.split(testString, ",", false);
+        assertEquals(9, stringParts.size());
+        assertEquals("  abstract", stringParts.get(0));
+        assertEquals(" (contents", stringParts.get(1));
+        assertEquals(" table of \"['figure''s']", stringParts.get(2));
+        assertEquals("(tables\")", stringParts.get(3));
+        assertEquals("  introduction  ", stringParts.get(4));
+        assertEquals(" \"methods()", stringParts.get(5));
+        assertEquals(" ()results\"", stringParts.get(6));
+        assertEquals(" ['discussion'']'", stringParts.get(7));
+        assertEquals(" conclusion]   ", stringParts.get(8));
+
+        // most common markers, trim
+        stringParts = StringUtils.split(testString, ",", "'\"", "'\"", true);
+        assertEquals(7, stringParts.size());
+        assertEquals("abstract", stringParts.get(0));
+        assertEquals("(contents", stringParts.get(1));
+        assertEquals("table of \"['figure''s'],(tables\")", stringParts.get(2));
+        assertEquals("introduction", stringParts.get(3));
+        assertEquals("\"methods(), ()results\"", stringParts.get(4));
+        assertEquals("['discussion'']'", stringParts.get(5));
+        assertEquals("conclusion]", stringParts.get(6));
+
+        // extended markers, trim
+        stringParts = StringUtils.split(testString, ",", "'\"([{", "'\")]}", true);
+        assertEquals(2, stringParts.size());
+        assertEquals("abstract", stringParts.get(0));
+        assertEquals("(contents, table of \"['figure''s'],(tables\"),  introduction  , \"methods(), ()results\", ['discussion'']', conclusion]",
+                stringParts.get(1));
+
+        // extended markers with overridable markers, trim
+        stringParts = StringUtils.split(testString, ",", "'\"([{", "'\")]}", "'\"", true);
+        assertEquals(5, stringParts.size());
+        assertEquals("abstract", stringParts.get(0));
+        assertEquals("(contents, table of \"['figure''s'],(tables\")", stringParts.get(1));
+        assertEquals("introduction", stringParts.get(2));
+        assertEquals("\"methods(), ()results\"", stringParts.get(3));
+        assertEquals("['discussion'']', conclusion]", stringParts.get(4));
     }
 }
