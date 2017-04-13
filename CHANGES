@@ -1,6 +1,7 @@
 # Changelog
-# $Id$
-mm-dd-yy - Version 5.1.42
+# https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/
+
+Version 5.1.42
 
   - Fix for Bug#73775 (19531384), DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern.
 
