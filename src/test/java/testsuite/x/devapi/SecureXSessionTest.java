@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.NodeSession;
+import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -122,6 +123,11 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
         assertSecureXSession(testSession);
+        SqlResult rs = testSession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+        String actual = rs.fetchOne().getString(1);
+
+        System.out.println(actual);
+
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
@@ -301,6 +307,25 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
             if (testSession != null) {
                 testSession.sql("DROP USER bug25494338user").execute();
             }
+        }
+    }
+
+    @Test
+    public void testBug23597281() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Properties props = new Properties(this.testProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+
+        NodeSession nSession;
+        for (int i = 0; i < 1000; i++) {
+            nSession = this.fact.getNodeSession(props);
+            nSession.close();
+            nSession = null;
         }
     }
 }
