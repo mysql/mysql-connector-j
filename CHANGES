@@ -11,7 +11,7 @@ Version 6.0.7
 
   - Fix for Bug#84084 (25215008), JAVA.LANG.ARRAYINDEXOUTOFBOUNDSEXCEPTION ON ATTEMPT TO GET VALUE FROM RESULTSET.
 
-  - Added static mapping for utf8mb4_ja_0900_as_cs collation.
+  - WL#10553, Add mapping for Japanese utf8mb4 collation.
 
   - Fix for Bug#25575103, NPE FROM CREATETABLE() WHEN SOME OF THE INPUTS ARE NULL.
 
