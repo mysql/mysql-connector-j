@@ -429,6 +429,10 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         return getActiveMySQLConnection().getLoadBalanceStrategy();
     }
 
+    public String getServerAffinityOrder() {
+        return getActiveMySQLConnection().getServerAffinityOrder();
+    }
+
     public boolean getLoadBalanceValidateConnectionOnSwapServer() {
         return getActiveMySQLConnection().getLoadBalanceValidateConnectionOnSwapServer();
     }
@@ -1179,6 +1183,10 @@ public class MultiHostMySQLConnection implements MySQLConnection {
 
     public void setLoadBalanceStrategy(String strategy) {
         getActiveMySQLConnection().setLoadBalanceStrategy(strategy);
+    }
+
+    public void setServerAffinityOrder(String hostsList) {
+        getActiveMySQLConnection().setServerAffinityOrder(hostsList);
     }
 
     public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {

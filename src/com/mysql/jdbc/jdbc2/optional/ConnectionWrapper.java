@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1310,6 +1310,10 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         return this.mc.getLoadBalanceStrategy();
     }
 
+    public String getServerAffinityOrder() {
+        return this.mc.getServerAffinityOrder();
+    }
+
     public String getLocalSocketAddress() {
         return this.mc.getLocalSocketAddress();
     }
@@ -1984,6 +1988,10 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
     public void setLoadBalanceStrategy(String strategy) {
         this.mc.setLoadBalanceStrategy(strategy);
+    }
+
+    public void setServerAffinityOrder(String hostsList) {
+        this.mc.setServerAffinityOrder(hostsList);
     }
 
     public void setLocalSocketAddress(String address) {

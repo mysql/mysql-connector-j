@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -41,6 +42,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private static final String HOST_1 = "host1";
     private static final String HOST_2 = "host2";
     private static final String HOST_3 = "host3";
+    private static final String HOST_4 = "host4";
+    private static final String HOST_5 = "host5";
 
     private static final String HOST_1_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_1);
     private static final String HOST_1_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_1);
@@ -48,6 +51,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private static final String HOST_2_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_2);
     private static final String HOST_3_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_3);
     private static final String HOST_3_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_3);
+    private static final String HOST_4_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_4);
+    private static final String HOST_4_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_4);
+    private static final String HOST_5_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_5);
+    private static final String HOST_5_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_5);
 
     private static final String STMT_CLOSED_ERR_PATTERN = "No operations allowed after statement closed.";
     private static final String COMM_LINK_ERR_PATTERN = "(?s)Communications link failure.*";
@@ -1265,8 +1272,92 @@ public class MultiHostConnectionTest extends BaseTestCase {
                 testStmt.close();
             }
             if (testConn != null) {
-                //                testConn.close();
+                testConn.close();
             }
         }
+    }
+
+    /**
+     * Tests "serverAffinity" load-balancing strategy.
+     */
+    public void testLoadBalanceServerAffinityStrategy() throws Exception {
+        final Properties connProps = getPropertiesFromTestsuiteUrl();
+        final String port = connProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+
+        final String[] hosts = new String[] { HOST_1, HOST_2, HOST_3, HOST_4, HOST_5 };
+        final Properties props = new Properties();
+        props.setProperty("loadBalanceStrategy", "serverAffinity");
+        props.setProperty("retriesAllDown", "2");
+        props.setProperty("maxReconnects", "2");
+        props.setProperty("initialTimeout", "1");
+        props.setProperty("autoReconnect", "true");
+
+        /*
+         * Connect to the highest affinity, single, host.
+         */
+        for (String host : hosts) {
+            props.setProperty("serverAffinityOrder", host + ":" + port);
+
+            final Connection testConn = getUnreliableLoadBalancedConnection(hosts, props);
+            testConn.close();
+            assertConnectionsHistory(UnreliableSocketFactory.getHostConnectedStatus(host));
+        }
+
+        /*
+         * Connect to the second most highest affinity host and fall back to first as soon as possible.
+         */
+        props.setProperty("serverAffinityOrder", HOST_2 + ":" + port + "," + HOST_4 + ":" + port + "," + HOST_5 + ":" + port);
+
+        Connection testConn = getUnreliableLoadBalancedConnection(hosts, props, new HashSet<String>(Arrays.asList(HOST_1, HOST_2)));
+        testConn.setAutoCommit(false);
+        assertConnectionsHistory(HOST_2_FAIL, HOST_2_FAIL, HOST_4_OK);
+
+        testConn.commit(); // Retries HOST2 but fails. Ends up reusing the active HOST4 connection.
+        assertConnectionsHistory(HOST_2_FAIL, HOST_2_FAIL, HOST_4_OK, HOST_2_FAIL, HOST_2_FAIL);
+        this.rs = testConn.createStatement().executeQuery("SELECT 1");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals(HOST_4, ((com.mysql.jdbc.MySQLConnection) testConn).getHost());
+
+        UnreliableSocketFactory.dontDownHost(HOST_2);
+        testConn.commit(); // Retries HOST2 and succeeds.
+        assertConnectionsHistory(HOST_2_FAIL, HOST_2_FAIL, HOST_4_OK, HOST_2_FAIL, HOST_2_FAIL, HOST_2_OK);
+
+        testConn.close();
+
+        /*
+         * Connect to a random host when all affinity hosts are down, then fall back to one of the affinity hosts when its back on.
+         */
+        props.setProperty("serverAffinityOrder", HOST_2 + ":" + port + "," + HOST_4 + ":" + port);
+        props.setProperty("loadBalanceBlacklistTimeout", "2000"); // Turn on blacklisting to avoid retrying the affinity hosts.
+
+        testConn = getUnreliableLoadBalancedConnection(hosts, props, new HashSet<String>(Arrays.asList(HOST_1, HOST_2, HOST_4)));
+        testConn.setAutoCommit(false);
+        assertEquals(HOST_2_FAIL, UnreliableSocketFactory.getHostsFromAllConnections().get(0));
+        assertEquals(HOST_2_FAIL, UnreliableSocketFactory.getHostsFromAllConnections().get(1));
+        assertEquals(HOST_4_FAIL, UnreliableSocketFactory.getHostsFromAllConnections().get(2));
+        assertEquals(HOST_4_FAIL, UnreliableSocketFactory.getHostsFromAllConnections().get(3));
+        assertTrue(
+                UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_3_OK) || UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_5_OK));
+
+        Thread.sleep(2100); // Allow the blacklisted hosts to be retried.
+
+        UnreliableSocketFactory.dontDownHost(HOST_4);
+        testConn.commit();
+        assertConnectionsHistory(HOST_2_FAIL, HOST_2_FAIL, HOST_4_OK); // Check the expected last events only.
+
+        testConn.close();
+        props.remove("loadBalanceBlacklistTimeout");
+
+        /*
+         * Non-existing affinity host.
+         */
+        props.setProperty("serverAffinityOrder", "testlbconn-nohost:12345");
+        testConn = getUnreliableLoadBalancedConnection(hosts, props, new HashSet<String>(Arrays.asList(HOST_1, HOST_2, HOST_4)));
+        testConn.setAutoCommit(false);
+        assertTrue(
+                UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_3_OK) || UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_5_OK));
+
+        this.conn.close();
     }
 }
