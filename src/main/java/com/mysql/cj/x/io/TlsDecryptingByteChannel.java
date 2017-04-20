@@ -109,8 +109,19 @@ public class TlsDecryptingByteChannel implements AsynchronousByteChannel, Comple
             SSLEngineResult res = this.sslEngine.unwrap(this.cipherTextBuffer, this.clearTextBuffer);
             switch (res.getStatus()) {
                 case BUFFER_UNDERFLOW:
+                    // Check if we need to enlarge the peer network packet buffer
+                    final int newPeerNetDataSize = this.sslEngine.getSession().getPacketBufferSize();
+                    if (newPeerNetDataSize > this.cipherTextBuffer.capacity()) {
+                        // enlarge the peer network packet buffer
+                        ByteBuffer newPeerNetData = ByteBuffer.allocate(newPeerNetDataSize);
+                        newPeerNetData.put(this.cipherTextBuffer);
+                        newPeerNetData.flip();
+                        this.cipherTextBuffer = newPeerNetData;
+                    } else {
+                        this.cipherTextBuffer.compact();
+                    }
+
                     // continue reading, not enough to decrypt yet
-                    this.cipherTextBuffer.compact();
                     this.in.read(this.cipherTextBuffer, null, this);
                     return;
                 case BUFFER_OVERFLOW:

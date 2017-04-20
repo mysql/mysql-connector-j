@@ -250,10 +250,11 @@ public class AsyncQueryTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        int MANY = 1000;
+        int MANY = 100000;
         Collection coll = this.collection;
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < MANY; ++i) {
+            //System.out.println("++++ Write " + i + " set " + i % 3 + " +++++");
             if (i % 3 == 0) {
                 futures.add(coll.find("F1  like '%Field%-5'").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync());
             } else if (i % 3 == 1) {
@@ -264,6 +265,7 @@ public class AsyncQueryTest extends CollectionTest {
         }
         DocResult docs;
         for (int i = 0; i < MANY; ++i) {
+            //System.out.println("++++ Read " + i + " set " + i % 3 + " +++++");
             if (i % 3 == 0) {
                 //Expect Success and check F1  is like  %Field%-5
                 docs = futures.get(i).get();
@@ -283,5 +285,6 @@ public class AsyncQueryTest extends CollectionTest {
                 assertFalse(docs.hasNext());
             }
         }
+        System.out.println("Done.");
     }
 }
