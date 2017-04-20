@@ -46,25 +46,24 @@ import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.api.xdevapi.ViewUpdate;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.xdevapi.AbstractSession;
 import com.mysql.cj.xdevapi.ColumnDef;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.ForeignKeyDef;
 import com.mysql.cj.xdevapi.GeneratedColumnDef;
 import com.mysql.cj.xdevapi.JsonString;
-import com.mysql.cj.xdevapi.XSessionImpl;
+import com.mysql.cj.xdevapi.SessionImpl;
 
 public class SchemaTest extends DevApiBaseTestCase {
     @Before
@@ -88,7 +87,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         assertTrue(this.schema.equals(otherDefaultSchema));
         assertFalse(this.schema.equals(this.session));
 
-        XSession otherSession = new XSessionImpl(this.testProperties);
+        Session otherSession = new SessionImpl(this.testProperties);
         Schema diffSessionSchema = otherSession.getDefaultSchema();
         assertEquals(this.schema.getName(), diffSessionSchema.getName());
         assertFalse(this.schema.equals(diffSessionSchema));
@@ -599,7 +598,7 @@ public class SchemaTest extends DevApiBaseTestCase {
     private DbObjectType getViewType(String schemaName, String view) {
         try {
             // check that the actual type is COLLECTION_VIEW
-            Field f = AbstractSession.class.getDeclaredField("session");
+            Field f = SessionImpl.class.getDeclaredField("session");
             f.setAccessible(true);
             List<DatabaseObjectDescription> objects = ((MysqlxSession) f.get(this.session)).listObjects(schemaName, view);
             assertFalse(objects.isEmpty());

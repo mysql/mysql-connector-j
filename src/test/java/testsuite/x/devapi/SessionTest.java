@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,16 +32,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.SqlResult;
+import com.mysql.cj.api.xdevapi.SqlStatement;
 import com.mysql.cj.core.exceptions.CJPacketTooBigException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.xdevapi.XSessionFactory;
+import com.mysql.cj.xdevapi.SessionFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
     @Before
@@ -168,11 +172,116 @@ public class SessionTest extends DevApiBaseTestCase {
             props.putAll(this.testProperties);
             props.setProperty("user", "bug21690043user1");
             props.setProperty("password", "");
-            new XSessionFactory().getSession(props);
+            new SessionFactory().getSession(props);
         } catch (Throwable t) {
             throw t;
         } finally {
             this.session.sql("DROP USER 'bug21690043user1'@'%'").execute();
         }
+    }
+
+    @Test
+    public void basicSql() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        SqlStatement stmt = this.session.sql("select 1,2,3 from dual");
+        SqlResult res = stmt.execute();
+        assertTrue(res.hasData());
+        Row r = res.next();
+        assertEquals("1", r.getString(0));
+        assertEquals("2", r.getString(1));
+        assertEquals("3", r.getString(2));
+        assertEquals("1", r.getString("1"));
+        assertEquals("2", r.getString("2"));
+        assertEquals("3", r.getString("3"));
+        assertFalse(res.hasNext());
+
+        assertThrows(XDevAPIError.class, "Method getAutoIncrementValue\\(\\) is allowed only for insert statements.", new Callable<Void>() {
+            public Void call() throws Exception {
+                assertEquals(null, res.getAutoIncrementValue());
+                return null;
+            }
+        });
+    }
+
+    @Test
+    public void sqlUpdate() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        SqlStatement stmt = this.session.sql("set @cjTestVar = 1");
+        SqlResult res = stmt.execute();
+        assertFalse(res.hasData());
+        assertEquals(0, res.getAffectedItemsCount());
+        assertEquals(null, res.getAutoIncrementValue());
+        assertEquals(0, res.getWarningsCount());
+        assertFalse(res.getWarnings().hasNext());
+    }
+
+    @Test
+    public void sqlArguments() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        SqlStatement stmt = this.session.sql("select ? as a, 40 + ? as b, ? as c");
+        SqlResult res = stmt.bind(1).bind(2).bind(3).execute();
+        Row r = res.next();
+        assertEquals("1", r.getString("a"));
+        assertEquals("42", r.getString("b"));
+        assertEquals("3", r.getString("c"));
+    }
+
+    @Test
+    public void basicMultipleResults() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        sqlUpdate("drop procedure if exists basicMultipleResults");
+        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+        SqlResult res = stmt.execute();
+        assertTrue(res.hasData());
+        /* Row r = */ res.next();
+        assertFalse(res.hasNext());
+        assertTrue(res.nextResult());
+        assertTrue(res.hasData());
+        assertFalse(res.nextResult());
+        assertFalse(res.nextResult());
+        assertFalse(res.nextResult());
+    }
+
+    @Test
+    public void smartBufferMultipleResults() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        sqlUpdate("drop procedure if exists basicMultipleResults");
+        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+        /* SqlResult res = */ stmt.execute();
+        // execute another statement, should work fine
+        this.session.sql("call basicMultipleResults()");
+        this.session.sql("call basicMultipleResults()");
+        this.session.sql("call basicMultipleResults()");
+    }
+
+    @Test
+    public void sqlInsertAutoIncrementValue() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        sqlUpdate("drop table if exists lastInsertId");
+        sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
+
+        SqlStatement stmt = this.session.sql("insert into lastInsertId values (null, 'a')");
+        SqlResult res = stmt.execute();
+
+        assertFalse(res.hasData());
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(0, res.getWarningsCount());
+        assertFalse(res.getWarnings().hasNext());
+        assertEquals(new Long(1), res.getAutoIncrementValue());
     }
 }

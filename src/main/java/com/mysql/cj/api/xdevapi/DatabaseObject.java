@@ -45,9 +45,9 @@ public interface DatabaseObject {
     /**
      * Retrieve the session owning the given schema object.
      * 
-     * @return {@link BaseSession}
+     * @return {@link Session}
      */
-    BaseSession getSession();
+    Session getSession();
 
     /**
      * Retrieve the schema owning this database object.

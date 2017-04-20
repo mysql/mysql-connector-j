@@ -25,8 +25,7 @@ package com.mysql.cj.xdevapi;
 
 import java.util.Properties;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
-import com.mysql.cj.api.xdevapi.XSession;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
@@ -34,18 +33,16 @@ import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 
 /**
- * XSessionFactory is used for creation of sessions.
+ * SessionFactory is used for creation of sessions.
  * 
  * <pre>
- * XSessionFactory xFactory = new XSessionFactory();
+ * SessionFactory xFactory = new SessionFactory();
  * 
- * {@link XSession} crudSession = xFactory.getSession("<b>mysqlx:</b>//host[:port]/db?user=user1&amp;password=pwd1");
- * 
- * {@link NodeSession} nodeSession = xFactory.getNodeSession("<b>mysqlx:</b>//host[:port]/db?user=user1&amp;password=pwd1");
+ * {@link Session} session = xFactory.getSession("<b>mysqlx:</b>//host[:port]/db?user=user1&amp;password=pwd1");
  * </pre>
  *
  */
-public class XSessionFactory {
+public class SessionFactory {
 
     private ConnectionUrl parseUrl(String url) {
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
@@ -56,18 +53,18 @@ public class XSessionFactory {
     }
 
     /**
-     * Creates {@link XSession} by given URL.
+     * Creates {@link Session} by given URL.
      * 
      * @param url
      *            database URL
-     * @return {@link XSession}
+     * @return {@link Session}
      */
-    public XSession getSession(String url) {
+    public Session getSession(String url) {
         CJCommunicationsException latestException = null;
         ConnectionUrl connUrl = parseUrl(url);
         for (HostInfo hi : connUrl.getHostsList()) {
             try {
-                return new XSessionImpl(hi.exposeAsProperties());
+                return new SessionImpl(hi.exposeAsProperties());
             } catch (CJCommunicationsException e) {
                 latestException = e;
             }
@@ -79,39 +76,13 @@ public class XSessionFactory {
     }
 
     /**
-     * Creates {@link XSession} according to given properties.
+     * Creates {@link Session} according to given properties.
      * 
      * @param properties
      *            connection properties
-     * @return {@link XSession}
+     * @return {@link Session}
      */
-    public XSession getSession(Properties properties) {
-        return new XSessionImpl(properties);
-    }
-
-    /**
-     * Creates {@link NodeSession} by given URL.
-     * 
-     * @param url
-     *            database URL
-     * @return {@link NodeSession}
-     */
-    public NodeSession getNodeSession(String url) {
-        ConnectionUrl connUrl = parseUrl(url);
-        if (connUrl.getHostsList().size() > 1) {
-            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "A NodeSession cannot be initialized with a multi-host URL.");
-        }
-        return new NodeSessionImpl(connUrl.getMainHost().exposeAsProperties());
-    }
-
-    /**
-     * Creates {@link NodeSession} according to given properties.
-     * 
-     * @param properties
-     *            connection properties
-     * @return {@link NodeSession}
-     */
-    public NodeSession getNodeSession(Properties properties) {
-        return new NodeSessionImpl(properties);
+    public Session getSession(Properties properties) {
+        return new SessionImpl(properties);
     }
 }

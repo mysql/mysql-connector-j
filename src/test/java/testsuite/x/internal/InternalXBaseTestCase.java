@@ -30,9 +30,8 @@ import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -41,8 +40,8 @@ import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.x.io.XProtocol;
 import com.mysql.cj.x.io.XProtocolFactory;
-import com.mysql.cj.xdevapi.NodeSessionImpl;
-import com.mysql.cj.xdevapi.XSessionFactory;
+import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.SessionImpl;
 
 import testsuite.TestUtils;
 
@@ -58,7 +57,7 @@ public class InternalXBaseTestCase {
 
     protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
     protected boolean isSetForXTests = this.baseUrl != null && this.baseUrl.length() > 0;
-    protected XSessionFactory fact = new XSessionFactory();
+    protected SessionFactory fact = new SessionFactory();
 
     public Properties testProperties = new Properties();
 
@@ -193,7 +192,7 @@ public class InternalXBaseTestCase {
     protected boolean mysqlVersionMeetsMinimum(ServerVersion version) {
         if (this.isSetForXTests) {
             if (this.mysqlVersion == null) {
-                NodeSession session = new NodeSessionImpl(this.testProperties);
+                Session session = new SessionImpl(this.testProperties);
                 this.mysqlVersion = ServerVersion.parseVersion(session.sql("SELECT version()").execute().fetchOne().getString(0));
                 session.close();
             }
@@ -202,14 +201,14 @@ public class InternalXBaseTestCase {
         return false;
     }
 
-    protected void assertSessionStatusEquals(XSession xsession, String statusVariable, String expected) {
-        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
+    protected void assertSessionStatusEquals(Session sess, String statusVariable, String expected) {
+        SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
         Assert.assertEquals(expected, actual);
     }
 
-    protected void assertSessionStatusNotEquals(XSession xsession, String statusVariable, String unexpected) {
-        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
+    protected void assertSessionStatusNotEquals(Session sess, String statusVariable, String unexpected) {
+        SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
         Assert.assertNotEquals(unexpected, actual);
     }

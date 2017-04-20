@@ -28,13 +28,12 @@ import java.util.Properties;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
-public class SecureXSessionTest extends DevApiBaseTestCase {
+public class SecureSessionTest extends DevApiBaseTestCase {
     String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
     String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
     String trustStorePassword = "password";
@@ -44,7 +43,7 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     String clientKeyStorePassword = "password";
 
     @Before
-    public void setupSecureXSessionTest() {
+    public void setupSecureSessionTest() {
         if (this.isSetForXTests) {
             System.clearProperty("javax.net.ssl.trustStore");
             System.clearProperty("javax.net.ssl.trustStorePassword");
@@ -52,78 +51,78 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests non-secure {@link XSession}s created via URL and properties map.
+     * Tests non-secure {@link Session}s created via URL and properties map.
      */
     @Test
-    public void testNonSecureXSession() {
+    public void testNonSecureSession() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        XSession testSession = this.fact.getSession(this.baseUrl);
-        assertNonSecureXSession(testSession);
+        Session testSession = this.fact.getSession(this.baseUrl);
+        assertNonSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "false"));
-        assertNonSecureXSession(testSession);
+        assertNonSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.testProperties);
-        assertNonSecureXSession(testSession);
+        assertNonSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.testProperties);
         props.setProperty(PropertyDefinitions.PNAME_sslEnable, "false");
         testSession = this.fact.getSession(props);
-        assertNonSecureXSession(testSession);
+        assertNonSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, non-verifying server certificate {@link XSession}s created via URL and properties map.
+     * Tests secure, non-verifying server certificate {@link Session}s created via URL and properties map.
      */
     @Test
-    public void testSecureXSessionNoVerifyServerCertificate() {
+    public void testSecureSessionNoVerifyServerCertificate() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        XSession testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true"));
-        assertSecureXSession(testSession);
+        Session testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true"));
+        assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
                 + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false"));
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.testProperties);
         props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false");
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, verifying server certificate {@link XSession}s created via URL and properties map.
+     * Tests secure, verifying server certificate {@link Session}s created via URL and properties map.
      */
     @Test
-    public void testSecureXSessionVerifyServerCertificate() {
+    public void testSecureSessionVerifyServerCertificate() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        XSession testSession = this.fact.getSession(
+        Session testSession = this.fact.getSession(
                 this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true") + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
-        assertSecureXSession(testSession);
-        SqlResult rs = testSession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+        assertSecureSession(testSession);
+        SqlResult rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
         String actual = rs.fetchOne().getString(1);
 
         System.out.println(actual);
@@ -133,12 +132,12 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
                 + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                 + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                 + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.testProperties);
@@ -146,20 +145,20 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, verifying server certificate {@link XSession}s created via URL and properties map.
+     * Tests secure, verifying server certificate {@link Session}s created via URL and properties map.
      */
     @Test
-    public void testSecureXSessionVerifyServerCertificateUsingSystemProps() {
+    public void testSecureSessionVerifyServerCertificateUsingSystemProps() {
         if (!this.isSetForXTests) {
             return;
         }
@@ -167,32 +166,32 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
         System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
 
-        XSession testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
+        Session testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
                 + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true"));
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true"));
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.testProperties);
         props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true");
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
 
         props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
         testSession = this.fact.getSession(props);
-        assertSecureXSession(testSession);
+        assertSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link XSession}.
+     * Tests exception thrown on missing truststore for a secure {@link Session}.
      */
     @Test
-    public void testSecureXSessionMissingTrustStore1() {
+    public void testSecureSessionMissingTrustStore1() {
         if (!this.isSetForXTests) {
             return;
         }
@@ -202,10 +201,10 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link XSession}.
+     * Tests exception thrown on missing truststore for a secure {@link Session}.
      */
     @Test
-    public void testSecureXSessionMissingTrustStore2() {
+    public void testSecureSessionMissingTrustStore2() {
         if (!this.isSetForXTests) {
             return;
         }
@@ -215,10 +214,10 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link XSession}.
+     * Tests exception thrown on missing truststore for a secure {@link Session}.
      */
     @Test
-    public void testSecureXSessionMissingTrustStore3() {
+    public void testSecureSessionMissingTrustStore3() {
         if (!this.isSetForXTests) {
             return;
         }
@@ -230,10 +229,10 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link XSession}.
+     * Tests exception thrown on missing truststore for a secure {@link Session}.
      */
     @Test
-    public void testSecureXSessionMissingTrustStore4() {
+    public void testSecureSessionMissingTrustStore4() {
         if (!this.isSetForXTests) {
             return;
         }
@@ -243,12 +242,12 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
         assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(props));
     }
 
-    private void assertNonSecureXSession(XSession xsession) {
-        assertSessionStatusEquals(xsession, "mysqlx_ssl_cipher", "");
+    private void assertNonSecureSession(Session sess) {
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "");
     }
 
-    private void assertSecureXSession(XSession xsession) {
-        assertSessionStatusNotEquals(xsession, "mysqlx_ssl_cipher", "");
+    private void assertSecureSession(Session sess) {
+        assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
     }
 
     private String makeParam(String key, String value) {
@@ -264,11 +263,11 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
             return;
         }
 
-        NodeSession testSession = null;
+        Session testSession = null;
 
         try {
             Properties props = new Properties(this.testProperties);
-            testSession = this.fact.getNodeSession(props);
+            testSession = this.fact.getSession(props);
 
             testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
 
@@ -281,25 +280,25 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
 
             // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
             props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
-            XSession xSession = this.fact.getSession(props);
-            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
-            xSession.close();
+            Session sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+            sess.close();
 
             // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
             props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA");
-            xSession = this.fact.getSession(props);
-            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "AES128-SHA");
-            assertSessionStatusEquals(xSession, "ssl_cipher", "");
-            xSession.close();
+            sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(sess, "ssl_cipher", "");
+            sess.close();
 
             // 3. Check connection with required client certificate 
             props.setProperty(PropertyDefinitions.PNAME_user, "bug25494338user");
             props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
 
-            xSession = this.fact.getSession(props);
-            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "AES128-SHA");
-            assertSessionStatusEquals(xSession, "ssl_cipher", "");
-            xSession.close();
+            sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(sess, "ssl_cipher", "");
+            sess.close();
 
         } catch (Throwable t) {
             throw t;
@@ -321,9 +320,9 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
 
-        NodeSession nSession;
+        Session nSession;
         for (int i = 0; i < 1000; i++) {
-            nSession = this.fact.getNodeSession(props);
+            nSession = this.fact.getSession(props);
             nSession.close();
             nSession = null;
         }

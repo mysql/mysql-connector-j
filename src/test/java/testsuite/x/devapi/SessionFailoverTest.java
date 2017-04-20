@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,18 +35,15 @@ import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
 
 import testsuite.x.internal.InternalXBaseTestCase;
 
 /**
- * Tests for XSession client side failover features.
+ * Tests for Session client side failover features.
  */
-public class XSessionFailoverTest extends InternalXBaseTestCase {
+public class SessionFailoverTest extends InternalXBaseTestCase {
     private String testsHost = "";
 
     /**
@@ -100,7 +97,7 @@ public class XSessionFailoverTest extends InternalXBaseTestCase {
     }
 
     /**
-     * Tests basic failover while getting a {@link XSession} instance.
+     * Tests basic failover while getting a {@link Session} instance.
      */
     @Test
     public void testGetSessionForMultipleHostsWithFailover() throws Exception {
@@ -126,32 +123,6 @@ public class XSessionFailoverTest extends InternalXBaseTestCase {
 
             assertThrows(CJCommunicationsException.class, ".*", () -> this.fact.getSession(buildConnectionString(fakeHost, fakeHost, fakeHost, fakeHost)));
             assertEquals(4, fakeServer.getAndResetConnectionsCounter());
-        } finally {
-            fakeServer.shutdownSilently();
-        }
-    }
-
-    /**
-     * Tests {@link NodeSession} instance creation using multi-host URL.
-     */
-    @Test
-    public void testGetNodeSessionForMultipleHosts() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        ConnectionsCounterFakeServer fakeServer = new ConnectionsCounterFakeServer();
-        String fakeHost = fakeServer.getHostPortPair();
-
-        try {
-            assertThrows(InvalidConnectionAttributeException.class, "A NodeSession cannot be initialized with a multi-host URL.",
-                    () -> this.fact.getNodeSession(buildConnectionString(this.testsHost, fakeHost)));
-            assertEquals(0, fakeServer.getAndResetConnectionsCounter());
-
-            assertThrows(InvalidConnectionAttributeException.class, "A NodeSession cannot be initialized with a multi-host URL.",
-                    () -> this.fact.getNodeSession(buildConnectionString(fakeHost, this.testsHost)));
-            assertEquals(0, fakeServer.getAndResetConnectionsCounter());
-
         } finally {
             fakeServer.shutdownSilently();
         }
