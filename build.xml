@@ -26,7 +26,7 @@
 Compiling Connector/J
 =====================
 
-Connector/J 6.0 supports JDBC4.2. This requires JDBC classes to be compiled with Java 8.
+Connector/J 8.0 supports JDBC4.2. This requires JDBC classes to be compiled with Java 8.
 The variable 'com.mysql.cj.build.jdk' is used to find the compiler when building the driver. Side by side with these, the variable 'com.mysql.cj.extra.libs' must
 point to the location of third-party libraries that we don't distribute and are required for compiling. Further details can be found in
 http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
@@ -37,7 +37,7 @@ Targets: "dist", "full-dist", "package", "full-package", "full-package-no-source
 Testing Connector/J
 ===================
 
-Connector/J 6.0 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.cj.testsuite.url' and by
+Connector/J 8.0 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.cj.testsuite.url' and by
 calling the target "test". If nothing more is set, these tests run with the JVM referred in the variable 'com.mysql.cj.build.jdk'.
 Alternatively, all tests can be run with a distinct JVM, provided that it is pointed out in the variable 'com.mysql.cj.testsuite.jvm'.
 Running only one test set is possible by setting the variable 'com.mysql.cj.testsuite.test.class' with the class' fully qualified name. If also a comma separated
@@ -172,7 +172,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- If build.properties exists, import it. -->
     <property file="build.properties" />
 
-    <property name="com.mysql.cj.build.driver.version.major" value="6" />
+    <property name="com.mysql.cj.build.driver.version.major" value="8" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
     <property name="com.mysql.cj.build.driver.version.subminor" value="7" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
@@ -478,7 +478,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Add commercial license configuration class (Build). -->
     <target name="-init-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.filterLicense">
-        <copy file="${com.mysql.cj.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
               toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
@@ -486,7 +486,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Add no-crypto export control class (Build). -->
     <target name="-init-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.noCrypto">
-        <copy file="${com.mysql.cj.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
               toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
@@ -494,7 +494,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Copy commercial license configuration class (Package). -->
     <target name="-copy-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.filterLicense">
-        <copy file="${com.mysql.cj.extra.libs}/6.0/CommercialLicenseConfiguration.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
               toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
     </target>
@@ -502,7 +502,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.noCrypto">
-        <copy file="${com.mysql.cj.extra.libs}/6.0/ExportControlledNoCrypto.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
               toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
@@ -510,7 +510,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Copy README-commercial info (Package). -->
     <target name="-copy-readme-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
-        <copy file="${com.mysql.cj.extra.libs}/6.0/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
+        <copy file="${com.mysql.cj.extra.libs}/8.0/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
         </copy>
@@ -530,7 +530,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Copy LICENSE.mysql and replace license commercial headers (Package). -->
     <target name="-replace-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
         <delete file="${com.mysql.cj.dist.dir.package}/COPYING" />
-        <copy file="${com.mysql.cj.extra.libs}/6.0/LICENSE.mysql" toDir="${com.mysql.cj.dist.dir.package}" />
+        <copy file="${com.mysql.cj.extra.libs}/8.0/LICENSE.mysql" toDir="${com.mysql.cj.dist.dir.package}" />
 
         <!-- For safety. -->
         <replaceregexp match=" *The MySQL Connector.*1301  ?USA"

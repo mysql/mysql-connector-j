@@ -1,7 +1,9 @@
 # Changelog
-# https://dev.mysql.com/doc/relnotes/connector-j/6.0/en/
+# https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
-Version 6.0.7
+Version 8.0.7
+
+  - WL#10529, Move version number to 8.0.
 
   - Fix for Bug#23510958, CONCURRENT ASYNC OPERATIONS RESULT IN HANG.
 
