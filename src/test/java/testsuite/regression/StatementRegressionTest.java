@@ -3015,7 +3015,7 @@ public class StatementRegressionTest extends BaseTestCase {
             noBackslashEscapesConn = getConnectionWithProps(props);
 
             createTable("X_TEST",
-                    "(userName varchar(32) not null, ivalue integer, CNAME varchar(255), bvalue CHAR(1), svalue varchar(255), ACTIVE CHAR(1), primary key (userName))");
+                    "(userName varchar(32) not null, ivalue integer, CNAME varchar(255), bvalue CHAR(1), svalue varchar(255), ACTIVE CHAR(1), primary key (userName)) DEFAULT CHARSET=latin1");
 
             String insert_sql = "insert into X_TEST (ivalue, CNAME, bvalue, svalue, ACTIVE, userName) values (?, ?, ?, ?, ?, ?)";
 

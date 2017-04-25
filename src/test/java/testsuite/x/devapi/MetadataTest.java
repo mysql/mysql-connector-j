@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -73,11 +73,15 @@ public class MetadataTest extends TableTest {
         assertEquals("_id", idCol.getColumnName());
         assertEquals("_id", idCol.getColumnLabel());
         assertEquals(Type.STRING, idCol.getType());
-        assertEquals(32, idCol.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(128, idCol.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(32, idCol.getLength());
+        }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned()); // odd default
-        assertEquals("latin1_swedish_ci", idCol.getCollationName());
-        assertEquals("latin1", idCol.getCharacterSetName());
+        assertEquals(this.dbCollation, idCol.getCollationName());
+        assertEquals(this.dbCharset, idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
         assertEquals(true, idCol.isNullable());
         assertEquals(false, idCol.isAutoIncrement());
@@ -92,11 +96,15 @@ public class MetadataTest extends TableTest {
         assertEquals("name", nameCol.getColumnName());
         assertEquals("name", nameCol.getColumnLabel());
         assertEquals(Type.STRING, nameCol.getType());
-        assertEquals(20, nameCol.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(80, nameCol.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(20, nameCol.getLength());
+        }
         assertEquals(0, nameCol.getFractionalDigits());
         assertEquals(false, nameCol.isNumberSigned());
-        assertEquals("latin1_swedish_ci", nameCol.getCollationName());
-        assertEquals("latin1", nameCol.getCharacterSetName());
+        assertEquals(this.dbCollation, nameCol.getCollationName());
+        assertEquals(this.dbCharset, nameCol.getCharacterSetName());
         assertEquals(false, nameCol.isPadded());
         assertEquals(true, nameCol.isNullable());
         assertEquals(false, nameCol.isAutoIncrement());
@@ -160,11 +168,15 @@ public class MetadataTest extends TableTest {
         assertEquals("_id", idCol.getColumnName());
         assertEquals("TheId", idCol.getColumnLabel());
         assertEquals(Type.STRING, idCol.getType());
-        assertEquals(32, idCol.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(128, idCol.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(32, idCol.getLength());
+        }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
-        assertEquals("latin1_swedish_ci", idCol.getCollationName());
-        assertEquals("latin1", idCol.getCharacterSetName());
+        assertEquals(this.dbCollation, idCol.getCollationName());
+        assertEquals(this.dbCharset, idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
         assertEquals(true, idCol.isNullable());
         assertEquals(false, idCol.isAutoIncrement());
@@ -226,7 +238,7 @@ public class MetadataTest extends TableTest {
         assertEquals(128, idCol.getLength());
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
-        assertEquals("utf8mb4_general_ci", idCol.getCollationName());
+        assertEquals("utf8mb4_0900_ai_ci".equals(this.dbCollation) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci", idCol.getCollationName());
         assertEquals("utf8mb4", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
         assertEquals(false, idCol.isNullable());
@@ -297,11 +309,15 @@ public class MetadataTest extends TableTest {
         assertEquals("b", c.getColumnName());
         assertEquals("b", c.getColumnLabel());
         assertEquals(Type.STRING, c.getType());
-        assertEquals(20, c.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(80, c.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(20, c.getLength());
+        }
         assertEquals(0, c.getFractionalDigits());
         assertEquals(false, c.isNumberSigned());
-        assertEquals("latin1_swedish_ci", c.getCollationName());
-        assertEquals("latin1", c.getCharacterSetName());
+        assertEquals(this.dbCollation, c.getCollationName());
+        assertEquals(this.dbCharset, c.getCharacterSetName());
         assertEquals(true, c.isPadded());
         assertEquals(false, c.isNullable());
         assertEquals(false, c.isAutoIncrement());
@@ -487,11 +503,15 @@ public class MetadataTest extends TableTest {
         assertEquals("l", c.getColumnName());
         assertEquals("l", c.getColumnLabel());
         assertEquals(Type.SET, c.getType());
-        assertEquals(3, c.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(12, c.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(3, c.getLength());
+        }
         assertEquals(0, c.getFractionalDigits());
         assertEquals(false, c.isNumberSigned());
-        assertEquals("latin1_swedish_ci", c.getCollationName());
-        assertEquals("latin1", c.getCharacterSetName());
+        assertEquals(this.dbCollation, c.getCollationName());
+        assertEquals(this.dbCharset, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
         assertEquals(true, c.isNullable());
         assertEquals(false, c.isAutoIncrement());
@@ -506,11 +526,15 @@ public class MetadataTest extends TableTest {
         assertEquals("m", c.getColumnName());
         assertEquals("m", c.getColumnLabel());
         assertEquals(Type.ENUM, c.getType());
-        assertEquals(1, c.getLength());
+        if ("utf8mb4_0900_ai_ci".equals(this.dbCollation)) {
+            assertEquals(4, c.getLength()); // TODO is it an xplugin bug after changing default charset to utf8mb4?
+        } else {
+            assertEquals(1, c.getLength());
+        }
         assertEquals(0, c.getFractionalDigits());
         assertEquals(false, c.isNumberSigned());
-        assertEquals("latin1_swedish_ci", c.getCollationName());
-        assertEquals("latin1", c.getCharacterSetName());
+        assertEquals(this.dbCollation, c.getCollationName());
+        assertEquals(this.dbCharset, c.getCharacterSetName());
         assertEquals(false, c.isPadded());
         assertEquals(true, c.isNullable());
         assertEquals(false, c.isAutoIncrement());

@@ -27,6 +27,7 @@ import java.lang.reflect.Field;
 
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Session;
+import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
@@ -43,11 +44,17 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
      */
     Session session;
     Schema schema;
+    String dbCharset;
+    String dbCollation;
 
     public boolean setupTestSession() {
         if (this.isSetForXTests) {
             this.session = new SessionImpl(this.testProperties);
             this.schema = this.session.getDefaultSchema();
+            SqlResult rs = this.session.sql("SHOW VARIABLES LIKE 'character_set_database'").execute();
+            this.dbCharset = rs.fetchOne().getString(1);
+            rs = this.session.sql("SHOW VARIABLES LIKE 'collation_database'").execute();
+            this.dbCollation = rs.fetchOne().getString(1);
             return true;
         }
         return false;

@@ -53,6 +53,7 @@ import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.api.xdevapi.ViewUpdate;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
@@ -366,7 +367,7 @@ public class SchemaTest extends DevApiBaseTestCase {
                 + " KEY fk_film_language_original (original_language_id)," //
                 + " CONSTRAINT " + tableName2 + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)," //
                 + " CONSTRAINT " + tableName2 + "_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES " + tableName1 + " (language_id) ON UPDATE CASCADE" //
-                + ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+                + ") ENGINE=InnoDB DEFAULT CHARSET=" + this.dbCharset);
 
         try {
             this.schema.createTable(tableName2).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
@@ -394,7 +395,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         checkCreatedTable(tableAsName,
                 "(id smallint(5) unsigned NOT NULL AUTO_INCREMENT," // 
                         + " film_id smallint(5) unsigned NOT NULL DEFAULT '0'," //
-                        + " title varchar(255) CHARACTER SET latin1 NOT NULL," //
+                        + " title varchar(255) CHARACTER SET " + this.dbCharset + " NOT NULL," //
                         + " language_id tinyint(3) unsigned NOT NULL," //
                         + " PRIMARY KEY (id)," //
                         + " KEY idx_title (title)," //
@@ -447,6 +448,7 @@ public class SchemaTest extends DevApiBaseTestCase {
             sqlUpdate("drop table if exists collection_test_view_ddl");
             sqlUpdate("drop table if exists table_test_view_ddl");
             sqlUpdate("drop view if exists view_test_view_ddl");
+            sqlUpdate("drop view if exists view_test_view_ddl_check");
             sqlUpdate("create table table_test_view_ddl (first_name varchar(32), last_name varchar(32), age int, descr JSON)");
 
             Collection col = this.schema.createCollection("collection_test_view_ddl");
@@ -575,15 +577,32 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Clifford Simak", r.getString("n"));
             assertEquals(112, r.getInt("a"));
 
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
+                this.session
+                        .sql("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `view_test_view_ddl_check` (`n`,`a`)"
+                                + " AS select concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) AS `name`,"
+                                + "`table_test_view_ddl`.`age` AS `age` from `table_test_view_ddl`"
+                                + " order by concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) WITH CASCADED CHECK OPTION")
+                        .execute();
+            } else {
+                this.session
+                        .sql("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `view_test_view_ddl_check`"
+                                + " AS select concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) AS `n`,"
+                                + "`table_test_view_ddl`.`age` AS `a` from `table_test_view_ddl`"
+                                + " order by concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) WITH CASCADED CHECK OPTION")
+                        .execute();
+            }
+
             rows = this.session.sql("show create view `view_test_view_ddl`").execute();
             r = rows.next();
-            String t2 = r.getString(1);
+            String ddl = r.getString(1);
+
+            rows = this.session.sql("show create view `view_test_view_ddl_check`").execute();
+            r = rows.next();
+            String ddlCheck = r.getString(1).replaceAll("view_test_view_ddl_check", "view_test_view_ddl");
 
             // TODO could cause problems on different server versions
-            assertEquals("CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `view_test_view_ddl`"
-                    + " AS select concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) AS `n`,"
-                    + "`table_test_view_ddl`.`age` AS `a` from `table_test_view_ddl`"
-                    + " order by concat(`table_test_view_ddl`.`first_name`,' ',`table_test_view_ddl`.`last_name`) WITH CASCADED CHECK OPTION", t2);
+            assertEquals(ddlCheck, ddl);
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -592,6 +611,7 @@ public class SchemaTest extends DevApiBaseTestCase {
             sqlUpdate("drop table if exists collection_test_view_ddl");
             sqlUpdate("drop table if exists table_test_view_ddl");
             sqlUpdate("drop view if exists view_test_view_ddl");
+            sqlUpdate("drop view if exists view_test_view_ddl_check");
         }
     }
 
