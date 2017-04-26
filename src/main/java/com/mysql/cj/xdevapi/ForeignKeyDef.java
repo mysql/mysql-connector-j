@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.ForeignKeyDefinition;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class ForeignKeyDef implements ForeignKeyDefinition {
 
@@ -80,9 +81,20 @@ public class ForeignKeyDef implements ForeignKeyDefinition {
         StringBuilder sb = new StringBuilder("FOREIGN KEY");
 
         sb.append(" ").append(this.name);
+
+        if (this.columns == null || this.columns.length == 0) {
+            throw new XDevAPIError("ForeignKeyDefinition is incomplete, fields are empty.");
+        }
         sb.append(Arrays.stream(this.columns).collect(Collectors.joining(", ", " (", ")")));
 
+        if (this.toTable == null) {
+            throw new XDevAPIError("ForeignKeyDefinition is incomplete, to-table isn't set.");
+        }
         sb.append(" REFERENCES ").append(this.toTable);
+
+        if (this.toColumns == null || this.toColumns.length == 0) {
+            throw new XDevAPIError("ForeignKeyDefinition is incomplete, to-columns are empty.");
+        }
         sb.append(Arrays.stream(this.toColumns).collect(Collectors.joining(", ", " (", ")")));
 
         if (this.onDelete != ChangeMode.RESTRICT) {
