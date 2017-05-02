@@ -3266,6 +3266,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testSt.close();
                 }
                 if (testConn != null) {
+                    testConn.getWarnings();
                     testConn.close();
                 }
             }
@@ -3334,6 +3335,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testSt.close();
                 }
                 if (testConn != null) {
+                    testConn.getWarnings();
                     testConn.close();
                 }
             }
@@ -3402,6 +3404,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testSt.close();
                 }
                 if (testConn != null) {
+                    testConn.getWarnings();
                     testConn.close();
                 }
             }
@@ -3694,6 +3697,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertEquals("SSL connection required for plugin 'mysql_clear_password'. Check if \"useSSL\" is set to \"true\".", e.getMessage());
             } finally {
                 if (testConn != null) {
+                    testConn.getWarnings();
                     testConn.close();
                 }
             }
@@ -3724,6 +3728,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testSt.close();
                 }
                 if (testConn != null) {
+                    testConn.getWarnings();
                     testConn.close();
                 }
             }
