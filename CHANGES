@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - Fix for Bug#85555 (25757019), useConfigs Can't find configuration template named, in mysql-connector-java 6.x
+
   - WL#10529, Move version number to 8.0.
 
   - Fix for Bug#23510958, CONCURRENT ASYNC OPERATIONS RESULT IN HANG.
