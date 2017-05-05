@@ -1320,7 +1320,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     long elapsedTime = queryEndTime - begin;
 
                     if (logSlowQueries) {
-                        if (this.useAutoSlowLog) {
+                        if (!this.useAutoSlowLog) {
                             queryWasSlow = elapsedTime > this.connection.getSlowQueryThresholdMillis();
                         } else {
                             queryWasSlow = this.connection.isAbonormallyLongQuery(elapsedTime);
