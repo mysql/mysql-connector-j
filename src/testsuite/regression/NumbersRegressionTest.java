@@ -196,6 +196,16 @@ public class NumbersRegressionTest extends BaseTestCase {
         assertTrue(this.rs.getObject(1).getClass().equals(java.lang.Integer.class));
     }
 
+    public void testBitShouldReturnNullLong() throws Exception {
+        createTable("testBitShouldReturnNullLong", "(field1 BIT(1) NULL)");
+        this.stmt.executeUpdate("INSERT INTO testBitShouldReturnNullLong VALUES (NULL)");
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBitShouldReturnNullLong");
+        this.rs.next();
+
+        assertNull(this.rs.getLong(1));
+    }
+
     /**
      * Tests fix for BUG#5729, UNSIGNED BIGINT returned incorrectly
      * 
