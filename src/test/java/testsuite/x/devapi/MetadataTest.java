@@ -35,6 +35,7 @@ import com.mysql.cj.api.xdevapi.Column;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
+import com.mysql.cj.core.ServerVersion;
 
 /**
  * Tests for "Column" table metadata API.
@@ -238,7 +239,15 @@ public class MetadataTest extends TableTest {
         assertEquals(128, idCol.getLength());
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
-        assertEquals("utf8mb4_0900_ai_ci".equals(this.dbCollation) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci", idCol.getCollationName());
+
+        // Unlike ordinary tables, collections are always created in uft8mb4 charset, but collation was changed in 5.7.18 & 8.0.1
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.18")) && !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0"))
+                || mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
+            assertEquals("utf8mb4_0900_ai_ci", idCol.getCollationName());
+        } else {
+            assertEquals("utf8mb4_general_ci", idCol.getCollationName());
+        }
+
         assertEquals("utf8mb4", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
         assertEquals(false, idCol.isNullable());
