@@ -240,9 +240,8 @@ public class MetadataTest extends TableTest {
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
 
-        // Unlike ordinary tables, collections are always created in uft8mb4 charset, but collation was changed in 5.7.18 & 8.0.1
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.18")) && !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0"))
-                || mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
+        // Unlike ordinary tables, collections are always created in uft8mb4 charset, but collation was changed in 8.0.1
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
             assertEquals("utf8mb4_0900_ai_ci", idCol.getCollationName());
         } else {
             assertEquals("utf8mb4_general_ci", idCol.getCollationName());
