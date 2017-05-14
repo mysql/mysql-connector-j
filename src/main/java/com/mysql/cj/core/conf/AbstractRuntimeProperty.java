@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,9 +42,9 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     private PropertyDefinition<T> propertyDefinition;
 
-    protected T valueAsObject;
+    protected T value;
 
-    protected T initialValueAsObject;
+    protected T initialValue;
 
     protected boolean wasExplicitlySet = false;
 
@@ -55,7 +55,8 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     protected AbstractRuntimeProperty(PropertyDefinition<T> propertyDefinition) {
         this.propertyDefinition = propertyDefinition;
-        this.valueAsObject = getPropertyDefinition().getDefaultValue();
+        this.value = propertyDefinition.getDefaultValue();
+        this.initialValue = propertyDefinition.getDefaultValue();
     }
 
     @Override
@@ -88,7 +89,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     }
 
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.valueAsObject = getPropertyDefinition().parseObject(value, exceptionInterceptor);
+        this.value = getPropertyDefinition().parseObject(value, exceptionInterceptor);
         this.wasExplicitlySet = true;
     }
 
@@ -107,7 +108,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
             this.listeners = new ArrayList<>();
         }
         if (!this.listeners.contains(l)) {
-            this.listeners.add(new WeakReference<RuntimePropertyListener>(l));
+            this.listeners.add(new WeakReference<>(l));
         }
     }
 

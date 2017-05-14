@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,17 +23,13 @@
 
 package com.mysql.cj.core.conf;
 
-import java.io.Serializable;
-
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableBooleanProperty extends AbstractReadableProperty<Boolean> implements ReadableProperty<Boolean>, Serializable {
+public class ReadableBooleanProperty extends AbstractReadableProperty<Boolean> {
 
     private static final long serialVersionUID = 1102859411443650569L;
 
     protected ReadableBooleanProperty(PropertyDefinition<Boolean> propertyDefinition) {
         super(propertyDefinition);
     }
-
 }

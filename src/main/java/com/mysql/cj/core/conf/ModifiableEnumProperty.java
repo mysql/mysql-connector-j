@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,21 +23,32 @@
 
 package com.mysql.cj.core.conf;
 
+import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
-public class ReadableMemorySizeProperty extends ReadableIntegerProperty {
+public class ModifiableEnumProperty<T extends Enum<T>> extends ReadableEnumProperty<T> implements ModifiableProperty<T> {
+    private static final long serialVersionUID = -7498397533757779213L;
 
-    private static final long serialVersionUID = 4200558564320133284L;
-
-    protected String valueAsString;
-
-    protected ReadableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
+    public ModifiableEnumProperty(PropertyDefinition<T> propertyDefinition) {
         super(propertyDefinition);
-        this.valueAsString = propertyDefinition.getDefaultValue().toString();
     }
 
     @Override
-    public String getStringValue() {
-        return this.valueAsString;
+    public void setValue(T value) {
+        setValue(value, null);
+    }
+
+    @Override
+    public void setValue(T value, ExceptionInterceptor exceptionInterceptor) {
+        this.value = value;
+        this.wasExplicitlySet = true;
+        invokeListeners();
+    }
+
+    @Override
+    public void resetValue() {
+        this.value = this.initialValue;
+        invokeListeners();
     }
 }

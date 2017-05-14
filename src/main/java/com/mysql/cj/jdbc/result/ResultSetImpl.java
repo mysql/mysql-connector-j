@@ -211,7 +211,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     protected ReadableProperty<Boolean> emptyStringsConvertToZero;
     protected ReadableProperty<Boolean> emulateLocators;
     protected boolean yearIsDateType = true;
-    protected String zeroDateTimeBehavior;
+    protected PropertyDefinitions.ZeroDatetimeBehavior zeroDateTimeBehavior;
 
     /**
      * Create a result set for an executeUpdate statement.
@@ -273,7 +273,8 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
         this.bigDecimalValueFactory = new BigDecimalValueFactory();
         this.binaryStreamValueFactory = new BinaryStreamValueFactory();
 
-        this.zeroDateTimeBehavior = this.connection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
+        this.zeroDateTimeBehavior = this.connection
+                .getPropertySet().<PropertyDefinitions.ZeroDatetimeBehavior> getEnumReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
         this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(this.session.getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
         this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(this.session.getDefaultTimeZone(), this),
@@ -602,17 +603,17 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     /**
      * Decorate a date/time value factory to implement zeroDateTimeBehavior.
      */
-    private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, String zeroDateTimeBehavior) {
+    private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, PropertyDefinitions.ZeroDatetimeBehavior zeroDateTimeBehavior) {
         // enforce zero date/time behavior
-        if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToNullValueFactory<>(vf);
-        } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(zeroDateTimeBehavior)) {
-            // this behavior is default
-            return vf;
-        } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_ROUND.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToDefaultValueFactory<>(vf);
+        switch (zeroDateTimeBehavior) {
+            case CONVERT_TO_NULL:
+                return new ZeroDateTimeToNullValueFactory<>(vf);
+            case ROUND:
+                return new ZeroDateTimeToDefaultValueFactory<>(vf);
+            case EXCEPTION:
+            default:
+                return vf;
         }
-        return vf;
     }
 
     /**

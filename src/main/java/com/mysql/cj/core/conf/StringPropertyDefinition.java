@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,14 +35,8 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition<String>
         super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public StringPropertyDefinition(String name, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, String[] allowableValues) {
-        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, allowableValues);
-    }
-
     @Override
     public String parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
-        validateAllowableValues(value, exceptionInterceptor);
         return value;
     }
 
@@ -55,5 +49,4 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition<String>
     public RuntimeProperty<String> createRuntimeProperty() {
         return isRuntimeModifiable() ? new ModifiableStringProperty(this) : new ReadableStringProperty(this);
     }
-
 }

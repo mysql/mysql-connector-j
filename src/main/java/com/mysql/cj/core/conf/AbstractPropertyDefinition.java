@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,8 +27,6 @@ import java.io.Serializable;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
 
 public abstract class AbstractPropertyDefinition<T> implements PropertyDefinition<T>, Serializable {
 
@@ -41,8 +39,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     private String sinceVersion;
     private String category;
     private int order;
-
-    private String[] allowableValues = null;
 
     private int lowerBound;
     private int upperBound;
@@ -57,14 +53,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.setSinceVersion(sinceVersion);
         this.setCategory(category);
         this.setOrder(orderInCategory);
-        //this.valueAsObject = defaultValueToSet;
-        //this.required = false;
-    }
-
-    public AbstractPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, String[] allowableValues) {
-        this(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
-        this.setAllowableValues(allowableValues);
     }
 
     public AbstractPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
@@ -139,11 +127,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     }
 
     public String[] getAllowableValues() {
-        return this.allowableValues;
-    }
-
-    public void setAllowableValues(String[] allowableValues) {
-        this.allowableValues = allowableValues;
+        return null;
     }
 
     public int getLowerBound() {
@@ -163,26 +147,4 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     }
 
     public abstract T parseObject(String value, ExceptionInterceptor exceptionInterceptor);
-
-    public void validateAllowableValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) {
-        String[] validateAgainst = getAllowableValues();
-
-        if (valueToValidate == null || validateAgainst == null || validateAgainst.length == 0) {
-            return;
-        }
-
-        for (int i = 0; i < validateAgainst.length; i++) {
-            if ((validateAgainst[i] != null) && validateAgainst[i].equalsIgnoreCase(valueToValidate)) {
-                return;
-            }
-        }
-
-        StringBuilder errorMessageBuf = new StringBuilder();
-        errorMessageBuf.append(Messages.getString("PropertyDefinition.1", new Object[] { getName(), validateAgainst[0] }));
-        for (int i = 1; i < (validateAgainst.length - 1); i++) {
-            errorMessageBuf.append(Messages.getString("PropertyDefinition.2", new Object[] { validateAgainst[i] }));
-        }
-        errorMessageBuf.append(Messages.getString("PropertyDefinition.3", new Object[] { validateAgainst[validateAgainst.length - 1], valueToValidate }));
-        throw ExceptionFactory.createException(errorMessageBuf.toString(), exceptionInterceptor);
-    }
 }

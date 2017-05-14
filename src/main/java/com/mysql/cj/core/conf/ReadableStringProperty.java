@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,12 +23,9 @@
 
 package com.mysql.cj.core.conf;
 
-import java.io.Serializable;
-
 import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.api.conf.ReadableProperty;
 
-public class ReadableStringProperty extends AbstractReadableProperty<String> implements ReadableProperty<String>, Serializable {
+public class ReadableStringProperty extends AbstractReadableProperty<String> {
 
     private static final long serialVersionUID = -4141084145739428803L;
 
@@ -38,7 +35,6 @@ public class ReadableStringProperty extends AbstractReadableProperty<String> imp
 
     @Override
     public String getStringValue() {
-        return this.valueAsObject;
+        return this.value;
     }
-
 }

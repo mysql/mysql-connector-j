@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -221,7 +221,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
             return vf.createFromNull();
         }
 
-        // value factory may return null for zeroDateTimeBehavior=convertToNull so check the return value
+        // value factory may return null for zeroDateTimeBehavior=CONVERT_TO_NULL so check the return value
         T retVal = decodeAndCreateReturnValue(columnIndex, bytes, offset, length, vf);
         this.wasNull = (retVal == null);
         return retVal;

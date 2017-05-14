@@ -1757,14 +1757,14 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests for BUG#5235, ClassCastException on all-zero date field when
-     * zeroDatetimeBehavior is 'convertToNull'.
+     * zeroDatetimeBehavior is 'CONVERT_TO_NULL'.
      * 
      * @throws Exception
      *             if the test fails.
      */
     public void testBug5235() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
         if (versionMeetsMinimum(5, 7, 4)) {
             props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
         }

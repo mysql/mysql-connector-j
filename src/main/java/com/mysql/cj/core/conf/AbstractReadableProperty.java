@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,18 +42,18 @@ public abstract class AbstractReadableProperty<T> extends AbstractRuntimePropert
 
     @Override
     public T getValue() {
-        return this.valueAsObject;
+        return this.value;
     }
 
     @Override
     public T getInitialValue() {
-        return this.initialValueAsObject;
+        return this.initialValue;
     }
 
     @Override
     public String getStringValue() {
-        if (this.valueAsObject != null) {
-            return this.valueAsObject.toString();
+        if (this.value != null) {
+            return this.value.toString();
         }
         return null;
     }

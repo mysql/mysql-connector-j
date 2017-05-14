@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -54,7 +54,7 @@ public class ExceptionsTest extends BaseTestCase {
             }
         });
         assertThrows(SQLException.class,
-                "The connection property 'useSSL' only accepts values of the form: 'true', 'false', 'yes' or 'no'. The value 'wrongvalue' is not in this set.",
+                "The connection property 'useSSL' acceptable values are: 'TRUE', 'FALSE', 'YES' or 'NO'\\. The value 'wrongvalue' is not acceptable\\.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         new NonRegisteringDriver().getPropertyInfo(dbUrl + "&useSSL=wrongvalue", null);

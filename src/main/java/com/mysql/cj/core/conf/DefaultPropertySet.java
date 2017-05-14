@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -43,7 +43,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     private static final long serialVersionUID = -5156024634430650528L;
 
-    private final Map<String, RuntimeProperty<?>> PROPERTY_NAME_TO_RUNTIME_PROPERTY = new HashMap<String, RuntimeProperty<?>>();
+    private final Map<String, RuntimeProperty<?>> PROPERTY_NAME_TO_RUNTIME_PROPERTY = new HashMap<>();
 
     public DefaultPropertySet() {
 
@@ -109,6 +109,11 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @Override
     public ReadableProperty<String> getStringReadableProperty(String name) {
+        return getReadableProperty(name);
+    }
+
+    @Override
+    public <T extends Enum<T>> ReadableProperty<T> getEnumReadableProperty(String name) {
         return getReadableProperty(name);
     }
 

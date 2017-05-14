@@ -1966,4 +1966,33 @@ public class StringUtils {
     public static String safeTrim(String toTrim) {
         return isNullOrEmpty(toTrim) ? toTrim : toTrim.trim();
     }
+
+    /**
+     * Constructs a String containing all the elements in the String array bounded and joined by the provided concatenation elements. The last element uses a
+     * different delimiter.
+     * 
+     * @param elems
+     *            the String array from where to take the elements.
+     * @param prefix
+     *            the prefix of the resulting String.
+     * @param midDelimiter
+     *            the delimiter to be used between the N-1 elements
+     * @param lastDelimiter
+     *            the delimiter to be used before the last element.
+     * @param suffix
+     *            the suffix of the resulting String.
+     * @return
+     *         a String built from the provided String array and concatenation elements.
+     */
+    public static String stringArrayToString(String[] elems, String prefix, String midDelimiter, String lastDelimiter, String suffix) {
+        StringBuilder valuesString = new StringBuilder();
+        if (elems.length > 1) {
+            valuesString.append(Arrays.stream(elems).limit(elems.length - 1).collect(Collectors.joining(midDelimiter, prefix, lastDelimiter)));
+        } else {
+            valuesString.append(prefix);
+        }
+        valuesString.append(elems[elems.length - 1]).append(suffix);
+
+        return valuesString.toString();
+    }
 }

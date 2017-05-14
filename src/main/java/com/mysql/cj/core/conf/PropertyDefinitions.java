@@ -154,9 +154,12 @@ public class PropertyDefinitions {
     /** is not modifiable in run-time (will allow to set not-null value only once) */
     public static final boolean RUNTIME_NOT_MODIFIABLE = false;
 
-    public static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
-    public static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
-    public static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
+    /*
+     * Property enums
+     */
+    public enum ZeroDatetimeBehavior {
+        CONVERT_TO_NULL, EXCEPTION, ROUND;
+    }
 
     /*
      * Connection properties names
@@ -878,11 +881,10 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_yearIsDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.yearIsDateType"), "3.1.9", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PNAME_zeroDateTimeBehavior, ZERO_DATETIME_BEHAVIOR_EXCEPTION, RUNTIME_MODIFIABLE,
+                new EnumPropertyDefinition<>(PNAME_zeroDateTimeBehavior, ZeroDatetimeBehavior.EXCEPTION, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.zeroDateTimeBehavior",
-                                new Object[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
-                        "3.1.4", CATEGORY_DATETIMES, Integer.MIN_VALUE,
-                        new String[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND, ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL }),
+                                new Object[] { ZeroDatetimeBehavior.EXCEPTION, ZeroDatetimeBehavior.ROUND, ZeroDatetimeBehavior.CONVERT_TO_NULL }),
+                        "3.1.4", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_useAffectedRows, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAffectedRows"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),

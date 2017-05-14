@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - WL#10781, enum-based connection properties.
+
   - Fix for Bug#73775 (19531384), DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern.
 
   - Fix for Bug#84324 (25321524), CallableStatement.extractProcedureName() not work when catalog name with dash.

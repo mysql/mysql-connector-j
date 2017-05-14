@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,12 +42,12 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
     @Override
     protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         super.initializeFrom(extractedValue, exceptionInterceptor);
-        this.initialValueAsObject = this.valueAsObject;
+        this.initialValue = this.value;
     }
 
     @Override
     public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        setValue(((LongPropertyDefinition) getPropertyDefinition()).parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
+        setValue(getPropertyDefinition().parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
     }
 
     @Override
@@ -70,14 +70,14 @@ public class ModifiableLongProperty extends ReadableLongProperty implements Modi
                         exceptionInterceptor);
             }
         }
-        this.valueAsObject = Long.valueOf(longValue);
+        this.value = Long.valueOf(longValue);
         this.wasExplicitlySet = true;
         invokeListeners();
     }
 
     @Override
     public void resetValue() {
-        this.valueAsObject = this.initialValueAsObject;
+        this.value = this.initialValue;
         invokeListeners();
     }
 

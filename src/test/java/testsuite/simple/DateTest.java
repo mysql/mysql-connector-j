@@ -198,7 +198,7 @@ public class DateTest extends BaseTestCase {
             this.stmt.executeUpdate("CREATE TABLE testZeroDateBehavior(fieldAsString VARCHAR(32), fieldAsDateTime DATETIME)");
             this.stmt.executeUpdate("INSERT INTO testZeroDateBehavior VALUES ('0000-00-00 00:00:00', '0000-00-00 00:00:00')");
 
-            roundConn = getConnectionWithProps("zeroDateTimeBehavior=round");
+            roundConn = getConnectionWithProps("zeroDateTimeBehavior=ROUND");
             Statement roundStmt = roundConn.createStatement();
             this.rs = roundStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
             this.rs.next();
@@ -217,7 +217,7 @@ public class DateTest extends BaseTestCase {
             assertEquals("0001-01-01", this.rs.getDate(2).toString());
             assertEquals("0001-01-01 00:00:00.0", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(2)));
 
-            nullConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
+            nullConn = getConnectionWithProps("zeroDateTimeBehavior=CONVERT_TO_NULL");
             Statement nullStmt = nullConn.createStatement();
             this.rs = nullStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
 
@@ -238,7 +238,7 @@ public class DateTest extends BaseTestCase {
             assertNull(this.rs.getDate(2));
             assertNull(this.rs.getTimestamp(2));
 
-            exceptionConn = getConnectionWithProps("zeroDateTimeBehavior=exception");
+            exceptionConn = getConnectionWithProps("zeroDateTimeBehavior=EXCEPTION");
             Statement exceptionStmt = exceptionConn.createStatement();
             this.rs = exceptionStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
 

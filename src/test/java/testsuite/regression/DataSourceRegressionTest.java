@@ -287,7 +287,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
      */
     public void testBug19169() throws Exception {
         MysqlDataSource toSerialize = new MysqlDataSource();
-        toSerialize.<String> getModifiableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).setValue("convertToNull");
+
+        toSerialize.<PropertyDefinitions.ZeroDatetimeBehavior> getModifiableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior)
+                .setValue(PropertyDefinitions.ZeroDatetimeBehavior.CONVERT_TO_NULL);
+
+        toSerialize.<String> getModifiableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).setValue("test_lb_strategy");
 
         boolean testBooleanFlag = !toSerialize.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue();
         toSerialize.<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(testBooleanFlag);
@@ -305,7 +309,9 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
         MysqlDataSource thawedDs = (MysqlDataSource) objIn.readObject();
 
-        assertEquals("convertToNull", thawedDs.getStringReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
+        assertEquals(PropertyDefinitions.ZeroDatetimeBehavior.CONVERT_TO_NULL,
+                thawedDs.getEnumReadableProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
+        assertEquals("test_lb_strategy", thawedDs.getStringReadableProperty(PropertyDefinitions.PNAME_loadBalanceStrategy).getValue());
         assertEquals(testBooleanFlag, thawedDs.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue().booleanValue());
         assertEquals(testIntFlag, thawedDs.getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
     }
@@ -352,7 +358,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         this.tempDir.deleteOnExit();
 
         MysqlConnectionPoolDataSource ds;
-        Hashtable<String, String> env = new Hashtable<String, String>();
+        Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.fscontext.RefFSContextFactory");
         this.ctx = new InitialContext(env);
         assertTrue("Naming Context not created", this.ctx != null);
@@ -376,7 +382,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
             //
             Reference objAsRef = (Reference) obj;
             ObjectFactory factory = (ObjectFactory) Class.forName(objAsRef.getFactoryClassName()).newInstance();
-            boundDs = (DataSource) factory.getObjectInstance(objAsRef, datasourceName, this.ctx, new Hashtable<Object, Object>());
+            boundDs = (DataSource) factory.getObjectInstance(objAsRef, datasourceName, this.ctx, new Hashtable<>());
         }
 
         return boundDs;

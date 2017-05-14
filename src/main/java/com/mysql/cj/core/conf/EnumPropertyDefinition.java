@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,38 +31,30 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.util.StringUtils;
 
-public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolean> {
+public class EnumPropertyDefinition<T extends Enum<T>> extends AbstractPropertyDefinition<T> {
 
-    private static final long serialVersionUID = -7288366734350231540L;
+    private static final long serialVersionUID = -3297521968759540444L;
 
-    public enum AllowableValues {
-        TRUE(true), FALSE(false), YES(true), NO(false);
+    private Class<T> enumType;
 
-        private boolean asBoolean;
-
-        private AllowableValues(boolean booleanValue) {
-            this.asBoolean = booleanValue;
-        }
-
-        public boolean asBoolean() {
-            return this.asBoolean;
-        }
-    }
-
-    public BooleanPropertyDefinition(String name, Boolean defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+    public EnumPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
             int orderInCategory) {
         super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+        if (defaultValue == null) {
+            throw ExceptionFactory.createException("Enum property '" + name + "' cannot be initialized with null.");
+        }
+        this.enumType = defaultValue.getDeclaringClass();
     }
 
     @Override
     public String[] getAllowableValues() {
-        return Arrays.stream(AllowableValues.values()).map(AllowableValues::toString).toArray(String[]::new);
+        return Arrays.stream(this.enumType.getEnumConstants()).map(T::toString).sorted().toArray(String[]::new);
     }
 
     @Override
-    public Boolean parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
+    public T parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         try {
-            return AllowableValues.valueOf(value.toUpperCase()).asBoolean();
+            return Enum.valueOf(this.enumType, value.toUpperCase());
         } catch (Exception e) {
             throw ExceptionFactory.createException(
                     Messages.getString("PropertyDefinition.1",
@@ -72,13 +64,12 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
     }
 
     /**
-     * Creates instance of ReadableBooleanProperty or ModifiableBooleanProperty depending on isRuntimeModifiable() result.
+     * Creates an instance of ReadableEnumProperty or ModifiableEnumProperty depending on isRuntimeModifiable() result.
      * 
      * @return
      */
     @Override
-    public RuntimeProperty<Boolean> createRuntimeProperty() {
-        return isRuntimeModifiable() ? new ModifiableBooleanProperty(this) : new ReadableBooleanProperty(this);
+    public RuntimeProperty<T> createRuntimeProperty() {
+        return isRuntimeModifiable() ? new ModifiableEnumProperty<>(this) : new ReadableEnumProperty<>(this);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -50,7 +50,7 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
     @Override
     protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         super.initializeFrom(extractedValue, exceptionInterceptor);
-        this.initialValueAsObject = this.valueAsObject;
+        this.initialValue = this.value;
         this.initialValueAsString = this.valueAsString;
     }
 
@@ -75,14 +75,15 @@ public class ModifiableMemorySizeProperty extends ReadableMemorySizeProperty imp
             }
         }
 
-        this.valueAsObject = Integer.valueOf(intValue);
+        this.value = Integer.valueOf(intValue);
+        this.valueAsString = valueAsString == null ? String.valueOf(intValue) : valueAsString;
         this.wasExplicitlySet = true;
         invokeListeners();
     }
 
     @Override
     public void resetValue() {
-        this.valueAsObject = this.initialValueAsObject;
+        this.value = this.initialValue;
         this.valueAsString = this.initialValueAsString;
         invokeListeners();
     }

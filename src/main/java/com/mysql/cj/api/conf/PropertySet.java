@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,6 +42,8 @@ public interface PropertySet {
     ReadableProperty<Integer> getMemorySizeReadableProperty(String name);
 
     ReadableProperty<String> getStringReadableProperty(String name);
+
+    <T extends Enum<T>> ReadableProperty<T> getEnumReadableProperty(String name);
 
     <T> ModifiableProperty<T> getModifiableProperty(String name);
 

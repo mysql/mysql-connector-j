@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,19 +25,11 @@ package com.mysql.cj.core.conf;
 
 import com.mysql.cj.api.conf.PropertyDefinition;
 
-public class ReadableMemorySizeProperty extends ReadableIntegerProperty {
+public class ReadableEnumProperty<T extends Enum<T>> extends AbstractReadableProperty<T> {
 
-    private static final long serialVersionUID = 4200558564320133284L;
+    private static final long serialVersionUID = -60853080911910124L;
 
-    protected String valueAsString;
-
-    protected ReadableMemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
+    protected ReadableEnumProperty(PropertyDefinition<T> propertyDefinition) {
         super(propertyDefinition);
-        this.valueAsString = propertyDefinition.getDefaultValue().toString();
-    }
-
-    @Override
-    public String getStringValue() {
-        return this.valueAsString;
     }
 }

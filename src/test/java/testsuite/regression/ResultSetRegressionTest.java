@@ -1155,7 +1155,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug6561() throws Exception {
         Connection testConn = this.conn;
-        Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
+        Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=CONVERT_TO_NULL");
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
                 Properties props = new Properties();
@@ -2010,7 +2010,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testAllTypesForNull() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round");
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "ROUND");
         Connection conn2 = getConnectionWithProps(props);
         Statement stmt2 = conn2.createStatement();
 
@@ -5369,7 +5369,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             });
 
             // checking with ZeroDateTimeToNullValueFactory decorator
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
             this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertNull(this.rs.getObject(1, LocalDate.class));
@@ -5378,7 +5378,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
 
             // checking with ZeroDateTimeToDefaultValueFactory decorator
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round");
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "ROUND");
             this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertEquals(LocalDate.of(1, 1, 1), this.rs.getObject(1, LocalDate.class));

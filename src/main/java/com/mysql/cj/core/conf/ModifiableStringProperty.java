@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,13 +23,11 @@
 
 package com.mysql.cj.core.conf;
 
-import java.io.Serializable;
-
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.PropertyDefinition;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 
-public class ModifiableStringProperty extends ReadableStringProperty implements ModifiableProperty<String>, Serializable {
+public class ModifiableStringProperty extends ReadableStringProperty implements ModifiableProperty<String> {
 
     private static final long serialVersionUID = -3956001600419271415L;
 
@@ -40,7 +38,7 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
     @Override
     protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
         super.initializeFrom(extractedValue, exceptionInterceptor);
-        this.initialValueAsObject = this.valueAsObject;
+        this.initialValue = this.value;
     }
 
     @Override
@@ -56,7 +54,7 @@ public class ModifiableStringProperty extends ReadableStringProperty implements 
 
     @Override
     public void resetValue() {
-        this.valueAsObject = this.initialValueAsObject;
+        this.value = this.initialValue;
         invokeListeners();
     }
 

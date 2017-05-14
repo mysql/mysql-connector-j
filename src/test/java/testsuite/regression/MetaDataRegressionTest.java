@@ -2548,7 +2548,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#57808 - wasNull not set
      * for DATE field with value 0000-00-00
      * in getDate() although
-     * zeroDateTimeBehavior is convertToNull.
+     * zeroDateTimeBehavior is CONVERT_TO_NULL.
      * 
      * @throws Exception
      *             if the test fails.
@@ -2567,7 +2567,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
                 }
             }
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
             Connection conn1 = null;
 
             conn1 = getConnectionWithProps(props);
