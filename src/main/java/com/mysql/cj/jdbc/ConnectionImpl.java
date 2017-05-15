@@ -43,6 +43,7 @@ import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -273,12 +274,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /**
      * Actual collation index to mysql charset name map of user defined charsets for given server URLs.
      */
-    private static final Map<String, Map<Integer, String>> customIndexToCharsetMapByUrl = new HashMap<String, Map<Integer, String>>();
+    private static final Map<String, Map<Integer, String>> customIndexToCharsetMapByUrl = new HashMap<>();
 
     /**
      * Actual mysql charset name to mblen map of user defined charsets for given server URLs.
      */
-    private static final Map<String, Map<String, Integer>> customCharsetToMblenMapByUrl = new HashMap<String, Map<String, Integer>>();
+    private static final Map<String, Map<String, Integer>> customCharsetToMblenMapByUrl = new HashMap<>();
 
     private CacheAdapter<String, Map<String, String>> serverConfigCache;
 
@@ -296,7 +297,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
 
     static {
-        mapTransIsolationNameToValue = new HashMap<String, Integer>(8);
+        mapTransIsolationNameToValue = new HashMap<>(8);
         mapTransIsolationNameToValue.put("READ-UNCOMMITED", TRANSACTION_READ_UNCOMMITTED);
         mapTransIsolationNameToValue.put("READ-UNCOMMITTED", TRANSACTION_READ_UNCOMMITTED);
         mapTransIsolationNameToValue.put("READ-COMMITTED", TRANSACTION_READ_COMMITTED);
@@ -443,7 +444,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * An array of currently open statements.
      * Copy-on-write used here to avoid ConcurrentModificationException when statements unregister themselves while we iterate over the list.
      */
-    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<Statement>();
+    private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<>();
 
     private LRUCache parsedCallableStatementCache;
 
@@ -637,7 +638,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                             this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
                                     : Messages.getString("Connection.1",
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
-                    SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
+                            SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
 
     }
@@ -717,8 +718,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             java.sql.ResultSet results = null;
 
             try {
-                customCharset = new HashMap<Integer, String>();
-                customMblen = new HashMap<String, Integer>();
+                customCharset = new HashMap<>();
+                customMblen = new HashMap<>();
 
                 stmt = getMetadataSafeStatement();
 
@@ -1667,7 +1668,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
                 if (statementObj instanceof ServerPreparedStatement) {
                     if (serverPreparedStatements == null) {
-                        serverPreparedStatements = new Stack<Statement>();
+                        serverPreparedStatements = new Stack<>();
                     }
 
                     serverPreparedStatements.add(statementObj);
@@ -2201,7 +2202,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.typeMap == null) {
-                this.typeMap = new HashMap<String, Class<?>>();
+                this.typeMap = new HashMap<>();
             }
 
             return this.typeMap;
@@ -3885,27 +3886,33 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     private void setSessionVariables() throws SQLException {
         String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
         if (sessionVariables != null) {
-            List<String> variablesToSet = StringUtils.split(sessionVariables, ",", "\"'", "\"'", false);
+            //List<String> variablesToSet = StringUtils.split(sessionVariables, ",", "\"'", "\"'", false);
+            List<String> variablesToSet = new ArrayList<>();
+            for (String part : StringUtils.split(sessionVariables, ",", "\"'", "\"'", true)) {
+                variablesToSet.addAll(StringUtils.split(part, ";", "\"'", "\"'", true));
+            }
 
-            int numVariablesToSet = variablesToSet.size();
-
-            java.sql.Statement stmt = null;
-
-            try {
-                stmt = getMetadataSafeStatement();
-
-                for (int i = 0; i < numVariablesToSet; i++) {
-                    String variableValuePair = variablesToSet.get(i);
-
-                    if (variableValuePair.startsWith("@")) {
-                        stmt.executeUpdate("SET " + variableValuePair);
-                    } else {
-                        stmt.executeUpdate("SET SESSION " + variableValuePair);
+            if (!variablesToSet.isEmpty()) {
+                java.sql.Statement stmt = null;
+                try {
+                    stmt = getMetadataSafeStatement();
+                    StringBuilder query = new StringBuilder("SET ");
+                    String separator = "";
+                    for (String variableToSet : variablesToSet) {
+                        if (variableToSet.length() > 0) {
+                            query.append(separator);
+                            if (!variableToSet.startsWith("@")) {
+                                query.append("SESSION ");
+                            }
+                            query.append(variableToSet);
+                            separator = ",";
+                        }
                     }
-                }
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
+                    stmt.executeUpdate(query.toString());
+                } finally {
+                    if (stmt != null) {
+                        stmt.close();
+                    }
                 }
             }
         }
@@ -4346,7 +4353,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         private final int milliseconds;
 
         public NetworkTimeoutSetter(JdbcConnection conn, int milliseconds) {
-            this.connRef = new WeakReference<JdbcConnection>(conn);
+            this.connRef = new WeakReference<>(conn);
             this.milliseconds = milliseconds;
         }
 
