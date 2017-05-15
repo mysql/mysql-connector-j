@@ -25,8 +25,8 @@ package demo.x.devapi;
 
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
@@ -69,7 +69,7 @@ public class DevApiSample {
                 + ((JsonNumber) book.get("currentlyReadingPage")).getInteger());
 
         // remove the doc
-        coll.remove().execute();
+        coll.remove("true").execute();
         System.err.println("Number of books in collection: " + coll.count());
 
         schema.getSession().dropCollection(schema.getName(), coll.getName());

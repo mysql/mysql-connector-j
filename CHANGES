@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - WL#10765, DevAPI: Forbid modify() and remove() with no condition.
+
   - Fix for Bug#26090721, CONNECTION FAILING WHEN SERVER STARTED WITH COLLATION UTF8MB4_DE_PB_0900_AI_CI.
 
   - WL#10781, enum-based connection properties.

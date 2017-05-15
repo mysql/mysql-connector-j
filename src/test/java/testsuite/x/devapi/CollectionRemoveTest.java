@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,9 +25,13 @@ package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.concurrent.Callable;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.mysql.cj.x.core.XDevAPIError;
 
 /**
  * @todo
@@ -55,7 +59,28 @@ public class CollectionRemoveTest extends CollectionTest {
         this.collection.add("{}").execute();
 
         assertEquals(3, this.collection.count());
-        this.collection.remove().execute();
+
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionRemoveTest.this.collection.remove(null).execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionRemoveTest.this.collection.remove("").execute();
+                return null;
+            }
+        });
+
+        this.collection.remove("false").execute();
+        assertEquals(3, this.collection.count());
+
+        this.collection.remove("0 == 1").execute();
+        assertEquals(3, this.collection.count());
+
+        this.collection.remove("true").execute();
         assertEquals(0, this.collection.count());
     }
 

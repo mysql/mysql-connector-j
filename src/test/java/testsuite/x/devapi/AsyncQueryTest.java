@@ -184,7 +184,7 @@ public class AsyncQueryTest extends CollectionTest {
         CompletableFuture[] futures = new CompletableFuture[50];
 
         for (int i = 0; i < 50; ++i) {
-            futures[i] = this.collection.modify().change("$.n", i).executeAsync();
+            futures[i] = this.collection.modify("true").change("$.n", i).executeAsync();
         }
 
         // wait for them all to finish

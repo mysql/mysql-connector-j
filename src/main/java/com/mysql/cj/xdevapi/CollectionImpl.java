@@ -33,9 +33,9 @@ import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.DropCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
-import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.RemoveStatement;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.x.core.MysqlxSession;
@@ -105,16 +105,8 @@ public class CollectionImpl implements Collection {
         return new FindStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
     }
 
-    public ModifyStatement modify() {
-        return modify(null);
-    }
-
     public ModifyStatement modify(String searchCondition) {
         return new ModifyStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
-    }
-
-    public RemoveStatement remove() {
-        return remove(null);
     }
 
     public RemoveStatement remove(String searchCondition) {

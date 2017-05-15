@@ -27,18 +27,21 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.api.xdevapi.RemoveStatement;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Result> implements RemoveStatement {
     private MysqlxSession mysqlxSession;
 
     public RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(schema, collection, false);
-        this.mysqlxSession = mysqlxSession;
-        if (criteria != null && criteria.length() > 0) {
-            this.filterParams.setCriteria(criteria);
+        if (criteria == null || criteria.length() == 0) {
+            throw new XDevAPIError(Messages.getString("RemoveStatement.0", new String[] { "criteria" }));
         }
+        this.mysqlxSession = mysqlxSession;
+        this.filterParams.setCriteria(criteria);
     }
 
     public Result execute() {

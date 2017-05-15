@@ -32,9 +32,11 @@ import java.util.stream.Collectors;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.UpdateType;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.StatementExecuteOk;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
     private MysqlxSession mysqlxSession;
@@ -42,10 +44,11 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
 
     /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(schema, collection, false);
-        this.mysqlxSession = mysqlxSession;
-        if (criteria != null && criteria.length() > 0) {
-            this.filterParams.setCriteria(criteria);
+        if (criteria == null || criteria.length() == 0) {
+            throw new XDevAPIError(Messages.getString("ModifyStatement.0", new String[] { "criteria" }));
         }
+        this.mysqlxSession = mysqlxSession;
+        this.filterParams.setCriteria(criteria);
     }
 
     @Override

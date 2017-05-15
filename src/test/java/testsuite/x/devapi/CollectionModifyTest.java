@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,12 +27,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.StringReader;
+import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.DocResult;
+import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
@@ -62,11 +64,17 @@ public class CollectionModifyTest extends CollectionTest {
         }
         this.collection.add("{}").execute();
 
-        this.collection.modify().set("x", "Value for x").execute();
+        this.collection.modify("true").set("a", "Value for a").execute();
+        this.collection.modify("1 == 1").set("b", "Value for b").execute();
+        this.collection.modify("false").set("c", "Value for c").execute();
+        this.collection.modify("0 == 1").set("d", "Value for d").execute();
 
-        DocResult res = this.collection.find("x = 'Value for x'").execute();
+        DocResult res = this.collection.find("a = 'Value for a'").execute();
         DbDoc jd = res.next();
-        assertEquals("Value for x", ((JsonString) jd.get("x")).getString());
+        assertEquals("Value for a", ((JsonString) jd.get("a")).getString());
+        assertEquals("Value for b", ((JsonString) jd.get("b")).getString());
+        assertNull(jd.get("c"));
+        assertNull(jd.get("d"));
     }
 
     @Test
@@ -77,8 +85,8 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
         this.collection.add("{\"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
 
-        this.collection.modify().unset("$.x").unset("$.y").execute();
-        this.collection.modify().unset("$.a", "$.b").execute();
+        this.collection.modify("true").unset("$.x").unset("$.y").execute();
+        this.collection.modify("true").unset("$.a", "$.b").execute();
 
         DocResult res = this.collection.find().execute();
         DbDoc jd = res.next();
@@ -94,7 +102,7 @@ public class CollectionModifyTest extends CollectionTest {
             return;
         }
         this.collection.add("{\"x\":100}").execute();
-        this.collection.modify().change("$.x", "99").execute();
+        this.collection.modify("true").change("$.x", "99").execute();
 
         DocResult res = this.collection.find().execute();
         DbDoc jd = res.next();
@@ -107,7 +115,7 @@ public class CollectionModifyTest extends CollectionTest {
             return;
         }
         this.collection.add("{\"x\":[8,16,32]}").execute();
-        this.collection.modify().arrayAppend("$.x", "64").execute();
+        this.collection.modify("true").arrayAppend("$.x", "64").execute();
 
         DocResult res = this.collection.find().execute();
         DbDoc jd = res.next();
@@ -126,9 +134,9 @@ public class CollectionModifyTest extends CollectionTest {
             return;
         }
         this.collection.add("{\"x\":[1,2]}").execute();
-        this.collection.modify().arrayInsert("$.x[1]", 43).execute();
+        this.collection.modify("true").arrayInsert("$.x[1]", 43).execute();
         // same as append
-        this.collection.modify().arrayInsert("$.x[3]", 44).execute();
+        this.collection.modify("true").arrayInsert("$.x[3]", 44).execute();
 
         DocResult res = this.collection.find().execute();
         DbDoc jd = res.next();
@@ -154,11 +162,25 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add(doc).execute();
         this.collection.add("{\"x\":4, \"m\":1}").execute();
 
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.modify(null).set("y", nestedDoc).execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.modify("").set("y", nestedDoc).execute();
+                return null;
+            }
+        });
+
         this.collection.modify("y = 1").set("y", nestedDoc).execute();
         this.collection.modify("y = :n").set("y", nestedDoc).bind("n", 2).execute();
 
         this.collection.modify("x = 1").set("m", 1).execute();
-        this.collection.modify().change("$.m", nestedDoc).execute();
+        this.collection.modify("true").change("$.m", nestedDoc).execute();
 
         assertEquals(1, this.collection.find("x = :x").bind("x", 1).execute().count());
         assertEquals(0, this.collection.find("y = :y").bind("y", 2).execute().count());
@@ -196,7 +218,7 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add("{\"x\":2, \"y\":22}").execute();
         this.collection.add(doc).execute();
 
-        this.collection.modify().arrayInsert("$.y[1]", 44).execute();
+        this.collection.modify("true").arrayInsert("$.y[1]", 44).execute();
         this.collection.modify("x = 2").change("$.y", xArray).execute();
         this.collection.modify("x = 3").set("y", xArray).execute();
 

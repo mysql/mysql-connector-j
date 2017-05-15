@@ -88,13 +88,6 @@ public interface Collection extends DatabaseObject {
     FindStatement find(String searchCondition);
 
     /**
-     * Create a new modify statement affecting all documents in the collection.
-     * 
-     * @return {@link ModifyStatement}
-     */
-    ModifyStatement modify();
-
-    /**
      * Create a new modify statement affecting documents matching the given search condition.
      * 
      * @param searchCondition
@@ -102,13 +95,6 @@ public interface Collection extends DatabaseObject {
      * @return {@link ModifyStatement}
      */
     ModifyStatement modify(String searchCondition);
-
-    /**
-     * Create a new removal statement affecting all documents in the collection.
-     * 
-     * @return {@link RemoveStatement}
-     */
-    RemoveStatement remove();
 
     /**
      * Create a new removal statement affecting documents matching the given search condition.
