@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,47 +36,56 @@ import com.mysql.cj.x.core.StatementExecuteOk;
  */
 public class SqlUpdateResult extends UpdateResult implements SqlResult {
     public SqlUpdateResult(StatementExecuteOk ok) {
-        super(ok, null);
+        super(ok);
     }
 
+    @Override
     public boolean hasData() {
         return false;
     }
 
+    @Override
     public boolean nextResult() {
         throw new FeatureNotAvailableException("Not a multi-result");
     }
 
     @Override
-    public List<String> getLastDocumentIds() {
-        throw new FeatureNotAvailableException("Document IDs are not assigned for SQL statements");
-    }
-
     public List<Row> fetchAll() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public Row next() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public boolean hasNext() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public int getColumnCount() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public List<Column> getColumns() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public List<String> getColumnNames() {
         throw new FeatureNotAvailableException("No data");
     }
 
+    @Override
     public long count() {
         throw new FeatureNotAvailableException("No data");
+    }
+
+    @Override
+    public Long getAutoIncrementValue() {
+        return this.ok.getLastInsertId();
     }
 }

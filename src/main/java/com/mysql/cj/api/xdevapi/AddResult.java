@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,30 +23,24 @@
 
 package com.mysql.cj.api.xdevapi;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
- * Base result.
+ * A result from the collection.add() statement.
  */
-public interface Result {
-    /**
-     * Get the count of affected items from manipulation statements.
-     * 
-     * @return count
-     */
-    long getAffectedItemsCount();
+public interface AddResult extends Result {
 
     /**
-     * Count of warnings generated during statement execution.
+     * Get a list of all document ids for all documents added by collection.add().
      * 
-     * @return count
+     * @return document ids
      */
-    int getWarningsCount();
+    List<String> getDocumentIds();
 
     /**
-     * Warnings generated during statement execution.
+     * Get the unique identifier value when a single document is added by collection.add().
      * 
-     * @return iterator over warnings
+     * @return unique document id
      */
-    Iterator<Warning> getWarnings();
+    String getDocumentId();
 }

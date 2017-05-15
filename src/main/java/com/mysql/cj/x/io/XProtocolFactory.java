@@ -28,6 +28,9 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +40,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 
 import com.mysql.cj.api.conf.PropertySet;
@@ -125,15 +127,36 @@ public class XProtocolFactory {
                 boolean verifyServerCert = (verifyServerCertProp.isExplicitlySet() && verifyServerCertProp.getValue())
                         || (!verifyServerCertProp.isExplicitlySet() && !StringUtils.isNullOrEmpty(trustStoreUrl));
 
-                SSLContext sslContext = ExportControlled.getSSLContext(null, null, null, trustStoreUrl, trustStoreType, trustStorePassword, verifyServerCert,
-                        null);
+                // TODO WL#9925 will redefine other SSL connection properties for X Protocol
+                String keyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
+                String keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
+                String keyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue();
+
+                SSLContext sslContext = ExportControlled.getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType,
+                        trustStorePassword, verifyServerCert, null);
                 SSLEngine sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
-                // TODO: setEnabledCipherSuites()
-                // TODO: setEnabledProtocols()
+
+                // check allowed cipher suites
+                String enabledSSLCipherSuites = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
+                boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
+
+                if (overrideCiphers) {
+                    // If "enabledSSLCipherSuites" is set we check that JVM allows provided values,
+                    List<String> allowedCiphers = new ArrayList<>();
+                    List<String> availableCiphers = Arrays.asList(sslEngine.getEnabledCipherSuites());
+                    for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
+                        if (availableCiphers.contains(cipher)) {
+                            allowedCiphers.add(cipher);
+                        }
+                    }
+
+                    // if some ciphers were filtered into allowedCiphers 
+                    sslEngine.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+                }
+
                 // TODO: how to differentiate servers that do and don't support TLSv1.2
-                sslEngine.setEnabledProtocols(new String[] { "TLSv1.1", "TLSv1" });
-                //sslEngine.setEnabledProtocols(new String[] {"TLSv1.2", "TLSv1.1", "TLSv1"});
+                sslEngine.setEnabledProtocols(new String[] { /* "TLSv1.2", */ "TLSv1.1", "TLSv1" });
 
                 performTlsHandshake(sslEngine, channel);
 
@@ -163,37 +186,85 @@ public class XProtocolFactory {
      */
     private static void performTlsHandshake(SSLEngine sslEngine, AsynchronousSocketChannel channel) throws SSLException {
         sslEngine.beginHandshake();
-
-        ByteBuffer clear = ByteBuffer.allocate(16916);//sslEngine.getHandshakeSession().getApplicationBufferSize());
-        ByteBuffer cipher = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
         HandshakeStatus handshakeStatus = sslEngine.getHandshakeStatus();
-        SSLEngineResult res;
+
+        // Create byte buffers to use for holding application data
+        int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
+        ByteBuffer myNetData = ByteBuffer.allocate(packetBufferSize);
+        ByteBuffer peerNetData = ByteBuffer.allocate(packetBufferSize);
+        int appBufferSize = sslEngine.getSession().getApplicationBufferSize();
+        ByteBuffer myAppData = ByteBuffer.allocate(appBufferSize);
+        ByteBuffer peerAppData = ByteBuffer.allocate(appBufferSize);
+
+        SSLEngineResult res = null;
 
         while (handshakeStatus != HandshakeStatus.FINISHED && handshakeStatus != HandshakeStatus.NOT_HANDSHAKING) {
-            if (handshakeStatus == HandshakeStatus.NEED_WRAP) {
-                cipher.clear();
-                res = sslEngine.wrap(clear, cipher);
-                if (res.getStatus() != Status.OK) {
-                    throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
-                }
-                handshakeStatus = sslEngine.getHandshakeStatus();
-                cipher.flip();
-                write(channel, cipher);
-            } else if (handshakeStatus == HandshakeStatus.NEED_UNWRAP) {
-                cipher.clear();
-                read(channel, cipher);
-                cipher.flip();
-                while (handshakeStatus == HandshakeStatus.NEED_UNWRAP) {
-                    res = sslEngine.unwrap(cipher, clear);
-                    if (res.getStatus() != Status.OK) {
-                        throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
+            switch (handshakeStatus) {
+                case NEED_WRAP:
+                    myNetData.clear();
+                    res = sslEngine.wrap(myAppData, myNetData);
+                    handshakeStatus = res.getHandshakeStatus();
+                    switch (res.getStatus()) {
+                        case OK:
+                            myNetData.flip();
+                            write(channel, myNetData);
+                            break;
+                        case BUFFER_OVERFLOW:
+                        case BUFFER_UNDERFLOW:
+                        case CLOSED:
+                            throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
                     }
+                    break;
+                case NEED_UNWRAP:
+                    peerNetData.flip(); // Process incoming handshaking data
+                    res = sslEngine.unwrap(peerNetData, peerAppData);
+                    handshakeStatus = res.getHandshakeStatus();
+                    switch (res.getStatus()) {
+                        case OK:
+                            peerNetData.compact();
+                            break;
+                        case BUFFER_OVERFLOW:
+                            // Check if we need to enlarge the peer application data buffer.
+                            final int newPeerAppDataSize = sslEngine.getSession().getApplicationBufferSize();
+                            if (newPeerAppDataSize > peerAppData.capacity()) {
+                                // enlarge the peer application data buffer
+                                ByteBuffer newPeerAppData = ByteBuffer.allocate(newPeerAppDataSize);
+                                newPeerAppData.put(peerAppData);
+                                newPeerAppData.flip();
+                                peerAppData = newPeerAppData;
+                            } else {
+                                peerAppData.compact();
+                            }
+                            break;
+                        case BUFFER_UNDERFLOW:
+                            // Check if we need to enlarge the peer network packet buffer
+                            final int newPeerNetDataSize = sslEngine.getSession().getPacketBufferSize();
+                            if (newPeerNetDataSize > peerNetData.capacity()) {
+                                // enlarge the peer network packet buffer
+                                ByteBuffer newPeerNetData = ByteBuffer.allocate(newPeerNetDataSize);
+                                newPeerNetData.put(peerNetData);
+                                newPeerNetData.flip();
+                                peerNetData = newPeerNetData;
+                            } else {
+                                peerNetData.compact();
+                            }
+                            // obtain more inbound network data and then retry the operation
+                            if (read(channel, peerNetData) < 0) {
+                                throw new CJCommunicationsException("Server does not provide enough data to proceed with SSL handshake.");
+                            }
+                            break;
+                        case CLOSED:
+                            throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
+                    }
+                    break;
+
+                case NEED_TASK:
+                    sslEngine.getDelegatedTask().run();
                     handshakeStatus = sslEngine.getHandshakeStatus();
-                    if (handshakeStatus == HandshakeStatus.NEED_TASK) {
-                        sslEngine.getDelegatedTask().run();
-                        handshakeStatus = sslEngine.getHandshakeStatus();
-                    }
-                }
+                    break;
+                case FINISHED:
+                case NOT_HANDSHAKING:
+                    break;
             }
         }
     }
@@ -238,10 +309,10 @@ public class XProtocolFactory {
      * @param data
      *            {@link ByteBuffer}
      */
-    private static void read(AsynchronousSocketChannel channel, ByteBuffer data) {
+    private static Integer read(AsynchronousSocketChannel channel, ByteBuffer data) {
         Future<Integer> f = channel.read(data);
         try {
-            f.get();
+            return f.get();
         } catch (InterruptedException | ExecutionException ex) {
             throw new CJCommunicationsException(ex);
         }

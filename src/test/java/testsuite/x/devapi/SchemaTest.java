@@ -742,6 +742,28 @@ public class SchemaTest extends DevApiBaseTestCase {
             }
         });
 
+        assertThrows(XDevAPIError.class, "ForeignKeyDefinition is incomplete, fields are empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("x", Type.STRING, 10)).addForeignKey("a", new ForeignKeyDef()).execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "ForeignKeyDefinition is incomplete, to-table isn't set.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("x", Type.STRING, 10)).addForeignKey("a", new ForeignKeyDef().fields("x"))
+                        .execute();
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "ForeignKeyDefinition is incomplete, to-columns are empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.createTable("abc").addColumn(new ColumnDef("x", Type.STRING, 10))
+                        .addForeignKey("a", new ForeignKeyDef().fields("x").refersTo("cde", (String[]) null)).execute();
+                return null;
+            }
+        });
     }
 
     /**

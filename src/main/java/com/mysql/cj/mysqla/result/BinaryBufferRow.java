@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -227,13 +227,14 @@ public class BinaryBufferRow extends AbstractBufferRow {
         // field length is type-specific in binary-encoded results
         int type = this.metadata.getFields()[columnIndex].getMysqlTypeId();
         int length = MysqlaUtils.getBinaryEncodedLength(type);
-        if (length == 0) {
-            length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
-        } else if (length == -1) {
-            throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, columnIndex + 1, this.metadata.getFields().length }),
-                    this.exceptionInterceptor);
+        if (!getNull(columnIndex)) {
+            if (length == 0) {
+                length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
+            } else if (length == -1) {
+                throw ExceptionFactory.createException(
+                        Messages.getString("MysqlIO.97", new Object[] { type, columnIndex + 1, this.metadata.getFields().length }), this.exceptionInterceptor);
+            }
         }
-
         return getValueFromBytes(columnIndex, this.rowFromServer.getByteBuffer(), this.rowFromServer.getPosition(), length, vf);
     }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,32 +21,29 @@
 
  */
 
-package com.mysql.cj.api.xdevapi;
+package com.mysql.cj.xdevapi;
 
-import java.util.Iterator;
+import com.mysql.cj.api.xdevapi.InsertResult;
+import com.mysql.cj.x.core.StatementExecuteOk;
 
 /**
- * Base result.
+ * A result from a statement that doesn't return a set of rows.
  */
-public interface Result {
-    /**
-     * Get the count of affected items from manipulation statements.
-     * 
-     * @return count
-     */
-    long getAffectedItemsCount();
+public class InsertResultImpl extends UpdateResult implements InsertResult {
 
     /**
-     * Count of warnings generated during statement execution.
-     * 
-     * @return count
+     * Create a new result.
+     *
+     * @param ok
+     *            the response from the server
      */
-    int getWarningsCount();
+    public InsertResultImpl(StatementExecuteOk ok) {
+        super(ok);
+    }
 
-    /**
-     * Warnings generated during statement execution.
-     * 
-     * @return iterator over warnings
-     */
-    Iterator<Warning> getWarnings();
+    @Override
+    public Long getAutoIncrementValue() {
+        return this.ok.getLastInsertId();
+    }
+
 }

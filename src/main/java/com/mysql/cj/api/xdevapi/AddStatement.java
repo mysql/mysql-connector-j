@@ -28,7 +28,7 @@ import com.mysql.cj.xdevapi.DbDoc;
 /**
  * A statement adding documents to a collection.
  */
-public interface AddStatement extends Statement<AddStatement, Result> {
+public interface AddStatement extends Statement<AddStatement, AddResult> {
     /**
      * Add a document as a JSON string.
      * 

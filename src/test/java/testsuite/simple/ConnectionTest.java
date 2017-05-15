@@ -2084,4 +2084,182 @@ public class ConnectionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Test authentication with a user that requires an SSL connection.
+     * 
+     * This test requires the CA truststore and the client keystore available in src/test/config/ssl-test-certs.
+     * The server needs to be configured with the CA and server certificates from src/test/config/ssl-test-certs.
+     */
+    public void testUserRequireSSL() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Connection testConn;
+        Statement testStmt;
+
+        final String user = "testUserReqSSL";
+        final String password = "testUserReqSSL";
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_user, user);
+        props.setProperty(PropertyDefinitions.PNAME_password, password);
+
+        createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE SSL");
+        this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+        /*
+         * No SSL.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: no server certificate validation & no client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: server certificate validation & no client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: server certificate validation & client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: no server certificate validation & client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl);
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreType);
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword);
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+    }
+
+    /**
+     * Test authentication with a user that requires an SSL connection and an authorized client certificate.
+     * 
+     * This test requires the CA truststore and the client keystore available in src/test/config/ssl-test-certs.
+     * The server needs to be configured with the CA and server certificates from src/test/config/ssl-test-certs.
+     */
+    public void testUserRequireX509() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        Connection testConn;
+        Statement testStmt;
+
+        final String user = "testUserReqX509";
+        final String password = "testUserReqX509";
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_user, user);
+        props.setProperty(PropertyDefinitions.PNAME_password, password);
+
+        createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE X509");
+        this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+        /*
+         * No SSL.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: no server certificate validation & no client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: server certificate validation & no client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        /*
+         * SSL: server certificate validation & client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, "password");
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+
+        /*
+         * SSL: no server certificate validation & client certificate.
+         */
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl);
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreType);
+        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword);
+        testConn = getConnectionWithProps(props);
+        testStmt = testConn.createStatement();
+        this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+        assertTrue(this.rs.next());
+        assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+    }
 }

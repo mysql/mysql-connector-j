@@ -42,12 +42,12 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Re
 
     public Result execute() {
         StatementExecuteOk ok = this.mysqlxSession.updateRows(this.filterParams, this.updateParams);
-        return new UpdateResult(ok, null);
+        return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncUpdateRows(this.filterParams, this.updateParams);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new UpdateResult(ok));
     }
 
     public UpdateStatement set(Map<String, Object> fieldsAndValues) {

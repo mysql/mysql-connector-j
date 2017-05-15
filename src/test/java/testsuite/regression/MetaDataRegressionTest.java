@@ -1568,10 +1568,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     public void testCharacterSetForDBMD() throws Exception {
+        System.out.println("testCharacterSetForDBMD:");
         String quoteChar = this.conn.getMetaData().getIdentifierQuoteString();
 
         String tableName = quoteChar + "\u00e9\u0074\u00e9" + quoteChar;
         createTable(tableName, "(field1 int)");
+        this.rs = this.conn.getMetaData().getTables(this.conn.getCatalog(), null, "%", new String[] { "TABLE" });
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString("TABLE_NAME") + " -> " + new String(this.rs.getBytes("TABLE_NAME"), "UTF-8"));
+        }
         this.rs = this.conn.getMetaData().getTables(this.conn.getCatalog(), null, tableName, new String[] { "TABLE" });
         assertEquals(true, this.rs.next());
         System.out.println(this.rs.getString("TABLE_NAME"));

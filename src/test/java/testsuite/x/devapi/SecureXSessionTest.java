@@ -23,23 +23,25 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Properties;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.NodeSession;
 import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
 public class SecureXSessionTest extends DevApiBaseTestCase {
-    String trustStoreUrl = "file:src/test/config/ssl-test-certs/test-cert-store";
-    String trustStorePath = "src/test/config/ssl-test-certs/test-cert-store";
+    String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
+    String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
     String trustStorePassword = "password";
+
+    String clientKeyStoreUrl = "file:src/test/config/ssl-test-certs/client-keystore";
+    String clientKeyStorePath = "src/test/config/ssl-test-certs/client-keystore";
+    String clientKeyStorePassword = "password";
 
     @Before
     public void setupSecureXSessionTest() {
@@ -121,6 +123,11 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                         + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
         assertSecureXSession(testSession);
+        SqlResult rs = testSession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+        String actual = rs.fetchOne().getString(1);
+
+        System.out.println(actual);
+
         testSession.close();
 
         testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
@@ -227,7 +234,7 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureXSessionMissingTrustStore4() {
-        if (this.isSetForXTests) {
+        if (!this.isSetForXTests) {
             return;
         }
 
@@ -237,16 +244,88 @@ public class SecureXSessionTest extends DevApiBaseTestCase {
     }
 
     private void assertNonSecureXSession(XSession xsession) {
-        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-        assertEquals("", rs.fetchOne().getString(1));
+        assertSessionStatusEquals(xsession, "mysqlx_ssl_cipher", "");
     }
 
     private void assertSecureXSession(XSession xsession) {
-        SqlResult rs = xsession.bindToDefaultShard().sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-        Assert.assertNotEquals("", rs.fetchOne().getString(1));
+        assertSessionStatusNotEquals(xsession, "mysqlx_ssl_cipher", "");
     }
 
     private String makeParam(String key, String value) {
         return "&" + key + "=" + value;
+    }
+
+    /**
+     * Tests fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
+     */
+    @Test
+    public void testBug25494338() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        NodeSession testSession = null;
+
+        try {
+            Properties props = new Properties(this.testProperties);
+            testSession = this.fact.getNodeSession(props);
+
+            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
+
+            props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false");
+            props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+            props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+            props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
+            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
+
+            // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+            XSession xSession = this.fact.getSession(props);
+            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+            xSession.close();
+
+            // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA");
+            xSession = this.fact.getSession(props);
+            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(xSession, "ssl_cipher", "");
+            xSession.close();
+
+            // 3. Check connection with required client certificate 
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug25494338user");
+            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+
+            xSession = this.fact.getSession(props);
+            assertSessionStatusEquals(xSession, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(xSession, "ssl_cipher", "");
+            xSession.close();
+
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            if (testSession != null) {
+                testSession.sql("DROP USER bug25494338user").execute();
+            }
+        }
+    }
+
+    @Test
+    public void testBug23597281() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Properties props = new Properties(this.testProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+
+        NodeSession nSession;
+        for (int i = 0; i < 1000; i++) {
+            nSession = this.fact.getNodeSession(props);
+            nSession.close();
+            nSession = null;
+        }
     }
 }

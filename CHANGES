@@ -1,13 +1,31 @@
 # Changelog
-# https://dev.mysql.com/doc/relnotes/connector-j/6.0/en/
+# https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
-Version 6.0.7
+Version 8.0.7
 
-  - Added static mapping for utf8mb4_ja_0900_as_cs collation.
+  - Fix for Bug#85555 (25757019), useConfigs Can't find configuration template named, in mysql-connector-java 6.x
+
+  - WL#10529, Move version number to 8.0.
+
+  - Fix for Bug#23510958, CONCURRENT ASYNC OPERATIONS RESULT IN HANG.
+
+  - Fix for Bug#23597281, GETNODESESSION() CALL WITH SSL PARAMETERS RETURNS CJCOMMUNICATIONSEXCEPTION.
+
+  - Fix for Bug#25207784, C/J DOESN'T FOLLOW THE FINAL X DEVAPI MY-193 SPECIFICATION.
+
+  - Fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
+
+  - Fix for Bug#84084 (25215008), JAVA.LANG.ARRAYINDEXOUTOFBOUNDSEXCEPTION ON ATTEMPT TO GET VALUE FROM RESULTSET.
+
+  - WL#10553, Add mapping for Japanese utf8mb4 collation.
 
   - Fix for Bug#25575103, NPE FROM CREATETABLE() WHEN SOME OF THE INPUTS ARE NULL.
 
   - Fix for Bug#25575156, NPE FROM CREATEVIEW() WHEN SOME OF THE INPUTS ARE NULL.
+
+  - Fix for Bug#25636947, CONNECTION USING MYSQL CLIENT FAILS IF WE USE THE SSL CERTIFICATES FROM C/J SRC.
+
+  - Fix for Bug#25687718, INCORRECT TIME ZONE IDENTIFIER IN STATEMENTREGRESSIONTEST.
 
   - Fix for Bug#25556597, RESULTSETTEST.TESTPADDING UNIT TEST IS FAILING IN 5.1.41 RELEASE PACKAGE.
 
@@ -61,6 +79,8 @@ Version 6.0.6
   - Fix for Bug#82826 (24942672), Unneeded version requirement for javax.net.ssl Import-Package on OSGi MANIFEST.MF.
 
 10-21-16 - Version 6.0.5
+
+  - Fix for BUG#82896 (24613062), Unexpected behavior on attempt to connect to JDBC driver with unsupported URL.
 
   - Added client-side failover during XSession initialization for multi-router configuration.
 

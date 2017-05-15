@@ -51,13 +51,13 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     @Override
     public Result execute() {
         StatementExecuteOk ok = this.mysqlxSession.updateDocs(this.filterParams, this.updates);
-        return new UpdateResult(ok, null);
+        return new UpdateResult(ok);
     }
 
     @Override
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncUpdateDocs(this.filterParams, this.updates);
-        return okF.thenApply(ok -> new UpdateResult(ok, null));
+        return okF.thenApply(ok -> new UpdateResult(ok));
     }
 
     @Override

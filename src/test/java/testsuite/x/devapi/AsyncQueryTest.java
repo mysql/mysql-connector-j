@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -39,9 +39,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.api.xdevapi.Table;
@@ -71,8 +71,9 @@ public class AsyncQueryTest extends CollectionTest {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(json).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         CompletableFuture<DocResult> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
         DocResult docs = docsF.get();
@@ -89,8 +90,9 @@ public class AsyncQueryTest extends CollectionTest {
         final int NUMBER_OF_QUERIES = 50;
 
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        Result res = this.collection.add(json).execute();
-        assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        AddResult res = this.collection.add(json).execute();
+        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
 
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
@@ -157,9 +159,10 @@ public class AsyncQueryTest extends CollectionTest {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
-        CompletableFuture<Result> resF = this.collection.add(json).executeAsync();
-        CompletableFuture<DocResult> docF = resF.thenCompose((Result res) -> {
-            assertTrue(res.getLastDocumentIds().get(0).matches("[a-f0-9]{32}"));
+        CompletableFuture<AddResult> resF = this.collection.add(json).executeAsync();
+        CompletableFuture<DocResult> docF = resF.thenCompose((AddResult res) -> {
+            assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
+            assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
             return this.collection.find("firstName like '%Fra%'").executeAsync();
         });
 
@@ -247,10 +250,11 @@ public class AsyncQueryTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        int MANY = 1000;
+        int MANY = 100000;
         Collection coll = this.collection;
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < MANY; ++i) {
+            //System.out.println("++++ Write " + i + " set " + i % 3 + " +++++");
             if (i % 3 == 0) {
                 futures.add(coll.find("F1  like '%Field%-5'").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync());
             } else if (i % 3 == 1) {
@@ -261,6 +265,7 @@ public class AsyncQueryTest extends CollectionTest {
         }
         DocResult docs;
         for (int i = 0; i < MANY; ++i) {
+            //System.out.println("++++ Read " + i + " set " + i % 3 + " +++++");
             if (i % 3 == 0) {
                 //Expect Success and check F1  is like  %Field%-5
                 docs = futures.get(i).get();
@@ -280,5 +285,6 @@ public class AsyncQueryTest extends CollectionTest {
                 assertFalse(docs.hasNext());
             }
         }
+        System.out.println("Done.");
     }
 }

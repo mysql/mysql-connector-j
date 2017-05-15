@@ -55,7 +55,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.api.conf.DatabaseUrlContainer;
 import com.mysql.cj.core.Messages;
@@ -377,7 +376,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     public static Properties getPropertiesFromConfigFiles(String configFiles) {
         Properties configProps = new Properties();
         for (String configFile : configFiles.split(",")) {
-            try (InputStream configAsStream = Session.class.getResourceAsStream("../configurations/" + configFile + ".properties")) {
+            try (InputStream configAsStream = ConnectionUrl.class.getResourceAsStream("/com/mysql/cj/configurations/" + configFile + ".properties")) {
                 if (configAsStream == null) {
                     throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
                             Messages.getString("ConnectionString.10", new Object[] { configFile }));

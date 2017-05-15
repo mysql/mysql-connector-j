@@ -3856,7 +3856,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(earlier, timestampSeconds1);
 
             SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm z");
-            sdf.setTimeZone(TimeZone.getTimeZone("America/New York"));
+            sdf.setTimeZone(TimeZone.getTimeZone("America/New_York"));
             System.out.println(sdf.format(ts2));
             System.out.println(sdf.format(ts1));
         } finally {
