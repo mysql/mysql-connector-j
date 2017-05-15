@@ -5859,4 +5859,40 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertNull(rs1.getString(1));
         rs1.close();
     }
+
+    /**
+     * Tests fix for Bug#84189 - Allow null when extracting java.time.* classes from ResultSet.
+     */
+    public void testBug84189() throws Exception {
+        createTable("testBug84189", "(d DATE NULL, t TIME NULL, dt DATETIME NULL, ts TIMESTAMP NULL, ot VARCHAR(100), odt VARCHAR(100))");
+        this.stmt.execute(
+                "INSERT INTO testBug84189 VALUES ('2017-01-01', '10:20:30', '2017-01-01 10:20:30', '2017-01-01 10:20:30', '10:20:30+04:00', '2017-01-01T10:20:30+04:00')");
+        this.stmt.execute("INSERT INTO testBug84189 VALUES (NULL, NULL, NULL, NULL, NULL, NULL)");
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug84189");
+        assertTrue(this.rs.next());
+        assertEquals(LocalDate.of(2017, 1, 1), this.rs.getObject(1, LocalDate.class));
+        assertEquals(LocalTime.of(10, 20, 30), this.rs.getObject(2, LocalTime.class));
+        assertEquals(LocalDateTime.of(2017, 1, 1, 10, 20, 30), this.rs.getObject(3, LocalDateTime.class));
+        assertEquals(LocalDateTime.of(2017, 1, 1, 10, 20, 30), this.rs.getObject(4, LocalDateTime.class));
+        assertEquals(OffsetTime.of(10, 20, 30, 0, ZoneOffset.ofHours(4)), this.rs.getObject(5, OffsetTime.class));
+        assertEquals(OffsetDateTime.of(2017, 01, 01, 10, 20, 30, 0, ZoneOffset.ofHours(4)), this.rs.getObject(6, OffsetDateTime.class));
+
+        assertEquals(LocalDate.class, this.rs.getObject(1, LocalDate.class).getClass());
+        assertEquals(LocalTime.class, this.rs.getObject(2, LocalTime.class).getClass());
+        assertEquals(LocalDateTime.class, this.rs.getObject(3, LocalDateTime.class).getClass());
+        assertEquals(LocalDateTime.class, this.rs.getObject(4, LocalDateTime.class).getClass());
+        assertEquals(OffsetTime.class, this.rs.getObject(5, OffsetTime.class).getClass());
+        assertEquals(OffsetDateTime.class, this.rs.getObject(6, OffsetDateTime.class).getClass());
+
+        assertTrue(this.rs.next());
+        assertNull(this.rs.getObject(1, LocalDate.class));
+        assertNull(this.rs.getObject(2, LocalTime.class));
+        assertNull(this.rs.getObject(3, LocalDateTime.class));
+        assertNull(this.rs.getObject(4, LocalDateTime.class));
+        assertNull(this.rs.getObject(5, OffsetTime.class));
+        assertNull(this.rs.getObject(6, OffsetDateTime.class));
+
+        assertFalse(this.rs.next());
+    }
 }

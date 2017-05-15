@@ -84,14 +84,14 @@ import com.mysql.cj.core.io.FloatValueFactory;
 import com.mysql.cj.core.io.FloatingPointBoundsEnforcer;
 import com.mysql.cj.core.io.IntegerBoundsEnforcer;
 import com.mysql.cj.core.io.IntegerValueFactory;
-import com.mysql.cj.core.io.SqlDateValueFactory;
-import com.mysql.cj.core.io.SqlTimeValueFactory;
-import com.mysql.cj.core.io.SqlTimestampValueFactory;
 import com.mysql.cj.core.io.LocalDateTimeValueFactory;
 import com.mysql.cj.core.io.LocalDateValueFactory;
 import com.mysql.cj.core.io.LocalTimeValueFactory;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.ShortValueFactory;
+import com.mysql.cj.core.io.SqlDateValueFactory;
+import com.mysql.cj.core.io.SqlTimeValueFactory;
+import com.mysql.cj.core.io.SqlTimestampValueFactory;
 import com.mysql.cj.core.io.StringConverter;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.io.YearToDateValueFactory;
@@ -340,7 +340,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).getValue()) {
                 this.session.incrementNumberOfResultSetsCreated();
 
-                Set<String> tableNamesSet = new HashSet<String>();
+                Set<String> tableNamesSet = new HashSet<>();
 
                 for (int i = 0; i < this.columnDefinition.getFields().length; i++) {
                     Field f = this.columnDefinition.getFields()[i];
@@ -605,12 +605,12 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, String zeroDateTimeBehavior) {
         // enforce zero date/time behavior
         if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToNullValueFactory<T>(vf);
+            return new ZeroDateTimeToNullValueFactory<>(vf);
         } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(zeroDateTimeBehavior)) {
             // this behavior is default
             return vf;
         } else if (PropertyDefinitions.ZERO_DATETIME_BEHAVIOR_ROUND.equals(zeroDateTimeBehavior)) {
-            return new ZeroDateTimeToDefaultValueFactory<T>(vf);
+            return new ZeroDateTimeToDefaultValueFactory<>(vf);
         }
         return vf;
     }
