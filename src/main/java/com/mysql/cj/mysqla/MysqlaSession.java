@@ -32,6 +32,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1046,18 +1047,27 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     public void setSessionVariables() {
         String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
         if (sessionVariables != null) {
-            List<String> variablesToSet = StringUtils.split(sessionVariables, ",", "\"'", "\"'", false);
+            List<String> variablesToSet = new ArrayList<>();
+            for (String part : StringUtils.split(sessionVariables, ",", "\"'", "\"'", true)) {
+                variablesToSet.addAll(StringUtils.split(part, ";", "\"'", "\"'", true));
+            }
 
-            int numVariablesToSet = variablesToSet.size();
-
-            for (int i = 0; i < numVariablesToSet; i++) {
-                String variableValuePair = variablesToSet.get(i);
-
-                sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(),
-                        variableValuePair.startsWith("@") ? "SET " + variableValuePair : "SET SESSION " + variableValuePair), false, 0);
+            if (!variablesToSet.isEmpty()) {
+                StringBuilder query = new StringBuilder("SET ");
+                String separator = "";
+                for (String variableToSet : variablesToSet) {
+                    if (variableToSet.length() > 0) {
+                        query.append(separator);
+                        if (!variableToSet.startsWith("@")) {
+                            query.append("SESSION ");
+                        }
+                        query.append(variableToSet);
+                        separator = ",";
+                    }
+                }
+                sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), query.toString()), false, 0);
             }
         }
-
     }
 
     /**

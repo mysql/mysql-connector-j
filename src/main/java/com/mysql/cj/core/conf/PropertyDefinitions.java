@@ -340,6 +340,7 @@ public class PropertyDefinitions {
     public static final String PNAME_detectCustomCollations = "detectCustomCollations";
     public static final String PNAME_dontCheckOnDuplicateKeyUpdateInSQL = "dontCheckOnDuplicateKeyUpdateInSQL";
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
+    public static final String PNAME_replicationConnectionGroup = "replicationConnectionGroup";
 
     public static final String PNAME_useAsyncProtocol = "xdevapi.useAsyncProtocol";
     public static final String PNAME_sslEnable = "xdevapi.ssl-enable";
@@ -353,7 +354,6 @@ public class PropertyDefinitions {
     // TODO following names are used in code but have no definitions
     public static final String PNAME_user = "user";
     public static final String PNAME_password = "password";
-    public static final String PNAME_replicationConnectionGroup = "replicationConnectionGroup";
     public static final String PNAME_resultSetScannerRegex = "resultSetScannerRegex";
     public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
     public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";
@@ -721,6 +721,9 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_reconnectAtTxEnd, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", CATEGORY_HA, 4),
+
+                new StringPropertyDefinition(PNAME_replicationConnectionGroup, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.replicationConnectionGroup"), "8.0.7", CATEGORY_HA, Integer.MIN_VALUE),
 
                 new IntegerPropertyDefinition(PNAME_reportMetricsIntervalMillis, 30000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", CATEGORY_DEBUGING_PROFILING, 3, 0, Integer.MAX_VALUE),
@@ -1116,6 +1119,7 @@ public class PropertyDefinitions {
                 put(PNAME_detectCustomCollations, "detectCustomCollations");
                 put(PNAME_dontCheckOnDuplicateKeyUpdateInSQL, "dontCheckOnDuplicateKeyUpdateInSQL");
                 put(PNAME_readOnlyPropagatesToServer, "readOnlyPropagatesToServer");
+                put(PNAME_replicationConnectionGroup, "replicationConnectionGroup");
             }
         };
         PROPERTY_NAME_TO_ALIAS = Collections.unmodifiableMap(aliases);

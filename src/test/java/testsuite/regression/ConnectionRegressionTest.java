@@ -4291,6 +4291,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
         props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "EUC_JP");
 
         Connection testConn = null;
@@ -4364,19 +4365,63 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             testConn.close();
         }
+        props.remove(PropertyDefinitions.PNAME_cacheServerConfiguration);
 
         // Error messages may also be received after the handshake but before connection initialization is complete. This tests the interpretation of
-        // errors thrown during this time window using an invalid session variable
+        // errors thrown during this time window using a SatementInterceptor that throws an Exception while setting the session variables.
+        // Start by getting the Latin1 version of the error to compare later.
+        String latin1ErrorMsg = "";
+        int latin1ErrorLen = 0;
         try {
-            props.setProperty(PropertyDefinitions.PNAME_characterSetResults, "EUC_JP");
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "lc_messages=ru_RU,invalidVar=1");
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "Latin1");
+            props.setProperty(PropertyDefinitions.PNAME_characterSetResults, "Latin1");
+            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "lc_messages=ru_RU");
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug64205QueryInterceptor.class.getName());
             testConn = getConnectionWithProps(props);
-            fail("Exception should be thrown for attempting to set an unknown system variable");
-        } catch (SQLException e1) {
-            // The Russian version of this error message is 45 characters long. A mis-interpretation, e.g. decoding as latin1, would return a length of 75
-            assertEquals(45, e1.getMessage().length());
+            fail("Exception should be trown for syntax error, caused by the exception interceptor");
+        } catch (Exception e) {
+            latin1ErrorMsg = e.getMessage();
+            latin1ErrorLen = latin1ErrorMsg.length();
+        }
+        // Now compare with results when using a proper encoding.
+        try {
+            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "EUC_JP");
+            props.setProperty(PropertyDefinitions.PNAME_characterSetResults, "EUC_JP");
+            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "lc_messages=ru_RU");
+            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug64205QueryInterceptor.class.getName());
+            testConn = getConnectionWithProps(props);
+            fail("Exception should be trown for syntax error, caused by the exception interceptor");
+        } catch (SQLException e) {
+            // There should be the Russian version of this error message, correctly encoded. A mis-interpretation, e.g. decoding as latin1, would return a
+            // wrong message with the wrong size.
+            assertEquals(29 + dbname.length(), e.getMessage().length());
+            assertFalse(latin1ErrorMsg.equals(e.getMessage()));
+            assertFalse(latin1ErrorLen == e.getMessage().length());
         } finally {
             testConn.close();
+        }
+
+    }
+
+    public static class TestBug64205QueryInterceptor extends BaseQueryInterceptor {
+        private JdbcConnection connection;
+
+        @Override
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
+            this.connection = (JdbcConnection) conn;
+            return super.init(conn, props, log);
+        }
+
+        @Override
+        public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+            if (sql.contains("lc_messages=ru_RU")) {
+                try {
+                    this.connection.createStatement().executeQuery("SELECT * FROM `" + this.connection.getCatalog() + "`.`\u307b\u3052\u307b\u3052`");
+                } catch (Exception e) {
+                    throw ExceptionFactory.createException(e.getMessage(), e);
+                }
+            }
+            return super.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
         }
     }
 
