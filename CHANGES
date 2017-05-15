@@ -3,6 +3,10 @@
 
 Version 8.0.7
 
+  - Fix for Bug#77192 (21170603), Description for the Property replicationConnetionGroup Missing from the Manual.
+
+  - Fix for Bug#83834 (25101890), Typo in Connector/J error message.
+
   - WL#10531, Support utf8mb4 as default charset.
 
   - Fix for Bug#85555 (25757019), useConfigs Can't find configuration template named, in mysql-connector-java 6.x
