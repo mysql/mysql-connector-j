@@ -26,9 +26,9 @@ package com.mysql.cj.xdevapi;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.api.xdevapi.BaseSession;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.ViewCreate;
@@ -42,16 +42,16 @@ import com.mysql.cj.x.core.XDevAPIError;
 
 public class SchemaImpl implements Schema {
     private MysqlxSession mysqlxSession;
-    private BaseSession session;
+    private Session session;
     private String name;
 
-    /* package private */ SchemaImpl(MysqlxSession mysqlxSession, BaseSession session, String name) {
+    /* package private */ SchemaImpl(MysqlxSession mysqlxSession, Session session, String name) {
         this.mysqlxSession = mysqlxSession;
         this.session = session;
         this.name = name;
     }
 
-    public BaseSession getSession() {
+    public Session getSession() {
         return this.session;
     }
 

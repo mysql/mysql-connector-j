@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,45 +25,30 @@ package testsuite.x;
 
 import java.util.Properties;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
-import com.mysql.cj.api.xdevapi.XSession;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.xdevapi.XSessionFactory;
+import com.mysql.cj.xdevapi.SessionFactory;
 
 public abstract class BaseXDevAPITestCase {
     protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
     protected boolean isSetForXTests = this.baseUrl != null && this.baseUrl.length() > 0;
-    protected XSessionFactory f = new XSessionFactory();
+    protected SessionFactory f = new SessionFactory();
 
     public BaseXDevAPITestCase() {
         super();
-        // TODO create instance of XSessionFactory
+        // TODO create instance of SessionFactory
     }
 
-    protected NodeSession getNodeSession(String url) {
+    protected Session getSession(String url) {
 
-        NodeSession sess = this.f.getNodeSession(url);
+        Session sess = this.f.getSession(url);
 
         return sess;
     }
 
-    protected NodeSession getNodeSession(Properties props) {
+    protected Session getSession(Properties props) {
 
-        NodeSession sess = this.f.getNodeSession(props);
-
-        return sess;
-    }
-
-    protected XSession getSession(String url) {
-
-        XSession sess = this.f.getSession(url);
-
-        return sess;
-    }
-
-    protected XSession getSession(Properties props) {
-
-        XSession sess = this.f.getSession(props);
+        Session sess = this.f.getSession(props);
 
         return sess;
     }

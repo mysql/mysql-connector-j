@@ -1688,7 +1688,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             sb.append("field17 char(32), ");
             sb.append("field18 varchar(32), ");
             sb.append("field19 binary(32), ");
-            sb.append("field20 varbinary(65000), ");
+            sb.append("field20 varbinary(16384), ");
             sb.append("field21 tinyblob, ");
             sb.append("field22 blob, ");
             sb.append("field23 mediumblob, ");

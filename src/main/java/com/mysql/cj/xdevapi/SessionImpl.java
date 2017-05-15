@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 import com.mysql.cj.api.conf.PropertySet;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.result.Row;
-import com.mysql.cj.api.xdevapi.BaseSession;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -42,19 +42,19 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 
-public abstract class AbstractSession implements BaseSession {
+public class SessionImpl implements Session {
 
     protected MysqlxSession session;
     protected String defaultSchemaName;
 
-    public AbstractSession(Properties properties) {
+    public SessionImpl(Properties properties) {
         this.session = new MysqlxSession(properties);
         this.session.changeUser(properties.getProperty(PropertyDefinitions.PNAME_user), properties.getProperty(PropertyDefinitions.PNAME_password),
                 properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY));
         this.defaultSchemaName = properties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
     }
 
-    protected AbstractSession() {
+    protected SessionImpl() {
     }
 
     public List<Schema> getSchemas() {
@@ -155,4 +155,7 @@ public abstract class AbstractSession implements BaseSession {
         this.session.close();
     }
 
+    public SqlStatementImpl sql(String sql) {
+        return new SqlStatementImpl(this.session, sql);
+    }
 }

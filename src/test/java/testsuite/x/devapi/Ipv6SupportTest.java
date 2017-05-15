@@ -35,8 +35,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
-import com.mysql.cj.api.xdevapi.XSession;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 
@@ -67,11 +66,11 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests the creation of {@link NodeSession}s referencing the host by its IPv6. This feature was introduced in MySQL 5.7.17 and requires a server started
+     * Tests the creation of {@link Session}s referencing the host by its IPv6. This feature was introduced in MySQL 5.7.17 and requires a server started
      * with the option "mysqlx-bind-address=*" (future versions may set this value by default).
      */
     @Test
-    public void testIpv6SupportInNodeSession() {
+    public void testIpv6SupportInSession() {
         Assume.assumeTrue("Not set to run X tests. Set the url to the X server using the property " + PropertyDefinitions.SYSP_testsuite_url_mysqlx,
                 this.isSetForXTests);
         Assume.assumeTrue("Server version 5.7.17 or higher is required.", mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.17")));
@@ -88,45 +87,9 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
                 atLeastOne = true;
                 for (String url : urls) {
                     String ipv6Url = String.format(url, this.testUser, this.testUser, TestUtils.encodePercent(host), port);
-                    NodeSession nodeSession = this.fact.getNodeSession(ipv6Url);
-                    Assert.assertFalse(nodeSession.getSchemas().isEmpty());
-                    nodeSession.close();
-                }
-            }
-        }
-
-        if (!atLeastOne) {
-            fail("None of the tested hosts have server sockets listening on the port " + port
-                    + ". This test requires a MySQL server with X Protocol running in local host with IPv6 support enabled "
-                    + "(set '--mysqlx-bind-address = *' if needed.");
-        }
-    }
-
-    /**
-     * Tests the creation of {@link XSession}s referencing the host by its IPv6. This feature was introduced in MySQL 5.7.17 and requires a server started
-     * with the option "mysqlx-bind-address=*" (future versions may set this value by default).
-     */
-    @Test
-    public void testIpv6SupportInXSession() {
-        Assume.assumeTrue("Not set to run X tests. Set the url to the X server using the property " + PropertyDefinitions.SYSP_testsuite_url_mysqlx,
-                this.isSetForXTests);
-        Assume.assumeTrue("Server version 5.7.17 or higher is required.", mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.17")));
-
-        // Although per specification IPv6 addresses must be enclosed by square brackets, we actually support them directly.
-        String[] urls = new String[] { "mysqlx://%s:%s@%s:%d", "mysqlx://%s:%s@[%s]:%d", "mysqlx://%s:%s@(address=%s:%d)", "mysqlx://%s:%s@(address=[%s]:%d)",
-                "mysqlx://%s:%s@address=(host=%s)(port=%d)", "mysqlx://%s:%s@address=(host=[%s])(port=%d)" };
-
-        int port = getTestPort();
-
-        boolean atLeastOne = false;
-        for (String host : this.ipv6Addrs) {
-            if (TestUtils.serverListening(host, port)) {
-                atLeastOne = true;
-                for (String url : urls) {
-                    String ipv6Url = String.format(url, this.testUser, this.testUser, TestUtils.encodePercent(host), port);
-                    XSession xSession = this.fact.getSession(ipv6Url);
-                    Assert.assertFalse(xSession.getSchemas().isEmpty());
-                    xSession.close();
+                    Session sess = this.fact.getSession(ipv6Url);
+                    Assert.assertFalse(sess.getSchemas().isEmpty());
+                    sess.close();
                 }
             }
         }

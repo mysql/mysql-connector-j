@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,45 +34,17 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.NodeSession;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
-import com.mysql.cj.xdevapi.XSessionImpl;
+import com.mysql.cj.xdevapi.SessionImpl;
 
 /**
  * Tests for X DevAPI requirements.
  */
 public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
-
-    /**
-     * NodeSession [10]
-     * NodeSession.Connect.Single [6]
-     * NodeSession.Connect.DataSource [7]
-     * NodeSession.Connect.Mysqls [8] [9] - not supported in first version
-     * 
-     * @throws Exception
-     */
-    @Test
-    @Ignore("needs implemented")
-    public void testNodeSessionCreation() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-        // TODO fill in the next pattern
-
-        NodeSession sess;
-
-        String url = ""; // TODO test different URLs
-        sess = getNodeSession(url);
-        sess.close();
-
-        Properties props = new Properties(); // TODO test different properties
-        sess = getNodeSession(props);
-        sess.close();
-    }
 
     /**
      * Session [11]
@@ -87,7 +59,7 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        XSession sess;
+        Session sess;
 
         String url = this.baseUrl;
         sess = getSession(url);
@@ -112,41 +84,6 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
     }
 
     /**
-     * SQL incl. bind
-     * 
-     * @throws Exception
-     */
-    @Test
-    @Ignore("needs implemented")
-    public void testNodeSessionMethods() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        // TODO fill in the next pattern
-        NodeSession sess = getNodeSession(""); // TODO set URL
-
-        sess.getDefaultSchema(); // according to spec it's available if NodeSession created with DataSource file
-
-        String schema = ""; // TODO set name
-        sess.getSchema(schema); // no-op, error or allowed?
-
-        //String sql = ""; // TODO set query
-        //sess.executeSql(sql);
-
-        //sess.executeSql(sql, "v1", "v2"); // TODO test binding
-
-        sess.close();
-
-        // out of requirements
-        sess.createSchema("name"); // TODO set name
-        sess.dropSchema("name"); // TODO set name
-        sess.getSchemas();
-        sess.getUri();
-
-    }
-
-    /**
      * 
      * @throws Exception
      */
@@ -156,9 +93,9 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
             return;
         }
 
-        XSession sess = getSession(this.baseUrl);
+        Session sess = getSession(this.baseUrl);
         assertNotNull(sess);
-        assertTrue(sess instanceof XSessionImpl);
+        assertTrue(sess instanceof SessionImpl);
 
         Schema sch = sess.getDefaultSchema();
         sch.getName();
@@ -172,6 +109,9 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         //sess.dropSchema("name"); // TODO set name
         //sess.getSchemas();
         //sess.getUri();
+
+        //String sql = ""; // TODO set query
+        //sess.executeSql(sql);
     }
 
     /**

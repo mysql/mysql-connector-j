@@ -28,12 +28,12 @@ import java.io.StringReader;
 import java.util.Map;
 
 import com.mysql.cj.api.xdevapi.AddStatement;
-import com.mysql.cj.api.xdevapi.BaseSession;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.DropCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.RemoveStatement;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
@@ -51,7 +51,7 @@ public class CollectionImpl implements Collection {
         this.name = name;
     }
 
-    public BaseSession getSession() {
+    public Session getSession() {
         return this.schema.getSession();
     }
 

@@ -25,10 +25,52 @@ package com.mysql.cj.api.xdevapi;
 
 import java.util.List;
 
+import com.mysql.cj.core.util.StringUtils;
+
 /**
- * A client interface to the session on the X Plugin server.
+ * X DevAPI introduces a new, high-level database connection concept that is called Session. When working with X DevAPI it is important to understand this new
+ * Session concept which is different from working with traditional low-level MySQL connections.
+ * <p>
+ * An application using the Session class can be run against a single MySQL server or large number of MySQL servers forming a sharding cluster with no code
+ * changes.
+ * <p>
+ * When using literal/verbatim SQL the common API patterns are mostly the same compared to using DML and CRUD operations on Tables and Collections. Two
+ * differences exist: setting the current schema and escaping names.
+ * <p>
+ * You cannot call {@link Session#getSchema(String)} or {@link Session#getDefaultSchema()} to obtain a {@link Schema} object against which you can
+ * issue verbatin SQL statements. The Schema object does not feature a sql() function.
+ * <p>
+ * The sql() function is a method of the {@link Session} class. Use {@link Session#sql(String)} and the SQL command USE to change the current
+ * schema
+ * <p>
+ * Session session = SessionFactory.getSession("root:s3kr3t@localhost");<br>
+ * session.sql("USE test");
+ * <p>
+ * If a Session has been established using a data source file the name of the default schema can be obtained to change the current database.
+ * <p>
+ * Properties p = new Properties();<br>
+ * p.setProperty("dataSourceFile", "/home/app_instance50/mysqlxconfig.json");<br>
+ * Session session = SessionFactory.getSession(p);<br>
+ * String defaultSchema = session.getDefaultSchema().getName();<br>
+ * session.sql("USE ?").bind(defaultSchema).execute();<br>
+ * <p>
+ * A quoting function exists to escape SQL names/identifiers. {@link StringUtils#quoteIdentifier(String, boolean)} will escape the identifier given in
+ * accordance to the settings of the current connection.
+ * The escape function must not be used to escape values. Use the value bind syntax of {@link Session#sql(String)} instead.
+ * <p>
+ * // use bind syntax for values<br>
+ * session.sql("DROP TABLE IF EXISTS ?").bind(name).execute();<br>
+ * <br>
+ * // use escape function to quote names/identifier<br>
+ * var create = "CREATE TABLE ";<br>
+ * create += StringUtils.quoteIdentifier(name, true);<br>
+ * create += "(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT");<br>
+ * <br>
+ * session.sql(create).execute();
+ * <p>
+ * Users of the CRUD API do not need to escape identifiers. This is true for working with collections and for working with relational tables.
  */
-public interface BaseSession {
+public interface Session {
 
     /**
      * Retrieve the list of Schema objects for which the current user has access.
@@ -142,4 +184,12 @@ public interface BaseSession {
      */
     void rollback();
 
+    /**
+     * Create a native SQL command. Placeholders are supported using the native "?" syntax.
+     * 
+     * @param sql
+     *            native SQL statement
+     * @return {@link SqlStatement}
+     */
+    SqlStatement sql(String sql);
 }

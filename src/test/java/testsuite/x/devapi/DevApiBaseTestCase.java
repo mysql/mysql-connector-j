@@ -25,13 +25,13 @@ package testsuite.x.devapi;
 
 import java.lang.reflect.Field;
 
-import com.mysql.cj.api.xdevapi.NodeSession;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
+import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.xdevapi.AbstractSession;
-import com.mysql.cj.xdevapi.NodeSessionImpl;
+import com.mysql.cj.xdevapi.SessionImpl;
 
 import testsuite.x.internal.InternalXBaseTestCase;
 
@@ -42,13 +42,19 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     /**
      * Session for use in tests.
      */
-    NodeSession session;
+    Session session;
     Schema schema;
+    String dbCharset;
+    String dbCollation;
 
     public boolean setupTestSession() {
         if (this.isSetForXTests) {
-            this.session = new NodeSessionImpl(this.testProperties);
+            this.session = new SessionImpl(this.testProperties);
             this.schema = this.session.getDefaultSchema();
+            SqlResult rs = this.session.sql("SHOW VARIABLES LIKE 'character_set_database'").execute();
+            this.dbCharset = rs.fetchOne().getString(1);
+            rs = this.session.sql("SHOW VARIABLES LIKE 'collation_database'").execute();
+            this.dbCollation = rs.fetchOne().getString(1);
             return true;
         }
         return false;
@@ -68,7 +74,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
 
     protected void sqlUpdate(String sql) {
         try {
-            Field f = AbstractSession.class.getDeclaredField("session");
+            Field f = SessionImpl.class.getDeclaredField("session");
             f.setAccessible(true);
             ((MysqlxSession) f.get(this.session)).update(sql);
         } catch (Exception e) {

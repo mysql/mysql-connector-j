@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,19 +25,19 @@ package demo.x.devapi;
 
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DocResult;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Schema;
-import com.mysql.cj.api.xdevapi.XSession;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
-import com.mysql.cj.xdevapi.XSessionFactory;
+import com.mysql.cj.xdevapi.SessionFactory;
 
 /*
  * Sample program showing how to use Connector/J's Dev API support.
  */
 public class DevApiSample {
     public static void main(String[] args) {
-        XSession session = new XSessionFactory().getSession("mysqlx://localhost:33060/test?user=user&password=password1234");
+        Session session = new SessionFactory().getSession("mysqlx://localhost:33060/test?user=user&password=password1234");
         System.err.println("Connected!");
         Schema schema = session.getDefaultSchema();
         System.err.println("Default schema is: " + schema);

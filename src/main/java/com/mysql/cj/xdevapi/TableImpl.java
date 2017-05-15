@@ -26,9 +26,9 @@ package com.mysql.cj.xdevapi;
 import java.util.List;
 import java.util.Map;
 
-import com.mysql.cj.api.xdevapi.BaseSession;
 import com.mysql.cj.api.xdevapi.DeleteStatement;
 import com.mysql.cj.api.xdevapi.InsertStatement;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.api.xdevapi.Table;
@@ -76,7 +76,7 @@ public class TableImpl implements Table {
         this.isView = descr.getObjectType() == DbObjectType.VIEW || descr.getObjectType() == DbObjectType.COLLECTION_VIEW;
     }
 
-    public BaseSession getSession() {
+    public Session getSession() {
         return this.schema.getSession();
     }
 
