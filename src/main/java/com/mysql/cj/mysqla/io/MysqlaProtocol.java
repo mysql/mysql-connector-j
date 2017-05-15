@@ -640,6 +640,10 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 }
 
                 returnPacket = checkErrorPacket(command);
+
+                if (this.queryInterceptors != null) {
+                    returnPacket = invokeQueryInterceptorsPost(queryPacket, returnPacket, false);
+                }
             }
 
             return returnPacket;
@@ -1168,6 +1172,29 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
 
         return originalResultSet;
+    }
+
+    /**
+     * @param forceExecute
+     */
+    public PacketPayload invokeQueryInterceptorsPost(PacketPayload queryPacket, PacketPayload originalResponsePacket, boolean forceExecute) {
+
+        for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
+            QueryInterceptor interceptor = this.queryInterceptors.get(i);
+
+            // TODO how to handle executeTopLevelOnly in such case ?
+            //            boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
+            //            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
+            //            if (shouldExecute) {
+
+            PacketPayload interceptedPacketPayload = interceptor.postProcess(queryPacket, originalResponsePacket);
+            if (interceptedPacketPayload != null) {
+                originalResponsePacket = interceptedPacketPayload;
+            }
+            //            }
+        }
+
+        return originalResponsePacket;
     }
 
     public long getCurrentTimeNanosOrMillis() {

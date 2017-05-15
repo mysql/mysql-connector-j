@@ -4413,7 +4413,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+        public PacketPayload postProcess(PacketPayload queryPacket, PacketPayload originalResponsePacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
             if (sql.contains("lc_messages=ru_RU")) {
                 try {
                     this.connection.createStatement().executeQuery("SELECT * FROM `" + this.connection.getCatalog() + "`.`\u307b\u3052\u307b\u3052`");
@@ -4421,7 +4422,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     throw ExceptionFactory.createException(e.getMessage(), e);
                 }
             }
-            return super.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
+            return originalResponsePacket;
         }
     }
 

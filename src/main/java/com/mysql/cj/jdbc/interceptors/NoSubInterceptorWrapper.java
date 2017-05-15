@@ -81,6 +81,13 @@ public class NoSubInterceptorWrapper implements QueryInterceptor {
         return null; // don't allow PacketPayload substitution
     }
 
+    @Override
+    public PacketPayload postProcess(PacketPayload queryPacket, PacketPayload originalResponsePacket) {
+        this.underlyingInterceptor.postProcess(queryPacket, originalResponsePacket);
+
+        return null; // don't allow PacketPayload substitution
+    }
+
     public QueryInterceptor getUnderlyingInterceptor() {
         return this.underlyingInterceptor;
     }

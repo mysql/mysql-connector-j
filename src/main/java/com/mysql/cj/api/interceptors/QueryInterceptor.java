@@ -142,4 +142,20 @@ public interface QueryInterceptor {
      *         query.
      */
     <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession);
+
+    /**
+     * Called after the given query packet has been sent to the server for processing.
+     * 
+     * Interceptors are free to return either a different PacketPayload than the originalResponsePacket or null.
+     * 
+     * This method will be called while the connection-level mutex is held, so
+     * it will only be called from one thread at a time.
+     * 
+     * @param queryPacket
+     * @param originalResponsePacket
+     * @return
+     */
+    default PacketPayload postProcess(PacketPayload queryPacket, PacketPayload originalResponsePacket) {
+        return null;
+    }
 }
