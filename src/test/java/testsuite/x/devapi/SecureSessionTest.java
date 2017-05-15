@@ -321,7 +321,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
 
         Session nSession;
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             nSession = this.fact.getSession(props);
             nSession.close();
             nSession = null;
