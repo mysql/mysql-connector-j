@@ -935,7 +935,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             }
 
             if (this.unwrappedInterfaces == null) {
-                this.unwrappedInterfaces = new HashMap<Class<?>, Object>();
+                this.unwrappedInterfaces = new HashMap<>();
             }
 
             Object cachedUnwrapped = this.unwrappedInterfaces.get(iface);
@@ -1118,6 +1118,11 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public JdbcConnection getMultiHostSafeProxy() {
         return this.mc.getMultiHostSafeProxy();
+    }
+
+    @Override
+    public JdbcConnection getActiveMySQLConnection() {
+        return this.mc.getActiveMySQLConnection();
     }
 
     @Override

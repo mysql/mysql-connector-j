@@ -24,6 +24,8 @@
 package com.mysql.cj.jdbc;
 
 import java.io.InputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.sql.BatchUpdateException;
 import java.sql.DriverManager;
@@ -105,15 +107,13 @@ public class StatementImpl implements Statement, Query {
      * and simple way to implement a feature that isn't used all that often.
      */
     class CancelTask extends TimerTask {
-
-        long connectionId = 0;
         SQLException caughtWhileCancelling = null;
         StatementImpl toCancel;
         Properties origConnProps = null;
         String origConnURL = "";
+        long origConnId = 0;
 
         CancelTask(StatementImpl cancellee) throws SQLException {
-            this.connectionId = cancellee.connectionId;
             this.toCancel = cancellee;
             this.origConnProps = new Properties();
 
@@ -127,6 +127,7 @@ public class StatementImpl implements Statement, Query {
             }
 
             this.origConnURL = StatementImpl.this.connection.getURL();
+            this.origConnId = StatementImpl.this.connection.getId();
         }
 
         @Override
@@ -141,39 +142,41 @@ public class StatementImpl implements Statement, Query {
                     java.sql.Statement cancelStmt = null;
 
                     try {
-                        if (StatementImpl.this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
-                                .getValue()) {
-                            CancelTask.this.toCancel.wasCancelled = true;
-                            CancelTask.this.toCancel.wasCancelledByTimeout = true;
-                            StatementImpl.this.connection.realClose(false, false, true,
-                                    new MySQLStatementCancelledException(Messages.getString("Statement.ConnectionKilledDueToTimeout")));
-                        } else {
-                            synchronized (StatementImpl.this.cancelTimeoutMutex) {
-                                if (CancelTask.this.origConnURL.equals(StatementImpl.this.connection.getURL())) {
-                                    //All's fine
-                                    cancelConn = StatementImpl.this.connection.duplicate();
-                                    cancelStmt = cancelConn.createStatement();
-                                    cancelStmt.execute("KILL QUERY " + CancelTask.this.connectionId);
-                                } else {
-                                    try {
-                                        cancelConn = (JdbcConnection) DriverManager.getConnection(CancelTask.this.origConnURL, CancelTask.this.origConnProps);
-                                        cancelStmt = cancelConn.createStatement();
-                                        cancelStmt.execute("KILL QUERY " + CancelTask.this.connectionId);
-                                    } catch (NullPointerException npe) {
-                                        //Log this? "Failed to connect to " + origConnURL + " and KILL query"
-                                    }
-                                }
+                        JdbcConnection physicalConn = StatementImpl.this.physicalConnection.get();
+                        if (physicalConn != null) {
+                            if (physicalConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection).getValue()) {
                                 CancelTask.this.toCancel.wasCancelled = true;
                                 CancelTask.this.toCancel.wasCancelledByTimeout = true;
+                                physicalConn.realClose(false, false, true,
+                                        new MySQLStatementCancelledException(Messages.getString("Statement.ConnectionKilledDueToTimeout")));
+                            } else {
+                                synchronized (StatementImpl.this.cancelTimeoutMutex) {
+                                    if (CancelTask.this.origConnURL.equals(physicalConn.getURL())) {
+                                        // All's fine
+                                        cancelConn = physicalConn.duplicate();
+                                        cancelStmt = cancelConn.createStatement();
+                                        cancelStmt.execute("KILL QUERY " + physicalConn.getId());
+                                    } else {
+                                        try {
+                                            cancelConn = (JdbcConnection) DriverManager.getConnection(CancelTask.this.origConnURL,
+                                                    CancelTask.this.origConnProps);
+                                            cancelStmt = cancelConn.createStatement();
+                                            cancelStmt.execute("KILL QUERY " + CancelTask.this.origConnId);
+                                        } catch (NullPointerException npe) {
+                                            // Log this? "Failed to connect to " + origConnURL + " and KILL query"
+                                        }
+                                    }
+                                    CancelTask.this.toCancel.wasCancelled = true;
+                                    CancelTask.this.toCancel.wasCancelledByTimeout = true;
+                                }
                             }
                         }
                     } catch (SQLException sqlEx) {
                         CancelTask.this.caughtWhileCancelling = sqlEx;
                     } catch (NullPointerException npe) {
-                        // Case when connection closed while starting to cancel
-                        // We can't easily synchronize this, because then one thread can't cancel() a running query
-
-                        // ignore, we shouldn't re-throw this, because the connection's already closed, so the statement has been timed out.
+                        // Case when connection closed while starting to cancel.
+                        // We can't easily synchronize this, because then one thread can't cancel() a running query.
+                        // Ignore, we shouldn't re-throw this, because the connection's already closed, so the statement has been timed out.
                     } finally {
                         if (cancelStmt != null) {
                             try {
@@ -229,6 +232,9 @@ public class StatementImpl implements Statement, Query {
 
     /** The connection that created us */
     protected volatile JdbcConnection connection = null;
+
+    /** The physical connection used to effectively execute the statement */
+    protected Reference<JdbcConnection> physicalConnection = null;
 
     protected MysqlaSession session = null;
 
@@ -349,7 +355,7 @@ public class StatementImpl implements Statement, Query {
      * Constructor for a Statement.
      * 
      * @param c
-     *            the Connection instantation that creates us
+     *            the Connection instance that creates us
      * @param catalog
      *            the database name in use when we were created
      * 
@@ -955,6 +961,12 @@ public class StatementImpl implements Statement, Query {
     protected void statementBegins() {
         this.clearWarningsCalled = false;
         this.statementExecuting.set(true);
+
+        JdbcConnection physicalConn = this.connection.getMultiHostSafeProxy().getActiveMySQLConnection();
+        while (!(physicalConn instanceof ConnectionImpl)) {
+            physicalConn = physicalConn.getMultiHostSafeProxy().getActiveMySQLConnection();
+        }
+        this.physicalConnection = new WeakReference<>(physicalConn);
     }
 
     public void resetCancelledState() {

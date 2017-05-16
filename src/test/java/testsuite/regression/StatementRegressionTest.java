@@ -9580,7 +9580,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#81706 - NullPointerException in driver.
+     * Tests fix for Bug#81706 - NullPointerException in driver.
      */
     public void testBug81706() throws Exception {
         boolean useSPS = false;
@@ -9716,5 +9716,91 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
+
+    /**
+     * Tests fix for Bug#84783 - query timeout is not working(thread hang).
+     */
+    public void testBug84783() throws Exception {
+        // Test using a standard connection.
+        final Statement testStmt = this.conn.createStatement();
+        testStmt.setQueryTimeout(1);
+        assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+            public Void call() throws Exception {
+                testStmt.executeQuery("SELECT SLEEP(3)");
+                return null;
+            }
+        });
+        testStmt.close();
+
+        boolean useSPS = false;
+        do {
+            final Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+
+            final String testCase = String.format("Case [SPS: %s]", useSPS ? "Y" : "N");
+
+            Connection testConn;
+
+            // Test using a failover connection.
+            testConn = getUnreliableFailoverConnection(new String[] { "host1", "host2" }, null);
+            final Statement testStmtFO = testConn.createStatement();
+            testStmtFO.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmtFO.executeQuery("SELECT SLEEP(3)");
+                    return null;
+                }
+            });
+            final PreparedStatement testPstmtFO = testConn.prepareStatement("SELECT SLEEP(3)");
+            testPstmtFO.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmtFO.executeQuery();
+                    return null;
+                }
+            });
+            testConn.close();
+
+            // Test using a load-balanced connection.
+            testConn = getUnreliableLoadBalancedConnection(new String[] { "host1", "host2" }, null);
+            final Statement testStmtLB = testConn.createStatement();
+            testStmtLB.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmtLB.executeQuery("SELECT SLEEP(3)");
+                    return null;
+                }
+            });
+            final PreparedStatement testPstmtLB = testConn.prepareStatement("SELECT SLEEP(3)");
+            testPstmtLB.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmtLB.executeQuery();
+                    return null;
+                }
+            });
+            testConn.close();
+
+            // Test using a replication connection.
+            testConn = getUnreliableReplicationConnection(new String[] { "host1", "host2" }, null);
+            final Statement testStmtR = testConn.createStatement();
+            testStmtR.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmtR.executeQuery("SELECT SLEEP(3)");
+                    return null;
+                }
+            });
+            final PreparedStatement testPstmtR = testConn.prepareStatement("SELECT SLEEP(3)");
+            testPstmtR.setQueryTimeout(1);
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
+                public Void call() throws Exception {
+                    testPstmtR.executeQuery();
+                    return null;
+                }
+            });
+            testConn.close();
+        } while (useSPS = !useSPS);
     }
 }

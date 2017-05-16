@@ -44,7 +44,7 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
     }
 
     @Override
-    protected JdbcConnection getActiveMySQLConnection() {
+    public JdbcConnection getActiveMySQLConnection() {
         return getCurrentConnection();
     }
 

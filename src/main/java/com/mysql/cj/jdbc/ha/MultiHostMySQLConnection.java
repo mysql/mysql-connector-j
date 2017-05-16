@@ -86,7 +86,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return this.thisAsProxy;
     }
 
-    protected JdbcConnection getActiveMySQLConnection() {
+    public JdbcConnection getActiveMySQLConnection() {
         synchronized (this.thisAsProxy) {
             return this.thisAsProxy.currentConnection;
         }

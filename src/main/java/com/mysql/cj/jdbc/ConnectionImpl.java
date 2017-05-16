@@ -138,6 +138,10 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         return this.getProxy();
     }
 
+    public JdbcConnection getActiveMySQLConnection() {
+        return this;
+    }
+
     public Object getConnectionMutex() {
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
@@ -226,7 +230,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             if (this.cancelTimer == null) {
                 this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
             }
-
             return this.cancelTimer;
         }
     }
@@ -2253,7 +2256,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
-
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
