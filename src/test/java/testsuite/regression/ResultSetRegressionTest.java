@@ -5895,4 +5895,59 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         assertFalse(this.rs.next());
     }
+
+    /**
+     * Tests fix for Bug#83368 - 5.1.40 regression: wasNull not updated when calling getInt for a bit column.
+     */
+    public void testBug83368() throws Exception {
+        createTable("testBug83368", "(c1 VARCHAR(1), c2 BIT)");
+        this.stmt.execute("INSERT INTO testBug83368 VALUES (NULL, 1)");
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug83368");
+
+        assertTrue(this.rs.next());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals((byte) 1, this.rs.getByte(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals((short) 1, this.rs.getShort(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(1, this.rs.getInt(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(1L, this.rs.getLong(2));
+        assertFalse(this.rs.wasNull());
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+        assertEquals(BigDecimal.valueOf(1), this.rs.getBigDecimal(2));
+        assertFalse(this.rs.wasNull());
+    }
+
+    /**
+     * Tests fix for Bug#83662 - NullPointerException while reading NULL boolean value from DB.
+     * 
+     * This fix was actually done in the patch for Bug#83368, as both are fixed in the same way.
+     */
+    public void testBug83662() throws Exception {
+        createTable("testBug83662", "(b BIT(1) NULL)");
+        this.stmt.executeUpdate("INSERT INTO testBug83662 VALUES (null)");
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug83662");
+        assertTrue(this.rs.next());
+        assertEquals((byte) 0, this.rs.getByte(1));
+        assertEquals((short) 0, this.rs.getShort(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertEquals(0L, this.rs.getLong(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertNull(this.rs.getBigDecimal(1));
+    }
 }
