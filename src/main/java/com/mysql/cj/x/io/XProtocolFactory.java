@@ -345,6 +345,7 @@ public class XProtocolFactory {
      *            {@link AsynchronousSocketChannel}
      * @param data
      *            {@link ByteBuffer}
+     * @return
      */
     private static Integer read(AsynchronousSocketChannel channel, ByteBuffer data) {
         Future<Integer> f = channel.read(data);
