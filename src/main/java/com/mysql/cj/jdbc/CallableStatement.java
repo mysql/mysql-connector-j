@@ -159,8 +159,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             this.isReadOnlySafeProcedure = fullParamInfo.isReadOnlySafeProcedure;
             this.isReadOnlySafeChecked = fullParamInfo.isReadOnlySafeChecked;
-            this.parameterList = new ArrayList<CallableStatementParam>(fullParamInfo.numParameters);
-            this.parameterMap = new HashMap<String, CallableStatementParam>(fullParamInfo.numParameters);
+            this.parameterList = new ArrayList<>(fullParamInfo.numParameters);
+            this.parameterMap = new HashMap<>(fullParamInfo.numParameters);
 
             if (this.isFunctionCall) {
                 // Take the return value
@@ -192,8 +192,8 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             if (hadRows) {
                 this.numParameters = paramTypesRs.getRow();
 
-                this.parameterList = new ArrayList<CallableStatementParam>(this.numParameters);
-                this.parameterMap = new HashMap<String, CallableStatementParam>(this.numParameters);
+                this.parameterList = new ArrayList<>(this.numParameters);
+                this.parameterMap = new HashMap<>(this.numParameters);
 
                 paramTypesRs.beforeFirst();
 
@@ -212,7 +212,21 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             while (paramTypesRs.next()) {
                 String paramName = paramTypesRs.getString(4);
-                int inOutModifier = paramTypesRs.getInt(5);
+                int inOutModifier;
+                switch (paramTypesRs.getInt(5)) {
+                    case DatabaseMetaData.procedureColumnIn:
+                        inOutModifier = ParameterMetaData.parameterModeIn;
+                        break;
+                    case DatabaseMetaData.procedureColumnInOut:
+                        inOutModifier = ParameterMetaData.parameterModeInOut;
+                        break;
+                    case DatabaseMetaData.procedureColumnOut:
+                    case DatabaseMetaData.procedureColumnReturn:
+                        inOutModifier = ParameterMetaData.parameterModeOut;
+                        break;
+                    default:
+                        inOutModifier = ParameterMetaData.parameterModeUnknown;
+                }
 
                 boolean isOutParameter = false;
                 boolean isInParameter = false;
@@ -676,7 +690,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
 
-            ArrayList<Row> resultRows = new ArrayList<Row>();
+            ArrayList<Row> resultRows = new ArrayList<>();
 
             for (int i = 0; i < this.parameterCount; i++) {
                 byte[][] row = new byte[13][];
@@ -1336,12 +1350,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         getExceptionInterceptor());
             }
 
-            if (this.paramInfo == null) {
+            CallableStatementParam namedParamInfo;
+            if (this.paramInfo == null || (namedParamInfo = this.paramInfo.getParameter(paramName)) == null) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.3", new Object[] { paramName }),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
-
-            CallableStatementParam namedParamInfo = this.paramInfo.getParameter(paramName);
 
             if (forOut && !namedParamInfo.isOut) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.5", new Object[] { paramName }),

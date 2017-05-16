@@ -787,7 +787,7 @@ public class StringUtils {
      */
     public static List<String> split(String stringToSplit, String delimiter, boolean trim) {
         if (stringToSplit == null) {
-            return new ArrayList<String>();
+            return new ArrayList<>();
         }
 
         if (delimiter == null) {
@@ -839,7 +839,7 @@ public class StringUtils {
      */
     public static List<String> split(String stringToSplit, String delimiter, String markers, String markerCloses, boolean trim, Set<SearchMode> searchMode) {
         if (stringToSplit == null) {
-            return new ArrayList<String>();
+            return new ArrayList<>();
         }
 
         if (delimiter == null) {
@@ -849,7 +849,7 @@ public class StringUtils {
         int delimPos = 0;
         int currentPos = 0;
 
-        List<String> splitTokens = new ArrayList<String>();
+        List<String> splitTokens = new ArrayList<>();
 
         while ((delimPos = indexOfIgnoreCase(currentPos, stringToSplit, delimiter, markers, markerCloses, searchMode)) != -1) {
             String token = stringToSplit.substring(currentPos, delimPos);
@@ -1327,7 +1327,7 @@ public class StringUtils {
                         strBuilder.append('-');
 
                         if (currentChar != -1) {
-                            strBuilder.append(currentChar);
+                            strBuilder.append((char) currentChar);
                         }
 
                         continue;
@@ -1371,69 +1371,42 @@ public class StringUtils {
     }
 
     /**
-     * Next we check if there is anything to split. If so
-     * we return result in form of "database";"name"
-     * If string is NULL or wildcard (%), returns null and exits.
+     * Splits an entity identifier into its parts (database and entity name) and returns a list containing the two elements. If the identifier doesn't contain
+     * the database part then the argument <code>catalog</code> is used in its place and <code>source</code> corresponds to the full entity name.
+     * If argument <code>source</code> is NULL or wildcard (%), returns an empty list.
      * 
-     * @param src
+     * @param source
      *            the source string
-     * @param cat
+     * @param catalog
      *            Catalog, if available
-     * @param quotId
-     *            quoteId as defined on server
+     * @param quoteId
+     *            quote character as defined on server
      * @param isNoBslashEscSet
-     *            Is our connection in BackSlashEscape mode
+     *            is our connection in no BackSlashEscape mode
      * @return the input string with all comment-delimited data removed
      */
-    public static List<String> splitDBdotName(String src, String cat, String quotId, boolean isNoBslashEscSet) {
-        if ((src == null) || (src.equals("%"))) {
-            return new ArrayList<String>();
+    public static List<String> splitDBdotName(String source, String catalog, String quoteId, boolean isNoBslashEscSet) {
+        if ((source == null) || (source.equals("%"))) {
+            return Collections.emptyList();
         }
 
-        boolean isQuoted = StringUtils.indexOfIgnoreCase(0, src, quotId) > -1;
-
-        String retval = src;
-        String tmpCat = cat;
-        //I.e., what if database is named `MyDatabase 1.0.0`... thus trueDotIndex
-        int trueDotIndex = -1;
-        if (!" ".equals(quotId)) {
-            //Presumably, if there is a database name attached and it contains dots, then it should be quoted so we first check for that
-            if (isQuoted) {
-                trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, quotId + "." + quotId);
-            } else {
-                // NOT quoted, fetch first DOT
-                // ex: cStmt = this.conn.prepareCall("{call bug57022.procbug57022(?, ?)}");
-                trueDotIndex = StringUtils.indexOfIgnoreCase(0, retval, ".");
-            }
+        int dotIndex = -1;
+        if (" ".equals(quoteId)) {
+            dotIndex = source.indexOf(".");
         } else {
-            trueDotIndex = retval.indexOf(".");
+            dotIndex = indexOfIgnoreCase(0, source, ".", quoteId, quoteId, isNoBslashEscSet ? SEARCH_MODE__MRK_WS : SEARCH_MODE__BSESC_MRK_WS);
         }
 
-        List<String> retTokens = new ArrayList<String>(2);
-
-        if (trueDotIndex != -1) {
-            //There is a catalog attached
-            if (isQuoted) {
-                tmpCat = StringUtils.toString(StringUtils.stripEnclosure(retval.substring(0, trueDotIndex + 1).getBytes(), quotId, quotId));
-                if (StringUtils.startsWithIgnoreCaseAndWs(tmpCat, quotId)) {
-                    tmpCat = tmpCat.substring(1, tmpCat.length() - 1);
-                }
-
-                retval = retval.substring(trueDotIndex + 2);
-                retval = StringUtils.toString(StringUtils.stripEnclosure(retval.getBytes(), quotId, quotId));
-            } else {
-                //NOT quoted, adjust indexOf
-                tmpCat = retval.substring(0, trueDotIndex);
-                retval = retval.substring(trueDotIndex + 1);
-            }
+        String database = catalog;
+        String entityName;
+        if (dotIndex != -1) {
+            database = unQuoteIdentifier(source.substring(0, dotIndex), quoteId);
+            entityName = unQuoteIdentifier(source.substring(dotIndex + 1), quoteId);
         } else {
-            //No catalog attached, strip retval and return
-            retval = StringUtils.toString(StringUtils.stripEnclosure(retval.getBytes(), quotId, quotId));
+            entityName = unQuoteIdentifier(source, quoteId);
         }
 
-        retTokens.add(tmpCat);
-        retTokens.add(retval);
-        return retTokens;
+        return Arrays.asList(database, entityName);
     }
 
     public static boolean isEmptyOrWhitespaceOnly(String str) {
