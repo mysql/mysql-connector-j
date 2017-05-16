@@ -1886,7 +1886,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             if (this.useServerPreparedStmts && canServerPrepare) {
                 if (this.cachePrepStmts.getValue()) {
                     synchronized (this.serverSideStatementCache) {
-                        pStmt = (com.mysql.cj.jdbc.ServerPreparedStatement) this.serverSideStatementCache.remove(sql);
+                        pStmt = (com.mysql.cj.jdbc.ServerPreparedStatement) this.serverSideStatementCache
+                                .remove(makePreparedStatementCacheKey(this.database, sql));
 
                         if (pStmt != null) {
                             ((com.mysql.cj.jdbc.ServerPreparedStatement) pStmt).setClosed(false);
@@ -2056,11 +2057,18 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     }
 
+    private String makePreparedStatementCacheKey(String catalog, String query) {
+        StringBuilder key = new StringBuilder();
+        key.append("/*").append(catalog).append("*/");
+        key.append(query);
+        return key.toString();
+    }
+
     public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
+                    this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql), pstmt);
                 }
             }
         }
@@ -2070,7 +2078,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.remove(pstmt.originalSql);
+                    this.serverSideStatementCache.remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql));
                 }
             }
         }

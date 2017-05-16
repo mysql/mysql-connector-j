@@ -1278,111 +1278,112 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
             throw SQLError.createSQLException("Type parameter can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
-        if (type.equals(String.class)) {
-            return (T) getString(columnIndex);
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (type.equals(String.class)) {
+                return (T) getString(columnIndex);
 
-        } else if (type.equals(BigDecimal.class)) {
-            return (T) getBigDecimal(columnIndex);
+            } else if (type.equals(BigDecimal.class)) {
+                return (T) getBigDecimal(columnIndex);
 
-        } else if (type.equals(BigInteger.class)) {
-            return (T) getBigInteger(columnIndex);
+            } else if (type.equals(BigInteger.class)) {
+                return (T) getBigInteger(columnIndex);
 
-        } else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
-            return (T) Boolean.valueOf(getBoolean(columnIndex));
+            } else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
+                return (T) Boolean.valueOf(getBoolean(columnIndex));
 
-        } else if (type.equals(Integer.class) || type.equals(Integer.TYPE)) {
-            return (T) Integer.valueOf(getInt(columnIndex));
+            } else if (type.equals(Integer.class) || type.equals(Integer.TYPE)) {
+                return (T) Integer.valueOf(getInt(columnIndex));
 
-        } else if (type.equals(Long.class) || type.equals(Long.TYPE)) {
-            return (T) Long.valueOf(getLong(columnIndex));
+            } else if (type.equals(Long.class) || type.equals(Long.TYPE)) {
+                return (T) Long.valueOf(getLong(columnIndex));
 
-        } else if (type.equals(Float.class) || type.equals(Float.TYPE)) {
-            return (T) Float.valueOf(getFloat(columnIndex));
+            } else if (type.equals(Float.class) || type.equals(Float.TYPE)) {
+                return (T) Float.valueOf(getFloat(columnIndex));
 
-        } else if (type.equals(Double.class) || type.equals(Double.TYPE)) {
-            return (T) Double.valueOf(getDouble(columnIndex));
+            } else if (type.equals(Double.class) || type.equals(Double.TYPE)) {
+                return (T) Double.valueOf(getDouble(columnIndex));
 
-        } else if (type.equals(byte[].class)) {
-            return (T) getBytes(columnIndex);
+            } else if (type.equals(byte[].class)) {
+                return (T) getBytes(columnIndex);
 
-        } else if (type.equals(Date.class)) {
-            return (T) getDate(columnIndex);
+            } else if (type.equals(Date.class)) {
+                return (T) getDate(columnIndex);
 
-        } else if (type.equals(Time.class)) {
-            return (T) getTime(columnIndex);
+            } else if (type.equals(Time.class)) {
+                return (T) getTime(columnIndex);
 
-        } else if (type.equals(Timestamp.class)) {
-            return (T) getTimestamp(columnIndex);
+            } else if (type.equals(Timestamp.class)) {
+                return (T) getTimestamp(columnIndex);
 
-        } else if (type.equals(Clob.class)) {
-            return (T) getClob(columnIndex);
+            } else if (type.equals(Clob.class)) {
+                return (T) getClob(columnIndex);
 
-        } else if (type.equals(Blob.class)) {
-            return (T) getBlob(columnIndex);
+            } else if (type.equals(Blob.class)) {
+                return (T) getBlob(columnIndex);
 
-        } else if (type.equals(Array.class)) {
-            return (T) getArray(columnIndex);
+            } else if (type.equals(Array.class)) {
+                return (T) getArray(columnIndex);
 
-        } else if (type.equals(Ref.class)) {
-            return (T) getRef(columnIndex);
+            } else if (type.equals(Ref.class)) {
+                return (T) getRef(columnIndex);
 
-        } else if (type.equals(URL.class)) {
-            return (T) getURL(columnIndex);
+            } else if (type.equals(URL.class)) {
+                return (T) getURL(columnIndex);
 
-        } else if (type.equals(Struct.class)) {
-            throw new SQLFeatureNotSupportedException();
+            } else if (type.equals(Struct.class)) {
+                throw new SQLFeatureNotSupportedException();
 
-        } else if (type.equals(RowId.class)) {
-            return (T) getRowId(columnIndex);
+            } else if (type.equals(RowId.class)) {
+                return (T) getRowId(columnIndex);
 
-        } else if (type.equals(NClob.class)) {
-            return (T) getNClob(columnIndex);
+            } else if (type.equals(NClob.class)) {
+                return (T) getNClob(columnIndex);
 
-        } else if (type.equals(SQLXML.class)) {
-            return (T) getSQLXML(columnIndex);
+            } else if (type.equals(SQLXML.class)) {
+                return (T) getSQLXML(columnIndex);
 
-        } else if (type.equals(LocalDate.class)) {
-            return (T) getLocalDate(columnIndex);
+            } else if (type.equals(LocalDate.class)) {
+                return (T) getLocalDate(columnIndex);
 
-        } else if (type.equals(LocalDateTime.class)) {
-            return (T) getLocalDateTime(columnIndex);
+            } else if (type.equals(LocalDateTime.class)) {
+                return (T) getLocalDateTime(columnIndex);
 
-        } else if (type.equals(LocalTime.class)) {
-            return (T) getLocalTime(columnIndex);
+            } else if (type.equals(LocalTime.class)) {
+                return (T) getLocalTime(columnIndex);
 
-        } else if (type.equals(OffsetDateTime.class)) {
-            try {
-                String odt = getString(columnIndex);
-                return odt == null ? null : (T) OffsetDateTime.parse(odt);
-            } catch (DateTimeParseException e) {
-                // Let it continue and try by object deserialization.
+            } else if (type.equals(OffsetDateTime.class)) {
+                try {
+                    String odt = getString(columnIndex);
+                    return odt == null ? null : (T) OffsetDateTime.parse(odt);
+                } catch (DateTimeParseException e) {
+                    // Let it continue and try by object deserialization.
+                }
+
+            } else if (type.equals(OffsetTime.class)) {
+                try {
+                    String ot = getString(columnIndex);
+                    return ot == null ? null : (T) OffsetTime.parse(getString(columnIndex));
+                } catch (DateTimeParseException e) {
+                    // Let it continue and try by object deserialization.
+                }
+
             }
 
-        } else if (type.equals(OffsetTime.class)) {
-            try {
-                String ot = getString(columnIndex);
-                return ot == null ? null : (T) OffsetTime.parse(getString(columnIndex));
-            } catch (DateTimeParseException e) {
-                // Let it continue and try by object deserialization.
+            if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+                try {
+                    return (T) getObject(columnIndex);
+                } catch (ClassCastException cce) {
+                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    sqlEx.initCause(cce);
+
+                    throw sqlEx;
+                }
             }
 
+            throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
-
-        if (this.connection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
-            try {
-                return (T) getObject(columnIndex);
-            } catch (ClassCastException cce) {
-                SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                sqlEx.initCause(cce);
-
-                throw sqlEx;
-            }
-        }
-
-        throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                getExceptionInterceptor());
-
     }
 
     public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {

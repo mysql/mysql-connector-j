@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyManagementException;
@@ -38,7 +39,15 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertPathValidatorResult;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.PKIXParameters;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -52,10 +61,12 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
@@ -207,34 +218,141 @@ public class ExportControlled {
     private ExportControlled() { /* prevent instantiation */
     }
 
-    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(PropertySet propertySet, ExceptionInterceptor exceptionInterceptor)
-            throws SSLParamsException {
-        String keyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
-        String trustStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
+    /**
+     * Implementation of X509TrustManager wrapping JVM X509TrustManagers to add expiration check
+     */
+    public static class X509TrustManagerWrapper implements X509TrustManager {
 
-        if (StringUtils.isNullOrEmpty(keyStoreUrl) && StringUtils.isNullOrEmpty(trustStoreUrl)) {
-            if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()) {
-                return (SSLSocketFactory) SSLSocketFactory.getDefault();
+        private X509TrustManager origTm = null;
+        private boolean verifyServerCert = false;
+        private CertificateFactory certFactory = null;
+        private PKIXParameters validatorParams = null;
+        private CertPathValidator validator = null;
+
+        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, KeyStore trustKeyStore) throws CertificateException {
+            this.origTm = tm;
+            this.verifyServerCert = verifyServerCertificate;
+
+            if (verifyServerCertificate) {
+                try {
+                    this.validatorParams = new PKIXParameters(trustKeyStore);
+                    this.validatorParams.setRevocationEnabled(false);
+                    this.validator = CertPathValidator.getInstance("PKIX");
+                    this.certFactory = CertificateFactory.getInstance("X.509");
+                } catch (Exception e) {
+                    throw new CertificateException(e);
+                }
+            }
+
+        }
+
+        public X509TrustManagerWrapper(boolean verifyServerCertificate) {
+            this.verifyServerCert = verifyServerCertificate;
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            return this.origTm != null ? this.origTm.getAcceptedIssuers() : new X509Certificate[0];
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            for (int i = 0; i < chain.length; i++) {
+                chain[i].checkValidity();
+            }
+
+            if (this.validatorParams != null) {
+
+                X509CertSelector certSelect = new X509CertSelector();
+                certSelect.setSerialNumber(chain[0].getSerialNumber());
+
+                try {
+                    CertPath certPath = this.certFactory.generateCertPath(Arrays.asList(chain));
+                    // Validate against truststore
+                    CertPathValidatorResult result = this.validator.validate(certPath, this.validatorParams);
+                    // Check expiration for the CA used to validate this path
+                    ((PKIXCertPathValidatorResult) result).getTrustAnchor().getTrustedCert().checkValidity();
+
+                } catch (InvalidAlgorithmParameterException e) {
+                    throw new CertificateException(e);
+                } catch (CertPathValidatorException e) {
+                    throw new CertificateException(e);
+                }
+            }
+
+            if (this.verifyServerCert) {
+                if (this.origTm != null) {
+                    this.origTm.checkServerTrusted(chain, authType);
+                } else {
+                    throw new CertificateException("Can't verify server certificate because no trust manager is found.");
+                }
             }
         }
 
-        String keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
-        String keyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue();
-        String trustStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
-        String trustStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            this.origTm.checkClientTrusted(chain, authType);
+        }
+    }
+
+    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(PropertySet propertySet, ExceptionInterceptor exceptionInterceptor)
+            throws SSLParamsException {
+        String clientCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
+        String clientCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
+                .getValue();
+        String clientCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
+        String trustCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
+        String trustCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
+        String trustCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
+
+        if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+            clientCertificateKeyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
+            clientCertificateKeyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
+            clientCertificateKeyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
+            if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
+                clientCertificateKeyStoreType = "JKS";
+            }
+            // check URL
+            if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+                try {
+                    new URL(clientCertificateKeyStoreUrl);
+                } catch (MalformedURLException e) {
+                    clientCertificateKeyStoreUrl = "file:" + clientCertificateKeyStoreUrl;
+                }
+            }
+        }
+
+        if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+            trustCertificateKeyStoreUrl = System.getProperty("javax.net.ssl.trustStore");
+            trustCertificateKeyStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
+            trustCertificateKeyStoreType = System.getProperty("javax.net.ssl.trustStoreType");
+            if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+                trustCertificateKeyStoreType = "JKS";
+            }
+            // check URL
+            if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+                try {
+                    new URL(trustCertificateKeyStoreUrl);
+                } catch (MalformedURLException e) {
+                    trustCertificateKeyStoreUrl = "file:" + trustCertificateKeyStoreUrl;
+                }
+            }
+        }
+
         boolean verifyServerCert = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue();
 
-        return getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType, trustStorePassword, verifyServerCert,
-                exceptionInterceptor).getSocketFactory();
+        return getSSLContext(clientCertificateKeyStoreUrl, clientCertificateKeyStoreType, clientCertificateKeyStorePassword, trustCertificateKeyStoreUrl,
+                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, verifyServerCert, exceptionInterceptor).getSocketFactory();
     }
 
     /**
      * Configure the {@link SSLContext} based on the supplier property set.
      */
-    public static SSLContext getSSLContext(String keyStoreUrl, String keyStoreType, String keyStorePassword, String trustStoreUrl, String trustStoreType,
-            String trustStorePassword, boolean verifyServerCert, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
+    public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
+            String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword, boolean verifyServerCert,
+            ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
         TrustManagerFactory tmf = null;
         KeyManagerFactory kmf = null;
+
+        KeyManager[] kms = null;
+        List<TrustManager> tms = new ArrayList<>();
 
         try {
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -245,15 +363,18 @@ public class ExportControlled {
                     exceptionInterceptor);
         }
 
-        if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
+        if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
             InputStream ksIS = null;
             try {
-                KeyStore clientKeyStore = KeyStore.getInstance(keyStoreType);
-                URL ksURL = new URL(keyStoreUrl);
-                char[] password = (keyStorePassword == null) ? new char[0] : keyStorePassword.toCharArray();
-                ksIS = ksURL.openStream();
-                clientKeyStore.load(ksIS, password);
-                kmf.init(clientKeyStore, password);
+                if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
+                    KeyStore clientKeyStore = KeyStore.getInstance(clientCertificateKeyStoreType);
+                    URL ksURL = new URL(clientCertificateKeyStoreUrl);
+                    char[] password = (clientCertificateKeyStorePassword == null) ? new char[0] : clientCertificateKeyStorePassword.toCharArray();
+                    ksIS = ksURL.openStream();
+                    clientKeyStore.load(ksIS, password);
+                    kmf.init(clientKeyStore, password);
+                    kms = kmf.getKeyManagers();
+                }
             } catch (UnrecoverableKeyException uke) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", uke,
                         exceptionInterceptor);
@@ -264,14 +385,14 @@ public class ExportControlled {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         exceptionInterceptor);
             } catch (CertificateException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load client" + keyStoreType + " keystore from " + keyStoreUrl, nsae,
-                        exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class,
+                        "Could not load client" + clientCertificateKeyStoreType + " keystore from " + clientCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
-                throw ExceptionFactory.createException(SSLParamsException.class, keyStoreUrl + " does not appear to be a valid URL.", mue,
+                throw ExceptionFactory.createException(SSLParamsException.class, clientCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         exceptionInterceptor);
             } catch (IOException ioe) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + keyStoreUrl + " [" + ioe.getMessage() + "]", ioe,
-                        exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + clientCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        ioe, exceptionInterceptor);
             } finally {
                 if (ksIS != null) {
                     try {
@@ -283,16 +404,28 @@ public class ExportControlled {
             }
         }
 
-        if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
+        if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
             InputStream ksIS = null;
             try {
-                KeyStore trustKeyStore = KeyStore.getInstance(trustStoreType);
-                URL ksURL = new URL(trustStoreUrl);
+                if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+                    KeyStore trustKeyStore = KeyStore.getInstance(trustCertificateKeyStoreType);
+                    URL ksURL = new URL(trustCertificateKeyStoreUrl);
 
-                char[] password = (trustStorePassword == null) ? new char[0] : trustStorePassword.toCharArray();
-                ksIS = ksURL.openStream();
-                trustKeyStore.load(ksIS, password);
-                tmf.init(trustKeyStore);
+                    char[] password = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
+                    ksIS = ksURL.openStream();
+                    trustKeyStore.load(ksIS, password);
+                    tmf.init(trustKeyStore);
+
+                    // building the customized list of TrustManagers from original one if it's available
+                    TrustManager[] origTms = tmf.getTrustManagers();
+
+                    for (int j = 0; j < origTms.length; j++) {
+                        tms.add(origTms[j] instanceof X509TrustManager
+                                ? new X509TrustManagerWrapper((X509TrustManager) origTms[j], verifyServerCert, trustKeyStore) // wrapping X509TrustManagers
+                                : origTms[j] // for non-X509 TrustManagers putting original ones
+                        );
+                    }
+                }
             } catch (NoSuchAlgorithmException nsae) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
                         exceptionInterceptor);
@@ -300,14 +433,14 @@ public class ExportControlled {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
                         exceptionInterceptor);
             } catch (CertificateException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not load trust" + trustStoreType + " keystore from " + trustStoreUrl,
-                        nsae, exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class,
+                        "Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl, nsae, exceptionInterceptor);
             } catch (MalformedURLException mue) {
-                throw ExceptionFactory.createException(SSLParamsException.class, trustStoreUrl + " does not appear to be a valid URL.", mue,
+                throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
                         exceptionInterceptor);
             } catch (IOException ioe) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustStoreUrl + " [" + ioe.getMessage() + "]", ioe,
-                        exceptionInterceptor);
+                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
+                        ioe, exceptionInterceptor);
             } finally {
                 if (ksIS != null) {
                     try {
@@ -326,26 +459,42 @@ public class ExportControlled {
             }
         }
 
-        SSLContext sslContext = null;
+        //        SSLContext sslContext = null;
+        //
+        //        try {
+        //            sslContext = SSLContext.getInstance("TLS");
+        //            sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ? null : kmf.getKeyManagers(),
+        //                    verifyServerCert ? tmf.getTrustManagers() : new X509TrustManager[] { new X509TrustManager() {
+        //                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        //                            // return without complaint
+        //                        }
+        //
+        //                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        //                            // return without complaint
+        //                        }
+        //
+        //                        public X509Certificate[] getAcceptedIssuers() {
+        //                            return null;
+        //                        }
+        //                    } }, null);
+        //
+        //            return sslContext;
+        //        } catch (NoSuchAlgorithmException nsae) {
+        //            throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
+        //        } catch (KeyManagementException kme) {
+        //            throw new SSLParamsException("KeyManagementException: " + kme.getMessage(), kme);
+        //        }
+
+        // if original TrustManagers are not available then putting one X509TrustManagerWrapper which take care only about expiration check 
+        if (tms.size() == 0) {
+            tms.add(new X509TrustManagerWrapper(verifyServerCert));
+        }
 
         try {
-            sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(StringUtils.isNullOrEmpty(keyStoreUrl) ? null : kmf.getKeyManagers(),
-                    verifyServerCert ? tmf.getTrustManagers() : new X509TrustManager[] { new X509TrustManager() {
-                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                            // return without complaint
-                        }
-
-                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                            // return without complaint
-                        }
-
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-                    } }, null);
-
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kms, tms.toArray(new TrustManager[tms.size()]), null);
             return sslContext;
+
         } catch (NoSuchAlgorithmException nsae) {
             throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
         } catch (KeyManagementException kme) {

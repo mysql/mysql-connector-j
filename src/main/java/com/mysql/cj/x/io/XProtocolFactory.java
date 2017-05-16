@@ -25,6 +25,8 @@ package com.mysql.cj.x.io;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
@@ -124,6 +126,24 @@ public class XProtocolFactory {
                 String trustStoreUrl = trustStoreUrlProp.getValue();
                 String trustStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue();
                 String trustStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue();
+
+                if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
+                    trustStoreUrl = System.getProperty("javax.net.ssl.trustStore");
+                    trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
+                    trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
+                    if (StringUtils.isNullOrEmpty(trustStoreType)) {
+                        trustStoreType = "JKS";
+                    }
+                    // check URL
+                    if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
+                        try {
+                            new URL(trustStoreUrl);
+                        } catch (MalformedURLException e) {
+                            trustStoreUrl = "file:" + trustStoreUrl;
+                        }
+                    }
+                }
+
                 boolean verifyServerCert = (verifyServerCertProp.isExplicitlySet() && verifyServerCertProp.getValue())
                         || (!verifyServerCertProp.isExplicitlySet() && !StringUtils.isNullOrEmpty(trustStoreUrl));
 
@@ -131,6 +151,23 @@ public class XProtocolFactory {
                 String keyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
                 String keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
                 String keyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue();
+
+                if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
+                    keyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
+                    keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
+                    keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
+                    if (StringUtils.isNullOrEmpty(keyStoreType)) {
+                        keyStoreType = "JKS";
+                    }
+                    // check URL
+                    if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
+                        try {
+                            new URL(keyStoreUrl);
+                        } catch (MalformedURLException e) {
+                            keyStoreUrl = "file:" + keyStoreUrl;
+                        }
+                    }
+                }
 
                 SSLContext sslContext = ExportControlled.getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType,
                         trustStorePassword, verifyServerCert, null);

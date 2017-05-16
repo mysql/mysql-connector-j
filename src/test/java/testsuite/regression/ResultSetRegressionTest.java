@@ -26,6 +26,9 @@ package testsuite.regression;
 import java.io.ByteArrayInputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -63,6 +66,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -5949,5 +5953,57 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(0L, this.rs.getLong(1));
         assertEquals(0, this.rs.getInt(1));
         assertNull(this.rs.getBigDecimal(1));
+    }
+
+    /**
+     * Tests fix for Bug#70704 - Deadlock using UpdatableResultSet.
+     * 
+     * Doesn't actually test the buggy behavior since it is not verifiable since the fix for Bug#59462 (revision 385a151). However, the patch for this fix is
+     * needed because the synchronization in UpdatableResultSet was dated.
+     * This test makes sure there is no regression.
+     * 
+     * WARNING! If this test fails there is no guarantee that the JVM will remain stable and won't affect any other tests. It is imperative that this test
+     * passes to ensure other tests results.
+     */
+    public void testBug70704() throws Exception {
+        for (int i = 0; i < 100; i++) {
+            final Statement testStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            final ResultSet testRs = testStmt.executeQuery("SELECT 1");
+
+            ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+            executorService.submit(new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.close();
+                    return null;
+                }
+            });
+
+            executorService.submit(new Callable<Void>() {
+                public Void call() throws Exception {
+                    testRs.close();
+                    return null;
+                }
+            });
+
+            executorService.shutdown();
+            if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) {
+                ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+                long[] threadIds = threadMXBean.findMonitorDeadlockedThreads();
+                if (threadIds != null) {
+                    System.err.println("Deadlock detected!");
+                    ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+                    for (ThreadInfo ti : threadInfos) {
+                        System.err.println();
+                        System.err.println(ti);
+                        System.err.println("Stack trace:");
+                        for (StackTraceElement ste : ti.getStackTrace()) {
+                            System.err.println("   " + ste);
+                        }
+                    }
+                    fail("Unexpected deadlock detected. Consult system output for more details. WARNING: this failure may lead to JVM instability.");
+                }
+            }
+        }
     }
 }

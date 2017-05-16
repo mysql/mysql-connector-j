@@ -3,6 +3,10 @@
 
 Version 8.0.7
 
+  - Fix for Bug#70704 (17653733), Deadlock using UpdatableResultSet.
+
+  - Fix for Bug#66430 (16714868), setCatalog on connection leaves ServerPreparedStatement cache for old catalog.
+
   - Fix for Bug#70808 (17757070), Set sessionVariables in a single query.
 
   - Fix for Bug#77192 (21170603), Description for the Property replicationConnetionGroup Missing from the Manual.

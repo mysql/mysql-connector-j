@@ -144,7 +144,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean absolute(int row) throws SQLException {
+    public boolean absolute(int row) throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -156,7 +156,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void afterLast() throws SQLException {
+    public void afterLast() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -169,8 +169,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void beforeFirst() throws SQLException {
-
+    public void beforeFirst() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -183,9 +182,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void cancelRowUpdates() throws SQLException {
-        checkClosed();
-
+    public void cancelRowUpdates() throws SQLException {
         if (this.doingUpdates) {
             this.doingUpdates = false;
             this.updater.clearParameters();
@@ -193,9 +190,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    protected synchronized void checkRowPos() throws SQLException {
-        checkClosed();
-
+    protected void checkRowPos() throws SQLException {
         if (!this.onInsertRow) {
             super.checkRowPos();
         }
@@ -301,7 +296,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;
-                HashMap<String, String> primaryKeyNames = new HashMap<String, String>();
+                HashMap<String, String> primaryKeyNames = new HashMap<>();
 
                 try {
                     rs = dbmd.getPrimaryKeys(catalogName, null, singleTableName);
@@ -390,56 +385,54 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void deleteRow() throws SQLException {
-        checkClosed();
-
-        if (!this.isUpdatable) {
-            throw new NotUpdatable(this.notUpdatableReason);
-        }
-
-        if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1"), getExceptionInterceptor());
-        } else if (this.rowData.size() == 0) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2"), getExceptionInterceptor());
-        } else if (isBeforeFirst()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3"), getExceptionInterceptor());
-        } else if (isAfterLast()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4"), getExceptionInterceptor());
-        }
-
-        if (this.deleter == null) {
-            if (this.deleteSQL == null) {
-                generateStatements();
+    public void deleteRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw new NotUpdatable(this.notUpdatableReason);
             }
 
-            this.deleter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.deleteSQL);
-        }
-
-        this.deleter.clearParameters();
-
-        int numKeys = this.primaryKeyIndicies.size();
-
-        if (numKeys == 1) {
-            int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.deleter, 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
-        } else {
-            for (int i = 0; i < numKeys; i++) {
-                int index = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
-
+            if (this.onInsertRow) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1"), getExceptionInterceptor());
+            } else if (this.rowData.size() == 0) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2"), getExceptionInterceptor());
+            } else if (isBeforeFirst()) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3"), getExceptionInterceptor());
+            } else if (isAfterLast()) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4"), getExceptionInterceptor());
             }
+
+            if (this.deleter == null) {
+                if (this.deleteSQL == null) {
+                    generateStatements();
+                }
+
+                this.deleter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.deleteSQL);
+            }
+
+            this.deleter.clearParameters();
+
+            int numKeys = this.primaryKeyIndicies.size();
+
+            if (numKeys == 1) {
+                int index = this.primaryKeyIndicies.get(0).intValue();
+                this.setParamValue(this.deleter, 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
+            } else {
+                for (int i = 0; i < numKeys; i++) {
+                    int index = this.primaryKeyIndicies.get(i).intValue();
+                    this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
+
+                }
+            }
+
+            this.deleter.executeUpdate();
+            this.rowData.remove();
+
+            // position on previous row - Bug#27431
+            previous();
         }
-
-        this.deleter.executeUpdate();
-        this.rowData.remove();
-
-        // position on previous row - Bug#27431
-        previous();
-
     }
 
-    private synchronized void setParamValue(PreparedStatement ps, int psIdx, Row row, int rsIdx, MysqlType mysqlType) throws SQLException {
-
+    private void setParamValue(PreparedStatement ps, int psIdx, Row row, int rsIdx, MysqlType mysqlType) throws SQLException {
         byte[] val = row.getBytes(rsIdx);
         if (val == null) {
             ps.setNull(psIdx, MysqlType.NULL);
@@ -508,7 +501,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     }
 
-    private synchronized void extractDefaultValues() throws SQLException {
+    private void extractDefaultValues() throws SQLException {
         java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
         this.defaultColumnValue = new byte[this.getMetadata().getFields().length][];
 
@@ -544,7 +537,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean first() throws SQLException {
+    public boolean first() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -563,7 +556,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @throws SQLException
      * @throws NotUpdatable
      */
-    protected synchronized void generateStatements() throws SQLException {
+    protected void generateStatements() throws SQLException {
         if (!this.isUpdatable) {
             this.doingUpdates = false;
             this.onInsertRow = false;
@@ -576,21 +569,21 @@ public class UpdatableResultSet extends ResultSetImpl {
         Map<String, String> tableNamesSoFar = null;
 
         if (this.getConnection().lowerCaseTableNames()) {
-            tableNamesSoFar = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-            this.databasesUsedToTablesUsed = new TreeMap<String, Map<String, Map<String, Integer>>>(String.CASE_INSENSITIVE_ORDER);
+            tableNamesSoFar = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            this.databasesUsedToTablesUsed = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         } else {
-            tableNamesSoFar = new TreeMap<String, String>();
-            this.databasesUsedToTablesUsed = new TreeMap<String, Map<String, Map<String, Integer>>>();
+            tableNamesSoFar = new TreeMap<>();
+            this.databasesUsedToTablesUsed = new TreeMap<>();
         }
 
-        this.primaryKeyIndicies = new ArrayList<Integer>();
+        this.primaryKeyIndicies = new ArrayList<>();
 
         StringBuilder fieldValues = new StringBuilder();
         StringBuilder keyValues = new StringBuilder();
         StringBuilder columnNames = new StringBuilder();
         StringBuilder insertPlaceHolders = new StringBuilder();
         StringBuilder allTablesBuf = new StringBuilder();
-        Map<Integer, String> columnIndicesToTable = new HashMap<Integer, String>();
+        Map<Integer, String> columnIndicesToTable = new HashMap<>();
 
         boolean firstTime = true;
         boolean keysFirstTime = true;
@@ -745,9 +738,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         if (tablesUsedToColumnsMap == null) {
             if (this.getConnection().lowerCaseTableNames()) {
-                tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>(String.CASE_INSENSITIVE_ORDER);
+                tablesUsedToColumnsMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             } else {
-                tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>();
+                tablesUsedToColumnsMap = new TreeMap<>();
             }
 
             this.databasesUsedToTablesUsed.put(databaseName, tablesUsedToColumnsMap);
@@ -756,7 +749,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         nameToIndex = tablesUsedToColumnsMap.get(tableName);
 
         if (nameToIndex == null) {
-            nameToIndex = new HashMap<String, Integer>();
+            nameToIndex = new HashMap<>();
             tablesUsedToColumnsMap.put(tableName, nameToIndex);
         }
 
@@ -765,10 +758,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public int getConcurrency() throws SQLException {
-        return (this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
+        synchronized (checkClosed().getConnectionMutex()) {
+            return (this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
+        }
     }
 
-    private synchronized String getQuotedIdChar() throws SQLException {
+    private String getQuotedIdChar() throws SQLException {
         if (this.quotedIdChar == null) {
             java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
             this.quotedIdChar = dbmd.getIdentifierQuoteString();
@@ -778,61 +773,61 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void insertRow() throws SQLException {
-        checkClosed();
-
-        if (!this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor());
-        }
-
-        this.inserter.executeUpdate();
-
-        long autoIncrementId = this.inserter.getLastInsertID();
-        Field[] fields = this.getMetadata().getFields();
-        int numFields = fields.length;
-        byte[][] newRow = new byte[numFields][];
-
-        for (int i = 0; i < numFields; i++) {
-            if (this.inserter.isNull(i)) {
-                newRow[i] = null;
-            } else {
-                newRow[i] = this.inserter.getBytesRepresentation(i);
+    public void insertRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor());
             }
 
-            // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
-            if (fields[i].isAutoIncrement() && autoIncrementId > 0) {
-                newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
-                this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
+            this.inserter.executeUpdate();
+
+            long autoIncrementId = this.inserter.getLastInsertID();
+            Field[] fields = this.getMetadata().getFields();
+            int numFields = fields.length;
+            byte[][] newRow = new byte[numFields][];
+
+            for (int i = 0; i < numFields; i++) {
+                if (this.inserter.isNull(i)) {
+                    newRow[i] = null;
+                } else {
+                    newRow[i] = this.inserter.getBytesRepresentation(i);
+                }
+
+                // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
+                if (fields[i].isAutoIncrement() && autoIncrementId > 0) {
+                    newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
+                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
+                }
             }
+
+            Row resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
+
+            // inserter is always a client-side prepared statement, so it's safe to use it
+            // with ByteArrayRow for server-side prepared statement too
+            refreshRow(this.inserter, resultSetRow);
+
+            this.rowData.addRow(resultSetRow);
+            resetInserter();
         }
-
-        Row resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
-
-        // inserter is always a client-side prepared statement, so it's safe to use it
-        // with ByteArrayRow for server-side prepared statement too
-        refreshRow(this.inserter, resultSetRow);
-
-        this.rowData.addRow(resultSetRow);
-        resetInserter();
     }
 
     @Override
-    public synchronized boolean isAfterLast() throws SQLException {
+    public boolean isAfterLast() throws SQLException {
         return super.isAfterLast();
     }
 
     @Override
-    public synchronized boolean isBeforeFirst() throws SQLException {
+    public boolean isBeforeFirst() throws SQLException {
         return super.isBeforeFirst();
     }
 
     @Override
-    public synchronized boolean isFirst() throws SQLException {
+    public boolean isFirst() throws SQLException {
         return super.isFirst();
     }
 
     @Override
-    public synchronized boolean isLast() throws SQLException {
+    public boolean isLast() throws SQLException {
         return super.isLast();
     }
 
@@ -841,7 +836,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean last() throws SQLException {
+    public boolean last() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -854,96 +849,96 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void moveToCurrentRow() throws SQLException {
-        checkClosed();
+    public void moveToCurrentRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw new NotUpdatable(this.notUpdatableReason);
+            }
 
-        if (!this.isUpdatable) {
-            throw new NotUpdatable(this.notUpdatableReason);
-        }
-
-        if (this.onInsertRow) {
-            this.onInsertRow = false;
-            this.thisRow = this.savedCurrentRow;
+            if (this.onInsertRow) {
+                this.onInsertRow = false;
+                this.thisRow = this.savedCurrentRow;
+            }
         }
     }
 
     @Override
-    public synchronized void moveToInsertRow() throws SQLException {
-        checkClosed();
-
-        if (!this.isUpdatable) {
-            throw new NotUpdatable(this.notUpdatableReason);
-        }
-
-        if (this.inserter == null) {
-            if (this.insertSQL == null) {
-                generateStatements();
+    public void moveToInsertRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw new NotUpdatable(this.notUpdatableReason);
             }
 
-            this.inserter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.insertSQL);
-            if (this.populateInserterWithDefaultValues) {
-                extractDefaultValues();
-            }
+            if (this.inserter == null) {
+                if (this.insertSQL == null) {
+                    generateStatements();
+                }
 
-            resetInserter();
-        } else {
-            resetInserter();
-        }
+                this.inserter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.insertSQL);
+                if (this.populateInserterWithDefaultValues) {
+                    extractDefaultValues();
+                }
 
-        Field[] fields = this.getMetadata().getFields();
-        int numFields = fields.length;
-
-        this.onInsertRow = true;
-        this.doingUpdates = false;
-        this.savedCurrentRow = this.thisRow;
-        byte[][] newRowData = new byte[numFields][];
-        this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
-        this.thisRow.setMetadata(this.getMetadata());
-
-        for (int i = 0; i < numFields; i++) {
-            if (!this.populateInserterWithDefaultValues) {
-                this.inserter.setBytesNoEscapeNoQuotes(i + 1, StringUtils.getBytes("DEFAULT"));
-                newRowData = null;
+                resetInserter();
             } else {
-                if (this.defaultColumnValue[i] != null) {
-                    Field f = fields[i];
+                resetInserter();
+            }
 
-                    switch (f.getMysqlTypeId()) {
-                        case MysqlaConstants.FIELD_TYPE_DATE:
-                        case MysqlaConstants.FIELD_TYPE_DATETIME:
-                        case MysqlaConstants.FIELD_TYPE_TIME:
-                        case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+            Field[] fields = this.getMetadata().getFields();
+            int numFields = fields.length;
 
-                            if (this.defaultColumnValue[i].length > 7 && this.defaultColumnValue[i][0] == (byte) 'C'
-                                    && this.defaultColumnValue[i][1] == (byte) 'U' && this.defaultColumnValue[i][2] == (byte) 'R'
-                                    && this.defaultColumnValue[i][3] == (byte) 'R' && this.defaultColumnValue[i][4] == (byte) 'E'
-                                    && this.defaultColumnValue[i][5] == (byte) 'N' && this.defaultColumnValue[i][6] == (byte) 'T'
-                                    && this.defaultColumnValue[i][7] == (byte) '_') {
-                                this.inserter.setBytesNoEscapeNoQuotes(i + 1, this.defaultColumnValue[i]);
+            this.onInsertRow = true;
+            this.doingUpdates = false;
+            this.savedCurrentRow = this.thisRow;
+            byte[][] newRowData = new byte[numFields][];
+            this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
+            this.thisRow.setMetadata(this.getMetadata());
 
-                            } else {
-                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
-                            }
-                            break;
-
-                        default:
-                            this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
-                    }
-
-                    // This value _could_ be changed from a getBytes(), so we need a copy....
-                    byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
-                    System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
-                    newRowData[i] = defaultValueCopy;
+            for (int i = 0; i < numFields; i++) {
+                if (!this.populateInserterWithDefaultValues) {
+                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, StringUtils.getBytes("DEFAULT"));
+                    newRowData = null;
                 } else {
-                    this.inserter.setNull(i + 1, MysqlType.NULL);
-                    newRowData[i] = null;
+                    if (this.defaultColumnValue[i] != null) {
+                        Field f = fields[i];
+
+                        switch (f.getMysqlTypeId()) {
+                            case MysqlaConstants.FIELD_TYPE_DATE:
+                            case MysqlaConstants.FIELD_TYPE_DATETIME:
+                            case MysqlaConstants.FIELD_TYPE_TIME:
+                            case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+
+                                if (this.defaultColumnValue[i].length > 7 && this.defaultColumnValue[i][0] == (byte) 'C'
+                                        && this.defaultColumnValue[i][1] == (byte) 'U' && this.defaultColumnValue[i][2] == (byte) 'R'
+                                        && this.defaultColumnValue[i][3] == (byte) 'R' && this.defaultColumnValue[i][4] == (byte) 'E'
+                                        && this.defaultColumnValue[i][5] == (byte) 'N' && this.defaultColumnValue[i][6] == (byte) 'T'
+                                        && this.defaultColumnValue[i][7] == (byte) '_') {
+                                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, this.defaultColumnValue[i]);
+
+                                } else {
+                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
+                                }
+                                break;
+
+                            default:
+                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
+                        }
+
+                        // This value _could_ be changed from a getBytes(), so we need a copy....
+                        byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
+                        System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
+                        newRowData[i] = defaultValueCopy;
+                    } else {
+                        this.inserter.setNull(i + 1, MysqlType.NULL);
+                        newRowData[i] = null;
+                    }
                 }
             }
         }
     }
 
     @Override
-    public synchronized boolean next() throws SQLException {
+    public boolean next() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -956,12 +951,12 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean prev() throws SQLException {
+    public boolean prev() throws SQLException {
         return super.prev();
     }
 
     @Override
-    public synchronized boolean previous() throws SQLException {
+    public boolean previous() throws SQLException {
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
@@ -984,87 +979,89 @@ public class UpdatableResultSet extends ResultSetImpl {
      *             if an error occurs.
      */
     @Override
-    public synchronized void realClose(boolean calledExplicitly) throws SQLException {
+    public void realClose(boolean calledExplicitly) throws SQLException {
         if (this.isClosed) {
             return;
         }
 
-        SQLException sqlEx = null;
+        synchronized (checkClosed().getConnectionMutex()) {
+            SQLException sqlEx = null;
 
-        if (this.useUsageAdvisor) {
-            if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
+            if (this.useUsageAdvisor) {
+                if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
+                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
 
-                String message = Messages.getString("UpdatableResultSet.34");
+                    String message = Messages.getString("UpdatableResultSet.34");
 
-                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                        (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(), this.getConnectionId(),
-                        (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId, System.currentTimeMillis(), 0,
-                        Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
+                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
+                            (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(), this.getConnectionId(),
+                            (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId, System.currentTimeMillis(), 0,
+                            Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
+                }
             }
-        }
 
-        try {
-            if (this.deleter != null) {
-                this.deleter.close();
+            try {
+                if (this.deleter != null) {
+                    this.deleter.close();
+                }
+            } catch (SQLException ex) {
+                sqlEx = ex;
             }
-        } catch (SQLException ex) {
-            sqlEx = ex;
-        }
 
-        try {
-            if (this.inserter != null) {
-                this.inserter.close();
+            try {
+                if (this.inserter != null) {
+                    this.inserter.close();
+                }
+            } catch (SQLException ex) {
+                sqlEx = ex;
             }
-        } catch (SQLException ex) {
-            sqlEx = ex;
-        }
 
-        try {
-            if (this.refresher != null) {
-                this.refresher.close();
+            try {
+                if (this.refresher != null) {
+                    this.refresher.close();
+                }
+            } catch (SQLException ex) {
+                sqlEx = ex;
             }
-        } catch (SQLException ex) {
-            sqlEx = ex;
-        }
 
-        try {
-            if (this.updater != null) {
-                this.updater.close();
+            try {
+                if (this.updater != null) {
+                    this.updater.close();
+                }
+            } catch (SQLException ex) {
+                sqlEx = ex;
             }
-        } catch (SQLException ex) {
-            sqlEx = ex;
-        }
 
-        super.realClose(calledExplicitly);
+            super.realClose(calledExplicitly);
 
-        if (sqlEx != null) {
-            throw sqlEx;
+            if (sqlEx != null) {
+                throw sqlEx;
+            }
         }
     }
 
     @Override
-    public synchronized void refreshRow() throws SQLException {
-        checkClosed();
+    public void refreshRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw SQLError.notUpdatable();
+            }
 
-        if (!this.isUpdatable) {
-            throw SQLError.notUpdatable();
+            if (this.onInsertRow) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8"), getExceptionInterceptor());
+            } else if (this.rowData.size() == 0) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9"), getExceptionInterceptor());
+            } else if (isBeforeFirst()) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10"), getExceptionInterceptor());
+            } else if (isAfterLast()) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11"), getExceptionInterceptor());
+            }
+
+            refreshRow(this.updater, this.thisRow);
         }
-
-        if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8"), getExceptionInterceptor());
-        } else if (this.rowData.size() == 0) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9"), getExceptionInterceptor());
-        } else if (isBeforeFirst()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10"), getExceptionInterceptor());
-        } else if (isAfterLast()) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11"), getExceptionInterceptor());
-        }
-
-        refreshRow(this.updater, this.thisRow);
     }
 
-    private synchronized void refreshRow(PreparedStatement updateInsertStmt, Row rowToRefresh) throws SQLException {
+    private void refreshRow(PreparedStatement updateInsertStmt, Row rowToRefresh) throws SQLException {
         if (this.refresher == null) {
             if (this.refreshSQL == null) {
                 generateStatements();
@@ -1160,7 +1157,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean relative(int rows) throws SQLException {
+    public boolean relative(int rows) throws SQLException {
         return super.relative(rows);
     }
 
@@ -1173,17 +1170,17 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean rowDeleted() throws SQLException {
+    public boolean rowDeleted() throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
-    public synchronized boolean rowInserted() throws SQLException {
+    public boolean rowInserted() throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
-    public synchronized boolean rowUpdated() throws SQLException {
+    public boolean rowUpdated() throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
@@ -1209,7 +1206,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * 
      * @throws SQLException
      */
-    protected synchronized void syncUpdate() throws SQLException {
+    protected void syncUpdate() throws SQLException {
         if (this.updater == null) {
             if (this.updateSQL == null) {
                 generateStatements();
@@ -1244,330 +1241,360 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            this.updater.setAsciiStream(columnIndex, x, length);
-        } else {
-            this.inserter.setAsciiStream(columnIndex, x, length);
-            this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                this.updater.setAsciiStream(columnIndex, x, length);
+            } else {
+                this.inserter.setAsciiStream(columnIndex, x, length);
+                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+            }
         }
     }
 
     @Override
-    public synchronized void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
+    public void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
         updateAsciiStream(findColumn(columnName), x, length);
     }
 
     @Override
-    public synchronized void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            this.updater.setBigDecimal(columnIndex, x);
-        } else {
-            this.inserter.setBigDecimal(columnIndex, x);
-
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setBigDecimal(columnIndex, x);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x.toString()));
+                this.inserter.setBigDecimal(columnIndex, x);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x.toString()));
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
+    public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
         updateBigDecimal(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    public void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            this.updater.setBinaryStream(columnIndex, x, length);
-        } else {
-            this.inserter.setBinaryStream(columnIndex, x, length);
-
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setBinaryStream(columnIndex, x, length);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                this.inserter.setBinaryStream(columnIndex, x, length);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
+    public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
         updateBinaryStream(findColumn(columnName), x, length);
     }
 
     @Override
-    public synchronized void updateBlob(int columnIndex, java.sql.Blob blob) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    public void updateBlob(int columnIndex, java.sql.Blob blob) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            this.updater.setBlob(columnIndex, blob);
-        } else {
-            this.inserter.setBlob(columnIndex, blob);
-
-            if (blob == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setBlob(columnIndex, blob);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                this.inserter.setBlob(columnIndex, blob);
+
+                if (blob == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateBlob(String columnName, java.sql.Blob blob) throws SQLException {
+    public void updateBlob(String columnName, java.sql.Blob blob) throws SQLException {
         updateBlob(findColumn(columnName), blob);
     }
 
     @Override
-    public synchronized void updateBoolean(int columnIndex, boolean x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateBoolean(int columnIndex, boolean x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setBoolean(columnIndex, x);
+            } else {
+                this.inserter.setBoolean(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setBoolean(columnIndex, x);
-        } else {
-            this.inserter.setBoolean(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateBoolean(String columnName, boolean x) throws SQLException {
+    public void updateBoolean(String columnName, boolean x) throws SQLException {
         updateBoolean(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateByte(int columnIndex, byte x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateByte(int columnIndex, byte x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setByte(columnIndex, x);
+            } else {
+                this.inserter.setByte(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setByte(columnIndex, x);
-        } else {
-            this.inserter.setByte(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateByte(String columnName, byte x) throws SQLException {
+    public void updateByte(String columnName, byte x) throws SQLException {
         updateByte(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateBytes(int columnIndex, byte[] x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateBytes(int columnIndex, byte[] x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setBytes(columnIndex, x);
+            } else {
+                this.inserter.setBytes(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, x);
             }
-
-            this.updater.setBytes(columnIndex, x);
-        } else {
-            this.inserter.setBytes(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, x);
         }
     }
 
     @Override
-    public synchronized void updateBytes(String columnName, byte[] x) throws SQLException {
+    public void updateBytes(String columnName, byte[] x) throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    public void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            this.updater.setCharacterStream(columnIndex, x, length);
-        } else {
-            this.inserter.setCharacterStream(columnIndex, x, length);
-
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setCharacterStream(columnIndex, x, length);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                this.inserter.setCharacterStream(columnIndex, x, length);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
+    public void updateCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
         updateCharacterStream(findColumn(columnName), reader, length);
     }
 
     @Override
     public void updateClob(int columnIndex, java.sql.Clob clob) throws SQLException {
-        if (clob == null) {
-            updateNull(columnIndex);
-        } else {
-            updateCharacterStream(columnIndex, clob.getCharacterStream(), (int) clob.length());
-        }
-    }
-
-    @Override
-    public synchronized void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (clob == null) {
+                updateNull(columnIndex);
+            } else {
+                updateCharacterStream(columnIndex, clob.getCharacterStream(), (int) clob.length());
             }
-
-            this.updater.setDate(columnIndex, x);
-        } else {
-            this.inserter.setDate(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateDate(String columnName, java.sql.Date x) throws SQLException {
+    public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setDate(columnIndex, x);
+            } else {
+                this.inserter.setDate(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            }
+        }
+    }
+
+    @Override
+    public void updateDate(String columnName, java.sql.Date x) throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateDouble(int columnIndex, double x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateDouble(int columnIndex, double x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setDouble(columnIndex, x);
+            } else {
+                this.inserter.setDouble(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setDouble(columnIndex, x);
-        } else {
-            this.inserter.setDouble(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateDouble(String columnName, double x) throws SQLException {
+    public void updateDouble(String columnName, double x) throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateFloat(int columnIndex, float x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateFloat(int columnIndex, float x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setFloat(columnIndex, x);
+            } else {
+                this.inserter.setFloat(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setFloat(columnIndex, x);
-        } else {
-            this.inserter.setFloat(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateFloat(String columnName, float x) throws SQLException {
+    public void updateFloat(String columnName, float x) throws SQLException {
         updateFloat(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateInt(int columnIndex, int x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateInt(int columnIndex, int x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setInt(columnIndex, x);
+            } else {
+                this.inserter.setInt(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setInt(columnIndex, x);
-        } else {
-            this.inserter.setInt(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateInt(String columnName, int x) throws SQLException {
+    public void updateInt(String columnName, int x) throws SQLException {
         updateInt(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateLong(int columnIndex, long x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateLong(int columnIndex, long x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setLong(columnIndex, x);
+            } else {
+                this.inserter.setLong(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setLong(columnIndex, x);
-        } else {
-            this.inserter.setLong(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateLong(String columnName, long x) throws SQLException {
+    public void updateLong(String columnName, long x) throws SQLException {
         updateLong(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateNull(int columnIndex) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateNull(int columnIndex) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setNull(columnIndex, 0);
+            } else {
+                this.inserter.setNull(columnIndex, 0);
+
+                this.thisRow.setBytes(columnIndex - 1, null);
             }
-
-            this.updater.setNull(columnIndex, 0);
-        } else {
-            this.inserter.setNull(columnIndex, 0);
-
-            this.thisRow.setBytes(columnIndex - 1, null);
         }
     }
 
     @Override
-    public synchronized void updateNull(String columnName) throws SQLException {
+    public void updateNull(String columnName) throws SQLException {
         updateNull(findColumn(columnName));
     }
 
     @Override
-    public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
+    public void updateObject(int columnIndex, Object x) throws SQLException {
         updateObjectInternal(columnIndex, x, (Integer) null, 0);
     }
 
     @Override
-    public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
+    public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
         updateObjectInternal(columnIndex, x, (Integer) null, scale);
     }
 
@@ -1581,7 +1608,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @param scaleOrLength
      * @throws SQLException
      */
-    protected synchronized void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
+    protected void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
         try {
             MysqlType targetMysqlType = targetType == null ? null : MysqlType.getByJdbcType(targetType);
             updateObjectInternal(columnIndex, x, targetMysqlType, scaleOrLength);
@@ -1601,164 +1628,174 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @param scaleOrLength
      * @throws SQLException
      */
-    protected synchronized void updateObjectInternal(int columnIndex, Object x, SQLType targetType, int scaleOrLength) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
+    protected void updateObjectInternal(int columnIndex, Object x, SQLType targetType, int scaleOrLength) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            if (targetType == null) {
-                this.updater.setObject(columnIndex, x);
+                if (targetType == null) {
+                    this.updater.setObject(columnIndex, x);
+                } else {
+                    this.updater.setObject(columnIndex, x, targetType);
+                }
             } else {
-                this.updater.setObject(columnIndex, x, targetType);
-            }
-        } else {
-            if (targetType == null) {
-                this.inserter.setObject(columnIndex, x);
-            } else {
-                this.inserter.setObject(columnIndex, x, targetType);
-            }
+                if (targetType == null) {
+                    this.inserter.setObject(columnIndex, x);
+                } else {
+                    this.inserter.setObject(columnIndex, x, targetType);
+                }
 
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            }
         }
     }
 
     @Override
-    public synchronized void updateObject(String columnName, Object x) throws SQLException {
+    public void updateObject(String columnName, Object x) throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateObject(String columnName, Object x, int scale) throws SQLException {
+    public void updateObject(String columnName, Object x, int scale) throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
         updateObjectInternal(columnIndex, x, targetSqlType, 0);
     }
 
     @Override
-    public synchronized void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         updateObjectInternal(columnIndex, x, targetSqlType, scaleOrLength);
     }
 
     @Override
-    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
         updateObjectInternal(findColumn(columnLabel), x, targetSqlType, 0);
     }
 
     @Override
-    public synchronized void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         updateObjectInternal(findColumn(columnLabel), x, targetSqlType, scaleOrLength);
     }
 
     @Override
-    public synchronized void updateRow() throws SQLException {
-        if (!this.isUpdatable) {
-            throw new NotUpdatable(this.notUpdatableReason);
-        }
-
-        if (this.doingUpdates) {
-            this.updater.executeUpdate();
-            refreshRow();
-            this.doingUpdates = false;
-        } else if (this.onInsertRow) {
-            throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
-        }
-
-        // fixes calling updateRow() and then doing more updates on same row...
-        syncUpdate();
-    }
-
-    @Override
-    public synchronized void updateShort(int columnIndex, short x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw new NotUpdatable(this.notUpdatableReason);
             }
 
-            this.updater.setShort(columnIndex, x);
-        } else {
-            this.inserter.setShort(columnIndex, x);
+            if (this.doingUpdates) {
+                this.updater.executeUpdate();
+                refreshRow();
+                this.doingUpdates = false;
+            } else if (this.onInsertRow) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
+            }
 
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            // fixes calling updateRow() and then doing more updates on same row...
+            syncUpdate();
         }
     }
 
     @Override
-    public synchronized void updateShort(String columnName, short x) throws SQLException {
+    public void updateShort(int columnIndex, short x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setShort(columnIndex, x);
+            } else {
+                this.inserter.setShort(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+            }
+        }
+    }
+
+    @Override
+    public void updateShort(String columnName, short x) throws SQLException {
         updateShort(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateString(int columnIndex, String x) throws SQLException {
-        checkClosed();
+    public void updateString(int columnIndex, String x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
-
-            this.updater.setString(columnIndex, x);
-        } else {
-            this.inserter.setString(columnIndex, x);
-
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setString(columnIndex, x);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, this.charEncoding));
+                this.inserter.setString(columnIndex, x);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, this.charEncoding));
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateString(String columnName, String x) throws SQLException {
+    public void updateString(String columnName, String x) throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setTime(columnIndex, x);
+            } else {
+                this.inserter.setTime(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setTime(columnIndex, x);
-        } else {
-            this.inserter.setTime(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateTime(String columnName, java.sql.Time x) throws SQLException {
+    public void updateTime(String columnName, java.sql.Time x) throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
     @Override
-    public synchronized void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
+
+                this.updater.setTimestamp(columnIndex, x);
+            } else {
+                this.inserter.setTimestamp(columnIndex, x);
+
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
             }
-
-            this.updater.setTimestamp(columnIndex, x);
-        } else {
-            this.inserter.setTimestamp(columnIndex, x);
-
-            this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
         }
     }
 
     @Override
-    public synchronized void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
+    public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -2074,46 +2111,50 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.16"));
-        }
-
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException(Messages.getString("ResultSet.16"));
             }
 
-            this.updater.setNCharacterStream(columnIndex, x, length);
-        } else {
-            this.inserter.setNCharacterStream(columnIndex, x, length);
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setNCharacterStream(columnIndex, x, length);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                this.inserter.setNCharacterStream(columnIndex, x, length);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
+    public void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
         updateNCharacterStream(findColumn(columnName), reader, length);
     }
 
     @Override
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.17"));
-        }
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException(Messages.getString("ResultSet.17"));
+            }
 
-        if (nClob == null) {
-            updateNull(columnIndex);
-        } else {
-            updateNCharacterStream(columnIndex, nClob.getCharacterStream(), (int) nClob.length());
+            if (nClob == null) {
+                updateNull(columnIndex);
+            } else {
+                updateNCharacterStream(columnIndex, nClob.getCharacterStream(), (int) nClob.length());
+            }
         }
     }
 
@@ -2123,32 +2164,34 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized void updateNString(int columnIndex, String x) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.18"));
-        }
-
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
+    public void updateNString(int columnIndex, String x) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+                throw new SQLException(Messages.getString("ResultSet.18"));
             }
 
-            this.updater.setNString(columnIndex, x);
-        } else {
-            this.inserter.setNString(columnIndex, x);
+            if (!this.onInsertRow) {
+                if (!this.doingUpdates) {
+                    this.doingUpdates = true;
+                    syncUpdate();
+                }
 
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
+                this.updater.setNString(columnIndex, x);
             } else {
-                this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, fieldEncoding));
+                this.inserter.setNString(columnIndex, x);
+
+                if (x == null) {
+                    this.thisRow.setBytes(columnIndex - 1, null);
+                } else {
+                    this.thisRow.setBytes(columnIndex - 1, StringUtils.getBytes(x, fieldEncoding));
+                }
             }
         }
     }
 
     @Override
-    public synchronized void updateNString(String columnName, String x) throws SQLException {
+    public void updateNString(String columnName, String x) throws SQLException {
         updateNString(findColumn(columnName), x);
     }
 
@@ -2243,7 +2286,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public synchronized boolean isClosed() throws SQLException {
+    public boolean isClosed() throws SQLException {
         return this.isClosed;
     }
 
