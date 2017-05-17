@@ -1048,8 +1048,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
         if (sessionVariables != null) {
             List<String> variablesToSet = new ArrayList<>();
-            for (String part : StringUtils.split(sessionVariables, ",", "\"'", "\"'", true)) {
-                variablesToSet.addAll(StringUtils.split(part, ";", "\"'", "\"'", true));
+            for (String part : StringUtils.split(sessionVariables, ",", "\"'(", "\"')", "\"'", true)) {
+                variablesToSet.addAll(StringUtils.split(part, ";", "\"'(", "\"')", "\"'", true));
             }
 
             if (!variablesToSet.isEmpty()) {

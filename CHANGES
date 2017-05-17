@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - Fix for Bug#73775 (19531384), DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern.
+
   - Fix for Bug#84324 (25321524), CallableStatement.extractProcedureName() not work when catalog name with dash.
 
   - Fix for Bug#79561 (22333996), NullPointerException when calling a fully qualified stored procedure.

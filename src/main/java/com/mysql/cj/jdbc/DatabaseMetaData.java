@@ -1198,7 +1198,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *             if a database access error occurs.
      */
     public ResultSet extractForeignKeyFromCreateTable(String catalog, String tableName) throws SQLException {
-        ArrayList<String> tableList = new ArrayList<String>();
+        ArrayList<String> tableList = new ArrayList<>();
         java.sql.ResultSet rs = null;
         java.sql.Statement stmt = null;
 
@@ -1220,7 +1220,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        ArrayList<Row> rows = new ArrayList<Row>();
+        ArrayList<Row> rows = new ArrayList<>();
         Field[] fields = new Field[3];
         fields[0] = new Field("", "Name", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, Integer.MAX_VALUE);
         fields[1] = new Field("", "Type", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
@@ -1314,7 +1314,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[6] = new Field("", "DECIMAL_DIGITS", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 10);
         fields[7] = new Field("", "PSEUDO_COLUMN", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 5);
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
@@ -1696,9 +1696,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         paramName = paramName.substring(1, paramName.length() - 1);
                     }
 
-                    int wildCompareRes = StringUtils.wildCompare(paramName, parameterNamePattern);
-
-                    if (wildCompareRes != StringUtils.WILD_COMPARE_NO_MATCH) {
+                    if (StringUtils.wildCompareIgnoreCase(paramName, parameterNamePattern)) {
                         Row row = convertTypeDescriptorToProcedureRow(procNameAsBytes, procCatAsBytes, paramName, isOutParam, isInParam, false, typeDesc,
                                 forGetFunctionColumns, ordinal++);
 
@@ -1914,7 +1912,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 results.beforeFirst();
             }
 
-            List<String> resultsAsList = new ArrayList<String>(catalogsCount);
+            List<String> resultsAsList = new ArrayList<>(catalogsCount);
             while (results.next()) {
                 resultsAsList.add(results.getString(1));
             }
@@ -1924,7 +1922,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR,
                     results.getMetaData().getColumnDisplaySize(1));
 
-            ArrayList<Row> tuples = new ArrayList<Row>(catalogsCount);
+            ArrayList<Row> tuples = new ArrayList<>(catalogsCount);
             for (String cat : resultsAsList) {
                 byte[][] rowVal = new byte[1][];
                 rowVal[0] = s2b(cat);
@@ -1996,7 +1994,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         PreparedStatement pStmt = null;
         ResultSet results = null;
-        ArrayList<Row> grantRows = new ArrayList<Row>();
+        ArrayList<Row> grantRows = new ArrayList<>();
 
         try {
             pStmt = prepareMetaDataSafeStatement(grantQuery);
@@ -2087,7 +2085,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         Field[] fields = createColumnsFields();
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
@@ -2096,7 +2094,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 @Override
                 void forEach(String catalogStr) throws SQLException {
 
-                    ArrayList<String> tableNameList = new ArrayList<String>();
+                    ArrayList<String> tableNameList = new ArrayList<>();
 
                     if (tableNamePattern == null) {
                         // Select from all tables
@@ -2173,7 +2171,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                                 results = stmt.executeQuery(fullColumnQueryBuf.toString());
 
-                                ordinalFixUpMap = new HashMap<String, Integer>();
+                                ordinalFixUpMap = new HashMap<>();
 
                                 int fullOrdinalPos = 1;
 
@@ -2354,7 +2352,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         Field[] fields = createFkMetadataFields();
 
-        final ArrayList<Row> tuples = new ArrayList<Row>();
+        final ArrayList<Row> tuples = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -2580,7 +2578,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         Field[] fields = createFkMetadataFields();
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -2731,7 +2729,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         Field[] fields = createFkMetadataFields();
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -2827,8 +2825,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         Field[] fields = createIndexInfoFields();
 
-        final SortedMap<IndexMetaDataKey, Row> sortedRows = new TreeMap<IndexMetaDataKey, Row>();
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final SortedMap<IndexMetaDataKey, Row> sortedRows = new TreeMap<>();
+        final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
@@ -3174,7 +3172,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
@@ -3193,7 +3191,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         rs = stmt.executeQuery(queryBuf.toString());
 
-                        TreeMap<String, byte[][]> sortMap = new TreeMap<String, byte[][]>();
+                        TreeMap<String, byte[][]> sortMap = new TreeMap<>();
 
                         while (rs.next()) {
                             String keyType = rs.getString("Key_name");
@@ -3281,7 +3279,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected java.sql.ResultSet getProcedureOrFunctionColumns(Field[] fields, String catalog, String schemaPattern, String procedureOrFunctionNamePattern,
             String columnNamePattern, boolean returnProcedures, boolean returnFunctions) throws SQLException {
 
-        List<ComparableWrapper<String, ProcedureType>> procsOrFuncsToExtractList = new ArrayList<ComparableWrapper<String, ProcedureType>>();
+        List<ComparableWrapper<String, ProcedureType>> procsOrFuncsToExtractList = new ArrayList<>();
         //Main container to be passed to getProceduresAndOrFunctions
         ResultSet procsAndOrFuncsRs = null;
 
@@ -3318,7 +3316,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
                 procsOrFuncsToExtractList
-                        .add(new ComparableWrapper<String, ProcedureType>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
+                        .add(new ComparableWrapper<>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
                                 procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                 hasResults = true;
             }
@@ -3353,7 +3351,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        ArrayList<Row> resultRows = new ArrayList<Row>();
+        ArrayList<Row> resultRows = new ArrayList<>();
         int idx = 0;
         String procNameToCall = "";
 
@@ -3425,11 +3423,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        final ArrayList<Row> procedureRows = new ArrayList<Row>();
+        final ArrayList<Row> procedureRows = new ArrayList<>();
 
         final String procNamePattern = procedureNamePattern;
 
-        final List<ComparableWrapper<String, Row>> procedureRowsToSort = new ArrayList<ComparableWrapper<String, Row>>();
+        final List<ComparableWrapper<String, Row>> procedureRowsToSort = new ArrayList<>();
 
         new IterateBlock<String>(getCatalogIterator(catalog)) {
             @Override
@@ -3604,7 +3602,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[0] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
         fields[1] = new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
 
-        ArrayList<Row> tuples = new ArrayList<Row>();
+        ArrayList<Row> tuples = new ArrayList<>();
         java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
 
@@ -3655,7 +3653,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 return mysqlKeywords;
             }
 
-            Set<String> mysqlKeywordSet = new TreeSet<String>();
+            Set<String> mysqlKeywordSet = new TreeSet<>();
             StringBuilder mysqlKeywordsBuffer = new StringBuilder();
 
             Collections.addAll(mysqlKeywordSet, MYSQL_KEYWORDS);
@@ -3750,7 +3748,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         String grantQuery = "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv WHERE db LIKE ? AND table_name LIKE ?";
 
         ResultSet results = null;
-        ArrayList<Row> grantRows = new ArrayList<Row>();
+        ArrayList<Row> grantRows = new ArrayList<>();
         PreparedStatement pStmt = null;
 
         try {
@@ -3852,8 +3850,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        final SortedMap<TableMetaDataKey, Row> sortedRows = new TreeMap<TableMetaDataKey, Row>();
-        final ArrayList<Row> tuples = new ArrayList<Row>();
+        final SortedMap<TableMetaDataKey, Row> sortedRows = new TreeMap<>();
+        final ArrayList<Row> tuples = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -4077,7 +4075,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public java.sql.ResultSet getTableTypes() throws SQLException {
-        ArrayList<Row> tuples = new ArrayList<Row>();
+        ArrayList<Row> tuples = new ArrayList<>();
         Field[] fields = new Field[] { new Field("", "TABLE_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 256) };
 
         tuples.add(new ByteArrayRow(new byte[][] { TableType.LOCAL_TEMPORARY.asBytes() }, getExceptionInterceptor()));
@@ -4201,7 +4199,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[16] = new Field("", "SQL_DATETIME_SUB", this.metadataCollationIndex, this.metadataEncoding, MysqlType.INT, 10);
         fields[17] = new Field("", "NUM_PREC_RADIX", this.metadataCollationIndex, this.metadataEncoding, MysqlType.INT, 10);
 
-        ArrayList<Row> tuples = new ArrayList<Row>();
+        ArrayList<Row> tuples = new ArrayList<>();
 
         /*
          * The following are ordered by java.sql.Types, and then by how closely the MySQL type matches the JDBC Type (per spec)
@@ -4264,7 +4262,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "REMARKS", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 32);
         fields[6] = new Field("", "BASE_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 10);
 
-        ArrayList<Row> tuples = new ArrayList<Row>();
+        ArrayList<Row> tuples = new ArrayList<>();
 
         return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                 new ResultsetRowsStatic(tuples, new MysqlaColumnDefinition(fields)));
@@ -4341,7 +4339,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[6] = new Field("", "DECIMAL_DIGITS", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 16);
         fields[7] = new Field("", "PSEUDO_COLUMN", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 5);
 
-        final ArrayList<Row> rows = new ArrayList<Row>();
+        final ArrayList<Row> rows = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -4355,7 +4353,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     try {
                         StringBuilder whereBuf = new StringBuilder(" Extra LIKE '%on update CURRENT_TIMESTAMP%'");
-                        List<String> rsFields = new ArrayList<String>();
+                        List<String> rsFields = new ArrayList<>();
 
                         if (whereBuf.length() > 0 || rsFields.size() > 0) {
                             StringBuilder queryBuf = new StringBuilder("SHOW COLUMNS FROM ");
