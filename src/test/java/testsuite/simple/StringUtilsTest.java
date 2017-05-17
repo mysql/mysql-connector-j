@@ -1162,4 +1162,143 @@ public class StringUtilsTest extends BaseTestCase {
         assertEquals("\"methods(), ()results\"", stringParts.get(3));
         assertEquals("['discussion'']', conclusion]", stringParts.get(4));
     }
+
+    /**
+     * Tests StringUtils.split() methods for corner cases.
+     */
+    public void testSplitCornerCases() throws Exception {
+        List<String> stringParts;
+
+        int c = 0;
+        for (String s : new String[] { ",", "  ,", ",  ", "  ,  " }) {
+            String testCase = "Case: >" + s + "<";
+
+            // single delimiter, trim
+            String[] a = { "a" };
+            stringParts = StringUtils.split(s, ",", true);
+            assertEquals(testCase, 2, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            stringParts = StringUtils.split(s, ",", "([", ")]", true);
+            assertEquals(testCase, 2, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+
+            // single delimiter, don't trim
+            stringParts = StringUtils.split(s, ",", false);
+            assertEquals(testCase, 2, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0));
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(1));
+            stringParts = StringUtils.split(s, ",", "([", ")]", false);
+            assertEquals(testCase, 2, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0));
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(1));
+            c++;
+        }
+
+        // multiple delimiter (condensed)
+        c = 0;
+        for (String s : new String[] { ",,,", "  ,,,", ",,,  ", "  ,,,  " }) { // [empty|2sp], empty, empty, [empty|2sp]
+            String testCase = "Case: >" + s + "<";
+
+            // trim
+            stringParts = StringUtils.split(s, ",", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+            stringParts = StringUtils.split(s, ",", "([", ")]", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+
+            // don't trim
+            stringParts = StringUtils.split(s, ",", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "", stringParts.get(1)); // empty
+            assertEquals(testCase, "", stringParts.get(2)); // empty
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            stringParts = StringUtils.split(s, ",", "([", ")]", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "", stringParts.get(1)); // empty
+            assertEquals(testCase, "", stringParts.get(2)); // empty
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            c++;
+        }
+
+        // multiple delimiter (mixed)
+        c = 0;
+        for (String s : new String[] { ",, ,", "  ,, ,", ",, ,  ", "  ,, ,  " }) { // [empty|2sp], empty, 1sp, [empty|2sp]
+            String testCase = "Case: >" + s + "<";
+
+            // trim
+            stringParts = StringUtils.split(s, ",", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+            stringParts = StringUtils.split(s, ",", "([", ")]", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+
+            // don't trim
+            stringParts = StringUtils.split(s, ",", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "", stringParts.get(1)); // empty
+            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3));// [empty|2sp]
+            stringParts = StringUtils.split(s, ",", "([", ")]", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "", stringParts.get(1)); // empty
+            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3));// [empty|2sp]
+            c++;
+        }
+
+        // multiple delimiter (scattered)
+        c = 0;
+        for (String s : new String[] { ",   , ,", "  ,   , ,", ",   , ,  ", "  ,   , ,  " }) { // [empty|2sp], 3sp, 1sp, [empty|2sp]
+            String testCase = "Case: >" + s + "<";
+
+            // trim
+            stringParts = StringUtils.split(s, ",", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+            stringParts = StringUtils.split(s, ",", "([", ")]", true);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, "", stringParts.get(0));
+            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(testCase, "", stringParts.get(2));
+            assertEquals(testCase, "", stringParts.get(3));
+
+            // don't trim
+            stringParts = StringUtils.split(s, ",", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "   ", stringParts.get(1)); // 3sp
+            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            stringParts = StringUtils.split(s, ",", "([", ")]", false);
+            assertEquals(testCase, 4, stringParts.size());
+            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
+            assertEquals(testCase, "   ", stringParts.get(1)); // 3sp
+            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
+            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            c++;
+        }
+    }
 }
