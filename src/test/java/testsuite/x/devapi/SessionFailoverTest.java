@@ -26,6 +26,7 @@ package testsuite.x.devapi;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Callable;
@@ -167,6 +168,8 @@ public class SessionFailoverTest extends InternalXBaseTestCase {
                 for (;;) {
                     Socket clientSocket = this.serverSocket.accept();
                     this.connectionsCounter++;
+                    InputStream is = clientSocket.getInputStream();
+                    is.read(new byte[100]);
                     clientSocket.close();
                 }
             } catch (IOException e) {
