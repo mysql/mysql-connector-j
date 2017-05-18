@@ -894,8 +894,8 @@ public class StatementImpl implements Statement, Query {
 
                         statementBegins();
 
-                        rs = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, this.maxRows, null, createStreamingResultSet(),
-                                getResultSetFactory(), this.currentCatalog, cachedMetaData, false);
+                        rs = locallyScopedConn.getSession().execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), getResultSetFactory(),
+                                this.currentCatalog, cachedMetaData, false);
 
                         if (timeoutTask != null) {
                             if (timeoutTask.caughtWhileCancelling != null) {
@@ -1430,8 +1430,8 @@ public class StatementImpl implements Statement, Query {
 
                 statementBegins();
 
-                this.results = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, this.maxRows, null, createStreamingResultSet(),
-                        getResultSetFactory(), this.currentCatalog, cachedMetaData, false);
+                this.results = locallyScopedConn.getSession().execSQL(this, sql, this.maxRows, null, createStreamingResultSet(), getResultSetFactory(),
+                        this.currentCatalog, cachedMetaData, false);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {
@@ -1523,7 +1523,9 @@ public class StatementImpl implements Statement, Query {
     }
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
-        c.getSession().<ResultSetImpl> execSQL(c, this, nonQuery, -1, null, false, getResultSetFactory(), this.currentCatalog, null, false).close();
+        synchronized (c.getConnectionMutex()) {
+            c.getSession().<ResultSetImpl> execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), this.currentCatalog, null, false).close();
+        }
     }
 
     /**
@@ -1605,8 +1607,7 @@ public class StatementImpl implements Statement, Query {
                 statementBegins();
 
                 // null catalog: force read of field info on DML
-                rs = locallyScopedConn.getSession().execSQL(locallyScopedConn, this, sql, -1, null, false, getResultSetFactory(), this.currentCatalog, null,
-                        isBatch);
+                rs = locallyScopedConn.getSession().execSQL(this, sql, -1, null, false, getResultSetFactory(), this.currentCatalog, null, isBatch);
 
                 if (timeoutTask != null) {
                     if (timeoutTask.caughtWhileCancelling != null) {

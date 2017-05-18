@@ -159,4 +159,21 @@ public interface Session {
 
     String getProcessHost();
 
+    /**
+     * Add listener for this session status changes.
+     * 
+     * @param l
+     */
+    void addListener(SessionEventListener l);
+
+    void removeListener(SessionEventListener l);
+
+    public static interface SessionEventListener {
+        void handleNormalClose();
+
+        void handleReconnect();
+
+        void handleCleanup(Throwable whyCleanedUp);
+    }
+
 }

@@ -211,7 +211,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
 
                 this.statementLength = sql.length();
 
-                ArrayList<int[]> endpointList = new ArrayList<int[]>();
+                ArrayList<int[]> endpointList = new ArrayList<>();
                 boolean inQuotes = false;
                 char quoteChar = 0;
                 boolean inQuotedId = false;
@@ -586,7 +586,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     }
 
     static class AppendingBatchVisitor implements BatchVisitor {
-        LinkedList<byte[]> statementComponents = new LinkedList<byte[]>();
+        LinkedList<byte[]> statementComponents = new LinkedList<>();
 
         public BatchVisitor append(byte[] values) {
             this.statementComponents.addLast(values);
@@ -871,7 +871,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     public void addBatch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.batchedArgs == null) {
-                this.batchedArgs = new ArrayList<Object>();
+                this.batchedArgs = new ArrayList<>();
             }
 
             for (int i = 0; i < this.parameterValues.length; i++) {
@@ -1260,7 +1260,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                 int numBatchedArgs = this.batchedArgs.size();
 
                 if (this.retrieveGeneratedKeys) {
-                    this.batchedGeneratedKeys = new ArrayList<Row>(numBatchedArgs);
+                    this.batchedGeneratedKeys = new ArrayList<>(numBatchedArgs);
                 }
 
                 int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1446,7 +1446,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             int numBatchedArgs = this.batchedArgs.size();
 
             if (this.retrieveGeneratedKeys) {
-                this.batchedGeneratedKeys = new ArrayList<Row>(numBatchedArgs);
+                this.batchedGeneratedKeys = new ArrayList<>(numBatchedArgs);
             }
 
             int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1469,7 +1469,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             try {
                 try {
                     batchedStatement = /* FIXME -if we ever care about folks proxying our JdbcConnection */
-                    prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
+                            prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 
                     if (locallyScopedConn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue()
                             && batchTimeout != 0) {
@@ -1696,7 +1696,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (this.retrieveGeneratedKeys) {
-                        this.batchedGeneratedKeys = new ArrayList<Row>(nbrCommands);
+                        this.batchedGeneratedKeys = new ArrayList<>(nbrCommands);
                     }
 
                     for (this.batchCommandIndex = 0; this.batchCommandIndex < nbrCommands; this.batchCommandIndex++) {
@@ -1816,8 +1816,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                         statementBegins();
                     }
 
-                    rs = locallyScopedConnection.getSession().execSQL(locallyScopedConnection, this, null, maxRowsToRetrieve, sendPacket,
-                            createStreamingResultSet, getResultSetFactory(), this.getCurrentCatalog(), metadata, isBatch);
+                    rs = locallyScopedConnection.getSession().execSQL(this, null, maxRowsToRetrieve, sendPacket, createStreamingResultSet,
+                            getResultSetFactory(), this.getCurrentCatalog(), metadata, isBatch);
 
                     if (timeoutTask != null) {
                         timeoutTask.cancel();
@@ -2314,8 +2314,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         char c;
         char separator;
         StringReader reader = new StringReader(dt + " ");
-        ArrayList<Object[]> vec = new ArrayList<Object[]>();
-        ArrayList<Object[]> vecRemovelist = new ArrayList<Object[]>();
+        ArrayList<Object[]> vec = new ArrayList<>();
+        ArrayList<Object[]> vecRemovelist = new ArrayList<>();
         Object[] nv = new Object[3];
         Object[] v;
         nv[0] = Character.valueOf('y');
@@ -2534,8 +2534,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         return ((c == 'y') && (n == 2)) ? 'X'
                 : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
                         : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H'
-                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                                ? 'H' : ((c == 'H') ? 'm'
+                                        : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 
     /**
@@ -4720,7 +4720,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
         private boolean[] parameterIsNull;
 
         EmulatedPreparedStatementBindings() throws SQLException {
-            List<Row> rows = new ArrayList<Row>();
+            List<Row> rows = new ArrayList<>();
             this.parameterIsNull = new boolean[PreparedStatement.this.parameterCount];
             System.arraycopy(PreparedStatement.this.isNull, 0, this.parameterIsNull, 0, PreparedStatement.this.parameterCount);
             byte[][] rowData = new byte[PreparedStatement.this.parameterCount][];

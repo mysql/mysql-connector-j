@@ -27,27 +27,26 @@ import java.util.Set;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {
 
-    public CacheAdapter<String, ParseInfo> getInstance(MysqlConnection forConnection, String url, int cacheMaxSize, int maxKeySize) {
+    public CacheAdapter<String, ParseInfo> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize) {
 
-        return new PerConnectionLRU(forConnection, cacheMaxSize, maxKeySize);
+        return new PerConnectionLRU(syncMutex, cacheMaxSize, maxKeySize);
     }
 
     class PerConnectionLRU implements CacheAdapter<String, ParseInfo> {
         private final int cacheSqlLimit;
         private final LRUCache cache;
-        private final MysqlConnection conn;
+        private final Object syncMutex;
 
-        protected PerConnectionLRU(MysqlConnection forConnection, int cacheMaxSize, int maxKeySize) {
+        protected PerConnectionLRU(Object syncMutex, int cacheMaxSize, int maxKeySize) {
             final int cacheSize = cacheMaxSize;
             this.cacheSqlLimit = maxKeySize;
             this.cache = new LRUCache(cacheSize);
-            this.conn = forConnection;
+            this.syncMutex = syncMutex;
         }
 
         public ParseInfo get(String key) {
@@ -55,7 +54,7 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
                 return null;
             }
 
-            synchronized (this.conn.getConnectionMutex()) {
+            synchronized (this.syncMutex) {
                 return (ParseInfo) this.cache.get(key);
             }
         }
@@ -65,19 +64,19 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
                 return;
             }
 
-            synchronized (this.conn.getConnectionMutex()) {
+            synchronized (this.syncMutex) {
                 this.cache.put(key, value);
             }
         }
 
         public void invalidate(String key) {
-            synchronized (this.conn.getConnectionMutex()) {
+            synchronized (this.syncMutex) {
                 this.cache.remove(key);
             }
         }
 
         public void invalidateAll(Set<String> keys) {
-            synchronized (this.conn.getConnectionMutex()) {
+            synchronized (this.syncMutex) {
                 for (String key : keys) {
                     this.cache.remove(key);
                 }
@@ -86,7 +85,7 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
         }
 
         public void invalidateAll() {
-            synchronized (this.conn.getConnectionMutex()) {
+            synchronized (this.syncMutex) {
                 this.cache.clear();
             }
         }

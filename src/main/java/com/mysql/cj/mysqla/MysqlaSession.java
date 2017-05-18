@@ -26,6 +26,7 @@ package com.mysql.cj.mysqla;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -43,7 +44,6 @@ import java.util.TimeZone;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.Session;
@@ -73,6 +73,7 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -154,6 +155,14 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     private CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
+    /** Has this session been closed? */
+    private boolean isClosed = true;
+
+    /** Why was this session implicitly closed, if known? (for diagnostics) */
+    private Throwable forceClosedReason;
+
+    private List<WeakReference<SessionEventListener>> listeners;
+
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.connectionCreationTimeMillis = System.currentTimeMillis();
 
@@ -211,6 +220,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
         this.protocol.getServerSession().setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
+
+        this.isClosed = false;
     }
 
     // TODO: this method should not be used in user-level APIs
@@ -273,7 +284,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             }
             //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
-        //this.isClosed = true;
+        this.isClosed = true;
     }
 
     @Override
@@ -285,6 +296,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             }
 
         }
+        this.isClosed = true;
     }
 
     @Override
@@ -413,11 +425,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.setQueryInterceptors(queryInterceptors);
     }
 
-    public boolean isServerLocal(MysqlConnection conn) {
-        synchronized (conn.getConnectionMutex()) {
-            SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
-            return ((SocketMetadata) factory).isLocallyConnected(conn.getSession());
-        }
+    public boolean isServerLocal(Session sess) {
+        SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
+        return ((SocketMetadata) factory).isLocallyConnected(sess);
     }
 
     /**
@@ -888,8 +898,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         return this.requiresEscapingEncoder;
     }
 
-    private void createConfigCacheIfNeeded(MysqlConnection conn) {
-        synchronized (conn.getConnectionMutex()) {
+    private void createConfigCacheIfNeeded(Object syncMutex) {
+        synchronized (syncMutex) {
             if (this.serverConfigCache != null) {
                 return;
             }
@@ -902,7 +912,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
 
-                this.serverConfigCache = cacheFactory.getInstance(conn, this.hostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+                this.serverConfigCache = cacheFactory.getInstance(syncMutex, this.hostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE);
 
                 ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
@@ -949,10 +959,10 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
      * that the driver can configure itself.
      */
-    public void loadServerVariables(MysqlConnection conn, String version) {
+    public void loadServerVariables(Object syncMutex, String version) {
 
         if (this.cacheServerConfiguration.getValue()) {
-            createConfigCacheIfNeeded(conn);
+            createConfigCacheIfNeeded(syncMutex);
 
             Map<String, String> cachedVariableMap = this.serverConfigCache.get(this.hostInfo.getDatabaseUrl());
 
@@ -1272,7 +1282,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * Send a query to the server. Returns one of the ResultSet objects. This is
      * synchronized, so Statement's queries will be serialized.
      * 
-     * @param conn
      * @param callingQuery
      * @param query
      *            the SQL statement to be executed
@@ -1284,77 +1293,76 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * @param isBatch
      * @return a ResultSet holding the results
      */
-    public <T extends Resultset> T execSQL(MysqlConnection conn, Query callingQuery, String query, int maxRows, PacketPayload packet, boolean streamResults,
+    public <T extends Resultset> T execSQL(Query callingQuery, String query, int maxRows, PacketPayload packet, boolean streamResults,
             ProtocolEntityFactory<T> resultSetFactory, String catalog, ColumnDefinition cachedMetadata, boolean isBatch) {
-        synchronized (conn.getConnectionMutex()) {
 
-            long queryStartTime = 0;
-            int endOfQueryPacketPosition = 0;
-            if (packet != null) {
-                endOfQueryPacketPosition = packet.getPosition();
+        long queryStartTime = 0;
+        int endOfQueryPacketPosition = 0;
+        if (packet != null) {
+            endOfQueryPacketPosition = packet.getPosition();
+        }
+
+        if (this.gatherPerfMetrics.getValue()) {
+            queryStartTime = System.currentTimeMillis();
+        }
+
+        this.lastQueryFinishedTime = 0; // we're busy!
+
+        if ((this.autoReconnect.getValue()) && (this.autoCommit || this.autoReconnectForPools.getValue()) && this.needsPing && !isBatch) {
+            try {
+                ping(false, 0);
+                this.needsPing = false;
+
+            } catch (Exception Ex) {
+                invokeReconnectListeners();
+            }
+        }
+
+        try {
+            if (packet == null) {
+                String encoding = this.characterEncoding.getValue();
+                return this.protocol.sendQueryString(callingQuery, query, encoding, maxRows, streamResults, catalog, cachedMetadata,
+                        this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
+            }
+            return this.protocol.sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata,
+                    this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
+
+        } catch (CJException sqlE) {
+            if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
+                String extractedSql = MysqlaUtils.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
+                        getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
+                StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
+                messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
+                messageBuf.append(extractedSql);
+                messageBuf.append("\n\n");
+                sqlE.appendMessage(messageBuf.toString());
+            }
+
+            if ((this.autoReconnect.getValue())) {
+                this.needsPing = true;
+            } else if (sqlE instanceof CJCommunicationsException) {
+                invokeCleanupListeners(sqlE);
+            }
+            throw sqlE;
+
+        } catch (Throwable ex) {
+            if (this.autoReconnect.getValue()) {
+                this.needsPing = true;
+            }
+            throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
+
+        } finally {
+            if (this.maintainTimeStats.getValue()) {
+                this.lastQueryFinishedTime = System.currentTimeMillis();
             }
 
             if (this.gatherPerfMetrics.getValue()) {
-                queryStartTime = System.currentTimeMillis();
-            }
+                long queryTime = System.currentTimeMillis() - queryStartTime;
 
-            this.lastQueryFinishedTime = 0; // we're busy!
-
-            if ((this.autoReconnect.getValue()) && (this.autoCommit || this.autoReconnectForPools.getValue()) && this.needsPing && !isBatch) {
-                try {
-                    ping(conn, false, 0);
-
-                    this.needsPing = false;
-                } catch (Exception Ex) {
-                    conn.createNewIO(true);
-                }
-            }
-
-            try {
-                if (packet == null) {
-                    String encoding = this.characterEncoding.getValue();
-                    return this.protocol.sendQueryString(callingQuery, query, encoding, maxRows, streamResults, catalog, cachedMetadata,
-                            this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
-                }
-                return this.protocol.sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata,
-                        this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
-
-            } catch (CJException sqlE) {
-                if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
-                    String extractedSql = MysqlaUtils.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
-                            getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
-                    StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
-                    messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
-                    messageBuf.append(extractedSql);
-                    messageBuf.append("\n\n");
-                    sqlE.appendMessage(messageBuf.toString());
-                }
-
-                if ((this.autoReconnect.getValue())) {
-                    this.needsPing = true;
-                } else if (sqlE instanceof CJCommunicationsException) {
-                    conn.cleanup(sqlE);
-                }
-                throw sqlE;
-
-            } catch (Throwable ex) {
-                if (this.autoReconnect.getValue()) {
-                    this.needsPing = true;
-                }
-                throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
-
-            } finally {
-                if (this.maintainTimeStats.getValue()) {
-                    this.lastQueryFinishedTime = System.currentTimeMillis();
-                }
-
-                if (this.gatherPerfMetrics.getValue()) {
-                    long queryTime = System.currentTimeMillis() - queryStartTime;
-
-                    registerQueryExecutionTime(queryTime);
-                }
+                registerQueryExecutionTime(queryTime);
             }
         }
+
     }
 
     public long getIdleFor() {
@@ -1384,9 +1392,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.autoCommit = autoCommit;
     }
 
-    public void ping(MysqlConnection conn, boolean checkForClosedConnection, int timeoutMillis) {
+    public void ping(boolean checkForClosedConnection, int timeoutMillis) {
         if (checkForClosedConnection) {
-            conn.checkClosed();
+            checkClosed();
         }
 
         long pingMillisLifetime = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
@@ -1395,7 +1403,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
                 || (pingMaxOperations > 0 && pingMaxOperations <= getCommandCount())) {
 
-            conn.normalClose(); // TODO: do it via Listeners
+            invokeNormalCloseListeners();
 
             throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
                     MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
@@ -1411,4 +1419,84 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.connectionCreationTimeMillis = connectionCreationTimeMillis;
     }
 
+    public boolean isClosed() {
+        return this.isClosed;
+    }
+
+    public void checkClosed() {
+        if (this.isClosed) {
+            throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
+                    getExceptionInterceptor());
+        }
+    }
+
+    public Throwable getForceClosedReason() {
+        return this.forceClosedReason;
+    }
+
+    public void setForceClosedReason(Throwable forceClosedReason) {
+        this.forceClosedReason = forceClosedReason;
+    }
+
+    @Override
+    public void addListener(SessionEventListener l) {
+        if (this.listeners == null) {
+            this.listeners = new ArrayList<>();
+        }
+        if (!this.listeners.contains(l)) {
+            this.listeners.add(new WeakReference<>(l));
+        }
+    }
+
+    @Override
+    public void removeListener(SessionEventListener listener) {
+        if (this.listeners != null) {
+            for (WeakReference<SessionEventListener> wr : this.listeners) {
+                SessionEventListener l = wr.get();
+                if (l == listener) {
+                    this.listeners.remove(wr);
+                    break;
+                }
+            }
+        }
+    }
+
+    protected void invokeNormalCloseListeners() {
+        if (this.listeners != null) {
+            for (WeakReference<SessionEventListener> wr : this.listeners) {
+                SessionEventListener l = wr.get();
+                if (l != null) {
+                    l.handleNormalClose();
+                } else {
+                    this.listeners.remove(wr);
+                }
+            }
+        }
+    }
+
+    protected void invokeReconnectListeners() {
+        if (this.listeners != null) {
+            for (WeakReference<SessionEventListener> wr : this.listeners) {
+                SessionEventListener l = wr.get();
+                if (l != null) {
+                    l.handleReconnect();
+                } else {
+                    this.listeners.remove(wr);
+                }
+            }
+        }
+    }
+
+    protected void invokeCleanupListeners(Throwable whyCleanedUp) {
+        if (this.listeners != null) {
+            for (WeakReference<SessionEventListener> wr : this.listeners) {
+                SessionEventListener l = wr.get();
+                if (l != null) {
+                    l.handleCleanup(whyCleanedUp);
+                } else {
+                    this.listeners.remove(wr);
+                }
+            }
+        }
+    }
 }

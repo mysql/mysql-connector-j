@@ -38,7 +38,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.google.protobuf.MessageLite;
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.TransactionEventHandler;
 import com.mysql.cj.api.authentication.AuthenticationProvider;
@@ -157,10 +156,6 @@ public class XProtocol implements Protocol {
     }
 
     public ServerSession getServerSession() {
-        throw new NullPointerException("TODO");
-    }
-
-    public MysqlConnection getConnection() {
         throw new NullPointerException("TODO");
     }
 

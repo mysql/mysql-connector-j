@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
 import com.mysql.cj.api.ProfilerEvent;
+import com.mysql.cj.api.Session.SessionEventListener;
 import com.mysql.cj.api.conf.ModifiableProperty;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -70,7 +71,6 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.HostInfo;
 import com.mysql.cj.core.exceptions.CJException;
-import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -104,7 +104,7 @@ import com.mysql.cj.mysqla.MysqlaSession;
  * connection, etc. This information is obtained with the getMetaData method.
  * </p>
  */
-public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnection {
+public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnection, SessionEventListener {
 
     private static final long serialVersionUID = 2877471301981509474L;
 
@@ -278,13 +278,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** Internal DBMD to use for various database-version specific features */
     private DatabaseMetaData dbmd = null;
 
-    /** Why was this connection implicitly closed, if known? (for diagnostics) */
-    private Throwable forceClosedReason;
-
     private MysqlaSession session = null;
-
-    /** Has this connection been closed? */
-    private boolean isClosed = true;
 
     /** Is this connection associated with a global tx? */
     private boolean isInGlobalTx = false;
@@ -408,6 +402,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.nullStatementResultSetFactory = new ResultSetFactory(this, null);
             this.session = new MysqlaSession(hostInfo, getPropertySet());
 
+            // listen for session status changes
+            this.session.addListener(this);
+
             // we can't cache fixed values here because properties are still not initialized with user provided values
             this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
             this.cachePrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
@@ -478,7 +475,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public void initializeSafeQueryInterceptors() throws SQLException {
-        this.isClosed = false;
         this.queryInterceptors = Util
                 .<QueryInterceptor> loadClasses(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
                         "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
@@ -552,18 +548,15 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public void checkClosed() {
-        if (this.isClosed) {
-            throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
-                    getExceptionInterceptor());
-        }
+        this.session.checkClosed();
     }
 
     public void throwConnectionClosedException() throws SQLException {
         SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
                 getExceptionInterceptor());
 
-        if (this.forceClosedReason != null) {
-            ex.initCause(this.forceClosedReason);
+        if (this.session.getForceClosedReason() != null) {
+            ex.initCause(this.session.getForceClosedReason());
         }
 
         throw ex;
@@ -594,8 +587,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     public void abortInternal() throws SQLException {
         this.session.abortInternal();
-
-        this.isClosed = true;
     }
 
     /**
@@ -617,8 +608,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         } catch (SQLException | CJException sqlEx) {
             // ignore, we're going away.
         }
-
-        this.isClosed = true;
     }
 
     @Deprecated
@@ -824,7 +813,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     }
                 }
 
-                this.session.execSQL(this, null, "commit", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                this.session.execSQL(null, "commit", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
             } catch (SQLException sqlException) {
                 if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
                     throw SQLError.createSQLException(Messages.getString("Connection.4"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
@@ -889,8 +878,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 String oldCatalog;
 
                 synchronized (getConnectionMutex()) {
-                    this.isClosed = false;
-
                     // save state from old connection
                     oldAutoCommit = getAutoCommit();
                     oldIsolationLevel = this.isolationLevel;
@@ -991,7 +978,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             JdbcConnection c = getProxy();
             this.session.connect(this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
-            this.isClosed = false;
 
             // save state from old connection
             boolean oldAutoCommit = getAutoCommit();
@@ -1438,7 +1424,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.useServerPreparedStmts = true;
         }
 
-        this.session.loadServerVariables(this, this.dbmd.getDriverVersion());
+        this.session.loadServerVariables(this.getConnectionMutex(), this.dbmd.getDriverVersion());
 
         this.autoIncrementIncrement = this.session.getServerVariable("auto_increment_increment", 1);
 
@@ -1562,7 +1548,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public boolean isClosed() {
-        return this.isClosed;
+        return this.session.isClosed();
     }
 
     public boolean isInGlobalTx() {
@@ -1613,7 +1599,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      *                if a database access error occurs
      */
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
-        if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
+        if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
             try {
                 String s = this.session.queryServerVariable("@@session.tx_read_only");
@@ -1749,7 +1735,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     @Override
     public void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException {
-        this.session.ping(this, checkForClosedConnection, timeoutMillis);
+        this.session.ping(checkForClosedConnection, timeoutMillis);
     }
 
     /**
@@ -1987,7 +1973,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             return;
         }
 
-        this.forceClosedReason = reason;
+        this.session.setForceClosedReason(reason);
 
         try {
             if (!skipLocalTeardown) {
@@ -2050,8 +2036,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                     this.cancelTimer.cancel();
                 }
             }
-
-            this.isClosed = true;
         }
 
         if (sqlEx != null) {
@@ -2246,13 +2230,16 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private void rollbackNoChecks() throws SQLException {
-        if (this.useLocalTransactionState.getValue()) {
-            if (!this.session.inTransactionOnServer()) {
-                return; // effectively a no-op
+        synchronized (getConnectionMutex()) {
+            if (this.useLocalTransactionState.getValue()) {
+                if (!this.session.inTransactionOnServer()) {
+                    return; // effectively a no-op
+                }
             }
-        }
 
-        this.session.execSQL(this, null, "rollback", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+            this.session.execSQL(null, "rollback", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+
+        }
     }
 
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
@@ -2367,8 +2354,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 this.session.setAutoCommit(autoCommitFlag);
 
                 if (needsSetOnServer) {
-                    this.session.execSQL(this, null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false,
-                            this.nullStatementResultSetFactory, this.database, null, false);
+                    this.session.execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.nullStatementResultSetFactory,
+                            this.database, null, false);
                 }
             } finally {
                 if (this.autoReconnectForPools.getValue()) {
@@ -2441,7 +2428,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             StringBuilder query = new StringBuilder("USE ");
             query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic.getValue()));
 
-            this.session.execSQL(this, null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+            this.session.execSQL(null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
 
             this.database = catalog;
         }
@@ -2480,15 +2467,17 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
-        // note this this is safe even inside a transaction
-        if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
-            if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
-                this.session.execSQL(this, null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false,
-                        this.nullStatementResultSetFactory, this.database, null, false);
+        synchronized (getConnectionMutex()) {
+            // note this this is safe even inside a transaction
+            if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
+                if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
+                    this.session.execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false,
+                            this.nullStatementResultSetFactory, this.database, null, false);
+                }
             }
-        }
 
-        this.readOnly = readOnlyFlag;
+            this.readOnly = readOnlyFlag;
+        }
     }
 
     public java.sql.Savepoint setSavepoint() throws SQLException {
@@ -2585,7 +2574,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                                 MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 }
 
-                this.session.execSQL(this, null, sql, -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                this.session.execSQL(null, sql, -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
 
                 this.isolationLevel = level;
             }
@@ -2608,29 +2597,31 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private void setupServerForTruncationChecks() throws SQLException {
-        ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet()
-                .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation);
-        if (jdbcCompliantTruncation.getValue()) {
-            String currentSqlMode = this.session.getServerVariable("sql_mode");
+        synchronized (getConnectionMutex()) {
+            ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet()
+                    .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation);
+            if (jdbcCompliantTruncation.getValue()) {
+                String currentSqlMode = this.session.getServerVariable("sql_mode");
 
-            boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
+                boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
 
-            if (currentSqlMode == null || currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
-                StringBuilder commandBuf = new StringBuilder("SET sql_mode='");
+                if (currentSqlMode == null || currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
+                    StringBuilder commandBuf = new StringBuilder("SET sql_mode='");
 
-                if (currentSqlMode != null && currentSqlMode.length() > 0) {
-                    commandBuf.append(currentSqlMode);
-                    commandBuf.append(",");
+                    if (currentSqlMode != null && currentSqlMode.length() > 0) {
+                        commandBuf.append(currentSqlMode);
+                        commandBuf.append(",");
+                    }
+
+                    commandBuf.append("STRICT_TRANS_TABLES'");
+
+                    this.session.execSQL(null, commandBuf.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+
+                    jdbcCompliantTruncation.setValue(false); // server's handling this for us now
+                } else if (strictTransTablesIsSet) {
+                    // We didn't set it, but someone did, so we piggy back on it
+                    jdbcCompliantTruncation.setValue(false); // server's handling this for us now
                 }
-
-                commandBuf.append("STRICT_TRANS_TABLES'");
-
-                this.session.execSQL(this, null, commandBuf.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
-
-                jdbcCompliantTruncation.setValue(false); // server's handling this for us now
-            } else if (strictTransTablesIsSet) {
-                // We didn't set it, but someone did, so we piggy back on it
-                jdbcCompliantTruncation.setValue(false); // server's handling this for us now
             }
         }
     }
@@ -2796,11 +2787,13 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public boolean isServerLocal() throws SQLException {
-        try {
-            return this.session.isServerLocal(this);
-        } catch (CJException ex) {
-            SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
-            throw sqlEx;
+        synchronized (getConnectionMutex()) {
+            try {
+                return this.session.isServerLocal(this.getSession());
+            } catch (CJException ex) {
+                SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
+                throw sqlEx;
+            }
         }
     }
 
@@ -2825,9 +2818,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.session.getSessionMaxRows() != max) {
                 this.session.setSessionMaxRows(max);
-                this.session.execSQL(this, null,
-                        "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()), -1, null, false,
-                        this.nullStatementResultSetFactory, this.database, null, false);
+                this.session.execSQL(null, "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()),
+                        -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
             }
         }
     }
@@ -3142,6 +3134,25 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     @Override
     public String getHostPortPair() {
         return this.origHostInfo.getHostPortPair();
+    }
+
+    @Override
+    public void handleNormalClose() {
+        try {
+            close();
+        } catch (SQLException e) {
+            ExceptionFactory.createException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void handleReconnect() {
+        createNewIO(true);
+    }
+
+    @Override
+    public void handleCleanup(Throwable whyCleanedUp) {
+        cleanup(whyCleanedUp);
     }
 
 }

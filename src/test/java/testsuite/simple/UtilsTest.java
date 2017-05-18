@@ -126,7 +126,7 @@ public class UtilsTest extends BaseTestCase {
         assertEquals(ifaces[0], Statement.class);
 
         ifaces = Util.getImplementedInterfaces(ConnectionImpl.class);
-        assertEquals(2, ifaces.length);
+        assertEquals(3, ifaces.length);
         List<Class<?>> ifacesList = Arrays.asList(ifaces);
         for (Class<?> clazz : new Class<?>[] { JdbcConnection.class, Serializable.class }) {
             assertTrue(ifacesList.contains(clazz));

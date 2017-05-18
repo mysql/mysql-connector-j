@@ -655,4 +655,16 @@ public class MysqlxSession implements Session {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public void addListener(SessionEventListener l) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void removeListener(SessionEventListener l) {
+        // TODO Auto-generated method stub
+
+    }
 }
