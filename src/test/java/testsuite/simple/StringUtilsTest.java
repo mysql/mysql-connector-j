@@ -1174,7 +1174,6 @@ public class StringUtilsTest extends BaseTestCase {
             String testCase = "Case: >" + s + "<";
 
             // single delimiter, trim
-            String[] a = { "a" };
             stringParts = StringUtils.split(s, ",", true);
             assertEquals(testCase, 2, stringParts.size());
             assertEquals(testCase, "", stringParts.get(0));
