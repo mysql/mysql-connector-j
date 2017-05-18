@@ -37,7 +37,7 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
 
     public RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(schema, collection, false);
-        if (criteria == null || criteria.length() == 0) {
+        if (criteria == null || criteria.trim().length() == 0) {
             throw new XDevAPIError(Messages.getString("RemoveStatement.0", new String[] { "criteria" }));
         }
         this.mysqlxSession = mysqlxSession;

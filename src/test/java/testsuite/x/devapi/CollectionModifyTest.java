@@ -171,7 +171,7 @@ public class CollectionModifyTest extends CollectionTest {
 
         assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionModifyTest.this.collection.modify("").set("y", nestedDoc).execute();
+                CollectionModifyTest.this.collection.modify(" ").set("y", nestedDoc).execute();
                 return null;
             }
         });

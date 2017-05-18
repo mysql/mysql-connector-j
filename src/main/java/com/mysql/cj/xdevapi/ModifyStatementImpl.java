@@ -44,7 +44,7 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
 
     /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(schema, collection, false);
-        if (criteria == null || criteria.length() == 0) {
+        if (criteria == null || criteria.trim().length() == 0) {
             throw new XDevAPIError(Messages.getString("ModifyStatement.0", new String[] { "criteria" }));
         }
         this.mysqlxSession = mysqlxSession;

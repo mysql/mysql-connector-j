@@ -69,7 +69,7 @@ public class CollectionRemoveTest extends CollectionTest {
 
         assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionRemoveTest.this.collection.remove("").execute();
+                CollectionRemoveTest.this.collection.remove(" ").execute();
                 return null;
             }
         });
