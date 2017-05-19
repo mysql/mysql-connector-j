@@ -991,6 +991,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@character_set_connection AS character_set_connection");
                 queryBuf.append(", @@character_set_results AS character_set_results");
                 queryBuf.append(", @@character_set_server AS character_set_server");
+                queryBuf.append(", @@collation_server AS ccollation_server");
                 queryBuf.append(", @@init_connect AS init_connect");
                 queryBuf.append(", @@interactive_timeout AS interactive_timeout");
                 if (!versionMeetsMinimum(5, 5, 0)) {
@@ -1162,6 +1163,23 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         if (customMblen != null) {
             this.protocol.getServerSession().mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
         }
+
+        // Trying to workaround server collations with index > 255. Such index doesn't fit into server greeting packet, 0 is sent instead.
+        // Now we could set io.serverCharsetIndex according to "collation_server" value.
+        if (this.protocol.getServerSession().getServerDefaultCollationIndex() == 0) {
+            String collationServer = this.protocol.getServerSession().getServerVariable("collation_server");
+            if (collationServer != null) {
+                for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
+                    if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(collationServer)) {
+                        this.protocol.getServerSession().setServerDefaultCollationIndex(i);
+                    }
+                }
+            } else {
+                // We can't do more, just trying to use utf8mb4_general_ci because the most of collations in that range are utf8mb4.
+                this.protocol.getServerSession().setServerDefaultCollationIndex(45);
+            }
+        }
+
     }
 
     public String getProcessHost() {

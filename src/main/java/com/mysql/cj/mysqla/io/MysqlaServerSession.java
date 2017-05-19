@@ -80,7 +80,7 @@ public class MysqlaServerSession implements ServerSession {
     private boolean hasLongColumnInfo = false;
 
     /** The map of server variables that we retrieve at connection init. */
-    private Map<String, String> serverVariables = new HashMap<String, String>();
+    private Map<String, String> serverVariables = new HashMap<>();
 
     public Map<Integer, String> indexToCustomMysqlCharset = null;
 
@@ -106,6 +106,9 @@ public class MysqlaServerSession implements ServerSession {
 
     public MysqlaServerSession(PropertySet propertySet) {
         this.propertySet = propertySet;
+
+        // preconfigure some server variables which are consulted before their initialization from server
+        this.serverVariables.put("character_set_server", "utf8");
     }
 
     @Override
