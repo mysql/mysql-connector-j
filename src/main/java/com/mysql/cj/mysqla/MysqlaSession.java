@@ -1279,8 +1279,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     }
 
     /**
-     * Send a query to the server. Returns one of the ResultSet objects. This is
-     * synchronized, so Statement's queries will be serialized.
+     * Send a query to the server. Returns one of the ResultSet objects.
+     * To ensure that Statement's queries are serialized call to this method
+     * should be enclosed to connection mutex synchronized block.
      * 
      * @param callingQuery
      * @param query

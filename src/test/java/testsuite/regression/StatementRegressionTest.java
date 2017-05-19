@@ -81,6 +81,7 @@ import java.util.concurrent.TimeoutException;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
+import com.mysql.cj.api.Session;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.ServerSession;
 import com.mysql.cj.api.jdbc.JdbcConnection;
@@ -4702,6 +4703,11 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
+            public Session getSession() {
+                return null;
+            }
+
+            @Override
             public long getConnectionId() {
                 return 0;
             }
@@ -4765,6 +4771,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
             @Override
             public ResultsetRows getRows() {
+                return null;
+            }
+
+            @Override
+            public Object getSyncMutex() {
                 return null;
             }
         };

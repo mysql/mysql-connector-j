@@ -23,7 +23,6 @@
 
 package com.mysql.cj.mysqla.result;
 
-import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -98,17 +97,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
     @Override
     public void close() {
 
-        Object mutex = this;
-
-        MysqlConnection conn = null;
-
-        if (this.owner != null) {
-            conn = this.owner.getConnection();
-
-            if (conn != null) {
-                mutex = conn.getConnectionMutex();
-            }
-        }
+        Object mutex = this.owner != null && this.owner.getSyncMutex() != null ? this.owner.getSyncMutex() : this;
 
         boolean hadMore = false;
         int howMuchMore = 0;
@@ -124,34 +113,32 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                 }
             }
 
-            if (conn != null) {
-                if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
-                        && this.protocol.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
-                    int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
+            if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
+                    && this.protocol.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
+                int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
 
-                    this.protocol.clearInputStream();
+                this.protocol.clearInputStream();
 
-                    try {
-                        this.protocol.sendCommand(
-                                this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
-                                        this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
-                                false, 0);
-                    } catch (Exception ex) {
-                        throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
-                    }
+                try {
+                    this.protocol.sendCommand(
+                            this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
+                                    this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
+                            false, 0);
+                } catch (Exception ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                 }
+            }
 
-                if (this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
-                    if (hadMore) {
+            if (this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+                if (hadMore) {
 
-                        ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(conn.getSession());
+                    ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.owner.getSession());
 
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.getCurrentCatalog(), this.owner.getConnectionId(),
-                                this.owner.getOwningStatementId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
-                                Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
-                                        + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5")
-                                        + Messages.getString("RowDataDynamic.6") + this.owner.getPointOfOrigin()));
-                    }
+                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.getCurrentCatalog(), this.owner.getConnectionId(),
+                            this.owner.getOwningStatementId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
+                            Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
+                                    + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5") + Messages.getString("RowDataDynamic.6")
+                                    + this.owner.getPointOfOrigin()));
                 }
             }
         }

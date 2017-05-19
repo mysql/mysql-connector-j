@@ -197,7 +197,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             return;
         }
 
-        synchronized (this.owner.getConnection().getConnectionMutex()) {
+        synchronized (this.owner.getSyncMutex()) {
             try {
                 boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 

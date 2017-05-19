@@ -129,7 +129,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     protected boolean[] columnUsed = null;
 
     /** The Connection instance that created us */
-    private volatile JdbcConnection connection; // The connection that created us
+    protected volatile JdbcConnection connection;
 
     protected MysqlaSession session = null;
 
@@ -2538,6 +2538,11 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     }
 
     @Override
+    public MysqlaSession getSession() {
+        return this.connection != null ? this.connection.getSession() : null;
+    }
+
+    @Override
     public long getConnectionId() {
         return this.connectionId;
     }
@@ -2583,6 +2588,11 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     @Override
     public long getOwningStatementServerId() {
         return this.owningStatement == null ? 0 : this.owningStatement.getServerStatementId();
+    }
+
+    @Override
+    public Object getSyncMutex() {
+        return this.connection != null ? this.connection.getConnectionMutex() : null;
     }
 
 }

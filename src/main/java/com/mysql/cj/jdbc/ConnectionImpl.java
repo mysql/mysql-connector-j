@@ -286,9 +286,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** isolation level */
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
-    /** Is the server configured to use lower-case table names only? */
-    private boolean lowerCaseTableNames = false;
-
     /** When did the master fail? */
     //	private long masterFailTimeMillis = 0L;
 
@@ -350,8 +347,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * For testing failover scenarios
      */
     private boolean hasTriedMasterFlag = false;
-
-    private boolean storesLowerCaseTableName;
 
     private List<QueryInterceptor> queryInterceptors;
 
@@ -1436,12 +1431,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             throw SQLError.createSQLException(e.getMessage(), MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
         }
 
-        String lowerCaseTables = this.session.getServerVariable("lower_case_table_names");
-
-        this.lowerCaseTableNames = "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(lowerCaseTables);
-
-        this.storesLowerCaseTableName = "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
-
         this.session.configureTimezone();
 
         if (this.session.getServerVariables().containsKey("max_allowed_packet")) {
@@ -1675,7 +1664,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * @return true if lower_case_table_names is 'on'
      */
     public boolean lowerCaseTableNames() {
-        return this.lowerCaseTableNames;
+        return this.session.getServerSession().isLowerCaseTableNames();
     }
 
     /**
@@ -2408,7 +2397,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (this.useLocalSessionState.getValue()) {
-                if (this.lowerCaseTableNames) {
+                if (this.session.getServerSession().isLowerCaseTableNames()) {
                     if (this.database.equalsIgnoreCase(catalog)) {
                         return;
                     }
@@ -2776,7 +2765,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     public boolean storesLowerCaseTableName() {
-        return this.storesLowerCaseTableName;
+        return this.session.getServerSession().storesLowerCaseTableNames();
     }
 
     private ExceptionInterceptor exceptionInterceptor;

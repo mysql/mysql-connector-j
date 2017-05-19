@@ -138,9 +138,9 @@ public class UpdatableResultSet extends ResultSetImpl {
         super(tuples, conn, creatorStmt);
         checkUpdatability();
 
-        this.populateInserterWithDefaultValues = this.getConnection().getPropertySet()
+        this.populateInserterWithDefaultValues = this.getSession().getPropertySet()
                 .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
-        this.hasLongColumnInfo = this.getConnection().getSession().getServerSession().hasLongColumnInfo();
+        this.hasLongColumnInfo = this.getSession().getServerSession().hasLongColumnInfo();
     }
 
     @Override
@@ -292,7 +292,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.getConnection().getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
+            if (this.getSession().getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
                 java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;
@@ -406,7 +406,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     generateStatements();
                 }
 
-                this.deleter = (PreparedStatement) this.getConnection().clientPrepareStatement(this.deleteSQL);
+                this.deleter = (PreparedStatement) this.connection.clientPrepareStatement(this.deleteSQL);
             }
 
             this.deleter.clearParameters();
@@ -568,7 +568,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         Map<String, String> tableNamesSoFar = null;
 
-        if (this.getConnection().lowerCaseTableNames()) {
+        if (this.session.getServerSession().isLowerCaseTableNames()) {
             tableNamesSoFar = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             this.databasesUsedToTablesUsed = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         } else {
@@ -737,7 +737,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         Map<String, Map<String, Integer>> tablesUsedToColumnsMap = this.databasesUsedToTablesUsed.get(databaseName);
 
         if (tablesUsedToColumnsMap == null) {
-            if (this.getConnection().lowerCaseTableNames()) {
+            if (this.session.getServerSession().isLowerCaseTableNames()) {
                 tablesUsedToColumnsMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             } else {
                 tablesUsedToColumnsMap = new TreeMap<>();

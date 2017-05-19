@@ -200,4 +200,13 @@ public interface ServerSession {
 
     void setCharacterSetResultsOnServer(String characterSetResultsOnServer);
 
+    /**
+     * Is the server configured to use lower-case table names only?
+     * 
+     * @return true if lower_case_table_names is 'on'
+     */
+    boolean isLowerCaseTableNames();
+
+    boolean storesLowerCaseTableNames();
+
 }

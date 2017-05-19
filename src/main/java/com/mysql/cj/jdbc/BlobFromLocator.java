@@ -79,8 +79,8 @@ public class BlobFromLocator implements java.sql.Blob {
         this.quotedId = this.creatorResultSet.getConnection().getMetaData().getIdentifierQuoteString();
 
         if (this.numColsInResultSet > 1) {
-            this.primaryKeyColumns = new ArrayList<String>();
-            this.primaryKeyValues = new ArrayList<String>();
+            this.primaryKeyColumns = new ArrayList<>();
+            this.primaryKeyValues = new ArrayList<>();
 
             for (int i = 0; i < this.numColsInResultSet; i++) {
                 if (fields[i].isPrimaryKey()) {
@@ -162,8 +162,8 @@ public class BlobFromLocator implements java.sql.Blob {
      */
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
-        return new BufferedInputStream(new LocatorInputStream(), this.creatorResultSet.getConnection().getPropertySet()
-                .getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
+        return new BufferedInputStream(new LocatorInputStream(),
+                this.creatorResultSet.getSession().getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
     }
 
     /**

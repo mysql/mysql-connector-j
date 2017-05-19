@@ -470,4 +470,16 @@ public class MysqlaServerSession implements ServerSession {
         this.statusFlags |= this.oldStatusFlags & SERVER_STATUS_IN_TRANS;
     }
 
+    @Override
+    public boolean isLowerCaseTableNames() {
+        String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
+        return "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(lowerCaseTables);
+    }
+
+    @Override
+    public boolean storesLowerCaseTableNames() {
+        String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
+        return "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
+    }
+
 }
