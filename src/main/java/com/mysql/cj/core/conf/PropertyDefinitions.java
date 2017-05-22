@@ -45,7 +45,6 @@ import com.mysql.cj.jdbc.util.PerConnectionLRUFactory;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 
 public class PropertyDefinitions {
-
     /*
      * Built-in system properties
      */
@@ -157,8 +156,12 @@ public class PropertyDefinitions {
     /*
      * Property enums
      */
-    public enum ZeroDatetimeBehavior {
+    public enum ZeroDatetimeBehavior { // zeroDateTimeBehavior 
         CONVERT_TO_NULL, EXCEPTION, ROUND;
+    }
+
+    public enum SslMode { // xdevapi.ssl-mode
+        REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
     }
 
     /*
@@ -346,11 +349,10 @@ public class PropertyDefinitions {
     public static final String PNAME_replicationConnectionGroup = "replicationConnectionGroup";
 
     public static final String PNAME_useAsyncProtocol = "xdevapi.useAsyncProtocol";
-    public static final String PNAME_sslEnable = "xdevapi.ssl-enable";
+    public static final String PNAME_sslMode = "xdevapi.ssl-mode";
     public static final String PNAME_sslTrustStoreUrl = "xdevapi.ssl-truststore";
     public static final String PNAME_sslTrustStoreType = "xdevapi.ssl-truststore-type";
     public static final String PNAME_sslTrustStorePassword = "xdevapi.ssl-truststore-password";
-    public static final String PNAME_sslVerifyServerCertificate = "xdevapi.ssl-verify-server-certificate";
     public static final String PNAME_asyncResponseTimeout = "xdevapi.asyncResponseTimeout";
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
@@ -921,16 +923,14 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PNAME_useAsyncProtocol, DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new BooleanPropertyDefinition(PNAME_sslEnable, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.sslEnable"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new EnumPropertyDefinition<>(PNAME_sslMode, SslMode.REQUIRED, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.sslMode"), "8.0.7",
+                        CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new StringPropertyDefinition(PNAME_sslTrustStoreUrl, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStoreUrl"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new StringPropertyDefinition(PNAME_sslTrustStoreType, "JKS", RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStoreType"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new StringPropertyDefinition(PNAME_sslTrustStorePassword, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new BooleanPropertyDefinition(PNAME_sslVerifyServerCertificate, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.sslVerifyServerCertificate"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new IntegerPropertyDefinition(PNAME_asyncResponseTimeout, 300, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 

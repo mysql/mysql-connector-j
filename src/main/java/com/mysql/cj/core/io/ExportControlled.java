@@ -61,6 +61,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -69,6 +72,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
 
 import com.mysql.cj.api.Session;
 import com.mysql.cj.api.conf.PropertySet;
@@ -219,19 +223,22 @@ public class ExportControlled {
     }
 
     /**
-     * Implementation of X509TrustManager wrapping JVM X509TrustManagers to add expiration check
+     * Implementation of X509TrustManager wrapping JVM X509TrustManagers to add expiration and identity check
      */
     public static class X509TrustManagerWrapper implements X509TrustManager {
 
         private X509TrustManager origTm = null;
         private boolean verifyServerCert = false;
+        private String hostName = null;
         private CertificateFactory certFactory = null;
         private PKIXParameters validatorParams = null;
         private CertPathValidator validator = null;
 
-        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, KeyStore trustKeyStore) throws CertificateException {
+        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, String hostName, KeyStore trustKeyStore)
+                throws CertificateException {
             this.origTm = tm;
             this.verifyServerCert = verifyServerCertificate;
+            this.hostName = hostName;
 
             if (verifyServerCertificate) {
                 try {
@@ -246,8 +253,9 @@ public class ExportControlled {
 
         }
 
-        public X509TrustManagerWrapper(boolean verifyServerCertificate) {
+        public X509TrustManagerWrapper(boolean verifyServerCertificate, String hostName) {
             this.verifyServerCert = verifyServerCertificate;
+            this.hostName = hostName;
         }
 
         public X509Certificate[] getAcceptedIssuers() {
@@ -260,7 +268,6 @@ public class ExportControlled {
             }
 
             if (this.validatorParams != null) {
-
                 X509CertSelector certSelect = new X509CertSelector();
                 certSelect.setSerialNumber(chain[0].getSerialNumber());
 
@@ -283,6 +290,28 @@ public class ExportControlled {
                     this.origTm.checkServerTrusted(chain, authType);
                 } else {
                     throw new CertificateException("Can't verify server certificate because no trust manager is found.");
+                }
+
+                // verify server certificate identity
+                if (this.hostName != null) {
+                    String dn = chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253);
+                    String cn = null;
+                    try {
+                        LdapName ldapDN = new LdapName(dn);
+                        for (Rdn rdn : ldapDN.getRdns()) {
+                            if (rdn.getType().equalsIgnoreCase("CN")) {
+                                cn = rdn.getValue().toString();
+                                break;
+                            }
+                        }
+                    } catch (InvalidNameException e) {
+                        throw new CertificateException("Failed to retrieve the Common Name (CN) from the server certificate.");
+                    }
+
+                    if (!this.hostName.equalsIgnoreCase(cn)) {
+                        throw new CertificateException("Server certificate identity check failed. The certificate Common Name '" + cn
+                                + "' does not match with '" + this.hostName + "'.");
+                    }
                 }
             }
         }
@@ -339,7 +368,7 @@ public class ExportControlled {
         boolean verifyServerCert = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue();
 
         return getSSLContext(clientCertificateKeyStoreUrl, clientCertificateKeyStoreType, clientCertificateKeyStorePassword, trustCertificateKeyStoreUrl,
-                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, verifyServerCert, exceptionInterceptor).getSocketFactory();
+                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, verifyServerCert, null, exceptionInterceptor).getSocketFactory();
     }
 
     /**
@@ -347,7 +376,7 @@ public class ExportControlled {
      */
     public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
             String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword, boolean verifyServerCert,
-            ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
+            String hostName, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
         TrustManagerFactory tmf = null;
         KeyManagerFactory kmf = null;
 
@@ -421,7 +450,7 @@ public class ExportControlled {
 
                     for (int j = 0; j < origTms.length; j++) {
                         tms.add(origTms[j] instanceof X509TrustManager
-                                ? new X509TrustManagerWrapper((X509TrustManager) origTms[j], verifyServerCert, trustKeyStore) // wrapping X509TrustManagers
+                                ? new X509TrustManagerWrapper((X509TrustManager) origTms[j], verifyServerCert, hostName, trustKeyStore) // wrapping X509TrustManagers
                                 : origTms[j] // for non-X509 TrustManagers putting original ones
                         );
                     }
@@ -487,7 +516,7 @@ public class ExportControlled {
 
         // if original TrustManagers are not available then putting one X509TrustManagerWrapper which take care only about expiration check 
         if (tms.size() == 0) {
-            tms.add(new X509TrustManagerWrapper(verifyServerCert));
+            tms.add(new X509TrustManagerWrapper(verifyServerCert, hostName));
         }
 
         try {

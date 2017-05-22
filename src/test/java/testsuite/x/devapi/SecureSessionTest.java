@@ -26,27 +26,44 @@ package testsuite.x.devapi;
 import java.util.Properties;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.SqlResult;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 
 public class SecureSessionTest extends DevApiBaseTestCase {
-    String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
-    String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
-    String trustStorePassword = "password";
+    final String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
+    final String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
+    final String trustStorePassword = "password";
 
-    String clientKeyStoreUrl = "file:src/test/config/ssl-test-certs/client-keystore";
-    String clientKeyStorePath = "src/test/config/ssl-test-certs/client-keystore";
-    String clientKeyStorePassword = "password";
+    final String clientKeyStoreUrl = "file:src/test/config/ssl-test-certs/client-keystore";
+    final String clientKeyStorePath = "src/test/config/ssl-test-certs/client-keystore";
+    final String clientKeyStorePassword = "password";
+
+    final Properties sslFreeTestProperties = (Properties) this.testProperties.clone();
+    String sslFreeBaseUrl = this.baseUrl;
 
     @Before
     public void setupSecureSessionTest() {
         if (this.isSetForXTests) {
             System.clearProperty("javax.net.ssl.trustStore");
             System.clearProperty("javax.net.ssl.trustStorePassword");
+
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslMode);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStoreUrl);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStorePassword);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStoreType);
+
+            this.sslFreeBaseUrl = this.baseUrl;
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslMode + "=", PropertyDefinitions.PNAME_sslMode + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreUrl + "=",
+                    PropertyDefinitions.PNAME_sslTrustStoreUrl + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStorePassword + "=",
+                    PropertyDefinitions.PNAME_sslTrustStorePassword + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreType + "=",
+                    PropertyDefinitions.PNAME_sslTrustStoreType + "VOID=");
         }
     }
 
@@ -59,57 +76,47 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             return;
         }
 
-        Session testSession = this.fact.getSession(this.baseUrl);
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED));
         assertNonSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "false"));
-        assertNonSecureSession(testSession);
-        testSession.close();
-
-        testSession = this.fact.getSession(this.testProperties);
-        assertNonSecureSession(testSession);
-        testSession.close();
-
-        Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "false");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
         testSession = this.fact.getSession(props);
         assertNonSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, non-verifying server certificate {@link Session}s created via URL and properties map.
+     * Tests secure {@link Session}s created via URL and properties map. This is the default if no ssl-mode is provided.
      */
     @Test
-    public void testSecureSessionNoVerifyServerCertificate() {
+    public void testSecureSessionDefault() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        Session testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true"));
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
-                + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
         assertSecureSession(testSession);
         testSession.close();
 
-        Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
-        testSession = this.fact.getSession(props);
+        testSession = this.fact.getSession(this.sslFreeTestProperties);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, verifying server certificate {@link Session}s created via URL and properties map.
+     * Tests secure {@link Session}s created via URL and properties map, verifying server certificate.
      */
     @Test
     public void testSecureSessionVerifyServerCertificate() {
@@ -117,45 +124,23 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             return;
         }
 
-        Session testSession = this.fact.getSession(
-                this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true") + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
-        assertSecureSession(testSession);
-        SqlResult rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
-        String actual = rs.fetchOne().getString(1);
-
-        System.out.println(actual);
-
-        testSession.close();
-
-        testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
                 + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
                 + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
-        assertSecureSession(testSession);
-        testSession.close();
-
-        Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
-        testSession = this.fact.getSession(props);
-        assertSecureSession(testSession);
-        testSession.close();
-
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
     }
 
     /**
-     * Tests secure, verifying server certificate {@link Session}s created via URL and properties map.
+     * Tests secure {@link Session}s created via URL and properties map combined with SSL system properties, verifying server certificate.
      */
     @Test
     public void testSecureSessionVerifyServerCertificateUsingSystemProps() {
@@ -166,22 +151,39 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
 
-        Session testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
-                + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true"));
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true"));
-        assertSecureSession(testSession);
-        testSession.close();
-
-        Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
+    }
 
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+    /**
+     * Tests secure {@link Session}s created via URL and properties map, verifying server certificate.
+     * This test would pass if the server certificate had "CN=<host_name>", with <host_name> equals to the host name in the test URL.
+     */
+    @Test
+    @Ignore
+    public void testSecureSessionVerifyServerCertificateIdentity() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Session testSession = this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
+        assertSecureSession(testSession);
+        testSession.close();
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -191,55 +193,81 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      * Tests exception thrown on missing truststore for a secure {@link Session}.
      */
     @Test
-    public void testSecureSessionMissingTrustStore1() {
+    public void testSecureSessionMissingTrustStore() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslEnable, "true")
-                + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")));
+        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)));
+
+        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)));
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link Session}.
+     * Tests exception thrown on verifying server certificate identity failure.
+     * The server certificate used in this test has "CN=MySQL Connector/J Server".
      */
     @Test
-    public void testSecureSessionMissingTrustStore2() {
+    public void testSecureSessionVerifyServerCertificateIdentityFailure() {
         if (!this.isSetForXTests) {
             return;
         }
 
+        // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class,
-                () -> this.fact.getSession(this.baseUrl + makeParam(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true")));
-    }
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)));
 
-    /**
-     * Tests exception thrown on missing truststore for a secure {@link Session}.
-     */
-    @Test
-    public void testSecureSessionMissingTrustStore3() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        final Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
-        props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(props));
     }
 
     /**
-     * Tests exception thrown on missing truststore for a secure {@link Session}.
+     * Tests exception thrown on incompatible settings for a secure {@link Session}.
      */
     @Test
-    public void testSecureSessionMissingTrustStore4() {
+    public void testSecureSessionIncompatibleSettings() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        final Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "true");
-        assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(props));
+        String expectedError = "Incompatible security settings\\. The property 'xdevapi.ssl-truststore' requires 'xdevapi.ssl-mode' as 'VERIFY_CA' or 'VERIFY_IDENTITY'\\.";
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
+
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
+
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
     }
 
     private void assertNonSecureSession(Session sess) {
@@ -248,6 +276,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     private void assertSecureSession(Session sess) {
         assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
+    }
+
+    private String makeParam(String key, Enum<?> value) {
+        return makeParam(key, value.toString());
     }
 
     private String makeParam(String key, String value) {
@@ -266,13 +298,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         Session testSession = null;
 
         try {
-            Properties props = new Properties(this.testProperties);
+            Properties props = new Properties(this.sslFreeTestProperties);
             testSession = this.fact.getSession(props);
 
             testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
 
-            props.setProperty(PropertyDefinitions.PNAME_sslVerifyServerCertificate, "false");
-            props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
             props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
             props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
             props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
@@ -309,14 +340,17 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#23597281, GETNODESESSION() CALL WITH SSL PARAMETERS RETURNS CJCOMMUNICATIONSEXCEPTION
+     */
     @Test
     public void testBug23597281() {
         if (!this.isSetForXTests) {
             return;
         }
 
-        Properties props = new Properties(this.testProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslEnable, "true");
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
         props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
 

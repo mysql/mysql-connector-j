@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - WL#10528, DevAPI: Ensure all connectors are secure by default.
+
   - WL#8305, Remove internal dependency on connection objects.
 
   - Fix for Bug#22972057, X DEVAPI: CLIENT HANGS AFTER CONNECTION FAILURE.
