@@ -41,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
@@ -161,7 +162,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
     /** Why was this session implicitly closed, if known? (for diagnostics) */
     private Throwable forceClosedReason;
 
-    private List<WeakReference<SessionEventListener>> listeners;
+    private CopyOnWriteArrayList<WeakReference<SessionEventListener>> listeners = new CopyOnWriteArrayList<>();
 
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.connectionCreationTimeMillis = System.currentTimeMillis();
@@ -1280,8 +1281,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     /**
      * Send a query to the server. Returns one of the ResultSet objects.
-     * To ensure that Statement's queries are serialized call to this method
-     * should be enclosed to connection mutex synchronized block.
+     * To ensure that Statement's queries are serialized, calls to this method
+     * should be enclosed in a connection mutex synchronized block.
      * 
      * @param callingQuery
      * @param query
@@ -1441,62 +1442,49 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     @Override
     public void addListener(SessionEventListener l) {
-        if (this.listeners == null) {
-            this.listeners = new ArrayList<>();
-        }
-        if (!this.listeners.contains(l)) {
-            this.listeners.add(new WeakReference<>(l));
-        }
+        this.listeners.addIfAbsent(new WeakReference<>(l));
     }
 
     @Override
     public void removeListener(SessionEventListener listener) {
-        if (this.listeners != null) {
-            for (WeakReference<SessionEventListener> wr : this.listeners) {
-                SessionEventListener l = wr.get();
-                if (l == listener) {
-                    this.listeners.remove(wr);
-                    break;
-                }
+        for (WeakReference<SessionEventListener> wr : this.listeners) {
+            SessionEventListener l = wr.get();
+            if (l == listener) {
+                this.listeners.remove(wr);
+                break;
             }
         }
     }
 
     protected void invokeNormalCloseListeners() {
-        if (this.listeners != null) {
-            for (WeakReference<SessionEventListener> wr : this.listeners) {
-                SessionEventListener l = wr.get();
-                if (l != null) {
-                    l.handleNormalClose();
-                } else {
-                    this.listeners.remove(wr);
-                }
+        for (WeakReference<SessionEventListener> wr : this.listeners) {
+            SessionEventListener l = wr.get();
+            if (l != null) {
+                l.handleNormalClose();
+            } else {
+                this.listeners.remove(wr);
             }
         }
     }
 
     protected void invokeReconnectListeners() {
-        if (this.listeners != null) {
-            for (WeakReference<SessionEventListener> wr : this.listeners) {
-                SessionEventListener l = wr.get();
-                if (l != null) {
-                    l.handleReconnect();
-                } else {
-                    this.listeners.remove(wr);
-                }
+        for (WeakReference<SessionEventListener> wr : this.listeners) {
+            SessionEventListener l = wr.get();
+            if (l != null) {
+                l.handleReconnect();
+            } else {
+                this.listeners.remove(wr);
             }
         }
     }
 
     protected void invokeCleanupListeners(Throwable whyCleanedUp) {
-        if (this.listeners != null) {
-            for (WeakReference<SessionEventListener> wr : this.listeners) {
-                SessionEventListener l = wr.get();
-                if (l != null) {
-                    l.handleCleanup(whyCleanedUp);
-                } else {
-                    this.listeners.remove(wr);
-                }
+        for (WeakReference<SessionEventListener> wr : this.listeners) {
+            SessionEventListener l = wr.get();
+            if (l != null) {
+                l.handleCleanup(whyCleanedUp);
+            } else {
+                this.listeners.remove(wr);
             }
         }
     }
