@@ -214,8 +214,9 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         buf.flip();
         dispatchMessage(messageClass, parseMessage(messageClass, buf));
 
-        // As this is where the read loop begins, we can escape it here if requested
-        if (this.stopAfterNextMessage) {
+        // As this is where the read loop begins, we can escape it here if requested.
+        // But we always read a next message if the current one is a notice.
+        if (this.stopAfterNextMessage && messageClass != Frame.class) {
             this.stopAfterNextMessage = false;
             this.headerBuf.clear();
             return;
