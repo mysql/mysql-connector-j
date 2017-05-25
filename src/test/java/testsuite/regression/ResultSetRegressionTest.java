@@ -5422,9 +5422,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
     private void tstBug24525461testBytes(String params, boolean testJSON) throws Exception {
         this.stmt.executeUpdate("truncate table testBug24525461");
 
+        String fGeomFromText = versionMeetsMinimum(5, 6, 1) ? "ST_GeomFromText" : "GeomFromText";
+
         StringBuilder sb = new StringBuilder(
                 "INSERT INTO testBug24525461 values(0, 1, 1, 1, 1, 1, 1, 1, '2000-01-01 00:00:00', 1, 1, '2000-01-01', '12:00:00', '2000-01-01 00:00:00', 2000, 'aaa',"
-                        + " 1, 1, 'x', 'a', 1, '1', 1 , '1', 1, '1', 1, '1', '1', 1, GeomFromText('POINT(1 1)'), GeomFromText('POINT(2 2)'),"
+                        + " 1, 1, 'x', 'a', 1, '1', 1 , '1', 1, '1', 1, '1', '1', 1, " + fGeomFromText + "('POINT(1 1)'), " + fGeomFromText + "('POINT(2 2)'),"
                         + " _utf8 'aaa', _utf8 'aaa', 'aaa', 'aaa', 1, 1, 'aaa', 'aaa', 'aaa', _utf8 'aaa', _utf8 'aaa', '1', null");
         if (testJSON) {
             sb.append(", '{\"key1\": \"value1\"}'");
@@ -5513,7 +5515,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     private void tstBug24525461assertResults1(boolean testJSON) throws Exception {
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f30), AsText(f31) FROM testBug24525461");
+        String fAsText = versionMeetsMinimum(5, 6, 1) ? "ST_AsText" : "AsText";
+
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
@@ -5582,7 +5586,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     private void tstBug24525461assertResults2(boolean testJSON) throws Exception {
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, AsText(f30), AsText(f31) FROM testBug24525461");
+        String fAsText = versionMeetsMinimum(5, 6, 1) ? "ST_AsText" : "AsText";
+
+        ResultSet rs2 = this.stmt.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
