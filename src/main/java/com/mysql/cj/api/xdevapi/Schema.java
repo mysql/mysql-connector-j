@@ -180,11 +180,26 @@ public interface Schema extends DatabaseObject {
     ViewUpdate alterView(String name);
 
     /**
+     * Drop the collection from this schema.
+     * 
+     * @param collectionName
+     *            name of collection to drop
+     */
+    void dropCollection(String collectionName);
+
+    /**
+     * Drop the table from this schema.
+     * 
+     * @param tableName
+     *            name of table to drop
+     */
+    void dropTable(String tableName);
+
+    /**
      * Returns an instance of a ViewDrop to handle dropping an existing View.
      * 
      * @param name
      *            view name
-     * @return {@link ViewDrop}
      */
-    ViewDrop dropView(String name);
+    void dropView(String name);
 }

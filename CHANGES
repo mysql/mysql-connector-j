@@ -3,6 +3,8 @@
 
 Version 8.0.8
 
+  - WL#10532, DevAPI: Cleanup Drop APIs.
+
   - Fix for Bug#87153 (26501245), INCORRECT RESULT OF DBMD.GETVERSIONCOLUMNS() AGAINST MYSQL 8.0.2+.
 
   - Fix for Bug#78313 (21931572), proxies not handling Object.equals(Object) calls correctly.

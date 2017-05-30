@@ -158,6 +158,28 @@ public class SchemaTest extends DevApiBaseTestCase {
     }
 
     @Test
+    public void testDropCollection() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        String collName = "testDropCollection";
+        dropCollection(collName);
+        Collection coll = this.schema.getCollection(collName);
+        assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
+
+        // dropping non-existing collection should not fail
+        this.schema.dropCollection(collName);
+
+        coll = this.schema.createCollection(collName);
+        assertEquals(DbObjectStatus.EXISTS, coll.existsInDatabase());
+        this.schema.dropCollection(collName);
+
+        // ensure that collection is dropped
+        coll = this.schema.getCollection(collName);
+        assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
+    }
+
+    @Test
     public void testListTables() {
         if (!this.isSetForXTests) {
             return;
@@ -413,6 +435,30 @@ public class SchemaTest extends DevApiBaseTestCase {
         sqlUpdate("drop table if exists " + tableName1 + "_check");
     }
 
+    @Test
+    public void testDropTable() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        String tableName = "testDropTable";
+        sqlUpdate("drop table if exists " + tableName);
+
+        Table t = this.schema.getTable(tableName);
+        assertEquals(DbObjectStatus.NOT_EXISTS, t.existsInDatabase());
+
+        // dropping non-existing table should not fail
+        this.schema.dropTable(tableName);
+
+        t = this.schema.createTable(tableName, true).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
+
+        assertEquals(DbObjectStatus.EXISTS, t.existsInDatabase());
+        this.schema.dropTable(tableName);
+
+        // ensure that table is dropped
+        t = this.schema.getTable(tableName);
+        assertEquals(DbObjectStatus.NOT_EXISTS, t.existsInDatabase());
+    }
+
     private void checkCreatedTable(String name, String ddl) {
         RowResult rows = this.session.sql("show create table " + name).execute();
         Row row = rows.next();
@@ -528,19 +574,11 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("val", colNames.get(0));
 
             // 4. Dropping the existing view
-            this.schema.dropView("view_test_view_ddl").ifExists().execute();
+            this.schema.dropView("view_test_view_ddl");
             assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("view_test_view_ddl").existsInDatabase());
 
             // Dropping the not existing view
-            try {
-                this.schema.dropView("notExistingViewDDL").execute();
-                fail("Exception should be thrown if trying to drop a not existing view without ifExists() set.");
-            } catch (XDevAPIError ex) {
-                // expected
-                assertEquals(MysqlErrorNumbers.ER_BAD_TABLE_ERROR, ex.getErrorCode());
-            }
-
-            this.schema.dropView("notExistingViewDDL").ifExists().execute(); // Notices are produced here but ignored
+            this.schema.dropView("notExistingViewDDL"); // Notices are produced here but ignored
             assertEquals(DbObjectStatus.NOT_EXISTS, this.schema.getTable("notExistingViewDDL").existsInDatabase());
 
             // 5. Create collection view (views that have one column which is "doc JSON" should be categorized as "COLLECTION_VIEW")
@@ -563,7 +601,7 @@ public class SchemaTest extends DevApiBaseTestCase {
             assertEquals("Clifford", ((JsonString) doc.get("first_name")).getString());
             assertEquals("Simak", ((JsonString) doc.get("last_name")).getString());
 
-            this.schema.dropView("view_test_view_ddl").ifExists().execute();
+            this.schema.dropView("view_test_view_ddl");
 
             // 6. Define all fields
             view = this.schema.createView("view_test_view_ddl", false).algorithm(ViewAlgorithm.MERGE).columns("n", "a")

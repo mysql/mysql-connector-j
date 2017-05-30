@@ -102,14 +102,6 @@ public class SessionImpl implements Session {
         this.session.update(stmtString.toString());
     }
 
-    public void dropCollection(String schemaName, String collectionName) {
-        this.session.dropCollection(schemaName, collectionName);
-    }
-
-    public void dropTable(String schemaName, String tableName) {
-        this.session.dropCollection(schemaName, tableName);
-    }
-
     public void startTransaction() {
         this.session.update("START TRANSACTION");
     }

@@ -131,26 +131,6 @@ public interface Session {
     void dropSchema(String schemaName);
 
     /**
-     * Drop the collection in given schema.
-     * 
-     * @param schemaName
-     *            schema name
-     * @param collectionName
-     *            name of collection to drop
-     */
-    void dropCollection(String schemaName, String collectionName);
-
-    /**
-     * Drop the table in given schema.
-     * 
-     * @param schemaName
-     *            schema name
-     * @param tableName
-     *            name of table to drop
-     */
-    void dropTable(String schemaName, String tableName);
-
-    /**
      * Get the URL used to create this session.
      * 
      * @return URI

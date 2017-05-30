@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -86,7 +86,7 @@ public class CollectionTest extends DevApiBaseTestCase {
         assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
         coll = this.schema.createCollection(collName);
         assertEquals(DbObjectStatus.EXISTS, coll.existsInDatabase());
-        this.session.dropCollection(this.schema.getName(), collName);
+        this.schema.dropCollection(collName);
     }
 
     @Test(expected = WrongArgumentException.class)
@@ -134,8 +134,12 @@ public class CollectionTest extends DevApiBaseTestCase {
         } catch (XDevAPIError err) {
             assertEquals(MysqlErrorNumbers.ER_X_DOC_ID_DUPLICATE, err.getErrorCode());
         }
+
+        // dropping non-existing index should not fail
+        this.collection.dropIndex("non_existing_idx");
+
         // drop the index and we can now insert what was a duplicate key entry
-        this.collection.dropIndex("x_idx").execute();
+        this.collection.dropIndex("x_idx");
         this.collection.add("{'x':'1'}".replaceAll("'", "\"")).execute();
     }
 }

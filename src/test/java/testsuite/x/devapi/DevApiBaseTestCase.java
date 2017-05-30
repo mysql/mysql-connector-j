@@ -86,7 +86,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     protected void dropCollection(String collectionName) {
         if (this.isSetForXTests) {
             try {
-                this.session.dropCollection(this.schema.getName(), collectionName);
+                this.schema.dropCollection(collectionName);
             } catch (XDevAPIError ex) {
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
                     throw ex;

@@ -28,11 +28,10 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
-import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Schema;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.ViewCreate;
-import com.mysql.cj.api.xdevapi.ViewDrop;
 import com.mysql.cj.api.xdevapi.ViewUpdate;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -176,7 +175,33 @@ public class SchemaImpl implements Schema {
     }
 
     @Override
-    public ViewDrop dropView(String viewName) {
-        return new DropViewStatement(this.mysqlxSession, this, viewName);
+    public void dropCollection(String collectionName) {
+        try {
+            this.mysqlxSession.dropCollection(this.name, collectionName);
+        } catch (XDevAPIError e) {
+            // If specified object does not exist, dropX() methods succeed (no error is reported)
+            // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    public void dropTable(String tableName) {
+        try {
+            this.mysqlxSession.dropCollection(this.name, tableName);
+        } catch (XDevAPIError e) {
+            // If specified object does not exist, dropX() methods succeed (no error is reported)
+            // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    public void dropView(String viewName) {
+        this.mysqlxSession.dropView(this.name, viewName, true);
     }
 }

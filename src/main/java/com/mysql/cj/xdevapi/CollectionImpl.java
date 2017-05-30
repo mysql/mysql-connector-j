@@ -30,7 +30,6 @@ import java.util.Map;
 import com.mysql.cj.api.xdevapi.AddStatement;
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
-import com.mysql.cj.api.xdevapi.DropCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.RemoveStatement;
@@ -38,7 +37,9 @@ import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.core.XDevAPIError;
 
 public class CollectionImpl implements Collection {
     private MysqlxSession mysqlxSession;
@@ -117,8 +118,16 @@ public class CollectionImpl implements Collection {
         return new CreateCollectionIndexStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, indexName, isUnique);
     }
 
-    public DropCollectionIndexStatement dropIndex(String indexName) {
-        return new DropCollectionIndexStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, indexName);
+    public void dropIndex(String indexName) {
+        try {
+            this.mysqlxSession.dropCollectionIndex(this.schema.getName(), this.name, indexName);
+        } catch (XDevAPIError e) {
+            // If specified object does not exist, dropX() methods succeed (no error is reported)
+            // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_CANT_DROP_FIELD_OR_KEY) {
+                throw e;
+            }
+        }
     }
 
     public long count() {

@@ -121,9 +121,8 @@ public interface Collection extends DatabaseObject {
      * 
      * @param indexName
      *            index name
-     * @return {@link DropCollectionIndexStatement}
      */
-    DropCollectionIndexStatement dropIndex(String indexName);
+    void dropIndex(String indexName);
 
     /**
      * Query the number of documents in this collection.
