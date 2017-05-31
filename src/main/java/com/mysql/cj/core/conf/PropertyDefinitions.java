@@ -351,6 +351,7 @@ public class PropertyDefinitions {
     public static final String PNAME_sslTrustStoreType = "xdevapi.ssl-truststore-type";
     public static final String PNAME_sslTrustStorePassword = "xdevapi.ssl-truststore-password";
     public static final String PNAME_sslVerifyServerCertificate = "xdevapi.ssl-verify-server-certificate";
+    public static final String PNAME_asyncResponseTimeout = "xdevapi.asyncResponseTimeout";
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
 
@@ -930,6 +931,8 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new BooleanPropertyDefinition(PNAME_sslVerifyServerCertificate, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslVerifyServerCertificate"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new IntegerPropertyDefinition(PNAME_asyncResponseTimeout, 300, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };

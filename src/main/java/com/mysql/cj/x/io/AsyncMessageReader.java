@@ -33,6 +33,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -40,9 +42,12 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
+import com.mysql.cj.api.conf.PropertySet;
+import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.x.io.MessageConstants;
 import com.mysql.cj.api.x.io.MessageListener;
 import com.mysql.cj.api.x.io.MessageReader;
+import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
@@ -63,6 +68,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private ByteBuffer headerBuf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
     /** Dynamic buffer to store the message body. */
     private ByteBuffer messageBuf;
+    private PropertySet propertySet;
     /** The channel that we operate on. */
     private AsynchronousByteChannel channel;
     /**
@@ -76,7 +82,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private CompletableFuture<Class<? extends GeneratedMessage>> pendingMsgClass;
     /** Lock to protect the pending message. */
     private Object pendingMsgMonitor = new Object();
-    /** Have we been signaled to stop after the next message? */
+    /** Have we been signalled to stop after the next message? */
     private boolean stopAfterNextMessage = false;
 
     /** Possible state of reading messages. */
@@ -89,7 +95,8 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
 
     private ReadingState state;
 
-    public AsyncMessageReader(AsynchronousByteChannel channel) {
+    public AsyncMessageReader(PropertySet propertySet, AsynchronousByteChannel channel) {
+        this.propertySet = propertySet;
         this.channel = channel;
     }
 
@@ -423,7 +430,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      *             if the message is of a different type
      */
     public <T extends GeneratedMessage> T read(final Class<T> expectedClass) {
-        SyncReader<T> r = new SyncReader<>(this, expectedClass);
+        SyncReader<T> r = new SyncReader<>(this.propertySet, this, expectedClass);
         return r.read();
     }
 
@@ -433,15 +440,16 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
     private static final class SyncReader<T> implements MessageListener {
         private CompletableFuture<Function<BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, T>, T>> future = new CompletableFuture<>();
         private Class<T> expectedClass;
+        private ReadableProperty<Integer> asyncTimeout;
 
-        public SyncReader(AsyncMessageReader rdr, Class<T> expectedClass) {
+        public SyncReader(PropertySet propertySet, AsyncMessageReader rdr, Class<T> expectedClass) {
+            this.asyncTimeout = propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
             this.expectedClass = expectedClass;
             rdr.pushMessageListener(this);
         }
 
         public Boolean apply(Class<? extends GeneratedMessage> msgClass, GeneratedMessage msg) {
-            this.future.complete(c -> c.apply(msgClass, msg));
-            return true; /* done reading? */
+            return this.future.complete(c -> c.apply(msgClass, msg));
         }
 
         public void error(Throwable ex) {
@@ -469,14 +477,14 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
                                 + "' but actually received '" + msgClass.getSimpleName() + "'");
                     }
                     return this.expectedClass.cast(msg);
-                })).get();
+                })).get(this.asyncTimeout.getValue(), TimeUnit.SECONDS);
             } catch (ExecutionException ex) {
                 if (XDevAPIError.class.equals(ex.getCause().getClass())) {
                     // wrap the other thread's exception and include this thread's context
                     throw new XDevAPIError((XDevAPIError) ex.getCause());
                 }
                 throw new CJCommunicationsException(ex.getCause().getMessage(), ex.getCause());
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | TimeoutException ex) {
                 throw new CJCommunicationsException(ex);
             }
         }

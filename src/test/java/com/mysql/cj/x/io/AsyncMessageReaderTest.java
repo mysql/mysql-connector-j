@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,8 +34,8 @@ import org.junit.Test;
 
 import com.google.protobuf.GeneratedMessage;
 import com.mysql.cj.api.x.io.MessageListener;
+import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.x.io.AsyncMessageReader;
 import com.mysql.cj.x.protobuf.Mysqlx.Ok;
 
 /**
@@ -98,7 +98,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void testBug22972057() {
         BaseTestChannel channel = new BaseTestChannel();
-        AsyncMessageReader reader = new AsyncMessageReader(channel);
+        AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), channel);
         reader.start();
 
         // close the socket after the read is pending
@@ -143,7 +143,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void testBug22972057_getNextMessageClass() {
         BaseTestChannel channel = new BaseTestChannel();
-        AsyncMessageReader reader = new AsyncMessageReader(channel);
+        AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), channel);
         reader.start();
 
         // close the socket after the read is pending
@@ -187,7 +187,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void errorAfterClosed() {
         BaseTestChannel channel = new BaseTestChannel();
-        AsyncMessageReader reader = new AsyncMessageReader(channel);
+        AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), channel);
         reader.start();
 
         channel.close();

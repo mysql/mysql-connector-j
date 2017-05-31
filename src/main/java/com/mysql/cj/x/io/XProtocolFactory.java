@@ -98,7 +98,7 @@ public class XProtocolFactory {
             Future<Void> connectPromise = channel.connect(new InetSocketAddress(host, port));
             connectPromise.get();
 
-            AsyncMessageReader messageReader = new AsyncMessageReader(channel);
+            AsyncMessageReader messageReader = new AsyncMessageReader(propertySet, channel);
             messageReader.start();
             AsyncMessageWriter messageWriter = new AsyncMessageWriter(channel);
 
