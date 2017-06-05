@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -51,13 +51,14 @@ public class HostInfo implements DatabaseUrlContainer {
     private final int port;
     private final String user;
     private final String password;
+    private final boolean isPasswordless;
     private final Map<String, String> hostProperties = new HashMap<>();
 
     /**
      * Constructs an empty {@link HostInfo} instance.
      */
     public HostInfo() {
-        this(null, null, -1, null, null);
+        this(null, null, -1, null, null, true, null);
     }
 
     /**
@@ -75,7 +76,7 @@ public class HostInfo implements DatabaseUrlContainer {
      *            the user's password
      */
     public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password) {
-        this(url, host, port, user, password, null);
+        this(url, host, port, user, password, password == null, null);
     }
 
     /**
@@ -95,11 +96,34 @@ public class HostInfo implements DatabaseUrlContainer {
      *            a connection arguments map.
      */
     public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password, Map<String, String> properties) {
+        this(url, host, port, user, password, password == null, properties);
+    }
+
+    /**
+     * Constructs a {@link HostInfo} instance initialized with the provided host, port, user, password and connection arguments.
+     * 
+     * @param url
+     *            a reference to the original database URL that produced this host info
+     * @param host
+     *            the host ip or name
+     * @param port
+     *            the port
+     * @param user
+     *            the user name
+     * @param password
+     *            this user's password
+     * @param isPasswordless
+     *            no password was provided in the connection URL or arguments?
+     * @param properties
+     *            a connection arguments map.
+     */
+    public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password, boolean isPasswordless, Map<String, String> properties) {
         this.originalUrl = url;
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
+        this.isPasswordless = isPasswordless;
         if (properties != null) {
             this.hostProperties.putAll(properties);
         }
@@ -148,6 +172,16 @@ public class HostInfo implements DatabaseUrlContainer {
      */
     public String getPassword() {
         return this.password;
+    }
+
+    /**
+     * Returns true if the is the default one, i.e., no password was provided in the connection URL or arguments.
+     * 
+     * @return
+     *         true if no password was provided in the connection URL or arguments.
+     */
+    public boolean isPasswordless() {
+        return this.isPasswordless;
     }
 
     /**

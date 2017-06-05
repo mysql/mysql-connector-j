@@ -163,7 +163,7 @@ public class JsonParser {
                 if (ch == StructuralToken.LCRBRACKET.CHAR) {
                     leftBrackets++;
                 }
-                if (!(key = nextKey(reader)).equals("")) {
+                if ((key = nextKey(reader)) != null) {
                     try {
                         doc.put(key, nextValue(reader));
                     } catch (WrongArgumentException ex) {
@@ -172,7 +172,6 @@ public class JsonParser {
                 } else {
                     reader.reset();
                 }
-
             } else if (ch == StructuralToken.RCRBRACKET.CHAR) {
                 rightBrackets++;
                 break;
@@ -243,6 +242,9 @@ public class JsonParser {
         reader.mark(1);
 
         JsonString val = parseString(reader);
+        if (val == null) {
+            // reader.reset();
+        }
 
         // find delimiter
         int intch;
@@ -260,10 +262,10 @@ public class JsonParser {
             }
         }
 
-        if (ch != StructuralToken.COLON.CHAR && val.getString().length() > 0) {
+        if (ch != StructuralToken.COLON.CHAR && val != null && val.getString().length() > 0) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.4", new String[] { val.getString() }));
         }
-        return val.getString();
+        return val != null ? val.getString() : null;
     }
 
     private static JsonValue nextValue(StringReader reader) throws IOException {
@@ -334,7 +336,7 @@ public class JsonParser {
      * @param reader
      *            JSON string reader.
      * @return
-     *         New {@link JsonString} object initialized by parsed JSON string.
+     *         New {@link JsonString} object initialized by parsed JSON string or <code>null</code> if no JSON string was found.
      * @throws IOException
      *             if can't read
      */
@@ -382,10 +384,7 @@ public class JsonParser {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.3", new Character[] { EscapeChar.QUOTE.CHAR }));
         }
 
-        if (sb == null) {
-            return new JsonString(); // empty string
-        }
-        return new JsonString().setValue(sb.toString());
+        return sb == null ? null : new JsonString().setValue(sb.toString());
     }
 
     /**

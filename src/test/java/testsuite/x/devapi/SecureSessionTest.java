@@ -66,6 +66,9 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                     PropertyDefinitions.PNAME_sslTrustStorePassword + "VOID=");
             this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreType + "=",
                     PropertyDefinitions.PNAME_sslTrustStoreType + "VOID=");
+            if (!this.sslFreeBaseUrl.contains("?")) {
+                this.sslFreeBaseUrl += "?";
+            }
         }
     }
 

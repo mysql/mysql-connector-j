@@ -455,18 +455,22 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             user = getDefaultUser();
         }
 
+        boolean isPasswordless = hi.isPasswordless();
         String password = hostProps.remove(PNAME_password);
-        if (!isNullOrEmpty(hi.getPassword())) {
+        if (!isPasswordless) {
             password = hi.getPassword();
-        } else if (isNullOrEmpty(password)) {
+        } else if (password == null) {
             password = getDefaultPassword();
+            isPasswordless = true;
+        } else {
+            isPasswordless = false;
         }
 
         expandPropertiesFromConfigFiles(hostProps);
         fixKeysCase(hostProps);
         fixProtocolDependencies(hostProps);
 
-        return buildHostInfo(host, port, user, password, hostProps);
+        return buildHostInfo(host, port, user, password, isPasswordless, hostProps);
     }
 
     /**
@@ -641,7 +645,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         String user = getDefaultUser();
         String password = getDefaultPassword();
 
-        return buildHostInfo(host, port, user, password, this.properties);
+        return buildHostInfo(host, port, user, password, true, this.properties);
     }
 
     /**
@@ -660,7 +664,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the host properties map
      * @return a new instance of {@link HostInfo}
      */
-    private HostInfo buildHostInfo(String host, int port, String user, String password, Map<String, String> hostProps) {
+    private HostInfo buildHostInfo(String host, int port, String user, String password, boolean isDefaultPwd, Map<String, String> hostProps) {
         // Apply properties transformations if needed.
         if (this.propertiesTransformer != null) {
             Properties props = new Properties();
@@ -690,7 +694,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             hostProps = transformedHostProps;
         }
 
-        return new HostInfo(this, host, port, user, password, hostProps);
+        return new HostInfo(this, host, port, user, password, isDefaultPwd, hostProps);
     }
 
     /**

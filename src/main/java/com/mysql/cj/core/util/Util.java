@@ -214,7 +214,7 @@ public class Util {
     }
 
     public static Map<Object, Object> calculateDifferences(Map<?, ?> map1, Map<?, ?> map2) {
-        Map<Object, Object> diffMap = new HashMap<Object, Object>();
+        Map<Object, Object> diffMap = new HashMap<>();
 
         for (Map.Entry<?, ?> entry : map1.entrySet()) {
             Object key = entry.getKey();
@@ -263,7 +263,7 @@ public class Util {
 
     public static <T> List<T> loadClasses(String extensionClassNames, String errorMessageKey, ExceptionInterceptor exceptionInterceptor) {
 
-        List<T> instances = new LinkedList<T>();
+        List<T> instances = new LinkedList<>();
 
         List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
 
@@ -287,7 +287,7 @@ public class Util {
     }
 
     /** Cache for the JDBC interfaces already verified */
-    private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<Class<?>, Boolean>();
+    private static final ConcurrentMap<Class<?>, Boolean> isJdbcInterfaceCache = new ConcurrentHashMap<>();
 
     /**
      * Recursively checks for interfaces on the given class to determine if it implements a java.sql, javax.sql or com.mysql.cj.jdbc interface.
@@ -342,7 +342,7 @@ public class Util {
     }
 
     /** Cache for the implemented interfaces searched. */
-    private static final ConcurrentMap<Class<?>, Class<?>[]> implementedInterfacesCache = new ConcurrentHashMap<Class<?>, Class<?>[]>();
+    private static final ConcurrentMap<Class<?>, Class<?>[]> implementedInterfacesCache = new ConcurrentHashMap<>();
 
     /**
      * Retrieves a list with all interfaces implemented by the given class. If possible gets this information from a cache instead of navigating through the
@@ -359,7 +359,7 @@ public class Util {
             return implementedInterfaces;
         }
 
-        Set<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
+        Set<Class<?>> interfaces = new LinkedHashSet<>();
         Class<?> superClass = clazz;
         do {
             Collections.addAll(interfaces, superClass.getInterfaces());
@@ -426,5 +426,15 @@ public class Util {
             return fqcn.substring(0, classNameStartsAt);
         }
         return "";
+    }
+
+    /**
+     * Checks if the JVM is running on Windows Operating System.
+     * 
+     * @return
+     *         <code>true</code> if currently running on Windows, <code>false</code> otherwise.
+     */
+    public static boolean isRunningOnWindows() {
+        return StringUtils.indexOfIgnoreCase(Constants.OS_NAME, "WINDOWS") != -1;
     }
 }

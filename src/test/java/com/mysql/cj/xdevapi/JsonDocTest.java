@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,6 +24,7 @@
 package com.mysql.cj.xdevapi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.StringReader;
@@ -33,12 +34,6 @@ import java.util.concurrent.Callable;
 import org.junit.Test;
 
 import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.xdevapi.DbDoc;
-import com.mysql.cj.xdevapi.JsonArray;
-import com.mysql.cj.xdevapi.JsonLiteral;
-import com.mysql.cj.xdevapi.JsonNumber;
-import com.mysql.cj.xdevapi.JsonParser;
-import com.mysql.cj.xdevapi.JsonString;
 
 /**
  * DbDoc tests.
@@ -108,12 +103,14 @@ public class JsonDocTest {
             }
         });
 
+        val = JsonParser.parseString(new StringReader("\"\""));
+        assertEquals("", val.getString());
+
         val = JsonParser.parseString(new StringReader(""));
-        assertEquals("", val.getString());
+        assertNull(val);
 
-        val = JsonParser.parseString(new StringReader(" \\r\\n"));
-        assertEquals("", val.getString());
-
+        val = JsonParser.parseString(new StringReader(" \\t\\r\\n"));
+        assertNull(val);
     }
 
     @Test
@@ -631,6 +628,7 @@ public class JsonDocTest {
 
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+        sb.append("\"\" : \"val0\", ");
         sb.append("\"key1\" : \"val1\", ");
         sb.append("\"key2\" : -1.2E-12, ");
         sb.append("\"key3\" : {\"in.key1\" :   true, \"in.key2\" : 3.1415}, ");
@@ -642,7 +640,9 @@ public class JsonDocTest {
 
         doc = JsonParser.parseDoc(new StringReader(sb.toString()));
 
-        assertEquals(7, doc.size());
+        assertEquals(8, doc.size());
+        assertEquals(JsonString.class, doc.get("").getClass());
+        assertEquals("\"val0\"", doc.get("").toString());
         assertEquals(JsonString.class, doc.get("key1").getClass());
         assertEquals("\"val1\"", doc.get("key1").toString());
         assertEquals(JsonNumber.class, doc.get("key2").getClass());
@@ -658,7 +658,7 @@ public class JsonDocTest {
         assertEquals(JsonLiteral.NULL.getClass(), doc.get("key7").getClass());
         assertEquals("null", doc.get("key7").toString());
 
-        assertEquals("{\n\"key1\" : \"val1\",\n\"key2\" : -1.2E-12,\n\"key3\" : {\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n},\n"
+        assertEquals("{\n\"\" : \"val0\",\n\"key1\" : \"val1\",\n\"key2\" : -1.2E-12,\n\"key3\" : {\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n},\n"
                 + "\"key4\" : false,\n\"key5\" : [\"arr.val1\", null],\n\"key6\" : true,\n\"key7\" : null\n}", doc.toString());
 
         // Number at the end
