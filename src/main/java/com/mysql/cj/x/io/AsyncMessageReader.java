@@ -217,13 +217,16 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
         }
 
+        // Capture this flag value before dispatching the message, otherwise we risk having a different value when using it later on.
+        boolean copyOfStopAfterNextMessage = this.stopAfterNextMessage;
+
         // dispatch the message to the listener before starting next read to ensure in-order delivery
         buf.flip();
         dispatchMessage(messageClass, parseMessage(messageClass, buf));
 
         // As this is where the read loop begins, we can escape it here if requested.
-        // But we always read a next message if the current one is a notice.
-        if (this.stopAfterNextMessage && messageClass != Frame.class) {
+        // But we always read the next message if the current one is a notice.
+        if (copyOfStopAfterNextMessage && messageClass != Frame.class) {
             this.stopAfterNextMessage = false;
             this.headerBuf.clear();
             return;
