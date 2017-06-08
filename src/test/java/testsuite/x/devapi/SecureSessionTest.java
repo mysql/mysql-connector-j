@@ -25,6 +25,7 @@ package testsuite.x.devapi;
 
 import java.util.Properties;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     public void setupSecureSessionTest() {
         if (this.isSetForXTests) {
             System.clearProperty("javax.net.ssl.trustStore");
+            System.clearProperty("javax.net.ssl.trustStoreType");
             System.clearProperty("javax.net.ssl.trustStorePassword");
 
             this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslMode);
@@ -65,6 +67,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreType + "=",
                     PropertyDefinitions.PNAME_sslTrustStoreType + "VOID=");
         }
+    }
+
+    @After
+    public void teardownSecureSessionTest() {
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("javax.net.ssl.trustStoreType");
+        System.clearProperty("javax.net.ssl.trustStorePassword");
     }
 
     /**
@@ -91,10 +100,41 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      * Tests secure {@link Session}s created via URL and properties map. This is the default if no ssl-mode is provided.
      */
     @Test
-    public void testSecureSessionDefault() {
+    public void testSecureSessionDefaultAndRequired() {
         if (!this.isSetForXTests) {
             return;
         }
+
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeTestProperties);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        testSession = this.fact.getSession(props);
+        assertSecureSession(testSession);
+        testSession.close();
+    }
+
+    /**
+     * Tests secure {@link Session}s created via URL and properties map, with the SSL system properties also defined.
+     */
+    @Test
+    public void testSecureSessionDefaultAndRequiredWithSystemPropsPresent() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
         assertSecureSession(testSession);
@@ -360,5 +400,39 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             nSession.close();
             nSession = null;
         }
+    }
+
+    /**
+     * Tests fix for Bug#26227653, WL#10528 DIFF BEHAVIOUR WHEN SYSTEM PROP JAVAX.NET.SSL.TRUSTSTORETYPE IS SET
+     * 
+     * The actual bug is: if wrong system-wide SSL settings are provided, the session should not fail if 'xdevapi.ssl-mode=REQUIRED'.
+     */
+    @Test
+    public void testBug26227653() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        System.setProperty("javax.net.ssl.trustStore", "dummy_truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "some_password");
+        System.setProperty("javax.net.ssl.trustStoreType", "wrong_type");
+
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeTestProperties);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        testSession = this.fact.getSession(props);
+        assertSecureSession(testSession);
+        testSession.close();
     }
 }

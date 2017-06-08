@@ -181,7 +181,7 @@ public class XProtocolFactory {
             }
 
             SSLContext sslContext = ExportControlled.getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType,
-                    trustStorePassword, verifyServerCert, sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? host : null, null);
+                    trustStorePassword, false, verifyServerCert, sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? host : null, null);
             SSLEngine sslEngine = sslContext.createSSLEngine();
             sslEngine.setUseClientMode(true);
 

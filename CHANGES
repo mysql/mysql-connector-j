@@ -3,6 +3,8 @@
 
 Version 8.0.7
 
+  - Fix for Bug#26227653, WL#10528 DIFF BEHAVIOUR WHEN SYSTEM PROP JAVAX.NET.SSL.TRUSTSTORETYPE IS SET.
+
   - WL#10528, DevAPI: Ensure all connectors are secure by default.
 
   - WL#8305, Remove internal dependency on connection objects.

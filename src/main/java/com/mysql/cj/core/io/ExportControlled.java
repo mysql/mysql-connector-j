@@ -47,6 +47,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -56,6 +57,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -234,15 +237,15 @@ public class ExportControlled {
         private PKIXParameters validatorParams = null;
         private CertPathValidator validator = null;
 
-        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, String hostName, KeyStore trustKeyStore)
-                throws CertificateException {
+        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, String hostName) throws CertificateException {
             this.origTm = tm;
             this.verifyServerCert = verifyServerCertificate;
             this.hostName = hostName;
 
             if (verifyServerCertificate) {
                 try {
-                    this.validatorParams = new PKIXParameters(trustKeyStore);
+                    Set<TrustAnchor> anch = Arrays.stream(tm.getAcceptedIssuers()).map(c -> new TrustAnchor(c, null)).collect(Collectors.toSet());
+                    this.validatorParams = new PKIXParameters(anch);
                     this.validatorParams.setRevocationEnabled(false);
                     this.validator = CertPathValidator.getInstance("PKIX");
                     this.certFactory = CertificateFactory.getInstance("X.509");
@@ -377,6 +380,17 @@ public class ExportControlled {
     public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
             String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword, boolean verifyServerCert,
             String hostName, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
+        return getSSLContext(clientCertificateKeyStoreUrl, clientCertificateKeyStoreType, clientCertificateKeyStorePassword, trustCertificateKeyStoreUrl,
+                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, true, verifyServerCert, hostName, exceptionInterceptor);
+    }
+
+    /**
+     * Configure the {@link SSLContext} based on the supplier property set.
+     */
+    public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
+            String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword,
+            boolean fallbackToDefaultTrustStore, boolean verifyServerCert, String hostName, ExceptionInterceptor exceptionInterceptor)
+            throws SSLParamsException {
         TrustManagerFactory tmf = null;
         KeyManagerFactory kmf = null;
 
@@ -433,86 +447,57 @@ public class ExportControlled {
             }
         }
 
-        if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-            InputStream ksIS = null;
-            try {
-                if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
-                    KeyStore trustKeyStore = KeyStore.getInstance(trustCertificateKeyStoreType);
-                    URL ksURL = new URL(trustCertificateKeyStoreUrl);
+        InputStream trustStoreIS = null;
+        try {
+            String trustStoreType = "";
+            char[] trustStorePassword = null;
+            KeyStore trustKeyStore = null;
 
-                    char[] password = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
-                    ksIS = ksURL.openStream();
-                    trustKeyStore.load(ksIS, password);
-                    tmf.init(trustKeyStore);
+            if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl) && !StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+                trustStoreType = trustCertificateKeyStoreType;
+                trustStorePassword = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
+                trustStoreIS = new URL(trustCertificateKeyStoreUrl).openStream();
 
-                    // building the customized list of TrustManagers from original one if it's available
-                    TrustManager[] origTms = tmf.getTrustManagers();
+                trustKeyStore = KeyStore.getInstance(trustStoreType);
+                trustKeyStore.load(trustStoreIS, trustStorePassword);
+            }
 
-                    for (int j = 0; j < origTms.length; j++) {
-                        tms.add(origTms[j] instanceof X509TrustManager
-                                ? new X509TrustManagerWrapper((X509TrustManager) origTms[j], verifyServerCert, hostName, trustKeyStore) // wrapping X509TrustManagers
-                                : origTms[j] // for non-X509 TrustManagers putting original ones
-                        );
-                    }
-                }
-            } catch (NoSuchAlgorithmException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + nsae.getMessage() + "]", nsae,
-                        exceptionInterceptor);
-            } catch (KeyStoreException kse) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
-                        exceptionInterceptor);
-            } catch (CertificateException nsae) {
-                throw ExceptionFactory.createException(SSLParamsException.class,
-                        "Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl, nsae, exceptionInterceptor);
-            } catch (MalformedURLException mue) {
-                throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", mue,
-                        exceptionInterceptor);
-            } catch (IOException ioe) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        ioe, exceptionInterceptor);
-            } finally {
-                if (ksIS != null) {
-                    try {
-                        ksIS.close();
-                    } catch (IOException e) {
-                        // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
-                    }
+            if (trustKeyStore != null || fallbackToDefaultTrustStore) {
+                tmf.init(trustKeyStore); // (trustKeyStore == null) initializes the TrustManagerFactory with the default truststore.  
+
+                // building the customized list of TrustManagers from original one if it's available
+                TrustManager[] origTms = tmf.getTrustManagers();
+
+                for (TrustManager tm : origTms) {
+                    // wrap X509TrustManager or put original if non-X509 TrustManager
+                    tms.add(tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert, hostName) : tm);
                 }
             }
-        } else {
-            try {
-                tmf.init((KeyStore) null);
-            } catch (KeyStoreException kse) {
-                throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + kse.getMessage() + "]", kse,
-                        exceptionInterceptor);
+
+        } catch (MalformedURLException e) {
+            throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", e,
+                    exceptionInterceptor);
+        } catch (NoSuchAlgorithmException e) {
+            throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + e.getMessage() + "]", e,
+                    exceptionInterceptor);
+        } catch (KeyStoreException e) {
+            throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + e.getMessage() + "]", e,
+                    exceptionInterceptor);
+        } catch (CertificateException e) {
+            throw ExceptionFactory.createException(SSLParamsException.class,
+                    "Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl, e, exceptionInterceptor);
+        } catch (IOException e) {
+            throw ExceptionFactory.createException(SSLParamsException.class, "Cannot open " + trustCertificateKeyStoreUrl + " [" + e.getMessage() + "]", e,
+                    exceptionInterceptor);
+        } finally {
+            if (trustStoreIS != null) {
+                try {
+                    trustStoreIS.close();
+                } catch (IOException e) {
+                    // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
+                }
             }
         }
-
-        //        SSLContext sslContext = null;
-        //
-        //        try {
-        //            sslContext = SSLContext.getInstance("TLS");
-        //            sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ? null : kmf.getKeyManagers(),
-        //                    verifyServerCert ? tmf.getTrustManagers() : new X509TrustManager[] { new X509TrustManager() {
-        //                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-        //                            // return without complaint
-        //                        }
-        //
-        //                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        //                            // return without complaint
-        //                        }
-        //
-        //                        public X509Certificate[] getAcceptedIssuers() {
-        //                            return null;
-        //                        }
-        //                    } }, null);
-        //
-        //            return sslContext;
-        //        } catch (NoSuchAlgorithmException nsae) {
-        //            throw new SSLParamsException("TLS is not a valid SSL protocol.", nsae);
-        //        } catch (KeyManagementException kme) {
-        //            throw new SSLParamsException("KeyManagementException: " + kme.getMessage(), kme);
-        //        }
 
         // if original TrustManagers are not available then putting one X509TrustManagerWrapper which take care only about expiration check 
         if (tms.size() == 0) {
