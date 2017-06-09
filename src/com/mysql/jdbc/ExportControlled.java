@@ -46,6 +46,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -53,8 +54,10 @@ import java.security.spec.X509EncodedKeySpec;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.crypto.Cipher;
 import javax.net.ssl.KeyManager;
@@ -226,13 +229,17 @@ public class ExportControlled {
         private PKIXParameters validatorParams = null;
         private CertPathValidator validator = null;
 
-        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate, KeyStore trustKeyStore) throws CertificateException {
+        public X509TrustManagerWrapper(X509TrustManager tm, boolean verifyServerCertificate) throws CertificateException {
             this.origTm = tm;
             this.verifyServerCert = verifyServerCertificate;
 
             if (verifyServerCertificate) {
                 try {
-                    this.validatorParams = new PKIXParameters(trustKeyStore);
+                    Set<TrustAnchor> anch = new HashSet<TrustAnchor>();
+                    for (X509Certificate cert : tm.getAcceptedIssuers()) {
+                        anch.add(new TrustAnchor(cert, null));
+                    }
+                    this.validatorParams = new PKIXParameters(anch);
                     this.validatorParams.setRevocationEnabled(false);
                     this.validator = CertPathValidator.getInstance("PKIX");
                     this.certFactory = CertificateFactory.getInstance("X.509");
@@ -240,7 +247,6 @@ public class ExportControlled {
                     throw new CertificateException(e);
                 }
             }
-
         }
 
         public X509TrustManagerWrapper() {
@@ -385,56 +391,52 @@ public class ExportControlled {
             }
         }
 
-        if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+        InputStream trustStoreIS = null;
+        try {
+            KeyStore trustKeyStore = null;
 
-            InputStream ksIS = null;
-            try {
-                if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
-                    KeyStore trustKeyStore = KeyStore.getInstance(trustCertificateKeyStoreType);
-                    URL ksURL = new URL(trustCertificateKeyStoreUrl);
+            if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl) && !StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+                trustStoreIS = new URL(trustCertificateKeyStoreUrl).openStream();
+                char[] trustStorePassword = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
 
-                    char[] password = (trustCertificateKeyStorePassword == null) ? new char[0] : trustCertificateKeyStorePassword.toCharArray();
-                    ksIS = ksURL.openStream();
-                    trustKeyStore.load(ksIS, password);
-                    tmf.init(trustKeyStore);
+                trustKeyStore = KeyStore.getInstance(trustCertificateKeyStoreType);
+                trustKeyStore.load(trustStoreIS, trustStorePassword);
+            }
 
-                    // building the customized list of TrustManagers from original one if it's available
-                    TrustManager[] origTms = tmf.getTrustManagers();
-                    final boolean verifyServerCertificate = mysqlIO.connection.getVerifyServerCertificate();
+            tmf.init(trustKeyStore); // (trustKeyStore == null) initializes the TrustManagerFactory with the default truststore. 
 
-                    for (int j = 0; j < origTms.length; j++) {
-                        tms.add(origTms[j] instanceof X509TrustManager
-                                ? new X509TrustManagerWrapper((X509TrustManager) origTms[j], verifyServerCertificate, trustKeyStore) // wrapping X509TrustManagers
-                                : origTms[j] // for non-X509 TrustManagers putting original ones
-                        );
-                    }
-                }
-            } catch (NoSuchAlgorithmException nsae) {
-                throw SQLError.createSQLException("Unsupported keystore algorithm [" + nsae.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
-                        mysqlIO.getExceptionInterceptor());
-            } catch (KeyStoreException kse) {
-                throw SQLError.createSQLException("Could not create KeyStore instance [" + kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
-                        mysqlIO.getExceptionInterceptor());
-            } catch (CertificateException nsae) {
-                throw SQLError.createSQLException("Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl,
-                        SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
-            } catch (MalformedURLException mue) {
-                throw SQLError.createSQLException(trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
-                        mysqlIO.getExceptionInterceptor());
-            } catch (IOException ioe) {
-                SQLException sqlEx = SQLError.createSQLException("Cannot open " + trustCertificateKeyStoreUrl + " [" + ioe.getMessage() + "]",
-                        SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+            // building the customized list of TrustManagers from original one if it's available
+            TrustManager[] origTms = tmf.getTrustManagers();
+            final boolean verifyServerCert = mysqlIO.connection.getVerifyServerCertificate();
 
-                sqlEx.initCause(ioe);
+            for (TrustManager tm : origTms) {
+                // wrap X509TrustManager or put original if non-X509 TrustManager
+                tms.add(tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert) : tm);
+            }
 
-                throw sqlEx;
-            } finally {
-                if (ksIS != null) {
-                    try {
-                        ksIS.close();
-                    } catch (IOException e) {
-                        // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
-                    }
+        } catch (MalformedURLException e) {
+            throw SQLError.createSQLException(trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                    mysqlIO.getExceptionInterceptor());
+        } catch (KeyStoreException e) {
+            throw SQLError.createSQLException("Could not create KeyStore instance [" + e.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                    mysqlIO.getExceptionInterceptor());
+        } catch (NoSuchAlgorithmException e) {
+            throw SQLError.createSQLException("Unsupported keystore algorithm [" + e.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false,
+                    mysqlIO.getExceptionInterceptor());
+        } catch (CertificateException e) {
+            throw SQLError.createSQLException("Could not load trust" + trustCertificateKeyStoreType + " keystore from " + trustCertificateKeyStoreUrl,
+                    SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+        } catch (IOException e) {
+            SQLException sqlEx = SQLError.createSQLException("Cannot open " + trustCertificateKeyStoreType + " [" + e.getMessage() + "]",
+                    SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
+            sqlEx.initCause(e);
+            throw sqlEx;
+        } finally {
+            if (trustStoreIS != null) {
+                try {
+                    trustStoreIS.close();
+                } catch (IOException e) {
+                    // can't close input stream, but keystore can be properly initialized so we shouldn't throw this exception
                 }
             }
         }
