@@ -1415,6 +1415,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * WL#8055 - Consistent naming scheme for GIS functions - Deprecation
      * WL#8034 - More user friendly GIS functions
      * WL#7541 - GIS MBR spatial operations enhancement
+     * WL#8157 - Remove deprecated GIS functions
+     * WL#8055 - Consistent naming scheme for GIS functions - Deprecation
+     * WL#9435 - Axis order in WKB parsing functions
      * (...)
      * 
      * Test syntax for all GIS functions.
@@ -1428,24 +1431,32 @@ public class SyntaxRegressionTest extends BaseTestCase {
         final String wktMultiPolygon = "'MULTIPOLYGON(((0 0, 8 0, 4 6, 0 0), (4 1, 6 0, 5 3, 4 1)), ((0 3, 8 3, 4 9, 0 3)))'";
         final String wktGeometryCollection = "'GEOMETRYCOLLECTION(POINT(8 0), LINESTRING(0 0, 8 0, 4 6, 0 0), POLYGON((0 3, 8 3, 4 9, 0 3)))'";
 
-        final String wkbPoint1 = "Point(0, 0)";
-        final String wkbPoint2 = "Point(8, 0)";
-        final String wkbPoint3 = "Point(4, 6)";
-        final String wkbPoint4 = "Point(4, 1)";
-        final String wkbPoint5 = "Point(6, 0)";
-        final String wkbPoint6 = "Point(5, 3)";
-        final String wkbPoint7 = "Point(0, 3)";
-        final String wkbPoint8 = "Point(8, 3)";
-        final String wkbPoint9 = "Point(4, 9)";
-        final String wkbLineString1 = String.format("LineString(%s, %s, %s, %s)", wkbPoint1, wkbPoint2, wkbPoint3, wkbPoint1);
-        final String wkbLineString2 = String.format("LineString(%s, %s, %s, %s)", wkbPoint4, wkbPoint5, wkbPoint6, wkbPoint4);
-        final String wkbLineString3 = String.format("LineString(%s, %s, %s, %s)", wkbPoint7, wkbPoint8, wkbPoint9, wkbPoint7);
-        final String wkbPolygon1 = String.format("Polygon(%s, %s)", wkbLineString1, wkbLineString2);
-        final String wkbPolygon2 = String.format("Polygon(%s)", wkbLineString3);
-        final String wkbMultiPoint = String.format("MultiPoint(%s, %s, %s)", wkbPoint1, wkbPoint2, wkbPoint3);
-        final String wkbMultiLineString = String.format("MultiLineString(%s, %s)", wkbLineString1, wkbLineString2);
-        final String wkbMultiPolygon = String.format("MultiPolygon(%s, %s)", wkbPolygon1, wkbPolygon2);
-        final String wkbGeometryCollection = String.format("GeometryCollection(%s, %s, %s)", wkbPoint2, wkbLineString1, wkbPolygon2);
+        final String geoPoint1 = "Point(0, 0)";
+        final String geoPoint2 = "Point(8, 0)";
+        final String geoPoint3 = "Point(4, 6)";
+        final String geoPoint4 = "Point(4, 1)";
+        final String geoPoint5 = "Point(6, 0)";
+        final String geoPoint6 = "Point(5, 3)";
+        final String geoPoint7 = "Point(0, 3)";
+        final String geoPoint8 = "Point(8, 3)";
+        final String geoPoint9 = "Point(4, 9)";
+        final String geoLineString1 = String.format("LineString(%s, %s, %s, %s)", geoPoint1, geoPoint2, geoPoint3, geoPoint1);
+        final String geoLineString2 = String.format("LineString(%s, %s, %s, %s)", geoPoint4, geoPoint5, geoPoint6, geoPoint4);
+        final String geoLineString3 = String.format("LineString(%s, %s, %s, %s)", geoPoint7, geoPoint8, geoPoint9, geoPoint7);
+        final String geoPolygon1 = String.format("Polygon(%s, %s)", geoLineString1, geoLineString2);
+        final String geoPolygon2 = String.format("Polygon(%s)", geoLineString3);
+        final String geoMultiPoint = String.format("MultiPoint(%s, %s, %s)", geoPoint1, geoPoint2, geoPoint3);
+        final String geoMultiLineString = String.format("MultiLineString(%s, %s)", geoLineString1, geoLineString2);
+        final String geoMultiPolygon = String.format("MultiPolygon(%s, %s)", geoPolygon1, geoPolygon2);
+        final String geoGeometryCollection = String.format("GeometryCollection(%s, %s, %s)", geoPoint2, geoLineString1, geoPolygon2);
+
+        final String wkbPoint = String.format("ST_ASWKB(%s)", geoPoint1);
+        final String wkbLineString = String.format("ST_ASWKB(%s)", geoLineString1);
+        final String wkbPolygon = String.format("ST_ASWKB(%S)", geoPolygon1);
+        final String wkbMultiPoint = String.format("ST_ASWKB(%s)", geoMultiPoint);
+        final String wkbMultiLineString = String.format("ST_ASWKB(%s)", geoMultiLineString);
+        final String wkbMultiPolygon = String.format("ST_ASWKB(%s)", geoMultiPolygon);
+        final String wkbGeometryCollection = String.format("ST_ASWKB(%s)", geoGeometryCollection);
 
         final Map<String, String> args = new HashMap<String, String>();
         args.put("gcWkt", wktGeometryCollection);
@@ -1456,28 +1467,36 @@ public class SyntaxRegressionTest extends BaseTestCase {
         args.put("mplWkt", wktMultiPolygon);
         args.put("ptWkt", wktPoint);
         args.put("plWkt", wktPolygon);
+        args.put("gcGeo", geoGeometryCollection);
         args.put("gcWkb", wkbGeometryCollection);
+        args.put("gGeo", geoGeometryCollection);
         args.put("gWkb", wkbGeometryCollection);
-        args.put("lsWkb", wkbLineString1);
+        args.put("lsGeo", geoLineString1);
+        args.put("lsWkb", wkbLineString);
+        args.put("mlsGeo", geoMultiLineString);
         args.put("mlsWkb", wkbMultiLineString);
+        args.put("mptGeo", geoMultiPoint);
         args.put("mptWkb", wkbMultiPoint);
+        args.put("mplGeo", geoMultiPolygon);
         args.put("mplWkb", wkbMultiPolygon);
-        args.put("ptWkb", wkbPoint1);
-        args.put("plWkb", wkbPolygon1);
-        args.put("g1", wkbPolygon1);
-        args.put("g2", wkbPolygon2);
-        args.put("pt1", wkbPoint1);
-        args.put("pt2", wkbPoint2);
-        args.put("ls1", wkbLineString1);
-        args.put("ls2", wkbLineString2);
-        args.put("pl1", wkbPolygon1);
-        args.put("pl2", wkbPolygon2);
-        args.put("g", wkbGeometryCollection);
-        args.put("pt", wkbPoint3);
-        args.put("ls", wkbLineString1);
-        args.put("pl", wkbPolygon1);
-        args.put("mpl", wkbMultiPolygon);
-        args.put("gc", wkbGeometryCollection);
+        args.put("ptGeo", geoPoint1);
+        args.put("ptWkb", wkbPoint);
+        args.put("plGeo", geoPolygon1);
+        args.put("plWkb", wkbPolygon);
+        args.put("g1", geoPolygon1);
+        args.put("g2", geoPolygon2);
+        args.put("pt1", geoPoint1);
+        args.put("pt2", geoPoint2);
+        args.put("ls1", geoLineString1);
+        args.put("ls2", geoLineString2);
+        args.put("pl1", geoPolygon1);
+        args.put("pl2", geoPolygon2);
+        args.put("g", geoGeometryCollection);
+        args.put("pt", geoPoint3);
+        args.put("ls", geoLineString1);
+        args.put("pl", geoPolygon1);
+        args.put("mpl", geoMultiPolygon);
+        args.put("gc", geoGeometryCollection);
         args.put("gh", "'s14f5h28wc04jsq093jd'");
         args.put("js",
                 "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
@@ -1540,37 +1559,82 @@ public class SyntaxRegressionTest extends BaseTestCase {
         gisFunctions.add(new GisFunction("ST_PointFromText", 5, 6, 1, 0, 0, 0, "ptWkt"));
         gisFunctions.add(new GisFunction("ST_PolyFromText", 5, 6, 1, 0, 0, 0, "plWkt"));
         gisFunctions.add(new GisFunction("ST_PolygonFromText", 5, 6, 1, 0, 0, 0, "plWkt"));
-        // Functions That Create Geometry Values from WKB Values
-        gisFunctions.add(new GisFunction("GeomCollFromWKB", 5, 5, 1, 5, 7, 6, "gcWkb"));
-        gisFunctions.add(new GisFunction("GeometryCollectionFromWKB", 5, 5, 1, 5, 7, 6, "gcWkb"));
-        gisFunctions.add(new GisFunction("GeomFromWKB", 5, 5, 1, 5, 7, 6, "gWkb"));
-        gisFunctions.add(new GisFunction("GeometryFromWKB", 5, 5, 1, 5, 7, 6, "gWkb"));
-        gisFunctions.add(new GisFunction("LineFromWKB", 5, 5, 1, 5, 7, 6, "lsWkb"));
-        gisFunctions.add(new GisFunction("LineStringFromWKB", 5, 5, 1, 5, 7, 6, "lsWkb"));
-        gisFunctions.add(new GisFunction("MLineFromWKB", 5, 5, 1, 5, 7, 6, "mlsWkb"));
-        gisFunctions.add(new GisFunction("MultiLineStringFromWKB", 5, 5, 1, 5, 7, 6, "mlsWkb"));
-        gisFunctions.add(new GisFunction("MPointFromWKB", 5, 5, 1, 5, 7, 6, "mptWkb"));
-        gisFunctions.add(new GisFunction("MultiPointFromWKB", 5, 5, 1, 5, 7, 6, "mptWkb"));
-        gisFunctions.add(new GisFunction("MPolyFromWKB", 5, 5, 1, 5, 7, 6, "mplWkb"));
-        gisFunctions.add(new GisFunction("MultiPolygonFromWKB", 5, 5, 1, 5, 7, 6, "mplWkb"));
-        gisFunctions.add(new GisFunction("PointFromWKB", 5, 5, 1, 5, 7, 6, "ptWkb"));
-        gisFunctions.add(new GisFunction("PolyFromWKB", 5, 5, 1, 5, 7, 6, "plWkb"));
-        gisFunctions.add(new GisFunction("PolygonFromWKB", 5, 5, 1, 5, 7, 6, "plWkb"));
+        // Functions That Create Geometry Values from Geometry/WKB Values
+        gisFunctions.add(new GisFunction("GeomCollFromWKB", 5, 5, 1, 5, 7, 6, "gcGeo"));
+        gisFunctions.add(new GisFunction("GeometryCollectionFromWKB", 5, 5, 1, 5, 7, 6, "gcGeo"));
+        gisFunctions.add(new GisFunction("GeomFromWKB", 5, 5, 1, 5, 7, 6, "gGeo"));
+        gisFunctions.add(new GisFunction("GeometryFromWKB", 5, 5, 1, 5, 7, 6, "gGeo"));
+        gisFunctions.add(new GisFunction("LineFromWKB", 5, 5, 1, 5, 7, 6, "lsGeo"));
+        gisFunctions.add(new GisFunction("LineStringFromWKB", 5, 5, 1, 5, 7, 6, "lsGeo"));
+        gisFunctions.add(new GisFunction("MLineFromWKB", 5, 5, 1, 5, 7, 6, "mlsGeo"));
+        gisFunctions.add(new GisFunction("MultiLineStringFromWKB", 5, 5, 1, 5, 7, 6, "mlsGeo"));
+        gisFunctions.add(new GisFunction("MPointFromWKB", 5, 5, 1, 5, 7, 6, "mptGeo"));
+        gisFunctions.add(new GisFunction("MultiPointFromWKB", 5, 5, 1, 5, 7, 6, "mptGeo"));
+        gisFunctions.add(new GisFunction("MPolyFromWKB", 5, 5, 1, 5, 7, 6, "mplGeo"));
+        gisFunctions.add(new GisFunction("MultiPolygonFromWKB", 5, 5, 1, 5, 7, 6, "mplGeo"));
+        gisFunctions.add(new GisFunction("PointFromWKB", 5, 5, 1, 5, 7, 6, "ptGeo"));
+        gisFunctions.add(new GisFunction("PolyFromWKB", 5, 5, 1, 5, 7, 6, "plGeo"));
+        gisFunctions.add(new GisFunction("PolygonFromWKB", 5, 5, 1, 5, 7, 6, "plGeo"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromWKB", 5, 6, 1, 8, 0, 0, "gcGeo"));
         gisFunctions.add(new GisFunction("ST_GeomCollFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_GeomCollFromWKB", 8, 0, 1, 0, 0, 0, "gcWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_GeometryCollectionFromWKB", 5, 6, 1, 8, 0, 0, "gcGeo"));
         gisFunctions.add(new GisFunction("ST_GeometryCollectionFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb"));
+        gisFunctions.add(new GisFunction("ST_GeometryCollectionFromWKB", 5, 6, 1, 0, 0, 0, "gcWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_GeometryCollectionFromWKB", 8, 0, 1, 0, 0, 0, "gcWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_GeomFromWKB", 5, 6, 1, 8, 0, 0, "gGeo"));
         gisFunctions.add(new GisFunction("ST_GeomFromWKB", 5, 6, 1, 0, 0, 0, "gWkb"));
+        gisFunctions.add(new GisFunction("ST_GeomFromWKB", 5, 6, 1, 0, 0, 0, "gWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_GeomFromWKB", 8, 0, 1, 0, 0, 0, "gWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_GeometryFromWKB", 5, 6, 1, 8, 0, 0, "gGeo"));
         gisFunctions.add(new GisFunction("ST_GeometryFromWKB", 5, 6, 1, 0, 0, 0, "gWkb"));
+        gisFunctions.add(new GisFunction("ST_GeometryFromWKB", 5, 6, 1, 0, 0, 0, "gWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_GeometryFromWKB", 8, 0, 1, 0, 0, 0, "gWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_LineFromWKB", 5, 6, 1, 8, 0, 0, "lsGeo"));
         gisFunctions.add(new GisFunction("ST_LineFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb"));
+        gisFunctions.add(new GisFunction("ST_LineFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_LineFromWKB", 8, 0, 1, 0, 0, 0, "lsWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_LineStringFromWKB", 5, 6, 1, 8, 0, 0, "lsGeo"));
         gisFunctions.add(new GisFunction("ST_LineStringFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb"));
+        gisFunctions.add(new GisFunction("ST_LineStringFromWKB", 5, 6, 1, 0, 0, 0, "lsWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_LineStringFromWKB", 8, 0, 1, 0, 0, 0, "lsWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MLineFromWKB", 5, 7, 6, 8, 0, 0, "mlsGeo"));
         gisFunctions.add(new GisFunction("ST_MLineFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb"));
+        gisFunctions.add(new GisFunction("ST_MLineFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MLineFromWKB", 8, 0, 1, 0, 0, 0, "mlsWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MultiLineStringFromWKB", 5, 7, 6, 8, 0, 0, "mlsGeo"));
         gisFunctions.add(new GisFunction("ST_MultiLineStringFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiLineStringFromWKB", 5, 7, 6, 0, 0, 0, "mlsWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MultiLineStringFromWKB", 8, 0, 1, 0, 0, 0, "mlsWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MPointFromWKB", 5, 7, 6, 8, 0, 0, "mptGeo"));
         gisFunctions.add(new GisFunction("ST_MPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb"));
+        gisFunctions.add(new GisFunction("ST_MPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MPointFromWKB", 8, 0, 1, 0, 0, 0, "mptWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MultiPointFromWKB", 5, 7, 6, 8, 0, 0, "mptGeo"));
         gisFunctions.add(new GisFunction("ST_MultiPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiPointFromWKB", 5, 7, 6, 0, 0, 0, "mptWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MultiPointFromWKB", 8, 0, 1, 0, 0, 0, "mptWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MPolyFromWKB", 5, 7, 6, 8, 0, 0, "mplGeo"));
         gisFunctions.add(new GisFunction("ST_MPolyFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb"));
+        gisFunctions.add(new GisFunction("ST_MPolyFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MPolyFromWKB", 8, 0, 1, 0, 0, 0, "mplWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_MultiPolygonFromWKB", 5, 7, 6, 8, 0, 0, "mplGeo"));
         gisFunctions.add(new GisFunction("ST_MultiPolygonFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb"));
+        gisFunctions.add(new GisFunction("ST_MultiPolygonFromWKB", 5, 7, 6, 0, 0, 0, "mplWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_MultiPolygonFromWKB", 8, 0, 1, 0, 0, 0, "mplWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_PointFromWKB", 5, 6, 1, 8, 0, 0, "ptGeo"));
         gisFunctions.add(new GisFunction("ST_PointFromWKB", 5, 6, 1, 0, 0, 0, "ptWkb"));
+        gisFunctions.add(new GisFunction("ST_PointFromWKB", 5, 6, 1, 0, 0, 0, "ptWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_PointFromWKB", 8, 0, 1, 0, 0, 0, "ptWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_PolyFromWKB", 5, 6, 1, 8, 0, 0, "plGeo"));
         gisFunctions.add(new GisFunction("ST_PolyFromWKB", 5, 6, 1, 0, 0, 0, "plWkb"));
+        gisFunctions.add(new GisFunction("ST_PolyFromWKB", 5, 6, 1, 0, 0, 0, "plWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_PolyFromWKB", 8, 0, 1, 0, 0, 0, "plWkb", "0", "'axis-order=srid-defined'"));
+        gisFunctions.add(new GisFunction("ST_PolygonFromWKB", 5, 6, 1, 8, 0, 0, "plGeo"));
         gisFunctions.add(new GisFunction("ST_PolygonFromWKB", 5, 6, 1, 0, 0, 0, "plWkb"));
+        gisFunctions.add(new GisFunction("ST_PolygonFromWKB", 5, 6, 1, 0, 0, 0, "plWkb", "0"));
+        gisFunctions.add(new GisFunction("ST_PolygonFromWKB", 8, 0, 1, 0, 0, 0, "plWkb", "0", "'axis-order=srid-defined'"));
         // MySQL-Specific Functions That Create Geometry Values
         gisFunctions.add(new GisFunction("GeometryCollection", 5, 5, 1, 0, 0, 0, "g1", "g2"));
         gisFunctions.add(new GisFunction("LineString", 5, 5, 1, 0, 0, 0, "pt1", "pt2"));
