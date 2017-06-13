@@ -5356,7 +5356,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      *                if a database-access error occurs.
      */
     public java.sql.Time getTime(int columnIndex, Calendar cal) throws SQLException {
-        return getTimeInternal(columnIndex, cal, cal.getTimeZone(), true);
+        return getTimeInternal(columnIndex, cal, cal != null ? cal.getTimeZone() : this.getDefaultTimeZone(), true);
     }
 
     /**
@@ -5605,7 +5605,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
      *                if a database-access error occurs.
      */
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-        return getTimestampInternal(columnIndex, cal, cal.getTimeZone(), true);
+        return getTimestampInternal(columnIndex, cal, cal != null ? cal.getTimeZone() : this.getDefaultTimeZone(), true);
     }
 
     /**

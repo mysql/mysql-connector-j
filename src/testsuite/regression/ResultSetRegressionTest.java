@@ -5383,4 +5383,48 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests for fix to BUG#25650305 - GETDATE(),GETTIME() AND GETTIMESTAMP() CALL WITH NULL CALENDAR RETURNS NPE
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug25650305() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return; // fractional seconds are not supported in previous versions
+        }
+
+        createTable("testBug25650305", "(c1 timestamp(5))");
+        this.stmt.executeUpdate("INSERT INTO testBug25650305 VALUES ('2031-01-15 03:14:07.339999')");
+
+        Calendar cal = Calendar.getInstance();
+
+        Connection testConn;
+        Properties props = new Properties();
+        props.setProperty("useSSL", "false");
+        props.setProperty("useFastDateParsing", "true");
+
+        for (int i = 0; i < 2; i++) {
+            System.out.println("With useFastDateParsing=" + props.getProperty("useFastDateParsing"));
+            testConn = getConnectionWithProps(props);
+            this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug25650305");
+            this.rs.next();
+
+            assertEquals("2031-01-15", this.rs.getDate(1).toString());
+            assertEquals("2031-01-15", this.rs.getDate(1, cal).toString());
+            assertEquals("2031-01-15", this.rs.getDate(1, null).toString());
+
+            assertEquals("03:14:07", this.rs.getTime(1).toString());
+            assertEquals("03:14:07", this.rs.getTime(1, cal).toString());
+            assertEquals("03:14:07", this.rs.getTime(1, null).toString());
+
+            assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1).toString());
+            assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, cal).toString());
+            assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, null).toString());
+
+            testConn.close();
+            props.setProperty("useFastDateParsing", "false");
+        }
+    }
 }
