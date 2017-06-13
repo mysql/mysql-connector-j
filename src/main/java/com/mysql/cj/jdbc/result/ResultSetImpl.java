@@ -793,7 +793,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new SqlDateValueFactory(cal.getTimeZone());
+        ValueFactory<Date> vf = new SqlDateValueFactory(cal != null ? cal.getTimeZone() : this.session.getDefaultTimeZone());
         return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -923,7 +923,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Time> vf = new SqlTimeValueFactory(cal.getTimeZone());
+        ValueFactory<Time> vf = new SqlTimeValueFactory(cal != null ? cal.getTimeZone() : this.session.getDefaultTimeZone());
         return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -969,11 +969,13 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        if (this.customTsVf != null && cal.getTimeZone() == this.lastTsCustomTz) {
+
+        TimeZone tz = cal != null ? cal.getTimeZone() : this.session.getDefaultTimeZone();
+        if (this.customTsVf != null && tz == this.lastTsCustomTz) {
             return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
         }
-        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(cal.getTimeZone()), this.zeroDateTimeBehavior);
-        this.lastTsCustomTz = cal.getTimeZone();
+        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(tz), this.zeroDateTimeBehavior);
+        this.lastTsCustomTz = tz;
         this.customTsVf = vf;
         return getDateOrTimestampValueFromRow(columnIndex, vf);
     }
