@@ -792,7 +792,7 @@ public class PropertyDefinitions {
                         CATEGORY_NETWORK, 10, 0, Integer.MAX_VALUE),
 
                 new StringPropertyDefinition(PNAME_queryInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.queryInterceptors"), "5.1.1", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
+                        Messages.getString("ConnectionProperties.queryInterceptors"), "8.0.7", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_strictUpdates, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.strictUpdates"), "3.0.4", CATEGORY_RESULT_SETS, Integer.MIN_VALUE),
