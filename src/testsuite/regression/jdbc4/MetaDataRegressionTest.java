@@ -923,7 +923,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
 
             for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
-                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", "param2");
+                this.rs = dbmd.getProcedureColumns(null, "", "testBug73775%", ptn);
                 if (inclFuncs) {
                     assertTrue(this.rs.next());
                     assertEquals(testCase, "testBug73775f", this.rs.getString(3));
@@ -977,7 +977,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
 
             for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
-                this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", "param2");
+                this.rs = dbmd.getFunctionColumns(null, "", "testBug73775%", ptn);
                 assertTrue(this.rs.next());
                 assertEquals(testCase, "testBug73775f", this.rs.getString(3));
                 assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
