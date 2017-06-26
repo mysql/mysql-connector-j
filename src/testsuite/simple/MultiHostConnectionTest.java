@@ -54,7 +54,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private static final String HOST_4_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_4);
     private static final String HOST_4_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_4);
     private static final String HOST_5_OK = UnreliableSocketFactory.getHostConnectedStatus(HOST_5);
-    private static final String HOST_5_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_5);
+    //private static final String HOST_5_FAIL = UnreliableSocketFactory.getHostFailedStatus(HOST_5);
 
     private static final String STMT_CLOSED_ERR_PATTERN = "No operations allowed after statement closed.";
     private static final String COMM_LINK_ERR_PATTERN = "(?s)Communications link failure.*";

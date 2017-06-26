@@ -161,7 +161,7 @@ public final class MysqlDefs {
 
     static final int RELOAD = 7; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
 
-    static final int SHUTDOWN = 8;
+    static final int SHUTDOWN = 8; // Deprecated in MySQL 5.7.9 and MySQL 8.0.0.
 
     //
     // Constants defined from mysql

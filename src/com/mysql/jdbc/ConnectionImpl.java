@@ -5147,7 +5147,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     public void shutdownServer() throws SQLException {
         try {
-            this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null, 0);
+            if (versionMeetsMinimum(5, 7, 9)) {
+                execSQL(null, "SHUTDOWN", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+            } else {
+                this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null, 0);
+            }
         } catch (Exception ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
                     SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
