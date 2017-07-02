@@ -3,6 +3,8 @@
 
 Version 5.1.43
 
+  - Fix for Bug#85885 (25874048), resultSetConcurrency and resultSetType are swapped in call to prepareStatement.
+
   - Fix for Bug#74932 (20066806), ConnectionImp Doesn't Close Server Prepared Statement (PreparedStatement Leak).
 
   - WL#10536, Deprecating COM_SHUTDOWN.
