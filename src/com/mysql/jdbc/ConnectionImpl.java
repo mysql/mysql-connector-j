@@ -4273,7 +4273,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         synchronized (getConnectionMutex()) {
             if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.currentCatalog, pstmt.originalSql), pstmt);
+                    Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.currentCatalog, pstmt.originalSql), pstmt);
+                    if (oldServerPrepStmt != null) {
+                        ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
+                        ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
+                    }
                 }
             }
         }
