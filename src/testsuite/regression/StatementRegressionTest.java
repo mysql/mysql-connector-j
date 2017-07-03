@@ -8303,22 +8303,28 @@ public class StatementRegressionTest extends BaseTestCase {
 
         // Prepare different statements.
         Connection testConn = getConnectionWithProps("prepStmtCacheSize=10,cachePrepStmts=true,useServerPrepStmts=true");
+        this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
+        assertTrue(this.rs.next());
+        int currPrepCount = this.rs.getInt(2);
         for (int i = 0; i < 10; i++) {
             testBug74932ExecuteStmts(testConn, sql1, sql2);
 
             this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
             assertTrue(this.rs.next());
-            assertEquals(2, this.rs.getInt(2));
+            assertEquals(2, this.rs.getInt(2) - currPrepCount);
         }
         testConn.close();
 
         // Prepare same statement.
         testConn = getConnectionWithProps("prepStmtCacheSize=10,cachePrepStmts=true,useServerPrepStmts=true");
+        this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
+        assertTrue(this.rs.next());
+        currPrepCount = this.rs.getInt(2);
         for (int i = 0; i < 10; i++) {
             testBug74932ExecuteStmts(testConn, sql1, sql1);
             this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
             assertTrue(this.rs.next());
-            assertEquals(1, this.rs.getInt(2));
+            assertEquals(1, this.rs.getInt(2) - currPrepCount);
         }
         testConn.close();
     }
