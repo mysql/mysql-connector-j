@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,12 +35,15 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.sql.XAConnection;
+
 import com.mysql.jdbc.CallableStatement;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.Util;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 import testsuite.BaseTestCase;
 
@@ -1467,5 +1470,122 @@ public class StatementRegressionTest extends BaseTestCase {
                 throw e;
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#78313 - proxies not handling Object.equals(Object) calls correctly.
+     * 
+     * A reduced version of this test exists in jdbc4.StatementRegressionTest.
+     */
+    public void testBug78313() throws Exception {
+        Connection testConn;
+
+        // Plain connection.
+        testConn = getConnectionWithProps("");
+        assertFalse(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(testConn.equals(testConn));
+        this.stmt = testConn.createStatement();
+        assertFalse(this.stmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.stmt.equals(this.stmt));
+        this.rs = this.stmt.executeQuery("SELECT 'testBug78313'");
+        assertFalse(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        assertFalse(this.pstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.pstmt.equals(this.pstmt));
+        assertFalse(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        testConn.close();
+
+        // Plain connection with proxied result sets.
+        testConn = getConnectionWithProps("statementInterceptors=com.mysql.jdbc.interceptors.ResultSetScannerInterceptor,resultSetScannerRegex=.*");
+        assertFalse(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(testConn.equals(testConn));
+        this.stmt = testConn.createStatement();
+        assertFalse(this.stmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.stmt.equals(this.stmt));
+        this.rs = this.stmt.executeQuery("SELECT 'testBug78313'");
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        assertFalse(this.pstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.pstmt.equals(this.pstmt));
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        testConn.close();
+
+        // Fail-over connection; all JDBC objects are proxied.
+        testConn = getFailoverConnection();
+        assertTrue(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(testConn.equals(testConn));
+        this.stmt = testConn.createStatement();
+        assertTrue(this.stmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.stmt.equals(this.stmt));
+        this.rs = this.stmt.executeQuery("SELECT 'testBug78313'");
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        assertTrue(this.pstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.pstmt.equals(this.pstmt));
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        testConn.close();
+
+        // Load-balanced connection; all JDBC objects are proxied. 
+        testConn = getLoadBalancedConnection();
+        assertTrue(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(testConn.equals(testConn));
+        this.stmt = testConn.createStatement();
+        assertTrue(this.stmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.stmt.equals(this.stmt));
+        this.rs = this.stmt.executeQuery("SELECT 'testBug78313'");
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        assertTrue(this.pstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.pstmt.equals(this.pstmt));
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        testConn.close();
+
+        // Replication connection; all JDBC objects are proxied.
+        testConn = getMasterSlaveReplicationConnection();
+        assertTrue(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(testConn.equals(testConn));
+        this.stmt = testConn.createStatement();
+        assertTrue(this.stmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.stmt.equals(this.stmt));
+        this.rs = this.stmt.executeQuery("SELECT 'testBug78313'");
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        assertTrue(this.pstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.pstmt.equals(this.pstmt));
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(this.rs.equals(this.rs));
+        testConn.close();
+
+        // XA Connection; unwrapped connections and statements are proxied.
+        MysqlXADataSource xaDs = new MysqlXADataSource();
+        xaDs.setUrl(BaseTestCase.dbUrl);
+        XAConnection xaTestConn = xaDs.getXAConnection();
+        testConn = xaTestConn.getConnection();
+        Connection unwrappedTestConn = testConn.unwrap(com.mysql.jdbc.Connection.class);
+        assertTrue(unwrappedTestConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(unwrappedTestConn.equals(unwrappedTestConn));
+        this.stmt = testConn.createStatement();
+        Statement unwrappedStmt = this.stmt.unwrap(com.mysql.jdbc.Statement.class);
+        assertTrue(unwrappedStmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(unwrappedStmt.equals(unwrappedStmt));
+        this.pstmt = testConn.prepareStatement("SELECT 'testBug78313'");
+        Statement unwrappedPstmt = this.pstmt.unwrap(com.mysql.jdbc.Statement.class);
+        assertTrue(unwrappedPstmt.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
+        assertTrue(unwrappedPstmt.equals(unwrappedPstmt));
+        testConn.close();
+        xaTestConn.close();
     }
 }

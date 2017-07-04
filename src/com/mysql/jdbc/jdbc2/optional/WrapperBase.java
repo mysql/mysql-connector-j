@@ -74,6 +74,11 @@ abstract class WrapperBase {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if ("equals".equals(method.getName())) {
+                // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
+                return args[0].equals(this);
+            }
+
             Object result = null;
 
             try {
