@@ -7538,8 +7538,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("max_allowed_packet"), con.getServerVariable("max_allowed_packet"));
             assertEquals(serverVariables.get("net_buffer_length"), con.getServerVariable("net_buffer_length"));
             assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
-            assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
-            assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
+            assertEquals(serverVariables.get("have_query_cache"), con.getServerVariable("have_query_cache"));
+            if ("YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
+                assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
+                assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
+            }
 
             // not necessarily contains STRICT_TRANS_TABLES
             for (String sm : serverVariables.get("sql_mode").split(",")) {
@@ -9823,6 +9826,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * This test requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).
      */
     public void testBug74711() throws Exception {
+        if (!((ConnectionImpl) this.conn).isQueryCacheEnabled()) {
+            System.err.println("Warning! testBug77411() requires a server supporting a query cache.");
+            return;
+        }
         this.rs = this.stmt.executeQuery("SELECT @@global.query_cache_type, @@global.query_cache_size");
         this.rs.next();
         if (!"ON".equalsIgnoreCase(this.rs.getString(1)) || "0".equals(this.rs.getString(2))) {

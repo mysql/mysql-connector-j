@@ -3398,8 +3398,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         setupServerForTruncationChecks();
     }
 
-    private boolean isQueryCacheEnabled() {
-        return "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type")) && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
+    public boolean isQueryCacheEnabled() {
+        return "YES".equalsIgnoreCase(this.serverVariables.get("have_query_cache")) && "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type"))
+                && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
     }
 
     private int getServerVariableAsInt(String variableName, int fallbackValue) throws SQLException {
@@ -3776,8 +3777,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                     queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                     queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                    queryBuf.append(", @@query_cache_size AS query_cache_size");
-                    queryBuf.append(", @@query_cache_type AS query_cache_type");
+                    queryBuf.append(", @@have_query_cache AS have_query_cache");
                     queryBuf.append(", @@sql_mode AS sql_mode");
                     queryBuf.append(", @@system_time_zone AS system_time_zone");
                     queryBuf.append(", @@time_zone AS time_zone");
@@ -3791,6 +3791,18 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             this.serverVariables.put(rsmd.getColumnLabel(i), results.getString(i));
                         }
                     }
+
+                    if ("YES".equalsIgnoreCase(this.serverVariables.get("have_query_cache"))) {
+                        results.close();
+                        results = stmt.executeQuery("SELECT @@query_cache_size AS query_cache_size, @@query_cache_type AS query_cache_type");
+                        if (results.next()) {
+                            ResultSetMetaData rsmd = results.getMetaData();
+                            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                                this.serverVariables.put(rsmd.getColumnLabel(i), results.getString(i));
+                            }
+                        }
+                    }
+
                 } else {
                     results = stmt.executeQuery(versionComment + "SHOW VARIABLES");
                     while (results.next()) {
