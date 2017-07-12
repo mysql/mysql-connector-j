@@ -1013,8 +1013,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                 queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                queryBuf.append(", @@query_cache_size AS query_cache_size");
-                queryBuf.append(", @@query_cache_type AS query_cache_type");
+                queryBuf.append(", @@have_query_cache AS have_query_cache");
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
@@ -1033,6 +1032,23 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                         }
                     }
                 }
+
+                if ("YES".equalsIgnoreCase(this.protocol.getServerSession().getServerVariables().get("have_query_cache"))) {
+                    resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(),
+                            "SELECT @@query_cache_size AS query_cache_size, @@query_cache_type AS query_cache_type"), false, 0);
+                    rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+                    f = rs.getColumnDefinition().getFields();
+                    if (f.length > 0) {
+                        ValueFactory<String> vf = new StringValueFactory(f[0].getEncoding());
+                        Row r;
+                        if ((r = rs.getRows().next()) != null) {
+                            for (int i = 0; i < f.length; i++) {
+                                this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), r.getValue(i, vf));
+                            }
+                        }
+                    }
+                }
+
             } else {
                 PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), versionComment + "SHOW VARIABLES"), false, 0);
                 Resultset rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));

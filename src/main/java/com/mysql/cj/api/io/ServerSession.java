@@ -209,4 +209,6 @@ public interface ServerSession {
 
     boolean storesLowerCaseTableNames();
 
+    boolean isQueryCacheEnabled();
+
 }

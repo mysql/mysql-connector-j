@@ -482,4 +482,8 @@ public class MysqlaServerSession implements ServerSession {
         return "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
     }
 
+    public boolean isQueryCacheEnabled() {
+        return "YES".equalsIgnoreCase(this.serverVariables.get("have_query_cache")) && "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type"))
+                && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
+    }
 }
