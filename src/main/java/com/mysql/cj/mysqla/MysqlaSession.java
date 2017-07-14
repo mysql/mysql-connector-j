@@ -1002,7 +1002,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@character_set_connection AS character_set_connection");
                 queryBuf.append(", @@character_set_results AS character_set_results");
                 queryBuf.append(", @@character_set_server AS character_set_server");
-                queryBuf.append(", @@collation_server AS ccollation_server");
+                queryBuf.append(", @@collation_server AS collation_server");
                 queryBuf.append(", @@init_connect AS init_connect");
                 queryBuf.append(", @@interactive_timeout AS interactive_timeout");
                 if (!versionMeetsMinimum(5, 5, 0)) {
@@ -1199,6 +1199,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
                     if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(collationServer)) {
                         this.protocol.getServerSession().setServerDefaultCollationIndex(i);
+                        break;
                     }
                 }
             } else {
