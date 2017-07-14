@@ -3248,6 +3248,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
                         if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(collationServer)) {
                             this.io.serverCharsetIndex = i;
+                            break;
                         }
                     }
                 } else {
