@@ -110,6 +110,7 @@ import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.conf.url.HostInfo;
@@ -7000,8 +7001,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("max_allowed_packet"), session.getServerVariable("max_allowed_packet"));
             assertEquals(serverVariables.get("net_buffer_length"), session.getServerVariable("net_buffer_length"));
             assertEquals(serverVariables.get("net_write_timeout"), session.getServerVariable("net_write_timeout"));
-            assertEquals(serverVariables.get("have_query_cache"), session.getServerVariable("have_query_cache"));
-            if ("YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
+            if (con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3))) {
+                assertEquals(serverVariables.get("have_query_cache"), session.getServerVariable("have_query_cache"));
+            }
+            if (!con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3)) || "YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
                 assertEquals(serverVariables.get("query_cache_size"), session.getServerVariable("query_cache_size"));
                 assertEquals(serverVariables.get("query_cache_type"), session.getServerVariable("query_cache_type"));
             }

@@ -1013,7 +1013,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                 queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                queryBuf.append(", @@have_query_cache AS have_query_cache");
+                if (versionMeetsMinimum(8, 0, 3)) {
+                    queryBuf.append(", @@have_query_cache AS have_query_cache");
+                } else {
+                    queryBuf.append(", @@query_cache_size AS query_cache_size");
+                    queryBuf.append(", @@query_cache_type AS query_cache_type");
+                }
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
@@ -1033,7 +1038,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                     }
                 }
 
-                if ("YES".equalsIgnoreCase(this.protocol.getServerSession().getServerVariables().get("have_query_cache"))) {
+                if (versionMeetsMinimum(8, 0, 3) && "YES".equalsIgnoreCase(this.protocol.getServerSession().getServerVariables().get("have_query_cache"))) {
                     resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(),
                             "SELECT @@query_cache_size AS query_cache_size, @@query_cache_type AS query_cache_type"), false, 0);
                     rs = this.protocol.readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
