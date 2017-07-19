@@ -7538,8 +7538,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("max_allowed_packet"), con.getServerVariable("max_allowed_packet"));
             assertEquals(serverVariables.get("net_buffer_length"), con.getServerVariable("net_buffer_length"));
             assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
-            assertEquals(serverVariables.get("have_query_cache"), con.getServerVariable("have_query_cache"));
-            if ("YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
+            if (con.versionMeetsMinimum(8, 0, 3)) {
+                assertEquals(serverVariables.get("have_query_cache"), con.getServerVariable("have_query_cache"));
+            }
+            if (!con.versionMeetsMinimum(8, 0, 3) || "YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
                 assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
                 assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
             }
