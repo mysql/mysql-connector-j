@@ -1601,7 +1601,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             loggedConn = getConnectionWithProps(props);
             loggedConn.getTransactionIsolation();
 
-            assertEquals(-1, StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
+            String s = versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation";
+            assertEquals(-1, StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE '" + s + "'"));
         } finally {
             StandardLogger.dropBuffer();
             if (loggedConn != null) {
@@ -7018,7 +7019,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertEquals(serverVariables.get("system_time_zone"), session.getServerVariable("system_time_zone"));
             assertEquals(serverVariables.get("time_zone"), session.getServerVariable("time_zone"));
-            assertEquals(serverVariables.get("tx_isolation"), session.getServerVariable("tx_isolation"));
+
+            String s = versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation";
+            assertEquals(serverVariables.get(s), session.getServerVariable(s));
+
             assertEquals(serverVariables.get("wait_timeout"), session.getServerVariable("wait_timeout"));
             if (!versionMeetsMinimum(5, 5, 0)) {
                 assertEquals(serverVariables.get("language"), session.getServerVariable("language"));

@@ -876,7 +876,9 @@ public class ConnectionTest extends BaseTestCase {
 
         String logAsString = StandardLogger.getBuffer().toString();
 
-        assertTrue(logAsString.indexOf("SET SESSION") == -1 && logAsString.indexOf("SHOW VARIABLES LIKE 'tx_isolation'") == -1
+        String s = versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation";
+
+        assertTrue(logAsString.indexOf("SET SESSION") == -1 && logAsString.indexOf("SHOW VARIABLES LIKE '" + s + "'") == -1
                 && logAsString.indexOf("SET autocommit=") == -1);
     }
 
@@ -1699,6 +1701,8 @@ public class ConnectionTest extends BaseTestCase {
 
             Connection localState = getConnectionWithProps("profileSQL=true,useLocalSessionState=true");
 
+            String s = versionMeetsMinimum(8, 0, 3) ? "@@session.transaction_read_only" : "@@session.tx_read_only";
+
             for (int i = 0; i < 2; i++) {
                 StandardLogger.startLoggingToBuffer();
                 localState.setReadOnly(true);
@@ -1709,7 +1713,7 @@ public class ConnectionTest extends BaseTestCase {
                 }
                 StandardLogger.startLoggingToBuffer();
                 localState.isReadOnly();
-                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session." + s) == -1);
             }
 
             Connection noOptimization = getConnectionWithProps("profileSQL=true,readOnlyPropagatesToServer=false");
@@ -1720,7 +1724,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
                 StandardLogger.startLoggingToBuffer();
                 noOptimization.isReadOnly();
-                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session." + s) == -1);
             }
         } finally {
             StandardLogger.dropBuffer();

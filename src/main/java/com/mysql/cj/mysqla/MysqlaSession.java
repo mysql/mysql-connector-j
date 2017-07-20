@@ -1022,7 +1022,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
-                queryBuf.append(", @@tx_isolation AS tx_isolation");
+                if (versionMeetsMinimum(8, 0, 3)) {
+                    queryBuf.append(", @@transaction_isolation AS transaction_isolation");
+                } else {
+                    queryBuf.append(", @@tx_isolation AS tx_isolation");
+                }
                 queryBuf.append(", @@wait_timeout AS wait_timeout");
 
                 PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), queryBuf.toString()), false, 0);
