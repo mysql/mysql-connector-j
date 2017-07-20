@@ -1280,14 +1280,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @throws SQLException
      */
     private void checkTransactionIsolationLevel() throws SQLException {
-        String txIsolationName = null;
-
-        if (versionMeetsMinimum(4, 0, 3)) {
-            txIsolationName = "tx_isolation";
-        } else {
-            txIsolationName = "transaction_isolation";
-        }
-
+        String txIsolationName = versionMeetsMinimum(4, 0, 3) && !versionMeetsMinimum(8, 0, 3) ? "tx_isolation" : "transaction_isolation";
         String s = this.serverVariables.get(txIsolationName);
 
         if (s != null) {
@@ -3001,11 +2994,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                     String query = null;
 
-                    int offset = 0;
+                    int offset = 1;
 
-                    if (versionMeetsMinimum(4, 0, 3)) {
+                    if (versionMeetsMinimum(8, 0, 3)) {
+                        query = "SELECT @@session.transaction_isolation";
+                    } else if (versionMeetsMinimum(4, 0, 3)) {
                         query = "SELECT @@session.tx_isolation";
-                        offset = 1;
                     } else {
                         query = "SHOW VARIABLES LIKE 'transaction_isolation'";
                         offset = 2;
@@ -3548,7 +3542,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 try {
                     stmt = getMetadataSafeStatement();
 
-                    rs = stmt.executeQuery("select @@session.tx_read_only");
+                    rs = stmt.executeQuery(versionMeetsMinimum(8, 0, 3) ? "select @@session.transaction_read_only" : "select @@session.tx_read_only");
                     if (rs.next()) {
                         return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
                     }
@@ -3786,7 +3780,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     queryBuf.append(", @@sql_mode AS sql_mode");
                     queryBuf.append(", @@system_time_zone AS system_time_zone");
                     queryBuf.append(", @@time_zone AS time_zone");
-                    queryBuf.append(", @@tx_isolation AS tx_isolation");
+                    if (versionMeetsMinimum(8, 0, 3)) {
+                        queryBuf.append(", @@transaction_isolation AS transaction_isolation");
+                    } else {
+                        queryBuf.append(", @@tx_isolation AS tx_isolation");
+                    }
                     queryBuf.append(", @@wait_timeout AS wait_timeout");
 
                     results = stmt.executeQuery(queryBuf.toString());
