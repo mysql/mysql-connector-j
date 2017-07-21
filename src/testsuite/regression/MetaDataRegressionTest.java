@@ -2882,19 +2882,31 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void testTimestamp(Connection con, Statement st, String dbname) throws SQLException {
+        boolean explicitDefaultsForTimestamp = false;
+        if (versionMeetsMinimum(8, 0, 2)) {
+            String v = getMysqlVariable("explicit_defaults_for_timestamp");
+            if ("ON".equals(v)) {
+                explicitDefaultsForTimestamp = true;
+            }
+        }
+
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
         DatabaseMetaData dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        if (explicitDefaultsForTimestamp) {
+            assertFalse("0 column must be found", this.rs.next());
+        } else {
+            assertTrue("1 column must be found", this.rs.next());
+            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        }
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
@@ -2913,21 +2925,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f2");
+        assertEquals("Wrong column or single column not found", "f2", this.rs.getString(2));
 
         // ALTER test
         st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
@@ -2935,7 +2947,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f3");
+        assertEquals("Wrong column or single column not found", "f3", this.rs.getString(2));
     }
 
     private void testDatetime(Connection con, Statement st, String dbname) throws SQLException {
@@ -2944,7 +2956,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         DatabaseMetaData dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME)");
@@ -2969,14 +2981,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", this.rs.getString(2), "f1");
+        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME NULL, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
@@ -2985,8 +2997,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         int cnt = 0;
         while (this.rs.next()) {
             cnt++;
-            assertEquals("1 column must be found", cnt, 1);
-            assertEquals("Wrong column or single column not found", this.rs.getString(2), "f2");
+            assertEquals("1 column must be found", 1, cnt);
+            assertEquals("Wrong column or single column not found", "f2", this.rs.getString(2));
         }
 
         // ALTER 1 test
@@ -2997,8 +3009,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         cnt = 0;
         while (this.rs.next()) {
             cnt++;
-            assertEquals("1 column must be found", cnt, 1);
-            assertEquals("Wrong column or single column not found", this.rs.getString(2), "f3");
+            assertEquals("1 column must be found", 1, cnt);
+            assertEquals("Wrong column or single column not found", "f3", this.rs.getString(2));
         }
 
         // ALTER 2 test
@@ -3009,7 +3021,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             cnt++;
         }
-        assertEquals("2 column must be found", cnt, 2);
+        assertEquals("2 column must be found", 2, cnt);
+
+        boolean explicitDefaultsForTimestamp = false;
+        if (versionMeetsMinimum(8, 0, 2)) {
+            String v = getMysqlVariable("explicit_defaults_for_timestamp");
+            if ("ON".equals(v)) {
+                explicitDefaultsForTimestamp = true;
+            }
+        }
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
@@ -3019,7 +3039,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             cnt++;
         }
-        assertEquals("3 column must be found", cnt, 3);
+        if (explicitDefaultsForTimestamp) {
+            assertEquals("2 column must be found", 2, cnt);
+        } else {
+            assertEquals("3 column must be found", 3, cnt);
+        }
 
     }
 
