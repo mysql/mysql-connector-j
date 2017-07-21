@@ -3,6 +3,8 @@
 
 Version 8.0.8
 
+  - Fix for Bug#87153 (26501245), INCORRECT RESULT OF DBMD.GETVERSIONCOLUMNS() AGAINST MYSQL 8.0.2+.
+
   - Fix for Bug#78313 (21931572), proxies not handling Object.equals(Object) calls correctly.
 
   - Fix for Bug#85885 (25874048), resultSetConcurrency and resultSetType are swapped in call to prepareStatement.
