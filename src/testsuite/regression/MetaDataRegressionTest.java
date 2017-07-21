@@ -1105,7 +1105,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         String catalog = this.conn.getCatalog();
 
-        assertEquals("comment; APPFK(`C1`) REFER `" + catalog + "`/ `app tab` (`C1`)", this.rs.getString(3));
+        assertEquals(("comment; APPFK(`C1`) REFER `" + catalog + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
 
         this.rs.close();
 
