@@ -35,6 +35,7 @@ import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.io.ServerSession;
+import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.api.log.Log;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.Messages;
@@ -69,26 +70,32 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
         // requirement of anonymous class
         final T finalResultSet = originalResultSet;
 
-        return (T) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class<?>[] { Resultset.class }, new InvocationHandler() {
+        return (T) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class<?>[] { Resultset.class, ResultSetInternalMethods.class },
+                new InvocationHandler() {
 
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-                Object invocationResult = method.invoke(finalResultSet, args);
+                        if ("equals".equals(method.getName())) {
+                            // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
+                            return args[0].equals(this);
+                        }
 
-                String methodName = method.getName();
+                        Object invocationResult = method.invoke(finalResultSet, args);
 
-                if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
-                        || "getObjectStoredProc".equals(methodName)) {
-                    Matcher matcher = ResultSetScannerInterceptor.this.regexP.matcher(invocationResult.toString());
+                        String methodName = method.getName();
 
-                    if (matcher.matches()) {
-                        throw new SQLException(Messages.getString("ResultSetScannerInterceptor.2"));
+                        if (invocationResult != null && invocationResult instanceof String || "getString".equals(methodName) || "getObject".equals(methodName)
+                                || "getObjectStoredProc".equals(methodName)) {
+                            Matcher matcher = ResultSetScannerInterceptor.this.regexP.matcher(invocationResult.toString());
+
+                            if (matcher.matches()) {
+                                throw new SQLException(Messages.getString("ResultSetScannerInterceptor.2"));
+                            }
+                        }
+
+                        return invocationResult;
                     }
-                }
-
-                return invocationResult;
-            }
-        });
+                });
 
     }
 

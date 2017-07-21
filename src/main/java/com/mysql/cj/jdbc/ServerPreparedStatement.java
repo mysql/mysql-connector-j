@@ -2359,8 +2359,8 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
                 //PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.getCurrentCatalog(), this.resultSetConcurrency, this.resultSetType);
-                PreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(this.parseInfo.getSqlForBatch(numBatches), this.resultSetConcurrency,
-                        this.resultSetType)).unwrap(PreparedStatement.class);
+                PreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(this.parseInfo.getSqlForBatch(numBatches), this.resultSetType,
+                        this.resultSetConcurrency)).unwrap(PreparedStatement.class);
                 pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 
                 return pstmt;

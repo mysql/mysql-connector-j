@@ -2044,7 +2044,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql), pstmt);
+                    Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql),
+                            pstmt);
+                    if (oldServerPrepStmt != null) {
+                        ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
+                        ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
+                    }
                 }
             }
         }
