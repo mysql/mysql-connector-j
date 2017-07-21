@@ -65,7 +65,7 @@ public class MysqlaConstants {
     public static final int COM_CREATE_DB = 5; // Not used; deprecated?
     public static final int COM_DROP_DB = 6; // Not used; deprecated?
     public static final int COM_REFRESH = 7; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
-    public static final int COM_SHUTDOWN = 8;
+    public static final int COM_SHUTDOWN = 8; // Deprecated in MySQL 5.7.9 and MySQL 8.0.0.
     public static final int COM_STATISTICS = 9;
     public static final int COM_PROCESS_INFO = 10; // Not used; deprecated in MySQL 5.7.11 and MySQL 8.0.0.
     public static final int COM_CONNECT = 11;

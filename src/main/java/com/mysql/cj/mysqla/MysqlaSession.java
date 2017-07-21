@@ -436,7 +436,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
      * 
      */
     public void shutdownServer() {
-        sendCommand(this.commandBuilder.buildComShutdown(getSharedSendPacket()), false, 0);
+        if (versionMeetsMinimum(5, 7, 9)) {
+            sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHUTDOWN"), false, 0);
+        } else {
+            sendCommand(this.commandBuilder.buildComShutdown(getSharedSendPacket()), false, 0);
+        }
     }
 
     public void setSocketTimeout(int milliseconds) {
