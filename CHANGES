@@ -3,6 +3,11 @@
 
 Version 8.0.8
 
+  - Fix for Bug#25946965, UPDATE THE TIME ZONE MAPPINGS WITH LATEST TZ DATABASES.
+
+  - Fix for Bug#20182108, INCLUDE CUSTOM LOAD BALANCING STRATEGY USING PLUGIN API.
+    New load-balancing strategy "serverAffinity" and new connection property "serverAffinityOrder" added.
+
   - Fix for Bug#26440544, CONNECTOR/J SHOULD NOT USE TX_{READ_ONLY,ISOLATION} WHICH IS PLANNED FOR REMOVAL.
 
   - Fix for Bug#26399958, UNABLE TO CONNECT TO MYSQL 8.0.3.

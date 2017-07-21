@@ -357,6 +357,8 @@ public class PropertyDefinitions {
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
 
+    public static final String PNAME_serverAffinityOrder = "serverAffinityOrder";
+
     // TODO following names are used in code but have no definitions
     public static final String PNAME_user = "user";
     public static final String PNAME_password = "password";
@@ -935,7 +937,10 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE) };
+                        Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
+
+                new StringPropertyDefinition(PNAME_serverAffinityOrder, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.serverAffinityOrder"), "8.0.8", CATEGORY_HA, Integer.MIN_VALUE) };
 
         HashMap<String, PropertyDefinition<?>> propertyNameToPropertyDefinitionMap = new HashMap<>();
         for (PropertyDefinition<?> pdef : pdefs) {

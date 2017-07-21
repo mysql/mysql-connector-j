@@ -87,10 +87,10 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     private BalanceStrategy balancer;
 
     private int globalBlacklistTimeout = 0;
-    private static Map<String, Long> globalBlacklist = new HashMap<String, Long>();
+    private static Map<String, Long> globalBlacklist = new HashMap<>();
     private int hostRemovalGracePeriod = 0;
     // host:port pairs to be considered as removed (definitely blacklisted) from the original hosts list.
-    private Set<String> hostsToRemove = new HashSet<String>();
+    private Set<String> hostsToRemove = new HashSet<>();
 
     private boolean inTransaction = false;
     private long transactionStartTime = 0;
@@ -149,12 +149,12 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         // hosts specifications may have been reset with settings from a previous connection group
         int numHosts = initializeHostsSpecs(connectionUrl, hosts);
 
-        this.liveConnections = new HashMap<String, ConnectionImpl>(numHosts);
-        this.hostsToListIndexMap = new HashMap<String, Integer>(numHosts);
+        this.liveConnections = new HashMap<>(numHosts);
+        this.hostsToListIndexMap = new HashMap<>(numHosts);
         for (int i = 0; i < numHosts; i++) {
             this.hostsToListIndexMap.put(this.hostsList.get(i).getHostPortPair(), i);
         }
-        this.connectionsToHostsMap = new HashMap<ConnectionImpl, String>(numHosts);
+        this.connectionsToHostsMap = new HashMap<>(numHosts);
         this.responseTimes = new long[numHosts];
 
         String retriesAllDownAsString = props.getProperty(PropertyDefinitions.PNAME_retriesAllDown, "120");
@@ -191,6 +191,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     break;
                 case "bestResponseTime":
                     this.balancer = new BestResponseTimeBalanceStrategy();
+                    break;
+                case "serverAffinity":
+                    this.balancer = new ServerAffinityStrategy(props.getProperty(PropertyDefinitions.PNAME_serverAffinityOrder, null));
                     break;
                 default:
                     this.balancer = (BalanceStrategy) Class.forName(strategy).newInstance();
@@ -664,9 +667,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public synchronized Map<String, Long> getGlobalBlacklist() {
         if (!isGlobalBlacklistEnabled()) {
             if (this.hostsToRemove.isEmpty()) {
-                return new HashMap<String, Long>(1);
+                return new HashMap<>(1);
             }
-            HashMap<String, Long> fakedBlacklist = new HashMap<String, Long>();
+            HashMap<String, Long> fakedBlacklist = new HashMap<>();
             for (String h : this.hostsToRemove) {
                 fakedBlacklist.put(h, System.currentTimeMillis() + 5000);
             }
@@ -674,7 +677,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         // Make a local copy of the blacklist
-        Map<String, Long> blacklistClone = new HashMap<String, Long>(globalBlacklist.size());
+        Map<String, Long> blacklistClone = new HashMap<>(globalBlacklist.size());
         // Copy everything from synchronized global blacklist to local copy for manipulation
         synchronized (globalBlacklist) {
             blacklistClone.putAll(globalBlacklist);
@@ -701,7 +704,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         if (keys.size() == this.hostsList.size()) {
             // return an empty blacklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
             // unavailable - we don't want to wait for loadBalanceBlacklistTimeout to expire.
-            return new HashMap<String, Long>(1);
+            return new HashMap<>(1);
         }
 
         return blacklistClone;
