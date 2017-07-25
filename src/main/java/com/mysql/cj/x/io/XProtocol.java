@@ -59,6 +59,7 @@ import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
 import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.CharsetMapping;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
@@ -67,6 +68,7 @@ import com.mysql.cj.core.result.Field;
 import com.mysql.cj.core.util.LazyString;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.x.core.StatementExecuteOk;
+import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.x.protobuf.Mysqlx.Ok;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet;
@@ -295,6 +297,12 @@ public class XProtocol implements Protocol {
 
     // TODO: the following methods should be expose via a different interface such as CrudProtocol
     public void sendCreateCollection(String schemaName, String collectionName) {
+        if (schemaName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
+        if (collectionName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "collectionName" }));
+        }
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION,
                 Any.newBuilder().setType(Any.Type.OBJECT)
                         .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
@@ -305,6 +313,12 @@ public class XProtocol implements Protocol {
 
     // TODO this works for tables too
     public void sendDropCollection(String schemaName, String collectionName) {
+        if (schemaName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
+        if (collectionName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "collectionName" }));
+        }
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_DROP_COLLECTION,
                 Any.newBuilder().setType(Any.Type.OBJECT)
                         .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
@@ -330,6 +344,12 @@ public class XProtocol implements Protocol {
      *            object name pattern
      */
     public void sendListObjects(String schemaName, String pattern) {
+        if (schemaName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
+        if (pattern == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "pattern" }));
+        }
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS,
                 Any.newBuilder().setType(Any.Type.OBJECT)
                         .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
@@ -339,6 +359,9 @@ public class XProtocol implements Protocol {
     }
 
     public void sendListObjects(String schemaName) {
+        if (schemaName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
         this.writer.write(this.msgBuilder.buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_OBJECTS,
                 Any.newBuilder().setType(Any.Type.OBJECT).setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
                         .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))).build()));

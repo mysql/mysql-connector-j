@@ -177,6 +177,13 @@ public class SchemaTest extends DevApiBaseTestCase {
         // ensure that collection is dropped
         coll = this.schema.getCollection(collName);
         assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
+
+        assertThrows(XDevAPIError.class, "Parameter 'collectionName' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.dropCollection(null);
+                return null;
+            }
+        });
     }
 
     @Test
@@ -457,6 +464,13 @@ public class SchemaTest extends DevApiBaseTestCase {
         // ensure that table is dropped
         t = this.schema.getTable(tableName);
         assertEquals(DbObjectStatus.NOT_EXISTS, t.existsInDatabase());
+
+        assertThrows(XDevAPIError.class, "Parameter 'tableName' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                SchemaTest.this.schema.dropTable(null);
+                return null;
+            }
+        });
     }
 
     private void checkCreatedTable(String name, String ddl) {

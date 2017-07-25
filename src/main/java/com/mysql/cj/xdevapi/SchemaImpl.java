@@ -33,6 +33,7 @@ import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.ViewCreate;
 import com.mysql.cj.api.xdevapi.ViewUpdate;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
@@ -189,6 +190,9 @@ public class SchemaImpl implements Schema {
 
     @Override
     public void dropTable(String tableName) {
+        if (tableName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "tableName" }));
+        }
         try {
             this.mysqlxSession.dropCollection(this.name, tableName);
         } catch (XDevAPIError e) {
