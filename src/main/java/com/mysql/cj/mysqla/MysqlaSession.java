@@ -1440,7 +1440,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
                     MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
         }
-        sendCommand(this.commandBuilder.buildComPing(getSharedSendPacket()), false, timeoutMillis);
+        sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here 
     }
 
     public long getConnectionCreationTimeMillis() {

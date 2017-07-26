@@ -1558,4 +1558,20 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         cstmtP.close();
         cstmtF.close();
     }
+
+    /**
+     * Tests fix for BUG#26259384 - CALLABLE STATEMENT GIVES ERROR IN C/JAVA WHEN RUN AGAINST MYSQL 8.0
+     * 
+     * @throws Exception
+     */
+    public void testBug26259384() throws Exception {
+        createProcedure("testBug26259384", "(IN p1 int,INOUT p2 int)\nBEGIN\nSET p2=p1+100;\nEND");
+
+        Properties props = new Properties();
+        props.setProperty("autoReconnect", "true");
+
+        Connection conn1 = getConnectionWithProps(props);
+        conn1.prepareCall("{ call testBug26259384(?+?,?) }");
+    }
+
 }
