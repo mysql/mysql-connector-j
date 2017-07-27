@@ -371,14 +371,14 @@ public class SchemaTest extends DevApiBaseTestCase {
                         new ColumnDef("special_features", Type.SET).values("Trailers", "Commentaries", "Deleted Scenes", "Behind the Scenes").setDefault(null)) //
                 .addColumn(new ColumnDef("last_update", Type.TIMESTAMP).notNull().setDefault("CURRENT_TIMESTAMP")) //
                 .addIndex("idx_title", "title") //
-                .addForeignKey("fk_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
-                .addForeignKey("fk_film_language_original",
+                .addForeignKey("fk2_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
+                .addForeignKey("fk2_film_language_original",
                         new ForeignKeyDef().fields("original_language_id").refersTo(tableName1, "language_id").onUpdate(ChangeMode.CASCADE));
         System.out.println("Parsed to:");
         System.out.println(func);
         Table t2 = func.execute();
 
-        checkCreatedTable(tableName2, "(film_id smallint(5) unsigned NOT NULL AUTO_INCREMENT," //
+        sql1 = "(film_id smallint(5) unsigned NOT NULL AUTO_INCREMENT," //
                 + " title varchar(255) NOT NULL," //
                 + " language_id tinyint(3) unsigned NOT NULL," //
                 + " original_language_id tinyint(3) unsigned DEFAULT NULL," //
@@ -392,11 +392,18 @@ public class SchemaTest extends DevApiBaseTestCase {
                 + " PRIMARY KEY (film_id)," //
                 + " UNIQUE KEY title (title)," //
                 + " KEY idx_title (title)," //
-                + " KEY fk_film_language (language_id)," //
-                + " KEY fk_film_language_original (original_language_id)," //
-                + " CONSTRAINT " + tableName2 + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)," //
-                + " CONSTRAINT " + tableName2 + "_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES " + tableName1 + " (language_id) ON UPDATE CASCADE" //
-                + ") ENGINE=InnoDB DEFAULT CHARSET=" + this.dbCharset);
+                + " KEY fk2_film_language (language_id)," //
+                + " KEY fk2_film_language_original (original_language_id),";
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.2"))) {
+            sql1 += " CONSTRAINT fk2_film_language FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)," //
+                    + " CONSTRAINT fk2_film_language_original FOREIGN KEY (original_language_id) REFERENCES " + tableName1 + " (language_id) ON UPDATE CASCADE";
+        } else {
+            sql1 += " CONSTRAINT " + tableName2 + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)," //
+                    + " CONSTRAINT " + tableName2 + "_ibfk_2 FOREIGN KEY (original_language_id) REFERENCES " + tableName1 + " (language_id) ON UPDATE CASCADE";
+        }
+        sql1 += ") ENGINE=InnoDB DEFAULT CHARSET=" + this.dbCharset;
+
+        checkCreatedTable(tableName2, sql1);
 
         try {
             this.schema.createTable(tableName2).addColumn(new ColumnDef("id", Type.TINYINT).unsigned().notNull().primaryKey()).execute();
@@ -412,7 +419,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         func = this.schema.createTable(tableAsName) //
                 .addColumn(new ColumnDef("id", Type.SMALLINT).primaryKey().autoIncrement().unsigned()) //
                 .addIndex("idx_title", "title") //
-                .addForeignKey("fk_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
+                .addForeignKey("fk4_film_language", new ForeignKeyDef().fields("language_id").refersTo(tableName1, "language_id")) //
                 .setDefaultCharset("utf8") //
                 .setDefaultCollation("utf8_spanish_ci") //
                 .setComment("with generated columns") //
@@ -421,16 +428,21 @@ public class SchemaTest extends DevApiBaseTestCase {
         System.out.println(func);
         func.execute();
 
-        checkCreatedTable(tableAsName,
-                "(id smallint(5) unsigned NOT NULL AUTO_INCREMENT," // 
-                        + " film_id smallint(5) unsigned NOT NULL DEFAULT '0'," //
-                        + " title varchar(255) CHARACTER SET " + this.dbCharset + " NOT NULL," //
-                        + " language_id tinyint(3) unsigned NOT NULL," //
-                        + " PRIMARY KEY (id)," //
-                        + " KEY idx_title (title)," //
-                        + " KEY fk_film_language (language_id)," //
-                        + " CONSTRAINT " + tableAsName + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)"
-                        + ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci COMMENT='with generated columns'");
+        sql1 = "(id smallint(5) unsigned NOT NULL AUTO_INCREMENT," // 
+                + " film_id smallint(5) unsigned NOT NULL DEFAULT '0'," //
+                + " title varchar(255) CHARACTER SET " + this.dbCharset + " NOT NULL," //
+                + " language_id tinyint(3) unsigned NOT NULL," //
+                + " PRIMARY KEY (id)," //
+                + " KEY idx_title (title)," //
+                + " KEY fk4_film_language (language_id),";
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.2"))) {
+            sql1 += " CONSTRAINT fk4_film_language FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)";
+        } else {
+            sql1 += " CONSTRAINT " + tableAsName + "_ibfk_1 FOREIGN KEY (language_id) REFERENCES " + tableName1 + " (language_id)";
+        }
+        sql1 += ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci COMMENT='with generated columns'";
+
+        checkCreatedTable(tableAsName, sql1);
 
         sqlUpdate("drop table if exists " + tableAsName);
         sqlUpdate("drop table if exists " + tableAsName + "_check");
