@@ -878,7 +878,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
             Messages.getString("ConnectionProperties.loadBalanceStrategy"), "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
     private StringConnectionProperty serverAffinityOrder = new StringConnectionProperty("serverAffinityOrder", "", null,
-            Messages.getString("ConnectionProperties.serverAffinityOrder"), "5.1.4.", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+            Messages.getString("ConnectionProperties.serverAffinityOrder"), "5.1.43", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
     private IntegerConnectionProperty loadBalanceBlacklistTimeout = new IntegerConnectionProperty("loadBalanceBlacklistTimeout", 0, 0, Integer.MAX_VALUE,
             Messages.getString("ConnectionProperties.loadBalanceBlacklistTimeout"), "5.1.0", MISC_CATEGORY, Integer.MIN_VALUE);
