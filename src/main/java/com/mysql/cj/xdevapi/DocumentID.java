@@ -50,7 +50,7 @@ public class DocumentID {
      * <p>
      * X DevAPI Document ID: 4a383b7fcc894f311e648cb5c99cdfe
      *
-     * @return
+     * @return X DevAPI Document ID
      */
     public static String generate() {
         UUID uuid = UUID.randomUUID();

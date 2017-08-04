@@ -163,6 +163,7 @@ public interface Session {
      * Add listener for this session status changes.
      * 
      * @param l
+     *            {@link SessionEventListener} instance.
      */
     void addListener(SessionEventListener l);
 
