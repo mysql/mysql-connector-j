@@ -77,6 +77,7 @@ import com.mysql.jdbc.util.Base64Decoder;
 public class ExportControlled {
     private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
 
+
     protected static boolean enabled() {
         // we may wish to un-static-ify this class this static method call may be removed entirely by the compiler
         return true;
@@ -101,14 +102,39 @@ public class ExportControlled {
         try {
             mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
+            String[] driverProtocols = new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" };
+            String enabledTLSProtocols = mysqlIO.connection.getEnabledTLSProtocols();
+            // allow TLSv1 and TLSv1.1 for all server versions by default
+            String[] configuredProtocols = new String[] {"TLSv1.1", "TLSv1"};
+            // if enabledTLSProtocols configuration option is set, overriding the default
+            // TLS version restrictions.  This allows enabling TLSv1.2 for self-compiled
+            // MySQL  versions supporting it, as well as the ability for users to restrict
+            // TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client
+            // side.
+            if(enabledTLSProtocols != null && enabledTLSProtocols.length() > 0){
+                configuredProtocols = enabledTLSProtocols.split("\\s*,\\s*");
+            } else {
+                // Note that it is problematic to enable TLSv1.2 on the client side when
+                // the server does not support it.  This appears to be the original reason
+                // for this code, which is left as default behavior.  When TLSv1.2 is enabled
+                // client-side, and not supported by the server, a SSLException is thrown
+                // during SSLSocket.startHandshake().  This closes the SSLSocket, and the
+                // handshake cannot be re-attempted with a different protocol list without
+                // establishing a new SSLSocket.
+                if (mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())) {
+                    configuredProtocols =  new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" };
+                }
+            }
+            List<String> enabledProtocols = new ArrayList<String>(Arrays.asList(configuredProtocols));
             List<String> allowedProtocols = new ArrayList<String>();
+
             List<String> supportedProtocols = Arrays.asList(((SSLSocket) mysqlIO.mysqlConnection).getSupportedProtocols());
-            for (String protocol : (mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())
-                    ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1", "TLSv1" })) {
-                if (supportedProtocols.contains(protocol)) {
+            for (String protocol : driverProtocols) {
+                if (supportedProtocols.contains(protocol) && enabledProtocols.contains(protocol)) {
                     allowedProtocols.add(protocol);
                 }
             }
+
             ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
             // check allowed cipher suites
