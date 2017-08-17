@@ -8459,8 +8459,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
             ResultSet rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
             assertTrue(rset.next());
             String tlsVersion = rset.getString(2);
-            System.out.println(tlsVersion);
+            System.out.println("TLS version: " + tlsVersion);
             System.out.println();
+            System.out.println("MySQL version: " + ((MySQLConnection) sslConn).getServerVersion());
+            String etp = ((MySQLConnection) sslConn).getEnabledTLSProtocols();
+            System.out.println("enabledTLSProtocols: " + etp);
+            System.out.println();
+            System.out.println("JVM version: " + Util.getJVMVersion());
+            System.out.println();
+
 
             if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 10) && Util.getJVMVersion() > 6) {
                 if (Util.isEnterpriseEdition(((MySQLConnection) sslConn).getServerVersion())) {

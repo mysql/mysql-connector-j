@@ -101,14 +101,18 @@ public class ExportControlled {
         try {
             mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
+            String[] driverProtocols = { "TLSv1.2", "TLSv1.1", "TLSv1" };
+            String[] configuredProtocols = mysqlIO.connection.getEnabledTLSProtocols().split("\\s*,\\s*");
+            List<String> enabledProtocols = new ArrayList<String>(Arrays.asList(configuredProtocols));
             List<String> allowedProtocols = new ArrayList<String>();
+
             List<String> supportedProtocols = Arrays.asList(((SSLSocket) mysqlIO.mysqlConnection).getSupportedProtocols());
-            for (String protocol : (mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())
-                    ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1", "TLSv1" })) {
-                if (supportedProtocols.contains(protocol)) {
+            for (String protocol : driverProtocols) {
+                if (supportedProtocols.contains(protocol) && enabledProtocols.contains(protocol)) {
                     allowedProtocols.add(protocol);
                 }
             }
+
             ((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
             // check allowed cipher suites

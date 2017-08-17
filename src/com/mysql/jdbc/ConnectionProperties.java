@@ -1426,6 +1426,10 @@ public interface ConnectionProperties {
 
     public void setEnabledSSLCipherSuites(String cipherSuites);
 
+    public String getEnabledTLSProtocols();
+
+    public void setEnabledTLSProtocols(String protocols);
+
     public boolean getEnableEscapeProcessing();
 
     public void setEnableEscapeProcessing(boolean flag);
