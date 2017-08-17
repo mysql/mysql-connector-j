@@ -1334,7 +1334,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private StringConnectionProperty enabledSSLCipherSuites = new StringConnectionProperty("enabledSSLCipherSuites", null,
             Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", SECURITY_CATEGORY, 11);
 
-    private StringConnectionProperty enabledTLSProtocols = new StringConnectionProperty("enabledTLSProtocols", "TLSv1.2,TLSv1.1,TLSv1",
+    private StringConnectionProperty enabledTLSProtocols = new StringConnectionProperty("enabledTLSProtocols", null,
             Messages.getString("ConnectionProperties.enabledTLSProtocols"), "5.1.44", SECURITY_CATEGORY, 12);
 
     private BooleanConnectionProperty enableEscapeProcessing = new BooleanConnectionProperty("enableEscapeProcessing", true,
