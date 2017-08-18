@@ -4286,7 +4286,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.currentCatalog, pstmt.originalSql), pstmt);
-                    if (oldServerPrepStmt != null) {
+                    if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
                     }

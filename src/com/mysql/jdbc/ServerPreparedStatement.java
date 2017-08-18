@@ -566,7 +566,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         synchronized (locallyScopedConn.getConnectionMutex()) {
             if (this.isCached && isPoolable() && !this.isClosed) {
                 clearParameters();
-                this.isClosed = true;
                 this.connection.recachePreparedStatement(this);
                 return;
             }
