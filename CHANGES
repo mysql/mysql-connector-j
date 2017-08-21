@@ -3,6 +3,9 @@
 
 Version 5.1.44
 
+  - Fix for Bug#87379 (26646676), Perform actual TLS capabilities check when restricting TLSv1.2.
+    Thanks to Todd Farmer for his contribution.
+
   - Fix for Bug#85601 (25777822), Unit notation is missing in the description of the property involved in the time.
 
   - Fix for Bug#87153 (26501245), INCORRECT RESULT OF DBMD.GETVERSIONCOLUMNS() AGAINST MYSQL 8.0.2+.

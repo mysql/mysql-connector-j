@@ -2479,6 +2479,14 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         getActiveMySQLConnection().setEnabledSSLCipherSuites(cipherSuites);
     }
 
+    public String getEnabledTLSProtocols() {
+        return getActiveMySQLConnection().getEnabledTLSProtocols();
+    }
+
+    public void setEnabledTLSProtocols(String protocols) {
+        getActiveMySQLConnection().setEnabledTLSProtocols(protocols);
+    }
+
     public boolean getEnableEscapeProcessing() {
         return getActiveMySQLConnection().getEnableEscapeProcessing();
     }
