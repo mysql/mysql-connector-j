@@ -571,6 +571,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                 return;
             }
 
+            this.isClosed = false;
             realClose(true, true);
         }
     }
@@ -1014,6 +1015,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 if (this.isCached) {
                     this.connection.decachePreparedStatement(this);
+                    this.isCached = false;
                 }
                 super.realClose(calledExplicitly, closeOpenResults);
 

@@ -3,6 +3,9 @@
 
 Version 5.1.44
 
+  - Fix for Bug#87429 (26633984), repeated close of ServerPreparedStatement causes memory leak.
+    Thanks to Eduard Gurskiy for his contribution.
+
   - Fix for Bug#87379 (26646676), Perform actual TLS capabilities check when restricting TLSv1.2.
     Thanks to Todd Farmer for his contribution.
 
