@@ -97,6 +97,11 @@ import com.mysql.cj.core.util.Util;
  */
 public class ExportControlled {
 
+    private static final String TLSv1 = "TLSv1";
+    private static final String TLSv1_1 = "TLSv1.1";
+    private static final String TLSv1_2 = "TLSv1.2";
+    private static final String[] TLS_PROTOCOLS = new String[] { TLSv1_2, TLSv1_1, TLSv1 };
+
     public static boolean enabled() {
         // we may wish to un-static-ify this class this static method call may be removed entirely by the compiler
         return true;
@@ -123,11 +128,32 @@ public class ExportControlled {
 
         socketConnection.setMysqlSocket(sslFact.connect(socketConnection.getHost(), socketConnection.getPort(), null, 0));
 
+        String[] tryProtocols = null;
+
+        // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
+        // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
+        // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
+        String enabledTLSProtocols = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
+        if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
+            tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
+        } else {
+            // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL.
+            // When client attempts to connect with TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with
+            // lower TLS version.
+            if (serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString())) {
+                tryProtocols = new String[] { TLSv1_2, TLSv1_1, TLSv1 };
+            }
+        }
+        // allow TLSv1 and TLSv1.1 for all server versions by default
+        if (tryProtocols == null) {
+            tryProtocols = new String[] { TLSv1_1, TLSv1 };
+        }
+        List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
+        List<String> jvmSupportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
+
         List<String> allowedProtocols = new ArrayList<>();
-        List<String> supportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
-        for (String protocol : (serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString())
-                ? new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" } : new String[] { "TLSv1.1", "TLSv1" })) {
-            if (supportedProtocols.contains(protocol)) {
+        for (String protocol : TLS_PROTOCOLS) {
+            if (jvmSupportedProtocols.contains(protocol) && configuredProtocols.contains(protocol)) {
                 allowedProtocols.add(protocol);
             }
         }

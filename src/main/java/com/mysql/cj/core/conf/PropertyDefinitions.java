@@ -182,6 +182,7 @@ public class PropertyDefinitions {
     public static final String PNAME_trustCertificateKeyStorePassword = "trustCertificateKeyStorePassword";
     public static final String PNAME_verifyServerCertificate = "verifyServerCertificate";
     public static final String PNAME_enabledSSLCipherSuites = "enabledSSLCipherSuites";
+    public static final String PNAME_enabledTLSProtocols = "enabledTLSProtocols";
     public static final String PNAME_useUnbufferedInput = "useUnbufferedInput";
     public static final String PNAME_profilerEventHandler = "profilerEventHandler";
     public static final String PNAME_allowLoadLocalInfile = "allowLoadLocalInfile";
@@ -421,6 +422,9 @@ public class PropertyDefinitions {
 
                 new StringPropertyDefinition(PNAME_enabledSSLCipherSuites, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", CATEGORY_SECURITY, 11),
+
+                new StringPropertyDefinition(PNAME_enabledTLSProtocols, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.enabledTLSProtocols"), "8.0.8", CATEGORY_SECURITY, 12),
 
                 new BooleanPropertyDefinition(PNAME_useUnbufferedInput, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useUnbufferedInput"), "3.0.11", CATEGORY_NETWORK, Integer.MIN_VALUE),
@@ -965,6 +969,7 @@ public class PropertyDefinitions {
                 put(PNAME_trustCertificateKeyStorePassword, "trustCertificateKeyStorePassword");
                 put(PNAME_verifyServerCertificate, "verifyServerCertificate");
                 put(PNAME_enabledSSLCipherSuites, "enabledSSLCipherSuites");
+                put(PNAME_enabledTLSProtocols, "enabledTLSProtocols");
                 put(PNAME_useUnbufferedInput, "useUnbufferedInput");
                 put(PNAME_profilerEventHandler, "profilerEventHandler");
                 put(PNAME_allowLoadLocalInfile, "allowLoadLocalInfile");
