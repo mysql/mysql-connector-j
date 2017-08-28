@@ -1349,20 +1349,8 @@ public final class MysqlxResultset {
    *   ====== ================
    *   default: 0
    * :param content_type:
-   *   a hint about the higher-level encoding of a BYTES field
-   *   ====== ====== ===========
-   *   type   value  description
-   *   ====== ====== ===========
-   *   BYTES  0x0001 GEOMETRY (WKB encoding)
-   *   BYTES  0x0002 JSON (text encoding)
-   *   BYTES  0x0003 XML (text encoding)
-   *   ====== ====== ===========
-   *   .. note::
-   *     this list isn't comprehensive. As guideline: the field's value is expected
-   *     to pass a validator check on client and server if this field is set.
-   *     If the server adds more internal datatypes that rely on BLOB storage
-   *     like image manipulation, seeking into complex types in BLOBs, ... more
-   *     types will be added.
+   *   a hint about the higher-level encoding of a BYTES field, for more informations
+   *   please refer to Mysqlx.Datatypes.ContentType enum.
    * </pre>
    */
   public static final class ColumnMetaData extends
@@ -2308,20 +2296,8 @@ public final class MysqlxResultset {
      *   ====== ================
      *   default: 0
      * :param content_type:
-     *   a hint about the higher-level encoding of a BYTES field
-     *   ====== ====== ===========
-     *   type   value  description
-     *   ====== ====== ===========
-     *   BYTES  0x0001 GEOMETRY (WKB encoding)
-     *   BYTES  0x0002 JSON (text encoding)
-     *   BYTES  0x0003 XML (text encoding)
-     *   ====== ====== ===========
-     *   .. note::
-     *     this list isn't comprehensive. As guideline: the field's value is expected
-     *     to pass a validator check on client and server if this field is set.
-     *     If the server adds more internal datatypes that rely on BLOB storage
-     *     like image manipulation, seeking into complex types in BLOBs, ... more
-     *     types will be added.
+     *   a hint about the higher-level encoding of a BYTES field, for more informations
+     *   please refer to Mysqlx.Datatypes.ContentType enum.
      * </pre>
      */
     public static final class Builder extends

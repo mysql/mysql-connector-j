@@ -5683,7 +5683,6 @@ public final class MysqlxExpr {
    *     * ``default``
    *   Unary
    *     * ``!``
-   *     * ``*``
    *     * ``sign_plus``
    *     * ``sign_minus``
    *     * ``~``
@@ -5715,6 +5714,8 @@ public final class MysqlxExpr {
    *     * ``like``
    *     * ``not_like``
    *     * ``cast``
+   *     * ``cont_in``
+   *     * ``not_cont_in``
    *   Using special representation, with more than 2 params
    *     * ``in`` (param[0] IN (param[1], param[2], ...))
    *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
@@ -6080,7 +6081,6 @@ public final class MysqlxExpr {
      *     * ``default``
      *   Unary
      *     * ``!``
-     *     * ``*``
      *     * ``sign_plus``
      *     * ``sign_minus``
      *     * ``~``
@@ -6112,6 +6112,8 @@ public final class MysqlxExpr {
      *     * ``like``
      *     * ``not_like``
      *     * ``cast``
+     *     * ``cont_in``
+     *     * ``not_cont_in``
      *   Using special representation, with more than 2 params
      *     * ``in`` (param[0] IN (param[1], param[2], ...))
      *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))

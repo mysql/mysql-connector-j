@@ -3,6 +3,8 @@
 
 Version 8.0.8
 
+  - WL#10935, DevAPI: Array or Object "contains" operator.
+
   - WL#9875, Prepare c/J 8.0 for DEB and RPM builds.
 
   - Fix for BUG#26259384, CALLABLE STATEMENT GIVES ERROR IN C/JAVA WHEN RUN AGAINST MYSQL 8.0.

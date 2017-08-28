@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -37,6 +37,7 @@ import org.junit.Test;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
@@ -317,6 +318,49 @@ public class CollectionFindTest extends CollectionTest {
         docs.next();
         docs = this.collection.find("$.a NOT REGEXP '5432'").execute();
         assertFalse(docs.hasNext());
+
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.2"))) {
+
+            // cont_in
+
+            docs = this.collection.find("$.b IN [100,101,102]").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("'some text with 5432' in $.a").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("1 in [1, 2, 4]").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("5 in [1, 2, 4]").execute();
+            assertEquals(0, docs.count());
+
+            docs = this.collection.find("{'a': 2} in {'a': 1, 'b': 2}").execute();
+            assertEquals(0, docs.count());
+
+            docs = this.collection.find("{'a': 1} in {'a': 1, 'b': 2}").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("{'a': 1} in {'a': 1, 'b': 2}").execute();
+            assertEquals(1, docs.count());
+
+            // not_cont_in
+
+            docs = this.collection.find("3 not in [1, 2, 4]").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("'some text with 5432' not in $.a").execute();
+            assertEquals(0, docs.count());
+
+            docs = this.collection.find("'qqq' not in $.a").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("{'a': 1} not in {'a': 1, 'b': 2}").execute();
+            assertEquals(0, docs.count());
+
+            docs = this.collection.find("{'a': 2} not in {'a': 1, 'b': 2} AND $.b NOT IN (100, 200)").execute();
+            assertEquals(0, docs.count());
+        }
     }
 
     @Test

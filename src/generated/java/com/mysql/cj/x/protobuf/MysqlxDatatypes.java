@@ -31,6 +31,114 @@ public final class MysqlxDatatypes {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
+  /**
+   * Protobuf enum {@code Mysqlx.Datatypes.ContentType}
+   *
+   * <pre>
+   * a hint about the higher-level encoding of a BYTES field
+   * ====== ====== ===========
+   * type   value  description
+   * ====== ====== ===========
+   * BYTES  0x0001 GEOMETRY (WKB encoding)
+   * BYTES  0x0002 JSON (text encoding)
+   * BYTES  0x0003 XML (text encoding)
+   * ====== ====== ===========
+   * .. note::
+   *   this list isn't comprehensive. As guideline: the field's value is expected
+   *   to pass a validator check on client and server if this field is set.
+   *   If the server adds more internal datatypes that rely on BLOB storage
+   *   like image manipulation, seeking into complex types in BLOBs, ... more
+   *   types will be added.
+   * </pre>
+   */
+  public enum ContentType
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>GEOMETRY = 1;</code>
+     */
+    GEOMETRY(0, 1),
+    /**
+     * <code>JSON = 2;</code>
+     */
+    JSON(1, 2),
+    /**
+     * <code>XML = 3;</code>
+     */
+    XML(2, 3),
+    ;
+
+    /**
+     * <code>GEOMETRY = 1;</code>
+     */
+    public static final int GEOMETRY_VALUE = 1;
+    /**
+     * <code>JSON = 2;</code>
+     */
+    public static final int JSON_VALUE = 2;
+    /**
+     * <code>XML = 3;</code>
+     */
+    public static final int XML_VALUE = 3;
+
+
+    public final int getNumber() { return value; }
+
+    public static ContentType valueOf(int value) {
+      switch (value) {
+        case 1: return GEOMETRY;
+        case 2: return JSON;
+        case 3: return XML;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ContentType>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static com.google.protobuf.Internal.EnumLiteMap<ContentType>
+        internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ContentType>() {
+            public ContentType findValueByNumber(int number) {
+              return ContentType.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final ContentType[] VALUES = values();
+
+    public static ContentType valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private ContentType(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:Mysqlx.Datatypes.ContentType)
+  }
+
   public interface ScalarOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Mysqlx.Datatypes.Scalar)
       com.google.protobuf.MessageOrBuilder {
@@ -5694,7 +5802,9 @@ public final class MysqlxDatatypes {
       "calar\022%\n\003obj\030\003 \001(\0132\030.Mysqlx.Datatypes.Ob",
       "ject\022&\n\005array\030\004 \001(\0132\027.Mysqlx.Datatypes.A" +
       "rray\")\n\004Type\022\n\n\006SCALAR\020\001\022\n\n\006OBJECT\020\002\022\t\n\005" +
-      "ARRAY\020\003B\031\n\027com.mysql.cj.x.protobuf"
+      "ARRAY\020\003*.\n\013ContentType\022\014\n\010GEOMETRY\020\001\022\010\n\004" +
+      "JSON\020\002\022\007\n\003XML\020\003B\031\n\027com.mysql.cj.x.protob" +
+      "uf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
