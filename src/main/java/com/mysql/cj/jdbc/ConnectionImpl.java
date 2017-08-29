@@ -2046,8 +2046,9 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql),
                             pstmt);
-                    if (oldServerPrepStmt != null) {
+                    if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
+                        ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
                         ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
                     }
                 }

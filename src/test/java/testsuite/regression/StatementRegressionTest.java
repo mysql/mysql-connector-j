@@ -10010,4 +10010,79 @@ public class StatementRegressionTest extends BaseTestCase {
         testConn.close();
         xaTestConn.close();
     }
+
+    /**
+     * Tests fix for Bug#87429 - repeated close of ServerPreparedStatement causes memory leak.
+     */
+    public void testBug87429() throws Exception {
+        final String sql1 = "SELECT 'sql1', ?";
+        final String sql2 = "SELECT 'sql2', ?";
+
+        boolean useSPS = false;
+        boolean cachePS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, Boolean.toString(cachePS));
+            props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "5");
+
+            boolean cachedSPS = useSPS && cachePS;
+
+            JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+            // Single PreparedStatement, closed multiple times.
+            for (int i = 0; i < 100; i++) {
+                this.pstmt = testConn.prepareStatement(sql1);
+                assertEquals(1, testConn.getActiveStatementCount());
+                this.pstmt.close();
+                assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                this.pstmt.close(); // Second call effectively closes and un-caches the statement. 
+                assertEquals(0, testConn.getActiveStatementCount());
+                this.pstmt.close(); // No-op.
+                assertEquals(0, testConn.getActiveStatementCount());
+            }
+            testConn.close();
+            assertEquals(0, testConn.getActiveStatementCount());
+
+            testConn = (JdbcConnection) getConnectionWithProps(props);
+            // Multiple PreparedStatements interchanged, two queries, closed multiple times. 
+            for (int i = 0; i < 100; i++) {
+                for (int j = 0; j < 4; j++) {
+                    PreparedStatement pstmt1 = testConn.prepareStatement(j == 0 ? sql2 : sql1);
+                    PreparedStatement pstmt2 = testConn.prepareStatement(j == 1 ? sql2 : sql1);
+                    PreparedStatement pstmt3 = testConn.prepareStatement(j == 2 ? sql2 : sql1);
+                    PreparedStatement pstmt4 = testConn.prepareStatement(j == 3 ? sql2 : sql1);
+                    assertEquals(4, testConn.getActiveStatementCount());
+                    // First round of closes.
+                    pstmt4.close();
+                    assertEquals(cachedSPS ? 4 : 3, testConn.getActiveStatementCount());
+                    pstmt3.close();
+                    assertEquals(cachedSPS ? (j > 1 ? 4 : 3) : 2, testConn.getActiveStatementCount());
+                    pstmt2.close();
+                    assertEquals(cachedSPS ? (j > 0 ? 3 : 2) : 1, testConn.getActiveStatementCount());
+                    pstmt1.close();
+                    assertEquals(cachedSPS ? 2 : 0, testConn.getActiveStatementCount());
+                    // Second round of closes.
+                    pstmt4.close();
+                    assertEquals(cachedSPS ? (j > 2 ? 1 : 2) : 0, testConn.getActiveStatementCount());
+                    pstmt3.close();
+                    assertEquals(cachedSPS ? (j > 1 ? 1 : 2) : 0, testConn.getActiveStatementCount());
+                    pstmt2.close();
+                    assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                    pstmt1.close();
+                    assertEquals(0, testConn.getActiveStatementCount());
+                    // Third round of closes.
+                    pstmt4.close();
+                    assertEquals(0, testConn.getActiveStatementCount());
+                    pstmt3.close();
+                    assertEquals(0, testConn.getActiveStatementCount());
+                    pstmt2.close();
+                    assertEquals(0, testConn.getActiveStatementCount());
+                    pstmt1.close();
+                    assertEquals(0, testConn.getActiveStatementCount());
+                }
+            }
+            testConn.close();
+            assertEquals(0, testConn.getActiveStatementCount());
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
 }
