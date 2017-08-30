@@ -185,6 +185,12 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
             }
 
             if (this.host != null) {
+                if (Boolean.parseBoolean(props.getProperty("skipNameResolve"))) {
+                    InetSocketAddress sockAddr = new InetSocketAddress(this.host, this.port);
+                    connectRawSocket(sockAddr, localSockAddr, connectTimeout, props);
+                    return this.rawSocket;
+                }
+
                 InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
 
                 if (possibleAddresses.length == 0) {
@@ -198,18 +204,8 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
                 // MySQL don't listen on the IPv6 address so we try all addresses.
                 for (int i = 0; i < possibleAddresses.length; i++) {
                     try {
-                        this.rawSocket = createSocket(props);
-
-                        configureSocket(this.rawSocket, props);
-
                         InetSocketAddress sockAddr = new InetSocketAddress(possibleAddresses[i], this.port);
-                        // bind to the local port if not using the ephemeral port
-                        if (localSockAddr != null) {
-                            this.rawSocket.bind(localSockAddr);
-                        }
-
-                        this.rawSocket.connect(sockAddr, getRealTimeout(connectTimeout));
-
+                        connectRawSocket(sockAddr, localSockAddr, connectTimeout, props);
                         break;
                     } catch (SocketException ex) {
                         lastException = ex;
@@ -229,6 +225,18 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
         }
 
         throw new SocketException("Unable to create socket");
+    }
+
+    void connectRawSocket(InetSocketAddress sockAddr, InetSocketAddress localSockAddr, int connectTimeout, Properties props) throws SocketException, IOException {
+        this.rawSocket = createSocket(props);
+        configureSocket(this.rawSocket, props);
+
+        // bind to the local port if not using the ephemeral port
+        if (localSockAddr != null) {
+            this.rawSocket.bind(localSockAddr);
+        }
+
+        this.rawSocket.connect(sockAddr, getRealTimeout(connectTimeout));
     }
 
     public boolean isLocallyConnected(com.mysql.jdbc.ConnectionImpl conn) throws SQLException {
