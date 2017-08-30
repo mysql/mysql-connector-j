@@ -1,6 +1,9 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/
 
+Version 5.1.45
+
+
 Version 5.1.44
 
   - Fix for Bug#87429 (26633984), repeated close of ServerPreparedStatement causes memory leak.
