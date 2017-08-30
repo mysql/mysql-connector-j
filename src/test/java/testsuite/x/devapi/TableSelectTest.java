@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,6 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,9 +45,12 @@ import com.mysql.cj.api.xdevapi.Column;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SelectStatement;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.Type;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.DataConversionException;
+import com.mysql.cj.xdevapi.SessionFactory;
 
 /**
  * @todo
@@ -459,5 +466,112 @@ public class TableSelectTest extends TableTest {
 
         myCol = metadata.get(2);
         assertEquals(Type.DATETIME, myCol.getType());
+    }
+
+    @Test
+    public void testTableRowLocks() throws Exception {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+            return;
+        }
+
+        sqlUpdate("drop table if exists testTableRowLocks");
+        sqlUpdate("create table testTableRowLocks (_id varchar(32), a varchar(20))");
+        sqlUpdate("CREATE UNIQUE INDEX myIndex ON testTableRowLocks (_id)"); // index is required to enable row locking
+        sqlUpdate("insert into testTableRowLocks values ('1', '1')");
+        sqlUpdate("insert into testTableRowLocks values ('2', '1')");
+        sqlUpdate("insert into testTableRowLocks values ('3', '1')");
+
+        Session session1 = null;
+        Session session2 = null;
+
+        try {
+            session1 = new SessionFactory().getSession(this.testProperties);
+            Table table1 = session1.getDefaultSchema().getTable("testTableRowLocks");
+            session2 = new SessionFactory().getSession(this.testProperties);
+            Table table2 = session2.getDefaultSchema().getTable("testTableRowLocks");
+
+            // test1: Shared Lock
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            table2.select("_id").where("_id = '2'").lockShared().execute(); // should return immediately
+
+            CompletableFuture<RowResult> res1 = table2.select("_id").where("_id = '1'").lockShared().executeAsync(); // should return immediately
+            res1.get(5, TimeUnit.SECONDS);
+            assertTrue(res1.isDone());
+
+            session1.rollback();
+            session2.rollback();
+
+            // test2: Shared Lock after Exclusive
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            table2.select("_id").where("_id = '2'").lockShared().execute(); // should return immediately
+            CompletableFuture<RowResult> res2 = table2.select("_id").where("_id = '1'").lockShared().executeAsync(); // session2 blocks
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res2.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res2.get(5, TimeUnit.SECONDS);
+            assertTrue(res2.isDone());
+            session2.rollback();
+
+            // test3: Exclusive after Shared
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+            table1.select("_id").where("_id = '3'").lockShared().execute();
+
+            session2.startTransaction();
+            table2.select("_id").where("_id = '2'").lockExclusive().execute(); // should return immediately
+            table2.select("_id").where("_id = '3'").lockShared().execute(); // should return immediately
+            CompletableFuture<RowResult> res3 = table2.select("_id").where("_id = '1'").lockExclusive().executeAsync(); // session2 blocks
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res3.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res3.get(5, TimeUnit.SECONDS);
+            assertTrue(res3.isDone());
+            session2.rollback();
+
+            // test4: Exclusive after Exclusive
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            table2.select("_id").where("_id = '2'").lockExclusive().execute(); // should return immediately
+            CompletableFuture<RowResult> res4 = table2.select("_id").where("_id = '1'").lockExclusive().executeAsync(); // session2 blocks
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res4.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res4.get(5, TimeUnit.SECONDS);
+            assertTrue(res4.isDone());
+            session2.rollback();
+
+        } finally {
+            if (session1 != null) {
+                session1.close();
+            }
+            if (session2 != null) {
+                session2.close();
+            }
+            sqlUpdate("drop table if exists testTableRowLocks");
+        }
+
     }
 }

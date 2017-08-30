@@ -76,6 +76,9 @@ public class DocFindParams extends FindParams {
         if (this.having != null) {
             newFindParams.setGroupingCriteria(this.having);
         }
+        if (this.lock != null) {
+            newFindParams.setLock(this.lock);
+        }
         return newFindParams;
     }
 }

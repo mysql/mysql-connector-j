@@ -40,7 +40,7 @@ import com.mysql.cj.x.core.XDevAPIError;
 public class CollectionTest extends DevApiBaseTestCase {
     /** Collection for testing. */
     protected Collection collection;
-    private String collectionName;
+    protected String collectionName;
 
     @Before
     public void setupCollectionTest() {

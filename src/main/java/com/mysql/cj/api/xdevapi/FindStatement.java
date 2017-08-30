@@ -102,4 +102,18 @@ public interface FindStatement extends DataStatement<FindStatement, DocResult, D
      * @return {@link FindStatement}
      */
     FindStatement limit(long numberOfRows);
+
+    /**
+     * Locks matching rows against updates.
+     * 
+     * @return {@link FindStatement}
+     */
+    FindStatement lockShared();
+
+    /**
+     * Locks matching rows exclusively so no other transaction can read or write to it.
+     * 
+     * @return {@link FindStatement}
+     */
+    FindStatement lockExclusive();
 }

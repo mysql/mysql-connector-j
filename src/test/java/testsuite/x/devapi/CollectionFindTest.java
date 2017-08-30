@@ -30,12 +30,19 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Row;
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -43,6 +50,7 @@ import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.SessionFactory;
 
 /**
  * @todo
@@ -408,5 +416,106 @@ public class CollectionFindTest extends CollectionTest {
         assertFalse(docs.hasNext());
     }
 
-    // TODO: test rest of expressions
+    @Test
+    public void testCollectionRowLocks() throws Exception {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+            return;
+        }
+
+        this.collection.add("{\"_id\":\"1\", \"a\":1}").execute();
+        this.collection.add("{\"_id\":\"2\", \"a\":1}").execute();
+        this.collection.add("{\"_id\":\"3\", \"a\":1}").execute();
+
+        Session session1 = null;
+        Session session2 = null;
+
+        try {
+            session1 = new SessionFactory().getSession(this.testProperties);
+            Collection col1 = session1.getDefaultSchema().getCollection(this.collectionName);
+            session2 = new SessionFactory().getSession(this.testProperties);
+            Collection col2 = session2.getDefaultSchema().getCollection(this.collectionName);
+
+            // test1: Shared Lock
+            session1.startTransaction();
+            col1.find("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            col2.find("_id = '2'").lockShared().execute(); // should return immediately
+
+            CompletableFuture<DocResult> res1 = col2.find("_id = '1'").lockShared().executeAsync(); // should return immediately
+            res1.get(5, TimeUnit.SECONDS);
+            assertTrue(res1.isDone());
+
+            session1.rollback();
+            session2.rollback();
+
+            // test2: Shared Lock after Exclusive
+            session1.startTransaction();
+            col1.find("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            col2.find("_id = '2'").lockShared().execute(); // should return immediately
+            CompletableFuture<DocResult> res2 = col2.find("_id = '1'").lockShared().executeAsync(); // session2 blocks
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res2.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res2.get(5, TimeUnit.SECONDS);
+            assertTrue(res2.isDone());
+            session2.rollback();
+
+            // test3: Exclusive after Shared
+            session1.startTransaction();
+            col1.find("_id = '1'").lockShared().execute();
+            col1.find("_id = '3'").lockShared().execute();
+
+            session2.startTransaction();
+            col2.find("_id = '2'").lockExclusive().execute(); // should return immediately
+            col2.find("_id = '3'").lockShared().execute(); // should return immediately
+            CompletableFuture<DocResult> res3 = col2.find("_id = '1'").lockExclusive().executeAsync(); // session2 should block
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res3.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res3.get(5, TimeUnit.SECONDS);
+            assertTrue(res3.isDone());
+            session2.rollback();
+
+            // test4: Exclusive after Exclusive
+            session1.startTransaction();
+            col1.find("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            col2.find("_id = '2'").lockExclusive().execute(); // should return immediately
+            CompletableFuture<DocResult> res4 = col2.find("_id = '1'").lockExclusive().executeAsync(); // session2 should block
+            assertThrows(TimeoutException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    res4.get(5, TimeUnit.SECONDS);
+                    return null;
+                }
+            });
+
+            session1.rollback(); // session2 should unblock now
+            res4.get(5, TimeUnit.SECONDS);
+            assertTrue(res4.isDone());
+            session2.rollback();
+
+        } finally {
+            if (session1 != null) {
+                session1.close();
+            }
+            if (session2 != null) {
+                session2.close();
+            }
+        }
+
+    }
 }

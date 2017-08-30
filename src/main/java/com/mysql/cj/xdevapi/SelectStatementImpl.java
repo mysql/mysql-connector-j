@@ -29,6 +29,7 @@ import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SelectStatement;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock;
 
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
     private MysqlxSession mysqlxSession;
@@ -78,5 +79,17 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
     @Override
     public FindParams getFindParams() {
         return this.findParams;
+    }
+
+    @Override
+    public SelectStatement lockShared() {
+        this.findParams.setLock(RowLock.SHARED_LOCK);
+        return this;
+    }
+
+    @Override
+    public SelectStatement lockExclusive() {
+        this.findParams.setLock(RowLock.EXCLUSIVE_LOCK);
+        return this;
     }
 }

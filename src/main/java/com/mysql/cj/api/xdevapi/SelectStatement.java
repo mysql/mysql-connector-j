@@ -84,6 +84,20 @@ public interface SelectStatement extends DataStatement<SelectStatement, RowResul
     SelectStatement offset(long limitOffset);
 
     /**
+     * Locks matching rows against updates.
+     * 
+     * @return {@link SelectStatement}
+     */
+    SelectStatement lockShared();
+
+    /**
+     * Locks matching rows exclusively so no other transaction can read or write to it.
+     * 
+     * @return {@link SelectStatement}
+     */
+    SelectStatement lockExclusive();
+
+    /**
      * Return FindParams defined for this statement.
      * 
      * @return {@link FindParams}

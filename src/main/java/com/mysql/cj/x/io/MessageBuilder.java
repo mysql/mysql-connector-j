@@ -178,6 +178,9 @@ public class MessageBuilder {
         if (findParams.getGroupingCriteria() != null) {
             builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
         }
+        if (findParams.getLock() != null) {
+            builder.setLocking(findParams.getLock());
+        }
         applyFilterParams(findParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return builder.build();
     }

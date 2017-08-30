@@ -29,6 +29,7 @@ import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Expression;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock;
 
 public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
     private MysqlxSession mysqlxSession;
@@ -74,6 +75,18 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     public FindStatement having(String having) {
         this.findParams.setGroupingCriteria(having);
+        return this;
+    }
+
+    @Override
+    public FindStatement lockShared() {
+        this.findParams.setLock(RowLock.SHARED_LOCK);
+        return this;
+    }
+
+    @Override
+    public FindStatement lockExclusive() {
+        this.findParams.setLock(RowLock.EXCLUSIVE_LOCK);
         return this;
     }
 }

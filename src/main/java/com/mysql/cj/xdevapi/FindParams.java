@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
@@ -38,6 +39,7 @@ public abstract class FindParams extends FilterParams {
     private Expr groupingCriteria;
     protected String[] projection;
     protected List<Projection> fields;
+    protected RowLock lock;
 
     public FindParams(String schemaName, String collectionName, boolean isRelational) {
         super(schemaName, collectionName, isRelational);
@@ -73,6 +75,14 @@ public abstract class FindParams extends FilterParams {
 
     public Object getGroupingCriteria() {
         return this.groupingCriteria;
+    }
+
+    public RowLock getLock() {
+        return this.lock;
+    }
+
+    public void setLock(RowLock lock) {
+        this.lock = lock;
     }
 
     @Override

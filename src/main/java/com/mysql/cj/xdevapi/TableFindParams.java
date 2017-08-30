@@ -73,6 +73,9 @@ public class TableFindParams extends FindParams {
         if (this.projection != null) {
             newFindParams.setFields(this.projection);
         }
+        if (this.lock != null) {
+            newFindParams.setLock(this.lock);
+        }
         return newFindParams;
     }
 }
