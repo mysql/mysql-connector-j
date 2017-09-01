@@ -323,7 +323,7 @@ public class MessageBuilder {
         try {
             // now we create the client object we use which can handle PLAIN mechanism for "X Protocol" to "serverName"
             String[] mechanisms = new String[] { "PLAIN" };
-            String authorizationId = database; // as per protocol spec
+            String authorizationId = database == null || database.trim().length() == 0 ? null : database; // as per protocol spec
             String protocol = "X Protocol";
             Map<String, ?> props = null;
             // TODO: >> serverName. Is this of any use in our X Protocol exchange? Should be defined to be blank or something.
@@ -333,6 +333,45 @@ public class MessageBuilder {
             // now just pass the details to the X Protocol auth start message
             AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
             authStartBuilder.setMechName("PLAIN");
+            // saslClient will build the SASL response message
+            authStartBuilder.setAuthData(ByteString.copyFrom(saslClient.evaluateChallenge(null)));
+
+            return authStartBuilder.build();
+        } catch (SaslException ex) {
+            // TODO: better exception, should introduce a new exception class for auth?
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public AuthenticateStart buildExternalAuthStart(String database) {
+        CallbackHandler callbackHandler = new CallbackHandler() {
+            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
+                for (Callback c : callbacks) {
+                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
+                        // TODO ((NameCallback) c).setName(user);
+                        throw new UnsupportedCallbackException(c);
+                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+                        // TODO ((PasswordCallback) c).setPassword(password.toCharArray());
+                        throw new UnsupportedCallbackException(c);
+                    } else {
+                        throw new UnsupportedCallbackException(c);
+                    }
+                }
+            }
+        };
+        try {
+            // now we create the client object we use which can handle EXTERNAL mechanism for "X Protocol" to "serverName"
+            String[] mechanisms = new String[] { "EXTERNAL" };
+            String authorizationId = database == null || database.trim().length() == 0 ? null : database; // as per protocol spec
+            String protocol = "X Protocol";
+            Map<String, ?> props = null;
+            // TODO: >> serverName. Is this of any use in our X Protocol exchange? Should be defined to be blank or something.
+            String serverName = "<unknown>";
+            SaslClient saslClient = Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbackHandler);
+
+            // now just pass the details to the X Protocol auth start message
+            AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
+            authStartBuilder.setMechName("EXTERNAL");
             // saslClient will build the SASL response message
             authStartBuilder.setAuthData(ByteString.copyFrom(saslClient.evaluateChallenge(null)));
 

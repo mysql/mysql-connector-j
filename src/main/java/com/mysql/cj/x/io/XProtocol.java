@@ -212,6 +212,7 @@ public class XProtocol implements Protocol {
      *            capability value
      */
     public void setCapability(String name, Object value) {
+        this.capabilities.put("tls", ExprUtil.argObjectToScalarAny(value));
         this.writer.write(this.msgBuilder.buildCapabilitiesSet(name, value));
         readOk();
     }
@@ -225,8 +226,12 @@ public class XProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildMysql41AuthContinue(user, password, salt, database));
     }
 
-    public void sendSaslAuthStart(String user, String password, String database) {
+    public void sendSaslPlainAuthStart(String user, String password, String database) {
         this.writer.write(this.msgBuilder.buildPlainAuthStart(user, password, database));
+    }
+
+    public void sendSaslExternalAuthStart(String database) {
+        this.writer.write(this.msgBuilder.buildExternalAuthStart(database));
     }
 
     public void negotiateSSLConnection(int packLength) {

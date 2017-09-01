@@ -66,6 +66,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJCommunicationsException;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.LongValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
 import com.mysql.cj.core.result.Field;
@@ -100,6 +101,8 @@ public class MysqlxSession implements Session {
     // TODO Need to expand options here. Force user to specify, given possible heterogenous configuration in sharded env?
     private TimeZone defaultTimeZone = TimeZone.getDefault();
     ValueFactory<String> svf = new StringValueFactory();
+
+    protected String authMech = "MYSQL41"; // used in test case to check what type of the authentications was actually used
 
     public MysqlxSession(Properties properties) {
 
@@ -136,9 +139,37 @@ public class MysqlxSession implements Session {
      * Change user as given by parameters. This implementation only supports calling this during the initial handshake.
      */
     public void changeUser(String user, String password, String database) {
-        this.protocol.sendSaslMysql41AuthStart();
-        byte[] salt = this.protocol.readAuthenticateContinue();
-        this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
+        this.authMech = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
+        boolean overTLS = this.protocol.getTls();
+
+        // default choice
+        if (this.authMech == null) {
+            this.authMech = overTLS ? "PLAIN" : "MYSQL41";
+        } else {
+            this.authMech = this.authMech.toUpperCase();
+        }
+
+        switch (this.authMech) {
+            case "MYSQL41":
+                this.protocol.sendSaslMysql41AuthStart();
+                byte[] salt = this.protocol.readAuthenticateContinue();
+                this.protocol.sendSaslMysql41AuthContinue(user, password, salt, database);
+                break;
+            case "PLAIN":
+                if (overTLS) {
+                    this.protocol.sendSaslPlainAuthStart(user, password, database);
+                } else {
+                    throw new XDevAPIError("PLAIN authentication is not allowed via unencrypted connection.");
+                }
+                break;
+            case "EXTERNAL":
+                this.protocol.sendSaslExternalAuthStart(database);
+                break;
+
+            default:
+                throw new WrongArgumentException("Unknown authentication mechanism '" + this.authMech + "'.");
+        }
+
         this.protocol.readAuthenticateOk();
         setupInternalState();
     }

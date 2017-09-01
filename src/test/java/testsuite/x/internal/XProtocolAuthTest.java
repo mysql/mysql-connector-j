@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -80,7 +80,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+        protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
         protocol.readAuthenticateOk();
     }
 
@@ -102,7 +102,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
             return;
         }
         try {
-            protocol.sendSaslAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
+            protocol.sendSaslPlainAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
             protocol.readAuthenticateOk();
             fail("Auth using wrong password should fail");
         } catch (XDevAPIError ex) {
@@ -134,7 +134,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslAuthStart(getTestUser(), getTestPassword(), null);
+        protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), null);
         protocol.readAuthenticateOk();
     }
 }

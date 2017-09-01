@@ -3,6 +3,8 @@
 
 Version 8.0.8
 
+  - WL#10620, DevAPI: SHA256 Authentication support.
+
   - WL#10936, DevAPI: Row locking for Crud.Find.
 
   - WL#9868, DevAPI: Configuration handling interface.
