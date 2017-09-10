@@ -2289,7 +2289,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 // supported; null when TYPE is tableIndexStatistic
                 Types.BIGINT, // 11. CARDINALITY int/long => When TYPE is tableIndexStatistic, then this is the number of rows
                 // in the table; otherwise, it is the number of unique values in the index.
-                Types.BIGINT, // 12. PAGES int/long => When TYPE is tableIndexStatisic then this is the number of pages used
+                Types.BIGINT, // 12. PAGES int/long => When TYPE is tableIndexStatistic then this is the number of pages used
                 // for the table, otherwise it is the number of pages used for the current index.
                 Types.CHAR // 13. FILTER_CONDITION String => Filter condition, if any. (may be null)
         };
