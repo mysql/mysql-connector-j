@@ -1294,14 +1294,23 @@ public class SyntaxRegressionTest extends BaseTestCase {
     }
 
     private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
-        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tablespaces WHERE name LIKE 'testTs_'");
+        if (versionMeetsMinimum(8, 0, 3)) {
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tablespaces WHERE name LIKE 'testTs_'");
+        } else {
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tablespaces WHERE name LIKE 'testTs_'");
+        }
         assertTrue(this.rs.next());
         assertEquals(expectedTsCount, this.rs.getInt(1));
     }
 
     private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
-        this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tables a, information_schema.innodb_sys_tablespaces b "
-                + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
+        if (versionMeetsMinimum(8, 0, 3)) {
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tables a, information_schema.innodb_tablespaces b "
+                    + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
+        } else {
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_sys_tables a, information_schema.innodb_sys_tablespaces b "
+                    + "WHERE a.space = b.space AND b.name = '" + tablespace + "'");
+        }
         assertTrue(this.rs.next());
         assertEquals(expectedTblCount, this.rs.getInt(1));
     }
@@ -1319,7 +1328,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             return;
         }
 
-        Map<String, Integer> keyMergeThresholds = new HashMap<String, Integer>();
+        Map<String, Integer> keyMergeThresholds = new HashMap<>();
         keyMergeThresholds.put("k2", 45);
         keyMergeThresholds.put("k3", 40);
         keyMergeThresholds.put("k23", 35);
@@ -1352,8 +1361,13 @@ public class SyntaxRegressionTest extends BaseTestCase {
     }
 
     private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
-        this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_sys_indexes WHERE table_id = "
-                + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+        if (versionMeetsMinimum(8, 0, 3)) {
+            this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_indexes WHERE table_id = "
+                    + "(SELECT table_id FROM information_schema.innodb_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+        } else {
+            this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_sys_indexes WHERE table_id = "
+                    + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+        }
 
         while (this.rs.next()) {
             int expected = keyMergeThresholds.containsKey(this.rs.getString(1)) ? keyMergeThresholds.get(this.rs.getString(1)) : defaultMergeThreshold;
@@ -1445,7 +1459,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         final String wkbMultiPolygon = String.format("ST_ASWKB(%s)", geoMultiPolygon);
         final String wkbGeometryCollection = String.format("ST_ASWKB(%s)", geoGeometryCollection);
 
-        final Map<String, String> args = new HashMap<String, String>();
+        final Map<String, String> args = new HashMap<>();
         args.put("gcWkt", wktGeometryCollection);
         args.put("gWkt", wktGeometryCollection);
         args.put("lsWkt", wktLineString);
@@ -1513,7 +1527,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.args = Arrays.asList(args);
             }
         }
-        final List<GisFunction> gisFunctions = new ArrayList<GisFunction>();
+        final List<GisFunction> gisFunctions = new ArrayList<>();
         // Functions That Create Geometry Values from WKT Values
         gisFunctions.add(new GisFunction("GeomCollFromText", 5, 5, 1, 5, 7, 6, "gcWkt"));
         gisFunctions.add(new GisFunction("GeometryCollectionFromText", 5, 5, 1, 5, 7, 6, "gcWkt"));
