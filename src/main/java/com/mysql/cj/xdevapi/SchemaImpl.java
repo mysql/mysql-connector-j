@@ -206,6 +206,9 @@ public class SchemaImpl implements Schema {
 
     @Override
     public void dropView(String viewName) {
+        if (viewName == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "viewName" }));
+        }
         this.mysqlxSession.dropView(this.name, viewName, true);
     }
 }

@@ -668,6 +668,14 @@ public class SchemaTest extends DevApiBaseTestCase {
             // TODO could cause problems on different server versions
             assertEquals(ddlCheck, ddl);
 
+            // 7. Null view name should cause a XDevAPIError
+            assertThrows(XDevAPIError.class, "Parameter 'viewName' must not be null.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    SchemaTest.this.schema.dropView(null);
+                    return null;
+                }
+            });
+
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
