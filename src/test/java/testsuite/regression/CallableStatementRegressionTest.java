@@ -1524,7 +1524,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         /*
          * Test function.
          */
-        createFunction("`testBug84324-db`.`testBug84324-func`", "(a INT, b VARCHAR(123)) RETURNS INT BEGIN RETURN a + LENGTH(b); END");
+        createFunction("`testBug84324-db`.`testBug84324-func`", "(a INT, b VARCHAR(123)) RETURNS INT DETERMINISTIC BEGIN RETURN a + LENGTH(b); END");
 
         final CallableStatement cstmtF = this.conn.prepareCall("{? = CALL testBug84324-db.testBug84324-func(?, ?)}");
         pmd = cstmtF.getParameterMetaData();
