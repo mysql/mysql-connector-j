@@ -875,7 +875,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
     //
     public ResultSetInternalMethods copy() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData, this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
+            ResultSetImpl rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData, this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
+            if (this.isBinaryEncoded) {
+                rs.setBinaryEncoded();
+            }
 
             return rs;
         }
