@@ -793,7 +793,7 @@ public class ResultSetImpl extends MysqlaResultset implements ResultSetInternalM
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new SqlDateValueFactory(cal != null ? cal.getTimeZone() : this.session.getDefaultTimeZone());
+        ValueFactory<Date> vf = new SqlDateValueFactory(cal != null ? cal.getTimeZone() : this.session.getDefaultTimeZone(), this);
         return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 

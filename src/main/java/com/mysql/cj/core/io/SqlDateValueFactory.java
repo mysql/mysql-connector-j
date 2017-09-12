@@ -69,6 +69,24 @@ public class SqlDateValueFactory extends DefaultValueFactory<Date> {
     }
 
     @Override
+    public Date createFromTime(int hours, int minutes, int seconds, int nanos) {
+        if (this.warningListener != null) {
+            // TODO: need column context
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.ImplicitDatePartWarning", new Object[] { "java.sql.Date" }));
+        }
+
+        synchronized (this.cal) {
+            // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 GMT and should not be accessed."
+            // A new Calendar instance is used to don't spoil the date part of the default one.
+            Calendar c1 = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
+            c1.set(1970, 0, 1, hours, minutes, seconds);
+            c1.set(Calendar.MILLISECOND, 0);
+            long ms = (nanos / 1000000) + c1.getTimeInMillis();
+            return new Date(ms);
+        }
+    }
+
+    @Override
     public Date createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (this.warningListener != null) {
             // TODO: need column context

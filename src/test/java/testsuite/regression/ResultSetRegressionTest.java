@@ -45,6 +45,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
@@ -6050,4 +6051,50 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         testConn.close();
     }
+
+    /**
+     * Tests for fix to BUG#26750705 - MASTER : ERROR - UNSUPPORTED CONVERSION FROM TIME TO JAVA.SQL.DATE
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug26750705() throws Exception {
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            return; // fractional seconds are not supported in previous versions
+        }
+
+        createTable("testBug26750705", "(c1 time(3), c2 time(3))");
+        this.stmt.execute("insert into testBug26750705 values('80:59:59','8:59:59.01')");
+
+        long expected1 = 80 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000; // '80:59:59' in milliseconds
+        long expected2 = 8 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 10; // '8:59:59.01' in milliseconds
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        Connection testConn = getConnectionWithProps(props);
+
+        PreparedStatement ps = testConn.prepareStatement("select * from testBug26750705", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        this.rs = ps.executeQuery();
+
+        assertNotNull(this.rs.next());
+        assertEquals(expected1, this.rs.getDate(1, null).getTime());
+        assertEquals(expected2, this.rs.getDate(2, null).getTime());
+
+        // at least 2 warnings are expected 
+        SQLWarning w = this.rs.getWarnings();
+        assertNotNull(w);
+
+        int cnt = 2;
+        String expectedWarning = Messages.getString("ResultSet.ImplicitDatePartWarning", new Object[] { "java.sql.Date" });
+        while (w != null) {
+            if (expectedWarning.equals(w.getMessage())) {
+                cnt--;
+            }
+            w = w.getNextWarning();
+        }
+        assertEquals(0, cnt);
+
+        testConn.close();
+    }
+
 }

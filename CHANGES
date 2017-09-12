@@ -3,6 +3,8 @@
 
 Version 8.0.8
 
+  - Fix for BUG#26750705, MASTER : ERROR - UNSUPPORTED CONVERSION FROM TIME TO JAVA.SQL.DATE.
+
   - WL#10620, DevAPI: SHA256 Authentication support.
 
   - WL#10936, DevAPI: Row locking for Crud.Find.
