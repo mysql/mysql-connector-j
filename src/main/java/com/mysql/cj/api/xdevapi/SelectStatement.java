@@ -91,7 +91,7 @@ public interface SelectStatement extends DataStatement<SelectStatement, RowResul
     SelectStatement lockShared();
 
     /**
-     * Locks matching rows exclusively so no other transaction can read or write to it.
+     * Locks matching rows exclusively so no other transactions can read or write to them.
      * 
      * @return {@link SelectStatement}
      */

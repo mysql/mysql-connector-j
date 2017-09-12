@@ -111,7 +111,7 @@ public interface FindStatement extends DataStatement<FindStatement, DocResult, D
     FindStatement lockShared();
 
     /**
-     * Locks matching rows exclusively so no other transaction can read or write to it.
+     * Locks matching rows exclusively so no other transactions can read or write to them.
      * 
      * @return {@link FindStatement}
      */
