@@ -65,7 +65,7 @@
 Summary:        Standardized MySQL database driver for Java
 Name:           mysql-connector-java%{product_suffix}
 Version:        @MYSQL_CJ_VERSION@
-Release:        %{!?rpm_release:1}%{?rpm_release}%{?commercial:.1}@MYSQL_CJ_RPMRELEASE_EXTRA@%{?dist}
+Release:        0.1@MYSQL_CJ_RPMRELEASE_EXTRA@%{?commercial:.1}%{?dist}
 License:        %{lic_tag}
 Group:          Development/Libraries
 URL:            http://dev.mysql.com/downloads/connector/j/
