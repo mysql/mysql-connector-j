@@ -184,7 +184,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector Java" />
     <property name="com.mysql.cj.build.driver.version.snapshot" value="-SNAPSHOT" />
-    <property name="com.mysql.cj.build.driver.version.extra" value="-dmr" />
+    <property name="com.mysql.cj.build.driver.version.extra" value="" />
     <property name="com.mysql.cj.build.driver.version.full"
               value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
     <property name="com.mysql.cj.build.driver.extraName" value="" />
