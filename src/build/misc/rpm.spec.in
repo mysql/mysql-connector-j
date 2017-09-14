@@ -107,7 +107,7 @@ For detailed information please visit the official
 (http://dev.mysql.com/doc/connector-j/en/).
 
 %prep
-%setup -q -n %{name}%{name_suffix}-%{version}
+%setup -q -n %{name}%{name_suffix}-%{version}%{?milestone:-%{milestone}}
 
 %build
 COMMON_OPTIONS="\
