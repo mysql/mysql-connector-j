@@ -1249,12 +1249,14 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <target name="prepare-debian-commercial-props" if="com.mysql.cj.build.commercial">
         <echo message="Using Commercial settings" />
         <property name="product_suffix" value="-commercial" />
+        <property name="deb_version_suffix" value="+commercial" />
         <property name="lic_file" value="LICENSE.mysql" />
     </target>
 
     <target name="prepare-debian-gpl-props" unless="com.mysql.cj.build.commercial">
         <echo message="Using GPL settings" />
         <property name="product_suffix" value="" />
+        <property name="deb_version_suffix" value="" />
         <property name="lic_file" value="COPYING" />
     </target>
 
@@ -1284,7 +1286,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
           var orig = project.getProperty("com.mysql.cj.dist.dir");
           project.setProperty("com.mysql.cj.dist.dir.filter", orig.replace("./", ""));
         </script>
-        <property name="orig_package_name" value="mysql-connector-java${product_suffix}_${com.mysql.cj.build.driver.version.full}${id_release}.orig.tar.gz" />
+	<property name="orig_package_name" value="mysql-connector-java${product_suffix}_${com.mysql.cj.build.driver.version.full}${deb_version_suffix}${id_release}.orig.tar.gz" />
         <tar destfile="build/deb/${orig_package_name}" basedir="." compression="gzip" excludes="${com.mysql.cj.dist.dir.filter}/** build/**" />
 
         <copy todir="build/deb/src" overwrite="true">
@@ -1307,6 +1309,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                 <filter token="CODENAME" value="${codename}" />
                 <filter token="LIC_FILE" value="${lic_file}" />
                 <filter token="PRODUCT_SUFFIX" value="${product_suffix}" />
+                <filter token="DEB_VERSION_SUFFIX" value="${deb_version_suffix}" />
                 <filter token="VERSION_FULL" value="${com.mysql.cj.build.driver.version.full}" />
                 <filter token="MAINTAINER_EMAIL" value="${com.mysql.cj.build.deb.maintainerEmail}" />
             </filterset>
