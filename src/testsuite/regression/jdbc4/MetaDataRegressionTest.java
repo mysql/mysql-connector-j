@@ -691,7 +691,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             createDatabase(testDb2);
 
             // 1. Check if getProcedures() and getProcedureColumns() aren't returning more results than expected (as per reported bug).
-            createFunction(testDb1 + ".testBug19803348_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb1 + ".testBug19803348_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb1 + ".testBug19803348_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getFunctions(null, null, "testBug19803348_%");
@@ -728,9 +728,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
             dropProcedure(testDb1 + ".testBug19803348_p");
 
             // 2. Check if the results from getProcedures() and getProcedureColumns() are in the right order (secondary bug).
-            createFunction(testDb1 + ".testBug19803348_B_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb1 + ".testBug19803348_B_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb1 + ".testBug19803348_B_p", "(d int) BEGIN SELECT d; END");
-            createFunction(testDb2 + ".testBug19803348_A_f", "(d INT) RETURNS INT BEGIN RETURN d; END");
+            createFunction(testDb2 + ".testBug19803348_A_f", "(d INT) RETURNS INT DETERMINISTIC BEGIN RETURN d; END");
             createProcedure(testDb2 + ".testBug19803348_A_p", "(d int) BEGIN SELECT d; END");
 
             this.rs = dbmd.getFunctions(null, null, "testBug19803348_%");
@@ -797,9 +797,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20727196() throws Exception {
-        createFunction("testBug20727196_f1", "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
-        createFunction("testBug20727196_f2", "(p CHAR(1)) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='y', 'Yes', if(p='n', 'No', '?')); END");
-        createFunction("testBug20727196_f3", "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
+        createFunction("testBug20727196_f1", "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) DETERMINISTIC BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
+        createFunction("testBug20727196_f2", "(p CHAR(1)) RETURNS ENUM ('Yes', 'No') DETERMINISTIC BEGIN RETURN IF(p='y', 'Yes', if(p='n', 'No', '?')); END");
+        createFunction("testBug20727196_f3", "(p ENUM ('Yes', 'No')) RETURNS ENUM ('Yes', 'No') DETERMINISTIC BEGIN RETURN IF(p='Yes', 'Yes', if(p='No', 'No', '?')); END");
         createProcedure("testBug20727196_p1", "(p ENUM ('Yes', 'No')) BEGIN SELECT IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
 
         for (String connProps : new String[] { "getProceduresReturnsFunctions=false,useInformationSchema=false",
