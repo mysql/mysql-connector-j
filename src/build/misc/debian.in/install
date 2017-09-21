@@ -3,3 +3,4 @@ dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/mysql-connect
 #legal
 dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/@LIC_FILE@ usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
 dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/README usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
+dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/CHANGES usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
