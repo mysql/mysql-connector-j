@@ -603,7 +603,7 @@ public final class MysqlErrorNumbers {
     public final static int ER_DDL_LOG_ERROR = 1565; //SQLSTATE: HY000 Message: Error in DDL log
     public final static int ER_NULL_IN_VALUES_LESS_THAN = 1566; //SQLSTATE: HY000 Message: Not allowed to use NULL value in VALUES LESS THAN
     public final static int ER_WRONG_PARTITION_NAME = 1567; //SQLSTATE: HY000 Message: Incorrect partition name
-    public final static int ER_CANT_CHANGE_TX_ISOLATION = 1568; //SQLSTATE: 25001 Message: Transaction isolation level can't be changed while a transaction is in progress
+    public final static int ER_CANT_CHANGE_TRANSACTION_ISOLATION = 1568; //SQLSTATE: 25001 Message: Transaction isolation level can't be changed while a transaction is in progress
     public final static int ER_DUP_ENTRY_AUTOINCREMENT_CASE = 1569; //SQLSTATE: HY000 Message: ALTER TABLE causes auto_increment resequencing, resulting in duplicate entry '%s' for key '%s'
     public final static int ER_EVENT_MODIFY_QUEUE_ERROR = 1570; //SQLSTATE: HY000 Message: Internal scheduler error %d
     public final static int ER_EVENT_SET_VAR_ERROR = 1571; //SQLSTATE: HY000 Message: Error during starting/stopping of the scheduler. Error code %u
@@ -1319,7 +1319,7 @@ public final class MysqlErrorNumbers {
         mysqlToSql99State.put(MysqlErrorNumbers.ER_WRONG_VALUE_COUNT_ON_ROW, SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_INVALID_USE_OF_NULL, SQL_STATE_NULL_VALUE_NOT_ALLOWED);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_INVALID_ARGUMENT_FOR_LOGARITHM, SQL_STATE_INVALID_LOGARITHM_ARGUMENT);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_CANT_CHANGE_TX_ISOLATION, SQL_STATE_ACTIVE_SQL_TRANSACTION);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_CANT_CHANGE_TRANSACTION_ISOLATION, SQL_STATE_ACTIVE_SQL_TRANSACTION);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION, SQL_STATE_READ_ONLY_SQL_TRANSACTION);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_NO_RECURSIVE_CREATE, SQL_STATE_SRE_PROHIBITED_SQL_STATEMENT_ATTEMPTED);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_NORETURNEND, SQL_STATE_SRE_FUNCTION_EXECUTED_NO_RETURN_STATEMENT);

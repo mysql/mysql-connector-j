@@ -852,7 +852,7 @@ public class ConnectionTest extends BaseTestCase {
     /**
      * Tests whether or not the configuration 'useLocalSessionState' actually
      * prevents non-needed 'set autocommit=', 'set session transaction isolation
-     * ...' and 'show variables like tx_isolation' queries.
+     * ...' and 'show variables like transaction_isolation' queries.
      * 
      * @throws Exception
      *             if the test fails.
@@ -876,7 +876,7 @@ public class ConnectionTest extends BaseTestCase {
 
         String logAsString = StandardLogger.getBuffer().toString();
 
-        assertTrue(logAsString.indexOf("SET SESSION") == -1 && logAsString.indexOf("SHOW VARIABLES LIKE 'tx_isolation'") == -1
+        assertTrue(logAsString.indexOf("SET SESSION") == -1 && logAsString.indexOf("SHOW VARIABLES LIKE 'transaction_isolation'") == -1
                 && logAsString.indexOf("SET autocommit=") == -1);
     }
 
@@ -1709,7 +1709,7 @@ public class ConnectionTest extends BaseTestCase {
                 }
                 StandardLogger.startLoggingToBuffer();
                 localState.isReadOnly();
-                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.transaction_read_only") == -1);
             }
 
             Connection noOptimization = getConnectionWithProps("profileSQL=true,readOnlyPropagatesToServer=false");
@@ -1720,7 +1720,7 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
                 StandardLogger.startLoggingToBuffer();
                 noOptimization.isReadOnly();
-                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.tx_read_only") == -1);
+                assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session.transaction_read_only") == -1);
             }
         } finally {
             StandardLogger.dropBuffer();

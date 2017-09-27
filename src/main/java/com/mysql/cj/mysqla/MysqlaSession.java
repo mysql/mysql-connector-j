@@ -1013,12 +1013,14 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                 queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                queryBuf.append(", @@query_cache_size AS query_cache_size");
-                queryBuf.append(", @@query_cache_type AS query_cache_type");
+                if (!versionMeetsMinimum(8, 0, 3)) {
+                    queryBuf.append(", @@query_cache_size AS query_cache_size");
+                    queryBuf.append(", @@query_cache_type AS query_cache_type");
+                }
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
-                queryBuf.append(", @@tx_isolation AS tx_isolation");
+                queryBuf.append(", @@transaction_isolation AS transaction_isolation");
                 queryBuf.append(", @@wait_timeout AS wait_timeout");
 
                 PacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), queryBuf.toString()), false, 0);
@@ -1331,7 +1333,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
         } catch (CJException sqlE) {
             if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
-                String extractedSql = MysqlaUtils.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
+                String extractedSql = com.mysql.cj.mysqla.MysqlaUtils.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
                         getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
                 StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                 messageBuf.append("\n\nQuery being executed when exception was thrown:\n");

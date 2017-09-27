@@ -36,11 +36,11 @@ public final class MysqlxExpect {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
      */
     boolean hasOp();
     /**
-     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp();
 
@@ -194,47 +194,47 @@ public final class MysqlxExpect {
     public enum CtxOperation
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
-       * <code>EXPECT_CTX_COPY_PREV = 0;</code>
+       * <code>EXPECT_CTRANSACTION_COPY_PREV = 0;</code>
        *
        * <pre>
        * copy the operations from the parent Expect-block
        * </pre>
        */
-      EXPECT_CTX_COPY_PREV(0, 0),
+      EXPECT_CTRANSACTION_COPY_PREV(0, 0),
       /**
-       * <code>EXPECT_CTX_EMPTY = 1;</code>
+       * <code>EXPECT_CTRANSACTION_EMPTY = 1;</code>
        *
        * <pre>
        * start with a empty set of operations
        * </pre>
        */
-      EXPECT_CTX_EMPTY(1, 1),
+      EXPECT_CTRANSACTION_EMPTY(1, 1),
       ;
 
       /**
-       * <code>EXPECT_CTX_COPY_PREV = 0;</code>
+       * <code>EXPECT_CTRANSACTION_COPY_PREV = 0;</code>
        *
        * <pre>
        * copy the operations from the parent Expect-block
        * </pre>
        */
-      public static final int EXPECT_CTX_COPY_PREV_VALUE = 0;
+      public static final int EXPECT_CTRANSACTION_COPY_PREV_VALUE = 0;
       /**
-       * <code>EXPECT_CTX_EMPTY = 1;</code>
+       * <code>EXPECT_CTRANSACTION_EMPTY = 1;</code>
        *
        * <pre>
        * start with a empty set of operations
        * </pre>
        */
-      public static final int EXPECT_CTX_EMPTY_VALUE = 1;
+      public static final int EXPECT_CTRANSACTION_EMPTY_VALUE = 1;
 
 
       public final int getNumber() { return value; }
 
       public static CtxOperation valueOf(int value) {
         switch (value) {
-          case 0: return EXPECT_CTX_COPY_PREV;
-          case 1: return EXPECT_CTX_EMPTY;
+          case 0: return EXPECT_CTRANSACTION_COPY_PREV;
+          case 1: return EXPECT_CTRANSACTION_EMPTY;
           default: return null;
         }
       }
@@ -965,13 +965,13 @@ public final class MysqlxExpect {
     public static final int OP_FIELD_NUMBER = 1;
     private com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation op_;
     /**
-     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
      */
     public boolean hasOp() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+     * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp() {
       return op_;
@@ -1013,7 +1013,7 @@ public final class MysqlxExpect {
     }
 
     private void initFields() {
-      op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTX_COPY_PREV;
+      op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTRANSACTION_COPY_PREV;
       cond_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
@@ -1183,7 +1183,7 @@ public final class MysqlxExpect {
 
       public Builder clear() {
         super.clear();
-        op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTX_COPY_PREV;
+        op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTRANSACTION_COPY_PREV;
         bitField0_ = (bitField0_ & ~0x00000001);
         if (condBuilder_ == null) {
           cond_ = java.util.Collections.emptyList();
@@ -1310,21 +1310,21 @@ public final class MysqlxExpect {
       }
       private int bitField0_;
 
-      private com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTX_COPY_PREV;
+      private com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTRANSACTION_COPY_PREV;
       /**
-       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
        */
       public boolean hasOp() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp() {
         return op_;
       }
       /**
-       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
        */
       public Builder setOp(com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation value) {
         if (value == null) {
@@ -1336,11 +1336,11 @@ public final class MysqlxExpect {
         return this;
       }
       /**
-       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
+       * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTRANSACTION_COPY_PREV];</code>
        */
       public Builder clearOp() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTX_COPY_PREV;
+        op_ = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTRANSACTION_COPY_PREV;
         onChanged();
         return this;
       }
@@ -1949,15 +1949,15 @@ public final class MysqlxExpect {
     java.lang.String[] descriptorData = {
       "\n\023mysqlx_expect.proto\022\rMysqlx.Expect\"\200\003\n" +
       "\004Open\022B\n\002op\030\001 \001(\0162 .Mysqlx.Expect.Open.C" +
-      "txOperation:\024EXPECT_CTX_COPY_PREV\022+\n\004con" +
+      "txOperation:\024EXPECT_CTRANSACTION_COPY_PREV\022+\n\004con" +
       "d\030\002 \003(\0132\035.Mysqlx.Expect.Open.Condition\032\306" +
       "\001\n\tCondition\022\025\n\rcondition_key\030\001 \002(\r\022\027\n\017c" +
       "ondition_value\030\002 \001(\014\022K\n\002op\030\003 \001(\01620.Mysql" +
       "x.Expect.Open.Condition.ConditionOperati" +
       "on:\rEXPECT_OP_SET\"<\n\022ConditionOperation\022" +
       "\021\n\rEXPECT_OP_SET\020\000\022\023\n\017EXPECT_OP_UNSET\020\001\"" +
-      ">\n\014CtxOperation\022\030\n\024EXPECT_CTX_COPY_PREV\020",
-      "\000\022\024\n\020EXPECT_CTX_EMPTY\020\001\"\007\n\005CloseB\031\n\027com." +
+      ">\n\014CtxOperation\022\030\n\024EXPECT_CTRANSACTION_COPY_PREV\020",
+      "\000\022\024\n\020EXPECT_CTRANSACTION_EMPTY\020\001\"\007\n\005CloseB\031\n\027com." +
       "mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
