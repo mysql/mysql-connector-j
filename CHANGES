@@ -4624,7 +4624,7 @@ nn-nn-07 - Version 3.1.15
 
     - Added missing LONGTEXT type to DBMD.getColumns().
 
-    - Retrieve TX_ISOLATION from database for
+    - Retrieve TRANSACTION_ISOLATION from database for
       Connection.getTransactionIsolation() when the MySQL version
       supports it, instead of an instance variable.
 

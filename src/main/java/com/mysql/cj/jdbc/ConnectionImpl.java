@@ -563,7 +563,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     private void checkTransactionIsolationLevel() {
 
-        String s = this.session.getServerVariable("tx_isolation");
+        String s = this.session.getServerVariable("transaction_isolation");
 
         if (s != null) {
             Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -1272,7 +1272,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
         synchronized (getConnectionMutex()) {
             if (!this.useLocalSessionState.getValue()) {
-                String s = this.session.queryServerVariable("@@session.tx_isolation");
+                String s = this.session.queryServerVariable("@@session.transaction_isolation");
 
                 if (s != null) {
                     Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -1591,7 +1591,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
             try {
-                String s = this.session.queryServerVariable("@@session.tx_read_only");
+                String s = this.session.queryServerVariable("@@session.transaction_read_only");
                 if (s != null) {
                     return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
                 }
