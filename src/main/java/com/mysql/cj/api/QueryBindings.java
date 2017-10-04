@@ -23,49 +23,22 @@
 
 package com.mysql.cj.api;
 
-import java.util.List;
+public interface QueryBindings {
 
-import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
-import com.mysql.cj.api.mysqla.result.Resultset;
+    QueryBindings clone();
 
-public interface Query {
+    <T extends BindValue> T[] getBindValues();
 
-    public enum CancelStatus {
-        NOT_CANCELED, CANCELED_BY_USER, CANCELED_BY_TIMEOUT;
-    }
+    <T extends BindValue> void setBindValues(T[] bindValues);
 
     /**
-     * Returns the query id used when profiling
-     */
-    int getId();
-
-    void setId(int id);
-
-    void setCancelStatus(CancelStatus cs);
-
-    void checkCancelTimeout();
-
-    <T extends Resultset> ProtocolEntityFactory<T> getResultSetFactory();
-
-    Session getSession();
-
-    Object getCancelTimeoutMutex();
-
-    void resetCancelledState();
-
-    void closeQuery();
-
-    void addBatch(Object batch);
-
-    /**
-     * Get the batched args as added by the addBatch method(s).
-     * The list is unmodifiable and might contain any combination of String,
-     * ClientPreparedQueryBindings, or ServerPreparedQueryBindings depending on how the parameters were
-     * batched.
      * 
-     * @return an unmodifiable List of batched args
+     * @return true if bind values had long data
      */
-    List<Object> getBatchedArgs();
+    boolean clearBindValues();
 
-    void clearBatchedArgs();
+    void checkParameterSet(int columnIndex);
+
+    void checkAllParametersSet();
+
 }

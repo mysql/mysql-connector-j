@@ -41,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -79,6 +80,7 @@ import com.mysql.cj.core.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.exceptions.OperationCancelledException;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.IntegerValueFactory;
@@ -165,6 +167,8 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     private CopyOnWriteArrayList<WeakReference<SessionEventListener>> listeners = new CopyOnWriteArrayList<>();
 
+    private transient Timer cancelTimer;
+
     public MysqlaSession(HostInfo hostInfo, PropertySet propSet) {
         this.connectionCreationTimeMillis = System.currentTimeMillis();
 
@@ -181,15 +185,17 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.maintainTimeStats = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
 
         this.hostInfo = hostInfo;
-        //
-        // Normally, this code would be in initializeDriverProperties, but we need to do this as early as possible, so we can start logging to the 'correct'
-        // place as early as possible...this.log points to 'NullLogger' for every connection at startup to avoid NPEs and the overhead of checking for NULL at
-        // every logging call.
-        //
-        // We will reset this to the configured logger during properties initialization.
-        //
         this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
                 Log.LOGGER_INSTANCE_NAME);
+        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue()
+                || getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+            ProfilerEventHandlerFactory.getInstance(this);
+        }
+    }
+
+    public void connect(HostInfo hi, String user, String password, String database, int loginTimeout, TransactionEventHandler transactionManager)
+            throws IOException {
+        connect(hi, hi.exposeAsProperties(), user, password, database, loginTimeout, transactionManager);
     }
 
     public void connect(HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
@@ -286,6 +292,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             }
             //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
+        synchronized (this) {
+            if (this.cancelTimer != null) {
+                this.cancelTimer.cancel();
+                this.cancelTimer = null;
+            }
+        }
         this.isClosed = true;
     }
 
@@ -297,6 +309,12 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
             } catch (Exception e) {
             }
 
+        }
+        synchronized (this) {
+            if (this.cancelTimer != null) {
+                this.cancelTimer.cancel();
+                this.cancelTimer = null;
+            }
         }
         this.isClosed = true;
     }
@@ -1016,7 +1034,6 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 queryBuf.append(", @@license AS license");
                 queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
-                queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
                 if (versionMeetsMinimum(8, 0, 3)) {
                     queryBuf.append(", @@have_query_cache AS have_query_cache");
@@ -1458,6 +1475,9 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
 
     public void checkClosed() {
         if (this.isClosed) {
+            if (this.forceClosedReason != null && this.forceClosedReason.getClass().equals(OperationCancelledException.class)) {
+                throw (OperationCancelledException) this.forceClosedReason;
+            }
             throw ExceptionFactory.createException(ConnectionIsClosedException.class, Messages.getString("Connection.2"), this.forceClosedReason,
                     getExceptionInterceptor());
         }
@@ -1509,7 +1529,7 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         }
     }
 
-    protected void invokeCleanupListeners(Throwable whyCleanedUp) {
+    public void invokeCleanupListeners(Throwable whyCleanedUp) {
         for (WeakReference<SessionEventListener> wr : this.listeners) {
             SessionEventListener l = wr.get();
             if (l != null) {
@@ -1518,5 +1538,16 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
                 this.listeners.remove(wr);
             }
         }
+    }
+
+    public String getIdentifierQuoteString() {
+        return this.protocol != null && this.protocol.getServerSession().useAnsiQuotedIdentifiers() ? "\"" : "`";
+    }
+
+    public synchronized Timer getCancelTimer() {
+        if (this.cancelTimer == null) {
+            this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+        }
+        return this.cancelTimer;
     }
 }

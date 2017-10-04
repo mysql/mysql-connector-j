@@ -485,4 +485,20 @@ public class MysqlaServerSession implements ServerSession {
     public boolean isQueryCacheEnabled() {
         return "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type")) && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
     }
+
+    /**
+     * Is the server in a sql_mode that doesn't allow us to use \\ to escape
+     * things?
+     * 
+     * @return Returns the noBackslashEscapes.
+     */
+    public boolean isNoBackslashEscapesSet() {
+        String sqlModeAsString = this.serverVariables.get("sql_mode");
+        return sqlModeAsString != null && sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1;
+    }
+
+    public boolean useAnsiQuotedIdentifiers() {
+        String sqlModeAsString = this.serverVariables.get("sql_mode");
+        return sqlModeAsString != null && sqlModeAsString.indexOf("ANSI_QUOTES") != -1;
+    }
 }

@@ -41,7 +41,7 @@ import com.mysql.cj.core.profiler.LoggingProfilerEventHandler;
 import com.mysql.cj.core.util.PerVmServerConfigCacheFactory;
 import com.mysql.cj.jdbc.CommentClientInfoProvider;
 import com.mysql.cj.jdbc.ha.StandardLoadBalanceExceptionChecker;
-import com.mysql.cj.jdbc.util.PerConnectionLRUFactory;
+import com.mysql.cj.mysqla.PerConnectionLRUFactory;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 
 public class PropertyDefinitions {

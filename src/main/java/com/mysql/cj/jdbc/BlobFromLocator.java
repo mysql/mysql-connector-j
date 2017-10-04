@@ -76,7 +76,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
         Field[] fields = this.creatorResultSet.getMetadata().getFields();
         this.numColsInResultSet = fields.length;
-        this.quotedId = this.creatorResultSet.getConnection().getMetaData().getIdentifierQuoteString();
+        this.quotedId = this.creatorResultSet.getSession().getIdentifierQuoteString();
 
         if (this.numColsInResultSet > 1) {
             this.primaryKeyColumns = new ArrayList<>();

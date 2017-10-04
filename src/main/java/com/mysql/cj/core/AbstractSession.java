@@ -66,10 +66,6 @@ public abstract class AbstractSession implements Session {
         return this.log;
     }
 
-    public void setLog(Log log) {
-        this.log = log;
-    }
-
     public ProfilerEventHandler getProfilerEventHandler() {
         return this.eventSink;
     }

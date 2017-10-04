@@ -21,51 +21,15 @@
 
  */
 
-package com.mysql.cj.api;
+package com.mysql.cj.api.mysqla;
 
-import java.util.List;
+public interface BatchVisitor {
 
-import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
-import com.mysql.cj.api.mysqla.result.Resultset;
+    abstract BatchVisitor increment();
 
-public interface Query {
+    abstract BatchVisitor decrement();
 
-    public enum CancelStatus {
-        NOT_CANCELED, CANCELED_BY_USER, CANCELED_BY_TIMEOUT;
-    }
+    abstract BatchVisitor append(byte[] values);
 
-    /**
-     * Returns the query id used when profiling
-     */
-    int getId();
-
-    void setId(int id);
-
-    void setCancelStatus(CancelStatus cs);
-
-    void checkCancelTimeout();
-
-    <T extends Resultset> ProtocolEntityFactory<T> getResultSetFactory();
-
-    Session getSession();
-
-    Object getCancelTimeoutMutex();
-
-    void resetCancelledState();
-
-    void closeQuery();
-
-    void addBatch(Object batch);
-
-    /**
-     * Get the batched args as added by the addBatch method(s).
-     * The list is unmodifiable and might contain any combination of String,
-     * ClientPreparedQueryBindings, or ServerPreparedQueryBindings depending on how the parameters were
-     * batched.
-     * 
-     * @return an unmodifiable List of batched args
-     */
-    List<Object> getBatchedArgs();
-
-    void clearBatchedArgs();
+    abstract BatchVisitor merge(byte[] begin, byte[] end);
 }

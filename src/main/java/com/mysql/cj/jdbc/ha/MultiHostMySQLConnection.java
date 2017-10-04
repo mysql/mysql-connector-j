@@ -39,7 +39,6 @@ import java.sql.Struct;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
@@ -161,10 +160,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
         return getActiveMySQLConnection().createStatement(resultSetType, resultSetConcurrency);
     }
 
-    public JdbcConnection duplicate() throws SQLException {
-        return getActiveMySQLConnection().duplicate();
-    }
-
     public int getActiveStatementCount() {
         return getActiveMySQLConnection().getActiveStatementCount();
     }
@@ -179,10 +174,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         return getActiveMySQLConnection().getCachedMetaData(sql);
-    }
-
-    public Timer getCancelTimer() {
-        return getActiveMySQLConnection().getCancelTimer();
     }
 
     public String getCatalog() throws SQLException {
@@ -288,10 +279,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public boolean isMasterConnection() {
         return getThisAsProxy().isMasterConnection();
-    }
-
-    public boolean isNoBackslashEscapesSet() {
-        return getActiveMySQLConnection().isNoBackslashEscapesSet();
     }
 
     public boolean isReadOnly() throws SQLException {
@@ -488,10 +475,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     public void unSafeQueryInterceptors() throws SQLException {
         getActiveMySQLConnection().unSafeQueryInterceptors();
-    }
-
-    public boolean useAnsiQuotedIdentifiers() {
-        return getActiveMySQLConnection().useAnsiQuotedIdentifiers();
     }
 
     public boolean isClosed() throws SQLException {

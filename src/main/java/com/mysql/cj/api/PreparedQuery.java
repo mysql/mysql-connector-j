@@ -23,49 +23,26 @@
 
 package com.mysql.cj.api;
 
-import java.util.List;
+import com.mysql.cj.mysqla.ParseInfo;
 
-import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
-import com.mysql.cj.api.mysqla.result.Resultset;
+public interface PreparedQuery extends Query {
 
-public interface Query {
+    ParseInfo getParseInfo();
 
-    public enum CancelStatus {
-        NOT_CANCELED, CANCELED_BY_USER, CANCELED_BY_TIMEOUT;
-    }
+    void setParseInfo(ParseInfo parseInfo);
 
-    /**
-     * Returns the query id used when profiling
-     */
-    int getId();
+    String getOriginalSql();
 
-    void setId(int id);
+    void setOriginalSql(String originalSql);
 
-    void setCancelStatus(CancelStatus cs);
+    int getParameterCount();
 
-    void checkCancelTimeout();
+    void setParameterCount(int parameterCount);
 
-    <T extends Resultset> ProtocolEntityFactory<T> getResultSetFactory();
+    public <T extends QueryBindings> T getQueryBindings();
 
-    Session getSession();
+    public <T extends QueryBindings> void setQueryBindings(T queryBindings);
 
-    Object getCancelTimeoutMutex();
+    int computeBatchSize(int numBatchedArgs);
 
-    void resetCancelledState();
-
-    void closeQuery();
-
-    void addBatch(Object batch);
-
-    /**
-     * Get the batched args as added by the addBatch method(s).
-     * The list is unmodifiable and might contain any combination of String,
-     * ClientPreparedQueryBindings, or ServerPreparedQueryBindings depending on how the parameters were
-     * batched.
-     * 
-     * @return an unmodifiable List of batched args
-     */
-    List<Object> getBatchedArgs();
-
-    void clearBatchedArgs();
 }

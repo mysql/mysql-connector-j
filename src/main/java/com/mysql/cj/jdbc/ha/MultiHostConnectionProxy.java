@@ -108,9 +108,6 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Initializes a connection wrapper for this MultiHostConnectionProxy instance.
-     * 
-     * @param props
-     *            The properties to be used in new internal connections.
      */
     MultiHostConnectionProxy() throws SQLException {
         this.thisAsConnection = getNewWrapperForThisAsConnection();

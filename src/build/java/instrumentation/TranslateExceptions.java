@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
+import com.mysql.cj.api.QueryBindings;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
@@ -64,7 +65,6 @@ import com.mysql.cj.jdbc.NClob;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
-import com.mysql.cj.jdbc.ServerPreparedStatement.BindValue;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
@@ -74,6 +74,7 @@ import com.mysql.cj.jdbc.ha.ReplicationMySQLConnection;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
+import com.mysql.cj.mysqla.ServerPreparedQueryBindValue;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -84,7 +85,7 @@ public class TranslateExceptions {
 
     private static CtClass runTimeException = null;
     private static ClassPool pool = ClassPool.getDefault();
-    private static Map<String, List<CtMethod>> processed = new TreeMap<String, List<CtMethod>>();
+    private static Map<String, List<CtMethod>> processed = new TreeMap<>();
 
     private static String EXCEPTION_INTERCEPTOR_GETTER = "getExceptionInterceptor()";
     private static String EXCEPTION_INTERCEPTOR_MEMBER = "this.exceptionInterceptor";
@@ -96,30 +97,22 @@ public class TranslateExceptions {
         runTimeException = pool.get(CJException.class.getName());
 
         // params classes
-        CtClass ctBindValue = pool.get(BindValue.class.getName());
-        CtClass ctBoolArray = pool.get(boolean[].class.getName());
+        CtClass ctServerPreparedQueryBindValue = pool.get(ServerPreparedQueryBindValue.class.getName());
+        CtClass ctQueryBindings = pool.get(QueryBindings.class.getName());
         CtClass ctByteArray = pool.get(byte[].class.getName());
-        CtClass ctByteArray2 = pool.get(byte[][].class.getName());
-        //CtClass ctFieldArray = pool.get(Field[].class.getName());
         CtClass ctColumnDefinition = pool.get(ColumnDefinition.class.getName());
 
-        CtClass ctIntArray = pool.get(int[].class.getName());
         CtClass ctLongArray = pool.get(long[].class.getName());
         CtClass ctInputStream = pool.get(InputStream.class.getName());
-        CtClass ctInputStreamArray = pool.get(InputStream[].class.getName());
         CtClass ctJdbcConnection = pool.get(JdbcConnection.class.getName());
         CtClass ctMysqlSavepoint = pool.get(MysqlSavepoint.class.getName());
         CtClass ctPacketPayload = pool.get(PacketPayload.class.getName());
         CtClass ctProperties = pool.get(Properties.class.getName());
         CtClass ctResultSet = pool.get(ResultSet.class.getName());
         CtClass ctResultSetInternalMethods = pool.get(ResultSetInternalMethods.class.getName());
-        //CtClass ctSqlDate = pool.get(Date.class.getName());
         CtClass ctStatement = pool.get(java.sql.Statement.class.getName());
         CtClass ctStatementImpl = pool.get(StatementImpl.class.getName());
         CtClass ctString = pool.get(String.class.getName());
-        //CtClass ctTime = pool.get(Time.class.getName());
-        //CtClass ctTimestamp = pool.get(Timestamp.class.getName());
-        //CtClass ctTimeZone = pool.get(TimeZone.class.getName());
 
         // class we want to instrument
         CtClass clazz;
@@ -238,11 +231,8 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("clientPrepare", new CtClass[] { ctString }), EXCEPTION_INTERCEPTOR_MEMBER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("clientPrepare", new CtClass[] { ctString, CtClass.intType, CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_MEMBER);
-        //catchRuntimeException(clazz, clazz.getDeclaredMethod("getProcessHost", new CtClass[] {}), EXCEPTION_INTERCEPTOR_MEMBER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctString, ctString }), EXCEPTION_INTERCEPTOR_MEMBER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctProperties }), EXCEPTION_INTERCEPTOR_MEMBER);
-        //catchRuntimeException(clazz, clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { CtClass.intType, CtClass.intType, CtClass.intType }),
-        //        EXCEPTION_INTERCEPTOR_MEMBER);
         clazz.writeFile(args[0]);
 
         /*
@@ -298,9 +288,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("asSql", new CtClass[] { CtClass.booleanType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkBounds", new CtClass[] { CtClass.intType, CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkReadOnlySafeStatement", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("computeBatchSize", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("computeMaxParameterSetSizeAndBatchSize", new CtClass[] { CtClass.intType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchedInserts", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchSerially", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
@@ -311,19 +298,15 @@ public class TranslateExceptions {
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeUpdateInternal", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz,
-                clazz.getDeclaredMethod("executeUpdateInternal",
-                        new CtClass[] { ctByteArray2, ctInputStreamArray, ctBoolArray, ctIntArray, ctBoolArray, CtClass.booleanType }),
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("executeUpdateInternal", new CtClass[] { ctQueryBindings, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("fillSendPacket", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("fillSendPacket", new CtClass[] { ctByteArray2, ctInputStreamArray, ctBoolArray, ctIntArray }),
-                EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("fillSendPacket", new CtClass[] { ctQueryBindings }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("generateMultiStatementForBatch", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytesRepresentation", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytesRepresentationForBatch", new CtClass[] { CtClass.intType, CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getNonRewrittenSql", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getParameterBindings", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("initializeFromParseInfo", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("isNull", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
@@ -356,14 +339,14 @@ public class TranslateExceptions {
                 clazz.getDeclaredMethod("executeInternal",
                         new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytes", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("canRewriteAsMultiValueInsertAtSqlLevel", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("realClose", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverExecute", new CtClass[] { CtClass.intType, CtClass.booleanType, ctColumnDefinition }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctBindValue }), EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctServerPreparedQueryBindValue }),
+                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverPrepare", new CtClass[] { ctString }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverResetStatement", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
         /*
@@ -658,7 +641,7 @@ public class TranslateExceptions {
                 if (exc.equals(SQLException.class)) {
                     prefix = "INSTRUMENTING... ";
                     String jdbcClassName = method.getName();
-                    List<CtClass> params = new LinkedList<CtClass>();
+                    List<CtClass> params = new LinkedList<>();
                     for (Class<?> param : method.getParameterTypes()) {
                         params.add(pool.get(param.getName()));
                     }

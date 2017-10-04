@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.cj.jdbc.interceptors;
+package com.mysql.cj.mysqla;
 
 import java.util.Properties;
 import java.util.function.Supplier;

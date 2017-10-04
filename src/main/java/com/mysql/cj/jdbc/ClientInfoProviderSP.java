@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,7 +41,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     PreparedStatement getClientInfoBulkSp;
 
     public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
-        String identifierQuote = conn.getMetaData().getIdentifierQuoteString();
+        String identifierQuote = ((com.mysql.cj.api.jdbc.JdbcConnection) conn).getSession().getIdentifierQuoteString();
         String setClientInfoSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoSetSPName, "setClientInfo");
         String getClientInfoSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoGetSPName, "getClientInfo");
         String getClientInfoBulkSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");

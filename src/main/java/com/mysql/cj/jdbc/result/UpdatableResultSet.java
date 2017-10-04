@@ -765,8 +765,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     private String getQuotedIdChar() throws SQLException {
         if (this.quotedIdChar == null) {
-            java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
-            this.quotedIdChar = dbmd.getIdentifierQuoteString();
+            this.quotedIdChar = this.session.getIdentifierQuoteString();
         }
 
         return this.quotedIdChar;

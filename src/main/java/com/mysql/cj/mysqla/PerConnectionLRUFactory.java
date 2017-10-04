@@ -21,14 +21,13 @@
 
  */
 
-package com.mysql.cj.jdbc.util;
+package com.mysql.cj.mysqla;
 
 import java.util.Set;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
 import com.mysql.cj.core.util.LRUCache;
-import com.mysql.cj.jdbc.PreparedStatement.ParseInfo;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, ParseInfo> {
 

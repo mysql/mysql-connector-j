@@ -606,12 +606,6 @@ public class MysqlxSession implements Session {
     }
 
     @Override
-    public void setLog(Log log) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void configureTimezone() {
         // TODO Auto-generated method stub
 

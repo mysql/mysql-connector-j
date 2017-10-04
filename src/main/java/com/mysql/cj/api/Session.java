@@ -116,8 +116,6 @@ public interface Session {
 
     Log getLog();
 
-    void setLog(Log log);
-
     void configureTimezone();
 
     /**

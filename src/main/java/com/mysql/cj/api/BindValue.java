@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,21 +21,39 @@
 
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.api;
 
-import java.io.Serializable;
+import java.io.InputStream;
 
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.JdbcPropertySet;
+import com.mysql.cj.core.MysqlType;
 
-public abstract class AbstractJdbcConnection implements Serializable, JdbcConnection {
+public interface BindValue {
 
-    private static final long serialVersionUID = 8869245000140781024L;
+    BindValue clone();
 
-    protected JdbcPropertySet propertySet = new JdbcPropertySetImpl();
+    void reset();
 
-    @Override
-    public JdbcPropertySet getPropertySet() {
-        return this.propertySet;
-    }
+    boolean isNull();
+
+    void setNull(boolean isNull);
+
+    boolean isStream();
+
+    void setIsStream(boolean isStream);
+
+    MysqlType getParameterType();
+
+    void setParameterType(MysqlType type);
+
+    byte[] getParameterValue();
+
+    void setParameterValue(byte[] parameterValue);
+
+    InputStream getParameterStream();
+
+    void setParameterStream(InputStream parameterStream, int streamLength);
+
+    int getStreamLength();
+
+    boolean isSet();
 }

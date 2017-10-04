@@ -23,6 +23,7 @@
 
 package com.mysql.cj.jdbc;
 
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.sql.Blob;
@@ -45,13 +46,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Stack;
-import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
+import com.mysql.cj.api.PreparedQuery;
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.Session.SessionEventListener;
 import com.mysql.cj.api.conf.ModifiableProperty;
@@ -60,10 +61,10 @@ import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.interceptors.QueryInterceptor;
 import com.mysql.cj.api.jdbc.ClientInfoProvider;
 import com.mysql.cj.api.jdbc.JdbcConnection;
+import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
 import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.log.Log;
 import com.mysql.cj.core.Constants;
 import com.mysql.cj.core.LicenseConfiguration;
 import com.mysql.cj.core.Messages;
@@ -77,7 +78,6 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.PasswordExpiredException;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
 import com.mysql.cj.core.io.SocksProxySocketFactory;
-import com.mysql.cj.core.log.LogFactory;
 import com.mysql.cj.core.log.StandardLogger;
 import com.mysql.cj.core.profiler.ProfilerEventHandlerFactory;
 import com.mysql.cj.core.profiler.ProfilerEventImpl;
@@ -85,16 +85,17 @@ import com.mysql.cj.core.util.LRUCache;
 import com.mysql.cj.core.util.LogUtils;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.core.util.Util;
-import com.mysql.cj.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
-import com.mysql.cj.jdbc.interceptors.NoSubInterceptorWrapper;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.mysqla.MysqlaSession;
+import com.mysql.cj.mysqla.NoSubInterceptorWrapper;
+import com.mysql.cj.mysqla.ParseInfo;
+import com.mysql.cj.mysqla.ServerPreparedQuery;
 
 /**
  * A Connection represents a session with a specific database. Within the context of a Connection, SQL statements are executed and results are returned.
@@ -104,9 +105,9 @@ import com.mysql.cj.mysqla.MysqlaSession;
  * connection, etc. This information is obtained with the getMetaData method.
  * </p>
  */
-public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnection, SessionEventListener {
+public class ConnectionImpl implements JdbcConnection, SessionEventListener, Serializable {
 
-    private static final long serialVersionUID = 2877471301981509474L;
+    private static final long serialVersionUID = 4009476458425101761L;
 
     private static final SQLPermission SET_NETWORK_TIMEOUT_PERM = new SQLPermission("setNetworkTimeout");
 
@@ -208,8 +209,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     protected static Map<?, ?> roundRobinStatsMap;
 
-    private transient Timer cancelTimer;
-
     private List<ConnectionLifecycleInterceptor> connectionLifecycleInterceptors;
 
     private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
@@ -223,15 +222,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         mapTransIsolationNameToValue.put("READ-COMMITTED", TRANSACTION_READ_COMMITTED);
         mapTransIsolationNameToValue.put("REPEATABLE-READ", TRANSACTION_REPEATABLE_READ);
         mapTransIsolationNameToValue.put("SERIALIZABLE", TRANSACTION_SERIALIZABLE);
-    }
-
-    public Timer getCancelTimer() {
-        synchronized (getConnectionMutex()) {
-            if (this.cancelTimer == null) {
-                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
-            }
-            return this.cancelTimer;
-        }
     }
 
     /**
@@ -289,8 +279,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     /** When did the master fail? */
     //	private long masterFailTimeMillis = 0L;
 
-    private boolean noBackslashEscapes = false;
-
     /**
      * An array of currently open statements.
      * Copy-on-write used here to avoid ConcurrentModificationException when statements unregister themselves while we iterate over the list.
@@ -320,9 +308,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      */
     private Map<String, Class<?>> typeMap;
 
-    /** Has ANSI_QUOTES been enabled on the server? */
-    private boolean useAnsiQuotes = false;
-
     /** The user we're connected as */
     private String user = null;
 
@@ -350,10 +335,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private List<QueryInterceptor> queryInterceptors;
 
+    protected JdbcPropertySet propertySet;
+
     private ReadableProperty<Boolean> autoReconnectForPools;
     private ReadableProperty<Boolean> cachePrepStmts;
     private ModifiableProperty<Boolean> autoReconnect;
-    private ModifiableProperty<Boolean> profileSQL;
     private ReadableProperty<Boolean> useUsageAdvisor;
     private ReadableProperty<Boolean> reconnectAtTxEnd;
     private ReadableProperty<Boolean> emulateUnsupportedPstmts;
@@ -393,38 +379,64 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.origHostToConnectTo = hostInfo.getHost();
             this.origPortToConnectTo = hostInfo.getPort();
 
-            // We need Session ASAP to get access to central driver functionality
-            this.nullStatementResultSetFactory = new ResultSetFactory(this, null);
-            this.session = new MysqlaSession(hostInfo, getPropertySet());
-
-            // listen for session status changes
-            this.session.addListener(this);
-
-            // we can't cache fixed values here because properties are still not initialized with user provided values
-            this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
-            this.cachePrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
-            this.autoReconnect = getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
-            this.profileSQL = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_profileSQL);
-            this.useUsageAdvisor = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor);
-            this.reconnectAtTxEnd = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd);
-            this.emulateUnsupportedPstmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
-            this.ignoreNonTxTables = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
-            this.pedantic = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic);
-            this.prepStmtCacheSqlLimit = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
-            this.useLocalSessionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
-            this.useServerPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
-            this.processEscapeCodesForPrepStmts = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
-            this.useLocalTransactionState = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalTransactionState);
-            this.maxAllowedPacket = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
-            this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
-            this.readOnlyPropagatesToServer = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer);
-
             this.database = hostInfo.getDatabase();
             this.user = StringUtils.isNullOrEmpty(hostInfo.getUser()) ? "" : hostInfo.getUser();
             this.password = StringUtils.isNullOrEmpty(hostInfo.getPassword()) ? "" : hostInfo.getPassword();
 
             this.props = hostInfo.exposeAsProperties();
-            initializeDriverProperties(this.props);
+
+            this.propertySet = new JdbcPropertySetImpl();
+
+            this.propertySet.initializeProperties(this.props);
+
+            // We need Session ASAP to get access to central driver functionality
+            this.nullStatementResultSetFactory = new ResultSetFactory(this, null);
+            this.session = new MysqlaSession(hostInfo, this.propertySet);
+            this.session.addListener(this); // listen for session status changes
+
+            // we can't cache fixed values here because properties are still not initialized with user provided values
+            this.autoReconnectForPools = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
+            this.cachePrepStmts = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cachePrepStmts);
+            this.autoReconnect = this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
+            this.useUsageAdvisor = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor);
+            this.reconnectAtTxEnd = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd);
+            this.emulateUnsupportedPstmts = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
+            this.ignoreNonTxTables = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
+            this.pedantic = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic);
+            this.prepStmtCacheSqlLimit = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
+            this.useLocalSessionState = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+            this.useServerPrepStmts = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
+            this.processEscapeCodesForPrepStmts = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
+            this.useLocalTransactionState = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalTransactionState);
+            this.maxAllowedPacket = this.propertySet.getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+            this.disconnectOnExpiredPasswords = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
+            this.readOnlyPropagatesToServer = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer);
+
+            String exceptionInterceptorClasses = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
+            if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
+                this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses, this.props, this.session.getLog());
+            }
+
+            if (this.cachePrepStmts.getValue()) {
+                createPreparedStatementCaches();
+            }
+
+            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
+                this.parsedCallableStatementCache = new LRUCache(
+                        this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue());
+            }
+
+            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
+                this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).setValue(false); // we don't handle this yet
+            }
+
+            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                this.resultSetMetadataCache = new LRUCache(this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
+            }
+
+            if (this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_socksProxyHost).getStringValue() != null) {
+                this.propertySet.getJdbcModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(SocksProxySocketFactory.class.getName());
+            }
 
             this.pointOfOrigin = this.useUsageAdvisor.getValue() ? LogUtils.findCallingClassAndMethod(new Throwable()) : "";
 
@@ -460,6 +472,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     }
 
+    @Override
+    public JdbcPropertySet getPropertySet() {
+        return this.propertySet;
+    }
+
     public void unSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = this.queryInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
                 .collect(Collectors.toList());
@@ -471,7 +488,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     public void initializeSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = Util
-                .<QueryInterceptor> loadClasses(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
+                .<QueryInterceptor> loadClasses(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
                         "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
@@ -655,7 +672,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         PreparedStatement pStmt = null;
 
         if (this.cachePrepStmts.getValue()) {
-            PreparedStatement.ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
+            ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
 
             if (pStmtInfo == null) {
                 pStmt = com.mysql.cj.jdbc.PreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
@@ -837,7 +854,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             // re-prepare them...
 
             try {
-                Properties mergedProps = getPropertySet().exposeAsProperties(this.props);
+                Properties mergedProps = this.propertySet.exposeAsProperties(this.props);
 
                 if (!this.autoReconnect.getValue()) {
                     connectOneTryOnly(isForReconnect, mergedProps);
@@ -853,12 +870,12 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     private void connectWithRetries(boolean isForReconnect, Properties mergedProps) throws SQLException {
-        double timeout = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_initialTimeout).getValue();
+        double timeout = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_initialTimeout).getValue();
         boolean connectionGood = false;
 
         Exception connectionException = null;
 
-        for (int attemptCount = 0; (attemptCount < getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue())
+        for (int attemptCount = 0; (attemptCount < this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue())
                 && !connectionGood; attemptCount++) {
             try {
                 this.session.forceClose();
@@ -888,9 +905,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 if (isForReconnect) {
                     // Restore state from old connection
                     setAutoCommit(oldAutoCommit);
-
                     setTransactionIsolation(oldIsolationLevel);
-
                     setCatalog(oldCatalog);
                     setReadOnly(oldReadOnly);
                 }
@@ -924,7 +939,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             // We've really failed!
             SQLException chainedEx = SQLError.createSQLException(
                     Messages.getString("Connection.UnableToConnectWithRetries",
-                            new Object[] { getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue() }),
+                            new Object[] { this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxReconnects).getValue() }),
                     MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
             throw chainedEx;
         }
@@ -1034,8 +1049,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
-            int cacheSize = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).getValue();
-            String parseInfoCacheFactory = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue();
+            int cacheSize = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).getValue();
+            String parseInfoCacheFactory = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue();
 
             try {
                 Class<?> factoryClass;
@@ -1139,10 +1154,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         }
 
         return createStatement(resultSetType, resultSetConcurrency);
-    }
-
-    public JdbcConnection duplicate() throws SQLException {
-        return new ConnectionImpl(this.origHostInfo);
     }
 
     public int getActiveStatementCount() {
@@ -1342,50 +1353,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     /**
-     * Initializes driver properties that come from URL or properties passed to
-     * the driver manager.
-     * 
-     * @param info
-     * @throws SQLException
-     */
-    private void initializeDriverProperties(Properties info) throws SQLException {
-        getPropertySet().initializeProperties(info);
-
-        this.session.setLog(
-                LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME));
-
-        String exceptionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
-        if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
-            this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses, this.props, this.session.getLog());
-        }
-
-        if (this.profileSQL.getValue() || this.useUsageAdvisor.getValue()) {
-            ProfilerEventHandlerFactory.getInstance(this.session);
-        }
-
-        if (this.cachePrepStmts.getValue()) {
-            createPreparedStatementCaches();
-        }
-
-        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
-            this.parsedCallableStatementCache = new LRUCache(
-                    getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue());
-        }
-
-        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
-            getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).setValue(false); // we don't handle this yet
-        }
-
-        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
-            this.resultSetMetadataCache = new LRUCache(getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
-        }
-
-        if (getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_socksProxyHost).getStringValue() != null) {
-            getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_socketFactory).setValue(SocksProxySocketFactory.class.getName());
-        }
-    }
-
-    /**
      * Sets varying properties that depend on server information. Called once we
      * have connected to the server.
      * 
@@ -1393,7 +1360,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
      * @throws SQLException
      */
     private void initializePropsFromServer() throws SQLException {
-        String connectionInterceptorClasses = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)
+        String connectionInterceptorClasses = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)
                 .getStringValue();
 
         this.connectionLifecycleInterceptors = null;
@@ -1402,7 +1369,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             try {
                 this.connectionLifecycleInterceptors = Util
                         .<ConnectionLifecycleInterceptor> loadClasses(
-                                getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).getStringValue(),
+                                this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).getStringValue(),
                                 "Connection.badLifecycleInterceptor", getExceptionInterceptor())
                         .stream().map(o -> o.init(this, this.props, this.session.getLog())).collect(Collectors.toList());
             } catch (CJException e) {
@@ -1442,11 +1409,11 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             }
 
             if (this.useServerPrepStmts.getValue()) {
-                ModifiableProperty<Integer> blobSendChunkSize = getPropertySet().<Integer> getModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
+                ModifiableProperty<Integer> blobSendChunkSize = this.propertySet.<Integer> getModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
                 int preferredBlobSendChunkSize = blobSendChunkSize.getValue();
 
                 // LONG_DATA and MySQLIO packet header size
-                int packetHeaderSize = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11;
+                int packetHeaderSize = ServerPreparedQuery.BLOB_STREAM_READ_BUF_SIZE + 11;
                 int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, this.maxAllowedPacket.getValue()) - packetHeaderSize;
 
                 if (allowedBlobSendChunkSize <= 0) {
@@ -1461,17 +1428,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         checkTransactionIsolationLevel();
 
         this.session.checkForCharsetMismatch();
-
-        if (this.session.getServerVariables().containsKey("sql_mode")) {
-            String sqlModeAsString = this.session.getServerVariable("sql_mode");
-            if (StringUtils.isStrictlyNumeric(sqlModeAsString)) {
-                // Old MySQL servers used to have sql_mode as a numeric value.
-                this.useAnsiQuotes = (Integer.parseInt(sqlModeAsString) & 4) > 0;
-            } else if (sqlModeAsString != null) {
-                this.useAnsiQuotes = sqlModeAsString.indexOf("ANSI_QUOTES") != -1;
-                this.noBackslashEscapes = sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1;
-            }
-        }
 
         this.session.configureClientCharacterSet(false);
 
@@ -1556,16 +1512,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     }
 
     /**
-     * Is the server in a sql_mode that doesn't allow us to use \\ to escape
-     * things?
-     * 
-     * @return Returns the noBackslashEscapes.
-     */
-    public boolean isNoBackslashEscapesSet() {
-        return this.noBackslashEscapes;
-    }
-
-    /**
      * Tests to see if the connection is in Read Only Mode.
      * 
      * @return true if the connection is read only
@@ -1638,7 +1584,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             // Has the user explicitly set a resourceId?
             String otherResourceId = ((ConnectionImpl) otherConnection).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_resourceId)
                     .getValue();
-            String myResourceId = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_resourceId).getValue();
+            String myResourceId = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_resourceId).getValue();
 
             if (otherResourceId != null || myResourceId != null) {
                 directCompare = nullSafeCompare(otherResourceId, myResourceId);
@@ -1754,7 +1700,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         CallableStatement cStmt = null;
 
-        if (!getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
+        if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
 
             cStmt = parseCallableStatement(sql);
         } else {
@@ -2019,12 +1965,6 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
             this.queryInterceptors = null;
             this.exceptionInterceptor = null;
             this.nullStatementResultSetFactory = null;
-
-            synchronized (getConnectionMutex()) {
-                if (this.cancelTimer != null) {
-                    this.cancelTimer.cancel();
-                }
-            }
         }
 
         if (sqlEx != null) {
@@ -2044,8 +1984,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql),
-                            pstmt);
+                    Object oldServerPrepStmt = this.serverSideStatementCache
+                            .put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery) pstmt.query).getOriginalSql()), pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
@@ -2060,7 +2000,8 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), pstmt.originalSql));
+                    this.serverSideStatementCache
+                            .remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery) pstmt.query).getOriginalSql()));
                 }
             }
         }
@@ -2414,7 +2355,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
                 }
             }
 
-            String quotedId = this.dbmd.getIdentifierQuoteString();
+            String quotedId = this.session.getIdentifierQuoteString();
 
             if ((quotedId == null) || quotedId.equals(" ")) {
                 quotedId = "";
@@ -2527,7 +2468,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
             boolean shouldSendSet = false;
 
-            if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation).getValue()) {
+            if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation).getValue()) {
                 shouldSendSet = true;
             } else {
                 if (level != this.isolationLevel) {
@@ -2593,7 +2534,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
 
     private void setupServerForTruncationChecks() throws SQLException {
         synchronized (getConnectionMutex()) {
-            ModifiableProperty<Boolean> jdbcCompliantTruncation = getPropertySet()
+            ModifiableProperty<Boolean> jdbcCompliantTruncation = this.propertySet
                     .<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation);
             if (jdbcCompliantTruncation.getValue()) {
                 String currentSqlMode = this.session.getServerVariable("sql_mode");
@@ -2650,14 +2591,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
         this.openStatements.remove(stmt);
     }
 
-    public boolean useAnsiQuotedIdentifiers() {
-        synchronized (getConnectionMutex()) {
-            return this.useAnsiQuotes;
-        }
-    }
-
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
-
         return this.session.versionMeetsMinimum(major, minor, subminor);
     }
 
@@ -3000,7 +2934,7 @@ public class ConnectionImpl extends AbstractJdbcConnection implements JdbcConnec
     public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
-                String clientInfoProvider = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();
+                String clientInfoProvider = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();
                 try {
                     try {
                         this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class<?>[0], new Object[0],

@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#11161, Unify query bindings.
+
   - WL#8469, Don't extract query text from packets when possible.
 
 Version 8.0.8

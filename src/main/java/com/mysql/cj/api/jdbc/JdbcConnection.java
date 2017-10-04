@@ -25,7 +25,6 @@ package com.mysql.cj.api.jdbc;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Timer;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.TransactionEventHandler;
@@ -178,14 +177,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      *         the list.
      */
     boolean isMasterConnection();
-
-    /**
-     * Is the server in a sql_mode that doesn't allow us to use \\ to escape
-     * things?
-     * 
-     * @return Returns the noBackslashEscapes.
-     */
-    boolean isNoBackslashEscapesSet();
 
     /**
      * Does this connection have the same resource name as the given
@@ -343,11 +334,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     boolean isProxySet();
 
-    JdbcConnection duplicate() throws SQLException;
-
     CachedResultSetMetaData getCachedMetaData(String sql);
-
-    Timer getCancelTimer();
 
     String getCharacterSetMetadata();
 
@@ -382,8 +369,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void unregisterStatement(Statement stmt);
 
     void unSafeQueryInterceptors() throws SQLException;
-
-    boolean useAnsiQuotedIdentifiers();
 
     JdbcConnection getMultiHostSafeProxy();
 

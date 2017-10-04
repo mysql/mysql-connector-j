@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -637,10 +636,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         return this.mc.hasTriedMaster();
     }
 
-    public boolean isNoBackslashEscapesSet() {
-        return this.mc.isNoBackslashEscapesSet();
-    }
-
     public boolean lowerCaseTableNames() {
         return this.mc.lowerCaseTableNames();
     }
@@ -996,11 +991,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public JdbcConnection duplicate() throws SQLException {
-        return this.mc.duplicate();
-    }
-
-    @Override
     public JdbcPropertySet getPropertySet() {
         return this.mc.getPropertySet();
     }
@@ -1008,11 +998,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         return this.mc.getCachedMetaData(sql);
-    }
-
-    @Override
-    public Timer getCancelTimer() {
-        return this.mc.getCancelTimer();
     }
 
     @Override
@@ -1108,11 +1093,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void unSafeQueryInterceptors() throws SQLException {
         this.mc.unSafeQueryInterceptors();
-    }
-
-    @Override
-    public boolean useAnsiQuotedIdentifiers() {
-        return this.mc.useAnsiQuotedIdentifiers();
     }
 
     @Override

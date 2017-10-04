@@ -7004,7 +7004,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("license"), session.getServerVariable("license"));
             assertEquals(serverVariables.get("lower_case_table_names"), session.getServerVariable("lower_case_table_names"));
             assertEquals(serverVariables.get("max_allowed_packet"), session.getServerVariable("max_allowed_packet"));
-            assertEquals(serverVariables.get("net_buffer_length"), session.getServerVariable("net_buffer_length"));
             assertEquals(serverVariables.get("net_write_timeout"), session.getServerVariable("net_write_timeout"));
             if (con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3))) {
                 assertEquals(serverVariables.get("have_query_cache"), session.getServerVariable("have_query_cache"));
@@ -8470,32 +8469,32 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
         Connection testConn = getConnectionWithProps(props);
-        assertFalse(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
-        assertFalse(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        assertFalse(((JdbcConnection) testConn).getSession().getServerSession().useAnsiQuotedIdentifiers());
+        assertFalse(((JdbcConnection) testConn).getSession().getServerSession().isNoBackslashEscapesSet());
         testConn.close();
 
         props.clear();
         newSqlMode = sqlMode + "ANSI_QUOTES";
         props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
         testConn = getConnectionWithProps(props);
-        assertTrue(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
-        assertFalse(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        assertTrue(((JdbcConnection) testConn).getSession().getServerSession().useAnsiQuotedIdentifiers());
+        assertFalse(((JdbcConnection) testConn).getSession().getServerSession().isNoBackslashEscapesSet());
         testConn.close();
 
         props.clear();
         newSqlMode = sqlMode + "NO_BACKSLASH_ESCAPES";
         props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
         testConn = getConnectionWithProps(props);
-        assertFalse(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
-        assertTrue(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        assertFalse(((JdbcConnection) testConn).getSession().getServerSession().useAnsiQuotedIdentifiers());
+        assertTrue(((JdbcConnection) testConn).getSession().getServerSession().isNoBackslashEscapesSet());
         testConn.close();
 
         props.clear();
         newSqlMode = sqlMode + "ANSI_QUOTES,NO_BACKSLASH_ESCAPES";
         props.put("sessionVariables", "sql_mode='" + newSqlMode + "'");
         testConn = getConnectionWithProps(props);
-        assertTrue(((JdbcConnection) testConn).useAnsiQuotedIdentifiers());
-        assertTrue(((JdbcConnection) testConn).isNoBackslashEscapesSet());
+        assertTrue(((JdbcConnection) testConn).getSession().getServerSession().useAnsiQuotedIdentifiers());
+        assertTrue(((JdbcConnection) testConn).getSession().getServerSession().isNoBackslashEscapesSet());
         testConn.close();
     }
 

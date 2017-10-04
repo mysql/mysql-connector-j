@@ -71,10 +71,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,"
@@ -86,12 +84,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
             pStmt.setString(3, columnNamePattern);
 
@@ -125,10 +118,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             }
         }
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
@@ -267,12 +258,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, tableName);
             pStmt.setString(3, columnNamePattern);
 
@@ -295,16 +281,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
-        if (primaryCatalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                primaryCatalog = this.database;
-            }
+        if (primaryCatalog == null && this.nullCatalogMeansCurrent) {
+            primaryCatalog = this.database;
         }
 
-        if (foreignCatalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                foreignCatalog = this.database;
-            }
+        if (foreignCatalog == null && this.nullCatalogMeansCurrent) {
+            foreignCatalog = this.database;
         }
 
         String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
@@ -322,20 +304,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
-            if (primaryCatalog != null) {
-                pStmt.setString(1, primaryCatalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
 
+            pStmt.setString(1, primaryCatalog != null ? primaryCatalog : "%");
             pStmt.setString(2, primaryTable);
-
-            if (foreignCatalog != null) {
-                pStmt.setString(3, foreignCatalog);
-            } else {
-                pStmt.setString(3, "%");
-            }
-
+            pStmt.setString(3, foreignCatalog != null ? foreignCatalog : "%");
             pStmt.setString(4, foreignTable);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -358,10 +330,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         //CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION
@@ -381,12 +351,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -428,10 +393,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
@@ -449,12 +412,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -485,20 +443,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            if (catalog == null) {
-                if (this.nullCatalogMeansCurrent) {
-                    catalog = this.database;
-                }
+            if (catalog == null && this.nullCatalogMeansCurrent) {
+                catalog = this.database;
             }
 
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -516,10 +467,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         if (table == null) {
@@ -536,12 +485,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -594,12 +538,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (db != null) {
-                pStmt.setString(1, db);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, db != null ? db : "%");
             pStmt.setString(2, procedureNamePattern);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -698,12 +637,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            if (db != null) {
-                pStmt.setString(1, db);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, db != null ? db : "%");
             pStmt.setString(2, procedureNamePattern);
             pStmt.setString(3, columnNamePattern);
 
@@ -758,7 +692,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             tmpCat = catalog;
         }
 
-        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.conn.isNoBackslashEscapesSet());
+        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
         //There *should* be 2 rows, if any.
         if (parseList.size() == 2) {
             tableNamePat = parseList.get(1);
@@ -802,12 +736,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sql);
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, tableNamePat);
 
             // This overloading of IN (...) allows us to cache this prepared statement
@@ -845,10 +774,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         if (table == null) {
@@ -875,12 +802,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            if (catalog != null) {
-                pStmt.setString(1, catalog);
-            } else {
-                pStmt.setString(1, "%");
-            }
-
+            pStmt.setString(1, catalog != null ? catalog : "%");
             pStmt.setString(2, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
@@ -985,6 +907,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 pStmt.setString(1, "%");
             }
 
+            pStmt.setString(1, db != null ? db : "%");
             pStmt.setString(2, functionNamePattern);
             pStmt.setString(3, columnNamePattern);
 

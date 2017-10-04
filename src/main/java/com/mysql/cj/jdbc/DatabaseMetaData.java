@@ -62,6 +62,7 @@ import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
+import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.result.ByteArrayRow;
 import com.mysql.cj.mysqla.result.MysqlaColumnDefinition;
 import com.mysql.cj.mysqla.result.ResultsetRowsStatic;
@@ -690,6 +691,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /** The connection to the database */
     protected JdbcConnection conn;
 
+    protected MysqlaSession session;
+
     /** The 'current' database name being used */
     protected String database = null;
 
@@ -727,6 +730,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     protected DatabaseMetaData(JdbcConnection connToSet, String databaseToSet, ResultSetFactory resultSetFactory) {
         this.conn = connToSet;
+        this.session = connToSet.getSession();
         this.database = databaseToSet;
         this.resultSetFactory = resultSetFactory;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
@@ -736,16 +740,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.tinyInt1isBit = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
         this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue();
         this.useHostsInPrivileges = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).getValue();
-
-        String identifierQuote = null;
-        try {
-            identifierQuote = getIdentifierQuoteString();
-        } catch (SQLException sqlEx) {
-            // Forced by API, never thrown from getIdentifierQuoteString() in this implementation.
-            AssertionFailedException.shouldNotHappen(sqlEx);
-        } finally {
-            this.quotedId = identifierQuote;
-        }
+        this.quotedId = this.session.getIdentifierQuoteString();
     }
 
     /**
@@ -1475,7 +1470,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             if (!" ".equals(this.quotedId)) {
                 dotIndex = StringUtils.indexOfIgnoreCase(0, quotedProcName, ".", this.quotedId, this.quotedId,
-                        this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
             } else {
                 dotIndex = quotedProcName.indexOf(".");
             }
@@ -1541,7 +1536,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     procedureDef = StringUtils.stripComments(procedureDef, identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
 
                     int openParenIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, "(", this.quotedId, this.quotedId,
-                            this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                            this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
                     int endOfParamDeclarationIndex = 0;
 
                     endOfParamDeclarationIndex = endPositionOfParameterDeclaration(openParenIndex, procedureDef, this.quotedId);
@@ -1551,7 +1546,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         // Grab the return column since it needs
                         // to go first in the output result set
                         int returnsIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, " RETURNS ", this.quotedId, this.quotedId,
-                                this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                                this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
                         int endReturnsDef = findEndOfReturnsClause(procedureDef, returnsIndex);
 
@@ -1734,11 +1729,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         while (parenDepth > 0 && currentPos < procedureDef.length()) {
             int closedParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, ")", quoteChar, quoteChar,
-                    this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                    this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
             if (closedParenIndex != -1) {
                 int nextOpenParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, "(", quoteChar, quoteChar,
-                        this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
                 if (nextOpenParenIndex != -1 && nextOpenParenIndex < closedParenIndex) {
                     parenDepth++;
@@ -1788,7 +1783,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         for (int i = 0; i < tokens.length; i++) {
             int nextEndOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, tokens[i], openingMarkers, closingMarkers,
-                    this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                    this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
             if (nextEndOfReturn != -1) {
                 if (endOfReturn == -1 || (nextEndOfReturn < endOfReturn)) {
@@ -1803,7 +1798,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // Label?
         endOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, ":", openingMarkers, closingMarkers,
-                this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
         if (endOfReturn != -1) {
             // seek back until whitespace
@@ -2718,7 +2713,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      */
     public String getIdentifierQuoteString() throws SQLException {
-        return this.conn.useAnsiQuotedIdentifiers() ? "\"" : "`";
+        return this.session.getIdentifierQuoteString();
     }
 
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, final String table) throws SQLException {
@@ -3299,7 +3294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 //Keep the Catalog parsed, maybe we'll need it at some point in the future...
                 String tmpCatalog = catalog;
                 List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, this.quotedId,
-                        this.conn.isNoBackslashEscapesSet());
+                        this.session.getServerSession().isNoBackslashEscapesSet());
 
                 //There *should* be 2 rows, if any.
                 if (parseList.size() == 2) {
@@ -3315,9 +3310,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
-                procsOrFuncsToExtractList
-                        .add(new ComparableWrapper<>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
-                                procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
+                procsOrFuncsToExtractList.add(new ComparableWrapper<>(getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3)),
+                        procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                 hasResults = true;
             }
 
@@ -3362,7 +3356,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             //Continuing from above (database_name.sp_name)
             if (!" ".equals(this.quotedId)) {
                 idx = StringUtils.indexOfIgnoreCase(0, procName, ".", this.quotedId, this.quotedId,
-                        this.conn.isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
             } else {
                 idx = procName.indexOf(".");
             }
@@ -3866,7 +3860,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             tmpCat = catalog;
         }
 
-        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.conn.isNoBackslashEscapesSet());
+        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
         //There *should* be 2 rows, if any.
         if (parseList.size() == 2) {
             tableNamePat = parseList.get(1);

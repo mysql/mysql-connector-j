@@ -211,4 +211,7 @@ public interface ServerSession {
 
     boolean isQueryCacheEnabled();
 
+    boolean isNoBackslashEscapesSet();
+
+    boolean useAnsiQuotedIdentifiers();
 }
