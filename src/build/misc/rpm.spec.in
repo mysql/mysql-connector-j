@@ -40,12 +40,16 @@
 # list how to identify dists here
 # https://en.opensuse.org/openSUSE:Build_Service_cross_distribution_howto
 
+%global milestone    dmr
+
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
+%global sles12          1
 %endif
 
 %if 0%{?suse_version} == 1110
 %global dist            .sles11
+%global sles11          1
 %endif
 
 %if 0%{?with_product_suffix:1}
@@ -65,11 +69,11 @@
 Summary:        Standardized MySQL database driver for Java
 Name:           mysql-connector-java%{product_suffix}
 Version:        @MYSQL_CJ_VERSION@
-Release:        %{!?rpm_release:1}%{?rpm_release}%{?commercial:.1}@MYSQL_CJ_RPMRELEASE_EXTRA@%{?dist}
+Release:        0.1%{?milestone:.%{milestone}}%{?commercial:.1}%{?dist}
 License:        %{lic_tag}
 Group:          Development/Libraries
 URL:            http://dev.mysql.com/downloads/connector/j/
-Source0:        https://cdn.mysql.com/Downloads/Connector-J/%{name}%{name_suffix}-%{version}.tar.gz
+Source0:        https://cdn.mysql.com/Downloads/Connector-J/%{name}%{name_suffix}-%{version}%{?milestone:-%{milestone}}.tar.gz
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
@@ -86,7 +90,12 @@ BuildRequires:  ant
 %if 0%{!?with_java:1}
 BuildRequires:  java-devel >= 1:1.8.0
 %endif
+
+%if 0%{?sles12:1}
+Requires:       java-headless >= 1.8.0
+%else
 Requires:       java-headless >= 1:1.8.0
+%endif
 
 %description
 MySQL provides connectivity for client applications developed in the
@@ -105,7 +114,7 @@ For detailed information please visit the official
 (http://dev.mysql.com/doc/connector-j/en/).
 
 %prep
-%setup -q -n %{name}%{name_suffix}-%{version}
+%setup -q -n %{name}%{name_suffix}-%{version}%{?milestone:-%{milestone}}
 
 %build
 COMMON_OPTIONS="\
