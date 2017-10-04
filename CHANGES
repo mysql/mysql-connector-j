@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#8469, Don't extract query text from packets when possible.
+
 Version 8.0.8
 
   - Fix for BUG#26722030, TEST FAILING DUE TO BINARY LOGGING ENABLED BY DEFAULT IN MYSQL 8.0.3.

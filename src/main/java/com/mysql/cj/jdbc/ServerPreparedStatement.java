@@ -1024,7 +1024,9 @@ public class ServerPreparedStatement extends PreparedStatement {
     private ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.session.shouldIntercept()) {
-                ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPre(this.originalSql, this, true);
+                ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPre(() -> {
+                    return ServerPreparedStatement.this.originalSql;
+                }, this, true);
 
                 if (interceptedResults != null) {
                     return interceptedResults;
@@ -1257,7 +1259,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                         createStreamingResultSet, resultPacket, true, metadata != null ? metadata : this.resultFields, this.resultSetFactory);
 
                 if (this.session.shouldIntercept()) {
-                    ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPost(this.originalSql, this, rs, true);
+                    ResultSetInternalMethods interceptedResults = this.session.invokeQueryInterceptorsPost(() -> {
+                        return ServerPreparedStatement.this.originalSql;
+                    }, this, rs, true);
 
                     if (interceptedResults != null) {
                         rs = interceptedResults;
@@ -1289,7 +1293,9 @@ public class ServerPreparedStatement extends PreparedStatement {
                         this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, getExceptionInterceptor());
             } catch (SQLException | CJException sqlEx) {
                 if (this.session.shouldIntercept()) {
-                    this.session.invokeQueryInterceptorsPost(this.originalSql, this, null, true);
+                    this.session.invokeQueryInterceptorsPost(() -> {
+                        return ServerPreparedStatement.this.originalSql;
+                    }, this, null, true);
                 }
 
                 throw sqlEx;

@@ -44,8 +44,6 @@ import com.mysql.cj.core.io.SqlTimeValueFactory;
 import com.mysql.cj.core.io.SqlTimestampValueFactory;
 import com.mysql.cj.core.io.StringValueFactory;
 
-// TODO rid off JdbcDateValueFactory, JdbcTimeValueFactory, JdbcTimestampValueFactory
-
 public class RowImpl implements com.mysql.cj.api.xdevapi.Row {
     private Row row;
     private Supplier<Map<String, Integer>> lazyFieldNameToIndex;

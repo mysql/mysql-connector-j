@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -1944,7 +1945,8 @@ public class ConnectionTest extends BaseTestCase {
 
     public static class TestEnableEscapeProcessingQueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str == null ? null : str.get();
             if (sql == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 try {
                     sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
@@ -1969,7 +1971,10 @@ public class ConnectionTest extends BaseTestCase {
                 assertTrue(testCase, isPreparedStatement && processEscapeCodesForPrepStmts == escapeProcessingDone
                         || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone);
             }
-            return super.preProcess(sql, interceptedQuery);
+            final String fsql = sql;
+            return super.preProcess(() -> {
+                return fsql;
+            }, interceptedQuery);
         }
     }
 

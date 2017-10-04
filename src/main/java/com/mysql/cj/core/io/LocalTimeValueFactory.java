@@ -30,7 +30,7 @@ import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.DataReadException;
 
 /**
- * JdbcTimeValueFactory is a value factory to create {@link LocalTime} instances.
+ * A value factory to create {@link LocalTime} instances.
  */
 public class LocalTimeValueFactory extends DefaultValueFactory<LocalTime> {
     private WarningListener warningListener;

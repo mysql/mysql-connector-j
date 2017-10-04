@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +66,7 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         // requirement of anonymous class
         final T finalResultSet = originalResultSet;
@@ -99,7 +100,7 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         // we don't care about this event
 
         return null;

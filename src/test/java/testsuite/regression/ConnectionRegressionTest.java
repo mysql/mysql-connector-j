@@ -83,6 +83,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -6082,7 +6083,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug72712QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
                 throw ExceptionFactory.createException("Wrongt statement issued: " + sql);
             }
@@ -6795,7 +6797,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (sql == null) {
                 sql = "";
             }
@@ -7036,7 +7039,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public static class Bug75592QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (sql.contains("SHOW VARIABLES WHERE")) {
                 throw ExceptionFactory.createException("'SHOW VARIABLES WHERE' statement issued: " + sql);
             }
@@ -7937,7 +7941,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (sql.contains("<HOST_NAME>")) {
                 try {
                     return (T) ((Statement) interceptedQuery).executeQuery(sql.replace("<HOST_NAME>", this.connection.getHost()));
@@ -7945,7 +7950,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     throw ExceptionFactory.createException(ex.getMessage(), ex);
                 }
             }
-            return super.preProcess(sql, interceptedQuery);
+
+            return super.preProcess(() -> {
+                return sql;
+            }, interceptedQuery);
         }
 
         @Override

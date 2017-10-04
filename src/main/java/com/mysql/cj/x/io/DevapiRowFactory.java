@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,13 +30,14 @@ import java.util.TimeZone;
 import java.util.stream.IntStream;
 
 import com.mysql.cj.api.x.core.RowToElement;
+import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.core.result.Field;
 import com.mysql.cj.xdevapi.RowImpl;
 
 /**
- * Create {@link com.mysql.cj.api.xdevapi.Row} objects from internal row representation.
+ * Create {@link Row} objects from internal row representation.
  */
-public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.xdevapi.Row> {
+public class DevapiRowFactory implements RowToElement<Row> {
     private Map<String, Integer> fieldNameToIndex;
     private ArrayList<Field> metadata;
     private TimeZone defaultTimeZone;
@@ -54,7 +55,7 @@ public class DevapiRowFactory implements RowToElement<com.mysql.cj.api.xdevapi.R
         return this.fieldNameToIndex;
     }
 
-    public com.mysql.cj.api.xdevapi.Row apply(com.mysql.cj.api.result.Row internalRow) {
-        return new RowImpl(internalRow, this::getFieldNameToIndexMap, defaultTimeZone);
+    public Row apply(com.mysql.cj.api.result.Row internalRow) {
+        return new RowImpl(internalRow, this::getFieldNameToIndexMap, this.defaultTimeZone);
     }
 }

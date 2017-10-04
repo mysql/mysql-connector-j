@@ -25,6 +25,7 @@ package com.mysql.cj.jdbc.ha;
 
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -71,7 +72,7 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     }
 
     @SuppressWarnings("resource")
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         try {
             // don't care if auto-commit is not enabled
@@ -93,7 +94,7 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
 
                 if (this.proxy != null) {
                     // increment the match count if no regex specified, or if matches:
-                    if (this.matchingAfterStatementRegex == null || sql.matches(this.matchingAfterStatementRegex)) {
+                    if (this.matchingAfterStatementRegex == null || sql.get().matches(this.matchingAfterStatementRegex)) {
                         this.matchingAfterStatementCount++;
                     }
                 }
@@ -118,7 +119,7 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
         return originalResultSet;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         // we do nothing before execution, it's unsafe to swap servers at this point.
         return null;
     }

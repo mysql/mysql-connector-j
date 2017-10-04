@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,11 +23,13 @@
 
 package com.mysql.cj.core.util;
 
+import java.util.function.Supplier;
+
 /**
  * A lazy string that can take a byte buffer and encoding and interpret it as a string if/when requested. The string is cached and saved for any further
  * requests. "NULL" values can be represented by a 0-len string or a <i>null</i> passed to {@link LazyString(String)}.
  */
-public class LazyString {
+public class LazyString implements Supplier<String> {
     private String string; // the string, if one has been created
     private byte[] buffer;
     private int offset;
@@ -46,9 +48,16 @@ public class LazyString {
         this.encoding = encoding;
     }
 
+    public LazyString(byte[] buffer, int offset, int length) {
+        this.buffer = buffer;
+        this.offset = offset;
+        this.length = length;
+    }
+
     private String createAndCacheString() {
         if (this.length > 0) {
-            this.string = StringUtils.toString(this.buffer, this.offset, this.length, this.encoding);
+            this.string = this.encoding == null ? StringUtils.toString(this.buffer, this.offset, this.length)
+                    : StringUtils.toString(this.buffer, this.offset, this.length, this.encoding);
         }
         // this can be NULL for 0-len strings
         return this.string;
@@ -67,5 +76,10 @@ public class LazyString {
             return this.string.length();
         }
         return this.length;
+    }
+
+    @Override
+    public String get() {
+        return toString();
     }
 }

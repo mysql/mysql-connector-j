@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -2676,7 +2677,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     public static class QueryInterceptorBug61332 extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getPreparedSql();
                 assertTrue("Assereet failed on: " + sql,

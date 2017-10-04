@@ -24,6 +24,7 @@
 package com.mysql.cj.api.interceptors;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -69,7 +70,7 @@ public interface QueryInterceptor {
      * it will only be called from one thread at a time.
      * 
      * @param sql
-     *            the SQL representation of the query
+     *            the Supplier for SQL representation of the query
      * @param interceptedQuery
      *            the actual {@link Query} instance being intercepted
      * 
@@ -77,7 +78,7 @@ public interface QueryInterceptor {
      *         of results that are created from actual execution of the intercepted
      *         query.
      */
-    <T extends Resultset> T preProcess(String sql, Query interceptedQuery);
+    <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery);
 
     /**
      * Called before the given query packet is going to be sent to the server for processing.
@@ -129,7 +130,7 @@ public interface QueryInterceptor {
      * it will only be called from one thread at a time.
      * 
      * @param sql
-     *            the SQL representation of the query
+     *            the Supplier for SQL representation of the query
      * @param interceptedQuery
      *            the actual {@link Query} instance being intercepted
      * @param originalResultSet
@@ -141,7 +142,7 @@ public interface QueryInterceptor {
      *         of results that are created from actual execution of the intercepted
      *         query.
      */
-    <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession);
+    <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession);
 
     /**
      * Called after the given query packet has been sent to the server for processing.

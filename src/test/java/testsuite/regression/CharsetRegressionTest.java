@@ -26,6 +26,7 @@ package testsuite.regression;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -76,7 +77,8 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     public static class Bug73663QueryInterceptor extends BaseQueryInterceptor {
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
                 throw ExceptionFactory.createException("Character set statement issued: " + sql);
             }

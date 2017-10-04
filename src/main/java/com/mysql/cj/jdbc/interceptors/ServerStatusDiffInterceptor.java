@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -41,9 +42,9 @@ import com.mysql.cj.jdbc.util.ResultSetUtil;
 
 public class ServerStatusDiffInterceptor implements QueryInterceptor {
 
-    private Map<String, String> preExecuteValues = new HashMap<String, String>();
+    private Map<String, String> preExecuteValues = new HashMap<>();
 
-    private Map<String, String> postExecuteValues = new HashMap<String, String>();
+    private Map<String, String> postExecuteValues = new HashMap<>();
 
     private JdbcConnection connection;
 
@@ -56,7 +57,7 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
     }
 
     @Override
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         populateMapWithSessionStatusValues(this.postExecuteValues);
 
@@ -91,7 +92,7 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
         }
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
 
         populateMapWithSessionStatusValues(this.preExecuteValues);
 

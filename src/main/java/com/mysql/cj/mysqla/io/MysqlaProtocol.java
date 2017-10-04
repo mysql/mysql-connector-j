@@ -48,6 +48,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.ProfilerEvent;
 import com.mysql.cj.api.ProfilerEventHandler;
@@ -905,16 +906,12 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         long queryStartTime = 0;
         long queryEndTime = 0;
 
-        // TODO we don't need to extract every query from packet
-        //if (this.needToGrabQueryFromPacket) {
         queryBuf = queryPacket.getByteBuffer();
-
-        // save the packet position
-        oldPacketPosition = queryPacket.getPosition();
+        oldPacketPosition = queryPacket.getPosition(); // save the packet position
 
         queryStartTime = getCurrentTimeNanosOrMillis();
-        //}
-        String query = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
+
+        LazyString query = new LazyString(queryBuf, 1, (oldPacketPosition - 1));
 
         try {
 
@@ -927,21 +924,9 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             }
 
             if (this.autoGenerateTestcaseScript) {
-                String testcaseQuery = null;
-
-                //                if (query != null) {
-                //                    if (statementComment != null) {
-                //                        testcaseQuery = "/* " + statementComment + " */ " + query;
-                //                    } else {
-                //                        testcaseQuery = query;
-                //                    }
-                //                } else {
-                testcaseQuery = StringUtils.toString(queryBuf, 1, (oldPacketPosition - 1));
-                //                }
-
-                StringBuilder debugBuf = new StringBuilder(testcaseQuery.length() + 32);
+                StringBuilder debugBuf = new StringBuilder(query.length() + 32);
                 generateQueryCommentBlock(debugBuf);
-                debugBuf.append(testcaseQuery);
+                debugBuf.append(query);
                 debugBuf.append(';');
                 TestUtils.dumpTestcaseQuery(debugBuf.toString());
             }
@@ -1026,7 +1011,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
                         queryPacket.setPosition(1); // skip first byte 
-                        explainSlowQuery(query, profileQueryToLog);
+                        explainSlowQuery(query.toString(), profileQueryToLog);
                     } else {
                         this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
                     }
@@ -1088,13 +1073,6 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 callingQuery.checkCancelTimeout();
             }
 
-            /*
-             * if (sqlEx instanceof CJException) {
-             * // don't wrap CJException
-             * throw (CJException) sqlEx;
-             * }
-             * throw ExceptionFactory.createException(sqlEx.getMessage(), sqlEx);
-             */
             throw sqlEx;
 
         } finally {
@@ -1102,7 +1080,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         }
     }
 
-    public <T extends Resultset> T invokeQueryInterceptorsPre(String sql, Query interceptedQuery, boolean forceExecute) {
+    public <T extends Resultset> T invokeQueryInterceptorsPre(Supplier<String> sql, Query interceptedQuery, boolean forceExecute) {
         T previousResultSet = null;
 
         for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
@@ -1112,9 +1090,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
 
             if (shouldExecute) {
-                String sqlToInterceptor = sql;
-
-                T interceptedResultSet = interceptor.preProcess(sqlToInterceptor, interceptedQuery);
+                T interceptedResultSet = interceptor.preProcess(sql, interceptedQuery);
 
                 if (interceptedResultSet != null) {
                     previousResultSet = interceptedResultSet;
@@ -1152,7 +1128,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
         return previousPacketPayload;
     }
 
-    public <T extends Resultset> T invokeQueryInterceptorsPost(String sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
+    public <T extends Resultset> T invokeQueryInterceptorsPost(Supplier<String> sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
 
         for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
             QueryInterceptor interceptor = this.queryInterceptors.get(i);
@@ -1161,9 +1137,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
             boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
 
             if (shouldExecute) {
-                String sqlToInterceptor = sql;
-
-                T interceptedResultSet = interceptor.postProcess(sqlToInterceptor, interceptedQuery, originalResultSet, this.serverSession);
+                T interceptedResultSet = interceptor.postProcess(sql, interceptedQuery, originalResultSet, this.serverSession);
 
                 if (interceptedResultSet != null) {
                     originalResultSet = interceptedResultSet;

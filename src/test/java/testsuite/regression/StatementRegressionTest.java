@@ -78,6 +78,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import javax.sql.XAConnection;
 
@@ -5528,7 +5529,7 @@ public class StatementRegressionTest extends BaseTestCase {
         String prevSql;
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
 
             if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 String asSql = interceptedQuery.toString();
@@ -5536,7 +5537,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 asSql = asSql.substring(firstColon + 2);
 
                 if (asSql.equals(this.prevSql)) {
-                    throw new RuntimeException("Previous statement matched current: " + sql);
+                    throw new RuntimeException("Previous statement matched current: " + sql.get());
                 }
                 this.prevSql = asSql;
                 try {
@@ -5749,8 +5750,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
-            if (sql.equals("SELECT 1")) {
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            if (sql.get().equals("SELECT 1")) {
                 try {
                     java.sql.Statement test = this.connection.createStatement();
                     return (T) test.executeQuery("/* execute this, not the original */ SELECT 1");
@@ -5788,7 +5789,7 @@ public class StatementRegressionTest extends BaseTestCase {
         static boolean hasSeenBadIndex = false;
 
         @Override
-        public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+        public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
             if (serverSession.noIndexUsed()) {
                 hasSeenScan = true;
@@ -9002,9 +9003,9 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
             if (!(interceptedQuery instanceof ServerPreparedStatement)) {
-                String query = sql;
+                String query = sql.get();
                 if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                     query = interceptedQuery.toString();
                     query = query.substring(query.indexOf(':') + 2);
@@ -9114,8 +9115,8 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
-            String query = sql;
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            String query = sql.get();
             if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 query = interceptedQuery.toString();
                 query = query.substring(query.indexOf(':') + 2);
@@ -9656,9 +9657,9 @@ public class StatementRegressionTest extends BaseTestCase {
         public static String testCase = "";
 
         @Override
-        public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
             if (isActive) {
-                String query = sql;
+                String query = sql.get();
                 if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                     query = interceptedQuery.toString();
                     query = query.substring(query.indexOf(':') + 2);

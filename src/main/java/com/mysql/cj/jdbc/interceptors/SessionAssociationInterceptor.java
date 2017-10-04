@@ -26,6 +26,7 @@ package com.mysql.cj.jdbc.interceptors;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -39,7 +40,7 @@ import com.mysql.cj.core.exceptions.ExceptionFactory;
 public class SessionAssociationInterceptor implements QueryInterceptor {
 
     protected String currentSessionKey;
-    protected final static ThreadLocal<String> sessionLocal = new ThreadLocal<String>();
+    protected final static ThreadLocal<String> sessionLocal = new ThreadLocal<>();
     private JdbcConnection connection;
 
     public static final void setSessionKey(String key) {
@@ -65,11 +66,11 @@ public class SessionAssociationInterceptor implements QueryInterceptor {
     }
 
     @Override
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         return null;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         String key = getSessionKey();
 
         if (key != null && !key.equals(this.currentSessionKey)) {

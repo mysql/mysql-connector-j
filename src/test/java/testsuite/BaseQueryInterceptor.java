@@ -24,6 +24,7 @@
 package testsuite;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -38,7 +39,7 @@ public class BaseQueryInterceptor implements QueryInterceptor {
         return this;
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         return null;
     }
 
@@ -49,7 +50,7 @@ public class BaseQueryInterceptor implements QueryInterceptor {
     public void destroy() {
     }
 
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         return originalResultSet;
     }
 

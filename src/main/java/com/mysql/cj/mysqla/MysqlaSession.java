@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.CacheAdapter;
 import com.mysql.cj.api.CacheAdapterFactory;
@@ -473,11 +474,11 @@ public class MysqlaSession extends AbstractSession implements Session, Serializa
         this.protocol.dumpPacketRingBuffer();
     }
 
-    public <T extends Resultset> T invokeQueryInterceptorsPre(String sql, Query interceptedQuery, boolean forceExecute) {
+    public <T extends Resultset> T invokeQueryInterceptorsPre(Supplier<String> sql, Query interceptedQuery, boolean forceExecute) {
         return this.protocol.invokeQueryInterceptorsPre(sql, interceptedQuery, forceExecute);
     }
 
-    public <T extends Resultset> T invokeQueryInterceptorsPost(String sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
+    public <T extends Resultset> T invokeQueryInterceptorsPost(Supplier<String> sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
         return this.protocol.invokeQueryInterceptorsPost(sql, interceptedQuery, originalResultSet, forceExecute);
     }
 

@@ -24,6 +24,7 @@
 package com.mysql.cj.jdbc.interceptors;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
 import com.mysql.cj.api.Query;
@@ -62,13 +63,13 @@ public class NoSubInterceptorWrapper implements QueryInterceptor {
         return this;
     }
 
-    public <T extends Resultset> T postProcess(String sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+    public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         this.underlyingInterceptor.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
 
         return null; // don't allow result set substitution
     }
 
-    public <T extends Resultset> T preProcess(String sql, Query interceptedQuery) {
+    public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         this.underlyingInterceptor.preProcess(sql, interceptedQuery);
 
         return null; // don't allow result set substitution
