@@ -40,13 +40,13 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 
     class PerConnectionLRU implements CacheAdapter<String, ParseInfo> {
         private final int cacheSqlLimit;
-        private final LRUCache cache;
+        private final LRUCache<String, ParseInfo> cache;
         private final Connection conn;
 
         protected PerConnectionLRU(Connection forConnection, int cacheMaxSize, int maxKeySize) {
             final int cacheSize = cacheMaxSize;
             this.cacheSqlLimit = maxKeySize;
-            this.cache = new LRUCache(cacheSize);
+            this.cache = new LRUCache<String, ParseInfo>(cacheSize);
             this.conn = forConnection;
         }
 

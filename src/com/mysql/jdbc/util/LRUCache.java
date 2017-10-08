@@ -26,7 +26,7 @@ package com.mysql.jdbc.util;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-public class LRUCache extends LinkedHashMap<Object, Object> {
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     private static final long serialVersionUID = 1L;
     protected int maxElements;
 
@@ -41,7 +41,7 @@ public class LRUCache extends LinkedHashMap<Object, Object> {
      * @see java.util.LinkedHashMap#removeEldestEntry(java.util.Map.Entry)
      */
     @Override
-    protected boolean removeEldestEntry(Entry<Object, Object> eldest) {
+    protected boolean removeEldestEntry(Entry<K, V> eldest) {
         return (size() > this.maxElements);
     }
 }
