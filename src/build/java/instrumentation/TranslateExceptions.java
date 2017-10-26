@@ -23,7 +23,6 @@
 
 package instrumentation;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -74,7 +73,6 @@ import com.mysql.cj.jdbc.ha.ReplicationMySQLConnection;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
-import com.mysql.cj.mysqla.ServerPreparedQueryBindValue;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -97,13 +95,13 @@ public class TranslateExceptions {
         runTimeException = pool.get(CJException.class.getName());
 
         // params classes
-        CtClass ctServerPreparedQueryBindValue = pool.get(ServerPreparedQueryBindValue.class.getName());
+        //CtClass ctServerPreparedQueryBindValue = pool.get(ServerPreparedQueryBindValue.class.getName());
         CtClass ctQueryBindings = pool.get(QueryBindings.class.getName());
         CtClass ctByteArray = pool.get(byte[].class.getName());
         CtClass ctColumnDefinition = pool.get(ColumnDefinition.class.getName());
 
         CtClass ctLongArray = pool.get(long[].class.getName());
-        CtClass ctInputStream = pool.get(InputStream.class.getName());
+        //CtClass ctInputStream = pool.get(InputStream.class.getName());
         CtClass ctJdbcConnection = pool.get(JdbcConnection.class.getName());
         CtClass ctMysqlSavepoint = pool.get(MysqlSavepoint.class.getName());
         CtClass ctPacketPayload = pool.get(PacketPayload.class.getName());
@@ -300,8 +298,6 @@ public class TranslateExceptions {
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeUpdateInternal", new CtClass[] { ctQueryBindings, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("fillSendPacket", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("fillSendPacket", new CtClass[] { ctQueryBindings }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("generateMultiStatementForBatch", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytesRepresentation", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
@@ -316,16 +312,7 @@ public class TranslateExceptions {
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("setBytes", new CtClass[] { CtClass.intType, ctByteArray, CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setInternal", new CtClass[] { CtClass.intType, ctByteArray }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setInternal", new CtClass[] { CtClass.intType, ctString }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setRetrieveGeneratedKeys", new CtClass[] { CtClass.booleanType }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz,
-                clazz.getDeclaredMethod("streamToBytes",
-                        new CtClass[] { ctPacketPayload, ctInputStream, CtClass.booleanType, CtClass.intType, CtClass.booleanType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz,
-                clazz.getDeclaredMethod("streamToBytes", new CtClass[] { ctInputStream, CtClass.booleanType, CtClass.intType, CtClass.booleanType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
         /*
@@ -335,17 +322,19 @@ public class TranslateExceptions {
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getBinding", new CtClass[] { CtClass.intType, CtClass.booleanType }),
+                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
                         new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("canRewriteAsMultiValueInsertAtSqlLevel", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
+        //catchRuntimeException(clazz, clazz.getDeclaredMethod("canRewriteAsMultiValueInsertAtSqlLevel", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("realClose", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverExecute", new CtClass[] { CtClass.intType, CtClass.booleanType, ctColumnDefinition }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctServerPreparedQueryBindValue }),
-                EXCEPTION_INTERCEPTOR_GETTER);
+        //catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctServerPreparedQueryBindValue }),
+        //        EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverPrepare", new CtClass[] { ctString }), EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 

@@ -150,7 +150,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
          *            procedure or function.
          */
         CallableStatementParamInfo(CallableStatementParamInfo fullParamInfo) {
-            this.nativeSql = ((PreparedQuery) CallableStatement.this.query).getOriginalSql();
+            this.nativeSql = ((PreparedQuery<?>) CallableStatement.this.query).getOriginalSql();
             this.catalogInUse = CallableStatement.this.getCurrentCatalog();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
             @SuppressWarnings("synthetic-access")
@@ -185,7 +185,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         CallableStatementParamInfo(java.sql.ResultSet paramTypesRs) throws SQLException {
             boolean hadRows = paramTypesRs.last();
 
-            this.nativeSql = ((PreparedQuery) CallableStatement.this.query).getOriginalSql();
+            this.nativeSql = ((PreparedQuery<?>) CallableStatement.this.query).getOriginalSql();
             this.catalogInUse = CallableStatement.this.getCurrentCatalog();
             this.isFunctionCall = CallableStatement.this.callingStoredFunction;
 
@@ -416,8 +416,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
     private boolean hasOutputParams = false;
 
-    // private List parameterList;
-    // private Map parameterMap;
     private ResultSetInternalMethods outputParameterResults;
 
     protected boolean outputParamWasNull = false;
@@ -448,7 +446,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         this.callingStoredFunction = this.paramInfo.isFunctionCall;
 
         if (this.callingStoredFunction) {
-            ((PreparedQuery) this.query).setParameterCount(((PreparedQuery) this.query).getParameterCount() + 1);
+            ((PreparedQuery<?>) this.query).setParameterCount(((PreparedQuery<?>) this.query).getParameterCount() + 1);
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
@@ -490,7 +488,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 parameterCountFromMetaData--;
             }
 
-            PreparedQuery q = ((PreparedQuery) this.query);
+            PreparedQuery<?> q = ((PreparedQuery<?>) this.query);
             if (this.paramInfo != null && q.getParameterCount() != parameterCountFromMetaData) {
                 this.placeholderToParameterIndexMap = new int[q.getParameterCount()];
 
@@ -560,7 +558,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             determineParameterTypes();
             generateParameterMap();
 
-            ((PreparedQuery) this.query).setParameterCount(((PreparedQuery) this.query).getParameterCount() + 1);
+            ((PreparedQuery<?>) this.query).setParameterCount(((PreparedQuery<?>) this.query).getParameterCount() + 1);
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
@@ -694,7 +692,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             ArrayList<Row> resultRows = new ArrayList<>();
 
-            for (int i = 0; i < ((PreparedQuery) this.query).getParameterCount(); i++) {
+            for (int i = 0; i < ((PreparedQuery<?>) this.query).getParameterCount(); i++) {
                 byte[][] row = new byte[13][];
                 row[0] = null; // PROCEDURE_CAT
                 row[1] = null; // PROCEDURE_SCHEM
@@ -861,7 +859,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     }
 
     private String extractProcedureName() throws SQLException {
-        String sanitizedSql = StringUtils.stripComments(((PreparedQuery) this.query).getOriginalSql(), "`\"'", "`\"'", true, false, true, true);
+        String sanitizedSql = StringUtils.stripComments(((PreparedQuery<?>) this.query).getOriginalSql(), "`\"'", "`\"'", true, false, true, true);
 
         // TODO: Do this with less memory allocation
         int endCallIndex = StringUtils.indexOfIgnoreCase(sanitizedSql, "CALL ");
@@ -2054,7 +2052,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                         try {
                             setPstmt = ((Wrapper) this.connection.clientPrepareStatement(queryBuf.toString())).unwrap(PreparedStatement.class);
 
-                            if (((PreparedQuery) this.query).getQueryBindings().getBindValues()[inParamInfo.index].isNull()) {
+                            if (((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[inParamInfo.index].isNull()) {
                                 setPstmt.setBytesNoEscapeNoQuotes(1, "NULL".getBytes());
 
                             } else {
@@ -2580,11 +2578,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
      * @param s
      */
     protected byte[] s2b(String s) {
-        if (s == null) {
-            return null;
-        }
-
-        return StringUtils.getBytes(s, this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue());
+        return s == null ? null : StringUtils.getBytes(s, this.charEncoding);
     }
 
     @Override

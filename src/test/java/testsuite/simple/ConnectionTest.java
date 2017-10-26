@@ -61,6 +61,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.MysqlConnection;
+import com.mysql.cj.api.PreparedQuery;
 import com.mysql.cj.api.Query;
 import com.mysql.cj.api.jdbc.JdbcConnection;
 import com.mysql.cj.api.mysqla.io.PacketReader;
@@ -1947,9 +1948,13 @@ public class ConnectionTest extends BaseTestCase {
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str == null ? null : str.get();
-            if (sql == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+            if (sql == null) {
                 try {
-                    sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                    if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                        sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                    } else if (interceptedQuery instanceof PreparedQuery<?>) {
+                        sql = ((PreparedQuery<?>) interceptedQuery).asSql();
+                    }
                 } catch (SQLException ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex);
                 }
@@ -1961,7 +1966,7 @@ public class ConnectionTest extends BaseTestCase {
                 boolean enableEscapeProcessing = (tst & 0x1) != 0;
                 boolean processEscapeCodesForPrepStmts = (tst & 0x2) != 0;
                 boolean useServerPrepStmts = (tst & 0x4) != 0;
-                boolean isPreparedStatement = interceptedQuery instanceof PreparedStatement;
+                boolean isPreparedStatement = interceptedQuery instanceof PreparedStatement || interceptedQuery instanceof PreparedQuery<?>;
 
                 String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
                         processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-",

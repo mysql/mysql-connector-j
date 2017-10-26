@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -1994,5 +1995,41 @@ public class StringUtils {
         valuesString.append(elems[elems.length - 1]).append(suffix);
 
         return valuesString.toString();
+    }
+
+    public static final void escapeblockFast(byte[] buf, ByteArrayOutputStream bytesOut, int size, boolean useAnsiMode) {
+        int lastwritten = 0;
+
+        for (int i = 0; i < size; i++) {
+            byte b = buf[i];
+
+            if (b == '\0') {
+                // write stuff not yet written
+                if (i > lastwritten) {
+                    bytesOut.write(buf, lastwritten, i - lastwritten);
+                }
+
+                // write escape
+                bytesOut.write('\\');
+                bytesOut.write('0');
+                lastwritten = i + 1;
+            } else {
+                if ((b == '\\') || (b == '\'') || (!useAnsiMode && b == '"')) {
+                    // write stuff not yet written
+                    if (i > lastwritten) {
+                        bytesOut.write(buf, lastwritten, i - lastwritten);
+                    }
+
+                    // write escape
+                    bytesOut.write('\\');
+                    lastwritten = i; // not i+1 as b wasn't written.
+                }
+            }
+        }
+
+        // write out remaining stuff from buffer
+        if (lastwritten < size) {
+            bytesOut.write(buf, lastwritten, size - lastwritten);
+        }
     }
 }

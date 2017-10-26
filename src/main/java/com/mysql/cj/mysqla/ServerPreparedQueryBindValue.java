@@ -23,9 +23,18 @@
 
 package com.mysql.cj.mysqla;
 
+import java.util.Calendar;
 import java.util.TimeZone;
 
 import com.mysql.cj.api.BindValue;
+import com.mysql.cj.api.exceptions.ExceptionInterceptor;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
+import com.mysql.cj.api.mysqla.io.PacketPayload;
+import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.core.util.StringUtils;
 
 public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue implements BindValue {
 
@@ -211,5 +220,126 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     @Override
     public boolean isSet() {
         return this.isSet;
+    }
+
+    public void storeBinding(PacketPayload intoPacket, boolean isLoadDataQuery, String characterEncoding, ExceptionInterceptor interceptor) {
+        synchronized (this) {
+            try {
+                // Handle primitives first
+                switch (this.bufferType) {
+
+                    case MysqlaConstants.FIELD_TYPE_TINY:
+                        intoPacket.writeInteger(IntegerDataType.INT1, this.longBinding);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_SHORT:
+                        intoPacket.writeInteger(IntegerDataType.INT2, this.longBinding);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_LONG:
+                        intoPacket.writeInteger(IntegerDataType.INT4, this.longBinding);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_LONGLONG:
+                        intoPacket.writeInteger(IntegerDataType.INT8, this.longBinding);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_FLOAT:
+                        intoPacket.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(this.floatBinding));
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_DOUBLE:
+                        intoPacket.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(this.doubleBinding));
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_TIME:
+                        storeTime(intoPacket);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_DATE:
+                    case MysqlaConstants.FIELD_TYPE_DATETIME:
+                    case MysqlaConstants.FIELD_TYPE_TIMESTAMP:
+                        storeDateTime(intoPacket);
+                        return;
+                    case MysqlaConstants.FIELD_TYPE_VAR_STRING:
+                    case MysqlaConstants.FIELD_TYPE_STRING:
+                    case MysqlaConstants.FIELD_TYPE_VARCHAR:
+                    case MysqlaConstants.FIELD_TYPE_DECIMAL:
+                    case MysqlaConstants.FIELD_TYPE_NEWDECIMAL:
+                        if (this.value instanceof byte[]) {
+                            intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, (byte[]) this.value);
+                        } else if (!isLoadDataQuery) {
+                            intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) this.value, characterEncoding));
+                        } else {
+                            intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) this.value));
+                        }
+
+                        return;
+                }
+
+            } catch (CJException uEE) {
+                throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.22") + characterEncoding + "'", uEE, interceptor);
+            }
+        }
+    }
+
+    private void storeTime(PacketPayload intoPacket) {
+
+        intoPacket.ensureCapacity(9);
+        intoPacket.writeInteger(IntegerDataType.INT1, 8); // length
+        intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
+        intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
+
+        Calendar cal = Calendar.getInstance(this.tz);
+
+        cal.setTime((java.util.Date) this.value);
+        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
+        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
+        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
+    }
+
+    /**
+     * @param intoPacket
+     * @param dt
+     * @param mysql
+     */
+    private void storeDateTime(PacketPayload intoPacket) {
+        synchronized (this) {
+            Calendar cal = Calendar.getInstance(this.tz);
+
+            cal.setTime((java.util.Date) this.value);
+
+            if (this.value instanceof java.sql.Date) {
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+            }
+
+            byte length = (byte) 7;
+
+            if (this.value instanceof java.sql.Timestamp) {
+                length = (byte) 11;
+            }
+
+            intoPacket.ensureCapacity(length);
+
+            intoPacket.writeInteger(IntegerDataType.INT1, length); // length
+
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH) + 1;
+            int date = cal.get(Calendar.DAY_OF_MONTH);
+
+            intoPacket.writeInteger(IntegerDataType.INT2, year);
+            intoPacket.writeInteger(IntegerDataType.INT1, month);
+            intoPacket.writeInteger(IntegerDataType.INT1, date);
+
+            if (this.value instanceof java.sql.Date) {
+                intoPacket.writeInteger(IntegerDataType.INT1, 0);
+                intoPacket.writeInteger(IntegerDataType.INT1, 0);
+                intoPacket.writeInteger(IntegerDataType.INT1, 0);
+            } else {
+                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
+                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
+                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
+            }
+
+            if (length == 11) {
+                //  MySQL expects microseconds, not nanos
+                intoPacket.writeInteger(IntegerDataType.INT4, ((java.sql.Timestamp) this.value).getNanos() / 1000);
+            }
+        }
     }
 }

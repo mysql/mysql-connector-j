@@ -23,13 +23,16 @@
 
 package com.mysql.cj.api;
 
+import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.mysqla.ParseInfo;
 
-public interface PreparedQuery extends Query {
+public interface PreparedQuery<T extends QueryBindings<?>> extends Query {
 
     ParseInfo getParseInfo();
 
     void setParseInfo(ParseInfo parseInfo);
+
+    void checkNullOrEmptyQuery(String sql);
 
     String getOriginalSql();
 
@@ -39,10 +42,21 @@ public interface PreparedQuery extends Query {
 
     void setParameterCount(int parameterCount);
 
-    public <T extends QueryBindings> T getQueryBindings();
+    public T getQueryBindings();
 
-    public <T extends QueryBindings> void setQueryBindings(T queryBindings);
+    public void setQueryBindings(T queryBindings);
 
     int computeBatchSize(int numBatchedArgs);
 
+    int getBatchCommandIndex();
+
+    void setBatchCommandIndex(int batchCommandIndex);
+
+    String asSql();
+
+    String asSql(boolean quoteStreamsAndUnknowns);
+
+    PacketPayload fillSendPacket();
+
+    PacketPayload fillSendPacket(QueryBindings<?> bindings);
 }

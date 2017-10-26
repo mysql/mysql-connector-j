@@ -76,6 +76,9 @@ public class ClientPreparedQueryBindValue implements BindValue {
 
     public void setNull(boolean isNull) {
         this.isNull = isNull;
+        if (isNull) {
+            this.parameterType = MysqlType.NULL;
+        }
     }
 
     public boolean isStream() {
@@ -87,28 +90,32 @@ public class ClientPreparedQueryBindValue implements BindValue {
     }
 
     @Override
-    public MysqlType getParameterType() {
+    public MysqlType getMysqlType() {
         return this.parameterType;
     }
 
     @Override
-    public void setParameterType(MysqlType type) {
+    public void setMysqlType(MysqlType type) {
         this.parameterType = type;
     }
 
-    public byte[] getParameterValue() {
+    public byte[] getByteValue() {
         return this.parameterValue;
     }
 
-    public void setParameterValue(byte[] parameterValue) {
+    public void setByteValue(byte[] parameterValue) {
+        this.isNull = false;
+        this.isStream = false;
         this.parameterValue = parameterValue;
+        this.parameterStream = null;
+        this.streamLength = 0;
     }
 
-    public InputStream getParameterStream() {
+    public InputStream getStreamValue() {
         return this.parameterStream;
     }
 
-    public void setParameterStream(InputStream parameterStream, int streamLength) {
+    public void setStreamValue(InputStream parameterStream, int streamLength) {
         this.parameterStream = parameterStream;
         this.streamLength = streamLength;
     }

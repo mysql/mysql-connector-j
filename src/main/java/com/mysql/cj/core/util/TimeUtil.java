@@ -24,9 +24,11 @@
 package com.mysql.cj.core.util;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -176,5 +178,182 @@ public class TimeUtil {
         Timestamp truncatedTimestamp = new Timestamp(timestamp.getTime());
         truncatedTimestamp.setNanos(0);
         return truncatedTimestamp;
+    }
+
+    /**
+     * Used in prepared statements
+     * 
+     * @param dt
+     * @param toTime
+     * @return
+     * @throws IOException
+     */
+    public static final String getDateTimePattern(String dt, boolean toTime) throws IOException {
+        //
+        // Special case
+        //
+        int dtLength = (dt != null) ? dt.length() : 0;
+
+        if ((dtLength >= 8) && (dtLength <= 10)) {
+            int dashCount = 0;
+            boolean isDateOnly = true;
+
+            for (int i = 0; i < dtLength; i++) {
+                char c = dt.charAt(i);
+
+                if (!Character.isDigit(c) && (c != '-')) {
+                    isDateOnly = false;
+
+                    break;
+                }
+
+                if (c == '-') {
+                    dashCount++;
+                }
+            }
+
+            if (isDateOnly && (dashCount == 2)) {
+                return "yyyy-MM-dd";
+            }
+        }
+
+        //
+        // Special case - time-only
+        //
+        boolean colonsOnly = true;
+
+        for (int i = 0; i < dtLength; i++) {
+            char c = dt.charAt(i);
+
+            if (!Character.isDigit(c) && (c != ':')) {
+                colonsOnly = false;
+
+                break;
+            }
+        }
+
+        if (colonsOnly) {
+            return "HH:mm:ss";
+        }
+
+        int n;
+        int z;
+        int count;
+        int maxvecs;
+        char c;
+        char separator;
+        StringReader reader = new StringReader(dt + " ");
+        ArrayList<Object[]> vec = new ArrayList<>();
+        ArrayList<Object[]> vecRemovelist = new ArrayList<>();
+        Object[] nv = new Object[3];
+        Object[] v;
+        nv[0] = Character.valueOf('y');
+        nv[1] = new StringBuilder();
+        nv[2] = Integer.valueOf(0);
+        vec.add(nv);
+
+        if (toTime) {
+            nv = new Object[3];
+            nv[0] = Character.valueOf('h');
+            nv[1] = new StringBuilder();
+            nv[2] = Integer.valueOf(0);
+            vec.add(nv);
+        }
+
+        while ((z = reader.read()) != -1) {
+            separator = (char) z;
+            maxvecs = vec.size();
+
+            for (count = 0; count < maxvecs; count++) {
+                v = vec.get(count);
+                n = ((Integer) v[2]).intValue();
+                c = getSuccessor(((Character) v[0]).charValue(), n);
+
+                if (!Character.isLetterOrDigit(separator)) {
+                    if ((c == ((Character) v[0]).charValue()) && (c != 'S')) {
+                        vecRemovelist.add(v);
+                    } else {
+                        ((StringBuilder) v[1]).append(separator);
+
+                        if ((c == 'X') || (c == 'Y')) {
+                            v[2] = Integer.valueOf(4);
+                        }
+                    }
+                } else {
+                    if (c == 'X') {
+                        c = 'y';
+                        nv = new Object[3];
+                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('M');
+                        nv[0] = Character.valueOf('M');
+                        nv[2] = Integer.valueOf(1);
+                        vec.add(nv);
+                    } else if (c == 'Y') {
+                        c = 'M';
+                        nv = new Object[3];
+                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('d');
+                        nv[0] = Character.valueOf('d');
+                        nv[2] = Integer.valueOf(1);
+                        vec.add(nv);
+                    }
+
+                    ((StringBuilder) v[1]).append(c);
+
+                    if (c == ((Character) v[0]).charValue()) {
+                        v[2] = Integer.valueOf(n + 1);
+                    } else {
+                        v[0] = Character.valueOf(c);
+                        v[2] = Integer.valueOf(1);
+                    }
+                }
+            }
+
+            int size = vecRemovelist.size();
+
+            for (int i = 0; i < size; i++) {
+                v = vecRemovelist.get(i);
+                vec.remove(v);
+            }
+
+            vecRemovelist.clear();
+        }
+
+        int size = vec.size();
+
+        for (int i = 0; i < size; i++) {
+            v = vec.get(i);
+            c = ((Character) v[0]).charValue();
+            n = ((Integer) v[2]).intValue();
+
+            boolean bk = getSuccessor(c, n) != c;
+            boolean atEnd = (((c == 's') || (c == 'm') || ((c == 'h') && toTime)) && bk);
+            boolean finishesAtDate = (bk && (c == 'd') && !toTime);
+            boolean containsEnd = (((StringBuilder) v[1]).toString().indexOf('W') != -1);
+
+            if ((!atEnd && !finishesAtDate) || (containsEnd)) {
+                vecRemovelist.add(v);
+            }
+        }
+
+        size = vecRemovelist.size();
+
+        for (int i = 0; i < size; i++) {
+            vec.remove(vecRemovelist.get(i));
+        }
+
+        vecRemovelist.clear();
+        v = vec.get(0); // might throw exception
+
+        StringBuilder format = (StringBuilder) v[1];
+        format.setLength(format.length() - 1);
+
+        return format.toString();
+    }
+
+    private static final char getSuccessor(char c, int n) {
+        return ((c == 'y') && (n == 2)) ? 'X'
+                : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
+                        : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
+                                ? 'H' : ((c == 'H') ? 'm'
+                                        : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 }

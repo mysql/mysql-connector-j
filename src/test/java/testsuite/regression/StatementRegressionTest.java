@@ -110,6 +110,8 @@ import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.interceptors.ResultSetScannerInterceptor;
 import com.mysql.cj.jdbc.io.ResultSetFactory;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
+import com.mysql.cj.mysqla.ClientPreparedQuery;
+import com.mysql.cj.mysqla.ServerPreparedQuery;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -3474,7 +3476,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(Statement.SUCCESS_NO_INFO, counts[0]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[1]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[2]);
-            assertEquals(true, ((com.mysql.cj.jdbc.PreparedStatement) this.pstmt).canRewriteAsMultiValueInsertAtSqlLevel());
+            assertEquals(true, ((com.mysql.cj.jdbc.PreparedStatement) this.pstmt).getParseInfo().canRewriteAsMultiValueInsertAtSqlLevel());
         } finally {
             if (multiConn != null) {
                 multiConn.close();
@@ -5543,6 +5545,10 @@ public class StatementRegressionTest extends BaseTestCase {
                 try {
                     ParameterBindings b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getParameterBindings();
                     vals.add(new Integer(b.getInt(1)));
+
+                    // TODO
+                    //QueryBindings<?> b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getQueryBindings();
+                    //vals.add(new Integer(new String(b.getBindValues()[0].getByteValue())));
                 } catch (SQLException ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex);
                 }
@@ -9004,9 +9010,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
-            if (!(interceptedQuery instanceof ServerPreparedStatement)) {
+            if (!(interceptedQuery instanceof ServerPreparedStatement || interceptedQuery instanceof ServerPreparedQuery)) {
                 String query = sql.get();
-                if (query == null && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+                if (query == null && (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement || interceptedQuery instanceof ClientPreparedQuery)) {
                     query = interceptedQuery.toString();
                     query = query.substring(query.indexOf(':') + 2);
                 }

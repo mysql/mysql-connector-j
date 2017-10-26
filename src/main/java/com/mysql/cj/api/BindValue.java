@@ -41,17 +41,17 @@ public interface BindValue {
 
     void setIsStream(boolean isStream);
 
-    MysqlType getParameterType();
+    MysqlType getMysqlType();
 
-    void setParameterType(MysqlType type);
+    void setMysqlType(MysqlType type);
 
-    byte[] getParameterValue();
+    byte[] getByteValue();
 
-    void setParameterValue(byte[] parameterValue);
+    void setByteValue(byte[] parameterValue);
 
-    InputStream getParameterStream();
+    InputStream getStreamValue();
 
-    void setParameterStream(InputStream parameterStream, int streamLength);
+    void setStreamValue(InputStream parameterStream, int streamLength);
 
     int getStreamLength();
 

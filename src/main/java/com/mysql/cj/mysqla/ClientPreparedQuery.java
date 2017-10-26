@@ -24,87 +24,12 @@
 package com.mysql.cj.mysqla;
 
 import com.mysql.cj.api.BindValue;
-import com.mysql.cj.api.PreparedQuery;
-import com.mysql.cj.api.QueryBindings;
-import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.core.util.StringUtils;
 
-public class ClientPreparedQuery extends SimpleQuery implements PreparedQuery {
+public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQueryBindings> {
 
-    protected ParseInfo parseInfo;
-
-    protected QueryBindings queryBindings = null;
-
-    /** The SQL that was passed in to 'prepare' */
-    private String originalSql = null;
-
-    /** The number of parameters in this PreparedStatement */
-    protected int parameterCount;
-
-    /** Is this query a LOAD DATA query? */
-    protected boolean isLoadDataQuery = false;
-
-    protected ReadableProperty<Boolean> autoClosePStmtStreams;
-
-    public ClientPreparedQuery(MysqlaSession sess, int statementId) {
+    public ClientPreparedQuery(MysqlaSession sess) {
         super(sess);
-        setId(statementId);
-
-        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
-    }
-
-    public String getOriginalSql() {
-        return this.originalSql;
-    }
-
-    public void setOriginalSql(String originalSql) {
-        this.originalSql = originalSql;
-    }
-
-    public int getParameterCount() {
-        return this.parameterCount;
-    }
-
-    public void setParameterCount(int parameterCount) {
-        this.parameterCount = parameterCount;
-    }
-
-    public boolean isLoadDataQuery() {
-        return this.isLoadDataQuery;
-    }
-
-    public void setLoadDataQuery(boolean isLoadDataQuery) {
-        this.isLoadDataQuery = isLoadDataQuery;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends QueryBindings> T getQueryBindings() {
-        return (T) this.queryBindings;
-    }
-
-    @Override
-    public <T extends QueryBindings> void setQueryBindings(T queryBindings) {
-        this.queryBindings = queryBindings;
-    }
-
-    /**
-     * Computes the optimum number of batched parameter lists to send
-     * without overflowing max_allowed_packet.
-     * 
-     * @param numBatchedArgs
-     */
-    public int computeBatchSize(int numBatchedArgs) {
-        long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
-
-        long maxSizeOfParameterSet = combinedValues[0];
-        long sizeOfEntireBatch = combinedValues[1];
-
-        if (sizeOfEntireBatch < this.maxAllowedPacket.getValue() - this.originalSql.length()) {
-            return numBatchedArgs;
-        }
-
-        return (int) Math.max(1, (this.maxAllowedPacket.getValue() - this.originalSql.length()) / maxSizeOfParameterSet);
     }
 
     /**
@@ -112,12 +37,13 @@ public class ClientPreparedQuery extends SimpleQuery implements PreparedQuery {
      * the number of arguments in the batch.
      * 
      */
+    @Override
     protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
         long sizeOfEntireBatch = 0;
         long maxSizeOfParameterSet = 0;
 
         for (int i = 0; i < numBatchedArgs; i++) {
-            QueryBindings qBindings = (QueryBindings) this.batchedArgs.get(i);
+            ClientPreparedQueryBindings qBindings = (ClientPreparedQueryBindings) this.batchedArgs.get(i);
 
             BindValue[] bindValues = qBindings.getBindValues();
 
@@ -132,11 +58,11 @@ public class ClientPreparedQuery extends SimpleQuery implements PreparedQuery {
                         if (streamLength != -1) {
                             sizeOfParameterSet += streamLength * 2; // for safety in escaping
                         } else {
-                            int paramLength = qBindings.getBindValues()[j].getParameterValue().length;
+                            int paramLength = qBindings.getBindValues()[j].getByteValue().length;
                             sizeOfParameterSet += paramLength;
                         }
                     } else {
-                        sizeOfParameterSet += qBindings.getBindValues()[j].getParameterValue().length;
+                        sizeOfParameterSet += qBindings.getBindValues()[j].getByteValue().length;
                     }
                 } else {
                     sizeOfParameterSet += 4; // for NULL literal in SQL 
@@ -165,11 +91,60 @@ public class ClientPreparedQuery extends SimpleQuery implements PreparedQuery {
         return new long[] { maxSizeOfParameterSet, sizeOfEntireBatch };
     }
 
-    public ParseInfo getParseInfo() {
-        return this.parseInfo;
+    /**
+     * @param parameterIndex
+     */
+    public byte[] getBytesRepresentation(int parameterIndex) {
+        BindValue bv = this.queryBindings.getBindValues()[parameterIndex];
+
+        if (bv.isStream()) {
+            return streamToBytes(bv.getStreamValue(), false, bv.getStreamLength(), this.useStreamLengthsInPrepStmts.getValue());
+        }
+
+        byte[] parameterVal = bv.getByteValue();
+
+        if (parameterVal == null) {
+            return null;
+        }
+
+        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
+            byte[] valNoQuotes = new byte[parameterVal.length - 2];
+            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
+
+            return valNoQuotes;
+        }
+
+        return parameterVal;
     }
 
-    public void setParseInfo(ParseInfo parseInfo) {
-        this.parseInfo = parseInfo;
+    /**
+     * Get bytes representation for a parameter in a statement batch.
+     * 
+     * @param parameterIndex
+     * @param commandIndex
+     */
+    public byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex) {
+        Object batchedArg = this.batchedArgs.get(commandIndex);
+        if (batchedArg instanceof String) {
+            return StringUtils.getBytes((String) batchedArg, this.charEncoding);
+        }
+
+        BindValue bv = ((ClientPreparedQueryBindings) batchedArg).getBindValues()[parameterIndex];
+        if (bv.isStream()) {
+            return streamToBytes(bv.getStreamValue(), false, bv.getStreamLength(), this.useStreamLengthsInPrepStmts.getValue());
+        }
+        byte parameterVal[] = bv.getByteValue();
+        if (parameterVal == null) {
+            return null;
+        }
+
+        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
+            byte[] valNoQuotes = new byte[parameterVal.length - 2];
+            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
+
+            return valNoQuotes;
+        }
+
+        return parameterVal;
     }
 }

@@ -24,9 +24,11 @@
 package com.mysql.cj.api;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.mysqla.CancelQueryTask;
 
 public interface Query {
 
@@ -38,8 +40,6 @@ public interface Query {
      * Returns the query id used when profiling
      */
     int getId();
-
-    void setId(int id);
 
     void setCancelStatus(CancelStatus cs);
 
@@ -68,4 +68,36 @@ public interface Query {
     List<Object> getBatchedArgs();
 
     void clearBatchedArgs();
+
+    int getResultFetchSize();
+
+    void setResultFetchSize(int fetchSize);
+
+    Resultset.Type getResultType();
+
+    void setResultType(Resultset.Type resultSetType);
+
+    int getTimeoutInMillis();
+
+    void setTimeoutInMillis(int timeoutInMillis);
+
+    CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout);
+
+    ProfilerEventHandler getEventSink();
+
+    void setEventSink(ProfilerEventHandler eventSink);
+
+    AtomicBoolean getStatementExecuting();
+
+    String getCurrentCatalog();
+
+    void setCurrentCatalog(String currentCatalog);
+
+    boolean isClearWarningsCalled();
+
+    void setClearWarningsCalled(boolean clearWarningsCalled);
+
+    void statementBegins();
+
+    void stopQueryTimer(CancelQueryTask timeoutTask, boolean rethrowCancelReason, boolean checkCancelTimeout);
 }

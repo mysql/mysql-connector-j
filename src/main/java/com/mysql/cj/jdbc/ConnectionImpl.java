@@ -1985,7 +1985,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache
-                            .put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery) pstmt.query).getOriginalSql()), pstmt);
+                            .put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()), pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
@@ -2001,7 +2001,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     this.serverSideStatementCache
-                            .remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery) pstmt.query).getOriginalSql()));
+                            .remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()));
                 }
             }
         }

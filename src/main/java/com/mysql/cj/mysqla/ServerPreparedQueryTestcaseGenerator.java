@@ -25,14 +25,15 @@ package com.mysql.cj.mysqla;
 
 import java.io.IOException;
 
+import com.mysql.cj.api.mysqla.io.ProtocolEntityFactory;
 import com.mysql.cj.api.mysqla.result.ColumnDefinition;
 import com.mysql.cj.api.mysqla.result.Resultset;
 import com.mysql.cj.core.util.TestUtils;
 
 public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
 
-    public ServerPreparedQueryTestcaseGenerator(MysqlaSession sess, int statementId) {
-        super(sess, statementId);
+    public ServerPreparedQueryTestcaseGenerator(MysqlaSession sess) {
+        super(sess);
     }
 
     @Override
@@ -72,9 +73,10 @@ public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
     }
 
     @Override
-    public Resultset serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) {
+    public <T extends Resultset> T serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata,
+            ProtocolEntityFactory<T> resultSetFactory) {
         dumpExecuteForTestcase();
-        return super.serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata);
+        return super.serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata, resultSetFactory);
     }
 
     private void dumpExecuteForTestcase() {
@@ -89,7 +91,7 @@ public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
             buf.append(i);
             buf.append("=");
 
-            ServerPreparedQueryBindValue bv = this.getQueryBindings().<ServerPreparedQueryBindValue> getBindValues()[i];
+            ServerPreparedQueryBindValue bv = this.queryBindings.getBindValues()[i];
             buf.append(bv.isNull() ? "NULL" : bv.toString(true));
 
             buf.append(";\n");

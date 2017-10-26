@@ -23,7 +23,9 @@
 
 package com.mysql.cj.core.util;
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -436,5 +438,31 @@ public class Util {
      */
     public static boolean isRunningOnWindows() {
         return StringUtils.indexOfIgnoreCase(Constants.OS_NAME, "WINDOWS") != -1;
+    }
+
+    /**
+     * Reads length bytes from reader into buf. Blocks until enough input is
+     * available
+     * 
+     * @param reader
+     * @param buf
+     * @param length
+     * 
+     * @throws IOException
+     */
+    public static int readFully(Reader reader, char[] buf, int length) throws IOException {
+        int numCharsRead = 0;
+
+        while (numCharsRead < length) {
+            int count = reader.read(buf, numCharsRead, length - numCharsRead);
+
+            if (count < 0) {
+                break;
+            }
+
+            numCharsRead += count;
+        }
+
+        return numCharsRead;
     }
 }
