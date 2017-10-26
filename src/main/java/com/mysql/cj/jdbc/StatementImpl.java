@@ -680,7 +680,7 @@ public class StatementImpl implements Statement, Query {
         if (((MysqlConnection) stmtToCancel.getConnection()).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enableQueryTimeouts)
                 .getValue() && timeout != 0) {
             CancelQueryTask timeoutTask = new CancelQueryTask(stmtToCancel);
-            ((JdbcConnection) stmtToCancel.getConnection()).getSession().getCancelTimer().schedule(timeoutTask, timeout);
+            this.session.getCancelTimer().schedule(timeoutTask, timeout);
             return timeoutTask;
         }
         return null;
@@ -694,10 +694,7 @@ public class StatementImpl implements Statement, Query {
                 throw SQLExceptionsMapping.translateException(timeoutTask.getCaughtWhileCancelling(), this.exceptionInterceptor);
             }
 
-            Query q = timeoutTask.getQueryToCancel();
-            if (q != null) {
-                ((MysqlaSession) q.getSession()).getCancelTimer().purge();
-            }
+            this.session.getCancelTimer().purge();
 
             if (checkCancelTimeout) {
                 checkCancelTimeout();
@@ -951,6 +948,12 @@ public class StatementImpl implements Statement, Query {
                             try {
                                 String sql = (String) batchedArgs.get(commandIndex);
                                 updateCounts[commandIndex] = executeUpdateInternal(sql, true, true);
+
+                                if (timeoutTask != null) {
+                                    // we need to check the cancel state on each iteration to generate timeout exception if needed
+                                    checkCancelTimeout();
+                                }
+
                                 // limit one generated key per OnDuplicateKey statement
                                 getBatchedGeneratedKeys(this.results.getFirstCharOfQuery() == 'I' && containsOnDuplicateKeyInString(sql) ? 1 : 0);
                             } catch (SQLException ex) {
@@ -983,7 +986,7 @@ public class StatementImpl implements Statement, Query {
                     }
 
                     if (timeoutTask != null) {
-                        stopQueryTimer(timeoutTask, true, false);
+                        stopQueryTimer(timeoutTask, true, true);
                         timeoutTask = null;
                     }
 
@@ -1106,7 +1109,7 @@ public class StatementImpl implements Statement, Query {
                 }
 
                 if (timeoutTask != null) {
-                    stopQueryTimer(timeoutTask, true, false);
+                    stopQueryTimer(timeoutTask, true, true);
                     timeoutTask = null;
                 }
 
@@ -2013,6 +2016,8 @@ public class StatementImpl implements Statement, Query {
 
         this.isClosed = true;
 
+        closeQuery();
+
         this.results = null;
         this.generatedKeysResults = null;
         this.connection = null;
@@ -2022,8 +2027,6 @@ public class StatementImpl implements Statement, Query {
         this.batchedGeneratedKeys = null;
         this.pingTarget = null;
         this.resultSetFactory = null;
-
-        closeQuery();
     }
 
     /**

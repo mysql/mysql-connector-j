@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - Fix for BUG#26995710, WL#11161 : NULL POINTER EXCEPTION IN EXECUTEBATCH() AND CLOSE().
+
   - WL#11161, Unify query bindings.
 
   - WL#8469, Don't extract query text from packets when possible.

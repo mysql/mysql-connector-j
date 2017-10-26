@@ -413,6 +413,7 @@ public class TranslateExceptions {
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setResultSetConcurrency", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("useServerFetch", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("checkCancelTimeout", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
 
         /*

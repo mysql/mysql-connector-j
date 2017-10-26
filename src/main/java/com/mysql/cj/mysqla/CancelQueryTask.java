@@ -44,9 +44,20 @@ public class CancelQueryTask extends TimerTask {
 
     Query queryToCancel;
     Throwable caughtWhileCancelling = null;
+    boolean queryTimeoutKillsConnection = false;
 
     public CancelQueryTask(Query cancellee) {
         this.queryToCancel = cancellee;
+        MysqlaSession session = (MysqlaSession) cancellee.getSession();
+        this.queryTimeoutKillsConnection = session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
+                .getValue();
+    }
+
+    @Override
+    public boolean cancel() {
+        boolean res = super.cancel();
+        this.queryToCancel = null;
+        return res;
     }
 
     @Override
@@ -56,14 +67,21 @@ public class CancelQueryTask extends TimerTask {
 
             @Override
             public void run() {
-                MysqlaSession session = (MysqlaSession) CancelQueryTask.this.queryToCancel.getSession();
+                Query localQueryToCancel = CancelQueryTask.this.queryToCancel;
+                if (localQueryToCancel == null) {
+                    return;
+                }
+                MysqlaSession session = (MysqlaSession) localQueryToCancel.getSession();
+                if (session == null) {
+                    return;
+                }
 
                 try {
-                    if (session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection).getValue()) {
-                        CancelQueryTask.this.queryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
+                    if (CancelQueryTask.this.queryTimeoutKillsConnection) {
+                        localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         session.invokeCleanupListeners(new OperationCancelledException(Messages.getString("Statement.ConnectionKilledDueToTimeout")));
                     } else {
-                        synchronized (CancelQueryTask.this.queryToCancel.getCancelTimeoutMutex()) {
+                        synchronized (localQueryToCancel.getCancelTimeoutMutex()) {
                             long origConnId = session.getThreadId();
                             HostInfo hostInfo = session.getHostInfo();
                             String database = hostInfo.getDatabase();
@@ -81,7 +99,7 @@ public class CancelQueryTask extends TimerTask {
                             });
                             newSession.sendCommand(new CommandBuilder().buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
 
-                            CancelQueryTask.this.queryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
+                            localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         }
                     }
                     // } catch (NullPointerException npe) {

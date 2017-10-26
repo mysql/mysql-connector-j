@@ -92,14 +92,8 @@ public class SimpleQuery implements Query {
     }
 
     public void resetCancelledState() {
-        synchronized (this) {
-            if (this.cancelTimeoutMutex == null) {
-                return;
-            }
-
-            synchronized (this.cancelTimeoutMutex) {
-                this.cancelStatus = CancelStatus.NOT_CANCELED;
-            }
+        synchronized (this.cancelTimeoutMutex) {
+            this.cancelStatus = CancelStatus.NOT_CANCELED;
         }
     }
 
@@ -120,7 +114,6 @@ public class SimpleQuery implements Query {
     }
 
     public void closeQuery() {
-        this.cancelTimeoutMutex = null;
         this.session = null;
     }
 

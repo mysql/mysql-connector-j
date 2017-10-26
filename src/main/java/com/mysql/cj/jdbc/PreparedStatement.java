@@ -100,9 +100,9 @@ import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
-import com.mysql.cj.mysqla.ClientPreparedQueryBindValue;
 import com.mysql.cj.mysqla.CancelQueryTask;
 import com.mysql.cj.mysqla.ClientPreparedQuery;
+import com.mysql.cj.mysqla.ClientPreparedQueryBindValue;
 import com.mysql.cj.mysqla.ClientPreparedQueryBindings;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.ParseInfo;
@@ -370,10 +370,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     buf.append((String) batchArg);
                     continue;
                 }
-                val = this.batchCommandIndex == -1 ? ((PreparedQuery) this.query).getQueryBindings().getBindValues()[i].getParameterValue()
+
+                QueryBindings qb = ((PreparedQuery) this.query).getQueryBindings();
+                val = this.batchCommandIndex == -1 ? (qb == null ? null : qb.getBindValues()[i].getParameterValue())
                         : ((QueryBindings) batchArg).getBindValues()[i].getParameterValue();
 
-                boolean isStreamParam = this.batchCommandIndex == -1 ? ((PreparedQuery) this.query).getQueryBindings().getBindValues()[i].isStream()
+                boolean isStreamParam = this.batchCommandIndex == -1 ? (qb == null ? false : qb.getBindValues()[i].isStream())
                         : ((QueryBindings) batchArg).getBindValues()[i].isStream();
 
                 if ((val == null) && !isStreamParam) {
@@ -750,6 +752,12 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     batchedStatement.clearParameters();
 
                     numValuesPerBatch = numBatchedArgs - batchCounter;
+
+                    if (timeoutTask != null) {
+                        // we need to check the cancel state now because we loose if after the following batchedStatement.close()
+                        ((PreparedStatement) batchedStatement).checkCancelTimeout();
+                    }
+
                 } finally {
                     if (batchedStatement != null) {
                         batchedStatement.close();
@@ -786,7 +794,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
                     }
 
                     if (timeoutTask != null) {
-                        stopQueryTimer(timeoutTask, true, false);
+                        stopQueryTimer(timeoutTask, true, true);
                         timeoutTask = null;
                     }
 
@@ -3881,7 +3889,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
             int paramCount = ((PreparedQuery) PreparedStatement.this.query).getParameterCount();
             this.bindValues = new ClientPreparedQueryBindValue[paramCount];
             for (int i = 0; i < paramCount; i++) {
-                this.bindValues[i] = ((PreparedQuery) PreparedStatement.this.query).getQueryBindings().<ClientPreparedQueryBindValue> getBindValues()[i].clone();
+                this.bindValues[i] = ((PreparedQuery) PreparedStatement.this.query).getQueryBindings().<ClientPreparedQueryBindValue> getBindValues()[i]
+                        .clone();
 
             }
             byte[][] rowData = new byte[paramCount][];

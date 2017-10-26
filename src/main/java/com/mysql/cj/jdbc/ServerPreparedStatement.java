@@ -583,8 +583,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 
                 this.detectedLongParameterSwitch = ((ServerPreparedQuery) this.query).clearParametersInternal(false);
 
-                closeQuery();
-
                 if (exceptionDuringClose != null) {
                     throw exceptionDuringClose;
                 }

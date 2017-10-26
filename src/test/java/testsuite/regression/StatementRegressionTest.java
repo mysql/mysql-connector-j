@@ -10086,4 +10086,153 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(0, testConn.getActiveStatementCount());
         } while ((useSPS = !useSPS) || (cachePS = !cachePS));
     }
+
+    /**
+     * Tests fix for Bug#26995710 - WL#11161 : NULL POINTER EXCEPTION IN EXECUTEBATCH() AND CLOSE().
+     */
+    public void testBug26995710() throws Exception {
+        createTable("testBug26995710", "(c1 char(20),c2 char(20))");
+
+        boolean useSPS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+            props.setProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript, "true");
+            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode=STRICT_TRANS_TABLES");
+
+            Connection con = null;
+            try {
+                this.stmt.executeUpdate("truncate table testBug26995710");
+                this.stmt.executeUpdate("insert into testBug26995710 values('a','b')");
+
+                int colCnt = 0, i = 0;
+                ResultSetMetaData rsmd = null;
+
+                con = getConnectionWithProps(props);
+
+                PreparedStatement ps = con.prepareStatement("Insert into testBug26995710 values(?,?) ", ResultSet.TYPE_SCROLL_SENSITIVE,
+                        ResultSet.CONCUR_UPDATABLE);
+                ps.setQueryTimeout(2);
+                assertEquals(2, ps.getQueryTimeout());
+                ps.setString(1, "abc1");
+                ps.setString(2, "xyz1");
+                ps.addBatch();
+                ps.setString(1, "abc2");
+                ps.setString(2, "xyz2");
+                ps.addBatch();
+                ps.setNull(1, java.sql.Types.VARCHAR);
+                ps.setString(2, "xyz4");
+                ps.addBatch();
+                ps.setString(1, "abc4");
+                ps.setNull(2, java.sql.Types.VARCHAR);
+                ps.addBatch();
+                ps.setNull(1, java.sql.Types.VARCHAR);
+                ps.setNull(2, java.sql.Types.VARCHAR);
+                ps.addBatch();
+                ps.executeBatch();
+                ps.close();
+
+                ResultSet rset = this.stmt.executeQuery("select * from testBug26995710");
+                rsmd = rset.getMetaData();
+                colCnt = rsmd.getColumnCount();
+                System.out.println(" Column Cnt = " + colCnt);
+                while (rset.next()) {
+                    for (i = 1; i <= colCnt; i++) {
+                        System.out.print(" [" + rset.getString(i) + "]");
+                    }
+                    System.out.print("\n");
+                }
+                rset.close();
+                ps.close();
+
+                ps = con.prepareStatement("delete from testBug26995710 where c1=? ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                ps.setQueryTimeout(2);
+                ps.setString(1, "abc1");
+                ps.addBatch();
+                ps.setNull(1, java.sql.Types.VARCHAR);
+                ps.addBatch();
+                ps.setString(1, "abc4");
+                ps.addBatch();
+                ps.setString(1, "abc4");
+                ps.addBatch();
+                ps.executeBatch();
+                ps.close();
+
+                ps = con.prepareStatement("select count(*) from testBug26995710 ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rset = ps.executeQuery();
+                rset.next();
+                assertEquals(4, rset.getInt(1));
+                rset.close();
+
+                ps = con.prepareStatement("select * from testBug26995710 ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rset = ps.executeQuery();
+                rsmd = rset.getMetaData();
+                colCnt = rsmd.getColumnCount();
+                System.out.println(" Column Cnt = " + colCnt);
+                while (rset.next()) {
+                    for (i = 1; i <= colCnt; i++) {
+                        System.out.print(" [" + rset.getString(i) + "]");
+                    }
+                    System.out.print("\n");
+                }
+                rset.close();
+                ps.close();
+
+                ps = con.prepareStatement("insert into testBug26995710 select sleep(?)+1,sleep(?)+2 ", ResultSet.TYPE_SCROLL_SENSITIVE,
+                        ResultSet.CONCUR_UPDATABLE);
+                ps.setQueryTimeout(2);
+                ps.setInt(1, 2);
+                ps.setInt(2, 3);
+                ps.addBatch();
+                ps.setInt(1, 0);
+                ps.setInt(2, 1);
+                ps.addBatch();
+                ps.setNull(1, java.sql.Types.INTEGER);
+                ps.setInt(2, 1);
+                ps.addBatch();
+                ps.setInt(1, 4);
+                ps.setNull(2, java.sql.Types.INTEGER);
+                ps.addBatch();
+                ps.setNull(1, java.sql.Types.INTEGER);
+                ps.setNull(2, java.sql.Types.INTEGER);
+                ps.addBatch();
+                try {
+                    ps.executeBatch();
+                    fail("Expected Timeout Error ");
+                } catch (SQLException ex) {
+                    System.out.print("Error " + ex.getMessage());
+                    assertTrue(ex.getMessage().contains("Statement cancelled due to timeout or client request"));
+                }
+                ps.close();
+
+                ps = con.prepareStatement("select count(*) from testBug26995710 ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rset = ps.executeQuery();
+                rset.next();
+                System.out.println(" Rec Cnt " + rset.getInt(1));
+                //  assertEquals(4,rs.getInt(1));   
+
+                rset.close();
+                ps.close();
+
+                ps = con.prepareStatement("select * from testBug26995710 ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rset = ps.executeQuery();
+                rsmd = rset.getMetaData();
+                colCnt = rsmd.getColumnCount();
+                System.out.println(" Column Cnt = " + colCnt);
+                while (rset.next()) {
+                    for (i = 1; i <= colCnt; i++) {
+                        System.out.print(" [" + rset.getString(i) + "]");
+                    }
+                    System.out.print("\n");
+                }
+                rset.close();
+                ps.close();
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
+        } while (useSPS = !useSPS);
+    }
 }
