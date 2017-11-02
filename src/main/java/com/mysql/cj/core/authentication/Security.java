@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,6 +23,7 @@
 
 package com.mysql.cj.core.authentication;
 
+import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -34,10 +35,12 @@ import com.mysql.cj.core.util.StringUtils;
  */
 public class Security {
 
+    private static int CACHING_SHA2_DIGEST_LENGTH = 32;
+
     /**
      * Encrypt/Decrypt function used for password encryption in authentication
      * 
-     * Simple XOR is used here but it is OK as we crypt random strings
+     * Simple XOR is used here but it is OK as we encrypt random strings
      * 
      * @param from
      *            IN Data for encryption
@@ -104,6 +107,57 @@ public class Security {
         }
 
         return toBeXord;
+    }
+
+    /**
+     * Scrambling for caching_sha2_password plugin.
+     * 
+     * <pre>
+     * Scramble = XOR(SHA2(password), SHA2(SHA2(SHA2(password)), Nonce))
+     * </pre>
+     * 
+     * @throws DigestException
+     */
+    public static byte[] scrambleCachingSha2(byte[] password, byte[] seed) throws DigestException {
+        /*
+         * Server does it in 4 steps (see sql/auth/sha2_password_common.cc Generate_scramble::scramble method):
+         * 
+         * SHA2(src) => digest_stage1
+         * SHA2(digest_stage1) => digest_stage2
+         * SHA2(digest_stage2, m_rnd) => scramble_stage1
+         * XOR(digest_stage1, scramble_stage1) => scramble
+         */
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException ex) {
+            throw new AssertionFailedException(ex);
+        }
+
+        byte[] dig1 = new byte[CACHING_SHA2_DIGEST_LENGTH];
+        byte[] dig2 = new byte[CACHING_SHA2_DIGEST_LENGTH];
+        byte[] scramble1 = new byte[CACHING_SHA2_DIGEST_LENGTH];
+
+        // SHA2(src) => digest_stage1
+        md.update(password, 0, password.length);
+        md.digest(dig1, 0, CACHING_SHA2_DIGEST_LENGTH);
+        md.reset();
+
+        // SHA2(digest_stage1) => digest_stage2
+        md.update(dig1, 0, dig1.length);
+        md.digest(dig2, 0, CACHING_SHA2_DIGEST_LENGTH);
+        md.reset();
+
+        // SHA2(digest_stage2, m_rnd) => scramble_stage1
+        md.update(dig2, 0, dig1.length);
+        md.update(seed, 0, seed.length);
+        md.digest(scramble1, 0, CACHING_SHA2_DIGEST_LENGTH);
+
+        // XOR(digest_stage1, scramble_stage1) => scramble
+        byte[] mysqlScrambleBuff = new byte[CACHING_SHA2_DIGEST_LENGTH];
+        xorString(dig1, mysqlScrambleBuff, scramble1, CACHING_SHA2_DIGEST_LENGTH);
+
+        return mysqlScrambleBuff;
     }
 
     /**

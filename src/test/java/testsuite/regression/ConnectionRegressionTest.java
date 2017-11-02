@@ -145,6 +145,7 @@ import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
+import com.mysql.cj.mysqla.authentication.CachingSha2PasswordPlugin;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.mysqla.authentication.MysqlOldPasswordPlugin;
 import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
@@ -9660,6 +9661,498 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             this.stmt.execute("SET @@global.init_connect='" + originalInitConnect + "'");
             this.stmt.execute("SET @@global.autocommit=" + (originalAutoCommit ? 1 : 0));
+        }
+    }
+
+    /**
+     * This test requires two server instances:
+     * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable configured without RSA encryption support
+     * 2) additional server instance pointed by com.mysql.cj.testsuite.url.openssl variable configured with
+     * default-authentication-plugin=sha256_password, RSA encryption enabled and server configuration options
+     * "caching_sha2_password_private_key_path" and "caching_sha2_password_public_key_path" are set to the same values
+     * as "sha256_password_private_key_path" and "sha256_password_public_key_path" respectively.
+     * 
+     * To run this test please add this variable to ant call:
+     * -Dcom.mysql.cj.testsuite.url.openssl=jdbc:mysql://localhost:3307/test?user=root&password=pwd
+     * 
+     * @throws Exception
+     */
+    public void testCachingSha2PasswordPlugin() throws Exception {
+        String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
+        System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        /*
+         * test against server without RSA support
+         */
+        if (versionMeetsMinimum(8, 0, 3)) {
+            if (!pluginIsActive(this.stmt, "caching_sha2_password")) {
+                fail("caching_sha2_password required to run this test");
+            }
+            if (allowsRsa(this.stmt)) {
+                fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
+            }
+
+            try {
+                this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                createUser("'wl11060user'@'%'", "identified WITH caching_sha2_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl11060user'@'%'");
+                createUser("'wl11060nopassword'@'%'", "identified WITH caching_sha2_password");
+                this.stmt.executeUpdate("grant all on *.* to 'wl11060nopassword'@'%'");
+                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'"
+                        : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
+                this.stmt.executeUpdate("flush privileges");
+
+                final Properties propsNoRetrieval = new Properties();
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                final Properties propsNoRetrievalNoPassword = new Properties();
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl11060nopassword");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                final Properties propsAllowRetrieval = new Properties();
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                final Properties propsAllowRetrievalNoPassword = new Properties();
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl11060nopassword");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                // 1. without SSL
+                // SQLException expected due to server doesn't recognize Public Key Retrieval packet
+                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Access denied for user 'wl11060user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsAllowRetrieval);
+                        return null;
+                    }
+                });
+
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 2. with serverRSAPublicKeyFile specified
+                // SQLException expected due to server doesn't recognize RSA encrypted payload
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+
+                this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+
+                assertThrows(SQLException.class, "Access denied for user 'wl11060user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Access denied for user 'wl11060user'.*", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps(propsAllowRetrieval);
+                        return null;
+                    }
+                });
+
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 3. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+
+                this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(null, propsNoRetrieval, "wl11060user", true);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(null, propsAllowRetrieval, "wl11060user", true);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // over SSL with client-default CachingSha2PasswordPlugin
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+
+                this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(null, propsNoRetrieval, "wl11060user", true);
+                assertCurrentUser(null, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(null, propsAllowRetrieval, "wl11060user", true);
+                assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 4. without SSL but now we hit the cached scramble
+                propsNoRetrieval.clear();
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                propsAllowRetrieval.clear();
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                assertCurrentUser(null, propsNoRetrieval, "wl11060user", false); // note that is was failing on step 1
+                assertCurrentUser(null, propsAllowRetrieval, "wl11060user", false); // note that is was failing on step 1
+
+            } finally {
+                this.stmt.executeUpdate("flush privileges");
+                this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            }
+        }
+
+        /*
+         * test against server with RSA support
+         */
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 3)) {
+
+            if (!pluginIsActive(this.sha256Stmt, "caching_sha2_password")) {
+                fail("caching_sha2_password required to run this test");
+            }
+            if (!allowsRsa(this.sha256Stmt)) {
+                fail("RSA encryption must be enabled on " + sha256Url + " to run this test");
+            }
+
+            try {
+                // create user with long password and caching_sha2_password auth
+                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                createUser(this.sha256Stmt, "'wl11060user'@'%'", "identified WITH caching_sha2_password");
+                this.sha256Stmt.executeUpdate("grant all on *.* to 'wl11060user'@'%'");
+                createUser(this.sha256Stmt, "'wl11060nopassword'@'%'", "identified WITH caching_sha2_password");
+                this.sha256Stmt.executeUpdate("grant all on *.* to 'wl11060nopassword'@'%'");
+                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                this.sha256Stmt.executeUpdate(((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
+                        ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt.executeUpdate("flush privileges");
+
+                final Properties propsNoRetrieval = new Properties();
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+
+                final Properties propsNoRetrievalNoPassword = new Properties();
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl11060nopassword");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+
+                final Properties propsAllowRetrieval = new Properties();
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_user, "wl11060user");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+
+                final Properties propsAllowRetrievalNoPassword = new Properties();
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_user, "wl11060nopassword");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_password, "");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+
+                // 1. with client-default MysqlNativePasswordPlugin
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, MysqlNativePasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, MysqlNativePasswordPlugin.class.getName());
+
+                // 1.1. RSA
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval);
+                        return null;
+                    }
+                });
+
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", false);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 1.2. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", true);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 2. with client-default CachingSha2PasswordPlugin
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, CachingSha2PasswordPlugin.class.getName());
+
+                // 2.1. RSA
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", false); // wl11060user scramble is cached now, thus authenticated successfully
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval); // now, with full authentication, it's failed
+                        return null;
+                    }
+                });
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", false);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 2.2. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", false);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 3. with serverRSAPublicKeyFile specified
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
+
+                // 3.1. RSA
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", false);
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", false);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 3.2. Runtime setServerRSAPublicKeyFile must be denied 
+                final Connection c2 = getConnectionWithProps(sha256Url, propsNoRetrieval);
+                assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        ((JdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                                .setValue("src/test/config/ssl-test-certs/mykey.pub");
+                        return null;
+                    }
+                });
+                c2.close();
+
+                // 3.3. Runtime setAllowPublicKeyRetrieval must be denied 
+                final Connection c3 = getConnectionWithProps(sha256Url, propsNoRetrieval);
+                assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        ((JdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
+                        return null;
+                    }
+                });
+                c3.close();
+
+                // 3.4. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
+                assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl11060nopassword", false);
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+                assertCurrentUser(sha256Url, propsAllowRetrieval, "wl11060user", true);
+                assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
+
+                // 4. with wrong serverRSAPublicKeyFile specified
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "unexistant/dummy.pub");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "unexistant/dummy.pub");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "unexistant/dummy.pub");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "unexistant/dummy.pub");
+
+                // 4.1. RSA
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+
+                this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
+
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrievalNoPassword);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrievalNoPassword);
+                        return null;
+                    }
+                });
+
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrievalNoPassword);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrievalNoPassword);
+                        return null;
+                    }
+                });
+
+                // 4.2. over SSL
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "false");
+
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrievalNoPassword);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key 'unexistant/dummy.pub'.*", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrievalNoPassword);
+                        return null;
+                    }
+                });
+
+                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_paranoid, "true");
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsNoRetrievalNoPassword);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrieval);
+                        return null;
+                    }
+                });
+                assertThrows(SQLException.class, "Unable to read public key ", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps(sha256Url, propsAllowRetrievalNoPassword);
+                        return null;
+                    }
+                });
+
+            } finally {
+                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            }
+
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,18 +23,12 @@
 
 package com.mysql.cj.mysqla.authentication;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.security.DigestException;
 import java.util.List;
 
-import com.mysql.cj.api.conf.PropertySet;
-import com.mysql.cj.api.conf.ReadableProperty;
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.api.io.Protocol;
-import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.IntegerDataType;
+import com.mysql.cj.api.mysqla.io.NativeProtocol.StringLengthDataType;
 import com.mysql.cj.api.mysqla.io.NativeProtocol.StringSelfDataType;
 import com.mysql.cj.api.mysqla.io.PacketPayload;
 import com.mysql.cj.core.Messages;
@@ -43,55 +37,38 @@ import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.exceptions.CJException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.UnableToConnectException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.io.ExportControlled;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.mysqla.MysqlaConstants;
 import com.mysql.cj.mysqla.io.Buffer;
 
-public class Sha256PasswordPlugin implements AuthenticationPlugin {
-    public static String PLUGIN_NAME = "sha256_password";
+public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
+    public static String PLUGIN_NAME = "caching_sha2_password";
 
-    protected Protocol protocol;
-    protected String password = null;
-    protected String seed = null;
-    protected boolean publicKeyRequested = false;
-    protected String publicKeyString = null;
-    protected ReadableProperty<String> serverRSAPublicKeyFile = null;
+    public enum AuthStage {
+        FAST_AUTH_SEND_SCRAMBLE, FAST_AUTH_READ_RESULT, FAST_AUTH_COMPLETE, FULL_AUTH;
+    }
+
+    private AuthStage stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
 
     @Override
     public void init(Protocol prot) {
-        this.protocol = prot;
-        this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
-
-        String pkURL = this.serverRSAPublicKeyFile.getValue();
-        if (pkURL != null) {
-            this.publicKeyString = readRSAKey(pkURL, this.protocol.getPropertySet(), this.protocol.getExceptionInterceptor());
-        }
+        super.init(prot);
+        this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
     }
 
+    @Override
     public void destroy() {
-        this.password = null;
-        this.seed = null;
-        this.publicKeyRequested = false;
+        this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
+        super.destroy();
     }
 
+    @Override
     public String getProtocolPluginName() {
         return PLUGIN_NAME;
     }
 
-    public boolean requiresConfidentiality() {
-        return false;
-    }
-
-    public boolean isReusable() {
-        return true;
-    }
-
-    public void setAuthenticationParameters(String user, String password) {
-        this.password = password;
-    }
-
+    @Override
     public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
         toServer.clear();
 
@@ -102,6 +79,28 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
         } else {
             try {
+                if (this.stage == AuthStage.FAST_AUTH_SEND_SCRAMBLE) {
+                    // send a scramble for fast auth
+                    this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
+                    toServer.add(new Buffer(Security.scrambleCachingSha2(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()),
+                            this.seed.getBytes())));
+                    this.stage = AuthStage.FAST_AUTH_READ_RESULT;
+                    return true;
+
+                } else if (this.stage == AuthStage.FAST_AUTH_READ_RESULT) {
+                    int fastAuthResult = fromServer.readBytes(StringLengthDataType.STRING_FIXED, 1)[0];
+                    switch (fastAuthResult) {
+                        case 3:
+                            this.stage = AuthStage.FAST_AUTH_COMPLETE;
+                            return true;
+                        case 4:
+                            this.stage = AuthStage.FULL_AUTH;
+                            break;
+                        default:
+                            throw ExceptionFactory.createException("Unknown server response after fast auth.", this.protocol.getExceptionInterceptor());
+                    }
+                }
+
                 if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
                     PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
@@ -112,7 +111,6 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
 
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
-                    this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
                     PacketPayload bresp = new Buffer(
                             encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
                     toServer.add(bresp);
@@ -136,13 +134,12 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                         this.publicKeyRequested = false;
                     } else {
                         // build and send Public Key Retrieval packet
-                        this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
-                        PacketPayload bresp = new Buffer(new byte[] { 1 });
+                        PacketPayload bresp = new Buffer(new byte[] { 2 }); //was 1 in sha256_password
                         toServer.add(bresp);
                         this.publicKeyRequested = true;
                     }
                 }
-            } catch (CJException e) {
+            } catch (CJException | DigestException e) {
                 throw ExceptionFactory.createException(e.getMessage(), e, this.protocol.getExceptionInterceptor());
             }
         }
@@ -153,46 +150,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         byte[] input = password != null ? StringUtils.getBytesNullTerminated(password, passwordCharacterEncoding) : new byte[] { 0 };
         byte[] mysqlScrambleBuff = new byte[input.length];
         Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
-        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key));
-    }
 
-    protected static String readRSAKey(String pkPath, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
-        String res = null;
-        byte[] fileBuf = new byte[2048];
-
-        BufferedInputStream fileIn = null;
-
-        try {
-            File f = new File(pkPath);
-            String canonicalPath = f.getCanonicalPath();
-            fileIn = new BufferedInputStream(new FileInputStream(canonicalPath));
-
-            int bytesRead = 0;
-
-            StringBuilder sb = new StringBuilder();
-            while ((bytesRead = fileIn.read(fileBuf)) != -1) {
-                sb.append(StringUtils.toAsciiString(fileBuf, 0, bytesRead));
-            }
-            res = sb.toString();
-
-        } catch (IOException ioEx) {
-
-            throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Sha256PasswordPlugin.0", propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue()
-                            ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
-                    exceptionInterceptor);
-
-        } finally {
-            if (fileIn != null) {
-                try {
-                    fileIn.close();
-                } catch (IOException e) {
-                    throw ExceptionFactory.createException(Messages.getString("Sha256PasswordPlugin.1"), e, exceptionInterceptor);
-                }
-            }
-        }
-
-        return res;
+        // TODO in MySQL 8.0.3 the RSA_PKCS1_PADDING is used in caching_sha2_password full auth stage but in 8.0.4 it should be changed to RSA_PKCS1_OAEP_PADDING, the same as in sha256_password
+        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key), "RSA/ECB/PKCS1Padding");
     }
 
 }

@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#11060, Support new SHA-256 authentication system.
+
   - Fix for Bug#87826 (26846249), MYSQL JDBC CONNECTOR/J DATABASEMETADATA NULL PATTERN HANDLING IS NON-COMPLIANT.
 
   - WL#11163, Extract parameter setters, serverPrepare() and serverExecute() to core classes.

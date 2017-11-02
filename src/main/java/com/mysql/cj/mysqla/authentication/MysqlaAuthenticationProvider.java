@@ -260,7 +260,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         // disabled plugins
         String disabledPlugins = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins).getValue();
         if (disabledPlugins != null && !"".equals(disabledPlugins)) {
-            this.disabledAuthenticationPlugins = new ArrayList<String>();
+            this.disabledAuthenticationPlugins = new ArrayList<>();
             List<String> pluginsToDisable = StringUtils.split(disabledPlugins, ",", true);
             Iterator<String> iter = pluginsToDisable.iterator();
             while (iter.hasNext()) {
@@ -268,15 +268,16 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             }
         }
 
-        this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
+        this.authenticationPlugins = new HashMap<>();
         boolean defaultIsFound = false;
 
-        List<AuthenticationPlugin> pluginsToInit = new LinkedList<AuthenticationPlugin>();
+        List<AuthenticationPlugin> pluginsToInit = new LinkedList<>();
 
         // embedded plugins
         pluginsToInit.add(new MysqlNativePasswordPlugin());
         pluginsToInit.add(new MysqlClearPasswordPlugin());
         pluginsToInit.add(new Sha256PasswordPlugin());
+        pluginsToInit.add(new CachingSha2PasswordPlugin());
         pluginsToInit.add(new MysqlOldPasswordPlugin());
 
         // plugins from authenticationPluginClasses connection parameter
@@ -434,7 +435,7 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
         AuthenticationPlugin plugin = null;
         PacketPayload fromServer = null;
-        ArrayList<PacketPayload> toServer = new ArrayList<PacketPayload>();
+        ArrayList<PacketPayload> toServer = new ArrayList<>();
         boolean done = false;
         PacketPayload last_sent = null;
 
