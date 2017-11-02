@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -110,7 +110,6 @@ public class MessagesTest {
         assertEquals("Savepoint 'Test' does not exist", Messages.getString("Connection.22", new Object[] { "Test" }));
         assertEquals("Unsupported transaction isolation level 'Test'", Messages.getString("Connection.25", new Object[] { "Test" }));
 
-        assertEquals("Parameter/Column name pattern can not be NULL or empty.", Messages.getString("DatabaseMetaData.3"));
         assertEquals(
                 "User does not have access to metadata required to determine stored procedure parameter types."
                         + " If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" "

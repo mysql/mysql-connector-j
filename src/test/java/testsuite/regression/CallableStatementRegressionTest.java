@@ -89,7 +89,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     public void testBug3540() throws Exception {
         createProcedure("testBug3540", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
-        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true,nullCatalogMeansCurrent=true");
+        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true");
         try {
             this.rs = con.getMetaData().getProcedureColumns(null, null, "testBug3540%", "%");
 
@@ -119,7 +119,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     public void testBug7026() throws Exception {
         createProcedure("testBug7026", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
-        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true,nullCatalogMeansCurrent=true");
+        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true");
         try {
             //
             // Should be found this time.

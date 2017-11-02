@@ -271,7 +271,6 @@ public class PropertyDefinitions {
     public static final String PNAME_noAccessToProcedureBodies = "noAccessToProcedureBodies";
     public static final String PNAME_noDatetimeStringSync = "noDatetimeStringSync";
     public static final String PNAME_nullCatalogMeansCurrent = "nullCatalogMeansCurrent";
-    public static final String PNAME_nullNamePatternMatchesAll = "nullNamePatternMatchesAll";
     public static final String PNAME_packetDebugBufferSize = "packetDebugBufferSize";
     public static final String PNAME_padCharsWithSpace = "padCharsWithSpace";
     public static final String PNAME_pedantic = "pedantic";
@@ -691,9 +690,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_nullCatalogMeansCurrent, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", CATEGORY_METADATA, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_nullNamePatternMatchesAll, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.nullNamePatternMatchesAll"), "3.1.8", CATEGORY_METADATA, Integer.MIN_VALUE),
-
                 new IntegerPropertyDefinition(PNAME_packetDebugBufferSize, 20, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3", CATEGORY_DEBUGING_PROFILING, 7, 0, Integer.MAX_VALUE),
 
@@ -1062,7 +1058,6 @@ public class PropertyDefinitions {
                 put(PNAME_noAccessToProcedureBodies, "noAccessToProcedureBodies");
                 put(PNAME_noDatetimeStringSync, "noDatetimeStringSync");
                 put(PNAME_nullCatalogMeansCurrent, "nullCatalogMeansCurrent");
-                put(PNAME_nullNamePatternMatchesAll, "nullNamePatternMatchesAll");
                 put(PNAME_packetDebugBufferSize, "packetDebugBufferSize");
                 put(PNAME_padCharsWithSpace, "padCharsWithSpace");
                 put(PNAME_pedantic, "pedantic");

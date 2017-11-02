@@ -2032,4 +2032,14 @@ public class StringUtils {
             bytesOut.write(buf, lastwritten, size - lastwritten);
         }
     }
+
+    /**
+     * Does the string contain wildcard symbols ('%' or '_'). Used in DatabaseMetaData.
+     * 
+     * @param src
+     * @return
+     */
+    public static boolean hasWildcards(String src) {
+        return indexOfIgnoreCase(0, src, "%") > -1 || indexOfIgnoreCase(0, src, "_") > -1;
+    }
 }

@@ -43,7 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import com.mysql.cj.api.MysqlConnection;
@@ -236,7 +235,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         createTable("testBug1673", "(field_1 INT, field_2 INT)");
 
-        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
+        Properties props = new Properties();
+        Connection con = getConnectionWithProps(props);
         try {
 
             DatabaseMetaData dbmd = con.getMetaData();
@@ -955,21 +955,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug9769() throws Exception {
-        // test defaults
-        boolean defaultPatternConfig = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet()
-                .getBooleanReadableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).getValue();
-        assertEquals(false, defaultPatternConfig);
-
-        // test with no nulls allowed
-        assertThrows(SQLException.class, "Procedure name pattern can not be NULL or empty.", new Callable<Void>() {
-            @SuppressWarnings("synthetic-access")
-            public Void call() throws Exception {
-                MetaDataRegressionTest.this.conn.getMetaData().getProcedures(MetaDataRegressionTest.this.conn.getCatalog(), "%", null);
-                return null;
-            }
-        });
-
-        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
+        Properties props = new Properties();
+        Connection con = getConnectionWithProps(props);
         try {
 
             con.getMetaData().getProcedures(con.getCatalog(), "%", null);
@@ -1446,7 +1433,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
         props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         infoSchemConn = getConnectionWithProps(props);
@@ -2091,7 +2077,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "false");
         props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "100");
-        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
         props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
         Connection conn1 = null;
         try {
@@ -2112,7 +2097,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
             props2.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
             props2.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
             props2.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "100");
-            props2.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
             props2.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
             Connection conn2 = null;
@@ -2418,7 +2402,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug41269() throws Exception {
         createProcedure("bug41269", "(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
 
-        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true,nullNamePatternMatchesAll=true");
+        Connection con = getConnectionWithProps("nullCatalogMeansCurrent=true");
         try {
             ResultSet procMD = con.getMetaData().getProcedureColumns(null, null, "bug41269", "%");
             assertTrue(procMD.next());
@@ -2497,7 +2481,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "false");
-            props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
             overrideConn = getConnectionWithProps(props);
 
             DatabaseMetaData dbmd = overrideConn.getMetaData();
@@ -2528,7 +2511,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         createProcedure("sptestBug38367",
                 "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))" + "\nBEGIN\nEND");
 
-        Connection con = getConnectionWithProps("nullNamePatternMatchesAll=true");
+        Properties props = new Properties();
+        Connection con = getConnectionWithProps(props);
         try {
             DatabaseMetaData dbMeta = con.getMetaData();
             this.rs = dbMeta.getProcedureColumns(con.getCatalog(), null, "sptestBug38367", null);
@@ -2660,7 +2644,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
         props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, QueryInterceptorBug61332.class.getName());
-        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
 
         createDatabase("dbbug61332");
         Connection testConn = getConnectionWithProps(props);
@@ -2681,8 +2664,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             String sql = str.get();
             if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
                 sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getPreparedSql();
-                assertTrue("Assereet failed on: " + sql,
-                        StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME LIKE ?") > -1);
+                assertTrue("Assereet failed on: " + sql, StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?") > -1);
             }
             return null;
         }
@@ -3364,7 +3346,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug69298() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
         props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         Connection testConn;
@@ -3624,7 +3605,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug17248345() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll, "true");
         props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
 
         Connection testConn;
@@ -4613,5 +4593,49 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while ((useIS = !useIS) || (inclFuncs = !inclFuncs));
+    }
+
+    /**
+     * Tests fix for BUG#87826 (26846249), MYSQL JDBC CONNECTOR/J DATABASEMETADATA NULL PATTERN HANDLING IS NON-COMPLIANT.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug87826() throws Exception {
+        createTable("testBug87826", "(id INT)");
+        createProcedure("bug87826", "(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent, "true");
+
+        for (String useIS : new String[] { "false", "true" }) {
+            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, useIS);
+            Connection con = null;
+            try {
+                con = getConnectionWithProps(props);
+                DatabaseMetaData md = con.getMetaData();
+
+                ResultSet procMD = md.getProcedureColumns(null, null, "bug87826", null);
+                assertTrue(procMD.next());
+                assertEquals("Int param length", 10, procMD.getInt(9));
+                assertTrue(procMD.next());
+                assertEquals("String param length", 197, procMD.getInt(9));
+                assertFalse(procMD.next());
+
+                // at least one table should exist in current catalog
+                this.rs = md.getTables(null, null, null, null);
+                int cnt = 0;
+                while (this.rs.next()) {
+                    cnt++;
+                }
+                assertTrue(cnt > 0);
+
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
+        }
+
     }
 }

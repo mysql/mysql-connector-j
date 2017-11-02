@@ -700,7 +700,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected final String quotedId;
 
     protected boolean nullCatalogMeansCurrent;
-    protected boolean nullNamePatternMatchesAll;
     protected boolean pedantic;
     protected boolean tinyInt1isBit;
     protected boolean transformedBitIsBoolean;
@@ -710,8 +709,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     private String metadataEncoding;
     private int metadataCollationIndex;
-
-    // We need to provide factory-style methods so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise the class verifier complains...
 
     protected static DatabaseMetaData getInstance(JdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema, ResultSetFactory resultSetFactory)
             throws SQLException {
@@ -735,7 +732,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.resultSetFactory = resultSetFactory;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
         this.nullCatalogMeansCurrent = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).getValue();
-        this.nullNamePatternMatchesAll = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_nullNamePatternMatchesAll).getValue();
         this.pedantic = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pedantic).getValue();
         this.tinyInt1isBit = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
         this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue();
@@ -1201,7 +1197,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             tableList.add(tableName);
         } else {
             try {
-                rs = getTables(catalog, "", "%", new String[] { "TABLE" });
+                rs = getTables(catalog, null, null, new String[] { "TABLE" });
 
                 while (rs.next()) {
                     tableList.add(rs.getString("TABLE_NAME"));
@@ -1417,15 +1413,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             boolean forGetFunctionColumns) throws SQLException {
         java.sql.Statement paramRetrievalStmt = null;
         java.sql.ResultSet paramRetrievalRs = null;
-
-        if (parameterNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                parameterNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
 
         String parameterDef = null;
 
@@ -1691,7 +1678,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         paramName = paramName.substring(1, paramName.length() - 1);
                     }
 
-                    if (StringUtils.wildCompareIgnoreCase(paramName, parameterNamePattern)) {
+                    if (parameterNamePattern == null || StringUtils.wildCompareIgnoreCase(paramName, parameterNamePattern)) {
                         Row row = convertTypeDescriptorToProcedureRow(procNameAsBytes, procCatAsBytes, paramName, isOutParam, isInParam, false, typeDesc,
                                 forGetFunctionColumns, ordinal++);
 
@@ -1873,18 +1860,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected IteratorWithCleanup<String> getCatalogIterator(String catalogSpec) throws SQLException {
         IteratorWithCleanup<String> allCatalogsIter;
         if (catalogSpec != null) {
-            if (!catalogSpec.equals("")) {
-                if (this.pedantic) {
-                    allCatalogsIter = new SingleStringIterator(catalogSpec);
-                } else {
-                    allCatalogsIter = new SingleStringIterator(StringUtils.unQuoteIdentifier(catalogSpec, this.quotedId));
-                }
-            } else {
-                // legacy mode of operation
-                allCatalogsIter = new SingleStringIterator(this.database);
-            }
+            allCatalogsIter = new SingleStringIterator(this.pedantic ? catalogSpec : StringUtils.unQuoteIdentifier(catalogSpec, this.quotedId));
         } else if (this.nullCatalogMeansCurrent) {
-
             allCatalogsIter = new SingleStringIterator(this.database);
         } else {
             allCatalogsIter = new ResultSetIterator(getCatalogs(), 1);
@@ -1983,20 +1960,31 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[6] = new Field("", "PRIVILEGE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[7] = new Field("", "IS_GRANTABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 3);
 
-        String grantQuery = "SELECT c.host, c.db, t.grantor, c.user, c.table_name, c.column_name, c.column_priv "
-                + "FROM mysql.columns_priv c, mysql.tables_priv t WHERE c.host = t.host AND c.db = t.db AND "
-                + "c.table_name = t.table_name AND c.db LIKE ? AND c.table_name = ? AND c.column_name LIKE ?";
+        StringBuilder grantQueryBuf = new StringBuilder("SELECT c.host, c.db, t.grantor, c.user, c.table_name, c.column_name, c.column_priv");
+        grantQueryBuf.append(" FROM mysql.columns_priv c, mysql.tables_priv t");
+        grantQueryBuf.append(" WHERE c.host = t.host AND c.db = t.db AND c.table_name = t.table_name");
+        if (catalog != null) {
+            grantQueryBuf.append(" AND c.db LIKE ?");
+        }
+        grantQueryBuf.append(" AND c.table_name = ?");
+        if (columnNamePattern != null) {
+            grantQueryBuf.append(" AND c.column_name LIKE ?");
+        }
 
         PreparedStatement pStmt = null;
         ResultSet results = null;
         ArrayList<Row> grantRows = new ArrayList<>();
 
         try {
-            pStmt = prepareMetaDataSafeStatement(grantQuery);
-
-            pStmt.setString(1, (catalog != null) && (catalog.length() != 0) ? catalog : "%");
-            pStmt.setString(2, table);
-            pStmt.setString(3, columnNamePattern);
+            pStmt = prepareMetaDataSafeStatement(grantQueryBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId++, table);
+            if (columnNamePattern != null) {
+                pStmt.setString(nextId, columnNamePattern);
+            }
 
             results = pStmt.executeQuery();
 
@@ -2067,15 +2055,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern, String columnNamePattern)
             throws SQLException {
 
-        if (columnNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                columnNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         final String colPattern = columnNamePattern;
 
         Field[] fields = createColumnsFields();
@@ -2091,48 +2070,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                     ArrayList<String> tableNameList = new ArrayList<>();
 
-                    if (tableNamePattern == null) {
-                        // Select from all tables
-                        java.sql.ResultSet tables = null;
+                    java.sql.ResultSet tables = null;
 
-                        try {
-                            tables = getTables(catalogStr, schemaPattern, "%", new String[0]);
+                    try {
+                        tables = getTables(catalogStr, schemaPattern, tableNamePattern, new String[0]);
 
-                            while (tables.next()) {
-                                String tableNameFromList = tables.getString("TABLE_NAME");
-                                tableNameList.add(tableNameFromList);
-                            }
-                        } finally {
-                            if (tables != null) {
-                                try {
-                                    tables.close();
-                                } catch (Exception sqlEx) {
-                                    AssertionFailedException.shouldNotHappen(sqlEx);
-                                }
-
-                                tables = null;
-                            }
+                        while (tables.next()) {
+                            String tableNameFromList = tables.getString("TABLE_NAME");
+                            tableNameList.add(tableNameFromList);
                         }
-                    } else {
-                        java.sql.ResultSet tables = null;
-
-                        try {
-                            tables = getTables(catalogStr, schemaPattern, tableNamePattern, new String[0]);
-
-                            while (tables.next()) {
-                                String tableNameFromList = tables.getString("TABLE_NAME");
-                                tableNameList.add(tableNameFromList);
+                    } finally {
+                        if (tables != null) {
+                            try {
+                                tables.close();
+                            } catch (Exception sqlEx) {
+                                AssertionFailedException.shouldNotHappen(sqlEx);
                             }
-                        } finally {
-                            if (tables != null) {
-                                try {
-                                    tables.close();
-                                } catch (SQLException sqlEx) {
-                                    AssertionFailedException.shouldNotHappen(sqlEx);
-                                }
 
-                                tables = null;
-                            }
+                            tables = null;
                         }
                     }
 
@@ -2145,8 +2100,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             queryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" FROM ");
                             queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
-                            queryBuf.append(" LIKE ");
-                            queryBuf.append(StringUtils.quoteIdentifier(colPattern, "'", true));
+                            if (colPattern != null) {
+                                queryBuf.append(" LIKE ");
+                                queryBuf.append(StringUtils.quoteIdentifier(colPattern, "'", true));
+                            }
 
                             // Return correct ordinals if column name pattern is not '%'
                             // Currently, MySQL doesn't show enough data to do this, so we do it the 'hard' way...Once _SYSTEM tables are in, this should be
@@ -2154,7 +2111,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             boolean fixUpOrdinalsRequired = false;
                             Map<String, Integer> ordinalFixUpMap = null;
 
-                            if (!colPattern.equals("%")) {
+                            if (colPattern != null && !colPattern.equals("%")) {
                                 fixUpOrdinalsRequired = true;
 
                                 StringBuilder fullColumnQueryBuf = new StringBuilder("SHOW FULL COLUMNS FROM ");
@@ -2939,7 +2896,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public int getJDBCMinorVersion() throws SQLException {
-        return 1;
+        return 2;
     }
 
     /**
@@ -3408,15 +3365,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, String procedureNamePattern,
             final boolean returnProcedures, final boolean returnFunctions) throws SQLException {
-        if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.nullNamePatternMatchesAll) {
-                procedureNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         final ArrayList<Row> procedureRows = new ArrayList<>();
 
         final String procNamePattern = procedureNamePattern;
@@ -3433,13 +3381,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 StringBuilder selectFromMySQLProcSQL = new StringBuilder();
 
-                selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE ");
+                selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE");
                 if (returnProcedures && !returnFunctions) {
-                    selectFromMySQLProcSQL.append("type = 'PROCEDURE' AND ");
+                    selectFromMySQLProcSQL.append(" type = 'PROCEDURE' AND ");
                 } else if (!returnProcedures && returnFunctions) {
-                    selectFromMySQLProcSQL.append("type = 'FUNCTION' AND ");
+                    selectFromMySQLProcSQL.append(" type = 'FUNCTION' AND ");
                 }
-                selectFromMySQLProcSQL.append("name LIKE ? AND db <=> ? ORDER BY name, type");
+
+                selectFromMySQLProcSQL.append(" db <=> ?");
+
+                if (procNamePattern != null && procNamePattern.length() > 0) {
+                    selectFromMySQLProcSQL.append(" AND name LIKE ?");
+                }
+
+                selectFromMySQLProcSQL.append(" ORDER BY name, type");
 
                 java.sql.PreparedStatement proceduresStmt = prepareMetaDataSafeStatement(selectFromMySQLProcSQL.toString());
 
@@ -3451,14 +3406,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
                             db = db.toLowerCase();
                         }
-                        proceduresStmt.setString(2, db);
+                        proceduresStmt.setString(1, db);
                     } else {
-                        proceduresStmt.setNull(2, MysqlType.VARCHAR.getJdbcType());
+                        proceduresStmt.setNull(1, MysqlType.VARCHAR.getJdbcType());
                     }
 
                     int nameIndex = 1;
 
-                    proceduresStmt.setString(1, procNamePattern);
+                    if (procNamePattern != null && procNamePattern.length() > 0) {
+                        proceduresStmt.setString(2, procNamePattern);
+                    }
 
                     try {
                         proceduresRs = proceduresStmt.executeQuery();
@@ -3480,8 +3437,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (returnFunctions) {
                             proceduresStmt.close();
 
-                            proceduresStmt = prepareMetaDataSafeStatement("SHOW FUNCTION STATUS LIKE ?");
-                            proceduresStmt.setString(1, procNamePattern);
+                            String sql = procNamePattern != null && procNamePattern.length() > 0 ? "SHOW FUNCTION STATUS LIKE ?" : "SHOW FUNCTION STATUS";
+                            proceduresStmt = prepareMetaDataSafeStatement(sql);
+                            if (procNamePattern != null && procNamePattern.length() > 0) {
+                                proceduresStmt.setString(1, procNamePattern);
+                            }
                             proceduresRs = proceduresStmt.executeQuery();
 
                             convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
@@ -3491,8 +3451,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         if (returnProcedures) {
                             proceduresStmt.close();
 
-                            proceduresStmt = prepareMetaDataSafeStatement("SHOW PROCEDURE STATUS LIKE ?");
-                            proceduresStmt.setString(1, procNamePattern);
+                            String sql = procNamePattern != null && procNamePattern.length() > 0 ? "SHOW PROCEDURE STATUS LIKE ?" : "SHOW PROCEDURE STATUS";
+                            proceduresStmt = prepareMetaDataSafeStatement(sql);
+                            if (procNamePattern != null && procNamePattern.length() > 0) {
+                                proceduresStmt.setString(1, procNamePattern);
+                            }
                             proceduresRs = proceduresStmt.executeQuery();
 
                             convertToJdbcProcedureList(false, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
@@ -3721,15 +3684,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 
-        if (tableNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                tableNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         Field[] fields = new Field[7];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[1] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 1);
@@ -3739,17 +3693,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "PRIVILEGE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[6] = new Field("", "IS_GRANTABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 3);
 
-        String grantQuery = "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv WHERE db LIKE ? AND table_name LIKE ?";
+        StringBuilder grantQueryBuf = new StringBuilder("SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv");
+
+        StringBuilder conditionBuf = new StringBuilder();
+        if (catalog != null) {
+            conditionBuf.append(" db LIKE ?");
+        }
+        if (tableNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" table_name LIKE ?");
+        }
+        if (conditionBuf.length() > 0) {
+            grantQueryBuf.append(" WHERE");
+            grantQueryBuf.append(conditionBuf);
+        }
 
         ResultSet results = null;
         ArrayList<Row> grantRows = new ArrayList<>();
         PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(grantQuery);
-
-            pStmt.setString(1, ((catalog != null) && (catalog.length() != 0)) ? catalog : "%");
-            pStmt.setString(2, tableNamePattern);
+            pStmt = prepareMetaDataSafeStatement(grantQueryBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            if (tableNamePattern != null) {
+                pStmt.setString(nextId, tableNamePattern);
+            }
 
             results = pStmt.executeQuery();
 
@@ -3785,7 +3758,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         java.sql.ResultSet columnResults = null;
 
                         try {
-                            columnResults = getColumns(catalog, schemaPattern, table, "%");
+                            columnResults = getColumns(catalog, schemaPattern, table, null);
 
                             while (columnResults.next()) {
                                 byte[][] tuple = new byte[8][];
@@ -3835,38 +3808,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, final String[] types) throws SQLException {
 
-        if (tableNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                tableNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         final SortedMap<TableMetaDataKey, Row> sortedRows = new TreeMap<>();
         final ArrayList<Row> tuples = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
-        final String tableNamePat;
-        String tmpCat = "";
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
+        }
 
-        if ((catalog == null) || (catalog.length() == 0)) {
-            if (this.nullCatalogMeansCurrent) {
-                tmpCat = this.database;
+        if (tableNamePattern != null) {
+            List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, catalog, this.quotedId,
+                    this.session.getServerSession().isNoBackslashEscapesSet());
+            //There *should* be 2 rows, if any.
+            if (parseList.size() == 2) {
+                tableNamePattern = parseList.get(1);
             }
-        } else {
-            tmpCat = catalog;
         }
 
-        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
-        //There *should* be 2 rows, if any.
-        if (parseList.size() == 2) {
-            tableNamePat = parseList.get(1);
-        } else {
-            tableNamePat = tableNamePattern;
-        }
+        final String tableNamePat = tableNamePattern;
 
         try {
             new IterateBlock<String>(getCatalogIterator(catalog)) {
@@ -3880,9 +3840,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     try {
 
                         try {
-                            results = stmt.executeQuery("SHOW FULL TABLES FROM "
-                                    + StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic) + " LIKE "
-                                    + StringUtils.quoteIdentifier(tableNamePat, "'", true));
+                            StringBuilder sqlBuf = new StringBuilder("SHOW FULL TABLES FROM ");
+                            sqlBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                            if (tableNamePat != null) {
+                                sqlBuf.append(" LIKE ");
+                                sqlBuf.append(StringUtils.quoteIdentifier(tableNamePat, "'", true));
+                            }
+
+                            results = stmt.executeQuery(sqlBuf.toString());
                         } catch (SQLException sqlEx) {
                             if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                                 throw sqlEx;

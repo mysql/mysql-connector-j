@@ -62,31 +62,32 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
-        if (columnNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                columnNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
 
-        String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,"
-                + "COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE "
-                + "TABLE_SCHEMA LIKE ? AND TABLE_NAME =? AND COLUMN_NAME LIKE ? ORDER BY COLUMN_NAME, PRIVILEGE_TYPE";
+        StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,");
+        sqlBuf.append(" COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE");
+        if (catalog != null) {
+            sqlBuf.append(" TABLE_SCHEMA LIKE ? AND");
+        }
+
+        sqlBuf.append(" TABLE_NAME =?");
+        if (columnNamePattern != null) {
+            sqlBuf.append(" AND COLUMN_NAME LIKE ?");
+        }
+        sqlBuf.append(" ORDER BY COLUMN_NAME, PRIVILEGE_TYPE");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
-            pStmt.setString(3, columnNamePattern);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            pStmt.setString(nextId++, catalog);
+            pStmt.setString(nextId++, table);
+            if (columnNamePattern != null) {
+                pStmt.setString(nextId, columnNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition()
@@ -109,15 +110,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getColumns(String catalog, String schemaPattern, String tableName, String columnNamePattern) throws SQLException {
-        if (columnNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                columnNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.9"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
-
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
@@ -219,48 +211,49 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append("IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, ");
         sqlBuf.append("IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN ");
 
-        sqlBuf.append("FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+        sqlBuf.append("FROM INFORMATION_SCHEMA.COLUMNS");
 
-        final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
+        StringBuilder conditionBuf = new StringBuilder();
 
         if (catalog != null) {
-            if ((operatingOnInformationSchema)
-                    || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) && (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
-                sqlBuf.append("TABLE_SCHEMA = ? AND ");
-            } else {
-                sqlBuf.append("TABLE_SCHEMA LIKE ? AND ");
-            }
-
-        } else {
-            sqlBuf.append("TABLE_SCHEMA LIKE ? AND ");
+            conditionBuf.append(
+                    "information_schema".equalsIgnoreCase(catalog) || "performance_schema".equalsIgnoreCase(catalog) || !StringUtils.hasWildcards(catalog)
+                            ? " TABLE_SCHEMA = ?" : " TABLE_SCHEMA LIKE ?");
         }
-
         if (tableName != null) {
-            if ((StringUtils.indexOfIgnoreCase(0, tableName, "%") == -1) && (StringUtils.indexOfIgnoreCase(0, tableName, "_") == -1)) {
-                sqlBuf.append("TABLE_NAME = ? AND ");
-            } else {
-                sqlBuf.append("TABLE_NAME LIKE ? AND ");
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
             }
-
-        } else {
-            sqlBuf.append("TABLE_NAME LIKE ? AND ");
+            conditionBuf.append(StringUtils.hasWildcards(tableName) ? " TABLE_NAME LIKE ?" : " TABLE_NAME = ?");
+        }
+        if (columnNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(StringUtils.hasWildcards(columnNamePattern) ? " COLUMN_NAME LIKE ?" : " COLUMN_NAME = ?");
         }
 
-        if ((StringUtils.indexOfIgnoreCase(0, columnNamePattern, "%") == -1) && (StringUtils.indexOfIgnoreCase(0, columnNamePattern, "_") == -1)) {
-            sqlBuf.append("COLUMN_NAME = ? ");
-        } else {
-            sqlBuf.append("COLUMN_NAME LIKE ? ");
+        if (conditionBuf.length() > 0) {
+            sqlBuf.append(" WHERE");
         }
-        sqlBuf.append("ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
+        sqlBuf.append(conditionBuf);
+        sqlBuf.append(" ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, tableName);
-            pStmt.setString(3, columnNamePattern);
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            if (tableName != null) {
+                pStmt.setString(nextId++, tableName);
+            }
+            if (columnNamePattern != null) {
+                pStmt.setString(nextId, columnNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
@@ -289,26 +282,44 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             foreignCatalog = this.database;
         }
 
-        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN " + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
-                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) " + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
-                + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
-                + "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
+        StringBuilder sqlBuf = new StringBuilder(
+                "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,");
+        sqlBuf.append(" A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,");
+        sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+        sqlBuf.append(generateUpdateRuleClause());
+        sqlBuf.append(" AS UPDATE_RULE,");
+        sqlBuf.append(generateDeleteRuleClause());
+        sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,");
+        sqlBuf.append(" (SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA");
+        sqlBuf.append(" AND TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME, ");
+        sqlBuf.append(importedKeyNotDeferrable);
+        sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A");
+        sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ");
+        sqlBuf.append(generateOptionalRefContraintsJoin());
+        sqlBuf.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'");
+        if (primaryCatalog != null) {
+            sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA LIKE ?");
+        }
+        sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?");
+        if (foreignCatalog != null) {
+            sqlBuf.append(" AND A.TABLE_SCHEMA LIKE ?");
+        }
+        sqlBuf.append(" AND A.TABLE_NAME=?");
+        sqlBuf.append(" ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, primaryCatalog != null ? primaryCatalog : "%");
-            pStmt.setString(2, primaryTable);
-            pStmt.setString(3, foreignCatalog != null ? foreignCatalog : "%");
-            pStmt.setString(4, foreignTable);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            if (primaryCatalog != null) {
+                pStmt.setString(nextId++, primaryCatalog);
+            }
+            pStmt.setString(nextId++, primaryTable);
+            if (foreignCatalog != null) {
+                pStmt.setString(nextId++, foreignCatalog);
+            }
+            pStmt.setString(nextId, foreignTable);
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition().setFields(createFkMetadataFields());
@@ -336,23 +347,37 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         //CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION
 
-        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, "
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME,"
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN " + "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
-                + "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) " + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
-                + "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? " + "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
+        StringBuilder sqlBuf = new StringBuilder(
+                "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,");
+        sqlBuf.append(" A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME,");
+        sqlBuf.append(" A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+        sqlBuf.append(generateUpdateRuleClause());
+        sqlBuf.append(" AS UPDATE_RULE,");
+        sqlBuf.append(generateDeleteRuleClause());
+        sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME, (SELECT CONSTRAINT_NAME FROM");
+        sqlBuf.append(" INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND");
+        sqlBuf.append(" TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+        sqlBuf.append(importedKeyNotDeferrable);
+        sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A");
+        sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ");
+        sqlBuf.append(generateOptionalRefContraintsJoin());
+        sqlBuf.append(" WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'");
+        if (catalog != null) {
+            sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA LIKE ?");
+        }
+        sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?");
+        sqlBuf.append(" ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
 
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
@@ -397,23 +422,36 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             catalog = this.database;
         }
 
-        String sql = "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
-                + "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, "
-                + "A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ," + generateUpdateRuleClause() + " AS UPDATE_RULE,"
-                + generateDeleteRuleClause() + " AS DELETE_RULE," + "A.CONSTRAINT_NAME AS FK_NAME," + "(SELECT CONSTRAINT_NAME FROM"
-                + " INFORMATION_SCHEMA.TABLE_CONSTRAINTS" + " WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND" + " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                + " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)" + " AS PK_NAME," + importedKeyNotDeferrable + " AS DEFERRABILITY " + "FROM "
-                + "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A " + "JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING " + "(CONSTRAINT_NAME, TABLE_NAME) "
-                + generateOptionalRefContraintsJoin() + "WHERE " + "B.CONSTRAINT_TYPE = 'FOREIGN KEY' " + "AND A.TABLE_SCHEMA LIKE ? " + "AND A.TABLE_NAME=? "
-                + "AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL " + "ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION";
+        StringBuilder sqlBuf = new StringBuilder("SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM,");
+        sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT,");
+        sqlBuf.append(" NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+        sqlBuf.append(generateUpdateRuleClause());
+        sqlBuf.append(" AS UPDATE_RULE,");
+        sqlBuf.append(generateDeleteRuleClause());
+        sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME, (SELECT CONSTRAINT_NAME FROM");
+        sqlBuf.append(" INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND");
+        sqlBuf.append(" TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+        sqlBuf.append(importedKeyNotDeferrable);
+        sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A");
+        sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (CONSTRAINT_NAME, TABLE_NAME) ");
+        sqlBuf.append(generateOptionalRefContraintsJoin());
+        sqlBuf.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'");
+        if (catalog != null) {
+            sqlBuf.append(" AND A.TABLE_SCHEMA LIKE ?");
+        }
+        sqlBuf.append(" AND A.TABLE_NAME=?");
+        sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL");
+        sqlBuf.append(" ORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
@@ -429,28 +467,35 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
+        }
+
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE,");
-        sqlBuf.append("TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME," + tableIndexOther + " AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,");
-        sqlBuf.append("COLLATION AS ASC_OR_DESC, CARDINALITY, NULL AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE ");
-        sqlBuf.append("TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?");
+        sqlBuf.append("TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME,");
+        sqlBuf.append(tableIndexOther);
+        sqlBuf.append(" AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,");
+        sqlBuf.append("COLLATION AS ASC_OR_DESC, CARDINALITY, NULL AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE");
+        if (catalog != null) {
+            sqlBuf.append(" TABLE_SCHEMA LIKE ? AND");
+        }
+        sqlBuf.append(" TABLE_NAME LIKE ?");
 
         if (unique) {
             sqlBuf.append(" AND NON_UNIQUE=0 ");
         }
-
         sqlBuf.append("ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            if (catalog == null && this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
 
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
-
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
 
@@ -476,17 +521,23 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
-        String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
-                + "COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
-                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX";
+        StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,");
+        sqlBuf.append(" COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE");
+        if (catalog != null) {
+            sqlBuf.append(" TABLE_SCHEMA LIKE ? AND");
+        }
+        sqlBuf.append(" TABLE_NAME LIKE ?");
+        sqlBuf.append(" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition()
@@ -508,38 +559,54 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
 
-        if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.nullNamePatternMatchesAll) {
-                procedureNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
-        String db = null;
+        StringBuilder sqlBuf = new StringBuilder(
+                "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1,");
+        sqlBuf.append(" NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
+        sqlBuf.append(procedureNoResult);
+        sqlBuf.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ");
+        sqlBuf.append(procedureReturnsResult);
+        sqlBuf.append(" ELSE ");
+        sqlBuf.append(procedureResultUnknown);
+        sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES");
 
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                db = this.database;
+        StringBuilder conditionBuf = new StringBuilder();
+        if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+            conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
+        }
+        if (catalog != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
             }
-        } else {
-            db = catalog;
+            conditionBuf.append(" ROUTINE_SCHEMA LIKE ?");
+        }
+        if (procedureNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" ROUTINE_NAME LIKE ?");
         }
 
-        String sql = "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, "
-                + "NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN " + procedureNoResult
-                + " WHEN ROUTINE_TYPE='FUNCTION' THEN " + procedureReturnsResult + " ELSE " + procedureResultUnknown
-                + " END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES WHERE " + getRoutineTypeConditionForGetProcedures()
-                + "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE";
+        if (conditionBuf.length() > 0) {
+            sqlBuf.append(" WHERE");
+            sqlBuf.append(conditionBuf);
+        }
+        sqlBuf.append(" ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, db != null ? db : "%");
-            pStmt.setString(2, procedureNamePattern);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            if (procedureNamePattern != null) {
+                pStmt.setString(nextId, procedureNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition().setFields(createFieldMetadataForGetProcedures());
@@ -552,36 +619,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
     }
 
-    /**
-     * Returns a condition to be injected in the query that returns metadata for procedures only. Overrides
-     * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedures. When not empty must end with "AND ".
-     * 
-     * @return String with the condition to be injected.
-     */
-    protected String getRoutineTypeConditionForGetProcedures() {
-        return this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue() ? ""
-                : "ROUTINE_TYPE = 'PROCEDURE' AND ";
-    }
-
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
-        if ((procedureNamePattern == null) || (procedureNamePattern.length() == 0)) {
-            if (this.nullNamePatternMatchesAll) {
-                procedureNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
 
-        String db = null;
-
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                db = this.database;
-            }
-        } else {
-            db = catalog;
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         // Here's what we get from MySQL ...
@@ -599,11 +641,20 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // NUMERIC_PRECISION                            10 
         // NUMERIC_SCALE                                0 
         // DTD_IDENTIFIER                               int(11)
-
-        StringBuilder sqlBuf = new StringBuilder("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`, "
-                + "SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN " + procedureColumnIn
-                + " WHEN PARAMETER_MODE = 'OUT' THEN " + procedureColumnOut + " WHEN PARAMETER_MODE = 'INOUT' THEN " + procedureColumnInOut
-                + " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn + " ELSE " + procedureColumnUnknown + " END AS `COLUMN_TYPE`, ");
+        StringBuilder sqlBuf = new StringBuilder("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`, ");
+        sqlBuf.append(" SPECIFIC_NAME AS `PROCEDURE_NAME`,");
+        sqlBuf.append(" IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`,");
+        sqlBuf.append(" CASE WHEN PARAMETER_MODE = 'IN' THEN ");
+        sqlBuf.append(procedureColumnIn);
+        sqlBuf.append(" WHEN PARAMETER_MODE = 'OUT' THEN ");
+        sqlBuf.append(procedureColumnOut);
+        sqlBuf.append(" WHEN PARAMETER_MODE = 'INOUT' THEN ");
+        sqlBuf.append(procedureColumnInOut);
+        sqlBuf.append(" WHEN ORDINAL_POSITION = 0 THEN ");
+        sqlBuf.append(procedureColumnReturn);
+        sqlBuf.append(" ELSE ");
+        sqlBuf.append(procedureColumnUnknown);
+        sqlBuf.append(" END AS `COLUMN_TYPE`, ");
 
         //DATA_TYPE
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER");
@@ -611,35 +662,75 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS `DATA_TYPE`, ");
 
         // TYPE_NAME
-        sqlBuf.append(
-                "UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN CONCAT(DATA_TYPE, ' UNSIGNED') "
-                        + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+        sqlBuf.append(" UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0");
+        sqlBuf.append(" THEN CONCAT(DATA_TYPE, ' UNSIGNED') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION</B> int => precision
-        sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
+        sqlBuf.append(" NUMERIC_PRECISION AS `PRECISION`,");
+
         // LENGTH</B> int => length in bytes of data
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
-                + "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
-                + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19");
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH,");
 
         // SCALE</B> short => scale
         sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
         // RADIX</B> short => radix
         sqlBuf.append("10 AS RADIX,");
-        sqlBuf.append(procedureNullable + " AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, "
-                + "NULL AS `SQL_DATETIME_SUB`, CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, "
-                + "SPECIFIC_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE " + getRoutineTypeConditionForGetProcedureColumns()
-                + "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
-                + "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_TYPE, ORDINAL_POSITION");
+
+        sqlBuf.append(procedureNullable);
+        sqlBuf.append(" AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, NULL AS `SQL_DATETIME_SUB`,");
+        sqlBuf.append(" CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME");
+        sqlBuf.append(" FROM INFORMATION_SCHEMA.PARAMETERS");
+
+        StringBuilder conditionBuf = new StringBuilder();
+        if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+            conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
+        }
+        if (catalog != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" SPECIFIC_SCHEMA LIKE ?");
+        }
+        if (procedureNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" SPECIFIC_NAME LIKE ?");
+        }
+        if (columnNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL)");
+        }
+
+        if (conditionBuf.length() > 0) {
+            sqlBuf.append(" WHERE");
+            sqlBuf.append(conditionBuf);
+        }
+        sqlBuf.append(" ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_TYPE, ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            pStmt.setString(1, db != null ? db : "%");
-            pStmt.setString(2, procedureNamePattern);
-            pStmt.setString(3, columnNamePattern);
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            if (procedureNamePattern != null) {
+                pStmt.setString(nextId++, procedureNamePattern);
+            }
+            if (columnNamePattern != null) {
+                pStmt.setString(nextId, columnNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition().setFields(createProcedureColumnsFields());
@@ -652,109 +743,63 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
     }
 
-    /**
-     * Returns a condition to be injected in the query that returns metadata for procedure columns only. Overrides
-     * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedureColumns. When not empty must end with
-     * "AND ".
-     * 
-     * @return String with the condition to be injected.
-     */
-    protected String getRoutineTypeConditionForGetProcedureColumns() {
-        return this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue() ? ""
-                : "ROUTINE_TYPE = 'PROCEDURE' AND ";
-    }
-
     @Override
     public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                catalog = this.database;
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
-        if (tableNamePattern == null) {
-            if (this.nullNamePatternMatchesAll) {
-                tableNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.13"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+        if (tableNamePattern != null) {
+            List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, catalog, this.quotedId,
+                    this.session.getServerSession().isNoBackslashEscapesSet());
+            //There *should* be 2 rows, if any.
+            if (parseList.size() == 2) {
+                tableNamePattern = parseList.get(1);
             }
-        }
-
-        final String tableNamePat;
-        String tmpCat = "";
-
-        if ((catalog == null) || (catalog.length() == 0)) {
-            if (this.nullCatalogMeansCurrent) {
-                tmpCat = this.database;
-            }
-        } else {
-            tmpCat = catalog;
-        }
-
-        List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, this.quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
-        //There *should* be 2 rows, if any.
-        if (parseList.size() == 2) {
-            tableNamePat = parseList.get(1);
-        } else {
-            tableNamePat = tableNamePattern;
         }
 
         java.sql.PreparedStatement pStmt = null;
 
-        String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
-                + "CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' "
-                + "ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
-                + "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, "
-                + "NULL AS REF_GENERATION FROM INFORMATION_SCHEMA.TABLES WHERE ";
+        StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, ");
+        sqlBuf.append("CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' ");
+        sqlBuf.append("ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, ");
+        sqlBuf.append("TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, ");
+        sqlBuf.append("NULL AS REF_GENERATION FROM INFORMATION_SCHEMA.TABLES WHERE");
 
-        final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
         if (catalog != null) {
-            if ((operatingOnInformationSchema)
-                    || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) && (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
-                sql += "TABLE_SCHEMA = ? ";
-            } else {
-                sql += "TABLE_SCHEMA LIKE ? ";
-            }
-
-        } else {
-            sql += "TABLE_SCHEMA LIKE ? ";
+            sqlBuf.append("information_schema".equalsIgnoreCase(catalog) || "performance_schema".equalsIgnoreCase(catalog) || !StringUtils.hasWildcards(catalog)
+                    ? " TABLE_SCHEMA = ?" : " TABLE_SCHEMA LIKE ?");
         }
 
-        if (tableNamePat != null) {
-            if ((StringUtils.indexOfIgnoreCase(0, tableNamePat, "%") == -1) && (StringUtils.indexOfIgnoreCase(0, tableNamePat, "_") == -1)) {
-                sql += "AND TABLE_NAME = ? ";
-            } else {
-                sql += "AND TABLE_NAME LIKE ? ";
+        if (tableNamePattern != null) {
+            if (catalog != null) {
+                sqlBuf.append(" AND");
             }
-
-        } else {
-            sql += "AND TABLE_NAME LIKE ? ";
+            sqlBuf.append(StringUtils.hasWildcards(tableNamePattern) ? " TABLE_NAME LIKE ?" : " TABLE_NAME = ?");
         }
-        sql = sql + "HAVING TABLE_TYPE IN (?,?,?,?,?) ";
-        sql = sql + "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
+        if (types != null && types.length > 0) {
+            sqlBuf.append(" HAVING TABLE_TYPE IN (?,?,?,?,?)");
+        }
+        sqlBuf.append(" ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, tableNamePat);
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog != null ? catalog : "%");
+            }
+            if (tableNamePattern != null) {
+                pStmt.setString(nextId++, tableNamePattern);
+            }
 
-            // This overloading of IN (...) allows us to cache this prepared statement
-            if (types == null || types.length == 0) {
-                TableType[] tableTypes = TableType.values();
+            if (types != null && types.length > 0) {
                 for (int i = 0; i < 5; i++) {
-                    pStmt.setString(3 + i, tableTypes[i].getName());
+                    pStmt.setNull(nextId + i, MysqlType.VARCHAR.getJdbcType());
                 }
-            } else {
-                for (int i = 0; i < 5; i++) {
-                    pStmt.setNull(3 + i, MysqlType.VARCHAR.getJdbcType());
-                }
-
-                int idx = 3;
                 for (int i = 0; i < types.length; i++) {
                     TableType tableType = TableType.getTableTypeEqualTo(types[i]);
                     if (tableType != TableType.UNKNOWN) {
-                        pStmt.setString(idx++, tableType.getName());
+                        pStmt.setString(nextId++, tableType.getName());
                     }
                 }
             }
@@ -784,26 +829,34 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
-
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
-        sqlBuf.append(" AS DATA_TYPE, ");
-
-        sqlBuf.append("UPPER(COLUMN_TYPE) AS TYPE_NAME, ");
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 "
-                + "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
-                + "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " + Integer.MAX_VALUE + " THEN "
-                + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
-        sqlBuf.append(maxBufferSize + " AS BUFFER_LENGTH,NUMERIC_SCALE AS DECIMAL_DIGITS, " + Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo)
-                + " AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS "
-                + "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
+        sqlBuf.append(" AS DATA_TYPE, UPPER(COLUMN_TYPE) AS TYPE_NAME,");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8");
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19");
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
+        sqlBuf.append(maxBufferSize);
+        sqlBuf.append(" AS BUFFER_LENGTH,NUMERIC_SCALE AS DECIMAL_DIGITS, ");
+        sqlBuf.append(Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo));
+        sqlBuf.append(" AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE");
+        if (catalog != null) {
+            sqlBuf.append(" TABLE_SCHEMA LIKE ? AND");
+        }
+        sqlBuf.append(" TABLE_NAME LIKE ?");
+        sqlBuf.append(" AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
-
-            pStmt.setString(1, catalog != null ? catalog : "%");
-            pStmt.setString(2, table);
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            pStmt.setString(nextId, table);
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition()
@@ -826,23 +879,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-        if ((functionNamePattern == null) || (functionNamePattern.length() == 0)) {
-            if (this.nullNamePatternMatchesAll) {
-                functionNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
-        }
 
-        String db = null;
-
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                db = this.database;
-            }
-        } else {
-            db = catalog;
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
         // FUNCTION_CAT
@@ -889,27 +928,52 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // CHAR_OCTET_LENGTH *
         // ORDINAL_POSITION *
         // IS_NULLABLE *
+        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_NULLABLE));
+        sqlBuf.append(" AS `NULLABLE`,  NULL AS `REMARKS`, CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`,  ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`,");
         // SPECIFIC_NAME *
-        sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`,  NULL AS `REMARKS`, "
-                + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`,  ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME "
-                + "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
-                + "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
-                + "AND ROUTINE_TYPE='FUNCTION' ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+        sqlBuf.append(" SPECIFIC_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE");
+
+        StringBuilder conditionBuf = new StringBuilder();
+        if (catalog != null) {
+            conditionBuf.append(" SPECIFIC_SCHEMA LIKE ?");
+        }
+
+        if (functionNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" SPECIFIC_NAME LIKE ?");
+        }
+
+        if (columnNamePattern != null) {
+            if (conditionBuf.length() > 0) {
+                conditionBuf.append(" AND");
+            }
+            conditionBuf.append(" (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL)");
+        }
+
+        if (conditionBuf.length() > 0) {
+            conditionBuf.append(" AND");
+        }
+        conditionBuf.append(" ROUTINE_TYPE='FUNCTION'");
+
+        sqlBuf.append(conditionBuf);
+        sqlBuf.append(" ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
             pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
-
-            if (db != null) {
-                pStmt.setString(1, db);
-            } else {
-                pStmt.setString(1, "%");
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
             }
-
-            pStmt.setString(1, db != null ? db : "%");
-            pStmt.setString(2, functionNamePattern);
-            pStmt.setString(3, columnNamePattern);
+            if (functionNamePattern != null) {
+                pStmt.setString(nextId++, functionNamePattern);
+            }
+            if (columnNamePattern != null) {
+                pStmt.setString(nextId, columnNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition().setFields(createFunctionColumnsFields());
@@ -958,37 +1022,35 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     @Override
     public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
 
-        if ((functionNamePattern == null) || (functionNamePattern.length() == 0)) {
-            if (this.nullNamePatternMatchesAll) {
-                functionNamePattern = "%";
-            } else {
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.22"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-            }
+        if (catalog == null && this.nullCatalogMeansCurrent) {
+            catalog = this.database;
         }
 
-        String db = null;
-
-        if (catalog == null) {
-            if (this.nullCatalogMeansCurrent) {
-                db = this.database;
-            }
-        } else {
-            db = catalog;
+        StringBuilder sqlBuf = new StringBuilder(
+                "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ");
+        sqlBuf.append(getFunctionNoTableConstant());
+        sqlBuf.append(" AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES");
+        sqlBuf.append(" WHERE ROUTINE_TYPE LIKE 'FUNCTION'");
+        if (catalog != null) {
+            sqlBuf.append(" AND ROUTINE_SCHEMA LIKE ?");
+        }
+        if (functionNamePattern != null) {
+            sqlBuf.append(" AND ROUTINE_NAME LIKE ?");
         }
 
-        String sql = "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, "
-                + getFunctionNoTableConstant() + " AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES "
-                + "WHERE ROUTINE_TYPE LIKE 'FUNCTION' AND ROUTINE_SCHEMA LIKE ? AND "
-                + "ROUTINE_NAME LIKE ? ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME";
+        sqlBuf.append(" ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME");
 
         java.sql.PreparedStatement pStmt = null;
 
         try {
-            pStmt = prepareMetaDataSafeStatement(sql);
-
-            pStmt.setString(1, db != null ? db : "%");
-            pStmt.setString(2, functionNamePattern);
+            pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+            int nextId = 1;
+            if (catalog != null) {
+                pStmt.setString(nextId++, catalog);
+            }
+            if (functionNamePattern != null) {
+                pStmt.setString(nextId, functionNamePattern);
+            }
 
             ResultSet rs = executeMetadataQuery(pStmt);
             ((com.mysql.cj.api.jdbc.result.ResultSetInternalMethods) rs).getColumnDefinition()
