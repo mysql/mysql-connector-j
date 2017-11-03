@@ -190,18 +190,20 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * names soon will, so current catalog is a (hidden) component of the name.
      */
     static class CompoundCacheKey {
-        String componentOne;
+        final String componentOne;
 
-        String componentTwo;
+        final String componentTwo;
 
-        int hashCode;
+        final int hashCode;
 
         CompoundCacheKey(String partOne, String partTwo) {
             this.componentOne = partOne;
             this.componentTwo = partTwo;
 
-            // Handle first component (in most cases, currentCatalog being NULL....
-            this.hashCode = (((this.componentOne != null) ? this.componentOne : "") + this.componentTwo).hashCode();
+            int hc = 17;
+            hc = 31 * hc + (this.componentOne != null ? this.componentOne.hashCode() : 0);
+            hc = 31 * hc + (this.componentTwo != null ? this.componentTwo.hashCode() : 0);
+            this.hashCode = hc;
         }
 
         /*
@@ -440,7 +442,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * synchronization and at the same time save memory (each charset converter
      * takes approx 65K of static data).
      */
-    private Map<String, Object> charsetConverterMap = new HashMap<String, Object>(CharsetMapping.getNumberOfCharsetsConfigured());
+    private final Map<String, Object> charsetConverterMap = new HashMap<String, Object>(CharsetMapping.getNumberOfCharsetsConfigured());
 
     /** The point in time when this connection was created */
     private long connectionCreationTimeMillis = 0;
@@ -554,7 +556,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<Statement>();
 
-    private LRUCache parsedCallableStatementCache;
+    private LRUCache<CompoundCacheKey, CallableStatement.CallableStatementParamInfo> parsedCallableStatementCache;
 
     private boolean parserKnowsUnicode = false;
 
@@ -581,7 +583,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     private boolean readOnly = false;
 
     /** Cache of ResultSet metadata */
-    protected LRUCache resultSetMetadataCache;
+    protected LRUCache<String, CachedResultSetMetaData> resultSetMetadataCache;
 
     /** The timezone of the server */
     private TimeZone serverTimezoneTZ = null;
@@ -614,8 +616,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     private boolean useServerPreparedStmts = false;
 
-    private LRUCache serverSideStatementCheckCache;
-    private LRUCache serverSideStatementCache;
+    private LRUCache<String, Boolean> serverSideStatementCheckCache;
+    private LRUCache<CompoundCacheKey, ServerPreparedStatement> serverSideStatementCache;
     private Calendar sessionCalendar;
 
     private Calendar utcCalendar;
@@ -1009,7 +1011,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         if (getCachePreparedStatements()) {
             synchronized (this.serverSideStatementCheckCache) {
-                Boolean flag = (Boolean) this.serverSideStatementCheckCache.get(sql);
+                Boolean flag = this.serverSideStatementCheckCache.get(sql);
 
                 if (flag != null) {
                     return flag.booleanValue();
@@ -2312,14 +2314,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             if (getUseServerPreparedStmts()) {
-                this.serverSideStatementCheckCache = new LRUCache(cacheSize);
+                this.serverSideStatementCheckCache = new LRUCache<String, Boolean>(cacheSize);
 
-                this.serverSideStatementCache = new LRUCache(cacheSize) {
+                this.serverSideStatementCache = new LRUCache<CompoundCacheKey, ServerPreparedStatement>(cacheSize) {
 
                     private static final long serialVersionUID = 7692318650375988114L;
 
                     @Override
-                    protected boolean removeEldestEntry(java.util.Map.Entry<Object, Object> eldest) {
+                    protected boolean removeEldestEntry(java.util.Map.Entry<CompoundCacheKey, ServerPreparedStatement> eldest) {
                         if (this.maxElements <= 1) {
                             return false;
                         }
@@ -2327,7 +2329,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         boolean removeIt = super.removeEldestEntry(eldest);
 
                         if (removeIt) {
-                            ServerPreparedStatement ps = (ServerPreparedStatement) eldest.getValue();
+                            ServerPreparedStatement ps = eldest.getValue();
                             ps.isCached = false;
                             ps.setClosed(false);
 
@@ -3163,7 +3165,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
 
         if (getCacheCallableStatements()) {
-            this.parsedCallableStatementCache = new LRUCache(getCallableStatementCacheSize());
+            this.parsedCallableStatementCache = new LRUCache<CompoundCacheKey, CallableStatement.CallableStatementParamInfo>(getCallableStatementCacheSize());
         }
 
         if (getAllowMultiQueries()) {
@@ -3171,7 +3173,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         }
 
         if (getCacheResultSetMetadata()) {
-            this.resultSetMetadataCache = new LRUCache(getMetadataCacheSize());
+            this.resultSetMetadataCache = new LRUCache<String, CachedResultSetMetaData>(getMetadataCacheSize());
         }
 
         if (getSocksProxyHost() != null) {
@@ -3973,8 +3975,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 synchronized (this.parsedCallableStatementCache) {
                     CompoundCacheKey key = new CompoundCacheKey(getCatalog(), sql);
 
-                    CallableStatement.CallableStatementParamInfo cachedParamInfo = (CallableStatement.CallableStatementParamInfo) this.parsedCallableStatementCache
-                            .get(key);
+                    CallableStatement.CallableStatementParamInfo cachedParamInfo = this.parsedCallableStatementCache.get(key);
 
                     if (cachedParamInfo != null) {
                         cStmt = CallableStatement.getInstance(getMultiHostSafeProxy(), cachedParamInfo);
@@ -4086,8 +4087,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             if (this.useServerPreparedStmts && canServerPrepare) {
                 if (this.getCachePreparedStatements()) {
                     synchronized (this.serverSideStatementCache) {
-                        pStmt = (com.mysql.jdbc.ServerPreparedStatement) this.serverSideStatementCache
-                                .remove(makePreparedStatementCacheKey(this.database, sql));
+                        pStmt = this.serverSideStatementCache.remove(new CompoundCacheKey(this.database, sql));
 
                         if (pStmt != null) {
                             ((com.mysql.jdbc.ServerPreparedStatement) pStmt).setClosed(false);
@@ -4277,18 +4277,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     }
 
-    private String makePreparedStatementCacheKey(String catalog, String query) {
-        StringBuilder key = new StringBuilder();
-        key.append("/*").append(catalog).append("*/");
-        key.append(query);
-        return key.toString();
-    }
-
     public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    Object oldServerPrepStmt = this.serverSideStatementCache.put(makePreparedStatementCacheKey(pstmt.currentCatalog, pstmt.originalSql), pstmt);
+                    Object oldServerPrepStmt = this.serverSideStatementCache.put(new CompoundCacheKey(pstmt.currentCatalog, pstmt.originalSql), pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
@@ -4303,7 +4296,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         synchronized (getConnectionMutex()) {
             if (getCachePreparedStatements() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache.remove(makePreparedStatementCacheKey(pstmt.currentCatalog, pstmt.originalSql));
+                    this.serverSideStatementCache.remove(new CompoundCacheKey(pstmt.currentCatalog, pstmt.originalSql));
                 }
             }
         }
@@ -5233,7 +5226,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         if (this.resultSetMetadataCache != null) {
             synchronized (this.resultSetMetadataCache) {
-                return (CachedResultSetMetaData) this.resultSetMetadataCache.get(sql);
+                return this.resultSetMetadataCache.get(sql);
             }
         }
 

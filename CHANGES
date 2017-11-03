@@ -3,6 +3,9 @@
 
 Version 5.1.45
 
+  - Fix for Bug#88021 (26939943), High GC pressure when driver configured with serversideprepared statements.
+    Thanks to Johnathan Crawford for his contribution.
+
   - Fix for Bug#26724085, CHARSET MAPPING TO BE UPDATED FOR MYSQL 8.0.3.
 
   - Fix for Bug#26794652, TEST FAILING DUE TO BINARY LOGGING ENABLED BY DEFAULT IN MYSQL 8.0.3.
