@@ -52,6 +52,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
             this.ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
             this.ipv6Addrs.add("::1"); // IPv6 loopback
 
+            this.session.sql("DROP USER IF EXISTS '" + this.testUser + "'@'%'").execute();
             this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED WITH mysql_native_password BY '" + this.testUser + "'").execute();
             this.session.sql("GRANT ALL ON *.* TO '" + this.testUser + "'@'%'").execute();
         }
