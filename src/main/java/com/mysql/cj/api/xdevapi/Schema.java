@@ -25,8 +25,6 @@ package com.mysql.cj.api.xdevapi;
 
 import java.util.List;
 
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
-
 /**
  * A client-side representation of a database schema. Provides access to the schema contents.
  */
@@ -140,66 +138,10 @@ public interface Schema extends DatabaseObject {
     Collection createCollection(String name, boolean reuseExistingObject);
 
     /**
-     * Create a new table.
-     * 
-     * @param name
-     *            table name
-     * @return {@link CreateTableSplitStatement}
-     */
-    CreateTableSplitStatement createTable(String name);
-
-    /**
-     * Create a new table if it does not already exist on the server.
-     * 
-     * @param name
-     *            table name
-     * @param reuseExistingObject
-     *            true if allowed to reuse
-     * @return {@link CreateTableSplitStatement}
-     */
-    CreateTableSplitStatement createTable(String name, boolean reuseExistingObject);
-
-    /**
-     * Returns an instance of ViewCreate to handle the creation of a View.
-     * 
-     * @param name
-     *            view name
-     * @param replace
-     *            true if allowed to replace
-     * @return {@link ViewCreate}
-     */
-    ViewCreate createView(String name, boolean replace);
-
-    /**
-     * Returns an instance of ViewUpdate to handle updating an existing View.
-     * 
-     * @param name
-     *            view name
-     * @return {@link ViewUpdate}
-     */
-    ViewUpdate alterView(String name);
-
-    /**
      * Drop the collection from this schema.
      * 
      * @param collectionName
      *            name of collection to drop
      */
     void dropCollection(String collectionName);
-
-    /**
-     * Drop the table from this schema.
-     * 
-     * @param tableName
-     *            name of table to drop
-     */
-    void dropTable(String tableName);
-
-    /**
-     * Returns an instance of a ViewDrop to handle dropping an existing View.
-     * 
-     * @param name
-     *            view name
-     */
-    void dropView(String name);
 }

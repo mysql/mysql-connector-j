@@ -39,9 +39,6 @@ import javax.security.sasl.SaslException;
 
 import com.google.protobuf.ByteString;
 import com.mysql.cj.api.x.io.XpluginStatementCommand;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.authentication.Security;
 import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
@@ -49,15 +46,12 @@ import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Column;
-import com.mysql.cj.x.protobuf.MysqlxCrud.CreateView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Delete;
-import com.mysql.cj.x.protobuf.MysqlxCrud.DropView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Limit;
-import com.mysql.cj.x.protobuf.MysqlxCrud.ModifyView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
@@ -380,131 +374,5 @@ public class MessageBuilder {
             // TODO: better exception, should introduce a new exception class for auth?
             throw new RuntimeException(ex);
         }
-    }
-
-    public CreateView buildCreateView(String schemaName, String collectionName, boolean replaceExisting, List<String> columns, ViewAlgorithm algorithm,
-            ViewSqlSecurity security, String definer, FindParams findParams, ViewCheckOption checkOpt) {
-
-        CreateView.Builder builder = CreateView.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        if (definer != null) {
-            builder.setDefiner(definer);
-        }
-
-        if (algorithm != null) {
-            switch (algorithm) {
-                case UNDEFINED:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.UNDEFINED);
-                    break;
-                case MERGE:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.MERGE);
-                    break;
-                case TEMPTABLE:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.TEMPTABLE);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (security != null) {
-            switch (security) {
-                case DEFINER:
-                    builder.setSecurity(com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.DEFINER);
-                    break;
-                case INVOKER:
-                    builder.setSecurity(com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.INVOKER);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (checkOpt != null) {
-            switch (checkOpt) {
-                case CASCADED:
-                    builder.setCheck(com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.CASCADED);
-                    break;
-                case LOCAL:
-                    builder.setCheck(com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.LOCAL);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        builder.addAllColumn(columns);
-
-        builder.setStmt(buildFind(findParams));
-
-        if (replaceExisting) {
-            builder.setReplaceExisting(replaceExisting);
-        }
-
-        return builder.build();
-    }
-
-    public ModifyView buildModifyView(String schemaName, String collectionName, List<String> columns, ViewAlgorithm algorithm, ViewSqlSecurity security,
-            String definer, FindParams findParams, ViewCheckOption checkOpt) {
-
-        ModifyView.Builder builder = ModifyView.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        if (definer != null) {
-            builder.setDefiner(definer);
-        }
-
-        if (algorithm != null) {
-            switch (algorithm) {
-                case UNDEFINED:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.UNDEFINED);
-                    break;
-                case MERGE:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.MERGE);
-                    break;
-                case TEMPTABLE:
-                    builder.setAlgorithm(com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.TEMPTABLE);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (security != null) {
-            switch (security) {
-                case DEFINER:
-                    builder.setSecurity(com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.DEFINER);
-                    break;
-                case INVOKER:
-                    builder.setSecurity(com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.INVOKER);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (checkOpt != null) {
-            switch (checkOpt) {
-                case CASCADED:
-                    builder.setCheck(com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.CASCADED);
-                    break;
-                case LOCAL:
-                    builder.setCheck(com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.LOCAL);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        builder.addAllColumn(columns);
-
-        builder.setStmt(buildFind(findParams));
-
-        return builder.build();
-    }
-
-    public DropView buildDropView(String schemaName, String collectionName, boolean ifExists) {
-        DropView.Builder builder = DropView.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
-        if (ifExists) {
-            builder.setIfExists(ifExists);
-        }
-        return builder.build();
     }
 }

@@ -59,9 +59,6 @@ import com.mysql.cj.api.xdevapi.DatabaseObject;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.RowResult;
 import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
@@ -363,26 +360,6 @@ public class MysqlxSession implements Session {
         stmt.append(tableName.replaceAll("'", "\\'"));
         stmt.append("'");
         return 1 == queryForLong(stmt.toString());
-    }
-
-    public void createView(String schemaName, String collectionName, boolean replaceExisting, List<String> columns, ViewAlgorithm algorithm,
-            ViewSqlSecurity security, String definer, FindParams findParams, ViewCheckOption checkOpt) {
-        newCommand();
-        this.protocol.sendCreateView(schemaName, collectionName, replaceExisting, columns, algorithm, security, definer, findParams, checkOpt);
-        this.protocol.readOk();
-    }
-
-    public void modifyView(String schemaName, String collectionName, List<String> columns, ViewAlgorithm algorithm, ViewSqlSecurity security, String definer,
-            FindParams findParams, ViewCheckOption checkOpt) {
-        newCommand();
-        this.protocol.sendModifyView(schemaName, collectionName, columns, algorithm, security, definer, findParams, checkOpt);
-        this.protocol.readOk();
-    }
-
-    public void dropView(String schemaName, String collectionName, boolean ifExists) {
-        newCommand();
-        this.protocol.sendDropView(schemaName, collectionName, ifExists);
-        this.protocol.readOk();
     }
 
     /**

@@ -55,9 +55,6 @@ import com.mysql.cj.api.x.io.MessageWriter;
 import com.mysql.cj.api.x.io.ResultListener;
 import com.mysql.cj.api.x.io.XpluginStatementCommand;
 import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewAlgorithm;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewCheckOption;
-import com.mysql.cj.api.xdevapi.ViewDDL.ViewSqlSecurity;
 import com.mysql.cj.core.CharsetMapping;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.MysqlType;
@@ -808,18 +805,4 @@ public class XProtocol implements Protocol {
         this.writer.setMaxAllowedPacket(maxAllowedPacket);
     }
 
-    public void sendCreateView(String schemaName, String collectionName, boolean replaceExisting, List<String> columns, ViewAlgorithm algorithm,
-            ViewSqlSecurity security, String definer, FindParams findParams, ViewCheckOption checkOpt) {
-        this.writer.write(
-                this.msgBuilder.buildCreateView(schemaName, collectionName, replaceExisting, columns, algorithm, security, definer, findParams, checkOpt));
-    }
-
-    public void sendModifyView(String schemaName, String collectionName, List<String> columns, ViewAlgorithm algorithm, ViewSqlSecurity security,
-            String definer, FindParams findParams, ViewCheckOption checkOpt) {
-        this.writer.write(this.msgBuilder.buildModifyView(schemaName, collectionName, columns, algorithm, security, definer, findParams, checkOpt));
-    }
-
-    public void sendDropView(String schemaName, String collectionName, boolean ifExists) {
-        this.writer.write(this.msgBuilder.buildDropView(schemaName, collectionName, ifExists));
-    }
 }

@@ -27,13 +27,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.CreateTableStatement.CreateTableSplitStatement;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.ViewCreate;
-import com.mysql.cj.api.xdevapi.ViewUpdate;
-import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.DatabaseObjectDescription;
@@ -136,16 +132,6 @@ public class SchemaImpl implements Schema {
     }
 
     @Override
-    public CreateTableSplitStatement createTable(String tableName) {
-        return new CreateTableStatementImpl(this.mysqlxSession, this, tableName);
-    }
-
-    @Override
-    public CreateTableSplitStatement createTable(String tableName, boolean reuseExistingObject) {
-        return new CreateTableStatementImpl(this.mysqlxSession, this, tableName, reuseExistingObject);
-    }
-
-    @Override
     public boolean equals(Object other) {
         return other != null && other.getClass() == SchemaImpl.class && ((SchemaImpl) other).session == this.session
                 && ((SchemaImpl) other).mysqlxSession == this.mysqlxSession && this.name.equals(((SchemaImpl) other).name);
@@ -166,16 +152,6 @@ public class SchemaImpl implements Schema {
     }
 
     @Override
-    public ViewCreate createView(String viewName, boolean replace) {
-        return new CreateViewStatement(this.mysqlxSession, this, viewName, replace);
-    }
-
-    @Override
-    public ViewUpdate alterView(String viewName) {
-        return new UpdateViewStatement(this.mysqlxSession, this, viewName);
-    }
-
-    @Override
     public void dropCollection(String collectionName) {
         try {
             this.mysqlxSession.dropCollection(this.name, collectionName);
@@ -186,29 +162,5 @@ public class SchemaImpl implements Schema {
                 throw e;
             }
         }
-    }
-
-    @Override
-    public void dropTable(String tableName) {
-        if (tableName == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "tableName" }));
-        }
-        try {
-            this.mysqlxSession.dropCollection(this.name, tableName);
-        } catch (XDevAPIError e) {
-            // If specified object does not exist, dropX() methods succeed (no error is reported)
-            // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView
-            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
-                throw e;
-            }
-        }
-    }
-
-    @Override
-    public void dropView(String viewName) {
-        if (viewName == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "viewName" }));
-        }
-        this.mysqlxSession.dropView(this.name, viewName, true);
     }
 }
