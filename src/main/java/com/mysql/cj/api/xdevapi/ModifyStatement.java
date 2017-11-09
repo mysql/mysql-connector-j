@@ -23,6 +23,8 @@
 
 package com.mysql.cj.api.xdevapi;
 
+import com.mysql.cj.xdevapi.DbDoc;
+
 /**
  * A statement representing a set of document modifications.
  */
@@ -85,6 +87,24 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      */
     // TODO determine status of this feature
     ModifyStatement merge(String document);
+
+    /**
+     * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
+     * 
+     * @param document
+     *            patch object
+     * @return
+     */
+    ModifyStatement patch(DbDoc document);
+
+    /**
+     * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
+     * 
+     * @param document
+     *            patch object
+     * @return
+     */
+    ModifyStatement patch(String document);
 
     /**
      * Insert a value into the specified array.

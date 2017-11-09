@@ -4220,6 +4220,14 @@ public final class MysqlxCrud {
        * </pre>
        */
       ARRAY_APPEND(6, 7),
+      /**
+       * <code>MERGE_PATCH = 8;</code>
+       *
+       * <pre>
+       * merge JSON object value with the provided patch expression
+       * </pre>
+       */
+      MERGE_PATCH(7, 8),
       ;
 
       /**
@@ -4278,6 +4286,14 @@ public final class MysqlxCrud {
        * </pre>
        */
       public static final int ARRAY_APPEND_VALUE = 7;
+      /**
+       * <code>MERGE_PATCH = 8;</code>
+       *
+       * <pre>
+       * merge JSON object value with the provided patch expression
+       * </pre>
+       */
+      public static final int MERGE_PATCH_VALUE = 8;
 
 
       public final int getNumber() { return value; }
@@ -4291,6 +4307,7 @@ public final class MysqlxCrud {
           case 5: return ITEM_MERGE;
           case 6: return ARRAY_INSERT;
           case 7: return ARRAY_APPEND;
+          case 8: return MERGE_PATCH;
           default: return null;
         }
       }
@@ -17790,79 +17807,81 @@ public final class MysqlxCrud {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\021mysqlx_crud.proto\022\013Mysqlx.Crud\032\021mysqlx" +
-      "_expr.proto\032\026mysqlx_datatypes.proto\"[\n\006C" +
-      "olumn\022\014\n\004name\030\001 \001(\t\022\r\n\005alias\030\002 \001(\t\0224\n\rdo" +
-      "cument_path\030\003 \003(\0132\035.Mysqlx.Expr.Document" +
-      "PathItem\">\n\nProjection\022!\n\006source\030\001 \002(\0132\021" +
-      ".Mysqlx.Expr.Expr\022\r\n\005alias\030\002 \001(\t\"*\n\nColl" +
-      "ection\022\014\n\004name\030\001 \002(\t\022\016\n\006schema\030\002 \001(\t\"*\n\005" +
-      "Limit\022\021\n\trow_count\030\001 \002(\004\022\016\n\006offset\030\002 \001(\004" +
-      "\"~\n\005Order\022\037\n\004expr\030\001 \002(\0132\021.Mysqlx.Expr.Ex" +
-      "pr\0224\n\tdirection\030\002 \001(\0162\034.Mysqlx.Crud.Orde",
-      "r.Direction:\003ASC\"\036\n\tDirection\022\007\n\003ASC\020\001\022\010" +
-      "\n\004DESC\020\002\"\232\002\n\017UpdateOperation\022-\n\006source\030\001" +
-      " \002(\0132\035.Mysqlx.Expr.ColumnIdentifier\022:\n\to" +
-      "peration\030\002 \002(\0162\'.Mysqlx.Crud.UpdateOpera" +
-      "tion.UpdateType\022 \n\005value\030\003 \001(\0132\021.Mysqlx." +
-      "Expr.Expr\"z\n\nUpdateType\022\007\n\003SET\020\001\022\017\n\013ITEM" +
-      "_REMOVE\020\002\022\014\n\010ITEM_SET\020\003\022\020\n\014ITEM_REPLACE\020" +
-      "\004\022\016\n\nITEM_MERGE\020\005\022\020\n\014ARRAY_INSERT\020\006\022\020\n\014A" +
-      "RRAY_APPEND\020\007\"\316\003\n\004Find\022+\n\ncollection\030\002 \002" +
-      "(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mode",
-      "l\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022+\n\nproje" +
-      "ction\030\004 \003(\0132\027.Mysqlx.Crud.Projection\022#\n\010" +
-      "criteria\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004arg" +
-      "s\030\013 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005lim" +
-      "it\030\006 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 " +
-      "\003(\0132\022.Mysqlx.Crud.Order\022#\n\010grouping\030\010 \003(" +
-      "\0132\021.Mysqlx.Expr.Expr\022,\n\021grouping_criteri" +
-      "a\030\t \001(\0132\021.Mysqlx.Expr.Expr\022*\n\007locking\030\014 " +
-      "\001(\0162\031.Mysqlx.Crud.Find.RowLock\".\n\007RowLoc" +
-      "k\022\017\n\013SHARED_LOCK\020\001\022\022\n\016EXCLUSIVE_LOCK\020\002\"\242",
-      "\002\n\006Insert\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.C" +
-      "rud.Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mys" +
-      "qlx.Crud.DataModel\022\'\n\nprojection\030\003 \003(\0132\023" +
-      ".Mysqlx.Crud.Column\022)\n\003row\030\004 \003(\0132\034.Mysql" +
-      "x.Crud.Insert.TypedRow\022&\n\004args\030\005 \003(\0132\030.M" +
-      "ysqlx.Datatypes.Scalar\022\025\n\006upsert\030\006 \001(\010:\005" +
-      "false\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021.Mysql" +
-      "x.Expr.Expr\"\245\002\n\006Update\022+\n\ncollection\030\002 \002" +
-      "(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_mode" +
-      "l\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010crite",
-      "ria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004args\030\010 \003" +
-      "(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005limit\030\005 " +
-      "\001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003(\0132\022" +
-      ".Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(\0132\034." +
-      "Mysqlx.Crud.UpdateOperation\"\364\001\n\006Delete\022+" +
-      "\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud.Collect" +
-      "ion\022*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.Da" +
-      "taModel\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Expr." +
-      "Expr\022&\n\004args\030\006 \003(\0132\030.Mysqlx.Datatypes.Sc" +
-      "alar\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022",
-      "!\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.Order\"\274\002\n\nC" +
-      "reateView\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.C" +
-      "rud.Collection\022\017\n\007definer\030\002 \001(\t\0228\n\talgor" +
-      "ithm\030\003 \001(\0162\032.Mysqlx.Crud.ViewAlgorithm:\t" +
-      "UNDEFINED\0227\n\010security\030\004 \001(\0162\034.Mysqlx.Cru" +
-      "d.ViewSqlSecurity:\007DEFINER\022+\n\005check\030\005 \001(" +
-      "\0162\034.Mysqlx.Crud.ViewCheckOption\022\016\n\006colum" +
-      "n\030\006 \003(\t\022\037\n\004stmt\030\007 \002(\0132\021.Mysqlx.Crud.Find" +
-      "\022\037\n\020replace_existing\030\010 \001(\010:\005false\"\207\002\n\nMo" +
-      "difyView\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Cr",
-      "ud.Collection\022\017\n\007definer\030\002 \001(\t\022-\n\talgori" +
-      "thm\030\003 \001(\0162\032.Mysqlx.Crud.ViewAlgorithm\022.\n" +
-      "\010security\030\004 \001(\0162\034.Mysqlx.Crud.ViewSqlSec" +
-      "urity\022+\n\005check\030\005 \001(\0162\034.Mysqlx.Crud.ViewC" +
-      "heckOption\022\016\n\006column\030\006 \003(\t\022\037\n\004stmt\030\007 \001(\013" +
-      "2\021.Mysqlx.Crud.Find\"Q\n\010DropView\022+\n\ncolle" +
-      "ction\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022\030\n\t" +
-      "if_exists\030\002 \001(\010:\005false*$\n\tDataModel\022\014\n\010D" +
-      "OCUMENT\020\001\022\t\n\005TABLE\020\002*8\n\rViewAlgorithm\022\r\n" +
-      "\tUNDEFINED\020\001\022\t\n\005MERGE\020\002\022\r\n\tTEMPTABLE\020\003*+",
-      "\n\017ViewSqlSecurity\022\013\n\007INVOKER\020\001\022\013\n\007DEFINE" +
-      "R\020\002**\n\017ViewCheckOption\022\t\n\005LOCAL\020\001\022\014\n\010CAS" +
-      "CADED\020\002B\031\n\027com.mysql.cj.x.protobuf"
+      "\n\021mysqlx_crud.proto\022\013Mysqlx.Crud\032\014mysqlx" +
+      ".proto\032\021mysqlx_expr.proto\032\026mysqlx_dataty" +
+      "pes.proto\"[\n\006Column\022\014\n\004name\030\001 \001(\t\022\r\n\005ali" +
+      "as\030\002 \001(\t\0224\n\rdocument_path\030\003 \003(\0132\035.Mysqlx" +
+      ".Expr.DocumentPathItem\">\n\nProjection\022!\n\006" +
+      "source\030\001 \002(\0132\021.Mysqlx.Expr.Expr\022\r\n\005alias" +
+      "\030\002 \001(\t\"*\n\nCollection\022\014\n\004name\030\001 \002(\t\022\016\n\006sc" +
+      "hema\030\002 \001(\t\"*\n\005Limit\022\021\n\trow_count\030\001 \002(\004\022\016" +
+      "\n\006offset\030\002 \001(\004\"~\n\005Order\022\037\n\004expr\030\001 \002(\0132\021." +
+      "Mysqlx.Expr.Expr\0224\n\tdirection\030\002 \001(\0162\034.My",
+      "sqlx.Crud.Order.Direction:\003ASC\"\036\n\tDirect" +
+      "ion\022\007\n\003ASC\020\001\022\010\n\004DESC\020\002\"\254\002\n\017UpdateOperati" +
+      "on\022-\n\006source\030\001 \002(\0132\035.Mysqlx.Expr.ColumnI" +
+      "dentifier\022:\n\toperation\030\002 \002(\0162\'.Mysqlx.Cr" +
+      "ud.UpdateOperation.UpdateType\022 \n\005value\030\003" +
+      " \001(\0132\021.Mysqlx.Expr.Expr\"\213\001\n\nUpdateType\022\007" +
+      "\n\003SET\020\001\022\017\n\013ITEM_REMOVE\020\002\022\014\n\010ITEM_SET\020\003\022\020" +
+      "\n\014ITEM_REPLACE\020\004\022\016\n\nITEM_MERGE\020\005\022\020\n\014ARRA" +
+      "Y_INSERT\020\006\022\020\n\014ARRAY_APPEND\020\007\022\017\n\013MERGE_PA" +
+      "TCH\020\010\"\324\003\n\004Find\022+\n\ncollection\030\002 \002(\0132\027.Mys",
+      "qlx.Crud.Collection\022*\n\ndata_model\030\003 \001(\0162" +
+      "\026.Mysqlx.Crud.DataModel\022+\n\nprojection\030\004 " +
+      "\003(\0132\027.Mysqlx.Crud.Projection\022#\n\010criteria" +
+      "\030\005 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004args\030\013 \003(\0132" +
+      "\030.Mysqlx.Datatypes.Scalar\022!\n\005limit\030\006 \001(\013" +
+      "2\022.Mysqlx.Crud.Limit\022!\n\005order\030\007 \003(\0132\022.My" +
+      "sqlx.Crud.Order\022#\n\010grouping\030\010 \003(\0132\021.Mysq" +
+      "lx.Expr.Expr\022,\n\021grouping_criteria\030\t \001(\0132" +
+      "\021.Mysqlx.Expr.Expr\022*\n\007locking\030\014 \001(\0162\031.My" +
+      "sqlx.Crud.Find.RowLock\".\n\007RowLock\022\017\n\013SHA",
+      "RED_LOCK\020\001\022\022\n\016EXCLUSIVE_LOCK\020\002:\004\210\3520\021\"\250\002\n" +
+      "\006Insert\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Cru" +
+      "d.Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mysql" +
+      "x.Crud.DataModel\022\'\n\nprojection\030\003 \003(\0132\023.M" +
+      "ysqlx.Crud.Column\022)\n\003row\030\004 \003(\0132\034.Mysqlx." +
+      "Crud.Insert.TypedRow\022&\n\004args\030\005 \003(\0132\030.Mys" +
+      "qlx.Datatypes.Scalar\022\025\n\006upsert\030\006 \001(\010:\005fa" +
+      "lse\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021.Mysqlx." +
+      "Expr.Expr:\004\210\3520\022\"\253\002\n\006Update\022+\n\ncollection" +
+      "\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_",
+      "model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010c" +
+      "riteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004args" +
+      "\030\010 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005limi" +
+      "t\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003" +
+      "(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(" +
+      "\0132\034.Mysqlx.Crud.UpdateOperation:\004\210\3520\023\"\372\001" +
+      "\n\006Delete\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Cr" +
+      "ud.Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mysq" +
+      "lx.Crud.DataModel\022#\n\010criteria\030\003 \001(\0132\021.My" +
+      "sqlx.Expr.Expr\022&\n\004args\030\006 \003(\0132\030.Mysqlx.Da",
+      "tatypes.Scalar\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.C" +
+      "rud.Limit\022!\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.O" +
+      "rder:\004\210\3520\024\"\302\002\n\nCreateView\022+\n\ncollection\030" +
+      "\001 \002(\0132\027.Mysqlx.Crud.Collection\022\017\n\007define" +
+      "r\030\002 \001(\t\0228\n\talgorithm\030\003 \001(\0162\032.Mysqlx.Crud" +
+      ".ViewAlgorithm:\tUNDEFINED\0227\n\010security\030\004 " +
+      "\001(\0162\034.Mysqlx.Crud.ViewSqlSecurity:\007DEFIN" +
+      "ER\022+\n\005check\030\005 \001(\0162\034.Mysqlx.Crud.ViewChec" +
+      "kOption\022\016\n\006column\030\006 \003(\t\022\037\n\004stmt\030\007 \002(\0132\021." +
+      "Mysqlx.Crud.Find\022\037\n\020replace_existing\030\010 \001",
+      "(\010:\005false:\004\210\3520\036\"\215\002\n\nModifyView\022+\n\ncollec" +
+      "tion\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022\017\n\007d" +
+      "efiner\030\002 \001(\t\022-\n\talgorithm\030\003 \001(\0162\032.Mysqlx" +
+      ".Crud.ViewAlgorithm\022.\n\010security\030\004 \001(\0162\034." +
+      "Mysqlx.Crud.ViewSqlSecurity\022+\n\005check\030\005 \001" +
+      "(\0162\034.Mysqlx.Crud.ViewCheckOption\022\016\n\006colu" +
+      "mn\030\006 \003(\t\022\037\n\004stmt\030\007 \001(\0132\021.Mysqlx.Crud.Fin" +
+      "d:\004\210\3520\037\"W\n\010DropView\022+\n\ncollection\030\001 \002(\0132" +
+      "\027.Mysqlx.Crud.Collection\022\030\n\tif_exists\030\002 " +
+      "\001(\010:\005false:\004\210\3520 *$\n\tDataModel\022\014\n\010DOCUMEN",
+      "T\020\001\022\t\n\005TABLE\020\002*8\n\rViewAlgorithm\022\r\n\tUNDEF" +
+      "INED\020\001\022\t\n\005MERGE\020\002\022\r\n\tTEMPTABLE\020\003*+\n\017View" +
+      "SqlSecurity\022\013\n\007INVOKER\020\001\022\013\n\007DEFINER\020\002**\n" +
+      "\017ViewCheckOption\022\t\n\005LOCAL\020\001\022\014\n\010CASCADED\020" +
+      "\002B\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -17875,6 +17894,7 @@ public final class MysqlxCrud {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
           com.mysql.cj.x.protobuf.MysqlxExpr.getDescriptor(),
           com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(),
         }, assigner);
@@ -17962,6 +17982,18 @@ public final class MysqlxCrud {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_DropView_descriptor,
         new java.lang.String[] { "Collection", "IfExists", });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
     com.mysql.cj.x.protobuf.MysqlxExpr.getDescriptor();
     com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
   }

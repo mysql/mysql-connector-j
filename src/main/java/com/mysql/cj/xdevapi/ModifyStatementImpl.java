@@ -87,6 +87,18 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     }
 
     @Override
+    public ModifyStatement patch(DbDoc document) {
+        this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(document));
+        return this;
+    }
+
+    @Override
+    public ModifyStatement patch(String document) {
+        this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(document));
+        return this;
+    }
+
+    @Override
     public ModifyStatement arrayInsert(String field, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_INSERT, field).setValue(value));
         return this;

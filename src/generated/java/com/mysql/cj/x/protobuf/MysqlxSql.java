@@ -1420,12 +1420,13 @@ public final class MysqlxSql {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\020mysqlx_sql.proto\022\nMysqlx.Sql\032\026mysqlx_d" +
-      "atatypes.proto\"y\n\013StmtExecute\022\026\n\tnamespa" +
-      "ce\030\003 \001(\t:\003sql\022\014\n\004stmt\030\001 \002(\014\022#\n\004args\030\002 \003(" +
-      "\0132\025.Mysqlx.Datatypes.Any\022\037\n\020compact_meta" +
-      "data\030\004 \001(\010:\005false\"\017\n\rStmtExecuteOkB\031\n\027co" +
-      "m.mysql.cj.x.protobuf"
+      "\n\020mysqlx_sql.proto\022\nMysqlx.Sql\032\014mysqlx.p" +
+      "roto\032\026mysqlx_datatypes.proto\"\177\n\013StmtExec" +
+      "ute\022\026\n\tnamespace\030\003 \001(\t:\003sql\022\014\n\004stmt\030\001 \002(" +
+      "\014\022#\n\004args\030\002 \003(\0132\025.Mysqlx.Datatypes.Any\022\037" +
+      "\n\020compact_metadata\030\004 \001(\010:\005false:\004\210\3520\014\"\025\n" +
+      "\rStmtExecuteOk:\004\220\3520\021B\031\n\027com.mysql.cj.x.p" +
+      "rotobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1438,6 +1439,7 @@ public final class MysqlxSql {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
           com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Sql_StmtExecute_descriptor =
@@ -1452,6 +1454,13 @@ public final class MysqlxSql {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Sql_StmtExecuteOk_descriptor,
         new java.lang.String[] { });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
     com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
   }
 

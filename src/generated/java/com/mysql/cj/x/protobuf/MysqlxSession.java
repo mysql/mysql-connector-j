@@ -2207,13 +2207,14 @@ public final class MysqlxSession {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\024mysqlx_session.proto\022\016Mysqlx.Session\"S" +
-      "\n\021AuthenticateStart\022\021\n\tmech_name\030\001 \002(\t\022\021" +
-      "\n\tauth_data\030\002 \001(\014\022\030\n\020initial_response\030\003 " +
-      "\001(\014\")\n\024AuthenticateContinue\022\021\n\tauth_data" +
-      "\030\001 \002(\014\"#\n\016AuthenticateOk\022\021\n\tauth_data\030\001 " +
-      "\001(\014\"\007\n\005Reset\"\007\n\005CloseB\031\n\027com.mysql.cj.x." +
-      "protobuf"
+      "\n\024mysqlx_session.proto\022\016Mysqlx.Session\032\014" +
+      "mysqlx.proto\"Y\n\021AuthenticateStart\022\021\n\tmec" +
+      "h_name\030\001 \002(\t\022\021\n\tauth_data\030\002 \001(\014\022\030\n\020initi" +
+      "al_response\030\003 \001(\014:\004\210\3520\004\"3\n\024AuthenticateC" +
+      "ontinue\022\021\n\tauth_data\030\001 \002(\014:\010\220\3520\003\210\3520\005\")\n\016" +
+      "AuthenticateOk\022\021\n\tauth_data\030\001 \001(\014:\004\220\3520\004\"" +
+      "\r\n\005Reset:\004\210\3520\006\"\r\n\005Close:\004\210\3520\007B\031\n\027com.mys" +
+      "ql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2226,6 +2227,7 @@ public final class MysqlxSession {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Session_AuthenticateStart_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -2257,6 +2259,17 @@ public final class MysqlxSession {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Session_Close_descriptor,
         new java.lang.String[] { });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

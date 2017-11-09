@@ -30,6 +30,8 @@ public final class Mysqlx {
   private Mysqlx() {}
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
   }
   public interface ClientMessagesOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Mysqlx.ClientMessages)
@@ -2509,6 +2511,28 @@ public final class Mysqlx {
     // @@protoc_insertion_point(class_scope:Mysqlx.Error)
   }
 
+  public static final int CLIENT_MESSAGE_ID_FIELD_NUMBER = 100001;
+  /**
+   * <code>extend .google.protobuf.MessageOptions { ... }</code>
+   */
+  public static final
+    com.google.protobuf.GeneratedMessage.GeneratedExtension<
+      com.google.protobuf.DescriptorProtos.MessageOptions,
+      com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type> clientMessageId = com.google.protobuf.GeneratedMessage
+          .newFileScopedGeneratedExtension(
+        com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.class,
+        null);
+  public static final int SERVER_MESSAGE_ID_FIELD_NUMBER = 100002;
+  /**
+   * <code>extend .google.protobuf.MessageOptions { ... }</code>
+   */
+  public static final
+    com.google.protobuf.GeneratedMessage.GeneratedExtension<
+      com.google.protobuf.DescriptorProtos.MessageOptions,
+      com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type> serverMessageId = com.google.protobuf.GeneratedMessage
+          .newFileScopedGeneratedExtension(
+        com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.class,
+        null);
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_ClientMessages_descriptor;
   private static
@@ -2538,30 +2562,36 @@ public final class Mysqlx {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014mysqlx.proto\022\006Mysqlx\"\364\002\n\016ClientMessage" +
-      "s\"\341\002\n\004Type\022\030\n\024CON_CAPABILITIES_GET\020\001\022\030\n\024" +
-      "CON_CAPABILITIES_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n" +
-      "\027SESS_AUTHENTICATE_START\020\004\022\036\n\032SESS_AUTHE" +
-      "NTICATE_CONTINUE\020\005\022\016\n\nSESS_RESET\020\006\022\016\n\nSE" +
-      "SS_CLOSE\020\007\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r\n\tCRUD" +
-      "_FIND\020\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_UPDATE\020" +
-      "\023\022\017\n\013CRUD_DELETE\020\024\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014E" +
-      "XPECT_CLOSE\020\031\022\024\n\020CRUD_CREATE_VIEW\020\036\022\024\n\020C" +
-      "RUD_MODIFY_VIEW\020\037\022\022\n\016CRUD_DROP_VIEW\020 \"\342\002",
-      "\n\016ServerMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERR" +
-      "OR\020\001\022\025\n\021CONN_CAPABILITIES\020\002\022\036\n\032SESS_AUTH" +
-      "ENTICATE_CONTINUE\020\003\022\030\n\024SESS_AUTHENTICATE" +
-      "_OK\020\004\022\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_COLUMN_ME" +
-      "TA_DATA\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RESULTSE" +
-      "T_FETCH_DONE\020\016\022\035\n\031RESULTSET_FETCH_SUSPEN" +
-      "DED\020\017\022(\n$RESULTSET_FETCH_DONE_MORE_RESUL" +
-      "TSETS\020\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(\n$RESU" +
-      "LTSET_FETCH_DONE_MORE_OUT_PARAMS\020\022\"\021\n\002Ok" +
-      "\022\013\n\003msg\030\001 \001(\t\"\210\001\n\005Error\022/\n\010severity\030\001 \001(",
+      "\n\014mysqlx.proto\022\006Mysqlx\032 google/protobuf/" +
+      "descriptor.proto\"\364\002\n\016ClientMessages\"\341\002\n\004" +
+      "Type\022\030\n\024CON_CAPABILITIES_GET\020\001\022\030\n\024CON_CA" +
+      "PABILITIES_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n\027SESS_" +
+      "AUTHENTICATE_START\020\004\022\036\n\032SESS_AUTHENTICAT" +
+      "E_CONTINUE\020\005\022\016\n\nSESS_RESET\020\006\022\016\n\nSESS_CLO" +
+      "SE\020\007\022\024\n\020SQL_STMT_EXECUTE\020\014\022\r\n\tCRUD_FIND\020" +
+      "\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_UPDATE\020\023\022\017\n\013C" +
+      "RUD_DELETE\020\024\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014EXPECT_" +
+      "CLOSE\020\031\022\024\n\020CRUD_CREATE_VIEW\020\036\022\024\n\020CRUD_MO",
+      "DIFY_VIEW\020\037\022\022\n\016CRUD_DROP_VIEW\020 \"\342\002\n\016Serv" +
+      "erMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERROR\020\001\022\025" +
+      "\n\021CONN_CAPABILITIES\020\002\022\036\n\032SESS_AUTHENTICA" +
+      "TE_CONTINUE\020\003\022\030\n\024SESS_AUTHENTICATE_OK\020\004\022" +
+      "\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_COLUMN_META_DAT" +
+      "A\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RESULTSET_FETC" +
+      "H_DONE\020\016\022\035\n\031RESULTSET_FETCH_SUSPENDED\020\017\022" +
+      "(\n$RESULTSET_FETCH_DONE_MORE_RESULTSETS\020" +
+      "\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(\n$RESULTSET_" +
+      "FETCH_DONE_MORE_OUT_PARAMS\020\022\"\027\n\002Ok\022\013\n\003ms",
+      "g\030\001 \001(\t:\004\220\3520\000\"\216\001\n\005Error\022/\n\010severity\030\001 \001(" +
       "\0162\026.Mysqlx.Error.Severity:\005ERROR\022\014\n\004code" +
       "\030\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" " +
-      "\n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001B\031\n\027com." +
-      "mysql.cj.x.protobuf"
+      "\n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001:\004\220\3520\001:Y" +
+      "\n\021client_message_id\022\037.google.protobuf.Me" +
+      "ssageOptions\030\241\215\006 \001(\0162\033.Mysqlx.ClientMess" +
+      "ages.Type:Y\n\021server_message_id\022\037.google." +
+      "protobuf.MessageOptions\030\242\215\006 \001(\0162\033.Mysqlx" +
+      ".ServerMessages.TypeB\031\n\027com.mysql.cj.x.p" +
+      "rotobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2574,6 +2604,7 @@ public final class Mysqlx {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.google.protobuf.DescriptorProtos.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_ClientMessages_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -2599,6 +2630,15 @@ public final class Mysqlx {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Error_descriptor,
         new java.lang.String[] { "Severity", "Code", "SqlState", "Msg", });
+    clientMessageId.internalInit(descriptor.getExtensions().get(0));
+    serverMessageId.internalInit(descriptor.getExtensions().get(1));
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.google.protobuf.DescriptorProtos.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

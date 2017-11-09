@@ -430,6 +430,104 @@ public final class MysqlxExpect {
       }
 
       /**
+       * Protobuf enum {@code Mysqlx.Expect.Open.Condition.Key}
+       */
+      public enum Key
+          implements com.google.protobuf.ProtocolMessageEnum {
+        /**
+         * <code>EXPECT_NO_ERROR = 1;</code>
+         *
+         * <pre>
+         * Change error propagation behaviour
+         * </pre>
+         */
+        EXPECT_NO_ERROR(0, 1),
+        /**
+         * <code>EXPECT_FIELD_EXIST = 2;</code>
+         *
+         * <pre>
+         * Check if X Protocol field exists
+         * </pre>
+         */
+        EXPECT_FIELD_EXIST(1, 2),
+        ;
+
+        /**
+         * <code>EXPECT_NO_ERROR = 1;</code>
+         *
+         * <pre>
+         * Change error propagation behaviour
+         * </pre>
+         */
+        public static final int EXPECT_NO_ERROR_VALUE = 1;
+        /**
+         * <code>EXPECT_FIELD_EXIST = 2;</code>
+         *
+         * <pre>
+         * Check if X Protocol field exists
+         * </pre>
+         */
+        public static final int EXPECT_FIELD_EXIST_VALUE = 2;
+
+
+        public final int getNumber() { return value; }
+
+        public static Key valueOf(int value) {
+          switch (value) {
+            case 1: return EXPECT_NO_ERROR;
+            case 2: return EXPECT_FIELD_EXIST;
+            default: return null;
+          }
+        }
+
+        public static com.google.protobuf.Internal.EnumLiteMap<Key>
+            internalGetValueMap() {
+          return internalValueMap;
+        }
+        private static com.google.protobuf.Internal.EnumLiteMap<Key>
+            internalValueMap =
+              new com.google.protobuf.Internal.EnumLiteMap<Key>() {
+                public Key findValueByNumber(int number) {
+                  return Key.valueOf(number);
+                }
+              };
+
+        public final com.google.protobuf.Descriptors.EnumValueDescriptor
+            getValueDescriptor() {
+          return getDescriptor().getValues().get(index);
+        }
+        public final com.google.protobuf.Descriptors.EnumDescriptor
+            getDescriptorForType() {
+          return getDescriptor();
+        }
+        public static final com.google.protobuf.Descriptors.EnumDescriptor
+            getDescriptor() {
+          return com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.getDescriptor().getEnumTypes().get(0);
+        }
+
+        private static final Key[] VALUES = values();
+
+        public static Key valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+          if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+              "EnumValueDescriptor is not for this type.");
+          }
+          return VALUES[desc.getIndex()];
+        }
+
+        private final int index;
+        private final int value;
+
+        private Key(int index, int value) {
+          this.index = index;
+          this.value = value;
+        }
+
+        // @@protoc_insertion_point(enum_scope:Mysqlx.Expect.Open.Condition.Key)
+      }
+
+      /**
        * Protobuf enum {@code Mysqlx.Expect.Open.Condition.ConditionOperation}
        */
       public enum ConditionOperation
@@ -506,7 +604,7 @@ public final class MysqlxExpect {
         }
         public static final com.google.protobuf.Descriptors.EnumDescriptor
             getDescriptor() {
-          return com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.getDescriptor().getEnumTypes().get(0);
+          return com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.getDescriptor().getEnumTypes().get(1);
         }
 
         private static final ConditionOperation[] VALUES = values();
@@ -1947,18 +2045,20 @@ public final class MysqlxExpect {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\023mysqlx_expect.proto\022\rMysqlx.Expect\"\200\003\n" +
-      "\004Open\022B\n\002op\030\001 \001(\0162 .Mysqlx.Expect.Open.C" +
-      "txOperation:\024EXPECT_CTX_COPY_PREV\022+\n\004con" +
-      "d\030\002 \003(\0132\035.Mysqlx.Expect.Open.Condition\032\306" +
-      "\001\n\tCondition\022\025\n\rcondition_key\030\001 \002(\r\022\027\n\017c" +
-      "ondition_value\030\002 \001(\014\022K\n\002op\030\003 \001(\01620.Mysql" +
-      "x.Expect.Open.Condition.ConditionOperati" +
-      "on:\rEXPECT_OP_SET\"<\n\022ConditionOperation\022" +
-      "\021\n\rEXPECT_OP_SET\020\000\022\023\n\017EXPECT_OP_UNSET\020\001\"" +
-      ">\n\014CtxOperation\022\030\n\024EXPECT_CTX_COPY_PREV\020",
-      "\000\022\024\n\020EXPECT_CTX_EMPTY\020\001\"\007\n\005CloseB\031\n\027com." +
-      "mysql.cj.x.protobuf"
+      "\n\023mysqlx_expect.proto\022\rMysqlx.Expect\032\014my" +
+      "sqlx.proto\"\272\003\n\004Open\022B\n\002op\030\001 \001(\0162 .Mysqlx" +
+      ".Expect.Open.CtxOperation:\024EXPECT_CTX_CO" +
+      "PY_PREV\022+\n\004cond\030\002 \003(\0132\035.Mysqlx.Expect.Op" +
+      "en.Condition\032\372\001\n\tCondition\022\025\n\rcondition_" +
+      "key\030\001 \002(\r\022\027\n\017condition_value\030\002 \001(\014\022K\n\002op" +
+      "\030\003 \001(\01620.Mysqlx.Expect.Open.Condition.Co" +
+      "nditionOperation:\rEXPECT_OP_SET\"2\n\003Key\022\023" +
+      "\n\017EXPECT_NO_ERROR\020\001\022\026\n\022EXPECT_FIELD_EXIS" +
+      "T\020\002\"<\n\022ConditionOperation\022\021\n\rEXPECT_OP_S",
+      "ET\020\000\022\023\n\017EXPECT_OP_UNSET\020\001\">\n\014CtxOperatio" +
+      "n\022\030\n\024EXPECT_CTX_COPY_PREV\020\000\022\024\n\020EXPECT_CT" +
+      "X_EMPTY\020\001:\004\210\3520\030\"\r\n\005Close:\004\210\3520\031B\031\n\027com.my" +
+      "sql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1971,6 +2071,7 @@ public final class MysqlxExpect {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Expect_Open_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -1990,6 +2091,13 @@ public final class MysqlxExpect {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Expect_Close_descriptor,
         new java.lang.String[] { });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

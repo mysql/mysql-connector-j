@@ -24,7 +24,10 @@
 package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.StringReader;
 import java.util.concurrent.Callable;
@@ -274,4 +277,171 @@ public class CollectionModifyTest extends CollectionTest {
 
     }
 
+    @Test
+    public void testMergePatch() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        // 1. Update the name and zip code of match
+        this.collection.add("{\"_id\": \"1\", \"name\": \"Alice\", \"address\": {\"zip\": \"12345\", \"street\": \"32 Main str\"}}").execute();
+        this.collection.add("{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}")
+                .execute();
+
+        this.collection.modify("_id = :id").patch(JsonParser.parseDoc(new StringReader("{\"name\": \"Joe\", \"address\": {\"zip\":\"91234\"}}")))
+                .bind("id", "1").execute();
+
+        DocResult docs = this.collection.find().orderBy("$._id").execute();
+        assertTrue(docs.hasNext());
+        assertEquals(JsonParser
+                .parseDoc(new StringReader("{\"_id\": \"1\", \"name\": \"Joe\", \"address\": {\"zip\": \"91234\", \"street\": \"32 Main str\"}}")).toString(),
+                docs.next().toString());
+        assertTrue(docs.hasNext());
+        assertEquals(JsonParser
+                .parseDoc(new StringReader(
+                        "{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}"))
+                .toString(), docs.next().toString());
+        assertFalse(docs.hasNext());
+
+        // 2. Delete the address field of match
+        this.collection.modify("_id = :id").patch("{\"address\": null}").bind("id", "1").execute();
+
+        docs = this.collection.find().orderBy("$._id").execute();
+        assertTrue(docs.hasNext());
+        assertEquals(JsonParser.parseDoc(new StringReader("{\"_id\": \"1\", \"name\": \"Joe\"}")).toString(), docs.next().toString());
+        assertTrue(docs.hasNext());
+        assertEquals(JsonParser
+                .parseDoc(new StringReader(
+                        "{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}"))
+                .toString(), docs.next().toString());
+        assertFalse(docs.hasNext());
+
+        String id = "a6f4b93e1a264a108393524f29546a8c";
+        this.collection.add("{\"_id\" : \"" + id + "\"," //
+                + "\"title\" : \"AFRICAN EGG\"," //
+                + "\"description\" : \"A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist in The Gulf of Mexico\"," //
+                + "\"releaseyear\" : 2006," //
+                + "\"language\" : \"English\"," //
+                + "\"duration\" : 130," //
+                + "\"rating\" : \"G\"," //
+                + "\"genre\" : \"Science fiction\"," //
+                + "\"actors\" : [" //
+                + "    {\"name\" : \"MILLA PECK\"," //
+                + "     \"country\" : \"Mexico\"," //
+                + "     \"birthdate\": \"12 Jan 1984\"}," //
+                + "    {\"name\" : \"VAL BOLGER\"," //
+                + "     \"country\" : \"Botswana\"," //
+                + "     \"birthdate\": \"26 Jul 1975\" }," //
+                + "    {\"name\" : \"SCARLETT BENING\"," //
+                + "     \"country\" : \"Syria\"," //
+                + "     \"birthdate\": \"16 Mar 1978\" }" //
+                + "    ]," //
+                + "\"additionalinfo\" : {" //
+                + "    \"director\" : {" //
+                + "        \"name\": \"Sharice Legaspi\"," //
+                + "        \"age\":57," //
+                + "        \"awards\": [" //
+                + "            {\"award\": \"Best Movie\"," //
+                + "             \"movie\": \"THE EGG\"," //
+                + "             \"year\": 2002}," //
+                + "            {\"award\": \"Best Special Effects\"," //
+                + "             \"movie\": \"AFRICAN EGG\"," //
+                + "             \"year\": 2006}" //
+                + "            ]" //
+                + "        }," //
+                + "    \"writers\" : [\"Rusty Couturier\", \"Angelic Orduno\", \"Carin Postell\"]," //
+                + "    \"productioncompanies\" : [\"Qvodrill\", \"Indigoholdings\"]" //
+                + "    }" //
+                + "}").execute();
+
+        // Adding a new field to multiple documents
+        this.collection.modify("language = :lang").patch("{\"translations\": [\"Spanish\"]}").bind("lang", "English").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        DbDoc doc = docs.next();
+        assertNotNull(doc.get("translations"));
+        JsonArray arr = (JsonArray) doc.get("translations");
+        assertEquals(1, arr.size());
+        assertEquals("Spanish", ((JsonString) arr.get(0)).getString());
+
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"musicby\": \"Sakila D\" }}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        DbDoc doc2 = (DbDoc) doc.get("additionalinfo");
+        assertNotNull(doc2.get("musicby"));
+        assertEquals("Sakila D", ((JsonString) doc2.get("musicby")).getString());
+
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"director\": {\"country\": \"France\"}}}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        assertNotNull(((DbDoc) doc.get("additionalinfo")).get("director"));
+        doc2 = (DbDoc) ((DbDoc) doc.get("additionalinfo")).get("director");
+        assertNotNull(doc2.get("country"));
+        assertEquals("France", ((JsonString) doc2.get("country")).getString());
+
+        // Replacing/Updating a field's value in multiple documents
+        this.collection.modify("language = :lang").patch("{\"translations\": [\"Spanish\", \"Italian\"]}").bind("lang", "English").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("translations"));
+        arr = (JsonArray) doc.get("translations");
+        assertEquals(2, arr.size());
+        assertEquals("Spanish", ((JsonString) arr.get(0)).getString());
+        assertEquals("Italian", ((JsonString) arr.get(1)).getString());
+
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"musicby\": \"The Sakila\" }}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        doc2 = (DbDoc) doc.get("additionalinfo");
+        assertNotNull(doc2.get("musicby"));
+        assertEquals("The Sakila", ((JsonString) doc2.get("musicby")).getString());
+
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"director\": {\"country\": \"Canada\"}}}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        assertNotNull(((DbDoc) doc.get("additionalinfo")).get("director"));
+        doc2 = (DbDoc) ((DbDoc) doc.get("additionalinfo")).get("director");
+        assertNotNull(doc2.get("country"));
+        assertEquals("Canada", ((JsonString) doc2.get("country")).getString());
+
+        // Removing a field from multiple documents:
+        this.collection.modify("language = :lang").patch("{\"translations\": null}").bind("lang", "English").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNull(doc.get("translations"));
+
+        //            coll.modify('additionalinfo.director.name = :director').patch({ "additionalinfo": { "musicby": null }}).bind('director','Sharice Legaspi').execute();
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"musicby\": null }}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        doc2 = (DbDoc) doc.get("additionalinfo");
+        assertNull(doc2.get("musicby"));
+
+        this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"director\": {\"country\": null}}}")
+                .bind("director", "Sharice Legaspi").execute();
+        docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertNotNull(doc.get("additionalinfo"));
+        assertNotNull(((DbDoc) doc.get("additionalinfo")).get("director"));
+        doc2 = (DbDoc) ((DbDoc) doc.get("additionalinfo")).get("director");
+        assertNull(doc2.get("country"));
+    }
 }

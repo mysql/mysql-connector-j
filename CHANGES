@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#11210, DevAPI: Modify/MergePatch.
+
   - Fix for Bug#79612 (22362474), CONNECTION ATTRIBUTES LOST WHEN CONNECTING WITHOUT DEFAULT DATABASE.
 
   - WL#10152, Enable TLSv1.2 on mysqlx.

@@ -31,6 +31,206 @@ public final class MysqlxResultset {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
+  /**
+   * Protobuf enum {@code Mysqlx.Resultset.ContentType_BYTES}
+   *
+   * <pre>
+   * a hint about the higher-level encoding of a BYTES field
+   * ====== ====== ===========
+   * type   value  description
+   * ====== ====== ===========
+   * BYTES  0x0001 GEOMETRY (WKB encoding)
+   * BYTES  0x0002 JSON (text encoding)
+   * BYTES  0x0003 XML (text encoding)
+   * ====== ====== ===========
+   * .. note::
+   *   this list isn't comprehensive. As guideline: the field's value is expected
+   *   to pass a validator check on client and server if this field is set.
+   *   If the server adds more internal datatypes that rely on BLOB storage
+   *   like image manipulation, seeking into complex types in BLOBs, ... more
+   *   types will be added.
+   * </pre>
+   */
+  public enum ContentType_BYTES
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>GEOMETRY = 1;</code>
+     */
+    GEOMETRY(0, 1),
+    /**
+     * <code>JSON = 2;</code>
+     */
+    JSON(1, 2),
+    /**
+     * <code>XML = 3;</code>
+     */
+    XML(2, 3),
+    ;
+
+    /**
+     * <code>GEOMETRY = 1;</code>
+     */
+    public static final int GEOMETRY_VALUE = 1;
+    /**
+     * <code>JSON = 2;</code>
+     */
+    public static final int JSON_VALUE = 2;
+    /**
+     * <code>XML = 3;</code>
+     */
+    public static final int XML_VALUE = 3;
+
+
+    public final int getNumber() { return value; }
+
+    public static ContentType_BYTES valueOf(int value) {
+      switch (value) {
+        case 1: return GEOMETRY;
+        case 2: return JSON;
+        case 3: return XML;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ContentType_BYTES>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static com.google.protobuf.Internal.EnumLiteMap<ContentType_BYTES>
+        internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ContentType_BYTES>() {
+            public ContentType_BYTES findValueByNumber(int number) {
+              return ContentType_BYTES.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.mysql.cj.x.protobuf.MysqlxResultset.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final ContentType_BYTES[] VALUES = values();
+
+    public static ContentType_BYTES valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private ContentType_BYTES(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:Mysqlx.Resultset.ContentType_BYTES)
+  }
+
+  /**
+   * Protobuf enum {@code Mysqlx.Resultset.ContentType_DATETIME}
+   *
+   * <pre>
+   * a hint about the higher-level encoding of a DATETIME field
+   * ======   ====== ===========
+   * type     value  description
+   * ======== ====== ===========
+   * DATE     0x0001 DATETIME contains only date part
+   * DATETIME 0x0002 DATETIME contains both date and time parts
+   * ======   ====== ===========
+   * </pre>
+   */
+  public enum ContentType_DATETIME
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>DATE = 1;</code>
+     */
+    DATE(0, 1),
+    /**
+     * <code>DATETIME = 2;</code>
+     */
+    DATETIME(1, 2),
+    ;
+
+    /**
+     * <code>DATE = 1;</code>
+     */
+    public static final int DATE_VALUE = 1;
+    /**
+     * <code>DATETIME = 2;</code>
+     */
+    public static final int DATETIME_VALUE = 2;
+
+
+    public final int getNumber() { return value; }
+
+    public static ContentType_DATETIME valueOf(int value) {
+      switch (value) {
+        case 1: return DATE;
+        case 2: return DATETIME;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ContentType_DATETIME>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static com.google.protobuf.Internal.EnumLiteMap<ContentType_DATETIME>
+        internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ContentType_DATETIME>() {
+            public ContentType_DATETIME findValueByNumber(int number) {
+              return ContentType_DATETIME.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.mysql.cj.x.protobuf.MysqlxResultset.getDescriptor().getEnumTypes().get(1);
+    }
+
+    private static final ContentType_DATETIME[] VALUES = values();
+
+    public static ContentType_DATETIME valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private ContentType_DATETIME(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:Mysqlx.Resultset.ContentType_DATETIME)
+  }
+
   public interface FetchDoneMoreOutParamsOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Mysqlx.Resultset.FetchDoneMoreOutParams)
       com.google.protobuf.MessageOrBuilder {
@@ -1121,7 +1321,7 @@ public final class MysqlxResultset {
    * meta data of a Column
    * .. note:: the encoding used for the different ``bytes`` fields in the meta data is externally
    *   controlled.
-   *   .. seealso:: https://dev.mysql.com/doc/refman/5.0/en/charset-connection.html
+   *   .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/charset-connection.html
    * .. note::
    *   The server may not set the ``original_{table|name}`` fields if they are equal to the plain
    *   ``{table|name}`` field.
@@ -1179,7 +1379,7 @@ public final class MysqlxResultset {
    *       INT SIGNED      11
    *       LONGLONG SIGNED 20
    *       =============== ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
    *     ``value``
    *       variable length encoded signed 64 integer
    *   UINT
@@ -1198,14 +1398,14 @@ public final class MysqlxResultset {
    *       INT UNSIGNED      10
    *       LONGLONG UNSIGNED 20
    *       ================= ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
    *     ``value``
    *       variable length encoded unsigned 64 integer
    *   BIT
    *     ``.length``
    *       maximum number of displayable binary digits
    *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
-   *       .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   *       .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
    *     ``value``
    *       variable length encoded unsigned 64 integer
    *   DOUBLE
@@ -1350,7 +1550,7 @@ public final class MysqlxResultset {
    *   default: 0
    * :param content_type:
    *   a hint about the higher-level encoding of a BYTES field, for more informations
-   *   please refer to Mysqlx.Datatypes.ContentType enum.
+   *   please refer to Mysqlx.Resultset.ContentType_BYTES enum.
    * </pre>
    */
   public static final class ColumnMetaData extends
@@ -2068,7 +2268,7 @@ public final class MysqlxResultset {
      * meta data of a Column
      * .. note:: the encoding used for the different ``bytes`` fields in the meta data is externally
      *   controlled.
-     *   .. seealso:: https://dev.mysql.com/doc/refman/5.0/en/charset-connection.html
+     *   .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/charset-connection.html
      * .. note::
      *   The server may not set the ``original_{table|name}`` fields if they are equal to the plain
      *   ``{table|name}`` field.
@@ -2126,7 +2326,7 @@ public final class MysqlxResultset {
      *       INT SIGNED      11
      *       LONGLONG SIGNED 20
      *       =============== ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
      *     ``value``
      *       variable length encoded signed 64 integer
      *   UINT
@@ -2145,14 +2345,14 @@ public final class MysqlxResultset {
      *       INT UNSIGNED      10
      *       LONGLONG UNSIGNED 20
      *       ================= ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
      *     ``value``
      *       variable length encoded unsigned 64 integer
      *   BIT
      *     ``.length``
      *       maximum number of displayable binary digits
      *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
-     *       .. seealso:: https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     *       .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
      *     ``value``
      *       variable length encoded unsigned 64 integer
      *   DOUBLE
@@ -2297,7 +2497,7 @@ public final class MysqlxResultset {
      *   default: 0
      * :param content_type:
      *   a hint about the higher-level encoding of a BYTES field, for more informations
-     *   please refer to Mysqlx.Datatypes.ContentType enum.
+     *   please refer to Mysqlx.Resultset.ContentType_BYTES enum.
      * </pre>
      */
     public static final class Builder extends
@@ -3468,20 +3668,24 @@ public final class MysqlxResultset {
   static {
     java.lang.String[] descriptorData = {
       "\n\026mysqlx_resultset.proto\022\020Mysqlx.Results" +
-      "et\"\030\n\026FetchDoneMoreOutParams\"\031\n\027FetchDon" +
-      "eMoreResultsets\"\013\n\tFetchDone\"\237\003\n\016ColumnM" +
-      "etaData\0228\n\004type\030\001 \002(\0162*.Mysqlx.Resultset" +
-      ".ColumnMetaData.FieldType\022\014\n\004name\030\002 \001(\014\022" +
-      "\025\n\roriginal_name\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026\n" +
-      "\016original_table\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017\n" +
-      "\007catalog\030\007 \001(\014\022\021\n\tcollation\030\010 \001(\004\022\031\n\021fra" +
-      "ctional_digits\030\t \001(\r\022\016\n\006length\030\n \001(\r\022\r\n\005" +
-      "flags\030\013 \001(\r\022\024\n\014content_type\030\014 \001(\r\"\202\001\n\tFi",
-      "eldType\022\010\n\004SINT\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022" +
-      "\t\n\005FLOAT\020\006\022\t\n\005BYTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATET" +
-      "IME\020\014\022\007\n\003SET\020\017\022\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DEC" +
-      "IMAL\020\022\"\024\n\003Row\022\r\n\005field\030\001 \003(\014B\031\n\027com.mysq" +
-      "l.cj.x.protobuf"
+      "et\032\014mysqlx.proto\"\036\n\026FetchDoneMoreOutPara" +
+      "ms:\004\220\3520\022\"\037\n\027FetchDoneMoreResultsets:\004\220\3520" +
+      "\020\"\021\n\tFetchDone:\004\220\3520\016\"\245\003\n\016ColumnMetaData\022" +
+      "8\n\004type\030\001 \002(\0162*.Mysqlx.Resultset.ColumnM" +
+      "etaData.FieldType\022\014\n\004name\030\002 \001(\014\022\025\n\rorigi" +
+      "nal_name\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026\n\016origina" +
+      "l_table\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017\n\007catalog" +
+      "\030\007 \001(\014\022\021\n\tcollation\030\010 \001(\004\022\031\n\021fractional_" +
+      "digits\030\t \001(\r\022\016\n\006length\030\n \001(\r\022\r\n\005flags\030\013 ",
+      "\001(\r\022\024\n\014content_type\030\014 \001(\r\"\202\001\n\tFieldType\022" +
+      "\010\n\004SINT\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022\t\n\005FLOAT" +
+      "\020\006\022\t\n\005BYTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATETIME\020\014\022\007\n" +
+      "\003SET\020\017\022\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DECIMAL\020\022:\004" +
+      "\220\3520\014\"\032\n\003Row\022\r\n\005field\030\001 \003(\014:\004\220\3520\r*4\n\021Cont" +
+      "entType_BYTES\022\014\n\010GEOMETRY\020\001\022\010\n\004JSON\020\002\022\007\n" +
+      "\003XML\020\003*.\n\024ContentType_DATETIME\022\010\n\004DATE\020\001" +
+      "\022\014\n\010DATETIME\020\002B\031\n\027com.mysql.cj.x.protobu" +
+      "f"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3494,6 +3698,7 @@ public final class MysqlxResultset {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Resultset_FetchDoneMoreOutParams_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -3525,6 +3730,16 @@ public final class MysqlxResultset {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Resultset_Row_descriptor,
         new java.lang.String[] { "Field", });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

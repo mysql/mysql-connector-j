@@ -3144,28 +3144,28 @@ public final class MysqlxNotice {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\023mysqlx_notice.proto\022\rMysqlx.Notice\032\026my" +
-      "sqlx_datatypes.proto\"\307\001\n\005Frame\022\014\n\004type\030\001" +
-      " \002(\r\0221\n\005scope\030\002 \001(\0162\032.Mysqlx.Notice.Fram" +
-      "e.Scope:\006GLOBAL\022\017\n\007payload\030\003 \001(\014\"\036\n\005Scop" +
-      "e\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"L\n\004Type\022\013\n\007WARN" +
-      "ING\020\001\022\034\n\030SESSION_VARIABLE_CHANGED\020\002\022\031\n\025S" +
-      "ESSION_STATE_CHANGED\020\003\"\205\001\n\007Warning\0224\n\005le" +
-      "vel\030\001 \001(\0162\034.Mysqlx.Notice.Warning.Level:" +
-      "\007WARNING\022\014\n\004code\030\002 \002(\r\022\013\n\003msg\030\003 \002(\t\")\n\005L" +
-      "evel\022\010\n\004NOTE\020\001\022\013\n\007WARNING\020\002\022\t\n\005ERROR\020\003\"P",
-      "\n\026SessionVariableChanged\022\r\n\005param\030\001 \002(\t\022" +
-      "\'\n\005value\030\002 \001(\0132\030.Mysqlx.Datatypes.Scalar" +
-      "\"\325\002\n\023SessionStateChanged\022;\n\005param\030\001 \002(\0162" +
-      ",.Mysqlx.Notice.SessionStateChanged.Para" +
-      "meter\022\'\n\005value\030\002 \001(\0132\030.Mysqlx.Datatypes." +
-      "Scalar\"\327\001\n\tParameter\022\022\n\016CURRENT_SCHEMA\020\001" +
-      "\022\023\n\017ACCOUNT_EXPIRED\020\002\022\027\n\023GENERATED_INSER" +
-      "T_ID\020\003\022\021\n\rROWS_AFFECTED\020\004\022\016\n\nROWS_FOUND\020" +
-      "\005\022\020\n\014ROWS_MATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022\022" +
-      "\n\016TRX_ROLLEDBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020\n",
-      "\022\026\n\022CLIENT_ID_ASSIGNED\020\013B\031\n\027com.mysql.cj" +
-      ".x.protobuf"
+      "\n\023mysqlx_notice.proto\022\rMysqlx.Notice\032\014my" +
+      "sqlx.proto\032\026mysqlx_datatypes.proto\"\315\001\n\005F" +
+      "rame\022\014\n\004type\030\001 \002(\r\0221\n\005scope\030\002 \001(\0162\032.Mysq" +
+      "lx.Notice.Frame.Scope:\006GLOBAL\022\017\n\007payload" +
+      "\030\003 \001(\014\"\036\n\005Scope\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"L" +
+      "\n\004Type\022\013\n\007WARNING\020\001\022\034\n\030SESSION_VARIABLE_" +
+      "CHANGED\020\002\022\031\n\025SESSION_STATE_CHANGED\020\003:\004\220\352" +
+      "0\013\"\205\001\n\007Warning\0224\n\005level\030\001 \001(\0162\034.Mysqlx.N" +
+      "otice.Warning.Level:\007WARNING\022\014\n\004code\030\002 \002" +
+      "(\r\022\013\n\003msg\030\003 \002(\t\")\n\005Level\022\010\n\004NOTE\020\001\022\013\n\007WA",
+      "RNING\020\002\022\t\n\005ERROR\020\003\"P\n\026SessionVariableCha" +
+      "nged\022\r\n\005param\030\001 \002(\t\022\'\n\005value\030\002 \001(\0132\030.Mys" +
+      "qlx.Datatypes.Scalar\"\325\002\n\023SessionStateCha" +
+      "nged\022;\n\005param\030\001 \002(\0162,.Mysqlx.Notice.Sess" +
+      "ionStateChanged.Parameter\022\'\n\005value\030\002 \001(\013" +
+      "2\030.Mysqlx.Datatypes.Scalar\"\327\001\n\tParameter" +
+      "\022\022\n\016CURRENT_SCHEMA\020\001\022\023\n\017ACCOUNT_EXPIRED\020" +
+      "\002\022\027\n\023GENERATED_INSERT_ID\020\003\022\021\n\rROWS_AFFEC" +
+      "TED\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n\014ROWS_MATCHED\020\006\022" +
+      "\021\n\rTRX_COMMITTED\020\007\022\022\n\016TRX_ROLLEDBACK\020\t\022\024",
+      "\n\020PRODUCED_MESSAGE\020\n\022\026\n\022CLIENT_ID_ASSIGN" +
+      "ED\020\013B\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3178,6 +3178,7 @@ public final class MysqlxNotice {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
           com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Notice_Frame_descriptor =
@@ -3204,6 +3205,12 @@ public final class MysqlxNotice {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Notice_SessionStateChanged_descriptor,
         new java.lang.String[] { "Param", "Value", });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
     com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
   }
 

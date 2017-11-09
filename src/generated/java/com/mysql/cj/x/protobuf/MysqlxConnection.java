@@ -2649,14 +2649,15 @@ public final class MysqlxConnection {
   static {
     java.lang.String[] descriptorData = {
       "\n\027mysqlx_connection.proto\022\021Mysqlx.Connec" +
-      "tion\032\026mysqlx_datatypes.proto\"@\n\nCapabili" +
-      "ty\022\014\n\004name\030\001 \002(\t\022$\n\005value\030\002 \002(\0132\025.Mysqlx" +
-      ".Datatypes.Any\"C\n\014Capabilities\0223\n\014capabi" +
-      "lities\030\001 \003(\0132\035.Mysqlx.Connection.Capabil" +
-      "ity\"\021\n\017CapabilitiesGet\"H\n\017CapabilitiesSe" +
-      "t\0225\n\014capabilities\030\001 \002(\0132\037.Mysqlx.Connect" +
-      "ion.Capabilities\"\007\n\005CloseB\031\n\027com.mysql.c" +
-      "j.x.protobuf"
+      "tion\032\026mysqlx_datatypes.proto\032\014mysqlx.pro" +
+      "to\"@\n\nCapability\022\014\n\004name\030\001 \002(\t\022$\n\005value\030" +
+      "\002 \002(\0132\025.Mysqlx.Datatypes.Any\"I\n\014Capabili" +
+      "ties\0223\n\014capabilities\030\001 \003(\0132\035.Mysqlx.Conn" +
+      "ection.Capability:\004\220\3520\002\"\027\n\017CapabilitiesG" +
+      "et:\004\210\3520\001\"N\n\017CapabilitiesSet\0225\n\014capabilit" +
+      "ies\030\001 \002(\0132\037.Mysqlx.Connection.Capabiliti" +
+      "es:\004\210\3520\002\"\r\n\005Close:\004\210\3520\003B\031\n\027com.mysql.cj." +
+      "x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2670,6 +2671,7 @@ public final class MysqlxConnection {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(),
+          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
         }, assigner);
     internal_static_Mysqlx_Connection_Capability_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -2701,7 +2703,16 @@ public final class MysqlxConnection {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Connection_Close_descriptor,
         new java.lang.String[] { });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
     com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
+    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)
