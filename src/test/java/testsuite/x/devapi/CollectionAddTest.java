@@ -24,6 +24,7 @@
 package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
@@ -40,8 +41,10 @@ import org.junit.Test;
 import com.mysql.cj.api.xdevapi.AddResult;
 import com.mysql.cj.api.xdevapi.DocResult;
 import com.mysql.cj.api.xdevapi.Result;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 
 public class CollectionAddTest extends CollectionTest {
@@ -233,5 +236,45 @@ public class CollectionAddTest extends CollectionTest {
         Result res = this.collection.add(new DbDoc[] {}).execute();
         assertEquals(0, res.getAffectedItemsCount());
         assertEquals(0, res.getWarningsCount());
+    }
+
+    @Test
+    public void testAddOrReplaceOne() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+            return;
+        }
+        this.collection.add("{\"_id\": \"id1\", \"a\": 1}").execute();
+
+        // new _id
+        Result res = this.collection.addOrReplaceOne("id2", new DbDoc().add("a", new JsonNumber().setValue("2")));
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(2, this.collection.count());
+        assertTrue(this.collection.find("a = 1").execute().hasNext());
+        assertTrue(this.collection.find("a = 2").execute().hasNext());
+
+        // existing _id
+        res = this.collection.addOrReplaceOne("id1", new DbDoc().add("a", new JsonNumber().setValue("3")));
+        assertEquals(2, res.getAffectedItemsCount());
+        assertEquals(2, this.collection.count());
+        assertFalse(this.collection.find("a = 1").execute().hasNext());
+        assertTrue(this.collection.find("a = 2").execute().hasNext());
+        assertTrue(this.collection.find("a = 3").execute().hasNext());
+
+        // existing _id in a new document
+        res = this.collection.addOrReplaceOne("id1", "{\"_id\": \"id1\", \"a\": 4}");
+        assertEquals(2, res.getAffectedItemsCount());
+        assertEquals(2, this.collection.count());
+        assertTrue(this.collection.find("a = 2").execute().hasNext());
+        assertFalse(this.collection.find("a = 3").execute().hasNext());
+        assertTrue(this.collection.find("a = 4").execute().hasNext());
+
+        // a new document with _id field that doesn't match id parameter
+        assertThrows(XDevAPIError.class, "Document already has an _id that doesn't match to id parameter", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.addOrReplaceOne("id2", new DbDoc().add("_id", new JsonString().setValue("id111")));
+                return null;
+            }
+        });
+
     }
 }

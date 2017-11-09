@@ -241,9 +241,9 @@ public class MysqlxSession implements Session {
         }
     }
 
-    public StatementExecuteOk addDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+    public StatementExecuteOk addDocs(String schemaName, String collectionName, List<String> jsonStrings, boolean upsert) {
         newCommand();
-        this.protocol.sendDocInsert(schemaName, collectionName, jsonStrings);
+        this.protocol.sendDocInsert(schemaName, collectionName, jsonStrings, upsert);
         return this.protocol.readStatementExecuteOk();
     }
 
@@ -530,9 +530,9 @@ public class MysqlxSession implements Session {
         return f;
     }
 
-    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {
+    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings, boolean upsert) {
         newCommand();
-        return this.protocol.asyncAddDocs(schemaName, collectionName, jsonStrings);
+        return this.protocol.asyncAddDocs(schemaName, collectionName, jsonStrings, upsert);
     }
 
     public CompletableFuture<StatementExecuteOk> asyncInsertRows(String schemaName, String tableName, InsertParams insertParams) {

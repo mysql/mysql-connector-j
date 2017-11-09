@@ -46,4 +46,8 @@ public interface AddStatement extends Statement<AddStatement, AddResult> {
      * @return {@link AddStatement}
      */
     AddStatement add(DbDoc... documents);
+
+    boolean isUpsert();
+
+    AddStatement setUpsert(boolean upsert);
 }

@@ -24,6 +24,8 @@
 package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.Callable;
 
@@ -31,6 +33,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.x.core.XDevAPIError;
 
 /**
@@ -96,5 +99,36 @@ public class CollectionRemoveTest extends CollectionTest {
         assertEquals(3, this.collection.count());
         this.collection.remove("$.x = 22").orderBy("x", "x").execute();
         assertEquals(2, this.collection.count());
+    }
+
+    @Test
+    public void removeOne() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        this.collection.add("{\"x\":1}").execute();
+        this.collection.add("{\"x\":2}").execute();
+        this.collection.add("{\"_id\":\"existingId\",\"x\":3}").execute();
+
+        assertEquals(3, this.collection.count());
+        assertTrue(this.collection.find("x = 3").execute().hasNext());
+
+        Result res = this.collection.removeOne("existingId");
+        assertEquals(1, res.getAffectedItemsCount());
+
+        assertEquals(2, this.collection.count());
+        assertFalse(this.collection.find("x = 3").execute().hasNext());
+
+        res = this.collection.removeOne("notExistingId");
+        assertEquals(0, res.getAffectedItemsCount());
+
+        assertEquals(2, this.collection.count());
+        assertFalse(this.collection.find("x = 3").execute().hasNext());
+
+        res = this.collection.removeOne(null);
+        assertEquals(0, res.getAffectedItemsCount());
+
+        assertEquals(2, this.collection.count());
+        assertFalse(this.collection.find("x = 3").execute().hasNext());
     }
 }

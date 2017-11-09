@@ -33,8 +33,10 @@ import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.RemoveStatement;
+import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Session;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -158,5 +160,54 @@ public class CollectionImpl implements Collection {
         sb.append(ExprUnparser.quoteIdentifier(this.name));
         sb.append(")");
         return sb.toString();
+    }
+
+    @Override
+    public Result replaceOne(String id, DbDoc doc) {
+        return modify("_id = :id").set("$", doc).bind("id", id).execute();
+    }
+
+    @Override
+    public Result replaceOne(String id, String jsonString) {
+        try {
+            return replaceOne(id, JsonParser.parseDoc(new StringReader(jsonString)));
+        } catch (IOException e) {
+            throw AssertionFailedException.shouldNotHappen(e);
+        }
+    }
+
+    @Override
+    public Result addOrReplaceOne(String id, DbDoc doc) {
+        if (doc == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        if (doc.get("_id") == null) {
+            doc.add("_id", new JsonString().setValue(id));
+        } else if (!id.equals(((JsonString) doc.get("_id")).getString())) {
+            throw new XDevAPIError("Document already has an _id that doesn't match to id parameter");
+        }
+        return add(doc).setUpsert(true).execute();
+    }
+
+    @Override
+    public Result addOrReplaceOne(String id, String jsonString) {
+        if (jsonString == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+        }
+        try {
+            return addOrReplaceOne(id, JsonParser.parseDoc(new StringReader(jsonString)));
+        } catch (IOException e) {
+            throw AssertionFailedException.shouldNotHappen(e);
+        }
+    }
+
+    @Override
+    public DbDoc getOne(String id) {
+        return find("_id = :id").bind("id", id).execute().fetchOne();
+    }
+
+    @Override
+    public Result removeOne(String id) {
+        return remove("_id = :id").bind("id", id).execute();
     }
 }

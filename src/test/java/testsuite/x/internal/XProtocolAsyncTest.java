@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -93,7 +93,7 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false);
         this.protocol.readStatementExecuteOk();
 
         final ValueHolder<ArrayList<Field>> metadataHolder = new ValueHolder<>();

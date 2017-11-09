@@ -25,6 +25,7 @@ package com.mysql.cj.api.xdevapi;
 
 import java.util.Map;
 
+import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 
 /**
@@ -137,4 +138,76 @@ public interface Collection extends DatabaseObject {
      * @return {@link DbDoc}
      */
     DbDoc newDoc();
+
+    /**
+     * Takes in a document object which will replace the matching document. If no matches are found, the function returns normally with no changes being made.
+     * 
+     * @param id
+     *            the document id of the document to be replaced
+     * @param doc
+     *            the new document, which may contain expressions. If doc contains an _id value, it is ignored.
+     * @return
+     *         Result object, which will indicate the number of affected documents (1 or 0, if none)
+     */
+    Result replaceOne(String id, DbDoc doc);
+
+    /**
+     * Takes in a document object which will replace the matching document. If no matches are found, the function returns normally with no changes being made.
+     * 
+     * @param id
+     *            the document id of the document to be replaced
+     * @param jsonString
+     *            the new document, given as JSON string, which may contain expressions. If doc contains an _id value, it is ignored.
+     * @return
+     *         Result object, which will indicate the number of affected documents (1 or 0, if none)
+     */
+    Result replaceOne(String id, String jsonString);
+
+    /**
+     * Adds the document to the collection. The following algorithm applies:
+     * 
+     * @param id
+     *            the document id of the document to be replaced
+     * @param doc
+     *            the new document, which may contain expressions. If doc contains an _id value and it does not match the given id then {@link XDevAPIError}
+     *            will be thrown.
+     * @return
+     *         Result object, which will indicate the number of affected documents (0 - if none, 1 - if added, 2 - if replaced)
+     */
+    Result addOrReplaceOne(String id, DbDoc doc);
+
+    /**
+     * Adds the document to the collection. The following algorithm applies:
+     * 
+     * @param id
+     *            the document id of the document to be replaced
+     * @param jsonString
+     *            the new document, given as JSON string, which may contain expressions. If doc contains an _id value and it does not match the given id then
+     *            {@link XDevAPIError}
+     *            will be thrown.
+     * @return
+     *         Result object, which will indicate the number of affected documents (0 - if none, 1 - if added, 2 - if replaced)
+     */
+    Result addOrReplaceOne(String id, String jsonString);
+
+    /**
+     * Return the document with the given id.
+     * 
+     * @param id
+     *            the document id of the document to be retrieved
+     * @return
+     *         the document, or NULL if no match found
+     */
+    DbDoc getOne(String id);
+
+    /**
+     * Removes the document with the given id.
+     * 
+     * @param id
+     *            the document id of the document to be removed
+     * @return
+     *         Returns a Result object, which will indicate the number of removed documents (1 or 0, if none)
+     */
+    Result removeOne(String id);
+
 }

@@ -675,8 +675,8 @@ public class XProtocol implements Protocol {
         return f;
     }
 
-    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings) {
-        return asyncUpdate(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings));
+    public CompletableFuture<StatementExecuteOk> asyncAddDocs(String schemaName, String collectionName, List<String> jsonStrings, boolean upsert) {
+        return asyncUpdate(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings, upsert));
     }
 
     public CompletableFuture<StatementExecuteOk> asyncInsertRows(String schemaName, String tableName, InsertParams insertParams) {
@@ -719,8 +719,8 @@ public class XProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildDelete(filterParams));
     }
 
-    public void sendDocInsert(String schemaName, String collectionName, List<String> jsonStrings) {
-        this.writer.write(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings));
+    public void sendDocInsert(String schemaName, String collectionName, List<String> jsonStrings, boolean upsert) {
+        this.writer.write(this.msgBuilder.buildDocInsert(schemaName, collectionName, jsonStrings, upsert));
     }
 
     public void sendRowInsert(String schemaName, String tableName, InsertParams insertParams) {

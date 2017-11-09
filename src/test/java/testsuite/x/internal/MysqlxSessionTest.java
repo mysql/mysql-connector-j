@@ -117,7 +117,7 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         stringDocs.add("{'_id':'3'}");
         stringDocs.add("{'_id':'4'}");
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
-        this.session.addDocs(getTestDatabase(), collName, stringDocs);
+        this.session.addDocs(getTestDatabase(), collName, stringDocs, false);
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName);
         findParams.setOrder("$._id");

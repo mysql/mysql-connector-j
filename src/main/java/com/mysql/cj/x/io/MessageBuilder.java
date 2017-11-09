@@ -211,8 +211,11 @@ public class MessageBuilder {
         return builder.build();
     }
 
-    public Insert buildDocInsert(String schemaName, String collectionName, List<String> json) {
+    public Insert buildDocInsert(String schemaName, String collectionName, List<String> json, boolean upsert) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
+        if (upsert != builder.getUpsert()) {
+            builder.setUpsert(upsert);
+        }
         json.stream().map(str -> TypedRow.newBuilder().addField(ExprUtil.argObjectToExpr(str, false)).build()).forEach(builder::addRow);
         return builder.build();
     }

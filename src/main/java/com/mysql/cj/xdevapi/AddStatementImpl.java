@@ -43,6 +43,7 @@ public class AddStatementImpl implements AddStatement {
     private String schemaName;
     private String collectionName;
     private List<DbDoc> newDocs;
+    private boolean upsert = false;
 
     /* package private */ AddStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, DbDoc newDoc) {
         this.mysqlxSession = mysqlxSession;
@@ -96,13 +97,22 @@ public class AddStatementImpl implements AddStatement {
             return new AddResultImpl(ok, new ArrayList<>());
         }
         List<String> newIds = assignIds();
-        StatementExecuteOk ok = this.mysqlxSession.addDocs(this.schemaName, this.collectionName, serializeDocs());
+        StatementExecuteOk ok = this.mysqlxSession.addDocs(this.schemaName, this.collectionName, serializeDocs(), this.upsert);
         return new AddResultImpl(ok, newIds);
     }
 
     public CompletableFuture<AddResult> executeAsync() {
         final List<String> newIds = assignIds();
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncAddDocs(this.schemaName, this.collectionName, serializeDocs());
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncAddDocs(this.schemaName, this.collectionName, serializeDocs(), this.upsert);
         return okF.thenApply(ok -> new AddResultImpl(ok, newIds));
+    }
+
+    public boolean isUpsert() {
+        return this.upsert;
+    }
+
+    public AddStatement setUpsert(boolean upsert) {
+        this.upsert = upsert;
+        return this;
     }
 }

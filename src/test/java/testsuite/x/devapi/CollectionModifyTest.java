@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.DocResult;
+import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
@@ -518,5 +519,81 @@ public class CollectionModifyTest extends CollectionTest {
         doc = docs.next(); //   <---- Error at this line
         assertNotNull(doc.get("nullfield"));
         assertEquals(new DbDoc(), doc.get("nullfield"));
+    }
+
+    public void testReplaceOne() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+            return;
+        }
+
+        Result res = this.collection.replaceOne("someId", "{\"_id\":\"someId\",\"a\":3}");
+        assertEquals(0, res.getAffectedItemsCount());
+
+        this.collection.add("{\"_id\":\"existingId\",\"a\":1}").execute();
+
+        res = this.collection.replaceOne("existingId", new DbDoc().add("a", new JsonNumber().setValue("2")));
+        assertEquals(1, res.getAffectedItemsCount());
+
+        DbDoc doc = this.collection.getOne("existingId");
+        assertNotNull(doc);
+        assertEquals(new Integer(2), ((JsonNumber) doc.get("a")).getInteger());
+
+        res = this.collection.replaceOne("notExistingId", "{\"_id\":\"existingId\",\"a\":3}");
+        assertEquals(0, res.getAffectedItemsCount());
+
+        res = this.collection.replaceOne("", "{\"_id\":\"existingId\",\"a\":3}");
+        assertEquals(0, res.getAffectedItemsCount());
+
+        /*
+         * FR5.1 The id of the document must remain immutable:
+         * 
+         * Use a collection with some documents
+         * Fetch a document
+         * Modify _id: _new_id_ and modify any other field of the document
+         * Call replaceOne() giving original ID and modified document: expect affected = 1
+         * Fetch the document again, ensure other document modifications took place
+         * Ensure no document with _new_id_ was added to the collection
+         */
+        this.collection.remove("1=1").execute();
+        assertEquals(0, this.collection.count());
+        this.collection.add("{\"_id\":\"id1\",\"a\":1}").execute();
+
+        doc = this.collection.getOne("id1");
+        assertNotNull(doc);
+        ((JsonString) doc.get("_id")).setValue("id2");
+        ((JsonNumber) doc.get("a")).setValue("2");
+        res = this.collection.replaceOne("id1", doc);
+        assertEquals(1, res.getAffectedItemsCount());
+
+        doc = this.collection.getOne("id1");
+        assertNotNull(doc);
+        assertEquals("id1", ((JsonString) doc.get("_id")).getString());
+        assertEquals(new Integer(2), ((JsonNumber) doc.get("a")).getInteger());
+
+        doc = this.collection.getOne("id2");
+        assertNull(doc);
+
+        /*
+         * FR5.2 The id of the document must remain immutable:
+         * 
+         * Use a collection with some documents
+         * Fetch a document
+         * Unset _id and modify any other field of the document
+         * Call replaceOne() giving original ID and modified document: expect affected = 1
+         * Fetch the document again, ensure other document modifications took place
+         * Ensure the number of documents in the collection is unaltered
+         */
+        doc = this.collection.getOne("id1");
+        assertNotNull(doc);
+        doc.remove("_id");
+        ((JsonNumber) doc.get("a")).setValue("3");
+        res = this.collection.replaceOne("id1", doc);
+        assertEquals(1, res.getAffectedItemsCount());
+
+        doc = this.collection.getOne("id1");
+        assertNotNull(doc);
+        assertEquals("id1", ((JsonString) doc.get("_id")).getString());
+        assertEquals(new Integer(3), ((JsonNumber) doc.get("a")).getInteger());
+        assertEquals(1, this.collection.count());
     }
 }

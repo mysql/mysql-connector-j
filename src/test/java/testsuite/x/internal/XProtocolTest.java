@@ -320,7 +320,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false);
         this.protocol.readStatementExecuteOk();
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName, "$.testVal = 2-1");
@@ -345,7 +345,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         stringDocs.add("{'b': 'B', 'b2': 'B2', '_id': 'b'}");
         stringDocs.add("{'c': 'C', 'c3': 'C3', '_id': 'c'}");
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
-        this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs);
+        this.protocol.sendDocInsert(getTestDatabase(), collName, stringDocs, false);
         this.protocol.readStatementExecuteOk();
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName);
@@ -371,7 +371,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }));
+        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false);
         this.protocol.readStatementExecuteOk();
 
         List<UpdateSpec> updates = new ArrayList<>();

@@ -27,6 +27,8 @@ import static com.mysql.cj.api.xdevapi.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -517,5 +519,25 @@ public class CollectionFindTest extends CollectionTest {
             }
         }
 
+    }
+
+    @Test
+    public void getOne() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        this.collection.add("{\"a\":1}").execute();
+        this.collection.add("{\"a\":2}").execute();
+        this.collection.add("{\"_id\":\"existingId\",\"a\":3}").execute();
+
+        DbDoc doc = this.collection.getOne("existingId");
+        assertNotNull(doc);
+        assertEquals(new Integer(3), ((JsonNumber) doc.get("a")).getInteger());
+
+        doc = this.collection.getOne("NotExistingId");
+        assertNull(doc);
+
+        doc = this.collection.getOne(null);
+        assertNull(doc);
     }
 }
