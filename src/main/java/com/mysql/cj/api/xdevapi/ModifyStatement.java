@@ -93,7 +93,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * 
      * @param document
      *            patch object
-     * @return
+     * @return {@link ModifyStatement}
      */
     ModifyStatement patch(DbDoc document);
 
@@ -102,7 +102,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * 
      * @param document
      *            patch object
-     * @return
+     * @return {@link ModifyStatement}
      */
     ModifyStatement patch(String document);
 

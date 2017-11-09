@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.DocResult;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonArray;
@@ -279,7 +280,7 @@ public class CollectionModifyTest extends CollectionTest {
 
     @Test
     public void testMergePatch() throws Exception {
-        if (!this.isSetForXTests) {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
             return;
         }
 
