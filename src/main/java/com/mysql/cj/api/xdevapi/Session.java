@@ -165,6 +165,41 @@ public interface Session {
     void rollback();
 
     /**
+     * Creates a transaction savepoint with an implementation-defined generated name and returns it's name, which can be used in {@link #rollbackTo(String)} or
+     * {@link #releaseSavepoint(String)}. Calling this method more than once should always work. The generated name shall be unique per session.
+     * 
+     * @return savepoint name
+     */
+    String setSavepoint();
+
+    /**
+     * Creates or replaces a transaction savepoint with the given name. Calling this method more than once should always work.
+     * 
+     * @param name
+     *            savepoint name
+     * @return savepoint name
+     */
+    String setSavepoint(String name);
+
+    /**
+     * Rolls back the transaction back to the named savepoint. This method will succeed so long as the given save point has not been already rolled back or
+     * released. Rolling back to a savepoint prior to the one named will release or rollback any that came after.
+     * 
+     * @param name
+     *            savepoint name
+     */
+    void rollbackTo(String name);
+
+    /**
+     * Releases the named savepoint. This method will succeed so long as the given save point has not been already rolled back or
+     * released. Rolling back to a savepoint prior to the one named will release or rollback any that came after.
+     * 
+     * @param name
+     *            savepoint name
+     */
+    void releaseSavepoint(String name);
+
+    /**
      * Create a native SQL command. Placeholders are supported using the native "?" syntax.
      * 
      * @param sql

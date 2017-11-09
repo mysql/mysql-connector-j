@@ -114,6 +114,27 @@ public class SessionImpl implements Session {
         this.session.update("ROLLBACK");
     }
 
+    @Override
+    public String setSavepoint() {
+        return setSavepoint(StringUtils.getUniqueSavepointId());
+    }
+
+    @Override
+    public String setSavepoint(String name) {
+        this.session.update("SAVEPOINT " + StringUtils.quoteIdentifier(name, true));
+        return name;
+    }
+
+    @Override
+    public void rollbackTo(String name) {
+        this.session.update("ROLLBACK TO " + StringUtils.quoteIdentifier(name, true));
+    }
+
+    @Override
+    public void releaseSavepoint(String name) {
+        this.session.update("RELEASE SAVEPOINT " + StringUtils.quoteIdentifier(name, true));
+    }
+
     public String getUri() {
         PropertySet pset = this.session.getPropertySet();
 

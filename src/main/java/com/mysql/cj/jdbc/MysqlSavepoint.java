@@ -23,40 +23,19 @@
 
 package com.mysql.cj.jdbc;
 
-import java.rmi.server.UID;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
 import com.mysql.cj.api.exceptions.ExceptionInterceptor;
 import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.core.util.StringUtils;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * Represents SQL SAVEPOINTS in MySQL.
  */
 public class MysqlSavepoint implements Savepoint {
-    private static String getUniqueId() {
-        // no need to re-invent the wheel here...
-        String uidStr = new UID().toString();
-
-        int uidLength = uidStr.length();
-
-        StringBuilder safeString = new StringBuilder(uidLength + 1);
-        safeString.append('_');
-
-        for (int i = 0; i < uidLength; i++) {
-            char c = uidStr.charAt(i);
-
-            if (Character.isLetter(c) || Character.isDigit(c)) {
-                safeString.append(c);
-            } else {
-                safeString.append('_');
-            }
-        }
-
-        return safeString.toString();
-    }
 
     private String savepointName;
 
@@ -71,7 +50,7 @@ public class MysqlSavepoint implements Savepoint {
      *             if an error occurs
      */
     MysqlSavepoint(ExceptionInterceptor exceptionInterceptor) throws SQLException {
-        this(getUniqueId(), exceptionInterceptor);
+        this(StringUtils.getUniqueSavepointId(), exceptionInterceptor);
     }
 
     /**

@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2041,5 +2042,10 @@ public class StringUtils {
      */
     public static boolean hasWildcards(String src) {
         return indexOfIgnoreCase(0, src, "%") > -1 || indexOfIgnoreCase(0, src, "_") > -1;
+    }
+
+    public static String getUniqueSavepointId() {
+        String uuid = UUID.randomUUID().toString();
+        return uuid.replaceAll("-", "_"); // for safety
     }
 }
