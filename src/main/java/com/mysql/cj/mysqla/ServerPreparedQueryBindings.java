@@ -52,9 +52,8 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     private AtomicBoolean sendTypesToServer = new AtomicBoolean(false);
 
     /**
-     * Flag indicating whether or not the long parameters have been 'switched'
-     * back to normal parameters. We can not execute() if clearParameters()
-     * hasn't been called in this case.
+     * Flag indicating whether or not the long parameters have been 'switched' back to normal parameters.
+     * We cannot execute() if clearParameters() has not been called in this case.
      */
     private boolean longParameterSwitchDetected = false;
 

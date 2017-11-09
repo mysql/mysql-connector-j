@@ -34,7 +34,7 @@ import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.core.util.StringUtils;
 
 /**
- * Represents the "parsed" state of a prepared statement, with the statement broken up into it's static and dynamic (where parameters are bound) parts.
+ * Represents the "parsed" state of a prepared statement, with the statement broken up into its static and dynamic (where parameters are bound) parts.
  */
 public class ParseInfo {
 
@@ -375,7 +375,7 @@ public class ParseInfo {
     }
 
     /**
-     * Returns a preparable SQL string for the number of batched parameters, used by server-side prepared statements
+     * Returns a preparable SQL string for the number of batched parameters; used by server-side prepared statements
      * when re-writing batch INSERTs.
      */
 

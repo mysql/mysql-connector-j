@@ -34,8 +34,8 @@ import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 /**
  * An exception to represent communications errors with the database.
  * 
- * Attempts to provide 'friendlier' error messages to end-users, including last time a packet was sent to the database, what the client-timeout is set to, and
- * whether the idle time has been exceeded.
+ * Attempts to provide 'friendlier' error messages to end-users, including the last time a packet was sent to the database,
+ * what the client-timeout is set to, and whether the idle time has been exceeded.
  */
 public class CommunicationsException extends SQLRecoverableException implements StreamingNotifiable {
 

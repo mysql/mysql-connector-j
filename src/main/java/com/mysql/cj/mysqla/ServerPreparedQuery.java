@@ -62,7 +62,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /** Field-level metadata for parameters */
     private Field[] parameterFields;
 
-    /** Field-level metadata for result sets. It's got from statement prepare. */
+    /** Field-level metadata for result sets. From statement prepare. */
     private ColumnDefinition resultFields;
 
     protected ReadableProperty<Boolean> gatherPerfMetrics;
@@ -268,7 +268,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
         if (this.queryBindings.getSendTypesToServer().get()) {
             /*
-             * Store types of parameters in first in first package that is sent to the server.
+             * Store types of parameters in the first package that is sent to the server.
              */
             for (int i = 0; i < this.parameterCount; i++) {
                 packet.writeInteger(IntegerDataType.INT2, parameterBindings[i].bufferType);
@@ -461,12 +461,12 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
      *  Long data handling:
      * 
      *  - Server gets the long data in pieces with command type 'COM_LONG_DATA'.
-     *  - The packet received will have the format as:
+     *  - The packet received will have the format:
      *    [COM_LONG_DATA:     1][STMT_ID:4][parameter_number:2][type:2][data]
      *  - Checks if the type is specified by client, and if yes reads the type,
      *    and  stores the data in that format.
-     *  - It's up to the client to check for read data ended. The server doesn't
-     *    care;  and also server doesn't notify to the client that it got the
+     *  - It is up to the client to check for read data ended. The server does not
+     *    care; and also server does not notify to the client that it got the
      *    data  or not; if there is any error; then during execute; the error
      *    will  be returned
      * </pre>
@@ -687,8 +687,8 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /**
      * 
      * @param clearServerParameters
-     * @return Whether or not the long parameters have been 'switched' back to normal parameters. We can not execute() if clearParameters() hasn't been called
-     *         in this case.
+     * @return Whether or not the long parameters have been 'switched' back to normal parameters.
+     *         We cannot execute() if clearParameters() has not been called in this case.
      */
     public void clearParameters(boolean clearServerParameters) {
         boolean hadLongData = false;
@@ -715,7 +715,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     }
 
     /**
-     * Computes the maximum parameter set size, and entire batch size given
+     * Computes the maximum parameter set size and the size of the entire batch given
      * the number of arguments in the batch.
      */
     @Override

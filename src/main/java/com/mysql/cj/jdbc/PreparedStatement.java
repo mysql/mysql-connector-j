@@ -1181,7 +1181,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     }
 
     /**
-     * The number, types and properties of a ResultSet's columns are provided by
+     * The number, types, and properties of a ResultSet's columns are provided by
      * the getMetaData method.
      * 
      * @return the description of a ResultSet's columns
@@ -1396,9 +1396,8 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     }
 
     /**
-     * For calling stored functions, this will be -1 as we don't really count
-     * the first '?' parameter marker, it's only syntax, but JDBC counts it
-     * as #1, otherwise it will return 0
+     * For calling stored functions, this will be -1 as Connector/J does not count
+     * the first '?' parameter marker, but JDBC counts it * as 1, otherwise it will return 0
      */
     protected int getParameterIndexOffset() {
         return 0;

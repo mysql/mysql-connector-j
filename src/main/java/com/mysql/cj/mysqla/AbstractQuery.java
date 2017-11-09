@@ -61,7 +61,7 @@ public abstract class AbstractQuery implements Query {
 
     protected CommandBuilder commandBuilder = new CommandBuilder(); // TODO use shared builder
 
-    /** Mutex to prevent race between returning query results and noticing that we're timed-out or cancelled. */
+    /** Mutex to prevent race between returning query results and noticing that query has been timed-out or cancelled. */
     protected Object cancelTimeoutMutex = new Object();
 
     private CancelStatus cancelStatus = CancelStatus.NOT_CANCELED;
@@ -80,10 +80,10 @@ public abstract class AbstractQuery implements Query {
     /** The number of rows to fetch at a time (currently ignored) */
     protected int fetchSize = 0;
 
-    /** If we're profiling, where should events go to? */
+    /** If profiling, where should events go to? */
     protected ProfilerEventHandler eventSink = null;
 
-    /** Are we currently executing a statement? */
+    /** Currently executing a statement? */
     protected final AtomicBoolean statementExecuting = new AtomicBoolean(false);
 
     /** The catalog in use */

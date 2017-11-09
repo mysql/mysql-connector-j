@@ -284,10 +284,10 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     /**
-     * Should SET AUTOCOMMIT be sent to server if we're going to set autoCommitFlag in driver
+     * Should SET AUTOCOMMIT be sent to server if we are going to set autoCommitFlag in driver
      * 
      * @param autoCommitFlag
-     *            autocommit status we're going to set in driver
+     *            autocommit status we are going to set in driver
      * @param elideSetAutoCommitsFlag
      * @return true if SET AUTOCOMMIT to be sent
      */
@@ -487,8 +487,7 @@ public class MysqlaServerSession implements ServerSession {
     }
 
     /**
-     * Is the server in a sql_mode that doesn't allow us to use \\ to escape
-     * things?
+     * Is the server in a sql_mode that does not allow us to use \\ to escape things?
      * 
      * @return Returns the noBackslashEscapes.
      */
