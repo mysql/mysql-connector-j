@@ -213,20 +213,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
          */
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof CompoundCacheKey) {
-                CompoundCacheKey another = (CompoundCacheKey) obj;
-
-                boolean firstPartEqual = false;
-
-                if (this.componentOne == null) {
-                    firstPartEqual = (another.componentOne == null);
-                } else {
-                    firstPartEqual = this.componentOne.equals(another.componentOne);
-                }
-
-                return (firstPartEqual && this.componentTwo.equals(another.componentTwo));
+            if (this == obj) {
+                return true;
             }
-
+            if (obj != null && CompoundCacheKey.class.isAssignableFrom(obj.getClass())) {
+                CompoundCacheKey another = (CompoundCacheKey) obj;
+                if (this.componentOne == null ? another.componentOne == null : this.componentOne.equals(another.componentOne)) {
+                    return this.componentTwo == null ? another.componentTwo == null : this.componentTwo.equals(another.componentTwo);
+                }
+            }
             return false;
         }
 
