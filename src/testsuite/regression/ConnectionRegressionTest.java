@@ -10047,4 +10047,48 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.execute("SET @@global.autocommit=" + (originalAutoCommit ? 1 : 0));
         }
     }
+
+    /**
+     * Tests fix for Bug#88242 - autoReconnect and socketTimeout JDBC option makes wrong order of client packet.
+     * 
+     * The wrong behavior may not be observed in all systems or configurations. It seems to be easier to reproduce when SSL is enabled. Without it, the data
+     * packets flow faster and desynchronization occurs rarely, which is the root cause for this problem.
+     */
+    public void testBug88242() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("useSSL", "true");
+        props.setProperty("verifyServerCertificate", "false");
+        props.setProperty("autoReconnect", "true");
+        props.setProperty("socketTimeout", "1500");
+
+        Connection testConn = getConnectionWithProps(props);
+        this.pstmt = testConn.prepareStatement("SELECT ?, SLEEP(?)");
+
+        int key = 0;
+        for (int i = 0; i < 5; i++) {
+            // Execute a query that runs faster than the socket timeout limit.
+            this.pstmt.setInt(1, ++key);
+            this.pstmt.setInt(2, 0);
+            try {
+                this.rs = this.pstmt.executeQuery();
+                assertTrue(this.rs.next());
+                assertEquals(key, this.rs.getInt(1));
+            } catch (SQLException e) {
+                fail("Exception [" + e.getClass().getName() + ": " + e.getMessage() + "] caught when no exception was expected.");
+            }
+
+            // Execute a query that runs slower than the socket timeout limit.
+            this.pstmt.setInt(1, ++key);
+            this.pstmt.setInt(2, 2);
+            final PreparedStatement localPstmt = this.pstmt;
+            assertThrows("Communications link failure.*", SQLException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    localPstmt.executeQuery();
+                    return null;
+                }
+            });
+        }
+
+        testConn.close();
+    }
 }

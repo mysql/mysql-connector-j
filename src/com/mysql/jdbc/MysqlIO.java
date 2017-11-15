@@ -480,7 +480,7 @@ public class MysqlIO {
     }
 
     // We do this to break the chain between MysqlIO and Connection, so that we can have PhantomReferences on connections that let the driver clean up the
-    // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficent).
+    // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficient).
     protected NetworkResources getNetworkResources() {
         return new NetworkResources(this.mysqlConnection, this.mysqlInput, this.mysqlOutput);
     }

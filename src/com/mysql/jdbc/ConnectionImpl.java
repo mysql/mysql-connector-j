@@ -2459,7 +2459,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
             this.lastQueryFinishedTime = 0; // we're busy!
 
-            if ((getHighAvailability()) && (this.autoCommit || getAutoReconnectForPools()) && this.needsPing && !isBatch) {
+            if (getHighAvailability() && (this.autoCommit || getAutoReconnectForPools()) && this.needsPing && !isBatch) {
                 try {
                     pingInternal(false, 0);
 
@@ -2496,19 +2496,23 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
                 }
 
-                if ((getHighAvailability())) {
-                    this.needsPing = true;
-                } else {
-                    String sqlState = sqlE.getSQLState();
-
-                    if ((sqlState != null) && sqlState.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
-                        cleanup(sqlE);
+                if (getHighAvailability()) {
+                    if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlE.getSQLState())) {
+                        // IO may be dirty or damaged beyond repair, force close it.
+                        this.io.forceClose();
                     }
+                    this.needsPing = true;
+                } else if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlE.getSQLState())) {
+                    cleanup(sqlE);
                 }
 
                 throw sqlE;
             } catch (Exception ex) {
                 if (getHighAvailability()) {
+                    if (ex instanceof IOException) {
+                        // IO may be dirty or damaged beyond repair, force close it.
+                        this.io.forceClose();
+                    }
                     this.needsPing = true;
                 } else if (ex instanceof IOException) {
                     cleanup(ex);
