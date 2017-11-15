@@ -3749,7 +3749,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * This test requires two server instances:
      * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable
-     * configured without RSA encryption support
+     * configured without RSA encryption support (sha256_password_private_key_path,
+     * sha256_password_public_key_path, caching_sha2_password_private_key_path and
+     * caching_sha2_password_public_key_path config options are unset).
      * 2) additional server instance pointed by com.mysql.cj.testsuite.url.openssl
      * variable configured with default-authentication-plugin=sha256_password
      * and RSA encryption enabled.
@@ -3773,9 +3775,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (!pluginIsActive(this.stmt, "sha256_password")) {
                 fail("sha256_password required to run this test");
             }
-            if (allowsRsa(this.stmt)) {
-                fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
-            }
+
+            // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
+            boolean gplWithRSA = allowsRsa(this.stmt);
 
             try {
                 this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
@@ -3819,13 +3821,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         return null;
                     }
                 });
-                assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsAllowRetrieval);
-                        return null;
-                    }
-                });
 
+                if (gplWithRSA) {
+                    assertCurrentUser(null, propsAllowRetrieval, "wl5602user", false);
+                } else {
+                    assertThrows(SQLException.class, "Access denied for user 'wl5602user'.*", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            getConnectionWithProps(propsAllowRetrieval);
+                            return null;
+                        }
+                    });
+                }
                 assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
@@ -9667,6 +9673,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * This test requires two server instances:
      * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable configured without RSA encryption support
+     * (sha256_password_private_key_path, sha256_password_public_key_path, caching_sha2_password_private_key_path and
+     * caching_sha2_password_public_key_path config options are unset).
      * 2) additional server instance pointed by com.mysql.cj.testsuite.url.openssl variable configured with
      * default-authentication-plugin=sha256_password, RSA encryption enabled and server configuration options
      * "caching_sha2_password_private_key_path" and "caching_sha2_password_public_key_path" are set to the same values
@@ -9691,9 +9699,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (!pluginIsActive(this.stmt, "caching_sha2_password")) {
                 fail("caching_sha2_password required to run this test");
             }
-            if (allowsRsa(this.stmt)) {
-                fail("RSA encryption must be disabled on " + System.getProperty(PropertyDefinitions.SYSP_testsuite_url) + " to run this test");
-            }
+
+            // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
+            boolean gplWithRSA = allowsRsa(this.stmt);
 
             try {
                 this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
@@ -9737,12 +9745,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         return null;
                     }
                 });
-                assertThrows(SQLException.class, "Access denied for user 'wl11060user'.*", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        getConnectionWithProps(propsAllowRetrieval);
-                        return null;
-                    }
-                });
+                if (gplWithRSA) {
+                    assertCurrentUser(null, propsAllowRetrieval, "wl11060user", false);
+                } else {
+                    assertThrows(SQLException.class, "Access denied for user 'wl11060user'.*", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            getConnectionWithProps(propsAllowRetrieval);
+                            return null;
+                        }
+                    });
+                }
 
                 assertCurrentUser(null, propsNoRetrievalNoPassword, "wl11060nopassword", false);
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
