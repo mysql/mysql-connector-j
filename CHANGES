@@ -3,6 +3,8 @@
 
 Version 5.1.45
 
+  - Fix for Bug#88232 (27047676), c/J does not rollback transaction when autoReconnect=true.
+
   - Fix for Bug#88242 (27040063), autoReconnect and socketTimeout JDBC option makes wrong order of client packet.
 
   - Fix for Bug#88021 (26939943), High GC pressure when driver configured with serversideprepared statements.

@@ -10091,4 +10091,56 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         testConn.close();
     }
+
+    /**
+     * Tests fix for Bug#88232 - c/J does not rollback transaction when autoReconnect=true.
+     * 
+     * This is essentially a duplicate of Bug#88242, but observed in a different use case.
+     */
+    public void testBug88232() throws Exception {
+        createTable("testBug88232", "(id INT)", "INNODB");
+
+        Properties props = new Properties();
+        props.setProperty("useSSL", "false");
+        props.setProperty("autoReconnect", "true");
+        props.setProperty("socketTimeout", "2000");
+        props.setProperty("cacheServerConfiguration", "true");
+        props.setProperty("useLocalSessionState", "true");
+
+        final Connection testConn = getConnectionWithProps(props);
+        final Statement testStmt = testConn.createStatement();
+
+        try {
+            /*
+             * Step 1: Insert data in a interrupted (by socket timeout exception) transaction.
+             */
+            testStmt.execute("START TRANSACTION");
+            testStmt.execute("INSERT INTO testBug88232 VALUES (1)");
+            assertThrows("Communications link failure.*", SQLException.class, new Callable<Void>() {
+                public Void call() throws Exception {
+                    testStmt.executeQuery("SELECT SLEEP(3)"); // Throws exception due to socket timeout. Transaction should be rolled back or canceled.
+                    return null;
+                }
+            });
+            // Check data using a different connection: table should be empty.
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug88232");
+            assertFalse(this.rs.next());
+
+            /*
+             * Step 2: Insert data in a new transaction and commit.
+             */
+            testStmt.execute("START TRANSACTION"); // Reconnects and causes implicit commit in previous transaction if not rolled back.
+            testStmt.executeUpdate("INSERT INTO testBug88232 VALUES (2)");
+            testStmt.execute("COMMIT");
+
+            // Check data using a different connection: only 2nd record should be present.
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug88232");
+            assertTrue(this.rs.next());
+            assertEquals(2, this.rs.getInt(1));
+            assertFalse(this.rs.next());
+        } finally {
+            testConn.createStatement().execute("ROLLBACK"); // Make sure the table testBug88232 is unlocked in case of failure, otherwise it can't be deleted.
+            testConn.close();
+        }
+    }
 }
