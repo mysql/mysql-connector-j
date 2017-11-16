@@ -2983,8 +2983,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             noBackslashEscapesConn = getConnectionWithProps(props);
 
-            createTable("X_TEST",
-                    "(userName varchar(32) not null, ivalue integer, CNAME varchar(255), bvalue CHAR(1), svalue varchar(255), ACTIVE CHAR(1), primary key (userName))");
+            createTable("X_TEST", "(userName varchar(32) not null, ivalue integer, CNAME varchar(255), bvalue CHAR(1), svalue varchar(255), ACTIVE CHAR(1), "
+                    + "primary key (userName)) DEFAULT CHARSET=latin1");
 
             String insert_sql = "insert into X_TEST (ivalue, CNAME, bvalue, svalue, ACTIVE, userName) values (?, ?, ?, ?, ?, ?)";
 
@@ -2997,11 +2997,12 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.setString(6, "c:\\jetson");
             this.pstmt.execute();
 
-            String select_sql = "select user0_.userName as userName0_0_, user0_.ivalue as ivalue0_0_, user0_.CNAME as CNAME0_0_, user0_.bvalue as bvalue0_0_, user0_.svalue as svalue0_0_, user0_.ACTIVE as ACTIVE0_0_ from X_TEST user0_ where user0_.userName like ?";
+            String select_sql = "select user0_.userName as userName0_0_, user0_.ivalue as ivalue0_0_, user0_.CNAME as CNAME0_0_, user0_.bvalue as bvalue0_0_, "
+                    + "user0_.svalue as svalue0_0_, user0_.ACTIVE as ACTIVE0_0_ from X_TEST user0_ where user0_.userName like ?";
             this.pstmt = noBackslashEscapesConn.prepareStatement(select_sql);
             this.pstmt.setString(1, "c:\\j%");
             // if we comment out the previous line and uncomment the following, the like clause matches
-            // this.pstmt.setString(1,"c:\\\\j%");
+            // this.pstmt.setString(1, "c:\\\\j%");
             System.out.println("about to execute query " + select_sql);
             this.rs = this.pstmt.executeQuery();
             assertTrue(this.rs.next());
