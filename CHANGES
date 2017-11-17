@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - Fix for Bug#27131100, WL#11212 : SAVEPOINT CREATING WITH EMPTY STRING AND SPACE AS NAME.
+
   - WL#11212, DevAPI: transaction save-points.
 
   - WL#11060, Support new SHA-256 authentication system.

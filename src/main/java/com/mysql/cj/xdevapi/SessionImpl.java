@@ -33,6 +33,7 @@ import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.result.Row;
 import com.mysql.cj.api.xdevapi.Schema;
 import com.mysql.cj.api.xdevapi.Session;
+import com.mysql.cj.core.Messages;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -121,17 +122,29 @@ public class SessionImpl implements Session {
 
     @Override
     public String setSavepoint(String name) {
+        if (name == null || name.trim().length() == 0) {
+            throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
+        }
+
         this.session.update("SAVEPOINT " + StringUtils.quoteIdentifier(name, true));
         return name;
     }
 
     @Override
     public void rollbackTo(String name) {
+        if (name == null || name.trim().length() == 0) {
+            throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
+        }
+
         this.session.update("ROLLBACK TO " + StringUtils.quoteIdentifier(name, true));
     }
 
     @Override
     public void releaseSavepoint(String name) {
+        if (name == null || name.trim().length() == 0) {
+            throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
+        }
+
         this.session.update("RELEASE SAVEPOINT " + StringUtils.quoteIdentifier(name, true));
     }
 
