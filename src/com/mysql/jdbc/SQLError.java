@@ -684,6 +684,7 @@ public class SQLError {
         try {
             if (warningCountIfKnown < 100) {
                 stmt = connection.createStatement();
+                stmt.setFetchSize(0); // turns off cursor based fetch, in case the connection was set up to use them.
 
                 if (stmt.getMaxRows() != 0) {
                     stmt.setMaxRows(0);

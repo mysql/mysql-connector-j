@@ -3,6 +3,8 @@
 
 Version 5.1.45
 
+  - Fix for Bug#27131768, NULL POINTER EXCEPTION IN CONNECTION.
+
   - Fix for Bug#88232 (27047676), c/J does not rollback transaction when autoReconnect=true.
 
   - Fix for Bug#88242 (27040063), autoReconnect and socketTimeout JDBC option makes wrong order of client packet.

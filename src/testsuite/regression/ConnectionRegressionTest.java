@@ -10146,4 +10146,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn.close();
         }
     }
+
+    /**
+     * Tests fix for Bug#27131768 - NULL POINTER EXCEPTION IN CONNECTION.
+     */
+    public void testBug27131768() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("useServerPrepStmts", "true");
+        props.setProperty("useInformationSchema", "true");
+        props.setProperty("useCursorFetch", "true");
+        props.setProperty("defaultFetchSize", "3");
+
+        Connection testConn = getConnectionWithProps(props);
+        testConn.createStatement().executeQuery("SELECT 1");
+        testConn.close();
+    }
 }
