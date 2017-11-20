@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/
 
+Version 5.1.46
+
 Version 5.1.45
 
   - Fix for Bug#27131768, NULL POINTER EXCEPTION IN CONNECTION.
