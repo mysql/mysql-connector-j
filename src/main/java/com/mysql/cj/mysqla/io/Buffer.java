@@ -147,6 +147,11 @@ public class Buffer implements PacketPayload {
     }
 
     @Override
+    public boolean isErrorPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_ERROR;
+    }
+
+    @Override
     public final boolean isEOFPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() <= 5);
     }

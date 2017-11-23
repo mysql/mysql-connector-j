@@ -347,6 +347,7 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
 
         int errno = 2000;
 
+        buf.setPosition(1); // skip the packet type
         errno = (int) buf.readInteger(IntegerDataType.INT2);
 
         String serverErrorMessage = "";
@@ -488,13 +489,14 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
     public MysqlaCapabilities readServerCapabilities() {
         // Read the first packet
         PacketPayload buf = readPacket(null);
-        MysqlaCapabilities serverCapabilities = new MysqlaCapabilities();
-        serverCapabilities.setInitialHandshakePacket(buf);
 
-        // ERR packet instead of Initial Handshake
-        if (serverCapabilities.getProtocolVersion() == -1) {
+        // Server Greeting Error packet instead of Server Greeting
+        if (buf.isErrorPacket()) {
             rejectProtocol(buf);
         }
+
+        MysqlaCapabilities serverCapabilities = new MysqlaCapabilities();
+        serverCapabilities.setInitialHandshakePacket(buf);
 
         return serverCapabilities;
 
