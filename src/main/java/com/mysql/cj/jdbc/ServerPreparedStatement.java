@@ -130,9 +130,9 @@ public class ServerPreparedStatement extends PreparedStatement {
     public String toString() {
         StringBuilder toStringBuf = new StringBuilder();
 
-        toStringBuf.append("com.mysql.cj.jdbc.ServerPreparedStatement[");
+        toStringBuf.append(this.getClass().getName() + "[");
         toStringBuf.append(((ServerPreparedQuery) this.query).getServerStatementId());
-        toStringBuf.append("] - ");
+        toStringBuf.append("]: ");
 
         try {
             toStringBuf.append(asSql());

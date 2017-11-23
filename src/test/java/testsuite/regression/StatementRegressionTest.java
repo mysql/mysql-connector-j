@@ -10241,4 +10241,72 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#26748909 - MASTER : ERROR - NO OPERATIONS ALLOWED AFTER STATEMENT CLOSED FOR TOSTRING()
+     * 
+     * @throws Exception
+     */
+    public void testBug26748909() throws Exception {
+        createTable("testBug26748909", "(id int)");
+
+        Connection con = null;
+
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
+        PreparedStatement ps3 = null;
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+        boolean useSPS = false;
+
+        do {
+
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+
+            try {
+                con = getConnectionWithProps(props);
+                ps1 = con.prepareStatement("Select 'aaaaaaaaa' from dual");
+                ps2 = con.prepareStatement("insert into testBug26748909 values(?)");
+                ps3 = con.prepareStatement("select * from testBug26748909 where id=?");
+
+                ps1.execute();
+                ps1.close();
+
+                ps2.setInt(1, 10);
+                ps2.execute();
+                ps2.close();
+
+                ps3.setInt(1, 10);
+                ResultSet r = ps3.executeQuery();
+                assertTrue(r.next());
+                assertEquals(10, r.getInt(1));
+                ps3.close();
+
+                System.out.println("'" + ps1 + "'");
+                System.out.println("'" + ps2 + "'");
+                System.out.println("'" + ps3 + "'");
+
+                if (useSPS) {
+                    assertEquals(ps1.toString(), "com.mysql.cj.jdbc.ServerPreparedStatement[1]: Select 'aaaaaaaaa' from dual");
+                    assertEquals(ps2.toString(), "com.mysql.cj.jdbc.ServerPreparedStatement[2]: insert into testBug26748909 values(** NOT SPECIFIED **)");
+                    assertEquals(ps3.toString(), "com.mysql.cj.jdbc.ServerPreparedStatement[3]: select * from testBug26748909 where id=** NOT SPECIFIED **");
+                } else {
+                    assertEquals(ps1.toString(), "com.mysql.cj.jdbc.PreparedStatement: Select 'aaaaaaaaa' from dual");
+                    assertEquals(ps2.toString(), "com.mysql.cj.jdbc.PreparedStatement: insert into testBug26748909 values(** NOT SPECIFIED **)");
+                    assertEquals(ps3.toString(), "com.mysql.cj.jdbc.PreparedStatement: select * from testBug26748909 where id=** NOT SPECIFIED **");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
+        } while (useSPS = !useSPS);
+
+    }
 }

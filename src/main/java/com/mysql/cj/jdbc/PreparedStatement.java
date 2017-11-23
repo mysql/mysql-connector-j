@@ -226,7 +226,7 @@ public class PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implement
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        buf.append(super.toString());
+        buf.append(this.getClass().getName());
         buf.append(": ");
 
         try {
