@@ -6097,4 +6097,36 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testConn.close();
     }
 
+    /**
+     * Tests for fix to BUG#26266731 - CONCUR_UPDATABLE RESULTSET OPERATIONS FAIL AGAINST 8.0 FOR BOOLEAN COLUMN
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug26266731() throws Exception {
+        this.rs = null;
+
+        createTable("testBug26266731", "(c1 int,c2 char(10),c3 float,c4 double,c5 bigint,c6 blob,c7 bool,c8 date,c9 timestamp NULL,c10 time,"
+                + "c11 mediumint,c12 varchar(100),c13 binary(10),  primary key(c1,c5,c7))", "InnoDB");
+        this.stmt.executeUpdate("insert into testBug26266731 values(1,'a',1.1,1.1,1,'1',true,'2013-03-25','2013-03-25 01:01:01.01','01:01:01',1,'1','1')");
+        this.stmt.executeUpdate("insert into testBug26266731 values(2,'b',2.2,2.2,2,'2',true,'2014-03-25','2014-03-25 02:02:02.02','02:02:02',2,'2','2')");
+        this.stmt.executeUpdate("insert into testBug26266731 values(3,'c',3.3,3.3,3,'3',true,'2015-03-25','2015-03-25 03:03:03.03','03:03:03',3,'3','3')");
+
+        assertEquals(3, getRowCount("testBug26266731"));
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+        Connection c = getConnectionWithProps(props);
+
+        this.pstmt = c.prepareStatement("SELECT * FROM testBug26266731 order by c1", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        this.rs = this.pstmt.executeQuery();
+
+        if (this.rs.next()) {
+            this.rs.absolute(2);
+            this.rs.deleteRow();
+        }
+
+        assertEquals(2, getRowCount("testBug26266731"));
+    }
+
 }

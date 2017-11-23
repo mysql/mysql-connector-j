@@ -487,6 +487,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             case FLOAT:
             case FLOAT_UNSIGNED:
             case BOOLEAN:
+            case BIT:
                 ps.setBytesNoEscapeNoQuotes(psIdx, val);
                 break;
             /*
