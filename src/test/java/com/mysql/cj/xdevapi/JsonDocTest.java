@@ -498,13 +498,16 @@ public class JsonDocTest {
         assertEquals(JsonLiteral.NULL.getClass(), val.get(4).getClass());
         assertEquals("null", val.get(4).toString());
         assertEquals(DbDoc.class, val.get(5).getClass());
-        assertEquals("{\n\"k1\" : \"v1\"\n}", val.get(5).toString());
+        assertEquals("{\"k1\":\"v1\"}", val.get(5).toString());
+        assertEquals("{\n\"k1\" : \"v1\"\n}", val.get(5).toFormattedString());
         assertEquals(JsonArray.class, val.get(6).getClass());
-        assertEquals("[1, 2, 3]", val.get(6).toString());
+        assertEquals("[1,2,3]", val.get(6).toString());
+        assertEquals("[1, 2, 3]", val.get(6).toFormattedString());
 
         // ignore whitespaces
         val = JsonParser.parseArray(new StringReader(" \r\n  [ \r\n 1, \n 2 \r\n  ]  \r\n "));
-        assertEquals("[1, 2]", val.toString());
+        assertEquals("[1,2]", val.toString());
+        assertEquals("[1, 2]", val.toFormattedString());
 
         // wrong spaces
         assertThrows(WrongArgumentException.class, "Invalid whitespace character 'a'.", new Callable<Void>() {
@@ -533,7 +536,8 @@ public class JsonDocTest {
         });
 
         val = JsonParser.parseArray(new StringReader("    [   1 ,  2   ]  x "));
-        assertEquals("[1, 2]", val.toString());
+        assertEquals("[1,2]", val.toString());
+        assertEquals("[1, 2]", val.toFormattedString());
 
         // check brackets
         assertThrows(WrongArgumentException.class, "Missed closing ']'.", new Callable<Void>() {
@@ -648,18 +652,23 @@ public class JsonDocTest {
         assertEquals(JsonNumber.class, doc.get("key2").getClass());
         assertEquals("-1.2E-12", doc.get("key2").toString());
         assertEquals(DbDoc.class, doc.get("key3").getClass());
-        assertEquals("{\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n}", doc.get("key3").toString());
+        assertEquals("{\"in.key1\":true,\"in.key2\":3.1415}", doc.get("key3").toString());
+        assertEquals("{\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n}", doc.get("key3").toFormattedString());
         assertEquals(JsonLiteral.FALSE.getClass(), doc.get("key4").getClass());
         assertEquals("false", doc.get("key4").toString());
         assertEquals(JsonArray.class, doc.get("key5").getClass());
-        assertEquals("[\"arr.val1\", null]", doc.get("key5").toString());
+        assertEquals("[\"arr.val1\",null]", doc.get("key5").toString());
+        assertEquals("[\"arr.val1\", null]", doc.get("key5").toFormattedString());
         assertEquals(JsonLiteral.TRUE.getClass(), doc.get("key6").getClass());
         assertEquals("true", doc.get("key6").toString());
         assertEquals(JsonLiteral.NULL.getClass(), doc.get("key7").getClass());
         assertEquals("null", doc.get("key7").toString());
 
+        assertEquals("{\"\":\"val0\",\"key1\":\"val1\",\"key2\":-1.2E-12,\"key3\":{\"in.key1\":true,\"in.key2\":3.1415},"
+                + "\"key4\":false,\"key5\":[\"arr.val1\",null],\"key6\":true,\"key7\":null}", doc.toString());
+
         assertEquals("{\n\"\" : \"val0\",\n\"key1\" : \"val1\",\n\"key2\" : -1.2E-12,\n\"key3\" : {\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n},\n"
-                + "\"key4\" : false,\n\"key5\" : [\"arr.val1\", null],\n\"key6\" : true,\n\"key7\" : null\n}", doc.toString());
+                + "\"key4\" : false,\n\"key5\" : [\"arr.val1\", null],\n\"key6\" : true,\n\"key7\" : null\n}", doc.toFormattedString());
 
         // Number at the end
         doc = JsonParser.parseDoc(new StringReader("{\"x\" : 2}"));
@@ -682,12 +691,14 @@ public class JsonDocTest {
         // Array at the end
         doc = JsonParser.parseDoc(new StringReader("{\"x\" : [1,2]}"));
         assertEquals(JsonArray.class, doc.get("x").getClass());
-        assertEquals("[1, 2]", doc.get("x").toString());
+        assertEquals("[1,2]", doc.get("x").toString());
+        assertEquals("[1, 2]", doc.get("x").toFormattedString());
 
         // DbDoc at the end
         doc = JsonParser.parseDoc(new StringReader("{\"x\" : {\"y\" : true}}"));
         assertEquals(DbDoc.class, doc.get("x").getClass());
-        assertEquals("{\n\"y\" : true\n}", doc.get("x").toString());
+        assertEquals("{\"y\":true}", doc.get("x").toString());
+        assertEquals("{\n\"y\" : true\n}", doc.get("x").toFormattedString());
 
     }
 
@@ -703,11 +714,15 @@ public class JsonDocTest {
                 .add("field7", new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
                         .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDoc()));
 
+        assertEquals("{\"field1\":\"value 1\",\"field2\":1.234544E+26,\"field3\":true,\"field4\":false,\"field5\":null,"
+                + "\"field6\":{\"inner field 1\":\"inner value 1\",\"inner field 2\":2,\"inner field 3\":true,"
+                + "\"inner field 4\":false,\"inner field 5\":null,\"inner field 6\":[],\"inner field 7\":{}},"
+                + "\"field7\":[\"arr1\",3,true,false,null,[],{}]}", doc.toString());
+
         assertEquals("{\n\"field1\" : \"value 1\",\n\"field2\" : 1.234544E+26,\n\"field3\" : true,\n\"field4\" : false,\n\"field5\" : null,\n"
                 + "\"field6\" : {\n\"inner field 1\" : \"inner value 1\",\n\"inner field 2\" : 2,\n\"inner field 3\" : true,\n"
                 + "\"inner field 4\" : false,\n\"inner field 5\" : null,\n\"inner field 6\" : [],\n\"inner field 7\" : {}\n},\n"
-                + "\"field7\" : [\"arr1\", 3, true, false, null, [], {}]\n}", doc.toString());
-
+                + "\"field7\" : [\"arr1\", 3, true, false, null, [], {}]\n}", doc.toFormattedString());
     }
 
     @Test

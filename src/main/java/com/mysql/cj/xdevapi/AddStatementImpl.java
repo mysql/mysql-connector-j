@@ -87,7 +87,7 @@ public class AddStatementImpl implements AddStatement {
     }
 
     private List<String> serializeDocs() {
-        return this.newDocs.stream().map(DbDoc::toPackedString).collect(Collectors.toList());
+        return this.newDocs.stream().map(DbDoc::toString).collect(Collectors.toList());
     }
 
     public AddResult execute() {

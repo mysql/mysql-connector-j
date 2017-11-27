@@ -289,31 +289,27 @@ public class CollectionModifyTest extends CollectionTest {
         this.collection.add("{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}")
                 .execute();
 
-        this.collection.modify("_id = :id").patch(JsonParser.parseDoc(new StringReader("{\"name\": \"Joe\", \"address\": {\"zip\":\"91234\"}}")))
-                .bind("id", "1").execute();
+        this.collection.modify("_id = :id").patch(JsonParser.parseDoc("{\"name\": \"Joe\", \"address\": {\"zip\":\"91234\"}}")).bind("id", "1").execute();
 
         DocResult docs = this.collection.find().orderBy("$._id").execute();
         assertTrue(docs.hasNext());
-        assertEquals(JsonParser
-                .parseDoc(new StringReader("{\"_id\": \"1\", \"name\": \"Joe\", \"address\": {\"zip\": \"91234\", \"street\": \"32 Main str\"}}")).toString(),
+        assertEquals(JsonParser.parseDoc("{\"_id\": \"1\", \"name\": \"Joe\", \"address\": {\"zip\": \"91234\", \"street\": \"32 Main str\"}}").toString(),
                 docs.next().toString());
         assertTrue(docs.hasNext());
         assertEquals(JsonParser
-                .parseDoc(new StringReader(
-                        "{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}"))
+                .parseDoc("{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}")
                 .toString(), docs.next().toString());
         assertFalse(docs.hasNext());
 
-        // 2. Delete the address field of match
+        // Delete the address field of match
         this.collection.modify("_id = :id").patch("{\"address\": null}").bind("id", "1").execute();
 
         docs = this.collection.find().orderBy("$._id").execute();
         assertTrue(docs.hasNext());
-        assertEquals(JsonParser.parseDoc(new StringReader("{\"_id\": \"1\", \"name\": \"Joe\"}")).toString(), docs.next().toString());
+        assertEquals(JsonParser.parseDoc("{\"_id\": \"1\", \"name\": \"Joe\"}").toString(), docs.next().toString());
         assertTrue(docs.hasNext());
         assertEquals(JsonParser
-                .parseDoc(new StringReader(
-                        "{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}"))
+                .parseDoc("{\"_id\": \"2\", \"name\": \"Bob\", \"address\": {\"zip\": \"325226\", \"city\": \"San Francisco\", \"street\": \"42 2nd str\"}}")
                 .toString(), docs.next().toString());
         assertFalse(docs.hasNext());
 
@@ -425,7 +421,6 @@ public class CollectionModifyTest extends CollectionTest {
         doc = docs.next();
         assertNull(doc.get("translations"));
 
-        //            coll.modify('additionalinfo.director.name = :director').patch({ "additionalinfo": { "musicby": null }}).bind('director','Sharice Legaspi').execute();
         this.collection.modify("additionalinfo.director.name = :director").patch("{\"additionalinfo\": {\"musicby\": null }}")
                 .bind("director", "Sharice Legaspi").execute();
         docs = this.collection.find("_id = :id").bind("id", id).limit(1).execute();
@@ -444,5 +439,25 @@ public class CollectionModifyTest extends CollectionTest {
         assertNotNull(((DbDoc) doc.get("additionalinfo")).get("director"));
         doc2 = (DbDoc) ((DbDoc) doc.get("additionalinfo")).get("director");
         assertNull(doc2.get("country"));
+
+        // Using expressions
+
+        this.collection.modify("_id = :id").patch("{\"zip\": address.zip-300000, \"street\": CONCAT($.name, '''s street: ', $.address.street)}").bind("id", "2")
+                .execute();
+
+        this.collection.modify("_id = :id").patch("{\"city\": UPPER($.address.city)}").bind("id", "2").execute();
+
+        docs = this.collection.find("_id = :id").bind("id", "2").limit(1).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next();
+        assertEquals(25226, ((JsonNumber) doc.get("zip")).getInteger().intValue());
+        assertEquals("Bob's street: 42 2nd str", ((JsonString) doc.get("street")).getString());
+        assertEquals("SAN FRANCISCO", ((JsonString) doc.get("city")).getString());
+        doc2 = (DbDoc) doc.get("address");
+        assertNotNull(doc2);
+        assertEquals("325226", ((JsonString) doc2.get("zip")).getString());
+        assertEquals("42 2nd str", ((JsonString) doc2.get("street")).getString());
+        assertEquals("San Francisco", ((JsonString) doc2.get("city")).getString());
+
     }
 }

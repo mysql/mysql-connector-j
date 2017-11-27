@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.api.xdevapi.Expression;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.Result;
 import com.mysql.cj.api.xdevapi.UpdateType;
@@ -88,13 +89,12 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
 
     @Override
     public ModifyStatement patch(DbDoc document) {
-        this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(document));
-        return this;
+        return patch(document.toString());
     }
 
     @Override
     public ModifyStatement patch(String document) {
-        this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(document));
+        this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(Expression.expr(document)));
         return this;
     }
 

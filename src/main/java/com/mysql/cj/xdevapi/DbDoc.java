@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -94,45 +94,30 @@ public class DbDoc extends TreeMap<String, JsonValue> implements JsonValue {
 
     private static final long serialVersionUID = 6557406141541247905L;
 
-    /**
-     * @return human readable "pretty" JSON string
-     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
-        boolean isFirst = true;
         for (String key : keySet()) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
+            if (sb.length() > 1) {
                 sb.append(",");
             }
-            sb.append("\n\"").append(key).append("\" : ").append(get(key).toString());
-        }
-        if (size() > 0) {
-            sb.append("\n");
+            sb.append("\"").append(key).append("\":").append(get(key).toString());
         }
         sb.append("}");
         return sb.toString();
     }
 
-    public String toPackedString() {
+    @Override
+    public String toFormattedString() {
         StringBuilder sb = new StringBuilder("{");
-        boolean isFirst = true;
         for (String key : keySet()) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
+            if (sb.length() > 1) {
                 sb.append(",");
             }
-            sb.append("\"").append(key).append("\":");
-            if (JsonArray.class.equals(get(key).getClass())) {
-                sb.append(((JsonArray) get(key)).toPackedString());
-            } else if (DbDoc.class.equals(get(key).getClass())) {
-                sb.append(((DbDoc) get(key)).toPackedString());
-            } else {
-                sb.append(get(key).toString());
-            }
+            sb.append("\n\"").append(key).append("\" : ").append(get(key).toFormattedString());
+        }
+        if (size() > 0) {
+            sb.append("\n");
         }
         sb.append("}");
         return sb.toString();

@@ -90,6 +90,8 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
+     * Please note that {@link DbDoc} does not support expressions as a field values, please use {@link #patch(String)} method if you need
+     * such functionality.
      * 
      * @param document
      *            patch object
@@ -98,7 +100,13 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     ModifyStatement patch(DbDoc document);
 
     /**
-     * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
+     * Takes in a document patch and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
+     * A document patch is similar to a JSON object, with the key difference that document field values can be nested expressions in addition to literal values.
+     * <br>
+     * Example:<br>
+     * collection.modify("_id = :id")<br>
+     * .patch("{\"zip\": address.zip-300000, \"street\": CONCAT($.name, '''s street: ', $.address.street)}")<br>
+     * .bind("id", "2").execute();
      * 
      * @param document
      *            patch object

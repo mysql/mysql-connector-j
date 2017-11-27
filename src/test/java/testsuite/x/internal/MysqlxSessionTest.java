@@ -132,11 +132,11 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         assertTrue(docs2.hasNext());
         assertTrue(docs1.hasNext());
         for (int i = 0; i < 5; ++i) {
-            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs1.next().toString());
-            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs2.next().toString());
-            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs3.next().toString());
-            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs4.next().toString());
-            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs5.next().toString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs1.next().toFormattedString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs2.next().toFormattedString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs3.next().toFormattedString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs4.next().toFormattedString());
+            assertEquals("{\n\"_id\" : \"" + i + "\"\n}", docs5.next().toFormattedString());
         }
         assertFalse(docs5.hasNext());
         assertFalse(docs4.hasNext());

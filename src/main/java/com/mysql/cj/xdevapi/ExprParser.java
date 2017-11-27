@@ -1169,7 +1169,7 @@ public class ExprParser {
     }
 
     /**
-     * @return the number of positional placeholders in the expression.
+     * Return the number of positional placeholders in the expression.
      * 
      * @return the number of positional placeholders in the expression
      */

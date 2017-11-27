@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.mysql.cj.api.xdevapi.JsonValue;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.ExceptionFactory;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 
@@ -137,6 +138,14 @@ public class JsonParser {
 
     private static boolean isValidEndOfValue(char ch) {
         return StructuralToken.COMMA.CHAR == ch || StructuralToken.RCRBRACKET.CHAR == ch || StructuralToken.RSQBRACKET.CHAR == ch;
+    }
+
+    public static DbDoc parseDoc(String jsonString) {
+        try {
+            return JsonParser.parseDoc(new StringReader(jsonString));
+        } catch (IOException ex) {
+            throw AssertionFailedException.shouldNotHappen(ex);
+        }
     }
 
     /**
