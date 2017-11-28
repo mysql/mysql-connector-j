@@ -153,36 +153,33 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * names soon will, so current catalog is a (hidden) component of the name.
      */
     static class CompoundCacheKey {
-        String componentOne;
+        final String componentOne;
 
-        String componentTwo;
+        final String componentTwo;
 
-        int hashCode;
+        final int hashCode;
 
         CompoundCacheKey(String partOne, String partTwo) {
             this.componentOne = partOne;
             this.componentTwo = partTwo;
 
-            // Handle first component (in most cases, currentCatalog being NULL....
-            this.hashCode = (((this.componentOne != null) ? this.componentOne : "") + this.componentTwo).hashCode();
+            int hc = 17;
+            hc = 31 * hc + (this.componentOne != null ? this.componentOne.hashCode() : 0);
+            hc = 31 * hc + (this.componentTwo != null ? this.componentTwo.hashCode() : 0);
+            this.hashCode = hc;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof CompoundCacheKey) {
-                CompoundCacheKey another = (CompoundCacheKey) obj;
-
-                boolean firstPartEqual = false;
-
-                if (this.componentOne == null) {
-                    firstPartEqual = (another.componentOne == null);
-                } else {
-                    firstPartEqual = this.componentOne.equals(another.componentOne);
-                }
-
-                return (firstPartEqual && this.componentTwo.equals(another.componentTwo));
+            if (this == obj) {
+                return true;
             }
-
+            if (obj != null && CompoundCacheKey.class.isAssignableFrom(obj.getClass())) {
+                CompoundCacheKey another = (CompoundCacheKey) obj;
+                if (this.componentOne == null ? another.componentOne == null : this.componentOne.equals(another.componentOne)) {
+                    return this.componentTwo == null ? another.componentTwo == null : this.componentTwo.equals(another.componentTwo);
+                }
+            }
             return false;
         }
 
@@ -285,7 +282,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      */
     private final CopyOnWriteArrayList<Statement> openStatements = new CopyOnWriteArrayList<>();
 
-    private LRUCache parsedCallableStatementCache;
+    private LRUCache<CompoundCacheKey, CallableStatement.CallableStatementParamInfo> parsedCallableStatementCache;
 
     /** The password we used */
     private String password = null;
@@ -300,7 +297,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private boolean readOnly = false;
 
     /** Cache of ResultSet metadata */
-    protected LRUCache resultSetMetadataCache;
+    protected LRUCache<String, CachedResultSetMetaData> resultSetMetadataCache;
 
     /**
      * The type map for UDTs (not implemented, but used by some third-party
@@ -317,8 +314,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      */
     private boolean useServerPreparedStmts = false;
 
-    private LRUCache serverSideStatementCheckCache;
-    private LRUCache serverSideStatementCache;
+    private LRUCache<String, Boolean> serverSideStatementCheckCache;
+    private LRUCache<CompoundCacheKey, ServerPreparedStatement> serverSideStatementCache;
 
     private HostInfo origHostInfo;
 
@@ -422,7 +419,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
-                this.parsedCallableStatementCache = new LRUCache(
+                this.parsedCallableStatementCache = new LRUCache<>(
                         this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue());
             }
 
@@ -431,7 +428,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
-                this.resultSetMetadataCache = new LRUCache(this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
+                this.resultSetMetadataCache = new LRUCache<>(
+                        this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
             }
 
             if (this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_socksProxyHost).getStringValue() != null) {
@@ -508,7 +506,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         if (this.cachePrepStmts.getValue()) {
             synchronized (this.serverSideStatementCheckCache) {
-                Boolean flag = (Boolean) this.serverSideStatementCheckCache.get(sql);
+                Boolean flag = this.serverSideStatementCheckCache.get(sql);
 
                 if (flag != null) {
                     return flag.booleanValue();
@@ -1078,14 +1076,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (this.useServerPrepStmts.getValue()) {
-                this.serverSideStatementCheckCache = new LRUCache(cacheSize);
+                this.serverSideStatementCheckCache = new LRUCache<>(cacheSize);
 
-                this.serverSideStatementCache = new LRUCache(cacheSize) {
+                this.serverSideStatementCache = new LRUCache<CompoundCacheKey, ServerPreparedStatement>(cacheSize) {
 
                     private static final long serialVersionUID = 7692318650375988114L;
 
                     @Override
-                    protected boolean removeEldestEntry(java.util.Map.Entry<Object, Object> eldest) {
+                    protected boolean removeEldestEntry(java.util.Map.Entry<CompoundCacheKey, ServerPreparedStatement> eldest) {
                         if (this.maxElements <= 1) {
                             return false;
                         }
@@ -1093,7 +1091,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         boolean removeIt = super.removeEldestEntry(eldest);
 
                         if (removeIt) {
-                            ServerPreparedStatement ps = (ServerPreparedStatement) eldest.getValue();
+                            ServerPreparedStatement ps = eldest.getValue();
                             ps.isCached = false;
                             ps.setClosed(false);
 
@@ -1707,8 +1705,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             synchronized (this.parsedCallableStatementCache) {
                 CompoundCacheKey key = new CompoundCacheKey(getCatalog(), sql);
 
-                CallableStatement.CallableStatementParamInfo cachedParamInfo = (CallableStatement.CallableStatementParamInfo) this.parsedCallableStatementCache
-                        .get(key);
+                CallableStatement.CallableStatementParamInfo cachedParamInfo = this.parsedCallableStatementCache.get(key);
 
                 if (cachedParamInfo != null) {
                     cStmt = CallableStatement.getInstance(getMultiHostSafeProxy(), cachedParamInfo);
@@ -1810,8 +1807,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.useServerPreparedStmts && canServerPrepare) {
                 if (this.cachePrepStmts.getValue()) {
                     synchronized (this.serverSideStatementCache) {
-                        pStmt = (com.mysql.cj.jdbc.ServerPreparedStatement) this.serverSideStatementCache
-                                .remove(makePreparedStatementCacheKey(this.database, sql));
+                        pStmt = this.serverSideStatementCache.remove(new CompoundCacheKey(this.database, sql));
 
                         if (pStmt != null) {
                             ((com.mysql.cj.jdbc.ServerPreparedStatement) pStmt).setClosed(false);
@@ -1973,19 +1969,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     }
 
-    private String makePreparedStatementCacheKey(String catalog, String query) {
-        StringBuilder key = new StringBuilder();
-        key.append("/*").append(catalog).append("*/");
-        key.append(query);
-        return key.toString();
-    }
-
     public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache
-                            .put(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()), pstmt);
+                            .put(new CompoundCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()), pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
@@ -2000,8 +1989,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache
-                            .remove(makePreparedStatementCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()));
+                    this.serverSideStatementCache.remove(new CompoundCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.query).getOriginalSql()));
                 }
             }
         }
@@ -2612,7 +2600,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         if (this.resultSetMetadataCache != null) {
             synchronized (this.resultSetMetadataCache) {
-                return (CachedResultSetMetaData) this.resultSetMetadataCache.get(sql);
+                return this.resultSetMetadataCache.get(sql);
             }
         }
 

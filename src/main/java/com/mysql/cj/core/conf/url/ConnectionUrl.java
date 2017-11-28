@@ -159,7 +159,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     protected Map<String, String> properties = new HashMap<>();
     ConnectionPropertiesTransform propertiesTransformer;
 
-    private static final LRUCache connectionUrlCache = new LRUCache(100);
+    private static final LRUCache<String, ConnectionUrl> connectionUrlCache = new LRUCache<>(100);
     private static final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     /**
@@ -180,13 +180,13 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         ConnectionUrl connectionString;
 
         rwLock.readLock().lock();
-        connectionString = (ConnectionUrl) connectionUrlCache.get(connStringCacheKey);
+        connectionString = connectionUrlCache.get(connStringCacheKey);
         if (connectionString == null) {
             rwLock.readLock().unlock();
             rwLock.writeLock().lock();
             try {
                 // Check again, in the meantime it could have been cached by another thread.
-                connectionString = (ConnectionUrl) connectionUrlCache.get(connStringCacheKey);
+                connectionString = connectionUrlCache.get(connStringCacheKey);
                 if (connectionString == null) {
                     ConnectionUrlParser connStrParser = ConnectionUrlParser.parseConnectionString(connString);
                     try {

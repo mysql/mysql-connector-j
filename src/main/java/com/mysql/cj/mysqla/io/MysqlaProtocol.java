@@ -1686,6 +1686,11 @@ public class MysqlaProtocol extends AbstractProtocol implements NativeProtocol, 
                 clearInputStream();
             }
         }
+
+        if (this.hadWarnings) {
+            scanForAndThrowDataTruncation();
+        }
+
         reclaimLargeReusablePacket();
         return topLevelResultSet;
     }

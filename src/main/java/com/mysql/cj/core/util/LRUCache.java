@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,7 +26,7 @@ package com.mysql.cj.core.util;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-public class LRUCache extends LinkedHashMap<Object, Object> {
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     private static final long serialVersionUID = 1L;
     protected int maxElements;
 
@@ -36,7 +36,7 @@ public class LRUCache extends LinkedHashMap<Object, Object> {
     }
 
     @Override
-    protected boolean removeEldestEntry(Entry<Object, Object> eldest) {
+    protected boolean removeEldestEntry(Entry<K, V> eldest) {
         return (size() > this.maxElements);
     }
 }

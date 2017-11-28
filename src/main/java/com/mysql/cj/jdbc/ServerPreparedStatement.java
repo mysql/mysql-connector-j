@@ -513,8 +513,8 @@ public class ServerPreparedStatement extends PreparedStatement {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
 
-                            this.session.sendCommand(this.commandBuilder.buildComStmtClose(this.session.getSharedSendPacket(),
-                                    ((ServerPreparedQuery) this.query).getServerStatementId()), true, 0);
+                            this.session.sendCommand(this.commandBuilder.buildComStmtClose(null, ((ServerPreparedQuery) this.query).getServerStatementId()),
+                                    true, 0);
                         } catch (CJException sqlEx) {
                             exceptionDuringClose = sqlEx;
                         }

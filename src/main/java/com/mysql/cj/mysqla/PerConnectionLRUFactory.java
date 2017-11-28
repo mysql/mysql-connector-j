@@ -38,13 +38,13 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 
     class PerConnectionLRU implements CacheAdapter<String, ParseInfo> {
         private final int cacheSqlLimit;
-        private final LRUCache cache;
+        private final LRUCache<String, ParseInfo> cache;
         private final Object syncMutex;
 
         protected PerConnectionLRU(Object syncMutex, int cacheMaxSize, int maxKeySize) {
             final int cacheSize = cacheMaxSize;
             this.cacheSqlLimit = maxKeySize;
-            this.cache = new LRUCache(cacheSize);
+            this.cache = new LRUCache<>(cacheSize);
             this.syncMutex = syncMutex;
         }
 
@@ -54,7 +54,7 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
             }
 
             synchronized (this.syncMutex) {
-                return (ParseInfo) this.cache.get(key);
+                return this.cache.get(key);
             }
         }
 
