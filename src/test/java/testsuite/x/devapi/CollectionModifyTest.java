@@ -468,7 +468,7 @@ public class CollectionModifyTest extends CollectionTest {
      */
     @Test
     public void testBug27185332() throws Exception {
-        if (!this.isSetForXTests) {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
             return;
         }
 
