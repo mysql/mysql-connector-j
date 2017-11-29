@@ -252,7 +252,7 @@ public class JsonParser {
 
         JsonString val = parseString(reader);
         if (val == null) {
-            // reader.reset();
+            reader.reset();
         }
 
         // find delimiter

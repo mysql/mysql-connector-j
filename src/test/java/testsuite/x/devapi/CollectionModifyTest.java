@@ -458,6 +458,65 @@ public class CollectionModifyTest extends CollectionTest {
         assertEquals("325226", ((JsonString) doc2.get("zip")).getString());
         assertEquals("42 2nd str", ((JsonString) doc2.get("street")).getString());
         assertEquals("San Francisco", ((JsonString) doc2.get("city")).getString());
+    }
 
+    /**
+     * Tests fix for BUG#27185332, WL#11210:ERROR IS THROWN WHEN NESTED EMPTY DOCUMENTS ARE INSERTED TO COLLECTION.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    @Test
+    public void testBug27185332() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        DbDoc doc = JsonParser.parseDoc("{\"_id\": \"qqq\", \"nullfield\": {}, \"theme\": {         }}");
+        assertEquals("qqq", ((JsonString) doc.get("_id")).getString());
+        assertEquals(new DbDoc(), doc.get("nullfield"));
+        assertEquals(new DbDoc(), doc.get("theme"));
+
+        String id = "qqq";
+        this.collection.add("{\"_id\" : \"" + id + "\"," //
+                + "\"title\" : \"THE TITLE\"," //
+                + "\"description\" : \"Author's story\"," //
+                + "\"releaseyear\" : 2012," //
+                + "\"language\" : \"English\"," //
+                + "\"theme\" : \"fiction\"," //
+                + "\"roles\" : ["//
+                + "    {\"name\" : \"Role 1\"," //
+                + "     \"country\" : [\"Thailand\", \"Singapore\"]," //
+                + "     \"birthdate\": \"12 Jan 1984\"}," //
+                + "    {\"name\" : \"Role 2\"," //
+                + "     \"country\" : \"Bali\"," //
+                + "     \"birthdate\": \"26 Jul 1975\" }," //
+                + "    {\"name\" : \"Role 3\"," //
+                + "     \"country\" : \"Doha\"," //
+                + "     \"birthdate\": \"16 Mar 1978\" }" //
+                + "    ]," //
+                + "\"additionalinfo\" : {" //
+                + "    \"author\" : {" //
+                + "        \"name\": \"John Gray\"," //
+                + "        \"age\":57," //
+                + "        \"awards\": [" //
+                + "            {\"award\": \"Best Writer\"," //
+                + "             \"book\": \"MAFM WAFV\"," //
+                + "             \"year\": 2002}," //
+                + "            {\"award\": \"Best Imagination\"," //
+                + "             \"book\": \"THE TITLE\"," //
+                + "             \"year\": 2006}" //
+                + "            ]" //
+                + "        }," //
+                + "    \"otherwriters\" : [\"Rusty Couturier\", \"Angelic Orduno\", \"Carin Postell\"]," //
+                + "    \"production\" : [\"Qvodrill\", \"Indigoholdings\"]" //
+                + "    }" //
+                + "}").execute();
+        this.collection.modify("true").patch("{\"nullfield\": { \"nested\": null}}").execute();
+        DocResult docs = this.collection.find("_id = :id").bind("id", id).execute();
+        assertTrue(docs.hasNext());
+        doc = docs.next(); //   <---- Error at this line
+        assertNotNull(doc.get("nullfield"));
+        assertEquals(new DbDoc(), doc.get("nullfield"));
     }
 }
