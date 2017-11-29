@@ -20,14 +20,11 @@
 
 # You can pass these options to "rpmbuild"
 #
-#    --define="rpm_release <num>"
 #    --define="commercial <nonempty>"
-#    --define="dist .<disttag>"        # Like .sles12
 #    --define="with_ant <path>"
 #    --define="with_java <path>"
 #    --define="with_jardeps <path>"
 #    --define="with_docs <path>"
-#    --define="with_product_suffix -<string>"
 #
 # The 'with_docs' option should have a path that points out
 #
@@ -36,44 +33,32 @@
 #  <docs-base>/en/pdf/connector-j.pdf
 #  <docs-base>/en/txt/connector-j.txt
 
-# Linux distributions doesn't set the "dist" macro. There is a
+# Some linux distributions doesn't set the "dist" macro. There is a
 # list how to identify dists here
 # https://en.opensuse.org/openSUSE:Build_Service_cross_distribution_howto
 
-%global milestone    dmr
-
+# SuSE will not set "dist", others do
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
 %global sles12          1
 %endif
 
-%if 0%{?suse_version} == 1110
-%global dist            .sles11
-%global sles11          1
-%endif
-
-%if 0%{?with_product_suffix:1}
-%global product_suffix %{with_product_suffix}
-%else
 %if 0%{?commercial:1}
-%global product_suffix -commercial
 %global name_suffix    -src
 %global lic_tag        Commercial
 %else
-%global product_suffix %{nil}
 %global name_suffix    %{nil}
 %global lic_tag        GPLv2
 %endif
-%endif
 
 Summary:        Standardized MySQL database driver for Java
-Name:           mysql-connector-java%{product_suffix}
-Version:        @MYSQL_CJ_VERSION@
-Release:        0.1%{?milestone:.%{milestone}}%{?commercial:.1}%{?dist}
+Name:           @MYSQL_CJ_EXTENDED_PROD_NAME@
+Version:        @MYSQL_CJ_VERSION_NUMERIC@
+Release:        @MYSQL_CJ_RPM_RELEASE_FULL@%{?dist}
 License:        %{lic_tag}
 Group:          Development/Libraries
 URL:            http://dev.mysql.com/downloads/connector/j/
-Source0:        https://cdn.mysql.com/Downloads/Connector-J/%{name}%{name_suffix}-%{version}%{?milestone:-%{milestone}}.tar.gz
+Source0:        https://cdn.mysql.com/Downloads/Connector-J/@MYSQL_CJ_FULL_PROD_NAME@.tar.gz
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
@@ -114,7 +99,7 @@ For detailed information please visit the official
 (http://dev.mysql.com/doc/connector-j/en/).
 
 %prep
-%setup -q -n %{name}%{name_suffix}-%{version}%{?milestone:-%{milestone}}
+%setup -q -n @MYSQL_CJ_FULL_PROD_NAME@
 
 %build
 COMMON_OPTIONS="\
@@ -123,7 +108,7 @@ COMMON_OPTIONS="\
   -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
   -Dcom.mysql.cj.extra.libs=%{with_jardeps} \
-  -Dcom.mysql.cj.build.driver.extraName=%{product_suffix} \
+  -Dcom.mysql.cj.build.driver.extraName=@MYSQL_CJ_EXTRA_NAME@ \
   -Djava.awt.headless=true"
 
 %if 0%{?with_ant:1}
@@ -152,7 +137,7 @@ ${ANT_CMD} \
 # We use the 'full-package-no-sources' as there are changes done only
 # when creating a package, 'dist' is not enough. To make it a bit easier
 # in the install step, we rename the directory with the content
-mv dist/toArchive/mysql-connector-java* package-content
+mv dist/toArchive/@MYSQL_CJ_PROD_NAME@* package-content
 
 # The 'package' target doesn't copy the HTML or PDF doc like 'dist',
 # we copy it here
@@ -166,7 +151,7 @@ cp %{with_docs}/en/txt/connector-j.txt   package-content/docs/
 
 %install
 install -d -m 0755 %{buildroot}%{_javadir}
-install -p -m 0644 package-content/%{name}-%{version}-bin.jar %{buildroot}%{_javadir}/%{name}-%{version}-bin.jar
+install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar %{buildroot}%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar
 
 %clean
 rm -rf %{buildroot}
@@ -189,8 +174,10 @@ rm -rf %{buildroot}
 %doc package-content/docs/mvl.css
 %endif
 
-%{_javadir}/%{name}-%{version}-bin.jar
+%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar
 
 %changelog
+* Mon Nov 27 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 8.0.9-1
+- Set more in "build.xml"
 * Tue Mar 14 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 6.0.7-1
 - initial package
