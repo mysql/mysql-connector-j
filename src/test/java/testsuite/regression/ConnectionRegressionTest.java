@@ -3748,7 +3748,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     /**
      * This test requires two server instances:
-     * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable
+     * 1) main test server pointed by com.mysql.cj.testsuite.url variable
      * configured without RSA encryption support (sha256_password_private_key_path,
      * sha256_password_public_key_path, caching_sha2_password_private_key_path and
      * caching_sha2_password_public_key_path config options are unset).
@@ -8035,8 +8035,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * separated, no spaces), the default behaviour restricting the TLS version based on JRE and MySQL
      * Server version is bypassed to enable or restrict specific TLS versions.
      * 
-     * This test requires community server (with yaSSL) in -Dcom.mysql.jdbc.testsuite.url and
-     * commercial server (with OpenSSL) in -Dcom.mysql.jdbc.testsuite.url.sha256default
+     * This test requires community server (with yaSSL) in -Dcom.mysql.cj.testsuite.url and
+     * commercial server (with OpenSSL) in -Dcom.mysql.cj.testsuite.url.openssl
      * 
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
      * 
@@ -9672,15 +9672,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     /**
      * This test requires two server instances:
-     * 1) main test server pointed by com.mysql.jdbc.testsuite.url variable configured without RSA encryption support
+     * 1) main test server pointed to by the com.mysql.cj.testsuite.url variable configured without RSA encryption support
      * (sha256_password_private_key_path, sha256_password_public_key_path, caching_sha2_password_private_key_path and
      * caching_sha2_password_public_key_path config options are unset).
-     * 2) additional server instance pointed by com.mysql.cj.testsuite.url.openssl variable configured with
-     * default-authentication-plugin=sha256_password, RSA encryption enabled and server configuration options
-     * "caching_sha2_password_private_key_path" and "caching_sha2_password_public_key_path" are set to the same values
+     * 2) additional server instance pointed to by the com.mysql.cj.testsuite.url.openssl variable configured with
+     * default-authentication-plugin=sha256_password, RSA encryption enabled, and server configuration options
+     * "caching_sha2_password_private_key_path" and "caching_sha2_password_public_key_path" set to the same values
      * as "sha256_password_private_key_path" and "sha256_password_public_key_path" respectively.
      * 
-     * To run this test please add this variable to ant call:
+     * To run this test, please add this variable to the ant call:
      * -Dcom.mysql.cj.testsuite.url.openssl=jdbc:mysql://localhost:3307/test?user=root&password=pwd
      * 
      * @throws Exception
@@ -9760,7 +9760,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
 
                 // 2. with serverRSAPublicKeyFile specified
-                // SQLException expected due to server doesn't recognize RSA encrypted payload
+                // SQLException expected due to server not recognizing RSA encrypted payload
                 propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
                 propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
                 propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile, "src/test/config/ssl-test-certs/mykey.pub");
