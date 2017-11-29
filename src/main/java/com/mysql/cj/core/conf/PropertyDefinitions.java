@@ -364,7 +364,6 @@ public class PropertyDefinitions {
     // TODO following names are used in code but have no definitions
     public static final String PNAME_user = "user";
     public static final String PNAME_password = "password";
-    public static final String PNAME_schema = "schema";
     public static final String PNAME_resultSetScannerRegex = "resultSetScannerRegex";
     public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
     public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";

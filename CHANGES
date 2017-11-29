@@ -3,6 +3,9 @@
 
 Version 8.0.9
 
+  - WL#11401, DevAPI: Remove configuration API.
+    Partial revert of "WL#9868, DevAPI: Configuration handling interface."
+
   - WL#10619, Ensure compatibility with new data dictionary.
 
   - Fix for BUG#27217264, WL#10937: NULL POINTER EXCEPTION WHEN NULL IS PASSED AS _ID IN COLL.REPLACEONE.
