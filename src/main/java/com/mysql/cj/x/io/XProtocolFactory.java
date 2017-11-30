@@ -203,8 +203,23 @@ public class XProtocolFactory {
                 sslEngine.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
             }
 
-            // TODO: how to differentiate servers that do and don't support TLSv1.2
-            sslEngine.setEnabledProtocols(new String[] { /* "TLSv1.2", */ "TLSv1.1", "TLSv1" });
+            // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
+            // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
+            // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
+            String enabledTLSProtocols = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
+            String[] tryProtocols = enabledTLSProtocols != null && enabledTLSProtocols.length() > 0 ? enabledTLSProtocols.split("\\s*,\\s*")
+                    : new String[] { "TLSv1.1", "TLSv1" };
+            List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
+            List<String> jvmSupportedProtocols = Arrays.asList(sslEngine.getSupportedProtocols());
+
+            List<String> allowedProtocols = new ArrayList<>();
+            final String[] TLS_PROTOCOLS = new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" };
+            for (String p : TLS_PROTOCOLS) {
+                if (jvmSupportedProtocols.contains(p) && configuredProtocols.contains(p)) {
+                    allowedProtocols.add(p);
+                }
+            }
+            sslEngine.setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
             performTlsHandshake(sslEngine, channel);
 

@@ -54,6 +54,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     final String clientKeyStorePassword = "password";
 
     final Properties sslFreeTestProperties = (Properties) this.testProperties.clone();
+    final Properties sslFreeTestPropertiesOpenSSL = (Properties) this.testPropertiesOpenSSL.clone();
     String sslFreeBaseUrl = this.baseUrl;
 
     @Before
@@ -79,6 +80,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             if (!this.sslFreeBaseUrl.contains("?")) {
                 this.sslFreeBaseUrl += "?";
             }
+        }
+        if (this.isSetForOpensslXTests) {
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslMode);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStoreUrl);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStorePassword);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStoreType);
         }
     }
 
@@ -562,4 +569,110 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
         }
     }
+
+    /**
+     * Tests TLSv1.2
+     * 
+     * This test requires two server instances:
+     * 1) main xplugin server pointed by com.mysql.cj.testsuite.mysqlx.url variable
+     * compiled with yaSSL
+     * 2) additional xplugin server instance pointed by com.mysql.cj.testsuite.mysqlx.url.openssl
+     * variable compiled with OpenSSL.
+     * 
+     * For example, add this variables to ant call:
+     * -Dcom.mysql.cj.testsuite.mysqlx.url=mysqlx://localhost:33060/cjtest_5_1?user=root&password=pwd
+     * -Dcom.mysql.cj.testsuite.mysqlx.url.openssl=mysqlx://localhost:33070/cjtest_5_1?user=root&password=pwd
+     */
+    @Test
+    public void testTLSv1_2() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
+        boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+
+        /* Against yaSSL server */
+
+        // defaults to TLSv1.1
+        Session testSession = this.fact.getSession(props);
+        assertSecureSession(testSession);
+        SqlResult rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+        String actual = rs.fetchOne().getString(1);
+        assertEquals("TLSv1.1", actual);
+        testSession.close();
+
+        // restricted to TLSv1
+        props.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1");
+        testSession = this.fact.getSession(props);
+        assertSecureSession(testSession);
+        rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+        actual = rs.fetchOne().getString(1);
+        assertEquals("TLSv1", actual);
+        testSession.close();
+
+        // TLSv1.2 should fail
+        props.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1.2,TLSv1");
+        if (gplWithRSA) {
+            testSession = this.fact.getSession(props);
+            assertSecureSession(testSession);
+            rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+            actual = rs.fetchOne().getString(1);
+            assertEquals("TLSv1.2", actual);
+            testSession.close();
+        } else {
+            assertThrows(CJCommunicationsException.class, "Server does not provide enough data to proceed with SSL handshake.",
+                    () -> this.fact.getSession(props));
+        }
+
+        /* Against OpenSSL server */
+        if (this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0) {
+            Properties propsOpenSSL = new Properties(this.sslFreeTestPropertiesOpenSSL);
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+
+            // defaults to TLSv1.1
+            testSession = this.fact.getSession(propsOpenSSL);
+            assertSecureSession(testSession);
+            rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+            actual = rs.fetchOne().getString(1);
+            assertEquals("TLSv1.1", actual);
+            testSession.close();
+
+            // restricted to TLSv1
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1");
+            testSession = this.fact.getSession(propsOpenSSL);
+            assertSecureSession(testSession);
+            rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+            actual = rs.fetchOne().getString(1);
+            assertEquals("TLSv1", actual);
+            testSession.close();
+
+            // TLSv1.2
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1.2,TLSv1.1,TLSv1");
+            testSession = this.fact.getSession(propsOpenSSL);
+            assertSecureSession(testSession);
+            rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
+            actual = rs.fetchOne().getString(1);
+            assertEquals("TLSv1.2", actual);
+            testSession.close();
+        }
+    }
+
+    private boolean allowsRsa(Session sess) {
+        boolean allowsRSA = false;
+        SqlResult rset = sess.sql("SHOW STATUS LIKE 'Rsa_public_key'").execute();
+        if (rset.hasNext()) {
+            String value = rset.fetchOne().getString(1);
+            allowsRSA = (value != null && value.length() > 0);
+        }
+        return allowsRSA;
+    }
+
 }

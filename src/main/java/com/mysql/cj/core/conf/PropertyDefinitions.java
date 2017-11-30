@@ -67,6 +67,7 @@ public class PropertyDefinitions {
     public static final String SYSP_testsuite_url_openssl /*                  */ = "com.mysql.cj.testsuite.url.openssl";
 
     public static final String SYSP_testsuite_url_mysqlx /*                   */ = "com.mysql.cj.testsuite.mysqlx.url";
+    public static final String SYSP_testsuite_url_mysqlx_openssl /*           */ = "com.mysql.cj.testsuite.mysqlx.url.openssl";
 
     public static final String SYSP_testsuite_cantGrant /*                    */ = "com.mysql.cj.testsuite.cantGrant";
     public static final String SYSP_testsuite_disable_multihost_tests /*      */ = "com.mysql.cj.testsuite.disable.multihost.tests"; // TODO should be more specific for different types of multi-host configs

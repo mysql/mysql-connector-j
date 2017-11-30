@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#10152, Enable TLSv1.2 on mysqlx.
+
   - Fix for Bug#27131768, NULL POINTER EXCEPTION IN CONNECTION.
 
   - Fix for Bug#88232 (27047676), c/J does not rollback transaction when autoReconnect=true.

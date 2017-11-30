@@ -56,10 +56,13 @@ public class InternalXBaseTestCase {
     protected static final String DEFAULT_METADATA_CHARSET = "latin1";
 
     protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
+    protected String baseOpensslUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx_openssl);
     protected boolean isSetForXTests = this.baseUrl != null && this.baseUrl.length() > 0;
+    protected boolean isSetForOpensslXTests = this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0;
     protected SessionFactory fact = new SessionFactory();
 
     public Properties testProperties = new Properties();
+    public Properties testPropertiesOpenSSL = new Properties();
 
     private ServerVersion mysqlVersion;
 
@@ -70,6 +73,13 @@ public class InternalXBaseTestCase {
                 throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");
             }
             this.testProperties = conUrl.getMainHost().exposeAsProperties();
+        }
+        if (this.isSetForOpensslXTests) {
+            ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(this.baseOpensslUrl, null);
+            if (conUrl.getType() == null) {
+                throw new RuntimeException("Initialization via URL failed for \"" + this.baseOpensslUrl + "\"");
+            }
+            this.testPropertiesOpenSSL = conUrl.getMainHost().exposeAsProperties();
         }
     }
 

@@ -159,6 +159,7 @@ com.mysql.cj.testsuite.jvm - run testsuite under this one JVM
 com.mysql.cj.testsuite.url - connection string to the main test server
 com.mysql.cj.testsuite.url.openssl - connection string to the test server compiled with OpenSSL, used in sha256 tests
 com.mysql.cj.testsuite.mysqlx.url - connection string to the test server with xplugin
+com.mysql.cj.testsuite.mysqlx.url.openssl - connection string to the test server compiled with OpenSSL and enabled xplugin
 com.mysql.cj.testsuite.test.class - testcase class name to run
 com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in class defined by 'com.mysql.cj.testsuite.test.class'
 
