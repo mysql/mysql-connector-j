@@ -3283,6 +3283,34 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testConn.close();
     }
 
+    public void testChangeUserNoDb() throws Exception {
+        String dbName = "testChangeUserNoDb";
+
+        this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbName);
+
+        Properties props = getPropertiesFromTestsuiteUrl();
+        props.setProperty("createDatabaseIfNotExist", "true");
+        props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, dbName);
+
+        Connection con = getConnectionWithProps(props);
+
+        this.rs = this.stmt.executeQuery("show databases like '" + dbName + "'");
+        if (this.rs.next()) {
+            assertEquals(dbName, this.rs.getString(1));
+        } else {
+            fail("Database " + dbName + " is not found.");
+        }
+
+        ((com.mysql.jdbc.Connection) con).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY),
+                props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+
+        this.rs = con.createStatement().executeQuery("select DATABASE()");
+        assertTrue(this.rs.next());
+        assertEquals(dbName, this.rs.getString(1));
+
+        con.close();
+    }
+
     public void testChangeUserClosedConn() throws Exception {
         Properties props = getPropertiesFromTestsuiteUrl();
         Connection newConn = getConnectionWithProps((Properties) null);
@@ -5046,13 +5074,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testConnectionAttributes() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
+        if (versionMeetsMinimum(5, 6)) {
+            testConnectionAttributes(dbUrl);
         }
+        if (this.sha256Conn != null && ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 6, 5)) {
+            testConnectionAttributes(sha256Url);
+        }
+
+    }
+
+    private void testConnectionAttributes(String url) throws Exception {
         Properties props = new Properties();
         props.setProperty("connectionAttributes", "first:one,again:two");
         props.setProperty("user", getPropertiesFromTestsuiteUrl().getProperty(NonRegisteringDriver.USER_PROPERTY_KEY));
-        Connection attConn = super.getConnectionWithProps(props);
+        Connection attConn = super.getConnectionWithProps(url, props);
         ResultSet rslt = attConn.createStatement()
                 .executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");
         Map<String, Integer> matchedCounts = new HashMap<String, Integer>();
@@ -5106,7 +5141,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         props.setProperty("connectionAttributes", "none");
-        attConn = super.getConnectionWithProps(props);
+        attConn = super.getConnectionWithProps(url, props);
         rslt = attConn.createStatement().executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");
         if (rslt.next()) {
             fail("Expected no connection attributes.");
@@ -10160,5 +10195,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection testConn = getConnectionWithProps(props);
         testConn.createStatement().executeQuery("SELECT 1");
         testConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#79612 (22362474), CONNECTION ATTRIBUTES LOST WHEN CONNECTING WITHOUT DEFAULT DATABASE.
+     */
+    public void testBug79612() throws Exception {
+        // The case with database present in URL is covered by testConnectionAttributes() test case.
+        // Testing without database here.
+        if (versionMeetsMinimum(5, 6)) {
+            testConnectionAttributes(getNoDbUrl(dbUrl));
+        }
+        if (this.sha256Conn != null && ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 6, 5)) {
+            testConnectionAttributes(getNoDbUrl(sha256Url));
+        }
+
     }
 }

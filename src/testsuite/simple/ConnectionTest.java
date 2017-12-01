@@ -1069,14 +1069,24 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testCreateDatabaseIfNotExist() throws Exception {
-        if (isAdminConnectionConfigured()) {
-            Properties props = new Properties();
-            props.setProperty("createDatabaseIfNotExist", "true");
-            props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, "testcreatedatabaseifnotexists");
+        String dbName = "testCreateDatabaseIfNotExistDb";
 
-            Connection newConn = getAdminConnectionWithProps(props);
-            newConn.createStatement().executeUpdate("DROP DATABASE testcreatedatabaseifnotexists");
+        this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbName);
+
+        Properties props = new Properties();
+        props.setProperty("createDatabaseIfNotExist", "true");
+        props.setProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY, dbName);
+
+        Connection con = getConnectionWithProps(props);
+
+        this.rs = this.stmt.executeQuery("show databases like '" + dbName + "'");
+        if (this.rs.next()) {
+            assertEquals(dbName, this.rs.getString(1));
+        } else {
+            fail("Database " + dbName + " is not found.");
         }
+
+        con.createStatement().executeUpdate("DROP DATABASE IF EXISTS " + dbName);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -36,6 +36,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -439,7 +440,11 @@ public abstract class BaseTestCase extends TestCase {
      *             if parsing fails
      */
     protected Properties getPropertiesFromTestsuiteUrl() throws SQLException {
-        Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+        return getPropertiesFromUrl(dbUrl);
+    }
+
+    protected Properties getPropertiesFromUrl(String url) throws SQLException {
+        Properties props = new NonRegisteringDriver().parseURL(url, null);
 
         String hostname = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         if (hostname == null) {
@@ -482,6 +487,28 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
+    }
+
+    protected String getNoDbUrl(String url) throws SQLException {
+        Properties props = getPropertiesFromUrl(url);
+        final String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+        final String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+        props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+        removeHostRelatedProps(props);
+
+        final StringBuilder urlBuilder = new StringBuilder("jdbc:mysql://").append(host).append(":").append(port).append("/?");
+
+        Enumeration<Object> keyEnum = props.keys();
+        while (keyEnum.hasMoreElements()) {
+            String key = (String) keyEnum.nextElement();
+            urlBuilder.append(key);
+            urlBuilder.append("=");
+            urlBuilder.append(props.get(key));
+            if (keyEnum.hasMoreElements()) {
+                urlBuilder.append("&");
+            }
+        }
+        return urlBuilder.toString();
     }
 
     protected int getRowCount(String tableName) throws SQLException {
