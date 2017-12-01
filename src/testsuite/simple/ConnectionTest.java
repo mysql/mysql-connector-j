@@ -1069,7 +1069,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testCreateDatabaseIfNotExist() throws Exception {
-        String dbName = "testCreateDatabaseIfNotExistDb";
+        String dbName = "testcreatedatabaseifnotexist";
 
         this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbName);
 

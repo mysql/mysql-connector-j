@@ -3284,7 +3284,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testChangeUserNoDb() throws Exception {
-        String dbName = "testChangeUserNoDb";
+        String dbName = "testchangeusernodb";
 
         this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbName);
 
