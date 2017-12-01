@@ -3019,6 +3019,34 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testConn.close();
     }
 
+    public void testChangeUserNoDb() throws Exception {
+        String databaseName = "testchangeusernodb";
+
+        this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + databaseName);
+
+        Properties props = getPropertiesFromTestsuiteUrl();
+        props.setProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist, "true");
+        props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, databaseName);
+
+        Connection con = getConnectionWithProps(props);
+
+        this.rs = this.stmt.executeQuery("show databases like '" + databaseName + "'");
+        if (this.rs.next()) {
+            assertEquals(databaseName, this.rs.getString(1));
+        } else {
+            fail("Database " + databaseName + " is not found.");
+        }
+
+        ((com.mysql.cj.api.jdbc.JdbcConnection) con).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+                props.getProperty(PropertyDefinitions.PNAME_password));
+
+        this.rs = con.createStatement().executeQuery("select DATABASE()");
+        assertTrue(this.rs.next());
+        assertEquals(databaseName, this.rs.getString(1));
+
+        con.close();
+    }
+
     public void testChangeUserClosedConn() throws Exception {
         Properties props = getPropertiesFromTestsuiteUrl();
         Connection newConn = getConnectionWithProps((Properties) null);
@@ -4768,13 +4796,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     public void testConnectionAttributes() throws Exception {
+        if (versionMeetsMinimum(5, 6)) {
+            testConnectionAttributes(dbUrl);
+        }
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 5)) {
+            testConnectionAttributes(sha256Url);
+        }
+
+    }
+
+    private void testConnectionAttributes(String url) throws Exception {
         if (!versionMeetsMinimum(5, 6)) {
             return;
         }
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "first:one,again:two");
         props.setProperty(PropertyDefinitions.PNAME_user, getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.PNAME_user));
-        Connection attConn = super.getConnectionWithProps(props);
+        Connection attConn = super.getConnectionWithProps(url, props);
         ResultSet rslt = attConn.createStatement()
                 .executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");
         Map<String, Integer> matchedCounts = new HashMap<>();
@@ -4828,7 +4866,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         props.setProperty(PropertyDefinitions.PNAME_connectionAttributes, "none");
-        attConn = super.getConnectionWithProps(props);
+        attConn = super.getConnectionWithProps(url, props);
         rslt = attConn.createStatement().executeQuery("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()");
         if (rslt.next()) {
             fail("Expected no connection attributes.");
@@ -10278,5 +10316,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Connection testConn = getConnectionWithProps(props);
         testConn.createStatement().executeQuery("SELECT 1");
         testConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#79612 (22362474), CONNECTION ATTRIBUTES LOST WHEN CONNECTING WITHOUT DEFAULT DATABASE.
+     */
+    public void testBug79612() throws Exception {
+        // The case with database present in URL is covered by testConnectionAttributes() test case.
+        // Testing without database here.
+        if (versionMeetsMinimum(5, 6)) {
+            testConnectionAttributes(getNoDbUrl(dbUrl));
+        }
+        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 5)) {
+            testConnectionAttributes(getNoDbUrl(sha256Url));
+        }
+
     }
 }

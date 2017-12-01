@@ -38,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -437,7 +438,11 @@ public abstract class BaseTestCase extends TestCase {
      *             if parsing fails
      */
     protected Properties getPropertiesFromTestsuiteUrl() throws SQLException {
-        return mainConnectionUrl.getMainHost().exposeAsProperties();
+        return getPropertiesFromUrl(mainConnectionUrl);
+    }
+
+    protected Properties getPropertiesFromUrl(ConnectionUrl url) throws SQLException {
+        return url.getMainHost().exposeAsProperties();
     }
 
     protected Properties getHostFreePropertiesFromTestsuiteUrl() throws SQLException {
@@ -476,6 +481,28 @@ public abstract class BaseTestCase extends TestCase {
         String hostPortPair = mainConnectionUrl.getMainHost().getHostPortPair();
         hostPortPair = TestUtils.encodePercent(hostPortPair);
         return hostPortPair;
+    }
+
+    protected String getNoDbUrl(String url) throws SQLException {
+        Properties props = getPropertiesFromUrl(ConnectionUrl.getConnectionUrlInstance(url, null));
+        final String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        final String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
+        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        removeHostRelatedProps(props);
+
+        final StringBuilder urlBuilder = new StringBuilder("jdbc:mysql://").append(host).append(":").append(port).append("/?");
+
+        Enumeration<Object> keyEnum = props.keys();
+        while (keyEnum.hasMoreElements()) {
+            String key = (String) keyEnum.nextElement();
+            urlBuilder.append(key);
+            urlBuilder.append("=");
+            urlBuilder.append(props.get(key));
+            if (keyEnum.hasMoreElements()) {
+                urlBuilder.append("&");
+            }
+        }
+        return urlBuilder.toString();
     }
 
     protected int getRowCount(String tableName) throws SQLException {

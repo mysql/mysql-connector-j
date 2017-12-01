@@ -676,9 +676,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
 
                     if (this.useConnectWithDb) {
                         last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
-                    } else {
-                        /* For empty database */
-                        last_sent.writeInteger(IntegerDataType.INT1, 0);
                     }
 
                     if ((serverCapabilities & MysqlaServerSession.CLIENT_PLUGIN_AUTH) != 0) {
