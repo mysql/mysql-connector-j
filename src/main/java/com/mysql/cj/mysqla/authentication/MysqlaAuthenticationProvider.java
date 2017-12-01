@@ -153,7 +153,6 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
         }
 
         // Changing SSL defaults for 5.7+ server: useSSL=true, requireSSL=false, verifyServerCertificate=false
-
         ModifiableProperty<Boolean> useSSL = this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useSSL);
         if (this.protocol.versionMeetsMinimum(5, 7, 0) && !useSSL.getValue() && !useSSL.isExplicitlySet()) {
             useSSL.setValue(true);
@@ -161,6 +160,12 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
             if (this.log != null) {
                 this.log.logWarn(Messages.getString("MysqlIO.SSLWarning"));
             }
+        }
+
+        // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
+        ModifiableProperty<Boolean> useInformationSchema = this.propertySet.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useInformationSchema);
+        if (this.protocol.versionMeetsMinimum(8, 0, 3) && !useInformationSchema.getValue() && !useInformationSchema.isExplicitlySet()) {
+            useInformationSchema.setValue(true);
         }
 
         // check SSL availability

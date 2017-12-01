@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#10619, Ensure compatibility with new data dictionary.
+
   - Fix for BUG#27217264, WL#10937: NULL POINTER EXCEPTION WHEN NULL IS PASSED AS _ID IN COLL.REPLACEONE.
 
   - WL#10937, DevAPI: ReplaceOne, AddOrReplaceOne, GetOne, RemoveOne.

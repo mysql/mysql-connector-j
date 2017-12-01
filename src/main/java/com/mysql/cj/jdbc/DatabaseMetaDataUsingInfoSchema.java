@@ -66,6 +66,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             catalog = this.database;
         }
 
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,");
         sqlBuf.append(" COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE");
         if (catalog != null) {
@@ -113,6 +115,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME,");
 
@@ -282,6 +286,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             foreignCatalog = this.database;
         }
 
+        primaryCatalog = this.pedantic ? primaryCatalog : StringUtils.unQuoteIdentifier(primaryCatalog, this.quotedId);
+        foreignCatalog = this.pedantic ? foreignCatalog : StringUtils.unQuoteIdentifier(foreignCatalog, this.quotedId);
+
         StringBuilder sqlBuf = new StringBuilder(
                 "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,");
         sqlBuf.append(" A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,");
@@ -344,6 +351,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         //CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION
 
@@ -422,6 +431,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             catalog = this.database;
         }
 
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+
         StringBuilder sqlBuf = new StringBuilder("SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT, NULL AS PKTABLE_SCHEM,");
         sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_SCHEMA AS FKTABLE_CAT,");
         sqlBuf.append(" NULL AS FKTABLE_SCHEM, A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
@@ -470,6 +481,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE,");
         sqlBuf.append("TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME,");
@@ -521,6 +534,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+
         StringBuilder sqlBuf = new StringBuilder("SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,");
         sqlBuf.append(" COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE");
         if (catalog != null) {
@@ -562,6 +577,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         StringBuilder sqlBuf = new StringBuilder(
                 "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1,");
@@ -625,6 +642,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         // Here's what we get from MySQL ...
         // SPECIFIC_CATALOG                             NULL 
@@ -749,6 +768,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             catalog = this.database;
         }
 
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+
         if (tableNamePattern != null) {
             List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, catalog, this.quotedId,
                     this.session.getServerSession().isNoBackslashEscapesSet());
@@ -828,6 +849,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
         sqlBuf.append(" AS DATA_TYPE, UPPER(COLUMN_TYPE) AS TYPE_NAME,");
@@ -883,6 +906,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         // FUNCTION_CAT
         // FUNCTION_SCHEM
@@ -1025,6 +1050,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog == null && this.nullCatalogMeansCurrent) {
             catalog = this.database;
         }
+
+        catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
 
         StringBuilder sqlBuf = new StringBuilder(
                 "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ");

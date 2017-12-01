@@ -37,6 +37,7 @@ import java.util.Set;
 
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
 
 import testsuite.BaseTestCase;
 
@@ -112,8 +113,22 @@ public class MetadataTest extends BaseTestCase {
             assertEquals(pkTableName, "cpd_foreign_3");
             assertEquals(fkColumnName, "cpd_foreign_1_id");
             assertEquals(fkTableName, "cpd_foreign_4");
-            assertEquals(deleteAction, "NO ACTION");
             assertEquals(updateAction, "CASCADE");
+
+            // SHOW CREATE TABLE `cjtest_5_1`.`cpd_foreign_4` doesn't return ON DELETE rule while it was used in a table creation:
+            //    CREATE TABLE cpd_foreign_4 (
+            //                 cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null,
+            //                 key(cpd_foreign_1_id), key(cpd_foreign_2_id),
+            //                 primary key (cpd_foreign_1_id, cpd_foreign_2_id),
+            //                 foreign key (cpd_foreign_1_id, cpd_foreign_2_id)
+            //                 references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE
+            //                 ) ENGINE = InnoDB
+            // I_S returns a correct info, thus we have different results here 
+            if (dbmd instanceof DatabaseMetaDataUsingInfoSchema) {
+                assertEquals(deleteAction, "RESTRICT");
+            } else {
+                assertEquals(deleteAction, "NO ACTION");
+            }
 
             this.rs.close();
             this.rs = null;
