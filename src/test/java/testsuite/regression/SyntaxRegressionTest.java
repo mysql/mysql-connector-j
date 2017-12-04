@@ -970,7 +970,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * - JSON_INSERT(), Insert data into JSON document
      * - JSON_KEYS(), Array of keys from JSON document
      * - JSON_LENGTH(), Number of elements in JSON document
-     * - JSON_MERGE(), Merge JSON documents
+     * - JSON_MERGE(), Merge JSON documents (up to 8.0.2)
+     * - JSON_MERGE_PRESERVE(), Merge JSON documents (since to 8.0.3)
      * - JSON_OBJECT(), Create JSON object
      * - JSON_QUOTE(), Quote JSON document
      * - JSON_REMOVE(), Remove data from JSON document
@@ -1050,7 +1051,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testJsonTypeCheckFunction("SELECT JSON_INSERT('[1]', '$[1]', 2)", "[1, 2]");
         testJsonTypeCheckFunction("SELECT JSON_KEYS('{\"a\": 1}')", "[\"a\"]");
         testJsonTypeCheckFunction("SELECT JSON_LENGTH('{\"a\": 1}')", "1");
-        testJsonTypeCheckFunction("SELECT JSON_MERGE('[1]', '[2]')", "[1, 2]");
+        testJsonTypeCheckFunction(versionMeetsMinimum(8, 0, 3) ? "SELECT JSON_MERGE_PRESERVE('[1]', '[2]')" : "SELECT JSON_MERGE('[1]', '[2]')", "[1, 2]");
         testJsonTypeCheckFunction("SELECT JSON_OBJECT('a', 1)", "{\"a\": 1}");
         testJsonTypeCheckFunction("SELECT JSON_QUOTE('[1]')", "\"[1]\"");
         testJsonTypeCheckFunction("SELECT JSON_REMOVE('[1, 2]', '$[1]')", "[1]");
