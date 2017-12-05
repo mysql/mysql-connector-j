@@ -276,5 +276,33 @@ public class CollectionAddTest extends CollectionTest {
             }
         });
 
+        // null document
+        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.addOrReplaceOne("id2", (DbDoc) null);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.addOrReplaceOne("id2", (String) null);
+                return null;
+            }
+        });
+
+        // null id parameter
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.addOrReplaceOne(null, new DbDoc().add("_id", new JsonString().setValue("id111")));
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.addOrReplaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
+                return null;
+            }
+        });
+
     }
 }

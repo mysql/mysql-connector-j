@@ -595,5 +595,36 @@ public class CollectionModifyTest extends CollectionTest {
         assertEquals("id1", ((JsonString) doc.get("_id")).getString());
         assertEquals(new Integer(3), ((JsonNumber) doc.get("a")).getInteger());
         assertEquals(1, this.collection.count());
+
+        // null document
+        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne("id1", (DbDoc) null);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne("id2", (String) null);
+                return null;
+            }
+        });
+
+        // null id parameter
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne(null, new DbDoc().add("a", new JsonNumber().setValue("2")));
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
+                return null;
+            }
+        });
+
+        assertNull(this.collection.getOne(null));
+
     }
 }

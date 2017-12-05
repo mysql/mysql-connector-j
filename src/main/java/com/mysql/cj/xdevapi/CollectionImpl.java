@@ -164,11 +164,23 @@ public class CollectionImpl implements Collection {
 
     @Override
     public Result replaceOne(String id, DbDoc doc) {
+        if (id == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "id" }));
+        }
+        if (doc == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "doc" }));
+        }
         return modify("_id = :id").set("$", doc).bind("id", id).execute();
     }
 
     @Override
     public Result replaceOne(String id, String jsonString) {
+        if (id == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "id" }));
+        }
+        if (jsonString == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "jsonString" }));
+        }
         try {
             return replaceOne(id, JsonParser.parseDoc(new StringReader(jsonString)));
         } catch (IOException e) {
@@ -178,8 +190,11 @@ public class CollectionImpl implements Collection {
 
     @Override
     public Result addOrReplaceOne(String id, DbDoc doc) {
+        if (id == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "id" }));
+        }
         if (doc == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "doc" }));
         }
         if (doc.get("_id") == null) {
             doc.add("_id", new JsonString().setValue(id));
@@ -191,8 +206,11 @@ public class CollectionImpl implements Collection {
 
     @Override
     public Result addOrReplaceOne(String id, String jsonString) {
+        if (id == null) {
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "id" }));
+        }
         if (jsonString == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
+            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "jsonString" }));
         }
         try {
             return addOrReplaceOne(id, JsonParser.parseDoc(new StringReader(jsonString)));
