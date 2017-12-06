@@ -25,8 +25,6 @@ package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Table;
@@ -34,18 +32,7 @@ import com.mysql.cj.api.xdevapi.Table;
 /**
  * @todo
  */
-public class TableDeleteTest extends TableTest {
-    @Before
-    @Override
-    public void setupTableTest() {
-        super.setupTableTest();
-    }
-
-    @After
-    @Override
-    public void teardownTableTest() {
-        super.teardownTableTest();
-    }
+public class TableDeleteTest extends BaseTableTestCase {
 
     @Test
     public void testDelete() {

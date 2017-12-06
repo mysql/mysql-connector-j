@@ -27,8 +27,6 @@ import static com.mysql.cj.api.xdevapi.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Row;
@@ -38,18 +36,7 @@ import com.mysql.cj.api.xdevapi.Table;
 /**
  * @todo
  */
-public class TableUpdateTest extends TableTest {
-    @Before
-    @Override
-    public void setupTableTest() {
-        super.setupTableTest();
-    }
-
-    @After
-    @Override
-    public void teardownTableTest() {
-        super.teardownTableTest();
-    }
+public class TableUpdateTest extends BaseTableTestCase {
 
     @Test
     public void testUpdates() {

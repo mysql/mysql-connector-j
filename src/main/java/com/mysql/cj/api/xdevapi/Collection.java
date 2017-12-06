@@ -116,17 +116,20 @@ public interface Collection extends DatabaseObject {
      *            index name
      * @param indexDefinition
      *            JSON document with the following fields:
-     *            <li>fields: array of IndexField objects, each describing a single document member to be included in the index (see below)
-     *            <li>type: string, (optional) the type of index. One of INDEX or SPATIAL (case insensitive). Default is INDEX and may be omitted.
-     *            <br>
+     *            <ul>
+     *            <li>fields: array of IndexField objects, each describing a single document member to be included in the index (see below)</li>
+     *            <li>type: string, (optional) the type of index. One of INDEX or SPATIAL (case insensitive). Default is INDEX and may be omitted.</li>
+     *            </ul>
      *            where single IndexField description consists of the following fields:
-     *            <li>field: string, the full document path to the document member or field to be indexed
+     *            <ul>
+     *            <li>field: string, the full document path to the document member or field to be indexed</li>
      *            <li>type: string, one of the supported SQL column types to map the field into (see below for a list). For numeric types, the optional UNSIGNED
-     *            keyword may follow. For the TEXT type, the length to consider for indexing may be added. Type descriptions are case insensitive.
+     *            keyword may follow. For the TEXT type, the length to consider for indexing may be added. Type descriptions are case insensitive.</li>
      *            <li>required: bool, (optional) true if the field is required to exist in the document. Defaults to false, except for GEOJSON where it defaults
-     *            to true
-     *            <li>options: int, (optional) special option flags for use when decoding GEOJSON data
-     *            <li>srid: int, (optional) srid value for use when decoding GEOJSON data
+     *            to true</li>
+     *            <li>options: int, (optional) special option flags for use when decoding GEOJSON data</li>
+     *            <li>srid: int, (optional) srid value for use when decoding GEOJSON data</li>
+     *            </ul>
      * @return {@link Result}
      */
     Result createIndex(String indexName, DbDoc indexDefinition);
@@ -141,17 +144,20 @@ public interface Collection extends DatabaseObject {
      *            index name
      * @param jsonIndexDefinition
      *            JSON document with the following fields:
-     *            <li>fields: array of IndexField objects, each describing a single document member to be included in the index (see below)
-     *            <li>type: string, (optional) the type of index. One of INDEX or SPATIAL. Default is INDEX and may be omitted.
-     *            <br>
+     *            <ul>
+     *            <li>fields: array of IndexField objects, each describing a single document member to be included in the index (see below)</li>
+     *            <li>type: string, (optional) the type of index. One of INDEX or SPATIAL. Default is INDEX and may be omitted.</li>
+     *            </ul>
      *            where single IndexField description consists of the following fields:
-     *            <li>field: string, the full document path to the document member or field to be indexed
+     *            <ul>
+     *            <li>field: string, the full document path to the document member or field to be indexed</li>
      *            <li>type: string, one of the supported SQL column types to map the field into (see below for a list). For numeric types, the optional UNSIGNED
-     *            keyword may follow. For the TEXT type, the length to consider for indexing may be added.
+     *            keyword may follow. For the TEXT type, the length to consider for indexing may be added.</li>
      *            <li>required: bool, (optional) true if the field is required to exist in the document. Defaults to false, except for GEOJSON where it defaults
-     *            to true
-     *            <li>options: int, (optional) special option flags for use when decoding GEOJSON data
-     *            <li>srid: int, (optional) srid value for use when decoding GEOJSON data
+     *            to true</li>
+     *            <li>options: int, (optional) special option flags for use when decoding GEOJSON data</li>
+     *            <li>srid: int, (optional) srid value for use when decoding GEOJSON data</li>
+     *            </ul>
      * @return {@link Result}
      */
     Result createIndex(String indexName, String jsonIndexDefinition);

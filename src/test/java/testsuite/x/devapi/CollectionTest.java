@@ -26,47 +26,20 @@ package testsuite.x.devapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Random;
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Collection;
 import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.api.xdevapi.Row;
 import com.mysql.cj.api.xdevapi.SqlResult;
+import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.xdevapi.DbDoc;
 
-public class CollectionTest extends DevApiBaseTestCase {
-    /** Collection for testing. */
-    protected Collection collection;
-    protected String collectionName;
-
-    @Before
-    public void setupCollectionTest() {
-        if (setupTestSession()) {
-            this.collectionName = "CollectionTest-" + new Random().nextInt(1000);
-            dropCollection(this.collectionName);
-            this.collection = this.schema.createCollection(this.collectionName);
-        }
-    }
-
-    @After
-    public void teardownCollectionTest() {
-        if (this.isSetForXTests && this.session.isOpen()) {
-            try {
-                dropCollection(this.collectionName);
-            } catch (Exception ex) {
-                System.err.println("Error during cleanup teardownCollectionTest()");
-                ex.printStackTrace();
-            }
-            destroyTestSession();
-        }
-    }
+public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void testCount() {
@@ -126,7 +99,7 @@ public class CollectionTest extends DevApiBaseTestCase {
 
     @Test
     public void createIndex() throws Exception {
-        if (!this.isSetForXTests) {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) {
             return;
         }
 

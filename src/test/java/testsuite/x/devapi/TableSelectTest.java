@@ -37,8 +37,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Column;
@@ -55,18 +53,7 @@ import com.mysql.cj.xdevapi.SessionFactory;
 /**
  * @todo
  */
-public class TableSelectTest extends TableTest {
-    @Before
-    @Override
-    public void setupTableTest() {
-        super.setupTableTest();
-    }
-
-    @After
-    @Override
-    public void teardownTableTest() {
-        super.teardownTableTest();
-    }
+public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void basicQuery() {

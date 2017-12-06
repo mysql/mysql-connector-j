@@ -34,8 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -52,18 +50,7 @@ import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 
 @Category(testsuite.x.AsyncTests.class)
-public class AsyncQueryTest extends CollectionTest {
-    @Before
-    @Override
-    public void setupCollectionTest() {
-        super.setupCollectionTest();
-    }
-
-    @After
-    @Override
-    public void teardownCollectionTest() {
-        super.teardownCollectionTest();
-    }
+public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void basicAsyncQuery() throws Exception {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,26 +27,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.api.xdevapi.Table;
 
 /**
  * @todo
  */
-public class TableTest extends DevApiBaseTestCase {
-    @Before
-    public void setupTableTest() {
-        super.setupTestSession();
-    }
-
-    @After
-    public void teardownTableTest() {
-        super.destroyTestSession();
-    }
+public class TableTest extends BaseTableTestCase {
 
     @Test
     public void tableBasics() {

@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,7 +40,7 @@ import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
 /**
  * Tests for "Column" table metadata API.
  */
-public class MetadataTest extends TableTest {
+public class MetadataTest extends BaseTableTestCase {
     @Before
     @Override
     public void setupTableTest() {
@@ -50,12 +49,6 @@ public class MetadataTest extends TableTest {
             sqlUpdate("drop table if exists example_metadata");
             sqlUpdate("create table example_metadata (_id varchar(32), name varchar(20), birthday date, age int)");
         }
-    }
-
-    @After
-    @Override
-    public void teardownTableTest() {
-        super.teardownTableTest();
     }
 
     @Test

@@ -47,7 +47,7 @@ import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 
-public class CollectionAddTest extends CollectionTest {
+public class CollectionAddTest extends BaseCollectionTestCase {
     @Before
     @Override
     public void setupCollectionTest() {

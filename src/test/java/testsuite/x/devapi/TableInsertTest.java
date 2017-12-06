@@ -31,8 +31,6 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.InsertResult;
@@ -46,18 +44,7 @@ import com.mysql.cj.xdevapi.JsonString;
 /**
  * @todo
  */
-public class TableInsertTest extends TableTest {
-    @Before
-    @Override
-    public void setupTableTest() {
-        super.setupTableTest();
-    }
-
-    @After
-    @Override
-    public void teardownTableTest() {
-        super.teardownTableTest();
-    }
+public class TableInsertTest extends BaseTableTestCase {
 
     @Test
     public void lastInsertId() {

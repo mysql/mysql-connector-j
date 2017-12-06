@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Collection;
@@ -57,12 +56,7 @@ import com.mysql.cj.xdevapi.SessionFactory;
 /**
  * @todo
  */
-public class CollectionFindTest extends CollectionTest {
-    @Before
-    @Override
-    public void setupCollectionTest() {
-        super.setupCollectionTest();
-    }
+public class CollectionFindTest extends BaseCollectionTestCase {
 
     @After
     @Override

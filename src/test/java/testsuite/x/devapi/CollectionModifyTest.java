@@ -32,8 +32,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.StringReader;
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.DocResult;
@@ -49,18 +47,7 @@ import com.mysql.cj.xdevapi.JsonString;
 /**
  * @todo
  */
-public class CollectionModifyTest extends CollectionTest {
-    @Before
-    @Override
-    public void setupCollectionTest() {
-        super.setupCollectionTest();
-    }
-
-    @After
-    @Override
-    public void teardownCollectionTest() {
-        super.teardownCollectionTest();
-    }
+public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testSet() {

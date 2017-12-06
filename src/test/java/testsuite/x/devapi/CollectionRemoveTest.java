@@ -29,8 +29,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.api.xdevapi.Result;
@@ -40,17 +38,6 @@ import com.mysql.cj.x.core.XDevAPIError;
  * @todo
  */
 public class CollectionRemoveTest extends CollectionTest {
-    @Before
-    @Override
-    public void setupCollectionTest() {
-        super.setupCollectionTest();
-    }
-
-    @After
-    @Override
-    public void teardownCollectionTest() {
-        super.teardownCollectionTest();
-    }
 
     @Test
     public void deleteAll() {
