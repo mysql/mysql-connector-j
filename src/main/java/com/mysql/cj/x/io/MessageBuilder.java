@@ -66,6 +66,7 @@ import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute;
 import com.mysql.cj.xdevapi.CreateIndexParams;
+import com.mysql.cj.xdevapi.CreateIndexParams.IndexField;
 import com.mysql.cj.xdevapi.ExprUtil;
 import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.FindParams;
@@ -93,15 +94,28 @@ public class MessageBuilder {
         builder.addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(params.getIndexName())))
                 .addFld(ObjectField.newBuilder().setKey("collection").setValue(ExprUtil.buildAny(collectionName)))
                 .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)))
-                .addFld(ObjectField.newBuilder().setKey("unique").setValue(ExprUtil.buildAny(params.isUnique())));
+                .addFld(ObjectField.newBuilder().setKey("unique").setValue(ExprUtil.buildAny(false)));
+        if (params.getIndexType() != null) {
+            builder.addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(params.getIndexType())));
+        }
 
         com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.Builder abuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.newBuilder();
-        for (int i = 0; i < params.getDocPaths().size(); ++i) {
-            abuilder.addValue(Any.newBuilder().setType(Any.Type.OBJECT)
-                    .setObj(com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
-                            .addFld(ObjectField.newBuilder().setKey("member").setValue(ExprUtil.buildAny("$" + params.getDocPaths().get(i))))
-                            .addFld(ObjectField.newBuilder().setKey("required").setValue(ExprUtil.buildAny(params.getNotNulls().get(i))))
-                            .addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(params.getTypes().get(i))))));
+        for (IndexField indexField : params.getFields()) {
+            com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder fld = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+                    .addFld(ObjectField.newBuilder().setKey("member").setValue(ExprUtil.buildAny(indexField.getField())))
+                    .addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(indexField.getType())))
+                    .addFld(ObjectField.newBuilder().setKey("required").setValue(ExprUtil.buildAny(indexField.isRequired())));
+            if ("GEOJSON".equalsIgnoreCase(indexField.getType())) {
+                if (indexField.getOptions() != null) {
+                    fld.addFld(ObjectField.newBuilder().setKey("options").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
+                            .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getOptions())).build()));
+                }
+                if (indexField.getSrid() != null) {
+                    fld.addFld(ObjectField.newBuilder().setKey("srid").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
+                            .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getSrid())).build()));
+                }
+            }
+            abuilder.addValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(fld));
         }
 
         builder.addFld(ObjectField.newBuilder().setKey("constraint").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder)));

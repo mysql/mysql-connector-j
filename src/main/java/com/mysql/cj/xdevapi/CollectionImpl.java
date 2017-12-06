@@ -29,7 +29,6 @@ import java.util.Map;
 
 import com.mysql.cj.api.xdevapi.AddStatement;
 import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.CreateCollectionIndexStatement;
 import com.mysql.cj.api.xdevapi.FindStatement;
 import com.mysql.cj.api.xdevapi.ModifyStatement;
 import com.mysql.cj.api.xdevapi.RemoveStatement;
@@ -41,6 +40,7 @@ import com.mysql.cj.core.exceptions.AssertionFailedException;
 import com.mysql.cj.core.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.x.core.StatementExecuteOk;
 import com.mysql.cj.x.core.XDevAPIError;
 
 public class CollectionImpl implements Collection {
@@ -116,8 +116,17 @@ public class CollectionImpl implements Collection {
         return new RemoveStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, searchCondition);
     }
 
-    public CreateCollectionIndexStatement createIndex(String indexName, boolean isUnique) {
-        return new CreateCollectionIndexStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, indexName, isUnique);
+    @Override
+    public Result createIndex(String indexName, DbDoc indexDefinition) {
+        StatementExecuteOk ok = this.mysqlxSession.createCollectionIndex(this.schema.getName(), this.name, new CreateIndexParams(indexName, indexDefinition));
+        return new UpdateResult(ok);
+    }
+
+    @Override
+    public Result createIndex(String indexName, String jsonIndexDefinition) {
+        StatementExecuteOk ok = this.mysqlxSession.createCollectionIndex(this.schema.getName(), this.name,
+                new CreateIndexParams(indexName, jsonIndexDefinition));
+        return new UpdateResult(ok);
     }
 
     public void dropIndex(String indexName) {

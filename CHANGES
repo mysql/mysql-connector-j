@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - WL#11208, DevAPI: Collection.createIndex.
+
   - WL#10156, Add setters/getters for connection properties to MysqlDataSource, MysqlXADataSource and MysqlConnectionPoolDataSource.
 
   - WL#11401, DevAPI: Remove configuration API.
