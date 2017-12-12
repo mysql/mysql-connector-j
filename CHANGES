@@ -3,6 +3,8 @@
 
 Version 8.0.9
 
+  - Fix for BUG#27247349, WL#11208 : UNIQUE DOES NOT GIVE ERROR EVEN THOUGH IT IS NOT SUPPORTED.
+
   - WL#11208, DevAPI: Collection.createIndex.
 
   - WL#10156, Add setters/getters for connection properties to MysqlDataSource, MysqlXADataSource and MysqlConnectionPoolDataSource.

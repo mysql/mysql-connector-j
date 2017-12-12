@@ -64,6 +64,12 @@ public class CreateIndexParams {
 
         this.indexName = idxName;
 
+        for (String key : indexDefinition.keySet()) {
+            if (!"type".equals(key) && !"fields".equals(key)) {
+                throw new XDevAPIError("The '" + key + "' field is not allowed in indexDefinition.");
+            }
+        }
+
         JsonValue val = indexDefinition.get("type");
         if (val != null) {
             if (val instanceof JsonString) {
@@ -131,6 +137,12 @@ public class CreateIndexParams {
         private Integer srid = null;
 
         public IndexField(DbDoc indexField) {
+            for (String key : indexField.keySet()) {
+                if (!"type".equals(key) && !"field".equals(key) && !"required".equals(key) && !"options".equals(key) && !"srid".equals(key)) {
+                    throw new XDevAPIError("The '" + key + "' field is not allowed in indexField.");
+                }
+            }
+
             JsonValue val = indexField.get("field");
             if (val != null) {
                 if (val instanceof JsonString) {

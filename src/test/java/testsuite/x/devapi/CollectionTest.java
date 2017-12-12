@@ -224,7 +224,7 @@ public class CollectionTest extends BaseCollectionTestCase {
         // FR5_4 Create an index where its definition is a JSON document but its structure is not valid.
         assertThrows(XDevAPIError.class, "Index definition does not contain fields.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionTest.this.collection.createIndex("myIndex", "{\"somekey\": 123}");
+                CollectionTest.this.collection.createIndex("myIndex", "{\"type\": \"INDEX\"}");
                 return null;
             }
         });
@@ -242,7 +242,7 @@ public class CollectionTest extends BaseCollectionTestCase {
         });
         assertThrows(XDevAPIError.class, "Index field definition has no document path.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionTest.this.collection.createIndex("myIndex", "{\"fields\": [{\"somefield\": 123}]}");
+                CollectionTest.this.collection.createIndex("myIndex", "{\"fields\": [{\"type\": 123}]}");
                 return null;
             }
         });
@@ -372,6 +372,26 @@ public class CollectionTest extends BaseCollectionTestCase {
         assertThrows(XDevAPIError.class, "Parameter 'indexDefinition' must not be null or empty.", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionTest.this.collection.createIndex("myIndex", (DbDoc) null);
+                return null;
+            }
+        });
+
+        assertThrows(XDevAPIError.class, "The 'somekey' field is not allowed in indexDefinition.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionTest.this.collection.createIndex("myIndex", "{\"somekey\": 123}");
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "The 'somefield' field is not allowed in indexField.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionTest.this.collection.createIndex("myIndex", "{\"fields\": [{\"somefield\": 123}]}");
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "The 'unique' field is not allowed in indexDefinition.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionTest.this.collection.createIndex("myIndex",
+                        "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"INT\", \"required\": true}], \"unique\":true, \"type\":\"INDEX\"}");
                 return null;
             }
         });
