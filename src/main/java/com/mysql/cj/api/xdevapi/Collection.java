@@ -140,24 +140,24 @@ public interface Collection extends DatabaseObject {
     DbDoc newDoc();
 
     /**
-     * Takes in a document object which will replace the matching document. If no matches are found, the function returns normally with no changes being made.
+     * Takes in a document object that will replace the matching document. If no matches are found, the function returns normally with no changes being made.
      * 
      * @param id
      *            the document id of the document to be replaced
      * @param doc
-     *            the new document, which may contain expressions. If doc contains an _id value, it is ignored.
+     *            the new document, which may contain expressions. If document contains an _id value, it is ignored.
      * @return
      *         Result object, which will indicate the number of affected documents (1 or 0, if none)
      */
     Result replaceOne(String id, DbDoc doc);
 
     /**
-     * Takes in a document object which will replace the matching document. If no matches are found, the function returns normally with no changes being made.
+     * Takes in a document object that will replace the matching document. If no matches are found, the function returns normally with no changes being made.
      * 
      * @param id
      *            the document id of the document to be replaced
      * @param jsonString
-     *            the new document, given as JSON string, which may contain expressions. If doc contains an _id value, it is ignored.
+     *            the new document, given as JSON string, which may contain expressions. If document contains an _id value, it is ignored.
      * @return
      *         Result object, which will indicate the number of affected documents (1 or 0, if none)
      */
