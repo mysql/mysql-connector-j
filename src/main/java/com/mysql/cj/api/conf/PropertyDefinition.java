@@ -49,6 +49,20 @@ public interface PropertyDefinition<T> {
     String getName();
 
     /**
+     * Returns the property camel-case alias.
+     * 
+     * @return
+     */
+    String getCcAlias();
+
+    /**
+     * Returns true if property has a camel-case alias.
+     * 
+     * @return
+     */
+    boolean hasCcAlias();
+
+    /**
      * Returns the default value.
      * 
      * @return

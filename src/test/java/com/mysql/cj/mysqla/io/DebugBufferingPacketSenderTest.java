@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,9 +42,9 @@ import com.mysql.cj.core.conf.ReadableIntegerProperty;
 public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
     @Test
     public void packetPushedToDebugBufferTest() throws IOException {
-        LinkedList<StringBuilder> debugBuffer = new LinkedList<StringBuilder>();
+        LinkedList<StringBuilder> debugBuffer = new LinkedList<>();
         DebugBufferingPacketSender sender = new DebugBufferingPacketSender(getNoopPacketSender(), debugBuffer,
-                new ReadableIntegerProperty(new IntegerPropertyDefinition(PropertyDefinitions.PNAME_packetDebugBufferSize, 20,
+                new ReadableIntegerProperty(new IntegerPropertyDefinition(PropertyDefinitions.PNAME_packetDebugBufferSize, PropertyDefinitions.NO_ALIAS, 20,
                         PropertyDefinitions.RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3",
                         PropertyDefinitions.CATEGORY_DEBUGING_PROFILING, 7, 0, Integer.MAX_VALUE)));
         byte packet[] = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 };

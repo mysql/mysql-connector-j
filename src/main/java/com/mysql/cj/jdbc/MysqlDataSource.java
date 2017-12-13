@@ -39,6 +39,7 @@ import javax.sql.DataSource;
 import com.mysql.cj.api.conf.ReadableProperty;
 import com.mysql.cj.api.jdbc.JdbcPropertySet;
 import com.mysql.cj.core.Messages;
+import com.mysql.cj.core.conf.AbstractRuntimeProperty;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
@@ -92,6 +93,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     /** Port number */
     protected int port = 3306;
 
+    protected String description = "MySQL Connector/J Data Source";
+
     /**
      * Default no-arg constructor for Serialization
      */
@@ -138,6 +141,14 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         exposeAsProperties(props);
 
         return getConnection(props);
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public void setDescription(String value) {
+        this.description = value;
     }
 
     /**
@@ -444,4 +455,190 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name property name
+     * @return
+     * @throws SQLException
+     */
+    protected String getStringProperty(String name) throws SQLException {
+        return getStringReadableProperty(name).getValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    @SuppressWarnings("unchecked")
+    protected void setStringProperty(String name, String value) throws SQLException {
+        ReadableProperty<String> prop = getStringReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getStringModifiableProperty(name).setValue(value);
+        } else {
+            ((AbstractRuntimeProperty<String>) prop).setFromString(value, null);
+        }
+    }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @return
+     * @throws SQLException
+     */
+    protected boolean getBooleanProperty(String name) throws SQLException {
+        return getBooleanReadableProperty(name).getValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    @SuppressWarnings("unchecked")
+    protected void setBooleanProperty(String name, boolean value) throws SQLException {
+        ReadableProperty<Boolean> prop = getBooleanReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getBooleanModifiableProperty(name).setValue(value);
+        } else {
+            ((AbstractRuntimeProperty<Boolean>) prop).setFromString("" + value, null);
+        }
+    }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @return
+     * @throws SQLException
+     */
+    protected int getIntegerProperty(String name) throws SQLException {
+        return getIntegerReadableProperty(name).getValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    @SuppressWarnings("unchecked")
+    protected void setIntegerProperty(String name, int value) throws SQLException {
+        ReadableProperty<Integer> prop = getIntegerReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getIntegerModifiableProperty(name).setValue(value);
+        } else {
+            ((AbstractRuntimeProperty<Integer>) prop).setFromString("" + value, null);
+        }
+    }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @return
+     * @throws SQLException
+     */
+    protected long getLongProperty(String name) throws SQLException {
+        return getLongReadableProperty(name).getValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    @SuppressWarnings("unchecked")
+    protected void setLongProperty(String name, long value) throws SQLException {
+        ReadableProperty<Long> prop = getLongReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getLongModifiableProperty(name).setValue(value);
+        } else {
+            ((AbstractRuntimeProperty<Long>) prop).setFromString("" + value, null);
+        }
+    }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @return
+     * @throws SQLException
+     */
+    protected int getMemorySizeProperty(String name) throws SQLException {
+        return getMemorySizeReadableProperty(name).getValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    @SuppressWarnings("unchecked")
+    protected void setMemorySizeProperty(String name, int value) throws SQLException {
+        ReadableProperty<Integer> prop = getIntegerReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getMemorySizeModifiableProperty(name).setValue(value);
+        } else {
+            ((AbstractRuntimeProperty<Integer>) prop).setFromString("" + value, null);
+        }
+    }
+
+    /**
+     * Used in properties getters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @return
+     * @throws SQLException
+     */
+    protected String getEnumProperty(String name) throws SQLException {
+        return getEnumReadableProperty(name).getStringValue();
+    }
+
+    /**
+     * Used in properties setters added by instrumentation.
+     * 
+     * @param name
+     *            property name
+     * @param value
+     *            value
+     * @throws SQLException
+     */
+    protected void setEnumProperty(String name, String value) throws SQLException {
+        ReadableProperty<?> prop = getEnumReadableProperty(name);
+        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
+            getEnumModifiableProperty(name).setFromString(value, null);
+        } else {
+            ((AbstractRuntimeProperty<?>) prop).setFromString("" + value, null);
+        }
+    }
+
 }

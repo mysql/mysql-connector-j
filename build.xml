@@ -913,6 +913,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
         </java>
+        <java jvm="${com.mysql.cj.build.jdk.java}"
+              classname="instrumentation.AddMethods"
+              classpathref="instrumentation.classpath"
+              fork="yes"
+              failonerror="true">
+            <arg value="${com.mysql.cj.build.compiler.output}" />
+        </java>
     </target>
 
 

@@ -37,9 +37,9 @@ public class EnumPropertyDefinition<T extends Enum<T>> extends AbstractPropertyD
 
     private Class<T> enumType;
 
-    public EnumPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory) {
-        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public EnumPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
         if (defaultValue == null) {
             throw ExceptionFactory.createException("Enum property '" + name + "' cannot be initialized with null.");
         }

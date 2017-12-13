@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -34,14 +34,14 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Intege
 
     protected int multiplier = 1;
 
-    public IntegerPropertyDefinition(String name, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory) {
-        super(name, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public IntegerPropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public IntegerPropertyDefinition(String name, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, int lowerBound, int upperBound) {
-        super(name, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
+    public IntegerPropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory, int lowerBound, int upperBound) {
+        super(name, alias, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
     }
 
     @Override

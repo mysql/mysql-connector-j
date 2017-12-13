@@ -33,6 +33,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     private static final long serialVersionUID = 2696624840927848766L;
 
     private String name;
+    private String ccAlias;
     private T defaultValue;
     private boolean isRuntimeModifiable;
     private String description;
@@ -43,10 +44,11 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
     private int lowerBound;
     private int upperBound;
 
-    public AbstractPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory) {
+    public AbstractPropertyDefinition(String name, String camelCaseAlias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
 
-        this.setName(name);
+        this.name = name;
+        this.ccAlias = camelCaseAlias;
         this.setDefaultValue(defaultValue);
         this.setRuntimeModifiable(isRuntimeModifiable);
         this.setDescription(description);
@@ -55,9 +57,9 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.setOrder(orderInCategory);
     }
 
-    public AbstractPropertyDefinition(String name, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, int lowerBound, int upperBound) {
-        this(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory, int lowerBound, int upperBound) {
+        this(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
         this.setLowerBound(lowerBound);
         this.setUpperBound(upperBound);
     }
@@ -74,8 +76,14 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         return this.name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public String getCcAlias() {
+        return this.ccAlias;
+    }
+
+    @Override
+    public boolean hasCcAlias() {
+        return this.ccAlias != null && this.ccAlias.length() > 0;
     }
 
     public T getDefaultValue() {

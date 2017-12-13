@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,14 +32,15 @@ public class LongPropertyDefinition extends AbstractPropertyDefinition<Long> {
 
     private static final long serialVersionUID = -5264490959206230852L;
 
-    public LongPropertyDefinition(String name, long defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory) {
-        super(name, Long.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public LongPropertyDefinition(String name, String alias, long defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, Long.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public LongPropertyDefinition(String name, long defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, long lowerBound, long upperBound) {
-        super(name, Long.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, (int) lowerBound, (int) upperBound);
+    public LongPropertyDefinition(String name, String alias, long defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory, long lowerBound, long upperBound) {
+        super(name, alias, Long.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, (int) lowerBound,
+                (int) upperBound);
     }
 
     @Override

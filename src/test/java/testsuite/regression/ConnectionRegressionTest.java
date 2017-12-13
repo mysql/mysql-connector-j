@@ -129,6 +129,7 @@ import com.mysql.cj.core.util.Util;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
 import com.mysql.cj.jdbc.MysqlXAConnection;
 import com.mysql.cj.jdbc.MysqlXADataSource;
@@ -1510,6 +1511,108 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         return count;
+    }
+
+    /**
+     * Ensures that we don't miss getters/setters for driver properties defined in
+     * PropertyDefinitions so that names given in documentation work with
+     * DataSources which will use JavaBean-style names and reflection to set the
+     * values (and often fail silently! when the method isn't available).
+     * 
+     * @throws Exception
+     */
+    public void testBug23626() throws Exception {
+
+        List<String> propertyNames = new ArrayList<>();
+        // Standard DataSource methods
+        propertyNames.add("databaseName");
+        propertyNames.add("description");
+        propertyNames.add("password");
+        propertyNames.add("portNumber");
+        propertyNames.add("serverName");
+        propertyNames.add("user");
+        // propertyNames.add("dataSourceName"); // TODO not supported
+        // propertyNames.add("networkProtocol"); // TODO not supported
+        // propertyNames.add("roleName"); // TODO not supported
+
+        DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(dbUrl, null);
+        for (int i = 0; i < dpi.length; i++) {
+            String propertyName = dpi[i].name;
+            switch (propertyName) {
+                case PropertyDefinitions.PNAME_user:
+                case PropertyDefinitions.PNAME_password:
+                case PropertyDefinitions.DBNAME_PROPERTY_KEY:
+                case PropertyDefinitions.PORT_PROPERTY_KEY:
+                case PropertyDefinitions.HOST_PROPERTY_KEY:
+                    continue;
+
+                default:
+                    if (PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.containsKey(propertyName)
+                            && PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.get(propertyName).hasCcAlias()) {
+                        propertyName = PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.get(propertyName).getCcAlias();
+                    }
+                    break;
+            }
+            propertyNames.add(propertyName);
+        }
+
+        testBug23626ForClass(MysqlDataSource.class, propertyNames);
+        testBug23626ForClass(MysqlXADataSource.class, propertyNames);
+
+        // TODO Standard Connection Pool Properties are not supported
+        //        maxStatements   int     The total number of statements that the pool should keep open. 0 (zero) indicates that caching of statements is disabled.
+        //        initialPoolSize int     The number of physical connections the pool should contain when it is created
+        //        minPoolSize     int     The number of physical connections the pool should keep available at all times. 0 (zero) indicates that connections should be created as needed.
+        //        maxPoolSize     int     The maximum number of physical connections that the pool should contain. 0 (zero) indicates no maximum size.
+        //        maxIdleTime     int     The number of seconds that a physical connection should remain unused in the pool before the connection is closed. 0 (zero) indicates no limit.
+        //        propertyCycle   int     The interval, in seconds, that the pool should wait before enforcing the current policy defined by the values of the above connection pool properties
+        testBug23626ForClass(MysqlConnectionPoolDataSource.class, propertyNames);
+    }
+
+    private void testBug23626ForClass(Class<?> clazz, List<String> propertyNames) throws Exception {
+        StringBuilder missingSettersBuf = new StringBuilder();
+        StringBuilder missingGettersBuf = new StringBuilder();
+
+        Class<?>[][] argTypes = { new Class<?>[] { String.class }, new Class<?>[] { Integer.TYPE }, new Class<?>[] { Long.TYPE },
+                new Class<?>[] { Boolean.TYPE } };
+
+        for (String propertyName : propertyNames) {
+            StringBuilder mutatorName = new StringBuilder("set");
+            mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
+            mutatorName.append(propertyName.substring(1));
+
+            StringBuilder accessorName = new StringBuilder("get");
+            accessorName.append(Character.toUpperCase(propertyName.charAt(0)));
+            accessorName.append(propertyName.substring(1));
+
+            try {
+                clazz.getMethod(accessorName.toString(), (Class[]) null);
+            } catch (NoSuchMethodException nsme) {
+                missingGettersBuf.append(accessorName.toString());
+                missingGettersBuf.append("\n");
+            }
+
+            boolean foundMethod = false;
+
+            for (int j = 0; j < argTypes.length; j++) {
+                try {
+                    clazz.getMethod(mutatorName.toString(), argTypes[j]);
+                    foundMethod = true;
+                    break;
+                } catch (NoSuchMethodException nsme) {
+
+                }
+            }
+
+            if (!foundMethod) {
+                missingSettersBuf.append(mutatorName);
+                missingSettersBuf.append("\n");
+            }
+        }
+
+        assertEquals("Missing setters for listed configuration properties.", "", missingSettersBuf.toString());
+        assertEquals("Missing getters for listed configuration properties.", "", missingSettersBuf.toString());
+
     }
 
     /**

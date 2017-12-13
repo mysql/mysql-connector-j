@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,14 +31,14 @@ public class MemorySizePropertyDefinition extends IntegerPropertyDefinition {
 
     private static final long serialVersionUID = -6878680905514177949L;
 
-    public MemorySizePropertyDefinition(String name, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory) {
-        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public MemorySizePropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public MemorySizePropertyDefinition(String name, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
-            int orderInCategory, int lowerBound, int upperBound) {
-        super(name, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
+    public MemorySizePropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+            String category, int orderInCategory, int lowerBound, int upperBound) {
+        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
     }
 
     @Override

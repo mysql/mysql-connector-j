@@ -55,18 +55,21 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @Override
     public void addProperty(RuntimeProperty<?> prop) {
-        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(prop.getPropertyDefinition().getName(), prop);
-        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(PropertyDefinitions.PROPERTY_NAME_TO_ALIAS.get(prop.getPropertyDefinition().getName()), prop);
+        PropertyDefinition<?> def = prop.getPropertyDefinition();
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getName(), prop);
+        if (def.hasCcAlias()) {
+            this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getCcAlias(), prop);
+        }
     }
 
     @Override
     public void removeProperty(String name) {
         RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(name);
         if (prop != null) {
-            if (name.equals(prop.getPropertyDefinition().getName())) {
-                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(PropertyDefinitions.PROPERTY_NAME_TO_ALIAS.get(prop.getPropertyDefinition().getName()));
-            } else {
+            if (!name.equals(prop.getPropertyDefinition().getName())) {
                 this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getName());
+            } else if (prop.getPropertyDefinition().hasCcAlias()) {
+                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getCcAlias());
             }
         }
     }
@@ -138,6 +141,36 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
 
+    }
+
+    @Override
+    public ModifiableProperty<Boolean> getBooleanModifiableProperty(String name) {
+        return getModifiableProperty(name);
+    }
+
+    @Override
+    public ModifiableProperty<Integer> getIntegerModifiableProperty(String name) {
+        return getModifiableProperty(name);
+    }
+
+    @Override
+    public ModifiableProperty<Long> getLongModifiableProperty(String name) {
+        return getModifiableProperty(name);
+    }
+
+    @Override
+    public ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name) {
+        return getModifiableProperty(name);
+    }
+
+    @Override
+    public ModifiableProperty<String> getStringModifiableProperty(String name) {
+        return getModifiableProperty(name);
+    }
+
+    @Override
+    public <T extends Enum<T>> ModifiableProperty<T> getEnumModifiableProperty(String name) {
+        return getModifiableProperty(name);
     }
 
     public void initializeProperties(Properties props) {

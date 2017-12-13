@@ -47,6 +47,18 @@ public interface PropertySet {
 
     <T> ModifiableProperty<T> getModifiableProperty(String name);
 
+    ModifiableProperty<Boolean> getBooleanModifiableProperty(String name);
+
+    ModifiableProperty<Integer> getIntegerModifiableProperty(String name);
+
+    ModifiableProperty<Long> getLongModifiableProperty(String name);
+
+    ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name);
+
+    ModifiableProperty<String> getStringModifiableProperty(String name);
+
+    <T extends Enum<T>> ReadableProperty<T> getEnumModifiableProperty(String name);
+
     /**
      * Initializes driver properties that come from URL or properties passed to
      * the driver manager.
