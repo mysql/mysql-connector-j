@@ -4282,12 +4282,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * What's the database vendor's preferred term for "schema"?
-     * 
+     * The answer is: SCHEMA .
+     * see: https://dev.mysql.com/doc/refman/5.7/en/create-database.html
+     * *begin quote* 
+     *  CREATE SCHEMA is a synonym for CREATE DATABASE.
+     * *end quote * 
+     *
+     * In the end it does not matter if the function returns DATABASE or SCHEMA, because SCHEMA is a synonym for DATABASE
+     * But at least it is the expected term from an ANSI SQL point of view
+     *
      * @return the vendor term
      * @throws SQLException
      */
     public String getSchemaTerm() throws SQLException {
-        return "";
+        return "SCHEMA";
     }
 
     /**
