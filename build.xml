@@ -2,24 +2,30 @@
 <!--
   Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
 
-  The MySQL Connector/J is licensed under the terms of the GPLv2
-  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
-  There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
-  this software, see the FOSS License Exception
-  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License, version 2.0, as published by the
+  Free Software Foundation.
 
-  This program is free software; you can redistribute it and/or modify it under the terms
-  of the GNU General Public License as published by the Free Software Foundation; version 2
-  of the License.
+  This program is also distributed with certain software (including but not
+  limited to OpenSSL) that is licensed under separate terms, as designated in a
+  particular file or component or in included license documentation. The
+  authors of MySQL hereby grant you an additional permission to link the
+  program and your derivative works with the separately licensed software that
+  they have included with MySQL.
 
-  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU General Public License for more details.
+  Without limiting anything contained in the foregoing, this file, which is
+  part of MySQL Connector/J, is also subject to the Universal FOSS Exception,
+  version 1.0, a copy of which can be found at
+  http://oss.oracle.com/licenses/universal-foss-exception.
 
-  You should have received a copy of the GNU General Public License along with this
-  program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
-  Floor, Boston, MA 02110-1301  USA
+  This program is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE. See the GNU General Public License, version 2.0,
+  for more details.
 
+  You should have received a copy of the GNU General Public License along with
+  this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 -->
 <project name="MySQL Connector/J" default="dist" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
     <description>
@@ -115,6 +121,7 @@ com.mysql.cj.build.addDebugInfo - should the driver be compiled with debugging i
 com.mysql.cj.build.noCleanBetweenCompiles - if 'yes' then 'clean' and '-clean-output' targets do nothing
 com.mysql.cj.build.failOnWarnings - fail the build when any warning is found
 
+com.mysql.cj.build.licenseUrl - license book location, default 'file:./LICENSE'
 com.mysql.cj.build.commercial - build commercial variant of the driver
 com.mysql.cj.build.filterLicense - build ISV variant of the driver
 com.mysql.cj.build.noCrypto - build the driver without SSL support
@@ -194,6 +201,8 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <property name="com.mysql.cj.build.driver.extraName" value="" />
     <property name="com.mysql.cj.build.driver.extendedName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}" />
     <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.extendedName}-${com.mysql.cj.build.driver.version.full}" />
+
+    <property name="com.mysql.cj.build.licenseUrl" value="file:./LICENSE" />
 
     <property name="com.mysql.cj.build.dir" value="build" />
     <property name="com.mysql.cj.build.dir.driver" value="${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}" />
@@ -307,7 +316,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <fail message="The property 'com.mysql.cj.extra.libs' must point to a directory that contains the libraries required for build tasks.">
             <condition>
                 <not>
-                    <available file="${com.mysql.cj.extra.libs}" type="dir" />
+                    <and>
+                        <available file="${com.mysql.cj.extra.libs}" type="dir" />
+                        <or>
+                            <available file="${com.mysql.cj.extra.libs}/8.0/javassist.jar" type="file" />
+                            <available file="${com.mysql.cj.extra.libs}/javassist.jar" type="file" />
+                        </or>
+                    </and>
                 </not>
             </condition>
         </fail>
@@ -374,7 +389,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Prepares files and settings for compiling driver. -->
-    <target name="init" depends="-compiler-check, -init-copy, -init-filter-license, -init-no-crypto">
+    <target name="init" depends="-extra-libs-check, -compiler-check, -init-copy">
         <!-- The following is needed for source distributions as the classpath can't be dynamically altered, and not having this directory present causes the
              build to fail. -->
         <available property="com.mysql.cj.prebuiltDocsPresent" file="${com.mysql.cj.dist.dir.prebuilt.docs}" />
@@ -387,7 +402,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Copy source files and fix licensing header in source files. -->
-    <target name="-init-copy" depends="-init-copy-common, -replace-headers-commercial" />
+    <target name="-init-copy" depends="-init-copy-common, -init-filter-license, -init-no-crypto, -init-license-headers" />
 
 
     <!-- Copy source files. -->
@@ -513,10 +528,12 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     </target>
 
 
-    <!-- Fix licensing header in source files. -->
-    <target name="-replace-headers-commercial" if="com.mysql.cj.build.commercial">
-        <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
-                       replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
+    <!-- Fix license headers in source files (Build). -->
+    <target name="-init-license-headers" if="com.mysql.cj.build.commercial">
+        <local name="ls" />
+        <property name="ls" value="${line.separator}" />
+        <replaceregexp match="([^\r\n]*?)[ \t]*+This program is free software;.*MA 02110-1301  ?USA\r?\n"
+                       replace="\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}"
                        flags="s">
             <fileset dir="${com.mysql.cj.build.dir.driver}" includes="**/*" />
         </replaceregexp>
@@ -524,7 +541,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Add commercial license configuration class (Build). -->
-    <target name="-init-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.filterLicense">
+    <target name="-init-filter-license" if="com.mysql.cj.build.filterLicense">
         <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
               toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
@@ -532,7 +549,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Add no-crypto export control class (Build). -->
-    <target name="-init-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.noCrypto">
+    <target name="-init-no-crypto" if="com.mysql.cj.build.noCrypto">
         <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
               toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
@@ -540,7 +557,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Copy commercial license configuration class (Package). -->
-    <target name="-copy-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.filterLicense">
+    <target name="-copy-filter-license" if="com.mysql.cj.build.filterLicense">
         <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
               toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/LicenseConfiguration.java"
               overwrite="true" />
@@ -548,42 +565,45 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <!-- Copy no-crypto export control class (Package). -->
-    <target name="-copy-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.noCrypto">
+    <target name="-copy-no-crypto" if="com.mysql.cj.build.noCrypto">
         <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
               toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/io/ExportControlled.java"
               overwrite="true" />
     </target>
 
 
-    <!-- Copy README-commercial info (Package). -->
-    <target name="-copy-readme-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
-        <copy file="${com.mysql.cj.extra.libs}/8.0/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
-            <filterset refid="versionFilterset" />
-            <filterset refid="licenseFilterset" />
-        </copy>
-        <copy file="${com.mysql.cj.dist.dir.package}/README.txt" tofile="${com.mysql.cj.dist.dir.package}/README" overwrite="true" />
+    <!-- Copy GPL LICENSE & README files (Package). -->
+    <target name="-copy-license-notices-gpl" unless="com.mysql.cj.build.commercial">
+        <get src="${com.mysql.cj.build.licenseUrl}" dest="${com.mysql.cj.dist.dir.package}/LICENSE" verbose="true" />
+        <fixcrlf file="${com.mysql.cj.dist.dir.package}/LICENSE" tab="remove" tablength="8" eol="lf" />
+
+        <copy file="${basedir}/README" tofile="${com.mysql.cj.dist.dir.package}/README" overwrite="true" />
     </target>
 
 
-    <!-- Copy README info (Package). -->
-    <target name="-copy-readme-noncommercial" depends="-init-copy" unless="com.mysql.cj.build.commercial">
-        <copy file="${basedir}/README" tofile="${com.mysql.cj.dist.dir.package}/README.txt" filtering="true">
-            <filterset refid="versionFilterset" />
-        </copy>
-        <copy file="${com.mysql.cj.dist.dir.package}/README.txt" tofile="${com.mysql.cj.dist.dir.package}/README" overwrite="true" />
+    <!-- Copy Commercial LICENSE & README files (Package). -->
+    <target name="-copy-license-notices-commercial" if="com.mysql.cj.build.commercial">
+        <fail message="Commercial license book URL required. Set the URL from where to fetch the license book with the property 'com.mysql.cj.build.licenseUrl'.">
+            <condition>
+                <equals arg1="${com.mysql.cj.build.licenseUrl}" arg2="file:./LICENSE"/>
+            </condition>
+        </fail>
+
+        <get src="${com.mysql.cj.build.licenseUrl}" dest="${com.mysql.cj.dist.dir.package}/LICENSE" verbose="true" />
+        <fixcrlf file="${com.mysql.cj.dist.dir.package}/LICENSE" tab="remove" tablength="8" eol="lf" />
+
+        <copy file="${com.mysql.cj.extra.libs}/8.0/README-commercial" tofile="${com.mysql.cj.dist.dir.package}/README" overwrite="true" />
     </target>
 
 
-    <!-- Copy LICENSE.mysql and replace license commercial headers (Package). -->
-    <target name="-replace-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.cj.build.commercial">
-        <delete file="${com.mysql.cj.dist.dir.package}/COPYING" />
-        <copy file="${com.mysql.cj.extra.libs}/8.0/LICENSE.mysql" toDir="${com.mysql.cj.dist.dir.package}" />
-
-        <!-- For safety. -->
-        <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
-                       replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
+    <!-- Replace commercial license headers (Package). -->
+    <target name="-replace-license-headers" if="com.mysql.cj.build.commercial">
+        <local name="ls" />
+        <property name="ls" value="${line.separator}" />
+        <replaceregexp match="([^\r\n]*?)[ \t]*+This program is free software;.*MA 02110-1301  ?USA\r?\n"
+                       replace="\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}\1${ls}"
                        flags="s">
-            <fileset dir="${com.mysql.cj.dist.dir.package}" includes="**/*" />
+            <fileset dir="${com.mysql.cj.dist.dir.package}" includes="**/*" excludes="README*,LICENSE*" />
         </replaceregexp>
     </target>
 
@@ -708,15 +728,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Prepare a package for archiving. -->
     <target name="-make-packages"
-            depends="-make-packages-init, -copy-filter-license, -copy-no-crypto, -copy-readme-commercial, -copy-readme-noncommercial, -replace-license-commercial">
-        <!-- Fix CRLF for various platforms. -->
-
-        <!-- For Windows-y platforms. -->
-        <fixcrlf srcdir="${com.mysql.cj.dist.dir.package}" tab="remove" tablength="8" eol="crlf" includes="**/README.txt" />
-
-        <!-- For Unix-y platforms. -->
-        <fixcrlf srcdir="${com.mysql.cj.dist.dir.package}" tab="remove" tablength="8" eol="lf" includes="**/README" />
-    </target>
+            depends="-make-packages-init, -copy-filter-license, -copy-no-crypto, -copy-license-notices-commercial, -copy-license-notices-gpl, -replace-license-headers" />
 
 
     <!-- Prepare a package for archiving (initialize). -->
@@ -741,7 +753,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                 <patternset refid="non.test.sources" />
             </fileset>
 
-            <fileset dir="." includes="src/**, lib/*, build.xml, CHANGES, COPYING">
+            <fileset dir="." includes="src/**, lib/*, build.xml, CHANGES">
                 <patternset refid="non.test.sources" />
             </fileset>
         </copy>
@@ -790,7 +802,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     </target>
 
 
-    <!-- Create a Maven bundle for upload to their repository. -->
+    <!-- Create a Maven bundle to upload to central repository. -->
     <target name="-create-maven-archive"
             depends="-make-packages, -create-maven-archive-common, -create-maven-archive-sources"
             unless="com.mysql.cj.build.commercial">
@@ -803,7 +815,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     </target>
 
 
-    <!-- Create a Maven bundle for upload to their repository (common files to all packaging modes). -->
+    <!-- Create a Maven bundle to upload to the central repository (common files to all packaging modes). -->
     <target name="-create-maven-archive-common" unless="com.mysql.cj.build.commercial">
         <tempfile destdir="${com.mysql.cj.build.dir}" prefix="maven-bundle-" property="com.mysql.cj.build.dir.maven" />
 
@@ -811,7 +823,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
         <jar jarfile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.jar"
              basedir="${com.mysql.cj.build.compiler.output}"
-             includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
+             includes="**/*.class,**/*.properties*,META-INF/**"
              excludes="testsuite/**,demo/**,instrumentation/**"
              index="true"
              manifest="${com.mysql.cj.build.dir.driver}/META-INF/MANIFEST.MF" />
@@ -824,19 +836,24 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="COPYING" toDir="${com.mysql.cj.build.dir.maven}" />
-        <checksum file="${com.mysql.cj.build.dir.maven}/COPYING" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.build.dir.maven}/COPYING" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+        <get src="${com.mysql.cj.build.licenseUrl}" dest="${com.mysql.cj.build.dir.maven}/LICENSE" verbose="true" />
+        <fixcrlf file="${com.mysql.cj.build.dir.maven}/LICENSE" tab="remove" tablength="8" eol="lf" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/LICENSE" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/LICENSE" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+
+        <copy file="README" toDir="${com.mysql.cj.build.dir.maven}" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/README" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${com.mysql.cj.build.dir.maven}/README" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
 
 
-    <!-- Create a Maven bundle for upload to their repository (include sources). -->
+    <!-- Create a Maven bundle to upload to the central repository (include sources). -->
     <target name="-create-maven-archive-sources"
             depends="-create-maven-archive-sources-check, -create-maven-archive-common"
             unless="com.mysql.cj.build.noMavenSources">
         <jar jarfile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
              basedir="${com.mysql.cj.build.compiler.output}"
-             includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
+             includes="**/*.java,**/*.properties*"
              excludes="testsuite/**,demo/**,instrumentation/**,doc/**" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
                   forceOverwrite="yes"
@@ -925,7 +942,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
     <!-- Compile the driver and JUnit test suite. -->
     <target name="compile-testsuite" description="Compiles driver and JUnit test suite." depends="init, -init-copy-test, dist">
-        <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.cj.build.jdk}' to '${com.mysql.cj.build.compiler.output}'</echo>
+        <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.cj.build.jdk}' to '${com.mysql.cj.testsuite.compiler.output}'</echo>
 
         <javac sourcepath=""
                srcdir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}"
@@ -1206,7 +1223,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
 
 
     <target name="report-coverage"
-            depends="-set-report-coverage-detaults, -jacoco-merge"
+            depends="-extra-libs-check, -set-report-coverage-detaults, -jacoco-merge"
             description="Merges coverage results and creates HTML coverage report.">
         <jacoco:report>
             <executiondata>
@@ -1273,7 +1290,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <target name="prepare-rpm-deb-commercial-props" if="com.mysql.cj.build.commercial">
         <echo message="Using Commercial settings" />
         <property name="deb_version_suffix" value="+commercial" />
-        <property name="lic_file" value="LICENSE.mysql" />
+        <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=commercial yes" />
     </target>
 
@@ -1281,7 +1298,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <target name="prepare-rpm-deb-gpl-props" unless="com.mysql.cj.build.commercial">
         <echo message="Using GPL settings" />
         <property name="deb_version_suffix" value="" />
-        <property name="lic_file" value="COPYING" />
+        <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=dummy yes" />
     </target>
 

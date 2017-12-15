@@ -8,7 +8,7 @@ For detailed information please visit the official [MySQL Connector/J documentat
 
 ## Licensing
 
-Please refer to files README and COPYING, available in this repository, and [Legal Notices in documentation](http://dev.mysql.com/doc/connector-j/en/preface.html) for further details. 
+Please refer to files README and LICENSE, available in this repository, and [Legal Notices in documentation](http://dev.mysql.com/doc/connector-j/en/preface.html) for further details. 
 
 ## Download & Install
 

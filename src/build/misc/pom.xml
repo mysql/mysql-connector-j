@@ -6,16 +6,13 @@
   <packaging>jar</packaging>
 
   <name>MySQL Connector/J</name>
-  <description>MySQL JDBC Type 4 driver</description>
+  <description>JDBC Type 4 driver for MySQL</description>
 
   <licenses>
     <license>
-      <name>The GNU General Public License, Version 2</name>
-      <url>http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</url>
+      <name>The GNU General Public License, v2 with FOSS exception</name>
       <distribution>repo</distribution>
-      <comments>MySQL Connector/J contains exceptions to GPL requirements when linking with other components
-that are licensed under OSI-approved open source licenses, see EXCEPTIONS-CONNECTOR-J
-in this distribution for more details.</comments>
+      <comments>For detailed license information see the LICENSE file in this distribution.</comments>
     </license>
   </licenses>
 
