@@ -104,16 +104,36 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
+        try {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.close();
 
-        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED));
-        assertNonSecureSession(testSession);
-        testSession.close();
+            String userAndSslFreeBaseUrl = this.sslFreeBaseUrl;
+            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_user + "=", PropertyDefinitions.PNAME_user + "VOID=");
+            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_password + "=", PropertyDefinitions.PNAME_password + "VOID=");
 
-        Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-        testSession = this.fact.getSession(props);
-        assertNonSecureSession(testSession);
-        testSession.close();
+            testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                    + makeParam(PropertyDefinitions.PNAME_user, "testPlainAuth") + makeParam(PropertyDefinitions.PNAME_password, "pwd"));
+            assertNonSecureSession(testSession);
+            testSession.close();
+
+            Properties props = new Properties(this.sslFreeTestProperties);
+            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+            props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuth");
+            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+            testSession = this.fact.getSession(props);
+            assertNonSecureSession(testSession);
+            testSession.close();
+
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("DROP USER if exists testPlainAuth").execute();
+            testSession.close();
+        }
+
     }
 
     /**

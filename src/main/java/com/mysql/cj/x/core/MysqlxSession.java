@@ -142,6 +142,7 @@ public class MysqlxSession implements Session {
         // default choice
         if (this.authMech == null) {
             this.authMech = overTLS ? "PLAIN" : "MYSQL41";
+            // TODO see WL#10992 this.authMech = overTLS ? "PLAIN" : (this.protocol.getAuthenticationMechanisms().contains("SHA256_MEMORY") ? "SHA256_MEMORY" : "MYSQL41");
         } else {
             this.authMech = this.authMech.toUpperCase();
         }
@@ -162,6 +163,12 @@ public class MysqlxSession implements Session {
             case "EXTERNAL":
                 this.protocol.sendSaslExternalAuthStart(database);
                 break;
+            // TODO see WL#10992
+            //            case "SHA256_MEMORY":
+            //                this.protocol.sendSaslSha256MemoryAuthStart();
+            //                salt = this.protocol.readAuthenticateContinue();
+            //                this.protocol.sendSaslSha256MemoryAuthContinue(user, password, salt, database);
+            //                break;
 
             default:
                 throw new WrongArgumentException("Unknown authentication mechanism '" + this.authMech + "'.");

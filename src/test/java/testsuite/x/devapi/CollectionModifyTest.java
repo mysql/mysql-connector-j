@@ -451,7 +451,7 @@ public class CollectionModifyTest extends CollectionTest {
         docs = this.collection.find("_id = :id").bind("id", "2").limit(1).execute();
         assertTrue(docs.hasNext());
         doc = docs.next();
-        assertEquals(25226, ((JsonNumber) doc.get("zip")).getInteger().intValue());
+        assertEquals(25226, ((JsonNumber) doc.get("zip")).getBigDecimal().intValue());
         assertEquals("Bob's street: 42 2nd str", ((JsonString) doc.get("street")).getString());
         assertEquals("SAN FRANCISCO", ((JsonString) doc.get("city")).getString());
         doc2 = (DbDoc) doc.get("address");

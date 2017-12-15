@@ -5316,7 +5316,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 + "N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY UNIQUE_KEY_TEST_DUPLICATE (ID) )");
 
         int numTests = 5000;
-        Connection rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,dumpQueriesOnException=true");
+        Connection rewriteConn = getConnectionWithProps("useSSL=false,allowPublicKeyRetrieval=true,rewriteBatchedStatements=true,dumpQueriesOnException=true");
 
         assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         long batchedTime = timeBatch(rewriteConn, numTests);
@@ -5329,7 +5329,8 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(String.valueOf(numTests), getSingleIndexedValueWithQuery(this.conn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         assertTrue(batchedTime < unbatchedTime);
 
-        rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
+        rewriteConn = getConnectionWithProps(
+                "useSSL=false,allowPublicKeyRetrieval=true,rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
         timeBatch(rewriteConn, numTests);
     }
 
@@ -9347,6 +9348,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             final Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useSSL, Boolean.toString(useSSL));
+            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
             if (useSSL) {
                 props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
                 props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
@@ -10258,6 +10260,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
         boolean useSPS = false;
 

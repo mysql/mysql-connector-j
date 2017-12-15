@@ -146,6 +146,7 @@ import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
+import com.mysql.cj.mysqla.MysqlaSession;
 import com.mysql.cj.mysqla.authentication.CachingSha2PasswordPlugin;
 import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.mysqla.authentication.MysqlOldPasswordPlugin;
@@ -3130,6 +3131,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist, "true");
         props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, databaseName);
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
         Connection con = getConnectionWithProps(props);
 
@@ -5711,8 +5714,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testLongAuthResponsePayload() throws Exception {
 
-        if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 6)) {
-
+        MysqlaSession sha256Sess;
+        if (this.sha256Conn != null && (sha256Sess = ((JdbcConnection) this.sha256Conn).getSession()).versionMeetsMinimum(5, 6, 6)) {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
@@ -5723,27 +5726,24 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 // create user with long password and sha256_password auth
+                String pwd = sha256Sess.versionMeetsMinimum(8, 0, 4) || sha256Sess.versionMeetsMinimum(5, 7, 21) && !sha256Sess.versionMeetsMinimum(8, 0, 0)
+                        || sha256Sess.versionMeetsMinimum(5, 6, 39) && !sha256Sess.versionMeetsMinimum(5, 7, 0)
+                                ? "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"
+                                : "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                        + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee";
+
                 this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
                 createUser(this.sha256Stmt, "'wl6134user'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl6134user'@'%'");
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
-                        : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'" : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 props.setProperty(PropertyDefinitions.PNAME_user, "wl6134user");
-                props.setProperty(PropertyDefinitions.PNAME_password,
-                        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
+                props.setProperty(PropertyDefinitions.PNAME_password, pwd);
                 props.setProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin, Sha256PasswordPlugin.class.getName());
                 props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
 
@@ -5767,6 +5767,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
                     props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
                     assertCurrentUser(sha256Url, props, "wl6134user", true);
 
                 } catch (Exception e) {
@@ -10364,6 +10366,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
         props.setProperty(PropertyDefinitions.PNAME_socketTimeout, "2000");
         props.setProperty(PropertyDefinitions.PNAME_cacheServerConfiguration, "true");

@@ -58,6 +58,11 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
     }
 
     @Override
+    public void reset() {
+        this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
+    }
+
+    @Override
     public void destroy() {
         this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
         super.destroy();

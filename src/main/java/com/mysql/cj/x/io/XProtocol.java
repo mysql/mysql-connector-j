@@ -231,6 +231,16 @@ public class XProtocol implements Protocol {
         this.writer.write(this.msgBuilder.buildExternalAuthStart(database));
     }
 
+    // TODO see WL#10992
+    //    public void sendSaslSha256MemoryAuthStart() {
+    //        AuthenticateStart.Builder builder = AuthenticateStart.newBuilder().setMechName("SHA256_MEMORY");
+    //        this.writer.write(builder.build());
+    //    }
+    //
+    //    public void sendSaslSha256MemoryAuthContinue(String user, String password, byte[] salt, String database) {
+    //        this.writer.write(this.msgBuilder.buildSha256MemoryAuthContinue(user, password, salt, database));
+    //    }
+
     public void negotiateSSLConnection(int packLength) {
         throw new NullPointerException("TODO: SSL is not yet supported in this X Protocol client");
     }

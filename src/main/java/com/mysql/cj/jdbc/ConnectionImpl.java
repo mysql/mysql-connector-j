@@ -1010,6 +1010,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         } catch (UnableToConnectException rejEx) {
             close();
             this.session.getProtocol().getSocketConnection().forceClose();
+            throw rejEx;
 
         } catch (Exception EEE) {
 

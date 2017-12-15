@@ -4434,6 +4434,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
             Connection testConn = getConnectionWithProps(props);
             Statement testStmt = testConn.createStatement();

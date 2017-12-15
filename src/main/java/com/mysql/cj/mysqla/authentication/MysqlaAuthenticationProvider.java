@@ -578,6 +578,8 @@ public class MysqlaAuthenticationProvider implements AuthenticationProvider {
                                     Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { pluginName }),
                                     getExceptionInterceptor());
                         }
+                    } else {
+                        plugin.reset();
                     }
 
                     checkConfidentiality(plugin);

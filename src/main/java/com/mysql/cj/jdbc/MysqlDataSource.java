@@ -641,4 +641,22 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         }
     }
 
+    @Override
+    public Properties exposeAsProperties(Properties props) {
+        if (props == null) {
+            props = new Properties();
+        }
+
+        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            ReadableProperty<?> propToGet = getReadableProperty(propName);
+
+            String propValue = propToGet.getStringValue();
+
+            if (propValue != null && propToGet.isExplicitlySet()) {
+                props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);
+            }
+        }
+
+        return props;
+    }
 }

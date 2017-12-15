@@ -1586,6 +1586,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         final Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
         props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
         props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "500");

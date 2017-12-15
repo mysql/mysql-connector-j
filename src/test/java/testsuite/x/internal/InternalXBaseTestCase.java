@@ -36,6 +36,7 @@ import com.mysql.cj.core.ServerVersion;
 import com.mysql.cj.core.conf.DefaultPropertySet;
 import com.mysql.cj.core.conf.PropertyDefinitions;
 import com.mysql.cj.core.conf.url.ConnectionUrl;
+import com.mysql.cj.core.exceptions.WrongArgumentException;
 import com.mysql.cj.x.core.MysqlxSession;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.x.io.XProtocol;
@@ -122,9 +123,44 @@ public class InternalXBaseTestCase {
     public XProtocol createAuthenticatedTestProtocol() {
         XProtocol protocol = createTestProtocol();
 
-        protocol.sendSaslMysql41AuthStart();
-        byte[] salt = protocol.readAuthenticateContinue();
-        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+        String authMech = protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
+        boolean overTLS = protocol.getTls();
+
+        // default choice
+        if (authMech == null) {
+            authMech = overTLS ? "PLAIN" : "MYSQL41";
+            // TODO see WL#10992 authMech = overTLS ? "PLAIN" : (protocol.getAuthenticationMechanisms().contains("SHA256_MEMORY") ? "SHA256_MEMORY" : "MYSQL41");
+        } else {
+            authMech = authMech.toUpperCase();
+        }
+
+        switch (authMech) {
+            case "MYSQL41":
+                protocol.sendSaslMysql41AuthStart();
+                byte[] salt = protocol.readAuthenticateContinue();
+                protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+                break;
+            case "PLAIN":
+                if (overTLS) {
+                    protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+                } else {
+                    throw new XDevAPIError("PLAIN authentication is not allowed via unencrypted connection.");
+                }
+                break;
+            case "EXTERNAL":
+                protocol.sendSaslExternalAuthStart(getTestDatabase());
+                break;
+            // TODO see WL#10992
+            //            case "SHA256_MEMORY":
+            //                protocol.sendSaslSha256MemoryAuthStart();
+            //                salt = protocol.readAuthenticateContinue();
+            //                protocol.sendSaslSha256MemoryAuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+            //                break;
+
+            default:
+                throw new WrongArgumentException("Unknown authentication mechanism '" + authMech + "'.");
+        }
+
         protocol.readAuthenticateOk();
 
         return protocol;

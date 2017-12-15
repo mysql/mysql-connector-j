@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.mysql.cj.api.xdevapi.Session;
 import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.x.core.XDevAPIError;
 import com.mysql.cj.x.io.XProtocol;
@@ -89,10 +90,22 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslMysql41AuthStart();
-        byte[] salt = protocol.readAuthenticateContinue();
-        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
-        protocol.readAuthenticateOk();
+        try {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.close();
+
+            protocol.sendSaslMysql41AuthStart();
+            byte[] salt = protocol.readAuthenticateContinue();
+            protocol.sendSaslMysql41AuthContinue("testPlainAuth", "pwd", salt, getTestDatabase());
+            protocol.readAuthenticateOk();
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("DROP USER if exists testPlainAuth").execute();
+            testSession.close();
+        }
     }
 
     @Test
@@ -119,10 +132,23 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslMysql41AuthStart();
-        byte[] salt = protocol.readAuthenticateContinue();
-        protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, null);
-        protocol.readAuthenticateOk();
+
+        try {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.close();
+
+            protocol.sendSaslMysql41AuthStart();
+            byte[] salt = protocol.readAuthenticateContinue();
+            protocol.sendSaslMysql41AuthContinue("testPlainAuth", "pwd", salt, null);
+            protocol.readAuthenticateOk();
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            Session testSession = this.fact.getSession(this.baseUrl);
+            testSession.sql("DROP USER if exists testPlainAuth").execute();
+            testSession.close();
+        }
     }
 
     /**

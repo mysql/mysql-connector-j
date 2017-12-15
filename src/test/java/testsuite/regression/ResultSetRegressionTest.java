@@ -3224,6 +3224,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
 
@@ -3526,7 +3527,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug33678() throws Exception {
         createTable("testBug33678", "(field1 INT)");
 
-        Connection multiConn = getConnectionWithProps("allowMultiQueries=true,useSSL=false");
+        Connection multiConn = getConnectionWithProps("allowMultiQueries=true,useSSL=false,allowPublicKeyRetrieval=true");
         Statement multiStmt = multiConn.createStatement();
 
         try {
@@ -5233,6 +5234,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         String[] docs = new String[] { "{\"key10\": \"value10\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -5415,9 +5417,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("testBug24525461", sb.toString());
 
-        tstBug24525461testBytes("useSSL=false", testJSON); // CSPS
-        tstBug24525461testBytes("useSSL=false,useServerPrepStmts=true", testJSON); // SSPS without cursor
-        tstBug24525461testBytes("useSSL=false,useCursorFetch=true,defaultFetchSize=1", testJSON); // SSPS with cursor
+        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true", testJSON); // CSPS
+        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true,useServerPrepStmts=true", testJSON); // SSPS without cursor
+        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true,useCursorFetch=true,defaultFetchSize=1", testJSON); // SSPS with cursor
     }
 
     private void tstBug24525461testBytes(String params, boolean testJSON) throws Exception {
@@ -5667,6 +5669,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
         props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "2");
         Connection con = getConnectionWithProps(props);
@@ -5809,6 +5812,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         // test 1 - OK
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         Connection conn1 = getConnectionWithProps(props);
         PreparedStatement pstm1 = conn1.prepareStatement("select id, val_one, val_blob, val_three from testBug25215008 where val_one = ?");
         pstm1.setString(1, VALUE_ONE);
@@ -6033,6 +6037,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection testConn;
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         testConn = getConnectionWithProps(props);
         this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug25650305");
         this.rs.next();
@@ -6071,6 +6076,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         Connection testConn = getConnectionWithProps(props);
 
         PreparedStatement ps = testConn.prepareStatement("select * from testBug26750705", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);

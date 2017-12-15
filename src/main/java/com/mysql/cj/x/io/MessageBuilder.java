@@ -378,4 +378,97 @@ public class MessageBuilder {
             throw new RuntimeException(ex);
         }
     }
+
+    //    public AuthenticateStart buildSha256MemoryStart(String database) { // TODO String user, String password, 
+    //        CallbackHandler callbackHandler = new CallbackHandler() {
+    //            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
+    //                for (Callback c : callbacks) {
+    //                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
+    //                        // TODO ((NameCallback) c).setName(user);
+    //                        throw new UnsupportedCallbackException(c);
+    //                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+    //                        // TODO ((PasswordCallback) c).setPassword(password.toCharArray());
+    //                        throw new UnsupportedCallbackException(c);
+    //                    } else {
+    //                        throw new UnsupportedCallbackException(c);
+    //                    }
+    //                }
+    //            }
+    //        };
+    //        try {
+    //            // now we create the client object we use which can handle EXTERNAL mechanism for "X Protocol" to "serverName"
+    //            String[] mechanisms = new String[] { "SHA256_MEMORY" };
+    //            String authorizationId = database == null || database.trim().length() == 0 ? null : database; // as per protocol spec
+    //            String protocol = "X Protocol";
+    //            Map<String, ?> props = null;
+    //            // TODO: >> serverName. Is this of any use in our X Protocol exchange? Should be defined to be blank or something.
+    //            String serverName = "<unknown>";
+    //            SaslClient saslClient = Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbackHandler);
+    //
+    //            // now just pass the details to the X Protocol auth start message
+    //            AuthenticateStart.Builder authStartBuilder = AuthenticateStart.newBuilder();
+    //            authStartBuilder.setMechName("SHA256_MEMORY");
+    //            // saslClient will build the SASL response message
+    //            authStartBuilder.setAuthData(ByteString.copyFrom(saslClient.evaluateChallenge(null)));
+    //
+    //            return authStartBuilder.build();
+    //        } catch (SaslException ex) {
+    //            // TODO: better exception, should introduce a new exception class for auth?
+    //            throw new RuntimeException(ex);
+    //        }
+    //    }
+    //
+    //    public AuthenticateContinue buildSha256MemoryAuthContinue(String user, String password, byte[] salt, String database) {
+    //        // TODO: encoding for all this?
+    //        String encoding = "UTF8";
+    //        byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
+    //        byte[] passwordBytes = password == null || password.length() == 0 ? new byte[] {} : StringUtils.getBytes(password, encoding);
+    //        byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
+    //
+    //        byte[] hashedPassword = passwordBytes;
+    //        if (password != null && password.length() > 0) {
+    //            try {
+    //                hashedPassword = //Security.scramble411(passwordBytes, salt);
+    //
+    //                        Security.scrambleCachingSha2(StringUtils.getBytes(password, encoding), salt);
+    //            } catch (DigestException e) {
+    //                // TODO Auto-generated catch block
+    //                e.printStackTrace();
+    //            }
+    //
+    //            // protocol dictates *-prefixed hex string as hashed password
+    //            //hashedPassword = String.format("*%040x", new java.math.BigInteger(1, hashedPassword)).getBytes();
+    //
+    //            String hexPassword = StringUtils.toHexString(hashedPassword, hashedPassword.length);
+    //            hashedPassword = hexPassword.getBytes();
+    //        }
+    //
+    //        // this is what would happen in the SASL provider but we don't need the overhead of all the plumbing.
+    //        byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
+    //
+    //        // reply is length-prefixed when sent so we just separate fields by \0
+    //        System.arraycopy(databaseBytes, 0, reply, 0, databaseBytes.length);
+    //        int pos = databaseBytes.length;
+    //        reply[pos++] = 0;
+    //        System.arraycopy(userBytes, 0, reply, pos, userBytes.length);
+    //        pos += userBytes.length;
+    //        reply[pos++] = 0;
+    //        System.arraycopy(hashedPassword, 0, reply, pos, hashedPassword.length);
+    //
+    //        AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
+    //        builder.setAuthData(ByteString.copyFrom(reply));
+    //        return builder.build();
+    //    }
+    //    public static String toHexString(byte[] byteBuffer, int length) {
+    //        StringBuilder outputBuilder = new StringBuilder(length * 2);
+    //        for (int i = 0; i < length; i++) {
+    //            String hexVal = Integer.toHexString(byteBuffer[i] & 0xff);
+    //            if (hexVal.length() == 1) {
+    //                hexVal = "0" + hexVal;
+    //            }
+    //            outputBuilder.append(hexVal);
+    //        }
+    //        return outputBuilder.toString();
+    //    }
+
 }

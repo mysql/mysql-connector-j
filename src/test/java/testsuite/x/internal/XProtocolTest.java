@@ -74,7 +74,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @After
     public void destroyTestProtocol() throws IOException {
-        if (this.isSetForXTests) {
+        if (this.isSetForXTests && this.protocol != null) {
             try {
                 this.protocol.sendSessionClose();
                 this.protocol.readOk();

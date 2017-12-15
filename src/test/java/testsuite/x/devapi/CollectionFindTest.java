@@ -109,7 +109,7 @@ public class CollectionFindTest extends CollectionTest {
         DocResult docs = this.collection.find().fields(expr("{'_id':$._id, 'q':1 + 1, 'g2':-20*$.g}")).execute();
         DbDoc doc = docs.next();
         assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
-        assertEquals(new Integer(-20), ((JsonNumber) doc.get("g2")).getInteger());
+        assertEquals(-20, ((JsonNumber) doc.get("g2")).getBigDecimal().intValue());
         assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
     }
 
