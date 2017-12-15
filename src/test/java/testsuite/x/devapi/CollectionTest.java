@@ -414,7 +414,7 @@ public class CollectionTest extends BaseCollectionTestCase {
                 }
 
                 indexFound = true;
-                assertEquals(collName, row.getString("Table"));
+                assertEquals(collName.toUpperCase(), row.getString("Table").toUpperCase());
                 assertEquals(unique ? "0" : "1", row.getString("Non_unique"));
                 String[] columnNameTokens = row.getString("Column_name").toString().split("_");
                 assertEquals(dataType, isUnsigned ? columnNameTokens[1] + "_" + columnNameTokens[2] : columnNameTokens[1]);
