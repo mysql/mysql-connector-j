@@ -3761,6 +3761,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return true;
         }
 
+        public void reset() {
+        }
+
     }
 
     public static class TwoQuestionsPlugin implements AuthenticationPlugin {
@@ -3800,6 +3803,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        public void reset() {
         }
 
     }
@@ -3845,6 +3851,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        public void reset() {
         }
 
     }
@@ -5913,27 +5922,27 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 // create user with long password and sha256_password auth
+                String pwd = ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(8, 0, 4)
+                        || ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 21)
+                                && !((MySQLConnection) this.sha256Conn).versionMeetsMinimum(8, 0, 0)
+                        || ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 6, 39)
+                                && !((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 0)
+                                        ? "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"
+                                        : "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
+                                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee";
+
                 this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
                 createUser(this.sha256Stmt, "'wl6134user'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl6134user'@'%'");
                 this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                 this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee'"
-                        : "set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'" : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 props.setProperty("user", "wl6134user");
-                props.setProperty("password",
-                        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
-                                + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
+                props.setProperty("password", pwd);
                 props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
                 props.setProperty("useSSL", "false");
 
@@ -10140,6 +10149,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
         props.setProperty("autoReconnect", "true");
         props.setProperty("socketTimeout", "2000");
         props.setProperty("cacheServerConfiguration", "true");

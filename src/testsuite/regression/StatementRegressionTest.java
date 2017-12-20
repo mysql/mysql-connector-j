@@ -5103,7 +5103,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 + "N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY UNIQUE_KEY_TEST_DUPLICATE (ID) )");
 
         int numTests = 5000;
-        Connection rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,dumpQueriesOnException=true");
+        Connection rewriteConn = getConnectionWithProps("useSSL=false,allowPublicKeyRetrieval=true,rewriteBatchedStatements=true,dumpQueriesOnException=true");
 
         assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         long batchedTime = timeBatch(rewriteConn, numTests);
@@ -5116,7 +5116,8 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(String.valueOf(numTests), getSingleIndexedValueWithQuery(this.conn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'").toString());
         assertTrue(batchedTime < unbatchedTime);
 
-        rewriteConn = getConnectionWithProps("useSSL=false,rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
+        rewriteConn = getConnectionWithProps(
+                "useSSL=false,allowPublicKeyRetrieval=true,rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
         timeBatch(rewriteConn, numTests);
     }
 
@@ -7812,6 +7813,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             final Properties props = new Properties();
             props.setProperty("useSSL", Boolean.toString(useSSL));
+            props.setProperty("allowPublicKeyRetrieval", "true");
             if (useSSL) {
                 props.setProperty("requireSSL", "true");
                 props.setProperty("verifyServerCertificate", "false");

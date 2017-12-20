@@ -5403,6 +5403,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection testConn;
         Properties props = new Properties();
         props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
         props.setProperty("useFastDateParsing", "true");
 
         for (int i = 0; i < 2; i++) {

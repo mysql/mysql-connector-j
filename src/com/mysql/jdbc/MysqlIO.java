@@ -1743,6 +1743,8 @@ public class MysqlIO {
                             throw SQLError.createSQLException(Messages.getString("Connection.BadAuthenticationPlugin", new Object[] { pluginName }),
                                     getExceptionInterceptor());
                         }
+                    } else {
+                        plugin.reset();
                     }
 
                     checkConfidentiality(plugin);

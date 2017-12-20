@@ -2025,15 +2025,19 @@ public class SyntaxRegressionTest extends BaseTestCase {
         } else { // Syntax can still be tested by with different outcome.
             System.out.println("Although not required it is recommended that the 'keyring_file' plugin is properly installed and configured to run this test.");
 
+            String err = versionMeetsMinimum(8, 0, 4)
+                    ? "Can't find master key from keyring, please check in the server log if a keyring plugin is loaded and initialized successfully."
+                    : "Can't find master key from keyring, please check keyring plugin is loaded.";
+
             final Statement testStmt = this.conn.createStatement();
-            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+            assertThrows(SQLException.class, err, new Callable<Void>() {
                 public Void call() throws Exception {
                     testStmt.execute("CREATE TABLE testInnodbTablespaceEncryption (id INT) ENCRYPTION='y'");
                     testStmt.execute("DROP TABLE testInnodbTablespaceEncryption");
                     return null;
                 }
             });
-            assertThrows(SQLException.class, "Can't find master key from keyring, please check keyring plugin is loaded.", new Callable<Void>() {
+            assertThrows(SQLException.class, err, new Callable<Void>() {
                 public Void call() throws Exception {
                     testStmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
                     return null;

@@ -1395,6 +1395,32 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
         return info;
     }
 
+    public Properties exposeAsProperties(Properties props, boolean explicitOnly) throws SQLException {
+        if (props == null) {
+            props = new Properties();
+        }
+
+        int numPropertiesToSet = PROPERTY_LIST.size();
+
+        for (int i = 0; i < numPropertiesToSet; i++) {
+            java.lang.reflect.Field propertyField = PROPERTY_LIST.get(i);
+
+            try {
+                ConnectionProperty propToGet = (ConnectionProperty) propertyField.get(this);
+
+                Object propValue = propToGet.getValueAsObject();
+
+                if (propValue != null && (!explicitOnly || propToGet.isExplicitlySet())) {
+                    props.setProperty(propToGet.getPropertyName(), propValue.toString());
+                }
+            } catch (IllegalAccessException iae) {
+                throw SQLError.createSQLException("Internal properties failure", SQLError.SQL_STATE_GENERAL_ERROR, iae, getExceptionInterceptor());
+            }
+        }
+
+        return props;
+    }
+
     class XmlMap {
         protected Map<Integer, Map<String, ConnectionProperty>> ordered = new TreeMap<Integer, Map<String, ConnectionProperty>>();
         protected Map<String, ConnectionProperty> alpha = new TreeMap<String, ConnectionProperty>();

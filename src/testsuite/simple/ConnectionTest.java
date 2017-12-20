@@ -2003,6 +2003,7 @@ public class ConnectionTest extends BaseTestCase {
          * No SSL.
          */
         props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2092,6 +2093,7 @@ public class ConnectionTest extends BaseTestCase {
          * No SSL.
          */
         props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
