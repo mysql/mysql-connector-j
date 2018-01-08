@@ -40,7 +40,8 @@ Product License - MySQL Connector/J 8.0
    software is released under version 2 of the GNU General Public License.
    MySQL Connector/J is brought to you by the MySQL team at Oracle.
 
-   Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights
+   reserved.
 
 GNU General Public License Version 2.0, June 1991
 
@@ -476,7 +477,7 @@ Written Offer for Source Code
    processing.
 
    Your request must be sent
-    a. within three (3) years of the date you received the Oracleproduct
+    a. within three (3) years of the date you received the Oracle product
        that included the binary that is the subject of your request, or
     b. in the case of code licensed under the GPL v3 for as long as Oracle
        offers spare parts or customer support for that product model.
@@ -488,9 +489,9 @@ Licenses for Third-Party Components
    to test MySQL Connector/J. We are thankful to all individuals that have
    created these.
 
-Ant-Contrib License
+Ant-Contrib
 
-   The following software may be included in this product: Ant-Contrib
+   The following software may be included in this product:
 Ant-Contrib
 Copyright (c) 2001-2003 Ant-Contrib project. All rights reserved.
 Licensed under the Apache 1.1 License Agreement, a copy of which is reproduced b
@@ -546,7 +547,7 @@ Copyright (c) 2001-2003 Ant-Contrib project.  All rights reserved.
  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
 
-c3p0 JDBC Library License
+c3p0 JDBC Library
 
    You are receiving a copy of c3p0-0.9.1-pre6.jar in both source and
    object code in the following /src/lib/c3p0-0.9.1-pre6.jar. The terms of
@@ -1090,10 +1091,9 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-Google Protocol Buffers License
+Google Protocol Buffers
 
-The following software may be included in this product:
-
+   The following software may be included in this product:
 Protocol Buffers (aka Google protobuf)
 
 Google Protocol Buffers - protobuf
@@ -1135,7 +1135,7 @@ code is not standalone and requires a support library to be
 linked with it. This support library is itself covered by
 the above license.
 
-jboss-common-jdbc-wrapper.jar License
+jboss-common-jdbc-wrapper.jar
 
    You are receiving a copy of jboss-common-jdbc-wrapper.jar in both
    source and object code in the following
@@ -1149,7 +1149,7 @@ jboss-common-jdbc-wrapper.jar License
    This component is licensed under Section Section, "GNU Lesser General
    Public License Version 2.1, February 1999."
 
-NanoXML License
+NanoXML
 
    The following software may be included in this product:
 
@@ -1189,7 +1189,7 @@ NanoXML License
  *  3. This notice may not be removed or altered from any source distribution.
  *
 
-rox.jar License
+rox.jar
 
    The following software may be included in this product:
 
@@ -1226,7 +1226,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Simple Logging Facade for Java (SLF4J) License
+Simple Logging Facade for Java (SLF4J)
 
    The following software may be included in this product:
 Simple Logging Facade for Java (SLF4J)
