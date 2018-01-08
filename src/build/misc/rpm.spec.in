@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License, version 2.0, as published by the
@@ -116,6 +116,7 @@ COMMON_OPTIONS="\
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
   -Dcom.mysql.cj.extra.libs=%{with_jardeps} \
   -Dcom.mysql.cj.build.driver.extraName=@MYSQL_CJ_EXTRA_NAME@ \
+  -Dcom.mysql.cj.build.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
   -Djava.awt.headless=true"
 
 %if 0%{?with_ant:1}

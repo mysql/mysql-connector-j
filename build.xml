@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License, version 2.0, as published by the
@@ -487,6 +487,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <filter token="MYSQL_CJ_EXTRA_NAME" value="${com.mysql.cj.build.driver.extraName}" />
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${com.mysql.cj.build.driver.fullName}" />
             <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${com.mysql.cj.build.driver.displayName}" />
+            <filter token="MYSQL_CJ_LICENSEURL" value="${com.mysql.cj.build.licenseUrl}" />
         </filterset>
 
         <condition property="com.mysql.cj.build.licenseType" value="commercial" else="GPL">
@@ -1308,7 +1309,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- *********************************** -->
 
 
-    <target name="build-rpm" depends="-create-common-archives, prepare-rpm-deb-commercial-props, prepare-rpm-deb-gpl-props">
+    <target name="build-rpm" depends="-init-copy-common, prepare-rpm-deb-commercial-props, prepare-rpm-deb-gpl-props">
         <copy file="src/build/misc/rpm.spec.in" tofile="${com.mysql.cj.build.dir}/mysql-connector-java.spec">
             <filterset refid="versionFilterset" />
         </copy>
@@ -1323,9 +1324,12 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
         <mkdir dir="${com.mysql.cj.build.dir}/rpm/SPECS" />
         <mkdir dir="${com.mysql.cj.build.dir}/rpm/SRPMS" />
 
-        <copy file="${com.mysql.cj.dist.dir}/${com.mysql.cj.build.driver.fullName}.tar.gz"
-              tofile="${com.mysql.cj.build.dir}/rpm/SOURCES/${com.mysql.cj.build.driver.fullName}.tar.gz">
+        <copy todir="${com.mysql.cj.build.dir}/tmp/${com.mysql.cj.build.driver.fullName}" overwrite="true">
+            <fileset dir="." excludes="${com.mysql.cj.dist.dir}/** ${com.mysql.cj.build.dir}/**" />
         </copy>
+        <!-- We know tmp is empty beside what we want to pack -->
+        <tar destfile="${com.mysql.cj.build.dir}/rpm/SOURCES/${com.mysql.cj.build.driver.fullName}.tar.gz"
+             basedir="${com.mysql.cj.build.dir}/tmp" />
 
         <property name="com.mysql.cj.build.dir.absolute" location="${com.mysql.cj.build.dir}" />
 
