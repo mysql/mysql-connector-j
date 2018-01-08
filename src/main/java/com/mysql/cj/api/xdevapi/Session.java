@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -171,7 +171,7 @@ public interface Session {
     void rollback();
 
     /**
-     * Creates a transaction savepoint with an implementation-defined generated name and returns it's name, which can be used in {@link #rollbackTo(String)} or
+     * Creates a transaction savepoint with an implementation-defined generated name and returns its name, which can be used in {@link #rollbackTo(String)} or
      * {@link #releaseSavepoint(String)}. Calling this method more than once should always work. The generated name shall be unique per session.
      * 
      * @return savepoint name
@@ -188,7 +188,7 @@ public interface Session {
     String setSavepoint(String name);
 
     /**
-     * Rolls back the transaction back to the named savepoint. This method will succeed so long as the given save point has not been already rolled back or
+     * Rolls back the transaction to the named savepoint. This method will succeed as long as the given save point has not been already rolled back or
      * released. Rolling back to a savepoint prior to the one named will release or rollback any that came after.
      * 
      * @param name
@@ -197,7 +197,7 @@ public interface Session {
     void rollbackTo(String name);
 
     /**
-     * Releases the named savepoint. This method will succeed so long as the given save point has not been already rolled back or
+     * Releases the named savepoint. This method will succeed as long as the given save point has not been already rolled back or
      * released. Rolling back to a savepoint prior to the one named will release or rollback any that came after.
      * 
      * @param name
