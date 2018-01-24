@@ -3,45 +3,48 @@ Licensing Information User Manual
 MySQL Connector/J 8.0
      __________________________________________________________________
 
-   This is a license book. It contains Oracle's product license and other
-   licensing information, including licensing information for third-party
-   software which may be included in this GPL release of MySQL Connector/J
-   8.0.
-
-   Last updated: December 2017.
-
 Introduction
 
-   This Licensing Information document is a part of the product or program
-   documentation under the terms of your Oracle license agreement and is
-   intended to help you understand the program editions, entitlements,
-   restrictions, prerequisites, special license rights, and/or separately
-   licensed third party technology terms associated with the Oracle
-   software program(s) covered by this document (the "Program(s)").
-   Entitled or restricted use products or components identified in this
-   document that are not provided with the particular Program may be
-   obtained from the Oracle Software Delivery Cloud website
-   (https://edelivery.oracle.com/) or from media Oracle may provide. If
-   you have a question about your license rights and obligations, please
-   contact your Oracle sales representative, review the information
-   provided in Oracle's Software Investment Guide
-   (http://www.oracle.com/us/corporate/pricing/software-investment-guide/i
-   ndex.html), and/or contact the applicable Oracle License Management
-   Services representative listed on
-   http://www.oracle.com/us/corporate/license-management-services/index.ht
-   ml.
+   This License Information User Manual contains Oracle's product license
+   and other licensing information, including licensing information for
+   third-party software which may be included in this distribution of
+   MySQL Connector/J 8.0.
+
+   Last updated: January 2018.
 
 Licensing Information
 
-Product License - MySQL Connector/J 8.0
+   This is a release of MySQL Connector/J 8.0, brought to you by the MySQL
+   team at Oracle. This software is released under version 2 of the GNU
+   General Public License (GPLv2), as set forth below, with the following
+   additional permissions:
 
-   This is a release of MySQL Connector/J, the dual-license Java API for
-   MySQL . For the avoidance of doubt, this particular copy of the
-   software is released under version 2 of the GNU General Public License.
-   MySQL Connector/J is brought to you by the MySQL team at Oracle.
+   This distribution of MySQL Connector/J 8.0 is distributed with certain
+   software that is licensed under separate terms, as designated in a
+   particular file or component or in the license documentation. Without
+   limiting your rights under the GPLv2, the authors of MySQL hereby grant
+   you an additional permission to link the program and your derivative
+   works with the separately licensed software that they have included
+   with the program.
+
+   Without limiting the foregoing grant of rights under the GPLv2 and
+   additional permission as to separately licensed software, this
+   Connector is also subject to the Universal FOSS Exception, version 1.0,
+   a copy of which is reproduced below and can also be found along with
+   its FAQ at http://oss.oracle.com/licenses/universal-foss-exception.
 
    Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights
    reserved.
+
+Election of GPLv2
+
+   For the avoidance of doubt, except that if any license choice other
+   than GPL or LGPL is available it will apply instead, Oracle elects to
+   use only the General Public License version 2 (GPLv2) at this time for
+   any software where a choice of GPL license versions is made available
+   with the language indicating that GPLv2 or any later version may be
+   used, or where a choice of which version of the GPL is applied is
+   otherwise unspecified.
 
 GNU General Public License Version 2.0, June 1991
 
@@ -413,81 +416,63 @@ you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use
 the GNU Lesser General Public License instead of this License.
 
-MySQL FOSS License Exception
+The Universal FOSS Exception, Version 1.0
 
-   We want free and open source software applications under certain
-   licenses to be able to use the GPL-licensed MySQL Connector/J despite
-   the fact that not all such FOSS licenses are compatible with version 2
-   of the GNU General Public License. Therefore there are special
-   exceptions to the terms and conditions of the GPLv2 as applied to these
-   client libraries, which are identified and described in more detail in
-   the FOSS License Exception at
-   http://www.mysql.com/about/legal/licensing/foss-exception/.
-
-   This software is OSI Certified Open Source Software. OSI Certified is a
-   certification mark of the Open Source Initiative.
-
-GPLv2 Disclaimer
-
-   For the avoidance of doubt, except that if any license choice other
-   than GPL or LGPL is available it will apply instead, Oracle elects to
-   use only the General Public License version 2 (GPLv2) at this time for
-   any software where a choice of GPL license versions is made available
-   with the language indicating that GPLv2 or any later version may be
-   used, or where a choice of which version of the GPL is applied is
-   otherwise unspecified.
-
-Written Offer for Source Code
-
-   For third-party software that you receive from Oracle in binary form
-   which is licensed under an open source license that gives you the right
-   to receive the source code for that binary, you can obtain a copy of
-   the applicable source code by visiting
-   http://www.oracle.com/goto/opensourcecode. If the source code for the
-   binary was not provided to you with the binary, you can also receive a
-   copy of the source code on physical media by submitting a written
-   request to the address listed below or by sending an email to Oracle
-   using the following link:
-
-   http://www.oracle.com/goto/opensourcecode/request
-      Oracle America, Inc.
-      Attn: Senior Vice President
-      Development and Engineering Legal
-      500 Oracle Parkway, 10th Floor
-      Redwood Shores, CA 94065
-
-   Your request should include:
-
-     * The name of the binary for which you are requesting the source code
-
-     * The name and version number of the Oracle product containing the
-       binary
-
-     * The date you received the Oracle product
-
-     * Your name
-
-     * Your company name (if applicable)
-
-     * Your return mailing address and email, and
-
-     * A telephone number in the event we need to reach you.
-
-   We may charge you a fee to cover the cost of physical media and
-   processing.
-
-   Your request must be sent
-    a. within three (3) years of the date you received the Oracle product
-       that included the binary that is the subject of your request, or
-    b. in the case of code licensed under the GPL v3 for as long as Oracle
-       offers spare parts or customer support for that product model.
+   In addition to the rights set forth in the other license(s) included in
+   the distribution for this software, data, and/or documentation
+   (collectively the "Software", and such licenses collectively with this
+   additional permission the "Software License"), the copyright holders
+   wish to facilitate interoperability with other software, data, and/or
+   documentation distributed with complete corresponding source under a
+   license that is OSI-approved and/or categorized by the FSF as free
+   (collectively "Other FOSS"). We therefore hereby grant the following
+   additional permission with respect to the use and distribution of the
+   Software with Other FOSS, and the constants, function signatures, data
+   structures and other invocation methods used to run or interact with
+   each of them (as to each, such software's "Interfaces"):
+    i. The Software's Interfaces may, to the extent permitted by the
+       license of the Other FOSS, be copied into, used and distributed in
+       the Other FOSS in order to enable interoperability, without
+       requiring a change to the license of the Other FOSS other than as
+       to any Interfaces of the Software embedded therein. The Software's
+       Interfaces remain at all times under the Software License,
+       including without limitation as used in the Other FOSS (which upon
+       any such use also then contains a portion of the Software under the
+       Software License).
+   ii. The Other FOSS's Interfaces may, to the extent permitted by the
+       license of the Other FOSS, be copied into, used and distributed in
+       the Software in order to enable interoperability, without requiring
+       that such Interfaces be licensed under the terms of the Software
+       License or otherwise altering their original terms, if this does
+       not require any portion of the Software other than such Interfaces
+       to be licensed under the terms other than the Software License.
+   iii. If only Interfaces and no other code is copied between the
+       Software and the Other FOSS in either direction, the use and/or
+       distribution of the Software with the Other FOSS shall not be
+       deemed to require that the Other FOSS be licensed under the license
+       of the Software, other than as to any Interfaces of the Software
+       copied into the Other FOSS. This includes, by way of example and
+       without limitation, statically or dynamically linking the Software
+       together with Other FOSS after enabling interoperability using the
+       Interfaces of one or both, and distributing the resulting
+       combination under different licenses for the respective portions
+       thereof. For avoidance of doubt, a license which is OSI-approved or
+       categorized by the FSF as free, includes, for the purpose of this
+       permission, such licenses with additional permissions, and any
+       license that has previously been so approved or categorized as
+       free, even if now deprecated or otherwise no longer recognized as
+       approved or free. Nothing in this additional permission grants any
+       right to distribute any portion of the Software on terms other than
+       those of the Software License or grants any additional permission
+       of any kind for use or distribution of the Software in conjunction
+       with software other than Other FOSS.
 
 Licenses for Third-Party Components
 
    The following sections contain licensing information for libraries that
-   we have included with the MySQL Connector/J source and components used
-   to test MySQL Connector/J. We are thankful to all individuals that have
-   created these.
+   we have included with the MySQL Connector/J 8.0 source and components
+   used to test MySQL Connector/J 8.0. We are thankful to all individuals
+   that have created these.
 
 Ant-Contrib
 
@@ -1297,3 +1282,47 @@ Except as contained in this notice, the name of a copyright holder shall not
 be used in advertising or otherwise to promote the sale, use or other
 dealings in these Data Files or Software without prior written authorization
 of the copyright holder.
+
+Written Offer for Source Code
+
+   For any software that you receive from Oracle in binary form which is
+   licensed under an open source license that gives you the right to
+   receive the source code for that binary, you can obtain a copy of the
+   applicable source code by visiting
+   http://www.oracle.com/goto/opensourcecode. If the source code for the
+   binary was not provided to you with the binary, you can also receive a
+   copy of the source code on physical media by submitting a written
+   request to the address listed below or by sending an email to Oracle
+   using the following link:
+   http://www.oracle.com/goto/opensourcecode/request.
+  Oracle America, Inc.
+  Attn: Senior Vice President
+  Development and Engineering Legal
+  500 Oracle Parkway, 10th Floor
+  Redwood Shores, CA 94065
+
+   Your request should include:
+
+     * The name of the binary for which you are requesting the source code
+
+     * The name and version number of the Oracle product containing the
+       binary
+
+     * The date you received the Oracle product
+
+     * Your name
+
+     * Your company name (if applicable)
+
+     * Your return mailing address and email, and
+
+     * A telephone number in the event we need to reach you.
+
+   We may charge you a fee to cover the cost of physical media and
+   processing.
+
+   Your request must be sent
+    a. within three (3) years of the date you received the Oracle product
+       that included the binary that is the subject of your request, or
+    b. in the case of code licensed under the GPL v3 for as long as Oracle
+       offers spare parts or customer support for that product model.
