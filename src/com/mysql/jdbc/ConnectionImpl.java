@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1277,8 +1277,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      * @throws SQLException
      */
     private void checkTransactionIsolationLevel() throws SQLException {
-        String txIsolationName = versionMeetsMinimum(4, 0, 3) && !versionMeetsMinimum(8, 0, 3) ? "tx_isolation" : "transaction_isolation";
-        String s = this.serverVariables.get(txIsolationName);
+        String s = this.serverVariables.get("transaction_isolation");
+        if (s == null) {
+            s = this.serverVariables.get("tx_isolation");
+        }
 
         if (s != null) {
             Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -2992,30 +2994,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                 try {
                     stmt = getMetadataSafeStatement();
-
-                    String query = null;
-
-                    int offset = 1;
-
-                    if (versionMeetsMinimum(8, 0, 3)) {
-                        query = "SELECT @@session.transaction_isolation";
-                    } else if (versionMeetsMinimum(4, 0, 3)) {
-                        query = "SELECT @@session.tx_isolation";
-                    } else {
-                        query = "SHOW VARIABLES LIKE 'transaction_isolation'";
-                        offset = 2;
-                    }
-
+                    String query = versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
+                            ? "SELECT @@session.transaction_isolation" : "SELECT @@session.tx_isolation";
                     rs = stmt.executeQuery(query);
 
                     if (rs.next()) {
-                        String s = rs.getString(offset);
+                        String s = rs.getString(1);
 
                         if (s != null) {
                             Integer intTI = mapTransIsolationNameToValue.get(s);
 
                             if (intTI != null) {
-                                return intTI.intValue();
+                                this.isolationLevel = intTI.intValue();
+                                return this.isolationLevel;
                             }
                         }
 
@@ -3543,7 +3534,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 try {
                     stmt = getMetadataSafeStatement();
 
-                    rs = stmt.executeQuery(versionMeetsMinimum(8, 0, 3) ? "select @@session.transaction_read_only" : "select @@session.tx_read_only");
+                    rs = stmt.executeQuery(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
+                            ? "select @@session.transaction_read_only" : "select @@session.tx_read_only");
                     if (rs.next()) {
                         return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
                     }
@@ -3753,6 +3745,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
             this.serverVariables = new HashMap<String, String>();
 
+            boolean currentJdbcComplTrunc = this.getJdbcCompliantTruncation();
+            setJdbcCompliantTruncation(false); // Temporarily disabling data truncation check avoids unnecessary SHOW WARNINGS on deprecated vars.  
+
             try {
                 if (versionMeetsMinimum(5, 1, 0)) {
                     StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
@@ -3772,19 +3767,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                     queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                     queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                    if (versionMeetsMinimum(8, 0, 3)) {
-                        queryBuf.append(", @@have_query_cache AS have_query_cache");
-                    } else {
+                    if (!versionMeetsMinimum(8, 0, 3)) {
                         queryBuf.append(", @@query_cache_size AS query_cache_size");
                         queryBuf.append(", @@query_cache_type AS query_cache_type");
                     }
                     queryBuf.append(", @@sql_mode AS sql_mode");
                     queryBuf.append(", @@system_time_zone AS system_time_zone");
                     queryBuf.append(", @@time_zone AS time_zone");
-                    if (versionMeetsMinimum(8, 0, 3)) {
+                    if (versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))) {
                         queryBuf.append(", @@transaction_isolation AS transaction_isolation");
                     } else {
-                        queryBuf.append(", @@tx_isolation AS tx_isolation");
+                        queryBuf.append(", @@tx_isolation AS transaction_isolation");
                     }
                     queryBuf.append(", @@wait_timeout AS wait_timeout");
 
@@ -3795,18 +3788,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             this.serverVariables.put(rsmd.getColumnLabel(i), results.getString(i));
                         }
                     }
-
-                    if (versionMeetsMinimum(8, 0, 3) && "YES".equalsIgnoreCase(this.serverVariables.get("have_query_cache"))) {
-                        results.close();
-                        results = stmt.executeQuery("SELECT @@query_cache_size AS query_cache_size, @@query_cache_type AS query_cache_type");
-                        if (results.next()) {
-                            ResultSetMetaData rsmd = results.getMetaData();
-                            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                                this.serverVariables.put(rsmd.getColumnLabel(i), results.getString(i));
-                            }
-                        }
-                    }
-
                 } else {
                     results = stmt.executeQuery(versionComment + "SHOW VARIABLES");
                     while (results.next()) {
@@ -3820,6 +3801,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
                     throw ex;
                 }
+            } finally {
+                setJdbcCompliantTruncation(currentJdbcComplTrunc);
             }
 
             if (getCacheServerConfiguration()) {

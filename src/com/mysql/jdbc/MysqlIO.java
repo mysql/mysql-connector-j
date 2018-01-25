@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -4181,7 +4181,9 @@ public class MysqlIO {
 
     void scanForAndThrowDataTruncation() throws SQLException {
         if ((this.streamingData == null) && versionMeetsMinimum(4, 1, 0) && this.connection.getJdbcCompliantTruncation() && this.warningCount > 0) {
+            int warningCountOld = this.warningCount;
             SQLError.convertShowWarningsToSQLWarnings(this.connection, this.warningCount, true);
+            this.warningCount = warningCountOld;
         }
     }
 

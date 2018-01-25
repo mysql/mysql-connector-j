@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -56,6 +56,7 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import com.mysql.jdbc.CharsetMapping;
+import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -529,6 +530,16 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testIsolationLevel() throws Exception {
         if (versionMeetsMinimum(4, 0)) {
+            // Check initial transaction isolation level
+            ((ConnectionProperties) this.conn).setUseLocalSessionState(true);
+            int initialTransactionIsolation = this.conn.getTransactionIsolation();
+
+            ((ConnectionProperties) this.conn).setUseLocalSessionState(false);
+            int actualTransactionIsolation = this.conn.getTransactionIsolation();
+
+            assertEquals("Inital transaction isolation level doesn't match the server's", actualTransactionIsolation, initialTransactionIsolation);
+
+            // Check setting all allowed transaction isolation levels
             String[] isoLevelNames = new String[] { "Connection.TRANSACTION_NONE", "Connection.TRANSACTION_READ_COMMITTED",
                     "Connection.TRANSACTION_READ_UNCOMMITTED", "Connection.TRANSACTION_REPEATABLE_READ", "Connection.TRANSACTION_SERIALIZABLE" };
 
@@ -536,7 +547,6 @@ public class ConnectionTest extends BaseTestCase {
                     Connection.TRANSACTION_REPEATABLE_READ, Connection.TRANSACTION_SERIALIZABLE };
 
             DatabaseMetaData dbmd = this.conn.getMetaData();
-
             for (int i = 0; i < isolationLevels.length; i++) {
                 if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
                     this.conn.setTransactionIsolation(isolationLevels[i]);

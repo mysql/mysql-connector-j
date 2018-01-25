@@ -118,6 +118,7 @@ import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.SocketMetadata;
 import com.mysql.jdbc.StandardSocketFactory;
+import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
@@ -7569,6 +7570,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 serverVariables.put(this.rs.getString(1), this.rs.getString(2));
             }
 
+            // fix the renaming of "tx_isolation" to "transaction_isolation" that is made in Connection.loadServerVariables().
+            if (con.versionMeetsMinimum(5, 1, 0) && !serverVariables.containsKey("transaction_isolation") && serverVariables.containsKey("tx_isolation")) {
+                serverVariables.put("transaction_isolation", serverVariables.remove("tx_isolation"));
+            }
+
             // check values from "select @@var..."
             assertEquals(serverVariables.get("auto_increment_increment"), con.getServerVariable("auto_increment_increment"));
             assertEquals(serverVariables.get("character_set_client"), con.getServerVariable("character_set_client"));
@@ -7589,10 +7595,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("max_allowed_packet"), con.getServerVariable("max_allowed_packet"));
             assertEquals(serverVariables.get("net_buffer_length"), con.getServerVariable("net_buffer_length"));
             assertEquals(serverVariables.get("net_write_timeout"), con.getServerVariable("net_write_timeout"));
-            if (con.versionMeetsMinimum(8, 0, 3)) {
-                assertEquals(serverVariables.get("have_query_cache"), con.getServerVariable("have_query_cache"));
-            }
-            if (!con.versionMeetsMinimum(8, 0, 3) || "YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
+            if (!con.versionMeetsMinimum(8, 0, 3)) {
                 assertEquals(serverVariables.get("query_cache_size"), con.getServerVariable("query_cache_size"));
                 assertEquals(serverVariables.get("query_cache_type"), con.getServerVariable("query_cache_type"));
             }
@@ -7606,11 +7609,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertEquals(serverVariables.get("system_time_zone"), con.getServerVariable("system_time_zone"));
             assertEquals(serverVariables.get("time_zone"), con.getServerVariable("time_zone"));
-            if (con.versionMeetsMinimum(8, 0, 3)) {
-                assertEquals(serverVariables.get("transaction_isolation"), con.getServerVariable("transaction_isolation"));
-            } else {
-                assertEquals(serverVariables.get("tx_isolation"), con.getServerVariable("tx_isolation"));
-            }
+            assertEquals(serverVariables.get("transaction_isolation"), con.getServerVariable("transaction_isolation"));
             assertEquals(serverVariables.get("wait_timeout"), con.getServerVariable("wait_timeout"));
             if (!versionMeetsMinimum(5, 5, 0)) {
                 assertEquals(serverVariables.get("language"), con.getServerVariable("language"));
@@ -10231,5 +10230,45 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConnectionAttributes(getNoDbUrl(sha256Url));
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#88227 (27029657), Connector/J 5.1.44 cannot be used against MySQL 5.7.20 without warnings.
+     */
+    public void testBug88227() throws Exception {
+        java.sql.Connection testConn = getConnectionWithProps("statementInterceptors=" + Bug88227StatementInterceptor.class.getName());
+        Bug88227StatementInterceptor.mayHaveWarnings = false;
+        testConn.getTransactionIsolation();
+        testConn.isReadOnly();
+        testConn.close();
+    }
+
+    public static class Bug88227StatementInterceptor implements StatementInterceptorV2 {
+        public static boolean mayHaveWarnings = true;
+
+        public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+        }
+
+        public boolean executeTopLevelOnly() {
+            return false;
+        }
+
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            assertFalse("Unexpected [SHOW WARNINGS] was issued", sql.contains("SHOW WARNINGS"));
+            return null;
+        }
+
+        public ResultSetInternalMethods postProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, ResultSetInternalMethods originalResultSet,
+                com.mysql.jdbc.Connection connection, int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException)
+                throws SQLException {
+            if (!mayHaveWarnings) {
+                assertEquals("Warnings while executing [" + sql + "]", 0, warningCount);
+            }
+            return originalResultSet;
+        }
+
+        public void destroy() {
+        }
     }
 }
