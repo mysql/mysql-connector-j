@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -87,6 +87,7 @@ import java.util.regex.Pattern;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.net.ssl.SSLContext;
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -8481,15 +8482,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Tests fix for WL#8196, Support for TLSv1.2 Protocol.
      * 
-     * This test requires community server (with yaSSL) in -Dcom.mysql.jdbc.testsuite.url and
-     * commercial server (with OpenSSL) in -Dcom.mysql.jdbc.testsuite.url.sha256default
+     * This test requires community server (preferably compiled with yaSSL) in -Dcom.mysql.jdbc.testsuite.url and commercial server (with OpenSSL) in
+     * -Dcom.mysql.jdbc.testsuite.url.sha256default
      * 
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     public void testTLSVersion() throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
 
         final String[] testDbUrls;
         Properties props = new Properties();
@@ -8508,51 +8510,55 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         for (String testDbUrl : testDbUrls) {
             System.out.println(testDbUrl);
-            System.out.println(System.getProperty("java.version"));
+            System.out.println("JVM version: " + System.getProperty("java.version"));
+            System.out.println("JVM supports TLS protocols: " + jvmSupportedProtocols);
             Connection sslConn = getConnectionWithProps(testDbUrl, props);
             assertTrue(((MySQLConnection) sslConn).getIO().isSSLEstablished());
-
-            ResultSet rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
-            assertTrue(rset.next());
-            String tlsVersion = rset.getString(2);
-            System.out.println("TLS version: " + tlsVersion);
-            System.out.println();
             System.out.println("MySQL version: " + ((MySQLConnection) sslConn).getServerVersion());
-            String etp = ((MySQLConnection) sslConn).getEnabledTLSProtocols();
-            System.out.println("enabledTLSProtocols: " + etp);
-            System.out.println();
-            System.out.println("JVM version: " + Util.getJVMVersion());
-            System.out.println();
+            this.rs = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
+            assertTrue(this.rs.next());
+            String tlsVersionUsed = this.rs.getString(2);
+            System.out.println("TLS version used: " + tlsVersionUsed);
 
-            if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 10) && Util.getJVMVersion() > 6) {
-                if (Util.isEnterpriseEdition(((MySQLConnection) sslConn).getServerVersion())) {
-                    assertEquals("TLSv1.2", tlsVersion);
-                } else {
-                    assertEquals("TLSv1.1", tlsVersion);
+            if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 10)) {
+                this.rs = sslConn.createStatement().executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+                assertTrue(this.rs.next());
+                List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
+                String highestCommonTlsVersion = "";
+                for (String p : new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" }) {
+                    if (jvmSupportedProtocols.contains(p) && serverSupportedProtocols.contains(p)) {
+                        highestCommonTlsVersion = p;
+                        break;
+                    }
                 }
+                System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+                System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
+
+                assertEquals(highestCommonTlsVersion, tlsVersionUsed);
             } else {
-                assertEquals("TLSv1", tlsVersion);
+                assertEquals("TLSv1", tlsVersionUsed);
             }
+            System.out.println();
 
             sslConn.close();
         }
     }
 
     /**
-     * Tests fix for Bug#87379. This allows TLS version to be overridden through a new configuration
-     * option - enabledTLSProtocols. When set to some combination of TLSv1, TLSv1.1, or TLSv1.2 (comma-
-     * separated, no spaces), the default behaviour restricting the TLS version based on JRE and MySQL
-     * Server version is bypassed to enable or restrict specific TLS versions.
+     * Tests fix for Bug#87379. This allows TLS version to be overridden through a new configuration option - enabledTLSProtocols. When set to some combination
+     * of TLSv1, TLSv1.1, or TLSv1.2 (comma-separated, no spaces), the default behavior restricting the TLS version based on JRE and MySQL Server version is
+     * bypassed to enable or restrict specific TLS versions.
      * 
-     * This test requires community server (with yaSSL) in -Dcom.mysql.jdbc.testsuite.url and
-     * commercial server (with OpenSSL) in -Dcom.mysql.jdbc.testsuite.url.sha256default
+     * This test requires community server (preferably compiled with yaSSL) in -Dcom.mysql.jdbc.testsuite.url and commercial server (with OpenSSL) in
+     * -Dcom.mysql.jdbc.testsuite.url.sha256default
      * 
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     public void testEnableTLSVersion() throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
 
         final String[] testDbUrls;
         Properties props = new Properties();
@@ -8571,17 +8577,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         for (String testDbUrl : testDbUrls) {
             System.out.println(testDbUrl);
-            System.out.println(System.getProperty("java.version"));
+            System.out.println("JVM version: " + System.getProperty("java.version"));
+            System.out.println("JVM supports TLS protocols: " + jvmSupportedProtocols);
             Connection sslConn = getConnectionWithProps(testDbUrl, props);
             assertTrue(((MySQLConnection) sslConn).getIO().isSSLEstablished());
-            List<String> expectedProtocols = new ArrayList<String>();
-            expectedProtocols.add("TLSv1");
-            if (Util.getJVMVersion() > 6 && ((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 10)) {
-                ResultSet rs1 = sslConn.createStatement().executeQuery("SELECT @@global.tls_version");
-                assertTrue(rs1.next());
-                String supportedTLSVersions = rs1.getString(1);
-                System.out.println("Server reported TLS version support: " + supportedTLSVersions);
-                expectedProtocols.addAll(Arrays.asList(supportedTLSVersions.split("\\s*,\\s*")));
+            System.out.println("MySQL version: " + ((MySQLConnection) sslConn).getServerVersion());
+            List<String> commonSupportedProtocols = new ArrayList<String>();
+            if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 10)) {
+                this.rs = sslConn.createStatement().executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+                assertTrue(this.rs.next());
+                List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
+                System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+                commonSupportedProtocols.addAll(serverSupportedProtocols);
+                commonSupportedProtocols.retainAll(jvmSupportedProtocols);
+            } else {
+                commonSupportedProtocols.add("TLSv1");
             }
 
             String[] testingProtocols = { "TLSv1.2", "TLSv1.1", "TLSv1" };
@@ -8589,11 +8599,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 Properties testProps = new Properties();
                 testProps.putAll(props);
                 testProps.put("enabledTLSProtocols", protocol);
-                System.out.println("Testing " + protocol + " expecting connection: " + expectedProtocols.contains(protocol));
+                System.out.println("Testing " + protocol + " expecting connection: " + commonSupportedProtocols.contains(protocol));
                 try {
                     Connection tlsConn = getConnectionWithProps(testDbUrl, testProps);
-                    if (!expectedProtocols.contains(protocol)) {
-                        fail("Expected to fail connection with " + protocol + " due to lack of server support.");
+                    if (!commonSupportedProtocols.contains(protocol)) {
+                        fail("Expected to fail connection with " + protocol + " due to lack of jvm/server support.");
                     }
                     ResultSet rset = tlsConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
                     assertTrue(rset.next());
@@ -8601,12 +8611,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     assertEquals(protocol, tlsVersion);
                     tlsConn.close();
                 } catch (Exception e) {
-                    if (expectedProtocols.contains(protocol)) {
+                    if (commonSupportedProtocols.contains(protocol)) {
                         e.printStackTrace();
                         fail("Expected to be able to connect with " + protocol + " protocol, but failed.");
                     }
                 }
             }
+            System.out.println();
             sslConn.close();
         }
     }

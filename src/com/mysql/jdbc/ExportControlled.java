@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -107,27 +107,25 @@ public class ExportControlled {
 
             String[] tryProtocols = null;
 
-            // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
-            // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
-            // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
+            // If enabledTLSProtocols configuration option is set then override the default TLS version restrictions. This allows enabling TLSv1.2 for
+            // self-compiled MySQL versions supporting it, as well as the ability for users to restrict TLS connections to approved protocols (e.g., prohibiting
+            // TLSv1) on the client side.
+            // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
+            // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version.
             String enabledTLSProtocols = mysqlIO.connection.getEnabledTLSProtocols();
             if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
                 tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
+            } else if (mysqlIO.versionMeetsMinimum(8, 0, 4) || mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())) {
+                // allow all known TLS versions for this subset of server versions by default
+                tryProtocols = TLS_PROTOCOLS;
             } else {
-                // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL.
-                // When client attempts to connect with TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with
-                // lower TLS version.
-                if (mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())) {
-                    tryProtocols = new String[] { TLSv1_2, TLSv1_1, TLSv1 };
-                }
-            }
-            // allow TLSv1 and TLSv1.1 for all server versions by default
-            if (tryProtocols == null) {
+                // allow TLSv1 and TLSv1.1 for all server versions by default
                 tryProtocols = new String[] { TLSv1_1, TLSv1 };
+
             }
+
             List<String> configuredProtocols = new ArrayList<String>(Arrays.asList(tryProtocols));
             List<String> jvmSupportedProtocols = Arrays.asList(((SSLSocket) mysqlIO.mysqlConnection).getSupportedProtocols());
-
             List<String> allowedProtocols = new ArrayList<String>();
             for (String protocol : TLS_PROTOCOLS) {
                 if (jvmSupportedProtocols.contains(protocol) && configuredProtocols.contains(protocol)) {
