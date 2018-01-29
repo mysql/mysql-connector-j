@@ -634,9 +634,10 @@ public abstract class BaseTestCase extends TestCase {
      */
     @Override
     public void setUp() throws Exception {
+        System.out.println("Running test " + getClass().getName() + "#" + getName());
+        System.out.println("################################################################################");
         System.out.println("Loading JDBC driver '" + this.dbClass + "'");
         Class.forName(this.dbClass).newInstance();
-        System.out.println("Done.\n");
         this.createdObjects = new ArrayList<String[]>();
 
         if (this.dbClass.equals("gwe.sql.gweMysqlDriver")) {
@@ -660,8 +661,6 @@ public abstract class BaseTestCase extends TestCase {
                 fail();
             }
         }
-
-        System.out.println("Done.\n");
 
         this.stmt = this.conn.createStatement();
 
