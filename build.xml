@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -618,6 +618,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
     <!-- Build a distribution 'image' that doesn't include docs. -->
     <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
+        <delete file="${buildDir}/${fullProdName}.jar" />
         <delete file="${buildDir}/${fullProdName}-bin.jar" />
 
         <mkdir dir="${buildDir}/META-INF" />
@@ -680,6 +681,12 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                        value="${crypto-imports},${jdbc4-imports},${jee-imports},${jmx-imports},${integration-imports},${logging-imports},${fabric-imports}" />
         </manifest>
 
+        <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}.jar"
+             basedir="${compiler.output}"
+             includes="**/*.class,**/*.properties*,META-INF/**"
+             excludes="testsuite/**,demo/**"
+             index="true"
+             manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
         <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
              basedir="${compiler.output}"
              includes="**/*.class,**/*.properties*,META-INF/**"
