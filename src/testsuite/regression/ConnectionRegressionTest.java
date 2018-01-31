@@ -3105,8 +3105,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assert (endConnCount > 0);
 
-            if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this
-                                                          // testsuite?
+            if (endConnCount - startConnCount >= 20) {
+                // this may be bogus if run on a real system, we should probably look to see they're coming from this testsuite?
                 fail("We're leaking connections even when not failed over");
             }
         } finally {
@@ -10765,5 +10765,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         public void destroy() {
         }
+    }
+
+    /**
+     * Tests fix for Bug#26819691, SETTING PACKETDEBUGBUFFERSIZE=0 RESULTS IN CONNECTION FAILURE.
+     */
+    public void testBug26819691() throws Exception {
+        assertThrows(SQLException.class, "The connection property 'packetDebugBufferSize' only accepts integer values in the range of 1 - 2147483647, "
+                + "the value '0' exceeds this range\\.", new Callable<Void>() {
+                    @SuppressWarnings("synthetic-access")
+                    public Void call() throws Exception {
+                        getConnectionWithProps("packetDebugBufferSize=0,enablePacketDebug=true");
+                        return null;
+                    }
+                });
+
+        getConnectionWithProps("packetDebugBufferSize=1,enablePacketDebug=true").close();
     }
 }
