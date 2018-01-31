@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -261,6 +261,20 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     @Override
     void pickNewConnection() throws SQLException {
         // no-op
+    }
+
+    @Override
+    void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException {
+        try {
+            super.syncSessionState(source, target, readOnly);
+        } catch (SQLException e1) {
+            try {
+                // Try again. It may happen that the connection had recovered in the meantime but the right syncing wasn't done yet.
+                super.syncSessionState(source, target, readOnly);
+            } catch (SQLException e2) {
+            }
+            // Swallow both exceptions. Replication connections must continue to "work" after swapping between masters and slaves.
+        }
     }
 
     @Override

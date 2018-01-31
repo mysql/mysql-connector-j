@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -166,7 +166,6 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         }
 
         this.localProps.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
-        this.localProps.setProperty("useLocalSessionState", "true");
 
         return numHosts;
     }
@@ -359,11 +358,17 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param target
      *            The connection where to set state.
      */
-    static void syncSessionState(Connection source, Connection target) throws SQLException {
+    void syncSessionState(Connection source, Connection target) throws SQLException {
         if (source == null || target == null) {
             return;
         }
-        syncSessionState(source, target, source.isReadOnly());
+
+        boolean prevUseLocalSessionState = source.getUseLocalSessionState();
+        source.setUseLocalSessionState(true);
+        boolean readOnly = source.isReadOnly();
+        source.setUseLocalSessionState(prevUseLocalSessionState);
+
+        syncSessionState(source, target, readOnly);
     }
 
     /**
@@ -376,7 +381,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param readOnly
      *            The new read-only status.
      */
-    static void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException {
+    void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException {
         if (target != null) {
             target.setReadOnly(readOnly);
         }
@@ -384,10 +389,16 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         if (source == null || target == null) {
             return;
         }
+
+        boolean prevUseLocalSessionState = source.getUseLocalSessionState();
+        source.setUseLocalSessionState(true);
+
         target.setAutoCommit(source.getAutoCommit());
         target.setCatalog(source.getCatalog());
         target.setTransactionIsolation(source.getTransactionIsolation());
         target.setSessionMaxRows(source.getSessionMaxRows());
+
+        source.setUseLocalSessionState(prevUseLocalSessionState);
     }
 
     /**

@@ -3,6 +3,8 @@
 
 Version 5.1.46
 
+  - Fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
+
   - Fix for Bug#27231383, PROVIDE MAVEN-FRIENDLY COMMERCIAL PACKAGES WITHOUT "-BIN".
 
   - Fix for Bug#26819691, SETTING PACKETDEBUGBUFFERSIZE=0 RESULTS IN CONNECTION FAILURE.

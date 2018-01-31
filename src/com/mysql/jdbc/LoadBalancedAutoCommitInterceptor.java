@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,6 +32,8 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
     private String matchingAfterStatementRegex;
     private ConnectionImpl conn;
     private LoadBalancedConnectionProxy proxy = null;
+
+    private boolean countStatements = false;
 
     public void destroy() {
         // do nothing here
@@ -73,44 +75,49 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
     public ResultSetInternalMethods postProcess(String sql, Statement interceptedStatement, ResultSetInternalMethods originalResultSet, Connection connection,
             int warningCount, boolean noIndexUsed, boolean noGoodIndexUsed, SQLException statementException) throws SQLException {
 
-        // don't care if auto-commit is not enabled
+        // Don't count SETs neither SHOWs. Those are mostly used internally and must not trigger a connection switch.
+        if (!this.countStatements || StringUtils.startsWithIgnoreCase(sql, "SET") || StringUtils.startsWithIgnoreCase(sql, "SHOW")) {
+            return originalResultSet;
+        }
+
+        // Don't care if auto-commit is not enabled.
         if (!this.conn.getAutoCommit()) {
             this.matchingAfterStatementCount = 0;
-            // auto-commit is enabled:
-        } else {
+            return originalResultSet;
+        }
 
-            if (this.proxy == null && this.conn.isProxySet()) {
-                MySQLConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
-                while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
-                    lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
-                }
-                if (lcl_proxy != null) {
-                    this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
-                }
-
+        if (this.proxy == null && this.conn.isProxySet()) {
+            MySQLConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
+            while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
+                lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
+            }
+            if (lcl_proxy != null) {
+                this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
             }
 
-            if (this.proxy != null) {
-                // increment the match count if no regex specified, or if matches:
-                if (this.matchingAfterStatementRegex == null || sql.matches(this.matchingAfterStatementRegex)) {
-                    this.matchingAfterStatementCount++;
-                }
-            }
-            // trigger rebalance if count exceeds threshold:
-            if (this.matchingAfterStatementCount >= this.matchingAfterStatementThreshold) {
-                this.matchingAfterStatementCount = 0;
-                try {
-                    if (this.proxy != null) {
-                        this.proxy.pickNewConnection();
-                    }
+        }
 
-                } catch (SQLException e) {
-                    // eat this exception, the auto-commit statement completed, but we could not rebalance for some reason.  User may get exception when using
-                    // connection next.
-                }
+        // Connection is not ready to rebalance yet.
+        if (this.proxy == null) {
+            return originalResultSet;
+        }
+
+        // Increment the match count if no regex specified, or if matches.
+        if (this.matchingAfterStatementRegex == null || sql.matches(this.matchingAfterStatementRegex)) {
+            this.matchingAfterStatementCount++;
+        }
+
+        // Trigger rebalance if count exceeds threshold.
+        if (this.matchingAfterStatementCount >= this.matchingAfterStatementThreshold) {
+            this.matchingAfterStatementCount = 0;
+            try {
+                this.proxy.pickNewConnection();
+            } catch (SQLException e) {
+                // eat this exception, the auto-commit statement completed, but we could not rebalance for some reason.  User may get exception when using
+                // connection next.
             }
         }
-        // always return the original result set.
+
         return originalResultSet;
     }
 
@@ -119,4 +126,11 @@ public class LoadBalancedAutoCommitInterceptor implements StatementInterceptorV2
         return null;
     }
 
+    void pauseCounters() {
+        this.countStatements = false;
+    }
+
+    void resumeCounters() {
+        this.countStatements = true;
+    }
 }

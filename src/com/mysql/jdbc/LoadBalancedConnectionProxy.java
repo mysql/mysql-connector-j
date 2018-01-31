@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -376,7 +376,30 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
         this.totalPhysicalConnections++;
 
+        for (StatementInterceptorV2 stmtInterceptor : conn.getStatementInterceptorsInstances()) {
+            if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
+                ((LoadBalancedAutoCommitInterceptor) stmtInterceptor).resumeCounters();
+                break;
+            }
+        }
+
         return conn;
+    }
+
+    @Override
+    void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException {
+        LoadBalancedAutoCommitInterceptor lbAutoCommitStmtInterceptor = null;
+        for (StatementInterceptorV2 stmtInterceptor : ((MySQLConnection) target).getStatementInterceptorsInstances()) {
+            if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
+                lbAutoCommitStmtInterceptor = (LoadBalancedAutoCommitInterceptor) stmtInterceptor;
+                lbAutoCommitStmtInterceptor.pauseCounters();
+                break;
+            }
+        }
+        super.syncSessionState(source, target, readOnly);
+        if (lbAutoCommitStmtInterceptor != null) {
+            lbAutoCommitStmtInterceptor.resumeCounters();
+        }
     }
 
     /**

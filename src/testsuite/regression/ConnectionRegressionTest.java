@@ -8767,7 +8767,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
 
         /*
-         * Run-time case 2a: Running with Masters down (Masters doesn't recover).
+         * Run-time case 2a: Running with Masters down (Masters connection doesn't recover).
          */
         downedHosts.clear();
         UnreliableSocketFactory.flushAllStaticData();
@@ -8782,13 +8782,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // Use Slaves.
         testConn.setReadOnly(true);
         testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
-
-        // Use Masters (fail!).
-        testConn.setReadOnly(false);
         assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+
+        // Use Masters.
+        testConn.setReadOnly(false);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL); // Failed re-initializing Masters.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
                     rset.next();
@@ -8796,10 +8798,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL); // No changes so far.
 
         /*
-         * Run-time case 2b: Running with Masters down (Masters recover in time).
+         * Run-time case 2b: Running with Masters down (Masters connection recover in time).
          */
         downedHosts.clear();
         UnreliableSocketFactory.flushAllStaticData();
@@ -8825,17 +8827,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Masters.
         testConn.setReadOnly(false);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
-        {
-            final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
-                    rset.next();
-                    return null;
-                }
-            });
-        }
         assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_OK); // Masters connection re-initialized.
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
 
@@ -8864,10 +8855,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Slaves.
         testConn.setReadOnly(true);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
                     rset.next();
@@ -8875,9 +8867,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // No changes so far.
 
-        // Retry using Slaves. Will fail definitely.
+        // Retry using Slaves. Will fail indefinitely.
         {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
@@ -8914,10 +8906,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Slaves.
         testConn.setReadOnly(true);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     ResultSet rset = localTestConn.createStatement().executeQuery("SELECT 1");
                     rset.next();
@@ -8925,7 +8918,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // No changes so far.
 
         // Retry using Slaves. Will fall-back to Masters as read-only.
         testConn.setReadOnly(true);
@@ -10781,5 +10774,56 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
 
         getConnectionWithProps("packetDebugBufferSize=1,enablePacketDebug=true").close();
+    }
+
+    /**
+     * Tests fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
+     */
+    public void testBug86741() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
+        this.rs = this.stmt.executeQuery("SELECT @@global.autocommit");
+        assertTrue(this.rs.next());
+        int prevAutocommit = this.rs.getInt(1);
+        this.stmt.execute("SET GLOBAL autocommit=0");
+        try {
+            Connection testConn;
+
+            testConn = getConnectionWithProps("");
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getFailoverConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getLoadBalancedConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getMasterSlaveReplicationConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+        } finally {
+            this.stmt.execute("SET GLOBAL autocommit=" + prevAutocommit);
+        }
     }
 }

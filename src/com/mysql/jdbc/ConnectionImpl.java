@@ -2896,11 +2896,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
+        return getMetadataSafeStatement(0);
+    }
+
+    public java.sql.Statement getMetadataSafeStatement(int maxRows) throws SQLException {
         java.sql.Statement stmt = createStatement();
 
-        if (stmt.getMaxRows() != 0) {
-            stmt.setMaxRows(0);
-        }
+        stmt.setMaxRows(maxRows == -1 ? 0 : maxRows);
 
         stmt.setEscapeProcessing(false);
 
@@ -2993,7 +2995,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 java.sql.ResultSet rs = null;
 
                 try {
-                    stmt = getMetadataSafeStatement();
+                    stmt = getMetadataSafeStatement(this.sessionMaxRows);
                     String query = versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
                             ? "SELECT @@session.transaction_isolation" : "SELECT @@session.tx_isolation";
                     rs = stmt.executeQuery(query);
@@ -3532,7 +3534,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
             try {
                 try {
-                    stmt = getMetadataSafeStatement();
+                    stmt = getMetadataSafeStatement(this.sessionMaxRows);
 
                     rs = stmt.executeQuery(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
                             ? "select @@session.transaction_read_only" : "select @@session.tx_read_only");
