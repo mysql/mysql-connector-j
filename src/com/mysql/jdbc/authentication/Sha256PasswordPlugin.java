@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -49,11 +49,11 @@ import com.mysql.jdbc.StringUtils;
 public class Sha256PasswordPlugin implements AuthenticationPlugin {
     public static String PLUGIN_NAME = "sha256_password";
 
-    private Connection connection;
-    private String password = null;
-    private String seed = null;
-    private boolean publicKeyRequested = false;
-    private String publicKeyString = null;
+    protected Connection connection;
+    protected String password = null;
+    protected String seed = null;
+    protected boolean publicKeyRequested = false;
+    protected String publicKeyString = null;
 
     public void init(Connection conn, Properties props) throws SQLException {
         this.connection = conn;

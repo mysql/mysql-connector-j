@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
+import com.mysql.jdbc.authentication.CachingSha2PasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
@@ -1460,6 +1461,12 @@ public class MysqlIO {
         }
 
         plugin = new Sha256PasswordPlugin();
+        plugin.init(this.connection, this.connection.getProperties());
+        if (addAuthenticationPlugin(plugin)) {
+            defaultIsFound = true;
+        }
+
+        plugin = new CachingSha2PasswordPlugin();
         plugin.init(this.connection, this.connection.getProperties());
         if (addAuthenticationPlugin(plugin)) {
             defaultIsFound = true;

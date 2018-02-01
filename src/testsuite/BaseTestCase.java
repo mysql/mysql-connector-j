@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -651,9 +651,9 @@ public abstract class BaseTestCase extends TestCase {
             try {
                 Properties props = new Properties();
                 props.setProperty("useSSL", "false"); // testsuite is built upon non-SSL default connection
+                props.setProperty("allowPublicKeyRetrieval", "true");
                 this.conn = DriverManager.getConnection(dbUrl, props);
 
-                props.setProperty("allowPublicKeyRetrieval", "true");
                 this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
             } catch (Exception ex) {
                 ex.printStackTrace();
