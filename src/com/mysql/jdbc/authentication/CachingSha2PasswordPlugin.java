@@ -31,7 +31,6 @@ import java.util.Properties;
 
 import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ExportControlled;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlIO;
@@ -123,7 +122,7 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
             } else if (this.connection.getServerRSAPublicKeyFile() != null) {
                 // encrypt with given key, don't use "Public Key Retrieval"
-                Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, this.publicKeyString));
+                Buffer bresp = new Buffer(encryptPassword());
                 toServer.add(bresp);
 
             } else {
@@ -138,7 +137,8 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
                     // so we check payload length to detect that.
 
                     // read key response
-                    Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, fromServer.readString()));
+                    this.publicKeyString = fromServer.readString();
+                    Buffer bresp = new Buffer(encryptPassword());
                     toServer.add(bresp);
                     this.publicKeyRequested = false;
                 } else {
@@ -152,20 +152,12 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, Connection connection, String key) throws SQLException {
-        byte[] input = null;
-        try {
-            input = password != null ? StringUtils.getBytesNullTerminated(password, connection.getPasswordCharacterEncoding()) : new byte[] { 0 };
-        } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.3", new Object[] { connection.getPasswordCharacterEncoding() }),
-                    SQLError.SQL_STATE_GENERAL_ERROR, null);
+    @Override
+    protected byte[] encryptPassword() throws SQLException {
+        if (this.connection.versionMeetsMinimum(8, 0, 5)) {
+            return super.encryptPassword();
         }
-        byte[] mysqlScrambleBuff = new byte[input.length];
-        Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
-
-        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff,
-                ExportControlled.decodeRSAPublicKey(key, ((MySQLConnection) connection).getExceptionInterceptor()), "RSA/ECB/PKCS1Padding",
-                ((MySQLConnection) connection).getExceptionInterceptor());
+        return super.encryptPassword("RSA/ECB/PKCS1Padding");
     }
 
     @Override

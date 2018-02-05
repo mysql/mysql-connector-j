@@ -113,7 +113,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         } else if (this.connection.getServerRSAPublicKeyFile() != null) {
             // encrypt with given key, don't use "Public Key Retrieval"
             this.seed = fromServer.readString();
-            Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, this.publicKeyString));
+            Buffer bresp = new Buffer(encryptPassword());
             toServer.add(bresp);
 
         } else {
@@ -128,7 +128,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
                 // so we check payload length to detect that.
 
                 // read key response
-                Buffer bresp = new Buffer(encryptPassword(this.password, this.seed, this.connection, fromServer.readString()));
+                this.publicKeyString = fromServer.readString();
+                Buffer bresp = new Buffer(encryptPassword());
                 toServer.add(bresp);
                 this.publicKeyRequested = false;
             } else {
@@ -142,19 +143,24 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin {
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, Connection connection, String key) throws SQLException {
+    protected byte[] encryptPassword() throws SQLException {
+        return encryptPassword("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    }
+
+    protected byte[] encryptPassword(String transformation) throws SQLException {
         byte[] input = null;
         try {
-            input = password != null ? StringUtils.getBytesNullTerminated(password, connection.getPasswordCharacterEncoding()) : new byte[] { 0 };
+            input = this.password != null ? StringUtils.getBytesNullTerminated(this.password, this.connection.getPasswordCharacterEncoding())
+                    : new byte[] { 0 };
         } catch (UnsupportedEncodingException e) {
-            throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.3", new Object[] { connection.getPasswordCharacterEncoding() }),
+            throw SQLError.createSQLException(Messages.getString("Sha256PasswordPlugin.3", new Object[] { this.connection.getPasswordCharacterEncoding() }),
                     SQLError.SQL_STATE_GENERAL_ERROR, null);
         }
         byte[] mysqlScrambleBuff = new byte[input.length];
-        Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
+        Security.xorString(input, mysqlScrambleBuff, this.seed.getBytes(), input.length);
         return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff,
-                ExportControlled.decodeRSAPublicKey(key, ((MySQLConnection) connection).getExceptionInterceptor()),
-                ((MySQLConnection) connection).getExceptionInterceptor());
+                ExportControlled.decodeRSAPublicKey(this.publicKeyString, this.connection.getExceptionInterceptor()), transformation,
+                this.connection.getExceptionInterceptor());
     }
 
     private static String readRSAKey(Connection connection, String pkPath) throws SQLException {
