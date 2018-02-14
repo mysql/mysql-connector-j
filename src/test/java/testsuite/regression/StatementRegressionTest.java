@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -6595,7 +6595,7 @@ public class StatementRegressionTest extends BaseTestCase {
         testBug71396MultiSettingsCheck("maxRows=2", 2, 1, 1);
         testBug71396MultiSettingsCheck("maxRows=2", 2, 2, 2);
 
-        // Case 8: New session bue to user change
+        // Case 8: New session due to user change
         createUser("'testBug71396User'@'%'", "IDENTIFIED BY 'testBug71396User'");
         this.stmt.execute("GRANT SELECT ON *.* TO 'testBug71396User'@'%'");
 
