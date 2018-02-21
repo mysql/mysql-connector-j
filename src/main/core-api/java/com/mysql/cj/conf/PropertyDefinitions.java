@@ -168,6 +168,10 @@ public class PropertyDefinitions {
         REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
     }
 
+    public enum AuthMech { // xdevapi.auth
+        PLAIN, MYSQL41, SHA256_MEMORY, EXTERNAL;
+    }
+
     /*
      * Connection properties names
      */
@@ -388,8 +392,9 @@ public class PropertyDefinitions {
     private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
     static {
-        PropertyDefinition<?>[] pdefs = new PropertyDefinition<?>[] { new BooleanPropertyDefinition(PNAME_paranoid, NO_ALIAS, DEFAULT_VALUE_FALSE,
-                RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.paranoid"), "3.0.1", CATEGORY_SECURITY, Integer.MIN_VALUE),
+        PropertyDefinition<?>[] pdefs = new PropertyDefinition<?>[] {
+                new BooleanPropertyDefinition(PNAME_paranoid, NO_ALIAS, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.paranoid"), "3.0.1", CATEGORY_SECURITY, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PNAME_passwordCharacterEncoding, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.passwordCharacterEncoding"), "5.1.7", CATEGORY_CONNECTION, Integer.MIN_VALUE),
@@ -940,8 +945,8 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new IntegerPropertyDefinition(PNAME_asyncResponseTimeout, "xdevapiAsyncResponseTimeout", 300, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new StringPropertyDefinition(PNAME_auth, "xdevapiAuth", DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.auth"), "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new EnumPropertyDefinition<>(PNAME_auth, "xdevapiAuth", AuthMech.PLAIN, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.auth"),
+                        "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, NO_ALIAS, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),

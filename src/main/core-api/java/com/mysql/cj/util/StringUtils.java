@@ -121,83 +121,58 @@ public class StringUtils {
     private static final String VALID_ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789$_#@";
 
     /**
-     * Dumps the given bytes to STDOUT as a hex dump (up to length bytes).
+     * Returns the given bytes as a hex & ascii dump (up to length bytes).
      * 
      * @param byteBuffer
-     *            the data to print as hex
+     *            the data to dump as hex
      * @param length
      *            the number of bytes to print
      * 
-     * @return ...
+     * @return a hex & ascii dump
      */
     public static String dumpAsHex(byte[] byteBuffer, int length) {
-        StringBuilder outputBuilder = new StringBuilder(length * 4);
+        length = Math.min(length, byteBuffer.length);
+        StringBuilder fullOutBuilder = new StringBuilder(length * 4);
+        StringBuilder asciiOutBuilder = new StringBuilder(16);
 
-        int p = 0;
-        int rows = length / 8;
-
-        for (int i = 0; (i < rows) && (p < length); i++) {
-            int ptemp = p;
-
-            for (int j = 0; j < 8; j++) {
-                String hexVal = Integer.toHexString(byteBuffer[ptemp] & 0xff);
-
-                if (hexVal.length() == 1) {
-                    hexVal = "0" + hexVal;
+        for (int p = 0, l = 0; p < length; l = 0) { // p: position in buffer (1..length); l: position in line (1..8)
+            for (; l < 8 && p < length; p++, l++) {
+                int asInt = byteBuffer[p] & 0xff;
+                if (asInt < 0x10) {
+                    fullOutBuilder.append("0");
                 }
-
-                outputBuilder.append(hexVal + " ");
-                ptemp++;
+                fullOutBuilder.append(Integer.toHexString(asInt)).append(" ");
+                asciiOutBuilder.append(" ").append(asInt >= 0x20 && asInt < 0x7f ? (char) asInt : ".");
             }
-
-            outputBuilder.append("    ");
-
-            for (int j = 0; j < 8; j++) {
-                int b = 0xff & byteBuffer[p];
-
-                if (b > 32 && b < 127) {
-                    outputBuilder.append((char) b + " ");
-                } else {
-                    outputBuilder.append(". ");
-                }
-
-                p++;
+            for (; l < 8; l++) { // if needed, fill remaining of last line with spaces
+                fullOutBuilder.append("   ");
             }
-
-            outputBuilder.append("\n");
+            fullOutBuilder.append("   ").append(asciiOutBuilder).append(System.lineSeparator());
+            asciiOutBuilder.setLength(0);
         }
+        return fullOutBuilder.toString();
+    }
 
-        int n = 0;
-
-        for (int i = p; i < length; i++) {
-            String hexVal = Integer.toHexString(byteBuffer[i] & 0xff);
-
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
+    /**
+     * Converts the given byte array into Hex String, stopping at given lenght.
+     * 
+     * @param byteBuffer
+     *            the byte array to convert
+     * @param length
+     *            the number of bytes from the given array to convert
+     * @return
+     *         a String containing the Hex representation of the given bytes
+     */
+    public static String toHexString(byte[] byteBuffer, int length) {
+        length = Math.min(length, byteBuffer.length);
+        StringBuilder outputBuilder = new StringBuilder(length * 2);
+        for (int i = 0; i < length; i++) {
+            int asInt = byteBuffer[i] & 0xff;
+            if (asInt < 0x10) {
+                outputBuilder.append("0");
             }
-
-            outputBuilder.append(hexVal + " ");
-            n++;
+            outputBuilder.append(Integer.toHexString(asInt));
         }
-
-        for (int i = n; i < 8; i++) {
-            outputBuilder.append("   ");
-        }
-
-        outputBuilder.append("    ");
-
-        for (int i = p; i < length; i++) {
-            int b = 0xff & byteBuffer[i];
-
-            if (b > 32 && b < 127) {
-                outputBuilder.append((char) b + " ");
-            } else {
-                outputBuilder.append(". ");
-            }
-        }
-
-        outputBuilder.append("\n");
-
         return outputBuilder.toString();
     }
 
@@ -2103,5 +2078,31 @@ public class StringUtils {
     public static String getUniqueSavepointId() {
         String uuid = UUID.randomUUID().toString();
         return uuid.replaceAll("-", "_"); // for safety
+    }
+
+    /**
+     * Joins all elements of the given list using serial comma (Oxford comma) rules.
+     * E.g.:
+     * - "A"
+     * - "A and B"
+     * - "A, B, and C"
+     * 
+     * @param elements
+     *            the elements to join
+     * @return
+     *         the String with all elements, joined by commas and "and".
+     */
+    public static String joinWithSerialComma(List<?> elements) {
+        if (elements == null || elements.size() == 0) {
+            return "";
+        }
+        if (elements.size() == 1) {
+            return elements.get(0).toString();
+        }
+        if (elements.size() == 2) {
+            return elements.get(0) + " and " + elements.get(1);
+        }
+        return elements.subList(0, elements.size() - 1).stream().map(Object::toString).collect(Collectors.joining(", ", "", ", and "))
+                + elements.get(elements.size() - 1).toString();
     }
 }

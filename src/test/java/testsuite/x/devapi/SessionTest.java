@@ -174,6 +174,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
         try {
             this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED WITH mysql_native_password").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'bug21690043user1'@'%'").execute();
 
             Properties props = new Properties();
             props.putAll(this.testProperties);

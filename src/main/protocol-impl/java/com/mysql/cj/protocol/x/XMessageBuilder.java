@@ -29,6 +29,7 @@
 
 package com.mysql.cj.protocol.x;
 
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -412,6 +413,44 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         }
     }
 
+    public XMessage buildSha256MemoryAuthStart() {
+        return new XMessage(AuthenticateStart.newBuilder().setMechName("SHA256_MEMORY").build());
+    }
+
+    public XMessage buildSha256MemoryAuthContinue(String user, String password, byte[] nonce, String database) {
+        // TODO: encoding for all this?
+        String encoding = "UTF8";
+        byte[] databaseBytes = database == null ? new byte[] {} : StringUtils.getBytes(database, encoding);
+        byte[] userBytes = user == null ? new byte[] {} : StringUtils.getBytes(user, encoding);
+        byte[] passwordBytes = password == null || password.length() == 0 ? new byte[] {} : StringUtils.getBytes(password, encoding);
+
+        byte[] hashedPassword = passwordBytes;
+        try {
+            hashedPassword = Security.scrambleCachingSha2(passwordBytes, nonce);
+        } catch (DigestException e) {
+            throw new RuntimeException(e);
+        }
+
+        hashedPassword = StringUtils.toHexString(hashedPassword, hashedPassword.length).getBytes();
+
+        byte[] reply = new byte[databaseBytes.length + userBytes.length + hashedPassword.length + 2];
+        System.arraycopy(databaseBytes, 0, reply, 0, databaseBytes.length);
+        int pos = databaseBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(userBytes, 0, reply, pos, userBytes.length);
+        pos += userBytes.length;
+        reply[pos++] = 0;
+        System.arraycopy(hashedPassword, 0, reply, pos, hashedPassword.length);
+
+        AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
+        builder.setAuthData(ByteString.copyFrom(reply));
+        return new XMessage(builder.build());
+    }
+
+    public XMessage buildMysql41AuthStart() {
+        return new XMessage(AuthenticateStart.newBuilder().setMechName("MYSQL41").build());
+    }
+
     public XMessage buildMysql41AuthContinue(String user, String password, byte[] salt, String database) {
         // TODO: encoding for all this?
         String encoding = "UTF8";
@@ -441,10 +480,6 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         AuthenticateContinue.Builder builder = AuthenticateContinue.newBuilder();
         builder.setAuthData(ByteString.copyFrom(reply));
         return new XMessage(builder.build());
-    }
-
-    public XMessage buildMysql41AuthStart() {
-        return new XMessage(AuthenticateStart.newBuilder().setMechName("MYSQL41").build());
     }
 
     public XMessage buildPlainAuthStart(String user, String password, String database) {

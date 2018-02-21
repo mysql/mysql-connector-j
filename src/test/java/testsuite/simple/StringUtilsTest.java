@@ -30,12 +30,15 @@
 package testsuite.simple;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.util.LazyString;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.StringUtils.SearchMode;
 
@@ -1305,5 +1308,23 @@ public class StringUtilsTest extends BaseTestCase {
             assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
             c++;
         }
+    }
+
+    /**
+     * Tests StringUtils.joinWithSerialComma().
+     */
+    public void testJoinWithSerialComma() throws Exception {
+        assertEquals("", StringUtils.joinWithSerialComma(null));
+        assertEquals("", StringUtils.joinWithSerialComma(Collections.emptyList()));
+
+        // Using lists of Strings
+        assertEquals("A", StringUtils.joinWithSerialComma(Arrays.asList("A")));
+        assertEquals("A and B", StringUtils.joinWithSerialComma(Arrays.asList("A", "B")));
+        assertEquals("A, B, and C", StringUtils.joinWithSerialComma(Arrays.asList("A", "B", "C")));
+
+        // Using lists of objects other than Strings
+        assertEquals("A", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"))));
+        assertEquals("A and B", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"), new LazyString("B"))));
+        assertEquals("A, B, and C", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"), new LazyString("B"), new LazyString("C"))));
     }
 }

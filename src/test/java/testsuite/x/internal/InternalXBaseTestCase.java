@@ -42,6 +42,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessageBuilder;
@@ -52,6 +53,7 @@ import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 import testsuite.TestUtils;
 
@@ -136,41 +138,53 @@ public class InternalXBaseTestCase {
         XProtocol protocol = createTestProtocol();
         XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
-        String authMech = protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
+        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
         boolean overTLS = ((XServerCapabilities) protocol.getServerSession().getCapabilities()).getTls();
 
-        // default choice
-        if (authMech == null) {
-            authMech = overTLS ? "PLAIN" : "MYSQL41";
-            // TODO see WL#10992 authMech = overTLS ? "PLAIN" : (protocol.getAuthenticationMechanisms().contains("SHA256_MEMORY") ? "SHA256_MEMORY" : "MYSQL41");
-        } else {
-            authMech = authMech.toUpperCase();
+        // Choose the best default auth mechanism.
+        if (!overTLS) {
+            authMech = AuthMech.MYSQL41;
+        } else if (authMech != AuthMech.PLAIN) {
+            authMech = AuthMech.PLAIN;
         }
 
-        switch (authMech) {
-            case "MYSQL41":
-                protocol.send(messageBuilder.buildMysql41AuthStart(), 0);
-                byte[] salt = protocol.readAuthenticateContinue();
-                protocol.send(messageBuilder.buildMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase()), 0);
-                break;
-            case "PLAIN":
-                if (overTLS) {
-                    protocol.send(messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase()), 0);
+        while (true) {
+            switch (authMech) {
+                case SHA256_MEMORY:
+                    protocol.send(messageBuilder.buildSha256MemoryAuthStart(), 0);
+                    byte[] nonce = protocol.readAuthenticateContinue();
+                    protocol.send(messageBuilder.buildSha256MemoryAuthContinue(getTestUser(), getTestPassword(), nonce, getTestDatabase()), 0);
+                    break;
+                case MYSQL41:
+                    protocol.send(messageBuilder.buildMysql41AuthStart(), 0);
+                    byte[] salt = protocol.readAuthenticateContinue();
+                    protocol.send(messageBuilder.buildMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase()), 0);
+                    break;
+                case PLAIN:
+                    if (overTLS) {
+                        protocol.send(messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase()), 0);
+                    } else {
+                        throw new XDevAPIError("PLAIN authentication is not allowed via unencrypted connection.");
+                    }
+                    break;
+                case EXTERNAL:
+                    protocol.send(messageBuilder.buildExternalAuthStart(getTestDatabase()), 0);
+                    break;
+                default:
+                    throw new WrongArgumentException("Unknown authentication mechanism '" + authMech + "'.");
+            }
+
+            try {
+                protocol.readAuthenticateOk();
+                return protocol;
+            } catch (XProtocolError e) {
+                if (authMech == AuthMech.MYSQL41) {
+                    authMech = AuthMech.SHA256_MEMORY; // try again using SHA256_MEMORY
                 } else {
-                    throw new XProtocolError("PLAIN authentication is not allowed via unencrypted connection.");
+                    throw e;
                 }
-                break;
-            case "EXTERNAL":
-                protocol.send(messageBuilder.buildExternalAuthStart(getTestDatabase()), 0);
-                break;
-
-            default:
-                throw new WrongArgumentException("Unknown authentication mechanism '" + authMech + "'.");
+            }
         }
-
-        protocol.readAuthenticateOk();
-
-        return protocol;
     }
 
     public MysqlxSession createTestSession() {

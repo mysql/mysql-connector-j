@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Field;
 import java.util.Properties;
+import java.util.function.Function;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,8 +43,8 @@ import org.junit.Test;
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
 import com.mysql.cj.exceptions.CJCommunicationsException;
-import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XAuthenticationProvider;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
@@ -67,7 +68,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     @Before
     public void setupSecureSessionTest() {
-        if (this.isSetForXTests) {
+        if (setupTestSession()) {
             System.clearProperty("javax.net.ssl.trustStore");
             System.clearProperty("javax.net.ssl.trustStoreType");
             System.clearProperty("javax.net.ssl.trustStorePassword");
@@ -102,6 +103,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         System.clearProperty("javax.net.ssl.trustStore");
         System.clearProperty("javax.net.ssl.trustStoreType");
         System.clearProperty("javax.net.ssl.trustStorePassword");
+        destroyTestSession();
     }
 
     /**
@@ -115,13 +117,15 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         try {
             Session testSession = this.fact.getSession(this.baseUrl);
             testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.sql("GRANT SELECT ON *.* TO 'testPlainAuth'@'%'").execute();
             testSession.close();
 
             String userAndSslFreeBaseUrl = this.sslFreeBaseUrl;
+            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(getTestUser() + ":" + getTestPassword() + "@", "");
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_user + "=", PropertyDefinitions.PNAME_user + "VOID=");
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_password + "=", PropertyDefinitions.PNAME_password + "VOID=");
 
-            testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
+            testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
                     + makeParam(PropertyDefinitions.PNAME_user, "testPlainAuth") + makeParam(PropertyDefinitions.PNAME_password, "pwd"));
             assertNonSecureSession(testSession);
             testSession.close();
@@ -333,7 +337,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             return;
         }
 
-        String expectedError = "Incompatible security settings\\. The property 'xdevapi.ssl-truststore' requires 'xdevapi.ssl-mode' as 'VERIFY_CA' or 'VERIFY_IDENTITY'\\.";
+        String expectedError = "Incompatible security settings\\. "
+                + "The property 'xdevapi.ssl-truststore' requires 'xdevapi.ssl-mode' as 'VERIFY_CA' or 'VERIFY_IDENTITY'\\.";
         assertThrows(CJCommunicationsException.class, expectedError,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
 
@@ -358,246 +363,246 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
     }
 
-    private void assertNonSecureSession(Session sess) {
-        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "");
-    }
-
-    private void assertSecureSession(Session sess) {
-        assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
-    }
-
-    private String makeParam(String key, Enum<?> value) {
-        return makeParam(key, value.toString());
-    }
-
-    private String makeParam(String key, String value) {
-        return "&" + key + "=" + value;
-    }
-
     /**
-     * Tests fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
-     */
-    @Test
-    public void testBug25494338() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        Session testSession = null;
-
-        try {
-            Properties props = new Properties(this.sslFreeTestProperties);
-            testSession = this.fact.getSession(props);
-
-            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
-
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-            props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-            props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
-            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
-            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
-
-            // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
-            Session sess = this.fact.getSession(props);
-            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
-            sess.close();
-
-            // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
-            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA");
-            sess = this.fact.getSession(props);
-            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
-            assertSessionStatusEquals(sess, "ssl_cipher", "");
-            sess.close();
-
-            // 3. Check connection with required client certificate 
-            props.setProperty(PropertyDefinitions.PNAME_user, "bug25494338user");
-            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
-
-            sess = this.fact.getSession(props);
-            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
-            assertSessionStatusEquals(sess, "ssl_cipher", "");
-            sess.close();
-
-        } catch (Throwable t) {
-            throw t;
-        } finally {
-            if (testSession != null) {
-                testSession.sql("DROP USER bug25494338user").execute();
-            }
-        }
-    }
-
-    /**
-     * Tests fix for Bug#23597281, GETNODESESSION() CALL WITH SSL PARAMETERS RETURNS CJCOMMUNICATIONSEXCEPTION
-     */
-    @Test
-    public void testBug23597281() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
-
-        Session nSession;
-        for (int i = 0; i < 100; i++) {
-            nSession = this.fact.getSession(props);
-            nSession.close();
-            nSession = null;
-        }
-    }
-
-    /**
-     * Tests fix for Bug#26227653, WL#10528 DIFF BEHAVIOUR WHEN SYSTEM PROP JAVAX.NET.SSL.TRUSTSTORETYPE IS SET
-     * 
-     * The actual bug is: if wrong system-wide SSL settings are provided, the session should not fail if 'xdevapi.ssl-mode=REQUIRED'.
-     */
-    @Test
-    public void testBug26227653() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-
-        System.setProperty("javax.net.ssl.trustStore", "dummy_truststore");
-        System.setProperty("javax.net.ssl.trustStorePassword", "some_password");
-        System.setProperty("javax.net.ssl.trustStoreType", "wrong_type");
-
-        Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
-        assertSecureSession(testSession);
-        testSession.close();
-
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
-        assertSecureSession(testSession);
-        testSession.close();
-
-        testSession = this.fact.getSession(this.sslFreeTestProperties);
-        assertSecureSession(testSession);
-        testSession.close();
-
-        Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-        testSession = this.fact.getSession(props);
-        assertSecureSession(testSession);
-        testSession.close();
-    }
-
-    /**
-     * Tests that PLAIN, MYSQL41 and EXTERNAL authentication mechanisms.
+     * Tests that PLAIN, MYSQL41, SHA256_MEMORY, and EXTERNAL authentication mechanisms.
      * 
      * @throws Throwable
      */
     @Test
-    public void testAuthMechanisns() throws Throwable {
+    public void testAuthMechanisms() throws Throwable {
         if (!this.isSetForXTests) {
             return;
         }
 
-        Session testSession = null;
-
         try {
-            testSession = this.fact.getSession(this.sslFreeBaseUrl);
-            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
-            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuthSha256'@'%' IDENTIFIED WITH sha256_password BY 'pwd'").execute();
-            testSession.close();
+            this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechNative'@'%' IDENTIFIED WITH mysql_native_password BY 'mysqlnative'").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechNative'@'%'").execute();
+            this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechSha256'@'%' IDENTIFIED WITH sha256_password BY 'sha256'").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechSha256'@'%'").execute();
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechCachingSha2'@'%' IDENTIFIED WITH caching_sha2_password BY 'cachingsha2'").execute();
+                this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechCachingSha2'@'%'").execute();
+            }
 
-            Field sf = SessionImpl.class.getDeclaredField("session");
+            final Field sf = SessionImpl.class.getDeclaredField("session");
             sf.setAccessible(true);
-
-            Field pf = CoreSession.class.getDeclaredField("protocol");
+            final Field pf = CoreSession.class.getDeclaredField("protocol");
             pf.setAccessible(true);
-
-            Field mf = XAuthenticationProvider.class.getDeclaredField("authMech");
+            final Field mf = XAuthenticationProvider.class.getDeclaredField("authMech");
             mf.setAccessible(true);
 
+            Function<Session, AuthMech> getAuthMech = s -> {
+                try {
+                    return (AuthMech) mf.get(((XProtocol) pf.get(sf.get(s))).getAuthenticationProvider());
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            };
+
+            /*
+             * Authenticate using (default) TLS first. As per MySQL 8.0.4 X Plugin this is required so that SHA2[56] logins get cached in SHA2_MEMORY.
+             */
+            Session testSession = null;
             Properties props = new Properties(this.sslFreeTestProperties);
-            props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuth");
-            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
 
-            // default MYSQL41 if no TLS
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            testSession = this.fact.getSession(props);
-            assertNonSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
-            testSession.close();
-
-            // default PLAIN if over TLS
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+            // With default auth mechanism for secure connections (PLAIN).
+            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
+            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
-            assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
+            assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
+            assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            // next block to be run under GPL server and GPL servers prior 8.0 not necessarily contain sha256 support 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                // PLAIN for sha256 authentication if over TLS
-                props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-                props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuthSha256");
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
+                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
-                assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
-
-                SqlResult rows = testSession.sql("select USER(),CURRENT_USER()").execute();
-                Row row = rows.next();
-                assertEquals("testPlainAuthSha256", row.getString(0).split("@")[0]);
-                assertEquals("testPlainAuthSha256", row.getString(1).split("@")[0]);
-
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
+                assertUser("testAuthMechSha256", testSession);
                 testSession.close();
             }
 
-            // forced MYSQL41 if no TLS
-            props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuth");
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
+                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
+                assertUser("testAuthMechCachingSha2", testSession);
+                testSession.close();
+            }
+
+            // Forcing an auth mechanism.
+            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
+            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
+            props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+            testSession = this.fact.getSession(props);
+            assertSecureSession(testSession);
+            assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+            assertUser("testAuthMechNative", testSession);
+            testSession.close();
             props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+            testSession = this.fact.getSession(props);
+            assertSecureSession(testSession);
+            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
+            assertUser("testAuthMechNative", testSession);
+            testSession.close();
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertUser("testAuthMechNative", testSession);
+                testSession.close();
+            }
+
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
+                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechSha256", testSession);
+                testSession.close();
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    testSession = this.fact.getSession(props);
+                    assertSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechSha256", testSession);
+                    testSession.close();
+                }
+            }
+
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
+                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechCachingSha2", testSession);
+                testSession.close();
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    testSession = this.fact.getSession(props);
+                    assertSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechCachingSha2", testSession);
+                    testSession.close();
+                }
+            }
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "external");
+            props.setProperty(PropertyDefinitions.PNAME_password, "external");
+            props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
+            assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
+            props.remove(PropertyDefinitions.PNAME_auth);
+
+            /*
+             * Authenticate using non-secure connections.
+             */
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+
+            // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
+            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
+            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
+            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
+            assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            // forced MYSQL41 if over TLS
-            props.setProperty(PropertyDefinitions.PNAME_auth, "Mysql41"); // also checks for case insensitivity
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-            testSession = this.fact.getSession(props);
-            assertSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
-            testSession.close();
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_PASSWORD requires secure connections in MySQL 8.0.3 and below.
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
+                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                testSession = this.fact.getSession(props);
+                assertNonSecureSession(testSession);
+                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertUser("testAuthMechSha256", testSession);
+                testSession.close();
+            }
 
-            // forced PLAIN if no TLS
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // CACHING_SHA2_PASSWORD requires secure connections in MySQL 8.0.3 and below.
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
+                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                testSession = this.fact.getSession(props);
+                assertNonSecureSession(testSession);
+                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertUser("testAuthMechCachingSha2", testSession);
+                testSession.close();
+            }
+
+            // Forcing an auth mechanism.
+            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
+            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection.", () -> this.fact.getSession(props));
-
-            // forced PLAIN if over TLS
-            props.setProperty(PropertyDefinitions.PNAME_auth, "plain"); // also checks for case insensitivity
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+            assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+            props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
             testSession = this.fact.getSession(props);
-            assertSecureSession(testSession);
-            assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
+            assertNonSecureSession(testSession);
+            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
+            assertUser("testAuthMechNative", testSession);
             testSession.close();
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                testSession = this.fact.getSession(props);
+                assertNonSecureSession(testSession);
+                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertUser("testAuthMechNative", testSession);
+                testSession.close();
+            }
 
-            // forced EXTERNAL if no TLS
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
+                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    testSession = this.fact.getSession(props);
+                    assertNonSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechSha256", testSession);
+                    testSession.close();
+                }
+            }
+
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
+                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
+                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    testSession = this.fact.getSession(props);
+                    assertNonSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechCachingSha2", testSession);
+                    testSession.close();
+                }
+            }
+
+            props.setProperty(PropertyDefinitions.PNAME_user, "external");
+            props.setProperty(PropertyDefinitions.PNAME_password, "external");
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            assertThrows(XProtocolError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
-
-            // forced EXTERNAL if over TLS
-            props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-            assertThrows(XProtocolError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
-
-            // forced unknown mech
-            props.setProperty(PropertyDefinitions.PNAME_auth, "uNkNoWn");
-            assertThrows(WrongArgumentException.class, "Unknown authentication mechanism 'UNKNOWN'.", () -> this.fact.getSession(props));
-
-        } catch (Throwable t) {
-            throw t;
+            assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
+            props.remove(PropertyDefinitions.PNAME_auth);
         } finally {
-            testSession = this.fact.getSession(this.sslFreeBaseUrl);
-            testSession.sql("DROP USER if exists testPlainAuth").execute();
-            testSession.sql("DROP USER if exists testPlainAuthSha256").execute();
-            testSession.close();
+            this.session.sql("DROP USER IF EXISTS testAuthMechNative").execute();
+            this.session.sql("DROP USER IF EXISTS testAuthMechSha256").execute();
+            this.session.sql("DROP USER IF EXISTS testAuthMechCachingSha2").execute();
         }
     }
 
@@ -706,4 +711,137 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         return allowsRSA;
     }
 
+    private void assertUser(String user, Session sess) {
+        SqlResult rows = sess.sql("SELECT USER(),CURRENT_USER()").execute();
+        Row row = rows.fetchOne();
+        assertEquals(user, row.getString(0).split("@")[0]);
+        assertEquals(user, row.getString(1).split("@")[0]);
+    }
+
+    private void assertNonSecureSession(Session sess) {
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "");
+    }
+
+    private void assertSecureSession(Session sess) {
+        assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
+    }
+
+    private String makeParam(String key, Enum<?> value) {
+        return makeParam(key, value.toString());
+    }
+
+    private String makeParam(String key, String value) {
+        return "&" + key + "=" + value;
+    }
+
+    /**
+     * Tests fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
+     */
+    @Test
+    public void testBug25494338() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Session testSession = null;
+
+        try {
+            Properties props = new Properties(this.sslFreeTestProperties);
+            testSession = this.fact.getSession(props);
+
+            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
+            testSession.sql("GRANT SELECT ON *.* TO 'bug25494338user'@'%'").execute();
+
+            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+            props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
+            props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
+
+            // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+            Session sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+            sess.close();
+
+            // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
+            props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA");
+            sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(sess, "ssl_cipher", "");
+            sess.close();
+
+            // 3. Check connection with required client certificate 
+            props.setProperty(PropertyDefinitions.PNAME_user, "bug25494338user");
+            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+
+            sess = this.fact.getSession(props);
+            assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
+            assertSessionStatusEquals(sess, "ssl_cipher", "");
+            sess.close();
+
+        } catch (Throwable t) {
+            throw t;
+        } finally {
+            if (testSession != null) {
+                testSession.sql("DROP USER bug25494338user").execute();
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#23597281, GETNODESESSION() CALL WITH SSL PARAMETERS RETURNS CJCOMMUNICATIONSEXCEPTION
+     */
+    @Test
+    public void testBug23597281() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+
+        Session nSession;
+        for (int i = 0; i < 100; i++) {
+            nSession = this.fact.getSession(props);
+            nSession.close();
+            nSession = null;
+        }
+    }
+
+    /**
+     * Tests fix for Bug#26227653, WL#10528 DIFF BEHAVIOUR WHEN SYSTEM PROP JAVAX.NET.SSL.TRUSTSTORETYPE IS SET
+     * 
+     * The actual bug is: if wrong system-wide SSL settings are provided, the session should not fail if 'xdevapi.ssl-mode=REQUIRED'.
+     */
+    @Test
+    public void testBug26227653() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        System.setProperty("javax.net.ssl.trustStore", "dummy_truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "some_password");
+        System.setProperty("javax.net.ssl.trustStoreType", "wrong_type");
+
+        Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        assertSecureSession(testSession);
+        testSession.close();
+
+        testSession = this.fact.getSession(this.sslFreeTestProperties);
+        assertSecureSession(testSession);
+        testSession.close();
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        testSession = this.fact.getSession(props);
+        assertSecureSession(testSession);
+        testSession.close();
+    }
 }

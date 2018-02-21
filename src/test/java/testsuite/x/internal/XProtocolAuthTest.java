@@ -102,6 +102,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         try {
             Session testSession = this.fact.getSession(this.baseUrl);
             testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.sql("GRANT SELECT ON *.* TO 'testPlainAuth'@'%'").execute();
             testSession.close();
 
             protocol.send(this.messageBuilder.buildMysql41AuthStart(), 0);

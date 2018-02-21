@@ -29,18 +29,27 @@
 
 package com.mysql.cj.protocol.x;
 
+import java.nio.channels.ClosedChannelException;
+import java.util.Arrays;
+import java.util.List;
+
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class XAuthenticationProvider implements AuthenticationProvider<XMessage> {
 
     XProtocol protocol;
-    private String authMech = "MYSQL41"; // used in test case to check what type of the authentications was actually used
+    private AuthMech authMech = null; // Used in test case SecureSessionTest#testAuthMechanisns() to check what type of the authentication was actually used.
     private XMessageBuilder messageBuilder = new XMessageBuilder();
 
     @Override
@@ -55,39 +64,78 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
 
     @Override
     public void changeUser(ServerSession serverSession, String userName, String password, String database) {
-        this.authMech = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
         boolean overTLS = ((XServerCapabilities) this.protocol.getServerSession().getCapabilities()).getTls();
-
-        // default choice
-        if (this.authMech == null) {
-            this.authMech = overTLS ? "PLAIN" : "MYSQL41";
-            // TODO see WL#10992 this.authMech = overTLS ? "PLAIN" : (this.protocol.getAuthenticationMechanisms().contains("SHA256_MEMORY") ? "SHA256_MEMORY" : "MYSQL41");
+        ReadableProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumReadableProperty(PropertyDefinitions.PNAME_auth);
+        List<AuthMech> tryAuthMech;
+        if (overTLS || authMechProp.isExplicitlySet()) {
+            tryAuthMech = Arrays.asList(authMechProp.getValue());
         } else {
-            this.authMech = this.authMech.toUpperCase();
+            tryAuthMech = Arrays.asList(AuthMech.MYSQL41, AuthMech.SHA256_MEMORY);
         }
 
-        switch (this.authMech) {
-            case "MYSQL41":
-                this.protocol.send(this.messageBuilder.buildMysql41AuthStart(), 0);
-                byte[] salt = this.protocol.readAuthenticateContinue();
-                this.protocol.send(this.messageBuilder.buildMysql41AuthContinue(userName, password, salt, database), 0);
-                break;
-            case "PLAIN":
-                if (overTLS) {
-                    this.protocol.send(this.messageBuilder.buildPlainAuthStart(userName, password, database), 0);
-                } else {
-                    throw new XProtocolError("PLAIN authentication is not allowed via unencrypted connection.");
+        XProtocolError capturedAuthErr = null;
+        for (AuthMech am : tryAuthMech) {
+            this.authMech = am;
+            try {
+                switch (this.authMech) {
+                    case SHA256_MEMORY:
+                        this.protocol.send(this.messageBuilder.buildSha256MemoryAuthStart(), 0);
+                        byte[] nonce = this.protocol.readAuthenticateContinue();
+                        this.protocol.send(this.messageBuilder.buildSha256MemoryAuthContinue(userName, password, nonce, database), 0);
+                        break;
+                    case MYSQL41:
+                        this.protocol.send(this.messageBuilder.buildMysql41AuthStart(), 0);
+                        byte[] salt = this.protocol.readAuthenticateContinue();
+                        this.protocol.send(this.messageBuilder.buildMysql41AuthContinue(userName, password, salt, database), 0);
+                        break;
+                    case PLAIN:
+                        if (overTLS) {
+                            this.protocol.send(this.messageBuilder.buildPlainAuthStart(userName, password, database), 0);
+                        } else {
+                            throw new XProtocolError("PLAIN authentication is not allowed via unencrypted connection.");
+                        }
+                        break;
+                    case EXTERNAL:
+                        this.protocol.send(this.messageBuilder.buildExternalAuthStart(database), 0);
+                        break;
+                    default:
+                        throw new WrongArgumentException("Unknown authentication mechanism '" + this.authMech + "'.");
                 }
-                break;
-            case "EXTERNAL":
-                this.protocol.send(this.messageBuilder.buildExternalAuthStart(database), 0);
-                break;
+            } catch (CJCommunicationsException e) {
+                if (capturedAuthErr != null && e.getCause() instanceof ClosedChannelException) {
+                    // High probability that the server doesn't support authentication sequences. Ignore this exception and throw the previous one.
+                    throw capturedAuthErr;
+                }
+                throw e;
+            }
 
-            default:
-                throw new WrongArgumentException("Unknown authentication mechanism '" + this.authMech + "'.");
+            try {
+                this.protocol.readAuthenticateOk();
+                // Clear any captured exception and stop trying remaining auth mechanisms.
+                capturedAuthErr = null;
+                break;
+            } catch (XProtocolError e) {
+                if (e.getErrorCode() != 1045) {
+                    throw e;
+                }
+                capturedAuthErr = e;
+            }
         }
 
-        this.protocol.readAuthenticateOk();
+        if (capturedAuthErr != null) {
+            if (tryAuthMech.size() == 1) {
+                throw capturedAuthErr;
+            }
+            // More than one authentication mechanism was tried.
+            String errMsg = "Authentication failed using " + StringUtils.joinWithSerialComma(tryAuthMech)
+                    + ", check username and password or try a secure connection";
+            XDevAPIError ex = new XDevAPIError(errMsg);
+            ex.setVendorCode(capturedAuthErr.getErrorCode());
+            ex.setSQLState(capturedAuthErr.getSQLState());
+            ex.initCause(capturedAuthErr);
+            throw ex;
+        }
+
         this.protocol.afterHandshake();
     }
 
