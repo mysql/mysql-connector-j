@@ -37,7 +37,6 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.UnableToConnectException;
-import com.mysql.cj.protocol.ExportControlled;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.Security;
 import com.mysql.cj.protocol.a.NativeConstants;
@@ -121,8 +120,7 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
-                    NativePacketPayload bresp = new NativePacketPayload(
-                            encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
+                    NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
                     toServer.add(bresp);
 
                 } else {
@@ -138,13 +136,13 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
                         // so we check payload length to detect that.
 
                         // read key response
-                        NativePacketPayload bresp = new NativePacketPayload(encryptPassword(this.password, this.seed,
-                                fromServer.readString(StringSelfDataType.STRING_TERM, null), this.protocol.getPasswordCharacterEncoding()));
+                        this.publicKeyString = fromServer.readString(StringSelfDataType.STRING_TERM, null);
+                        NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
                         // build and send Public Key Retrieval packet
-                        NativePacketPayload bresp = new NativePacketPayload(new byte[] { 2 }); //was 1 in sha256_password
+                        NativePacketPayload bresp = new NativePacketPayload(new byte[] { 2 }); // was 1 in sha256_password
                         toServer.add(bresp);
                         this.publicKeyRequested = true;
                     }
@@ -156,13 +154,11 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, String key, String passwordCharacterEncoding) {
-        byte[] input = password != null ? StringUtils.getBytesNullTerminated(password, passwordCharacterEncoding) : new byte[] { 0 };
-        byte[] mysqlScrambleBuff = new byte[input.length];
-        Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
-
-        // TODO in MySQL 8.0.3 the RSA_PKCS1_PADDING is used in caching_sha2_password full auth stage but in 8.0.4 it should be changed to RSA_PKCS1_OAEP_PADDING, the same as in sha256_password
-        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key), "RSA/ECB/PKCS1Padding");
+    @Override
+    protected byte[] encryptPassword() {
+        if (this.protocol.versionMeetsMinimum(8, 0, 5)) {
+            return super.encryptPassword();
+        }
+        return super.encryptPassword("RSA/ECB/PKCS1Padding");
     }
-
 }

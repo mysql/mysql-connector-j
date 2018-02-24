@@ -118,8 +118,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
                     this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
-                    NativePacketPayload bresp = new NativePacketPayload(
-                            encryptPassword(this.password, this.seed, this.publicKeyString, this.protocol.getPasswordCharacterEncoding()));
+                    NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
                     toServer.add(bresp);
 
                 } else {
@@ -135,8 +134,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
                         // so we check payload length to detect that.
 
                         // read key response
-                        NativePacketPayload bresp = new NativePacketPayload(encryptPassword(this.password, this.seed,
-                                fromServer.readString(StringSelfDataType.STRING_TERM, null), this.protocol.getPasswordCharacterEncoding()));
+                        this.publicKeyString = fromServer.readString(StringSelfDataType.STRING_TERM, null);
+                        NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
                         toServer.add(bresp);
                         this.publicKeyRequested = false;
                     } else {
@@ -154,11 +153,16 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
         return true;
     }
 
-    private static byte[] encryptPassword(String password, String seed, String key, String passwordCharacterEncoding) {
-        byte[] input = password != null ? StringUtils.getBytesNullTerminated(password, passwordCharacterEncoding) : new byte[] { 0 };
+    protected byte[] encryptPassword() {
+        return encryptPassword("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    }
+
+    protected byte[] encryptPassword(String transformation) {
+        byte[] input = null;
+        input = this.password != null ? StringUtils.getBytesNullTerminated(this.password, this.protocol.getPasswordCharacterEncoding()) : new byte[] { 0 };
         byte[] mysqlScrambleBuff = new byte[input.length];
-        Security.xorString(input, mysqlScrambleBuff, seed.getBytes(), input.length);
-        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(key));
+        Security.xorString(input, mysqlScrambleBuff, this.seed.getBytes(), input.length);
+        return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(this.publicKeyString), transformation);
     }
 
     protected static String readRSAKey(String pkPath, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor) {
@@ -199,5 +203,4 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
 
         return res;
     }
-
 }
