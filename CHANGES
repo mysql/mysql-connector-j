@@ -3,6 +3,8 @@
 
 Version 5.1.46
 
+  - WL#11629, Change caching_sha2_password padding.
+
   - Fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
 
   - Fix for Bug#27231383, PROVIDE MAVEN-FRIENDLY COMMERCIAL PACKAGES WITHOUT "-BIN".
