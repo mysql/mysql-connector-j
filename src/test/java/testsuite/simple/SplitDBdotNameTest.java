@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,7 @@ package testsuite.simple;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 
@@ -71,7 +71,7 @@ public class SplitDBdotNameTest extends BaseTestCase {
     public void testSplit() throws Exception {
         String src = null;
         String resString = null;
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
 
         //Test 1.1, weird DB.SP name
         src = "`MyDatabase 1.0.1.0`.`Proc 1.v1`";

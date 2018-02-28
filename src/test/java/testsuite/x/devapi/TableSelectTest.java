@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,16 +45,16 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Column;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
-import com.mysql.cj.api.xdevapi.SelectStatement;
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.Type;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.exceptions.DataConversionException;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.xdevapi.Column;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.SelectStatement;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.Table;
+import com.mysql.cj.xdevapi.Type;
 
 /**
  * @todo

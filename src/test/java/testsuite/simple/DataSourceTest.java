@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,7 +42,7 @@ import javax.naming.spi.ObjectFactory;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
@@ -122,7 +122,7 @@ public class DataSourceTest extends BaseTestCase {
             //
             Reference objAsRef = (Reference) obj;
             ObjectFactory factory = (ObjectFactory) Class.forName(objAsRef.getFactoryClassName()).newInstance();
-            boundDs = (DataSource) factory.getObjectInstance(objAsRef, datasourceName, this.ctx, new Hashtable<Object, Object>());
+            boundDs = (DataSource) factory.getObjectInstance(objAsRef, datasourceName, this.ctx, new Hashtable<>());
         }
 
         assertTrue("Datasource not bound", boundDs != null);
@@ -207,7 +207,7 @@ public class DataSourceTest extends BaseTestCase {
         this.tempDir.deleteOnExit();
 
         com.mysql.cj.jdbc.MysqlDataSource ds;
-        Hashtable<String, String> env = new Hashtable<String, String>();
+        Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.fscontext.RefFSContextFactory");
         env.put(Context.PROVIDER_URL, this.tempDir.toURI().toString());
         this.ctx = new InitialContext(env);

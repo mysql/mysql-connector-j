@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,9 +41,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 

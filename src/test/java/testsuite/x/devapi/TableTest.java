@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,8 +35,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
-import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.xdevapi.Table;
 
 /**
  * @todo

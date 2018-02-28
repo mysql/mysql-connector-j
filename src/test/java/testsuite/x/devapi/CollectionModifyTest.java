@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,15 +40,16 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Result;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Result;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 /**
  * @todo
@@ -152,8 +153,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             return;
         }
 
-        DbDoc nestedDoc = new DbDoc().add("z", new JsonNumber().setValue("100"));
-        DbDoc doc = new DbDoc().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
+        DbDoc nestedDoc = new DbDocImpl().add("z", new JsonNumber().setValue("100"));
+        DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
 
         this.collection.add("{\"x\":1, \"y\":1}").execute();
         this.collection.add("{\"x\":2, \"y\":2}").execute();
@@ -210,7 +211,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         }
 
         JsonArray xArray = new JsonArray().addValue(new JsonString().setValue("a")).addValue(new JsonNumber().setValue("1"));
-        DbDoc doc = new DbDoc().add("x", new JsonNumber().setValue("3")).add("y", xArray);
+        DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", xArray);
 
         this.collection.add("{\"x\":1, \"y\":[\"b\", 2]}").execute();
         this.collection.add("{\"x\":2, \"y\":22}").execute();
@@ -468,8 +469,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         DbDoc doc = JsonParser.parseDoc("{\"_id\": \"qqq\", \"nullfield\": {}, \"theme\": {         }}");
         assertEquals("qqq", ((JsonString) doc.get("_id")).getString());
-        assertEquals(new DbDoc(), doc.get("nullfield"));
-        assertEquals(new DbDoc(), doc.get("theme"));
+        assertEquals(new DbDocImpl(), doc.get("nullfield"));
+        assertEquals(new DbDocImpl(), doc.get("theme"));
 
         String id = "qqq";
         this.collection.add("{\"_id\" : \"" + id + "\"," //
@@ -511,7 +512,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         assertTrue(docs.hasNext());
         doc = docs.next(); //   <---- Error at this line
         assertNotNull(doc.get("nullfield"));
-        assertEquals(new DbDoc(), doc.get("nullfield"));
+        assertEquals(new DbDocImpl(), doc.get("nullfield"));
     }
 
     public void testReplaceOne() {
@@ -524,7 +525,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         this.collection.add("{\"_id\":\"existingId\",\"a\":1}").execute();
 
-        res = this.collection.replaceOne("existingId", new DbDoc().add("a", new JsonNumber().setValue("2")));
+        res = this.collection.replaceOne("existingId", new DbDocImpl().add("a", new JsonNumber().setValue("2")));
         assertEquals(1, res.getAffectedItemsCount());
 
         DbDoc doc = this.collection.getOne("existingId");
@@ -606,7 +607,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         // null id parameter
         assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne(null, new DbDoc().add("a", new JsonNumber().setValue("2")));
+                CollectionModifyTest.this.collection.replaceOne(null, new DbDocImpl().add("a", new JsonNumber().setValue("2")));
                 return null;
             }
         });

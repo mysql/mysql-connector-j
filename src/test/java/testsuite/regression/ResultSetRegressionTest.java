@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -80,18 +80,14 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
 
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.log.Log;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.MysqlType;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.ExceptionInterceptorChain;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.io.SqlDateValueFactory;
-import com.mysql.cj.core.log.StandardLogger;
-import com.mysql.cj.core.util.Util;
+import com.mysql.cj.Messages;
+import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.ExceptionInterceptorChain;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
@@ -100,8 +96,12 @@ import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
-import com.mysql.cj.mysqla.result.MysqlaResultset;
-import com.mysql.cj.mysqla.result.ResultsetRowsCursor;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.a.result.NativeResultset;
+import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
+import com.mysql.cj.result.SqlDateValueFactory;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
 
@@ -2948,7 +2948,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(1));
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(2));
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn)
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn)
                 .serverPrepareStatement("select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1").executeQuery();
 
         assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(1));
@@ -3658,7 +3658,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug34913() throws Exception {
         Timestamp ts = new Timestamp(new Date(109, 5, 1).getTime());
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
+        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
         this.pstmt.setTimestamp(1, ts);
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
@@ -3762,7 +3762,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         checkTimestampNanos();
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT '2008-09-26 15:47:20.797283'").executeQuery();
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT '2008-09-26 15:47:20.797283'").executeQuery();
         this.rs.next();
 
         checkTimestampNanos();
@@ -3816,8 +3816,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
-                .serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         this.rs.next();
         checkRanges();
@@ -3829,8 +3828,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkRanges();
         this.rs.close();
 
-        this.pstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) c)
-                .clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+        this.pstmt = ((com.mysql.cj.jdbc.JdbcConnection) c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
         this.rs = this.pstmt.executeQuery();
         assertTrue(this.rs.next());
         checkRanges();
@@ -3988,7 +3986,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             createTable("bug32525", "(field1 date, field2 timestamp)");
             st.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
 
-            this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
+            this.rs = ((com.mysql.cj.jdbc.JdbcConnection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
             this.rs.next();
             assertEquals("0000-00-00", this.rs.getString(1));
             assertEquals("0000-00-00 00:00:00", this.rs.getString(2));
@@ -5696,7 +5694,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(expectedResultClass, rs1.getClass());
 
         // ensure that cursor exists
-        Field f = MysqlaResultset.class.getDeclaredField("rowData");
+        Field f = NativeResultset.class.getDeclaredField("rowData");
         f.setAccessible(true);
         assertTrue(f.get(rs1).getClass().isAssignableFrom(ResultsetRowsCursor.class));
 

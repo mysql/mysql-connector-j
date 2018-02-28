@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,14 +41,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
-import com.mysql.cj.api.xdevapi.Schema;
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.Table;
 
 public class SchemaTest extends DevApiBaseTestCase {
     @Before
@@ -72,7 +72,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         assertTrue(this.schema.equals(otherDefaultSchema));
         assertFalse(this.schema.equals(this.session));
 
-        Session otherSession = new SessionImpl(this.testProperties);
+        Session otherSession = new SessionImpl(this.testHostInfo);
         Schema diffSessionSchema = otherSession.getDefaultSchema();
         assertEquals(this.schema.getName(), diffSessionSchema.getName());
         assertFalse(this.schema.equals(diffSessionSchema));
@@ -133,7 +133,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         try {
             this.schema.createCollection(collName);
             fail("Exception should be thrown trying to create a collection that already exists");
-        } catch (XDevAPIError ex) {
+        } catch (XProtocolError ex) {
             // expected
             assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
         }
@@ -162,7 +162,7 @@ public class SchemaTest extends DevApiBaseTestCase {
         coll = this.schema.getCollection(collName);
         assertEquals(DbObjectStatus.NOT_EXISTS, coll.existsInDatabase());
 
-        assertThrows(XDevAPIError.class, "Parameter 'collectionName' must not be null.", new Callable<Void>() {
+        assertThrows(XProtocolError.class, "Parameter 'collectionName' must not be null.", new Callable<Void>() {
             public Void call() throws Exception {
                 SchemaTest.this.schema.dropCollection(null);
                 return null;

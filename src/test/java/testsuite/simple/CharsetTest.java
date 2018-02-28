@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,8 +45,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.conf.PropertyDefinitions;
 
 import testsuite.BaseTestCase;
 
@@ -165,19 +165,19 @@ public class CharsetTest extends BaseTestCase {
             return;
         }
 
-        Map<String, char[]> testDataMap = new HashMap<String, char[]>();
+        Map<String, char[]> testDataMap = new HashMap<>();
 
-        List<String> charsetList = new ArrayList<String>();
+        List<String> charsetList = new ArrayList<>();
 
-        Map<String, Connection> connectionMap = new HashMap<String, Connection>();
+        Map<String, Connection> connectionMap = new HashMap<>();
 
-        Map<String, Connection> connectionWithResultMap = new HashMap<String, Connection>();
+        Map<String, Connection> connectionWithResultMap = new HashMap<>();
 
-        Map<String, Statement> statementMap = new HashMap<String, Statement>();
+        Map<String, Statement> statementMap = new HashMap<>();
 
-        Map<String, Statement> statementWithResultMap = new HashMap<String, Statement>();
+        Map<String, Statement> statementWithResultMap = new HashMap<>();
 
-        Map<String, String> javaToMysqlCharsetMap = new HashMap<String, String>();
+        Map<String, String> javaToMysqlCharsetMap = new HashMap<>();
 
         charsetList.add("SJIS");
         testDataMap.put("SJIS", SJIS_CHARS);
@@ -345,7 +345,7 @@ public class CharsetTest extends BaseTestCase {
                 { "823398318233973582339A3882348A32", "\u4460\u445A\u447B\u48C8" }, { "8134D5318134D6328134D832", "\u1817\u1822\u1836" },
                 { "4A7320204B82339A35646566", "Js  K\u4478def" }, { "8130883281308833", "\u00CE\u00CF" }, { "E05FE06A777682339230", "\u90F7\u9107wv\u4423" },
                 { "814081418139FE30", "\u4E02\u4E04\u3499" }, { "81308130FEFE", "\u0080\uE4C5" }, { "E3329A35E3329A34", "\uDBFF\uDFFF\uDBFF\uDFFE" } };
-        HashMap<String, String> expected = new HashMap<String, String>();
+        HashMap<String, String> expected = new HashMap<>();
 
         // check variables
         Connection con = getConnectionWithProps("characterEncoding=GB18030");

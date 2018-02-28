@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,21 +37,24 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.io.XProtocol;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Session;
 
 /**
  * Tests for protocol-level auth APIs against X Plugin via X Protocol.
  */
 public class XProtocolAuthTest extends InternalXBaseTestCase {
     private static XProtocol protocol;
+    private XMessageBuilder messageBuilder;
 
     @Before
     public void setupTestProtocol() throws Exception {
         if (this.isSetForXTests) {
             protocol = createTestProtocol();
+            this.messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
         }
     }
 
@@ -72,10 +75,10 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
             return;
         }
         try {
-            protocol.sendCreateCollection(getTestDatabase(), "wont_be_Created");
-            protocol.readStatementExecuteOk();
+            protocol.send(this.messageBuilder.buildCreateCollection(getTestDatabase(), "wont_be_Created"), 0);
+            protocol.readQueryResult();
             fail("Should fail after first message is sent");
-        } catch (XDevAPIError err) {
+        } catch (XProtocolError err) {
             // expected
             //ex.printStackTrace();
         }
@@ -87,7 +90,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+        protocol.send(this.messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase()), 0);
         protocol.readAuthenticateOk();
     }
 
@@ -101,9 +104,9 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
             testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
             testSession.close();
 
-            protocol.sendSaslMysql41AuthStart();
+            protocol.send(this.messageBuilder.buildMysql41AuthStart(), 0);
             byte[] salt = protocol.readAuthenticateContinue();
-            protocol.sendSaslMysql41AuthContinue("testPlainAuth", "pwd", salt, getTestDatabase());
+            protocol.send(this.messageBuilder.buildMysql41AuthContinue("testPlainAuth", "pwd", salt, getTestDatabase()), 0);
             protocol.readAuthenticateOk();
         } catch (Throwable t) {
             throw t;
@@ -121,10 +124,10 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
             return;
         }
         try {
-            protocol.sendSaslPlainAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase());
+            protocol.send(this.messageBuilder.buildPlainAuthStart(getTestUser(), "com.mysql.cj.theWrongPassword", getTestDatabase()), 0);
             protocol.readAuthenticateOk();
             fail("Auth using wrong password should fail");
-        } catch (XDevAPIError ex) {
+        } catch (XProtocolError ex) {
             assertEquals(MysqlErrorNumbers.ER_ACCESS_DENIED_ERROR, ex.getErrorCode());
             assertEquals("ERROR 1045 (HY000) Invalid user or password", ex.getMessage());
         }
@@ -144,9 +147,9 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
             testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
             testSession.close();
 
-            protocol.sendSaslMysql41AuthStart();
+            protocol.send(this.messageBuilder.buildMysql41AuthStart(), 0);
             byte[] salt = protocol.readAuthenticateContinue();
-            protocol.sendSaslMysql41AuthContinue("testPlainAuth", "pwd", salt, null);
+            protocol.send(this.messageBuilder.buildMysql41AuthContinue("testPlainAuth", "pwd", salt, null), 0);
             protocol.readAuthenticateOk();
         } catch (Throwable t) {
             throw t;
@@ -166,7 +169,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), null);
+        protocol.send(this.messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), null), 0);
         protocol.readAuthenticateOk();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,9 +33,9 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Properties;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.interceptors.ConnectionLifecycleInterceptor;
-import com.mysql.cj.api.log.Log;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.jdbc.interceptors.ConnectionLifecycleInterceptor;
+import com.mysql.cj.log.Log;
 
 public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor {
     static int transactionsBegun = 0;

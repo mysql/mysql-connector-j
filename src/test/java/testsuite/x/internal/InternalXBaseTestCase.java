@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,19 +36,22 @@ import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.conf.DefaultPropertySet;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.x.core.MysqlxSession;
-import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.io.XProtocol;
-import com.mysql.cj.x.io.XProtocolFactory;
+import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.ConnectionUrl;
+import com.mysql.cj.conf.DefaultPropertySet;
+import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.protocol.x.XServerCapabilities;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.SqlResult;
 
 import testsuite.TestUtils;
 
@@ -68,6 +71,7 @@ public class InternalXBaseTestCase {
     protected boolean isSetForOpensslXTests = this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0;
     protected SessionFactory fact = new SessionFactory();
 
+    public HostInfo testHostInfo;
     public Properties testProperties = new Properties();
     public Properties testPropertiesOpenSSL = new Properties();
 
@@ -79,6 +83,7 @@ public class InternalXBaseTestCase {
             if (conUrl.getType() == null) {
                 throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");
             }
+            this.testHostInfo = conUrl.getMainHost();
             this.testProperties = conUrl.getMainHost().exposeAsProperties();
         }
         if (this.isSetForOpensslXTests) {
@@ -119,7 +124,8 @@ public class InternalXBaseTestCase {
      */
     public XProtocol createTestProtocol() {
         // TODO pass prop. set
-        XProtocol protocol = XProtocolFactory.getInstance(getTestHost(), getTestPort(), new DefaultPropertySet());
+        XProtocol protocol = XProtocol.getInstance(getTestHost(), getTestPort(), new DefaultPropertySet());
+        protocol.beforeHandshake();
         return protocol;
     }
 
@@ -128,9 +134,10 @@ public class InternalXBaseTestCase {
      */
     public XProtocol createAuthenticatedTestProtocol() {
         XProtocol protocol = createTestProtocol();
+        XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
         String authMech = protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_auth).getValue();
-        boolean overTLS = protocol.getTls();
+        boolean overTLS = ((XServerCapabilities) protocol.getServerSession().getCapabilities()).getTls();
 
         // default choice
         if (authMech == null) {
@@ -142,26 +149,20 @@ public class InternalXBaseTestCase {
 
         switch (authMech) {
             case "MYSQL41":
-                protocol.sendSaslMysql41AuthStart();
+                protocol.send(messageBuilder.buildMysql41AuthStart(), 0);
                 byte[] salt = protocol.readAuthenticateContinue();
-                protocol.sendSaslMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
+                protocol.send(messageBuilder.buildMysql41AuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase()), 0);
                 break;
             case "PLAIN":
                 if (overTLS) {
-                    protocol.sendSaslPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase());
+                    protocol.send(messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), getTestDatabase()), 0);
                 } else {
-                    throw new XDevAPIError("PLAIN authentication is not allowed via unencrypted connection.");
+                    throw new XProtocolError("PLAIN authentication is not allowed via unencrypted connection.");
                 }
                 break;
             case "EXTERNAL":
-                protocol.sendSaslExternalAuthStart(getTestDatabase());
+                protocol.send(messageBuilder.buildExternalAuthStart(getTestDatabase()), 0);
                 break;
-            // TODO see WL#10992
-            //            case "SHA256_MEMORY":
-            //                protocol.sendSaslSha256MemoryAuthStart();
-            //                salt = protocol.readAuthenticateContinue();
-            //                protocol.sendSaslSha256MemoryAuthContinue(getTestUser(), getTestPassword(), salt, getTestDatabase());
-            //                break;
 
             default:
                 throw new WrongArgumentException("Unknown authentication mechanism '" + authMech + "'.");
@@ -173,8 +174,9 @@ public class InternalXBaseTestCase {
     }
 
     public MysqlxSession createTestSession() {
-        MysqlxSession session = new MysqlxSession(this.testProperties);
-        session.changeUser(getTestUser(), getTestPassword(), getTestDatabase());
+        PropertySet pset = new DefaultPropertySet();
+        pset.initializeProperties(this.testProperties);
+        MysqlxSession session = new MysqlxSession(this.testHostInfo, pset);
         return session;
     }
 
@@ -185,15 +187,16 @@ public class InternalXBaseTestCase {
      */
     public String createTempTestCollection(XProtocol protocol) {
         String collName = "protocol_test_collection";
+        XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
         try {
-            protocol.sendDropCollection(getTestDatabase(), collName);
-            protocol.readStatementExecuteOk();
-        } catch (XDevAPIError err) {
+            protocol.send(messageBuilder.buildDropCollection(getTestDatabase(), collName), 0);
+            protocol.readQueryResult();
+        } catch (XProtocolError err) {
             // ignore
         }
-        protocol.sendCreateCollection(getTestDatabase(), collName);
-        protocol.readStatementExecuteOk();
+        protocol.send(messageBuilder.buildCreateCollection(getTestDatabase(), collName), 0);
+        protocol.readQueryResult();
 
         return collName;
     }
@@ -244,7 +247,7 @@ public class InternalXBaseTestCase {
     protected boolean mysqlVersionMeetsMinimum(ServerVersion version) {
         if (this.isSetForXTests) {
             if (this.mysqlVersion == null) {
-                Session session = new SessionImpl(this.testProperties);
+                Session session = new SessionImpl(this.testHostInfo);
                 this.mysqlVersion = ServerVersion.parseVersion(session.sql("SELECT version()").execute().fetchOne().getString(0));
                 session.close();
             }

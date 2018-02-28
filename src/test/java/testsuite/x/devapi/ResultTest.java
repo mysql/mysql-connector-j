@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,11 +44,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
-import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.api.xdevapi.Warning;
-import com.mysql.cj.core.exceptions.DataReadException;
+import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.Table;
+import com.mysql.cj.xdevapi.Warning;
 
 public class ResultTest extends DevApiBaseTestCase {
     @Before

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,10 +51,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.MysqlType;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 
@@ -82,7 +82,7 @@ public class ResultSetTest extends BaseTestCase {
 
         // build map of charsets supported by server
         Connection c = getConnectionWithProps("detectCustomCollations=true");
-        Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
+        Map<String, Integer> charsetsMap = new HashMap<>();
         this.rs = this.stmt.executeQuery("SHOW COLLATION");
         while (this.rs.next()) {
             int index = ((Number) this.rs.getObject(3)).intValue();
@@ -183,7 +183,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) paddedConn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) paddedConn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -194,7 +194,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) paddedConn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) paddedConn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -223,7 +223,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
@@ -241,7 +241,7 @@ public class ResultSetTest extends BaseTestCase {
             }
         }
 
-        this.rs = ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement(query).executeQuery();
+        this.rs = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement(query).executeQuery();
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {

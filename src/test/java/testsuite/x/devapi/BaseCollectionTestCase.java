@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,7 @@ import java.util.Random;
 import org.junit.After;
 import org.junit.Before;
 
-import com.mysql.cj.api.xdevapi.Collection;
+import com.mysql.cj.xdevapi.Collection;
 
 public class BaseCollectionTestCase extends DevApiBaseTestCase {
     /** Collection for testing. */
@@ -52,7 +52,7 @@ public class BaseCollectionTestCase extends DevApiBaseTestCase {
 
     @After
     public void teardownCollectionTest() {
-        if (this.isSetForXTests && this.session.isOpen()) {
+        if (this.isSetForXTests && this.session != null && this.session.isOpen()) {
             try {
                 dropCollection(this.collectionName);
             } catch (Exception ex) {

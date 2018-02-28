@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,8 @@
 
 package testsuite.simple;
 
-import com.mysql.cj.api.ProfilerEvent;
-import com.mysql.cj.core.log.StandardLogger;
+import com.mysql.cj.log.ProfilerEvent;
+import com.mysql.cj.log.StandardLogger;
 
 public class TestBug57662Logger extends StandardLogger {
 

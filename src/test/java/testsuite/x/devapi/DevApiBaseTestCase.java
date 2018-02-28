@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,13 +31,13 @@ package testsuite.x.devapi;
 
 import java.lang.reflect.Field;
 
-import com.mysql.cj.api.xdevapi.Schema;
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.MysqlxSession;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.SqlResult;
 
 import testsuite.x.internal.InternalXBaseTestCase;
 
@@ -55,7 +55,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
 
     public boolean setupTestSession() {
         if (this.isSetForXTests) {
-            this.session = new SessionImpl(this.testProperties);
+            this.session = new SessionImpl(this.testHostInfo);
             this.schema = this.session.getDefaultSchema();
             SqlResult rs = this.session.sql("SHOW VARIABLES LIKE 'character_set_database'").execute();
             this.dbCharset = rs.fetchOne().getString(1);
@@ -82,7 +82,8 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         try {
             Field f = SessionImpl.class.getDeclaredField("session");
             f.setAccessible(true);
-            ((MysqlxSession) f.get(this.session)).update(sql);
+            MysqlxSession mysqlxSession = (MysqlxSession) f.get(this.session);
+            mysqlxSession.sendMessage(mysqlxSession.getMessageBuilder().buildSqlStatement(sql));
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -93,7 +94,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         if (this.isSetForXTests) {
             try {
                 this.schema.dropCollection(collectionName);
-            } catch (XDevAPIError ex) {
+            } catch (XProtocolError ex) {
                 if (ex.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
                     throw ex;
                 }

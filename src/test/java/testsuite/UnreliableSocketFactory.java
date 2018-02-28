@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,8 +46,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.io.StandardSocketFactory;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.protocol.StandardSocketFactory;
 
 /**
  * Configure "socketFactory" to use this class in your JDBC URL, and it will operate as normal, unless you map some host aliases to actual IP addresses, and
@@ -65,12 +65,12 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     public static final long DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000; // ugh
 
-    private static final Map<String, String> MAPPED_HOSTS = new HashMap<String, String>();
-    static final Set<String> HUNG_READ_HOSTS = new HashSet<String>();
-    static final Set<String> HUNG_WRITE_HOSTS = new HashSet<String>();
-    static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<String>();
-    static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<String>();
-    static final List<String> CONNECTION_ATTEMPTS = new LinkedList<String>();
+    private static final Map<String, String> MAPPED_HOSTS = new HashMap<>();
+    static final Set<String> HUNG_READ_HOSTS = new HashSet<>();
+    static final Set<String> HUNG_WRITE_HOSTS = new HashSet<>();
+    static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<>();
+    static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<>();
+    static final List<String> CONNECTION_ATTEMPTS = new LinkedList<>();
 
     private String hostname;
     private int portNumber;

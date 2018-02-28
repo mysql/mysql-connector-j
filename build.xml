@@ -170,7 +170,7 @@ com.mysql.cj.testsuite.mysqlx.url.openssl - connection string to the test server
 com.mysql.cj.testsuite.test.class - testcase class name to run
 com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in class defined by 'com.mysql.cj.testsuite.test.class'
 
-See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other test options.
+See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test options.
 </description>
 
 
@@ -501,8 +501,13 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <fileset dir="src/build/java" />
             <fileset dir="src/build/misc" />
             <fileset dir="src/generated/java" />
-            <fileset dir="src/main/java" />
+            <fileset dir="src/main/user-api/java" />
+            <fileset dir="src/main/user-impl/java" />
+            <fileset dir="src/main/core-api/java" />
+            <fileset dir="src/main/core-impl/java" />
+            <fileset dir="src/main/protocol-impl/java" />
             <fileset dir="src/main/resources" />
+            <fileset dir="src/legacy/java" />
             <fileset dir="src/demo/java" />
 
             <filterset refid="versionFilterset" />
@@ -544,7 +549,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Add commercial license configuration class (Build). -->
     <target name="-init-filter-license" if="com.mysql.cj.build.filterLicense">
         <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
-              toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/LicenseConfiguration.java"
+              toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
@@ -552,7 +557,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Add no-crypto export control class (Build). -->
     <target name="-init-no-crypto" if="com.mysql.cj.build.noCrypto">
         <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
-              toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/core/io/ExportControlled.java"
+              toFile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/protocol/ExportControlled.java"
               overwrite="true" />
     </target>
 
@@ -560,7 +565,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Copy commercial license configuration class (Package). -->
     <target name="-copy-filter-license" if="com.mysql.cj.build.filterLicense">
         <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
-              toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/LicenseConfiguration.java"
+              toFile="${com.mysql.cj.dist.dir.package}/src/main/core-impl/java/com/mysql/cj/LicenseConfiguration.java"
               overwrite="true" />
     </target>
 
@@ -568,7 +573,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" if="com.mysql.cj.build.noCrypto">
         <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
-              toFile="${com.mysql.cj.dist.dir.package}/src/main/java/com/mysql/cj/core/io/ExportControlled.java"
+              toFile="${com.mysql.cj.dist.dir.package}/src/main/protocol-impl/java/com/mysql/cj/protocol/ExportControlled.java"
               overwrite="true" />
     </target>
 
@@ -673,27 +678,35 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
                   value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
 
         <property name="com.mysql.cj.build.meta-inf.driver-exports"
-                  value="com.mysql.cj.api.jdbc;com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;javax.management,javax.naming,javax.naming.spi,javax.net.ssl,javax.sql,javax.transaction.xa,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
+                  value="com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;javax.management,javax.naming,javax.naming.spi,javax.net.ssl,javax.sql,javax.transaction.xa,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.core-exports"
+                  value="com.mysql.cj;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.protocol;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.protocol.result;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.result;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.protocol-exports"
+                  value="com.mysql.cj.protocol.a;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.protocol.a.authentication;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.protocol.a.result;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.protocol.x;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.generated-exports"
+                  value="com.mysql.cj.x.protobuf;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.logging-exports"
-                  value="com.mysql.cj.api.log;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
-        <property name="com.mysql.cj.build.meta-inf.profiling-exports"
-                  value="com.mysql.cj.core.profiler;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.log;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.util-exports"
-                  value="com.mysql.cj.core.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.util;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.exceptions-exports"
-                  value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.jdbc.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.exceptions;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.ha-exports"
-                  value="com.mysql.cj.api.jdbc.ha;com.mysql.cj.jdbc.ha;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.jdbc.ha;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.interceptors-exports"
-                  value="com.mysql.cj.api.jdbc.interceptors;com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.integration-exports"
                   value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;org.jboss.resource.adapter.jdbc,org.jboss.resource.adapter.jdbc.vendor&quot;" />
         <property name="com.mysql.cj.build.meta-inf.configs-exports"
-                  value="com.mysql.cj.configurations;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
+                  value="com.mysql.cj.configurations;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.conf;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.conf.url;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.legacy-exports"
                   value="com.mysql.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mysql.cj.jdbc&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.jdbc-exports"
+                  value="com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.jmx;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.result;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.xdevapi-exports"
-                  value="com.mysql.cj.api.xdevapi;com.mysql.cj.xdevapi;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.google.protobuf,javax.security.auth.callback,javax.security.sasl&quot;" />
+                  value="com.mysql.cj.xdevapi;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.google.protobuf,javax.security.auth.callback,javax.security.sasl&quot;" />
+        <property name="com.mysql.cj.build.meta-inf.admin-exports"
+                  value="com.mysql.cj.admin;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.jdbc.admin;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
 
         <manifest file="${com.mysql.cj.build.dir.driver}/META-INF/MANIFEST.MF">
             <attribute name="Built-By" value="${user.name}" />
@@ -713,7 +726,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             <attribute name="Bundle-ManifestVersion" value="2" />
             <attribute name="Bundle-SymbolicName" value="com.mysql.cj" />
             <attribute name="Export-Package"
-                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.profiling-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.xdevapi-exports}" />
+                       value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.core-exports},${com.mysql.cj.build.meta-inf.protocol-exports},${com.mysql.cj.build.meta-inf.generated-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.ha-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.jdbc-exports},${com.mysql.cj.build.meta-inf.xdevapi-exports},${com.mysql.cj.build.meta-inf.admin-exports}" />
             <attribute name="Import-Package"
                        value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
         </manifest>
@@ -1074,7 +1087,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             description="Generates properties table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="com.mysql.cj.generated.properties.xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.PropertiesDocGenerator"
+        <java classname="documentation.PropertiesDocGenerator"
               output="${com.mysql.cj.generated.properties.xml}"
               classpath="${com.mysql.cj.build.dir.driver}" />
         <copy file="${com.mysql.cj.generated.properties.xml}" tofile="${com.mysql.cj.build.dir.driver}/docs/sources/connPropsToDocbook.xml" />
@@ -1087,7 +1100,7 @@ See also com.mysql.cj.core.conf.PropertyDefinitions.SYSP_* variables for other t
             description="Generates error mapping table doc for the MySQL Connector/J docs web site."
             depends="compile-driver">
         <tempfile property="com.mysql.cj.generated.errorsMapping.xml" suffix=".xml" />
-        <java classname="com.mysql.cj.jdbc.util.ErrorMappingsDocGenerator"
+        <java classname="documentation.ErrorMappingsDocGenerator"
               output="${com.mysql.cj.generated.errorsMapping.xml}"
               classpath="${com.mysql.cj.build.dir.driver}" />
         <copy file="${com.mysql.cj.generated.errorsMapping.xml}" tofile="${com.mysql.cj.build.dir.driver}/docs/sources/errorMapToDocbook.xml" />

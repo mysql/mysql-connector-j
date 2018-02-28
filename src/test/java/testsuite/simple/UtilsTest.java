@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,14 +36,14 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.core.util.Util;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.PreparedStatement;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.ha.MultiHostConnectionProxy;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
 
@@ -74,15 +74,16 @@ public class UtilsTest extends BaseTestCase {
      */
     public void testIsJdbcInterface() throws Exception {
         // Classes directly or indirectly implementing JDBC interfaces.
-        assertTrue(Util.isJdbcInterface(PreparedStatement.class));
+        assertTrue(Util.isJdbcInterface(ClientPreparedStatement.class));
         assertTrue(Util.isJdbcInterface(StatementImpl.class));
-        assertTrue(Util.isJdbcInterface(Statement.class));
+        assertTrue(Util.isJdbcInterface(JdbcStatement.class));
         assertTrue(Util.isJdbcInterface(ResultSetImpl.class));
-        Statement s = (Statement) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[] { Statement.class }, new InvocationHandler() {
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return null;
-            }
-        });
+        JdbcStatement s = (JdbcStatement) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[] { JdbcStatement.class },
+                new InvocationHandler() {
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        return null;
+                    }
+                });
         assertTrue(Util.isJdbcInterface(s.getClass()));
 
         // Classes not implementing JDBC interfaces.
@@ -123,13 +124,13 @@ public class UtilsTest extends BaseTestCase {
      */
     public void testGetImplementedInterfaces() throws Exception {
         Class<?>[] ifaces;
-        ifaces = Util.getImplementedInterfaces(Statement.class);
-        assertEquals(1, ifaces.length);
+        ifaces = Util.getImplementedInterfaces(JdbcStatement.class);
+        assertEquals(2, ifaces.length);
         assertEquals(ifaces[0], java.sql.Statement.class);
 
         ifaces = Util.getImplementedInterfaces(StatementImpl.class);
-        assertEquals(2, ifaces.length);
-        assertEquals(ifaces[0], Statement.class);
+        assertEquals(1, ifaces.length);
+        assertEquals(ifaces[0], JdbcStatement.class);
 
         ifaces = Util.getImplementedInterfaces(ConnectionImpl.class);
         assertEquals(3, ifaces.length);

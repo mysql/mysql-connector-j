@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,13 +29,14 @@
 
 package demo.x.devapi;
 
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Schema;
-import com.mysql.cj.api.xdevapi.Session;
+import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 
 /*
@@ -54,7 +55,7 @@ public class DevApiSample {
     public static void documentWalkthrough(Schema schema) {
         // document walthrough
         Collection coll = schema.createCollection("myBooks", /* reuseExistingObject? */ true);
-        DbDoc newDoc = new DbDoc().add("isbn", new JsonString().setValue("12345"));
+        DbDoc newDoc = new DbDocImpl().add("isbn", new JsonString().setValue("12345"));
         newDoc.add("title", new JsonString().setValue("Effi Briest"));
         newDoc.add("author", new JsonString().setValue("Theodor Fontane"));
         newDoc.add("currentlyReadingPage", new JsonNumber().setValue(String.valueOf(42)));

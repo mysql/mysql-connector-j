@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,17 +43,16 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.mysql.cj.api.xdevapi.AddResult;
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.AddResult;
+import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.SqlResult;
 
 @Category(testsuite.x.AsyncTests.class)
 public class AsyncQueryTest extends BaseCollectionTestCase {
@@ -101,36 +100,6 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
     }
 
     @Test
-    public void basicRowWiseAsync() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
-        sqlUpdate("drop table if exists rowwise");
-        sqlUpdate("create table rowwise (age int)");
-        sqlUpdate("insert into rowwise values (1), (1), (1)");
-
-        Table table = this.schema.getTable("rowwise");
-        CompletableFuture<Integer> sumF = table.select("age").executeAsync(1, (Integer r, Row row) -> r + row.getInt("age"));
-        assertEquals(new Integer(4), sumF.get());
-    }
-
-    @Test
-    public void syntaxErrorRowWise() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
-        CompletableFuture<Integer> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync(1, (acc, doc) -> 1);
-        try {
-            res.get();
-            fail("Should fail due to non existing function");
-        } catch (ExecutionException ex) {
-            Throwable cause = ex.getCause();
-            assertEquals(XDevAPIError.class, cause.getClass());
-            assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((XDevAPIError) cause).getErrorCode());
-        }
-    }
-
-    @Test
     public void syntaxErrorEntireResult() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -141,8 +110,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
             fail("Should fail due to non existing function");
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();
-            assertEquals(XDevAPIError.class, cause.getClass());
-            assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((XDevAPIError) cause).getErrorCode());
+            assertEquals(XProtocolError.class, cause.getClass());
+            assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, ((XProtocolError) cause).getErrorCode());
         }
     }
 
@@ -269,7 +238,7 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
                     docs = futures.get(i).get();
                     fail("Expected error");
                 } catch (ExecutionException ex) {
-                    XDevAPIError err = (XDevAPIError) ex.getCause();
+                    XProtocolError err = (XProtocolError) ex.getCause();
                     assertEquals(MysqlErrorNumbers.ER_SP_DOES_NOT_EXIST, err.getErrorCode());
                 }
             } else {

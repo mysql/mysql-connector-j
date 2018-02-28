@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,12 +32,12 @@ package testsuite;
 import java.util.Properties;
 import java.util.function.Supplier;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Query;
-import com.mysql.cj.api.interceptors.QueryInterceptor;
-import com.mysql.cj.api.io.ServerSession;
-import com.mysql.cj.api.log.Log;
-import com.mysql.cj.api.mysqla.result.Resultset;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.Query;
+import com.mysql.cj.interceptors.QueryInterceptor;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.protocol.Resultset;
+import com.mysql.cj.protocol.ServerSession;
 
 public class BaseQueryInterceptor implements QueryInterceptor {
 

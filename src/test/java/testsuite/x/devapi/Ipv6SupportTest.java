@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,9 +41,9 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.xdevapi.Session;
 
 import testsuite.TestUtils;
 

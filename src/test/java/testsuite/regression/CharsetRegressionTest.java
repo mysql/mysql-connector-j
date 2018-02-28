@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,12 +34,12 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Query;
-import com.mysql.cj.api.mysqla.result.Resultset;
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.Query;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.protocol.Resultset;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -65,7 +65,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         String collation = this.rs.getString(2);
 
         if (collation != null && collation.startsWith("utf8mb4")
-                && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerVariable("character_set_server"))) {
+                && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server"))) {
             Properties p = new Properties();
             p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
             p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug73663QueryInterceptor.class.getName());

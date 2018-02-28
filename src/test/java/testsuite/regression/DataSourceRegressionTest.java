@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,10 +58,10 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.conf.ModifiableProperty;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.conf.ModifiableProperty;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlDataSourceFactory;

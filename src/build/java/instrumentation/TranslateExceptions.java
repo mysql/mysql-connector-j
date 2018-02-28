@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,24 +39,20 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import com.mysql.cj.api.QueryBindings;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.Statement;
-import com.mysql.cj.api.jdbc.ha.LoadBalancedConnection;
-import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.jdbc.result.ResultSetInternalMethods;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.ColumnDefinition;
-import com.mysql.cj.core.exceptions.CJException;
+import com.mysql.cj.QueryBindings;
+import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.BlobFromLocator;
 import com.mysql.cj.jdbc.CallableStatement;
 import com.mysql.cj.jdbc.CallableStatement.CallableStatementParamInfo;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.Clob;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
 import com.mysql.cj.jdbc.DatabaseMetaData;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcStatement;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlParameterMetadata;
@@ -68,17 +64,21 @@ import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.NClob;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.jdbc.PreparedStatement;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.jdbc.ha.LoadBalancedConnection;
 import com.mysql.cj.jdbc.ha.LoadBalancedMySQLConnection;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.jdbc.ha.ReplicationMySQLConnection;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
+import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.protocol.Message;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -110,13 +110,15 @@ public class TranslateExceptions {
         //CtClass ctInputStream = pool.get(InputStream.class.getName());
         CtClass ctJdbcConnection = pool.get(JdbcConnection.class.getName());
         CtClass ctMysqlSavepoint = pool.get(MysqlSavepoint.class.getName());
-        CtClass ctPacketPayload = pool.get(PacketPayload.class.getName());
+        //CtClass ctPacketPayload = pool.get(PacketPayload.class.getName());
         CtClass ctProperties = pool.get(Properties.class.getName());
         CtClass ctResultSet = pool.get(ResultSet.class.getName());
         CtClass ctResultSetInternalMethods = pool.get(ResultSetInternalMethods.class.getName());
         CtClass ctStatement = pool.get(java.sql.Statement.class.getName());
         CtClass ctStatementImpl = pool.get(StatementImpl.class.getName());
         CtClass ctString = pool.get(String.class.getName());
+
+        CtClass ctMessageBody = pool.get(Message.class.getName());
 
         // class we want to instrument
         CtClass clazz;
@@ -140,7 +142,7 @@ public class TranslateExceptions {
         // com.mysql.cj.jdbc.CallableStatement extends PreparedStatement implements java.sql.CallableStatement
         clazz = pool.get(CallableStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.CallableStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
-        instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
+        instrumentJdbcMethods(clazz, JdbcStatement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkIsOutputParam", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkParameterIndexBounds", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
@@ -285,9 +287,9 @@ public class TranslateExceptions {
          * java.sql.PreparedStatement extends java.sql.Statement (java.sql.Statement extends java.sql.Wrapper)
          */
         // com.mysql.cj.jdbc.PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement
-        clazz = pool.get(PreparedStatement.class.getName());
+        clazz = pool.get(ClientPreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
-        instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
+        instrumentJdbcMethods(clazz, JdbcStatement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
         catchRuntimeException(clazz, clazz.getDeclaredMethod("asSql", new CtClass[] { CtClass.booleanType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkBounds", new CtClass[] { CtClass.intType, CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
@@ -296,7 +298,7 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchSerially", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
-                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
+                        new CtClass[] { CtClass.intType, ctMessageBody, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executePreparedBatchAsMultiStatement", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
@@ -326,13 +328,13 @@ public class TranslateExceptions {
          */
         clazz = pool.get(ServerPreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
-        instrumentJdbcMethods(clazz, Statement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
+        instrumentJdbcMethods(clazz, JdbcStatement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBinding", new CtClass[] { CtClass.intType, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
-                        new CtClass[] { CtClass.intType, ctPacketPayload, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
+                        new CtClass[] { CtClass.intType, ctMessageBody, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         //catchRuntimeException(clazz, clazz.getDeclaredMethod("canRewriteAsMultiValueInsertAtSqlLevel", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("realClose", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
@@ -347,7 +349,7 @@ public class TranslateExceptions {
         /*
          * java.sql.ResultSet extends java.sql.Wrapper
          */
-        // com.mysql.cj.jdbc.ResultSetImpl implements com.mysql.cj.api.jdbc.ResultSetInternalMethods (extends java.sql.ResultSet)
+        // com.mysql.cj.jdbc.ResultSetImpl implements com.mysql.cj.jdbc.ResultSetInternalMethods (extends java.sql.ResultSet)
         clazz = pool.get(ResultSetImpl.class.getName());
         instrumentJdbcMethods(clazz, ResultSetInternalMethods.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         clazz.writeFile(args[0]);
@@ -377,9 +379,9 @@ public class TranslateExceptions {
         /*
          * java.sql.Statement extends java.sql.Wrapper
          */
-        // com.mysql.cj.jdbc.StatementImpl implements com.mysql.cj.api.jdbc.Statement (extends java.sql.Statement)
+        // com.mysql.cj.jdbc.StatementImpl implements com.mysql.cj.jdbc.Statement (extends java.sql.Statement)
         clazz = pool.get(StatementImpl.class.getName());
-        instrumentJdbcMethods(clazz, Statement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
+        instrumentJdbcMethods(clazz, JdbcStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         // non-JDBC
         catchRuntimeException(clazz, clazz.getDeclaredMethod("createResultSetUsingServerFetch", new CtClass[] { ctString }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("doPingInstead", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);

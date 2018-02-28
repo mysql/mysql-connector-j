@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,8 +31,8 @@ package testsuite.simple;
 
 import java.util.Properties;
 
-import com.mysql.cj.api.conf.ConnectionPropertiesTransform;
-import com.mysql.cj.core.conf.PropertyDefinitions;
+import com.mysql.cj.conf.ConnectionPropertiesTransform;
+import com.mysql.cj.conf.PropertyDefinitions;
 
 /**
  * Used for testing the ConnectionPropertiesTransform functionality.

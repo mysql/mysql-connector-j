@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,14 +44,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.Schema;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.api.xdevapi.SqlStatement;
-import com.mysql.cj.core.exceptions.CJPacketTooBigException;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.SqlResult;
+import com.mysql.cj.xdevapi.SqlStatement;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class SessionTest extends DevApiBaseTestCase {
     @Before
@@ -65,7 +66,7 @@ public class SessionTest extends DevApiBaseTestCase {
             this.createdTestSchemas.forEach(schemaName -> {
                 try {
                     this.session.dropSchema(schemaName);
-                } catch (XDevAPIError x) {
+                } catch (XProtocolError x) {
                     // ignored
                 }
             });
@@ -132,7 +133,7 @@ public class SessionTest extends DevApiBaseTestCase {
         try {
             this.session.createSchema(testSchemaName);
             fail("Attempt to create a schema with the name of an existing schema should fail");
-        } catch (XDevAPIError err) {
+        } catch (XProtocolError err) {
             assertEquals(MysqlErrorNumbers.ER_DB_CREATE_EXISTS, err.getErrorCode());
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,12 +45,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.mysql.cj.api.x.io.ResultListener;
-import com.mysql.cj.core.result.Field;
-import com.mysql.cj.x.core.StatementExecuteOk;
-import com.mysql.cj.x.core.XDevAPIError;
-import com.mysql.cj.x.io.XProtocol;
-import com.mysql.cj.x.io.XProtocolRow;
+import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.protocol.ResultListener;
+import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.result.Row;
 import com.mysql.cj.xdevapi.DocFindParams;
 
 /**
@@ -59,18 +59,20 @@ import com.mysql.cj.xdevapi.DocFindParams;
 @Category(testsuite.x.AsyncTests.class)
 public class XProtocolAsyncTest extends InternalXBaseTestCase {
     private XProtocol protocol;
+    private XMessageBuilder messageBuilder;
 
     @Before
     public void setupTestProtocol() {
         if (this.isSetForXTests) {
             this.protocol = createAuthenticatedTestProtocol();
+            this.messageBuilder = (XMessageBuilder) this.protocol.getMessageBuilder();
         }
     }
 
     @After
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForXTests) {
-            this.protocol.sendSessionClose();
+            this.protocol.send(this.messageBuilder.buildClose(), 0);
             this.protocol.readOk();
             this.protocol.close();
         }
@@ -99,34 +101,26 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
-        this.protocol.sendDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false);
-        this.protocol.readStatementExecuteOk();
+        this.protocol.send(this.messageBuilder.buildDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false), 0);
+        this.protocol.readQueryResult();
 
-        final ValueHolder<ArrayList<Field>> metadataHolder = new ValueHolder<>();
-        final ValueHolder<ArrayList<XProtocolRow>> rowHolder = new ValueHolder<>();
+        final ValueHolder<ColumnDefinition> metadataHolder = new ValueHolder<>();
+        final ValueHolder<ArrayList<Row>> rowHolder = new ValueHolder<>();
         rowHolder.accept(new ArrayList<>());
         final ValueHolder<StatementExecuteOk> okHolder = new ValueHolder<>();
-        final ValueHolder<XDevAPIError> errHolder = new ValueHolder<>();
         final ValueHolder<Throwable> excHolder = new ValueHolder<>();
 
-        this.protocol.asyncFind(new DocFindParams(getTestDatabase(), collName), DEFAULT_METADATA_CHARSET, new ResultListener() {
-            public void onMetadata(ArrayList<Field> metadata) {
+        this.protocol.asyncFind(new DocFindParams(getTestDatabase(), collName), new ResultListener<StatementExecuteOk>() {
+            public void onMetadata(ColumnDefinition metadata) {
                 metadataHolder.accept(metadata);
             }
 
-            public void onRow(XProtocolRow r) {
+            public void onRow(Row r) {
                 rowHolder.get().add(r);
             }
 
             public void onComplete(StatementExecuteOk ok) {
                 okHolder.accept(ok);
-                synchronized (XProtocolAsyncTest.this) {
-                    XProtocolAsyncTest.this.notify();
-                }
-            }
-
-            public void onError(XDevAPIError err) {
-                errHolder.accept(err);
                 synchronized (XProtocolAsyncTest.this) {
                     XProtocolAsyncTest.this.notify();
                 }
@@ -145,10 +139,9 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
             this.wait(5000);
         }
 
-        assertEquals(1, metadataHolder.get().size());
+        assertEquals(1, metadataHolder.get().getFields().length);
         assertEquals(1, rowHolder.get().size());
         assertNotNull(okHolder.get());
-        assertNull(errHolder.get());
         assertNull(excHolder.get());
     }
 }

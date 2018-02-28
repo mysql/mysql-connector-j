@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,7 @@
 
 package testsuite.x.devapi;
 
-import static com.mysql.cj.api.xdevapi.Expression.expr;
+import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -46,18 +46,18 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.DocResult;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.Table;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.Table;
 
 /**
  * @todo
@@ -126,7 +126,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
             docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
             fail("Statement should raise an error");
-        } catch (XDevAPIError err) {
+        } catch (XProtocolError err) {
             assertEquals(MysqlErrorNumbers.ER_DATA_OUT_OF_RANGE, err.getErrorCode());
         }
     }

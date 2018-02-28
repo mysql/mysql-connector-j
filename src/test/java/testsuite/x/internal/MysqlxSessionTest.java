@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,16 +34,27 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectType;
-import com.mysql.cj.core.io.IntegerValueFactory;
-import com.mysql.cj.x.core.MysqlxSession;
+import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.protocol.x.XMessage;
+import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.result.IntegerValueFactory;
+import com.mysql.cj.result.StringValueFactory;
+import com.mysql.cj.result.ValueFactory;
+import com.mysql.cj.xdevapi.DatabaseObject;
+import com.mysql.cj.xdevapi.DatabaseObject.DbObjectType;
 import com.mysql.cj.xdevapi.DocFindParams;
 import com.mysql.cj.xdevapi.DocResultImpl;
 import com.mysql.cj.xdevapi.FindParams;
@@ -63,8 +74,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
     @After
     public void destroyTestSession() {
-        if (this.isSetForXTests) {
-            this.session.close();
+        if (this.isSetForXTests && this.session != null) {
+            this.session.quit();
         }
     }
 
@@ -74,20 +85,27 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
             return;
         }
         String collName = "toBeCreatedAndDropped";
-        this.session.dropCollectionIfExists(getTestDatabase(), collName);
-        assertFalse(this.session.tableExists(getTestDatabase(), collName));
-        this.session.createCollection(getTestDatabase(), collName);
-        assertTrue(this.session.tableExists(getTestDatabase(), collName));
-        this.session.dropCollection(getTestDatabase(), collName);
-        assertFalse(this.session.tableExists(getTestDatabase(), collName));
-        this.session.createCollection(getTestDatabase(), collName);
-        assertTrue(this.session.tableExists(getTestDatabase(), collName));
-        this.session.dropCollection(getTestDatabase(), collName);
-        assertFalse(this.session.tableExists(getTestDatabase(), collName));
-        this.session.createCollection(getTestDatabase(), collName);
-        assertTrue(this.session.tableExists(getTestDatabase(), collName));
-        this.session.dropCollection(getTestDatabase(), collName);
-        assertFalse(this.session.tableExists(getTestDatabase(), collName));
+        XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+        try {
+            this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        } catch (XProtocolError e) {
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw e;
+            }
+        }
+        assertFalse(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildCreateCollection(getTestDatabase(), collName));
+        assertTrue(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        assertFalse(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildCreateCollection(getTestDatabase(), collName));
+        assertTrue(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        assertFalse(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildCreateCollection(getTestDatabase(), collName));
+        assertTrue(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
+        this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        assertFalse(this.session.getDataStoreMetadata().tableExists(getTestDatabase(), collName));
     }
 
     @Test
@@ -95,16 +113,31 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
+        XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+        ValueFactory<String> svf = new StringValueFactory();
         String collName = "test_get_objects";
-        this.session.dropCollectionIfExists(getTestDatabase(), collName);
-        this.session.createCollection(getTestDatabase(), collName);
-        List<String> collNames = this.session.getObjectNamesOfType(getTestDatabase(), DbObjectType.COLLECTION);
+        try {
+            this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        } catch (XProtocolError e) {
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw e;
+            }
+        }
+
+        this.session.sendMessage(builder.buildCreateCollection(getTestDatabase(), collName));
+
+        Set<String> strTypes = Arrays.stream(new DbObjectType[] { DbObjectType.COLLECTION }).map(DatabaseObject.DbObjectType::toString)
+                .collect(Collectors.toSet());
+        Predicate<com.mysql.cj.result.Row> rowFiler = r -> (strTypes).contains(r.getValue(1, svf));
+        Function<com.mysql.cj.result.Row, String> rowToName = r -> r.getValue(0, svf);
+
+        List<String> collNames = this.session.query(builder.buildListObjects(getTestDatabase(), null), rowFiler, rowToName, Collectors.toList());
         assertTrue(collNames.contains(collName));
-        collNames = this.session.getObjectNamesOfType(getTestDatabase(), "none%", DbObjectType.COLLECTION);
+        collNames = this.session.query(builder.buildListObjects(getTestDatabase(), "none%"), rowFiler, rowToName, Collectors.toList());
         assertFalse(collNames.contains(collName));
-        collNames = this.session.getObjectNamesOfType(getTestDatabase(), "%get_obj%", DbObjectType.COLLECTION);
+        collNames = this.session.query(builder.buildListObjects(getTestDatabase(), "%get_obj%"), rowFiler, rowToName, Collectors.toList());
         assertTrue(collNames.contains(collName));
-        this.session.dropCollection(getTestDatabase(), collName);
+        this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
     }
 
     @Test
@@ -112,9 +145,16 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
+        XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
         String collName = "testInterleavedResults";
-        this.session.dropCollectionIfExists(getTestDatabase(), collName);
-        this.session.createCollection(getTestDatabase(), collName);
+        try {
+            this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
+        } catch (XProtocolError e) {
+            if (e.getErrorCode() != MysqlErrorNumbers.ER_BAD_TABLE_ERROR) {
+                throw e;
+            }
+        }
+        this.session.sendMessage(builder.buildCreateCollection(getTestDatabase(), collName));
 
         List<String> stringDocs = new ArrayList<>();
         stringDocs.add("{'_id':'0'}");
@@ -123,15 +163,16 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         stringDocs.add("{'_id':'3'}");
         stringDocs.add("{'_id':'4'}");
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
-        this.session.addDocs(getTestDatabase(), collName, stringDocs, false);
+        this.session.sendMessage(builder.buildDocInsert(getTestDatabase(), collName, stringDocs, false));
 
         FindParams findParams = new DocFindParams(getTestDatabase(), collName);
         findParams.setOrder("$._id");
-        DocResultImpl docs1 = this.session.findDocs(findParams);
-        DocResultImpl docs2 = this.session.findDocs(findParams);
-        DocResultImpl docs3 = this.session.findDocs(findParams);
-        DocResultImpl docs4 = this.session.findDocs(findParams);
-        DocResultImpl docs5 = this.session.findDocs(findParams);
+
+        DocResultImpl docs1 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs2 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs3 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs4 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs5 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());
@@ -157,7 +198,9 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        List<Integer> ints = this.session.query("select 2 union select 1", r -> r.getValue(0, new IntegerValueFactory()), Collectors.toList());
+        XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+        List<Integer> ints = this.session.query(builder.buildSqlStatement("select 2 union select 1"), null, r -> r.getValue(0, new IntegerValueFactory()),
+                Collectors.toList());
         assertEquals(2, ints.size());
         assertEquals(new Integer(2), ints.get(0));
         assertEquals(new Integer(1), ints.get(1));

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/build/java"/>
 	<classpathentry kind="src" path="src/demo/java"/>
 	<classpathentry kind="src" path="src/generated/java">
@@ -8,8 +7,14 @@
 			<attribute name="ignore_optional_problems" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/legacy/java"/>
+	<classpathentry kind="src" path="src/main/user-api/java"/>
+	<classpathentry kind="src" path="src/main/user-impl/java"/>
+	<classpathentry kind="src" path="src/main/core-api/java"/>
+	<classpathentry kind="src" path="src/main/core-impl/java"/>
+	<classpathentry kind="src" path="src/main/protocol-impl/java"/>
 	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="lib" path="lib/jboss-common-jdbc-wrapper.jar"/>
 	<classpathentry kind="lib" path="lib/c3p0-0.9.1-pre6.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>

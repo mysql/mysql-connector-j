@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,13 +39,14 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.InsertResult;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
-import com.mysql.cj.api.xdevapi.Table;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
+import com.mysql.cj.xdevapi.InsertResult;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.Table;
 
 /**
  * @todo
@@ -157,7 +158,7 @@ public class TableInsertTest extends BaseTableTestCase {
             row.put("doc", "{\"x\":\"3\"}");
             table.insert(row).execute();
 
-            DbDoc doc = new DbDoc().add("firstName", new JsonString().setValue("Georgia"));
+            DbDoc doc = new DbDocImpl().add("firstName", new JsonString().setValue("Georgia"));
             doc.add("middleName", new JsonString().setValue("Totto"));
             doc.add("lastName", new JsonString().setValue("O'Keeffe"));
             table.insert("_id", "doc").values(4, doc).execute();

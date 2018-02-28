@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,33 +66,37 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.PreparedQuery;
-import com.mysql.cj.api.Query;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.mysqla.io.PacketReader;
-import com.mysql.cj.api.mysqla.io.PacketSender;
-import com.mysql.cj.api.mysqla.result.Resultset;
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.exceptions.InvalidConnectionAttributeException;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.log.StandardLogger;
-import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.NativeSession;
+import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.Query;
+import com.mysql.cj.conf.ConnectionUrl;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
-import com.mysql.cj.mysqla.io.DebugBufferingPacketReader;
-import com.mysql.cj.mysqla.io.DebugBufferingPacketSender;
-import com.mysql.cj.mysqla.io.MultiPacketReader;
-import com.mysql.cj.mysqla.io.MysqlaProtocol;
-import com.mysql.cj.mysqla.io.SimplePacketReader;
-import com.mysql.cj.mysqla.io.SimplePacketSender;
-import com.mysql.cj.mysqla.io.TimeTrackingPacketReader;
-import com.mysql.cj.mysqla.io.TimeTrackingPacketSender;
-import com.mysql.cj.mysqla.io.TracingPacketReader;
-import com.mysql.cj.mysqla.io.TracingPacketSender;
+import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.MessageReader;
+import com.mysql.cj.protocol.MessageSender;
+import com.mysql.cj.protocol.Resultset;
+import com.mysql.cj.protocol.a.DebugBufferingPacketReader;
+import com.mysql.cj.protocol.a.DebugBufferingPacketSender;
+import com.mysql.cj.protocol.a.MultiPacketReader;
+import com.mysql.cj.protocol.a.NativePacketHeader;
+import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.NativeProtocol;
+import com.mysql.cj.protocol.a.SimplePacketReader;
+import com.mysql.cj.protocol.a.SimplePacketSender;
+import com.mysql.cj.protocol.a.TimeTrackingPacketReader;
+import com.mysql.cj.protocol.a.TimeTrackingPacketSender;
+import com.mysql.cj.protocol.a.TracingPacketReader;
+import com.mysql.cj.protocol.a.TracingPacketSender;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.jdbc.Driver;
 
 import testsuite.BaseQueryInterceptor;
@@ -685,7 +689,7 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         try {
-            ((com.mysql.cj.api.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
+            ((com.mysql.cj.jdbc.JdbcConnection) dumpConn).clientPrepareStatement(bogusSQL).executeQuery();
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage().indexOf(bogusSQL) != -1);
         }
@@ -808,8 +812,8 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.cj.api.jdbc.JdbcConnection) loadConn).getPropertySet()
-                    .<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(false);
+            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
+                    .setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -954,8 +958,13 @@ public class ConnectionTest extends BaseTestCase {
         // this will fail, but we test that too
         assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
             public Void call() throws Exception {
-                ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
-                return null;
+                try {
+                    ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                    return null;
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    throw t;
+                }
             }
         });
     }
@@ -1028,11 +1037,11 @@ public class ConnectionTest extends BaseTestCase {
     public void testPing() throws SQLException {
         Connection conn2 = getConnectionWithProps((String) null);
 
-        ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).ping();
+        ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
         conn2.close();
 
         try {
-            ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).ping();
+            ((com.mysql.cj.jdbc.JdbcConnection) conn2).ping();
             fail("Should have failed with an exception");
         } catch (SQLException sqlEx) {
             // ignore for now
@@ -1068,11 +1077,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL)
-                .setValue(false);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
         this.stmt.execute("SELECT 1");
-        ((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL)
-                .setValue(true);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
         this.stmt.execute("SELECT 1");
     }
 
@@ -1519,7 +1526,7 @@ public class ConnectionTest extends BaseTestCase {
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
 
-        pStmtToCheck = ((com.mysql.cj.api.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
+        pStmtToCheck = ((com.mysql.cj.jdbc.JdbcConnection) connToCheck).serverPrepareStatement("SELECT 1");
 
         checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
         ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
@@ -1821,7 +1828,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testDriverConnectNullArgument() throws Exception {
         assertThrows(SQLException.class,
-                "Cannot load connection class because of underlying exception: com.mysql.cj.core.exceptions.WrongArgumentException: The database URL cannot be null.",
+                "Cannot load connection class because of underlying exception: com.mysql.cj.exceptions.WrongArgumentException: The database URL cannot be null.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         Driver mysqlDriver = new Driver();
@@ -1966,8 +1973,8 @@ public class ConnectionTest extends BaseTestCase {
             String sql = str == null ? null : str.get();
             if (sql == null) {
                 try {
-                    if (interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
-                        sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                    if (interceptedQuery instanceof ClientPreparedStatement) {
+                        sql = ((ClientPreparedStatement) interceptedQuery).asSql();
                     } else if (interceptedQuery instanceof PreparedQuery<?>) {
                         sql = ((PreparedQuery<?>) interceptedQuery).asSql();
                     }
@@ -2010,9 +2017,9 @@ public class ConnectionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
             c = getConnectionWithProps(props);
 
-            MysqlaProtocol p = ((JdbcConnection) c).getSession().getProtocol();
-            PacketSender sender = p.getPacketSender();
-            PacketReader reader = p.getPacketReader();
+            NativeProtocol p = ((NativeSession) ((JdbcConnection) c).getSession()).getProtocol();
+            MessageSender<NativePacketPayload> sender = p.getPacketSender();
+            MessageReader<NativePacketHeader, NativePacketPayload> reader = p.getPacketReader();
 
             assertEquals(DebugBufferingPacketSender.class, sender.getClass());
             assertEquals(TracingPacketSender.class, sender.undecorate().getClass());

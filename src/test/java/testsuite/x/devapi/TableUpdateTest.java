@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,15 +29,15 @@
 
 package testsuite.x.devapi;
 
-import static com.mysql.cj.api.xdevapi.Expression.expr;
+import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.RowResult;
-import com.mysql.cj.api.xdevapi.Table;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.Table;
 
 /**
  * @todo

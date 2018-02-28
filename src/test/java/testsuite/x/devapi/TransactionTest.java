@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,8 +39,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class TransactionTest extends DevApiBaseTestCase {
     protected Collection collection;

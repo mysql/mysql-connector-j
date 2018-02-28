@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,7 @@
 
 package testsuite;
 
-import static com.mysql.cj.core.util.StringUtils.isNullOrEmpty;
+import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -53,16 +53,16 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
-import com.mysql.cj.core.conf.url.ConnectionUrlParser;
-import com.mysql.cj.core.conf.url.HostInfo;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.Util;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.ConnectionUrl;
+import com.mysql.cj.conf.ConnectionUrlParser;
+import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
+import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 
 import junit.framework.TestCase;
 

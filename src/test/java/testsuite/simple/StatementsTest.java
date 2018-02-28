@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -62,16 +62,17 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.jdbc.ParameterBindings;
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.MysqlType;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.util.StringUtils;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
+import com.mysql.cj.jdbc.ParameterBindings;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
@@ -640,7 +641,7 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            final PreparedStatement cancelClientPstmt = ((com.mysql.cj.api.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
+            final PreparedStatement cancelClientPstmt = ((com.mysql.cj.jdbc.JdbcConnection) cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
 
             cancelClientPstmt.setQueryTimeout(1);
 
@@ -786,7 +787,7 @@ public class StatementsTest extends BaseTestCase {
 
     public void testEnableStreamingResults() throws Exception {
         Statement streamStmt = this.conn.createStatement();
-        ((com.mysql.cj.api.jdbc.Statement) streamStmt).enableStreamingResults();
+        ((com.mysql.cj.jdbc.JdbcStatement) streamStmt).enableStreamingResults();
         assertEquals(streamStmt.getFetchSize(), Integer.MIN_VALUE);
         assertEquals(streamStmt.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
     }
@@ -836,14 +837,14 @@ public class StatementsTest extends BaseTestCase {
             this.rs.getInt(1);
             rs2.close();
 
-            pstmt2 = ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
             pstmt2.close();
             this.rs.getInt(1);
 
-            pstmt2 = ((com.mysql.cj.api.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
+            pstmt2 = ((com.mysql.cj.jdbc.JdbcConnection) conn2).clientPrepareStatement("SELECT 1");
             this.rs = pstmt2.executeQuery();
             this.rs.next();
             this.rs.getInt(1);
@@ -1812,7 +1813,7 @@ public class StatementsTest extends BaseTestCase {
             this.pstmt.setObject(i + 1, valuesToTest[i]);
         }
 
-        ParameterBindings bindings = ((com.mysql.cj.jdbc.PreparedStatement) this.pstmt).getParameterBindings();
+        ParameterBindings bindings = ((ClientPreparedStatement) this.pstmt).getParameterBindings();
 
         for (int i = 0; i < valuesToTest.length; i++) {
             Object boundObject = bindings.getObject(i + 1);
@@ -1840,7 +1841,7 @@ public class StatementsTest extends BaseTestCase {
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
         try {
-            ((com.mysql.cj.api.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
+            ((com.mysql.cj.jdbc.JdbcStatement) this.stmt).setLocalInfileInputStream(stream);
             this.stmt.execute(
                     "LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
@@ -1854,7 +1855,7 @@ public class StatementsTest extends BaseTestCase {
             this.rs.next();
             assertEquals("ijkl", this.rs.getString(1));
         } finally {
-            ((com.mysql.cj.api.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
+            ((com.mysql.cj.jdbc.JdbcStatement) this.stmt).setLocalInfileInputStream(null);
         }
     }
 
@@ -1938,8 +1939,7 @@ public class StatementsTest extends BaseTestCase {
         props1.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props1.setProperty(PropertyDefinitions.PNAME_characterEncoding, "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
-        com.mysql.cj.jdbc.PreparedStatement pstmt1 = (com.mysql.cj.jdbc.PreparedStatement) conn1
-                .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
+        ClientPreparedStatement pstmt1 = (ClientPreparedStatement) conn1.prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt1.setNCharacterStream(1, null, 0);
         pstmt1.setNCharacterStream(2, new StringReader("aaa"), 3);
         pstmt1.setNCharacterStream(3, new StringReader("\'aaa\'"), 5);
@@ -1958,8 +1958,7 @@ public class StatementsTest extends BaseTestCase {
         props2.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // use client-side prepared statement
         props2.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
-        com.mysql.cj.jdbc.PreparedStatement pstmt2 = (com.mysql.cj.jdbc.PreparedStatement) conn2
-                .prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
+        ClientPreparedStatement pstmt2 = (ClientPreparedStatement) conn2.prepareStatement("INSERT INTO testSetNCharacterStream (c1, c2, c3) VALUES (?, ?, ?)");
         pstmt2.setNCharacterStream(1, null, 0);
         pstmt2.setNCharacterStream(2, new StringReader("aaa"), 3);
         pstmt2.setNCharacterStream(3, new StringReader("\'aaa\'"), 5);

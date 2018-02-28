@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,6 +31,7 @@ package com.mysql.cj.xdevapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.StringReader;
@@ -39,7 +40,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
-import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
  * DbDoc tests.
@@ -503,7 +504,7 @@ public class JsonDocTest {
         assertEquals("false", val.get(3).toString());
         assertEquals(JsonLiteral.NULL.getClass(), val.get(4).getClass());
         assertEquals("null", val.get(4).toString());
-        assertEquals(DbDoc.class, val.get(5).getClass());
+        assertTrue(DbDoc.class.isAssignableFrom(val.get(5).getClass()));
         assertEquals("{\"k1\":\"v1\"}", val.get(5).toString());
         assertEquals("{\n\"k1\" : \"v1\"\n}", val.get(5).toFormattedString());
         assertEquals(JsonArray.class, val.get(6).getClass());
@@ -657,7 +658,7 @@ public class JsonDocTest {
         assertEquals("\"val1\"", doc.get("key1").toString());
         assertEquals(JsonNumber.class, doc.get("key2").getClass());
         assertEquals("-1.2E-12", doc.get("key2").toString());
-        assertEquals(DbDoc.class, doc.get("key3").getClass());
+        assertTrue(DbDoc.class.isAssignableFrom(doc.get("key3").getClass()));
         assertEquals("{\"in.key1\":true,\"in.key2\":3.1415}", doc.get("key3").toString());
         assertEquals("{\n\"in.key1\" : true,\n\"in.key2\" : 3.1415\n}", doc.get("key3").toFormattedString());
         assertEquals(JsonLiteral.FALSE.getClass(), doc.get("key4").getClass());
@@ -702,7 +703,7 @@ public class JsonDocTest {
 
         // DbDoc at the end
         doc = JsonParser.parseDoc(new StringReader("{\"x\" : {\"y\" : true}}"));
-        assertEquals(DbDoc.class, doc.get("x").getClass());
+        assertTrue(DbDoc.class.isAssignableFrom(doc.get("x").getClass()));
         assertEquals("{\"y\":true}", doc.get("x").toString());
         assertEquals("{\n\"y\" : true\n}", doc.get("x").toFormattedString());
 
@@ -711,14 +712,14 @@ public class JsonDocTest {
     @Test
     public void testToJsonString() {
 
-        DbDoc doc = new DbDoc().add("field1", new JsonString().setValue("value 1")).add("field2", new JsonNumber().setValue("12345.44E22"))
+        DbDoc doc = new DbDocImpl().add("field1", new JsonString().setValue("value 1")).add("field2", new JsonNumber().setValue("12345.44E22"))
                 .add("field3", JsonLiteral.TRUE).add("field4", JsonLiteral.FALSE).add("field5", JsonLiteral.NULL)
                 .add("field6",
-                        new DbDoc().add("inner field 1", new JsonString().setValue("inner value 1")).add("inner field 2", new JsonNumber().setValue("2"))
+                        new DbDocImpl().add("inner field 1", new JsonString().setValue("inner value 1")).add("inner field 2", new JsonNumber().setValue("2"))
                                 .add("inner field 3", JsonLiteral.TRUE).add("inner field 4", JsonLiteral.FALSE).add("inner field 5", JsonLiteral.NULL)
-                                .add("inner field 6", new JsonArray()).add("inner field 7", new DbDoc()))
+                                .add("inner field 6", new JsonArray()).add("inner field 7", new DbDocImpl()))
                 .add("field7", new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
-                        .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDoc()));
+                        .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDocImpl()));
 
         assertEquals("{\"field1\":\"value 1\",\"field2\":1.234544E+26,\"field3\":true,\"field4\":false,\"field5\":null,"
                 + "\"field6\":{\"inner field 1\":\"inner value 1\",\"inner field 2\":2,\"inner field 3\":true,"

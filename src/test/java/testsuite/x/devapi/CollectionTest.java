@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,14 +36,15 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Collection;
-import com.mysql.cj.api.xdevapi.DatabaseObject.DbObjectStatus;
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.SqlResult;
+import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class CollectionTest extends BaseCollectionTestCase {
 
@@ -219,7 +220,7 @@ public class CollectionTest extends BaseCollectionTestCase {
 
         // FR5_2 Create an index with the name of an index that already exists.
         CollectionTest.this.collection.createIndex("myUniqueIndex", "{\"fields\": [{\"field\": \"$.myField\", \"type\": \"INT\"}]}");
-        assertThrows(XDevAPIError.class, "ERROR 1061 \\(42000\\) Duplicate key name 'myUniqueIndex'", new Callable<Void>() {
+        assertThrows(XProtocolError.class, "ERROR 1061 \\(42000\\) Duplicate key name 'myUniqueIndex'", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionTest.this.collection.createIndex("myUniqueIndex", "{\"fields\": [{\"field\": \"$.myField\", \"type\": \"INT\"}]}");
                 return null;
@@ -305,7 +306,7 @@ public class CollectionTest extends BaseCollectionTestCase {
         });
 
         // FR5_6 Create a 'SPATIAL' index with "required" flag set to false.
-        assertThrows(XDevAPIError.class, "ERROR 5117 \\(HY000\\) GEOJSON index requires 'constraint.required: TRUE", new Callable<Void>() {
+        assertThrows(XProtocolError.class, "ERROR 5117 \\(HY000\\) GEOJSON index requires 'constraint.required: TRUE", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionTest.this.collection.createIndex("myIndex",
                         "{\"fields\": [{\"field\": \"$.myField\", \"type\": \"GEOJSON\", \"required\": false, \"options\": 2, \"srid\": 4326}], \"type\":\"SPATIAL\"}");
@@ -330,7 +331,7 @@ public class CollectionTest extends BaseCollectionTestCase {
         });
 
         // ET_2 Create an index specifying SPATIAL as the index type for a non spatial data type
-        assertThrows(XDevAPIError.class, "ERROR 3106 \\(HY000\\) 'Spatial index on virtual generated column' is not supported for generated columns.",
+        assertThrows(XProtocolError.class, "ERROR 3106 \\(HY000\\) 'Spatial index on virtual generated column' is not supported for generated columns.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         CollectionTest.this.collection.createIndex("myIndex",
@@ -340,7 +341,7 @@ public class CollectionTest extends BaseCollectionTestCase {
                 });
 
         // ET_3 Create an index specifying INDEX as the index type for a spatial data type
-        assertThrows(XDevAPIError.class, "ERROR 1170 \\(42000\\) BLOB/TEXT column .+_gj_r_.+ used in key specification without a key length",
+        assertThrows(XProtocolError.class, "ERROR 1170 \\(42000\\) BLOB/TEXT column .+_gj_r_.+ used in key specification without a key length",
                 new Callable<Void>() {
                     public Void call() throws Exception {
                         CollectionTest.this.collection.createIndex("myIndex",

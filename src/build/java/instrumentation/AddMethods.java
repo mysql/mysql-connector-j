@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,14 +31,14 @@ package instrumentation;
 
 import java.util.Collection;
 
-import com.mysql.cj.api.conf.PropertyDefinition;
-import com.mysql.cj.core.conf.BooleanPropertyDefinition;
-import com.mysql.cj.core.conf.EnumPropertyDefinition;
-import com.mysql.cj.core.conf.IntegerPropertyDefinition;
-import com.mysql.cj.core.conf.LongPropertyDefinition;
-import com.mysql.cj.core.conf.MemorySizePropertyDefinition;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.StringPropertyDefinition;
+import com.mysql.cj.conf.BooleanPropertyDefinition;
+import com.mysql.cj.conf.EnumPropertyDefinition;
+import com.mysql.cj.conf.IntegerPropertyDefinition;
+import com.mysql.cj.conf.LongPropertyDefinition;
+import com.mysql.cj.conf.MemorySizePropertyDefinition;
+import com.mysql.cj.conf.PropertyDefinition;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.StringPropertyDefinition;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 import javassist.ClassPool;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,16 +39,18 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.mysql.cj.api.xdevapi.Row;
-import com.mysql.cj.api.xdevapi.Session;
-import com.mysql.cj.api.xdevapi.SqlResult;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.exceptions.CJCommunicationsException;
-import com.mysql.cj.core.exceptions.WrongArgumentException;
-import com.mysql.cj.x.core.MysqlxSession;
-import com.mysql.cj.x.core.XDevAPIError;
+import com.mysql.cj.CoreSession;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.XAuthenticationProvider;
+import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.SqlResult;
 
 public class SecureSessionTest extends DevApiBaseTestCase {
     final String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
@@ -504,7 +506,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             Field sf = SessionImpl.class.getDeclaredField("session");
             sf.setAccessible(true);
 
-            Field mf = MysqlxSession.class.getDeclaredField("authMech");
+            Field pf = CoreSession.class.getDeclaredField("protocol");
+            pf.setAccessible(true);
+
+            Field mf = XAuthenticationProvider.class.getDeclaredField("authMech");
             mf.setAccessible(true);
 
             Properties props = new Properties(this.sslFreeTestProperties);
@@ -515,14 +520,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(sf.get(testSession)));
+            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
             testSession.close();
 
             // default PLAIN if over TLS
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
-            assertEquals("PLAIN", mf.get(sf.get(testSession)));
+            assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
             testSession.close();
 
             // next block to be run under GPL server and GPL servers prior 8.0 not necessarily contain sha256 support 
@@ -532,7 +537,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuthSha256");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
-                assertEquals("PLAIN", mf.get(sf.get(testSession)));
+                assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
 
                 SqlResult rows = testSession.sql("select USER(),CURRENT_USER()").execute();
                 Row row = rows.next();
@@ -548,7 +553,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(sf.get(testSession)));
+            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
             testSession.close();
 
             // forced MYSQL41 if over TLS
@@ -556,31 +561,31 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
-            assertEquals("MYSQL41", mf.get(sf.get(testSession)));
+            assertEquals("MYSQL41", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
             testSession.close();
 
             // forced PLAIN if no TLS
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            assertThrows(XDevAPIError.class, "PLAIN authentication is not allowed via unencrypted connection.", () -> this.fact.getSession(props));
+            assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection.", () -> this.fact.getSession(props));
 
             // forced PLAIN if over TLS
             props.setProperty(PropertyDefinitions.PNAME_auth, "plain"); // also checks for case insensitivity
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
-            assertEquals("PLAIN", mf.get(sf.get(testSession)));
+            assertEquals("PLAIN", mf.get(((XProtocol) pf.get(sf.get(testSession))).getAuthenticationProvider()));
             testSession.close();
 
             // forced EXTERNAL if no TLS
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            assertThrows(XDevAPIError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
+            assertThrows(XProtocolError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
 
             // forced EXTERNAL if over TLS
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-            assertThrows(XDevAPIError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
+            assertThrows(XProtocolError.class, () -> this.fact.getSession(props)); // ERROR 1251 (HY000) Invalid authentication method EXTERNAL
 
             // forced unknown mech
             props.setProperty(PropertyDefinitions.PNAME_auth, "uNkNoWn");

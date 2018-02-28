@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,7 +40,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.mysql.cj.core.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
@@ -50,8 +50,6 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Object;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField;
-import com.mysql.cj.xdevapi.ExprParser;
-import com.mysql.cj.xdevapi.ExprUnparser;
 
 /**
  * Expression parser tests.

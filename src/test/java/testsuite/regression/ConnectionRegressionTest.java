@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -102,38 +103,28 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.cj.api.MysqlConnection;
-import com.mysql.cj.api.Query;
-import com.mysql.cj.api.Session;
-import com.mysql.cj.api.exceptions.ExceptionInterceptor;
-import com.mysql.cj.api.interceptors.QueryInterceptor;
-import com.mysql.cj.api.io.ServerSession;
-import com.mysql.cj.api.jdbc.JdbcConnection;
-import com.mysql.cj.api.jdbc.ha.LoadBalanceExceptionChecker;
-import com.mysql.cj.api.jdbc.ha.ReplicationConnection;
-import com.mysql.cj.api.log.Log;
-import com.mysql.cj.api.mysqla.authentication.AuthenticationPlugin;
-import com.mysql.cj.api.mysqla.io.PacketPayload;
-import com.mysql.cj.api.mysqla.result.Resultset;
-import com.mysql.cj.core.CharsetMapping;
-import com.mysql.cj.core.Constants;
-import com.mysql.cj.core.Messages;
-import com.mysql.cj.core.ServerVersion;
-import com.mysql.cj.core.conf.PropertyDefinitions;
-import com.mysql.cj.core.conf.url.ConnectionUrl;
-import com.mysql.cj.core.conf.url.HostInfo;
-import com.mysql.cj.core.conf.url.ReplicationConnectionUrl;
-import com.mysql.cj.core.exceptions.ClosedOnExpiredPasswordException;
-import com.mysql.cj.core.exceptions.ExceptionFactory;
-import com.mysql.cj.core.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.core.exceptions.PasswordExpiredException;
-import com.mysql.cj.core.io.StandardSocketFactory;
-import com.mysql.cj.core.log.StandardLogger;
-import com.mysql.cj.core.util.StringUtils;
-import com.mysql.cj.core.util.TimeUtil;
-import com.mysql.cj.core.util.Util;
+import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.Constants;
+import com.mysql.cj.Messages;
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.NativeSession;
+import com.mysql.cj.Query;
+import com.mysql.cj.ServerVersion;
+import com.mysql.cj.Session;
+import com.mysql.cj.conf.ConnectionUrl;
+import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.url.ReplicationConnectionUrl;
+import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.exceptions.PasswordExpiredException;
+import com.mysql.cj.interceptors.QueryInterceptor;
+import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
 import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
@@ -144,20 +135,31 @@ import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.LoadBalanceExceptionChecker;
 import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.RandomBalanceStrategy;
+import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.jdbc.ha.SequentialBalanceStrategy;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
-import com.mysql.cj.mysqla.MysqlaSession;
-import com.mysql.cj.mysqla.authentication.CachingSha2PasswordPlugin;
-import com.mysql.cj.mysqla.authentication.MysqlNativePasswordPlugin;
-import com.mysql.cj.mysqla.authentication.MysqlOldPasswordPlugin;
-import com.mysql.cj.mysqla.authentication.Sha256PasswordPlugin;
-import com.mysql.cj.mysqla.io.Buffer;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.AuthenticationPlugin;
+import com.mysql.cj.protocol.Message;
+import com.mysql.cj.protocol.Resultset;
+import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.protocol.StandardSocketFactory;
+import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
+import com.mysql.cj.protocol.a.authentication.MysqlNativePasswordPlugin;
+import com.mysql.cj.protocol.a.authentication.MysqlOldPasswordPlugin;
+import com.mysql.cj.protocol.a.authentication.Sha256PasswordPlugin;
+import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -678,14 +680,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue("08S01".equals(sqlEx.getSQLState()));
             }
 
-            ((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             failoverConnection.setAutoCommit(true);
 
             String failedConnectionId = getSingleIndexedValueWithQuery(failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
             System.out.println("Failed over connection id: " + failedConnectionId);
 
-            ((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
+            ((com.mysql.cj.jdbc.JdbcConnection) failoverConnection).setFailedOver(true);
 
             for (int i = 0; i < 30; i++) {
                 failoverConnection.setAutoCommit(true);
@@ -873,13 +875,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Connection bareConn = getConnectionWithProps(props);
 
-        int currentOpenStatements = ((com.mysql.cj.api.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
+        int currentOpenStatements = ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount();
 
         try {
             bareConn.prepareStatement("Boo!");
             fail("Should not've been able to prepare that one!");
         } catch (SQLException sqlEx) {
-            assertEquals(currentOpenStatements, ((com.mysql.cj.api.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
+            assertEquals(currentOpenStatements, ((com.mysql.cj.jdbc.JdbcConnection) bareConn).getActiveStatementCount());
         } finally {
             bareConn.close();
         }
@@ -2443,14 +2445,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45171() throws Exception {
         List<Statement> statementsToTest = new LinkedList<>();
         statementsToTest.add(this.conn.createStatement());
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
-        statementsToTest.add(((com.mysql.cj.api.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("SELECT 1", new String[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1"));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new int[0]));
+        statementsToTest.add(((com.mysql.cj.jdbc.JdbcConnection) this.conn).serverPrepareStatement("SELECT 1", new String[0]));
 
         for (Statement toTest : statementsToTest) {
             assertEquals(toTest.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
@@ -2684,7 +2686,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug49700() throws Exception {
         Connection c = getConnectionWithProps("sessionVariables=@foo='bar'");
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
-        ((com.mysql.cj.api.jdbc.JdbcConnection) c).resetServerState();
+        ((com.mysql.cj.jdbc.JdbcConnection) c).resetServerState();
         assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
     }
 
@@ -2804,18 +2806,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts,
-                Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts,
+                Map<String, JdbcConnection> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             if (forcedFutureServer == null || forceFutureServerTimes == 0 || !configuredHosts.contains(forcedFutureServer)) {
                 return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
             }
             if (forceFutureServerTimes > 0) {
                 forceFutureServerTimes--;
             }
-            ConnectionImpl conn = liveConnections.get(forcedFutureServer);
+            ConnectionImpl conn = (ConnectionImpl) liveConnections.get(forcedFutureServer);
 
             if (conn == null) {
-                conn = proxy.createConnectionForHost(forcedFutureServer);
+                conn = ((LoadBalancedConnectionProxy) proxy).createConnectionForHost(forcedFutureServer);
 
             }
             return conn;
@@ -2890,8 +2892,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts,
-                Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
+        public com.mysql.cj.jdbc.ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts,
+                Map<String, JdbcConnection> liveConnections, long[] responseTimes, int numRetries) throws SQLException {
             rebalancedTimes++;
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
         }
@@ -3048,7 +3050,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             PrintStream printStream = new PrintStream(bOut);
             System.setErr(printStream);
 
-            ((com.mysql.cj.api.jdbc.JdbcConnection) c).setStatementComment("Hi there");
+            ((com.mysql.cj.jdbc.JdbcConnection) c).setStatementComment("Hi there");
             c.setAutoCommit(false);
 
             c.createStatement().execute("SELECT 1");
@@ -3110,12 +3112,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement testStmt = testConn.createStatement();
 
         for (int i = 0; i < 500; i++) {
-            ((com.mysql.cj.api.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
 
             if (i % 10 == 0) {
                 try {
-                    ((com.mysql.cj.api.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
+                    ((com.mysql.cj.jdbc.JdbcConnection) testConn).changeUser("bubba", props.getProperty(PropertyDefinitions.PNAME_password));
                 } catch (SQLException sqlEx) {
                     sqlEx.printStackTrace();
                     assertTrue(testConn.isClosed());
@@ -3149,7 +3151,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             fail("Database " + databaseName + " is not found.");
         }
 
-        ((com.mysql.cj.api.jdbc.JdbcConnection) con).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+        ((com.mysql.cj.jdbc.JdbcConnection) con).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                 props.getProperty(PropertyDefinitions.PNAME_password));
 
         this.rs = con.createStatement().executeQuery("select DATABASE()");
@@ -3165,7 +3167,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             newConn.close();
-            ((com.mysql.cj.api.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
+            ((com.mysql.cj.jdbc.JdbcConnection) newConn).changeUser(props.getProperty(PropertyDefinitions.PNAME_user),
                     props.getProperty(PropertyDefinitions.PNAME_password));
             fail("Expected SQL Exception");
         } catch (SQLException ex) {
@@ -3202,7 +3204,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             failoverConnection2 = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
 
-            assertTrue(((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assertTrue(((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // Two different Connection objects should not equal each other:
             assertFalse(failoverConnection1.equals(failoverConnection2));
@@ -3219,7 +3221,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             }
             // ensure we're now connected to the slave
-            assertFalse(((com.mysql.cj.api.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
+            assertFalse(((com.mysql.cj.jdbc.JdbcConnection) failoverConnection1).isMasterConnection());
 
             // ensure that hashCode() result is persistent across failover events when proxy state changes
             assertEquals(hc, failoverConnection1.hashCode());
@@ -3565,7 +3567,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    public static class AuthTestPlugin implements AuthenticationPlugin {
+    public static class AuthTestPlugin implements AuthenticationPlugin<NativePacketPayload> {
 
         private String password = null;
 
@@ -3589,16 +3591,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
+        public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
             toServer.clear();
-            PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password));
+            NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password));
             toServer.add(bresp);
             return true;
         }
 
     }
 
-    public static class TwoQuestionsPlugin implements AuthenticationPlugin {
+    public static class TwoQuestionsPlugin implements AuthenticationPlugin<NativePacketPayload> {
 
         private String password = null;
 
@@ -3622,13 +3624,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
+        public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
             toServer.clear();
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
-                PacketPayload bresp = new Buffer(StringUtils.getBytes(this.password));
+                NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password));
                 toServer.add(bresp);
             } else {
-                PacketPayload bresp = new Buffer(StringUtils.getBytes("yes, of course"));
+                NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes("yes, of course"));
                 toServer.add(bresp);
             }
             return true;
@@ -3636,7 +3638,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     }
 
-    public static class ThreeAttemptsPlugin implements AuthenticationPlugin {
+    public static class ThreeAttemptsPlugin implements AuthenticationPlugin<NativePacketPayload> {
 
         private String password = null;
         private int counter = 0;
@@ -3662,14 +3664,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.password = password;
         }
 
-        public boolean nextAuthenticationStep(PacketPayload fromServer, List<PacketPayload> toServer) {
+        public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
             toServer.clear();
             this.counter++;
             if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
-                PacketPayload bresp = new Buffer(StringUtils.getBytes(this.counter > 2 ? this.password : "wrongpassword" + this.counter));
+                NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.counter > 2 ? this.password : "wrongpassword" + this.counter));
                 toServer.add(bresp);
             } else {
-                PacketPayload bresp = new Buffer(fromServer.getByteBuffer());
+                NativePacketPayload bresp = new NativePacketPayload(fromServer.getByteBuffer());
                 toServer.add(bresp);
             }
             return true;
@@ -4564,7 +4566,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public PacketPayload postProcess(PacketPayload queryPacket, PacketPayload originalResponsePacket) {
+        public <M extends Message> M postProcess(M queryPacket, M originalResponsePacket) {
             String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
             if (sql.contains("lc_messages=ru_RU")) {
                 try {
@@ -5465,7 +5467,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (finType == 1) {
                 connection.close();
             } else if (finType == 2) {
-                ((com.mysql.cj.api.jdbc.JdbcConnection) connection).abortInternal();
+                ((com.mysql.cj.jdbc.JdbcConnection) connection).abortInternal();
             }
             connection = null;
         }
@@ -5495,7 +5497,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     private int countTestConnections(Map<?, ?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
         int connectionNumber = 0;
         for (Object o1 : connectionTrackingMap.keySet()) {
-            com.mysql.cj.api.jdbc.JdbcConnection ctmp = (com.mysql.cj.api.jdbc.JdbcConnection) referentField.get(o1);
+            com.mysql.cj.jdbc.JdbcConnection ctmp = (com.mysql.cj.jdbc.JdbcConnection) referentField.get(o1);
             String atts = null;
             try {
                 if (ctmp != null) {
@@ -5720,8 +5722,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testLongAuthResponsePayload() throws Exception {
 
-        MysqlaSession sha256Sess;
-        if (this.sha256Conn != null && (sha256Sess = ((JdbcConnection) this.sha256Conn).getSession()).versionMeetsMinimum(5, 6, 6)) {
+        NativeSession sha256Sess;
+        if (this.sha256Conn != null && (sha256Sess = (NativeSession) ((JdbcConnection) this.sha256Conn).getSession()).versionMeetsMinimum(5, 6, 6)) {
             Properties props = new Properties();
             props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
 
@@ -5805,7 +5807,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         for (int i = 0; i < testMemUnits.length; i++) {
             for (int j = 0; j < testMemUnits[i].length; j++) {
                 // testing with memory values under 2GB because higher values aren't supported.
-                connWithMemProps = (com.mysql.cj.api.jdbc.JdbcConnection) getConnectionWithProps(
+                connWithMemProps = (com.mysql.cj.jdbc.JdbcConnection) getConnectionWithProps(
                         String.format("blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s", testMemUnits[i][j]));
 
                 // test values of property 'blobSendChunkSize'
@@ -6005,7 +6007,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int cnt = 0;
 
         @Override
-        public PacketPayload preProcess(PacketPayload queryPacket) {
+        public <M extends Message> M preProcess(M queryPacket) {
             String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
             if (sql.contains("SHOW COLLATION")) {
                 this.cnt++;
@@ -6221,7 +6223,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug72712() throws Exception {
         // this test is only run when character_set_server=latin1
-        if (!((MysqlConnection) this.conn).getSession().getServerVariable("character_set_server").equals("latin1")) {
+        if (!((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server").equals("latin1")) {
             return;
         }
 
@@ -6958,9 +6960,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             if (sql == null) {
                 sql = "";
             }
-            if (sql.length() == 0 && interceptedQuery instanceof com.mysql.cj.jdbc.PreparedStatement) {
+            if (sql.length() == 0 && interceptedQuery instanceof ClientPreparedStatement) {
                 try {
-                    sql = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).asSql();
+                    sql = ((ClientPreparedStatement) interceptedQuery).asSql();
                 } catch (SQLException ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex);
                 }
@@ -7143,48 +7145,49 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Session session = con.getSession();
 
             // check values from "select @@var..."
-            assertEquals(serverVariables.get("auto_increment_increment"), session.getServerVariable("auto_increment_increment"));
-            assertEquals(serverVariables.get("character_set_client"), session.getServerVariable("character_set_client"));
-            assertEquals(serverVariables.get("character_set_connection"), session.getServerVariable("character_set_connection"));
+            assertEquals(serverVariables.get("auto_increment_increment"), session.getServerSession().getServerVariable("auto_increment_increment"));
+            assertEquals(serverVariables.get("character_set_client"), session.getServerSession().getServerVariable("character_set_client"));
+            assertEquals(serverVariables.get("character_set_connection"), session.getServerSession().getServerVariable("character_set_connection"));
 
             // we override character_set_results sometimes when configuring client charsets, thus need to check against actual value
-            if (session.getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS) == null) {
+            if (session.getServerSession().getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS) == null) {
                 assertEquals("", serverVariables.get("character_set_results"));
             } else {
-                assertEquals(serverVariables.get("character_set_results"), session.getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS));
+                assertEquals(serverVariables.get("character_set_results"),
+                        session.getServerSession().getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS));
             }
 
-            assertEquals(serverVariables.get("character_set_server"), session.getServerVariable("character_set_server"));
-            assertEquals(serverVariables.get("init_connect"), session.getServerVariable("init_connect"));
-            assertEquals(serverVariables.get("interactive_timeout"), session.getServerVariable("interactive_timeout"));
-            assertEquals(serverVariables.get("license"), session.getServerVariable("license"));
-            assertEquals(serverVariables.get("lower_case_table_names"), session.getServerVariable("lower_case_table_names"));
-            assertEquals(serverVariables.get("max_allowed_packet"), session.getServerVariable("max_allowed_packet"));
-            assertEquals(serverVariables.get("net_write_timeout"), session.getServerVariable("net_write_timeout"));
+            assertEquals(serverVariables.get("character_set_server"), session.getServerSession().getServerVariable("character_set_server"));
+            assertEquals(serverVariables.get("init_connect"), session.getServerSession().getServerVariable("init_connect"));
+            assertEquals(serverVariables.get("interactive_timeout"), session.getServerSession().getServerVariable("interactive_timeout"));
+            assertEquals(serverVariables.get("license"), session.getServerSession().getServerVariable("license"));
+            assertEquals(serverVariables.get("lower_case_table_names"), session.getServerSession().getServerVariable("lower_case_table_names"));
+            assertEquals(serverVariables.get("max_allowed_packet"), session.getServerSession().getServerVariable("max_allowed_packet"));
+            assertEquals(serverVariables.get("net_write_timeout"), session.getServerSession().getServerVariable("net_write_timeout"));
             if (con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3))) {
-                assertEquals(serverVariables.get("have_query_cache"), session.getServerVariable("have_query_cache"));
+                assertEquals(serverVariables.get("have_query_cache"), session.getServerSession().getServerVariable("have_query_cache"));
             }
             if (!con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3)) || "YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
-                assertEquals(serverVariables.get("query_cache_size"), session.getServerVariable("query_cache_size"));
-                assertEquals(serverVariables.get("query_cache_type"), session.getServerVariable("query_cache_type"));
+                assertEquals(serverVariables.get("query_cache_size"), session.getServerSession().getServerVariable("query_cache_size"));
+                assertEquals(serverVariables.get("query_cache_type"), session.getServerSession().getServerVariable("query_cache_type"));
             }
 
             // not necessarily contains STRICT_TRANS_TABLES
             for (String sm : serverVariables.get("sql_mode").split(",")) {
                 if (!sm.equals("STRICT_TRANS_TABLES")) {
-                    assertTrue(session.getServerVariable("sql_mode").contains(sm));
+                    assertTrue(session.getServerSession().getServerVariable("sql_mode").contains(sm));
                 }
             }
 
-            assertEquals(serverVariables.get("system_time_zone"), session.getServerVariable("system_time_zone"));
-            assertEquals(serverVariables.get("time_zone"), session.getServerVariable("time_zone"));
+            assertEquals(serverVariables.get("system_time_zone"), session.getServerSession().getServerVariable("system_time_zone"));
+            assertEquals(serverVariables.get("time_zone"), session.getServerSession().getServerVariable("time_zone"));
 
             String s = versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation";
-            assertEquals(serverVariables.get(s), session.getServerVariable(s));
+            assertEquals(serverVariables.get(s), session.getServerSession().getServerVariable(s));
 
-            assertEquals(serverVariables.get("wait_timeout"), session.getServerVariable("wait_timeout"));
+            assertEquals(serverVariables.get("wait_timeout"), session.getServerSession().getServerVariable("wait_timeout"));
             if (!versionMeetsMinimum(5, 5, 0)) {
-                assertEquals(serverVariables.get("language"), session.getServerVariable("language"));
+                assertEquals(serverVariables.get("language"), session.getServerSession().getServerVariable("language"));
             }
         }
     }
@@ -8156,7 +8159,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String tlsVersion = rset.getString(2);
             System.out.println("TLS version: " + tlsVersion);
             System.out.println();
-            System.out.println("MySQL version: " + ((MysqlConnection) sslConn).getSession().getServerVersion());
+            System.out.println("MySQL version: " + ((MysqlConnection) sslConn).getSession().getServerSession().getServerVersion());
             String etp = ((MysqlConnection) sslConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
             System.out.println("enabledTLSProtocols: " + etp);
             System.out.println();
