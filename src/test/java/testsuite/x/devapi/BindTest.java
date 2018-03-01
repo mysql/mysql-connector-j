@@ -39,6 +39,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class BindTest extends BaseCollectionTestCase {
@@ -48,9 +49,15 @@ public class BindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":1}").execute();
-        this.collection.add("{\"x\":2}").execute();
-        this.collection.add("{\"x\":3}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": 1, \"x\":1}").execute();
+            this.collection.add("{\"_id\": 2, \"x\":2}").execute();
+            this.collection.add("{\"_id\": 3, \"x\":3}").execute();
+        } else {
+            this.collection.add("{\"x\":1}").execute();
+            this.collection.add("{\"x\":2}").execute();
+            this.collection.add("{\"x\":3}").execute();
+        }
 
         assertEquals(3, this.collection.count());
 
@@ -65,9 +72,15 @@ public class BindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":1}").execute();
-        this.collection.add("{\"x\":2}").execute();
-        this.collection.add("{\"x\":3}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": 1, \"x\":1}").execute();
+            this.collection.add("{\"_id\": 2, \"x\":2}").execute();
+            this.collection.add("{\"_id\": 3, \"x\":3}").execute();
+        } else {
+            this.collection.add("{\"x\":1}").execute();
+            this.collection.add("{\"x\":2}").execute();
+            this.collection.add("{\"x\":3}").execute();
+        }
 
         assertEquals(3, this.collection.count());
 
@@ -110,7 +123,11 @@ public class BindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{'x':1,'y':2}".replaceAll("'", "\"")).execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{'_id': 1, 'x':1,'y':2}".replaceAll("'", "\"")).execute();
+        } else {
+            this.collection.add("{'x':1,'y':2}".replaceAll("'", "\"")).execute();
+        }
         // same order as query
         assertEquals(1, this.collection.find("x = :x and y = :y").bind("x", 1).bind("y", 2).execute().count());
         // opposite order as query

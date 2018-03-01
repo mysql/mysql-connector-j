@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -80,38 +81,24 @@ public class AddStatementImpl implements AddStatement {
         return this;
     }
 
-    private List<String> assignIds() {
-        return this.newDocs.stream().map(d -> {
-            JsonValue id = d.get("_id");
-            if (id != null) {
-                return id instanceof JsonString ? ((JsonString) id).getString() : id.toString();
-            }
-            String newId = DocumentID.generate();
-            d.put("_id", new JsonString().setValue(newId));
-            return newId;
-        }).collect(Collectors.toList());
-    }
-
     private List<String> serializeDocs() {
         return this.newDocs.stream().map(DbDoc::toString).collect(Collectors.toList());
     }
 
     public AddResult execute() {
         if (this.newDocs.size() == 0) { // according to X DevAPI specification, this is a no-op. we create an empty Result
-            StatementExecuteOk ok = new StatementExecuteOk(0, null, new ArrayList<>());
-            return new AddResultImpl(ok, new ArrayList<>());
+            StatementExecuteOk ok = new StatementExecuteOk(0, null, Collections.emptyList(), Collections.emptyList());
+            return new AddResultImpl(ok);
         }
-        List<String> newIds = assignIds();
         StatementExecuteOk ok = this.mysqlxSession.sendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder())
                 .buildDocInsert(this.schemaName, this.collectionName, serializeDocs(), this.upsert));
-        return new AddResultImpl(ok, newIds);
+        return new AddResultImpl(ok);
     }
 
     public CompletableFuture<AddResult> executeAsync() {
-        final List<String> newIds = assignIds();
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder())
                 .buildDocInsert(this.schemaName, this.collectionName, serializeDocs(), this.upsert));
-        return okF.thenApply(ok -> new AddResultImpl(ok, newIds));
+        return okF.thenApply(ok -> new AddResultImpl(ok));
     }
 
     public boolean isUpsert() {

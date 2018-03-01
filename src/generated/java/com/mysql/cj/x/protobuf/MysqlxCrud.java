@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5197,6 +5197,15 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find.RowLock locking = 12;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock getLocking();
+
+    /**
+     * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+     */
+    boolean hasLockingOptions();
+    /**
+     * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+     */
+    com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions();
   }
   /**
    * Protobuf type {@code Mysqlx.Crud.Find}
@@ -5216,6 +5225,7 @@ public final class MysqlxCrud {
    * :param grouping: column expression list for aggregation (GROUP BY)
    * :param grouping_criteria: filter criteria for aggregated groups
    * :param locking: perform row locking on matches
+   * :param locking_options: additional options how to handle locked rows
    * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
    * </pre>
    */
@@ -5374,6 +5384,17 @@ public final class MysqlxCrud {
               }
               break;
             }
+            case 104: {
+              int rawValue = input.readEnum();
+              com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions value = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(13, rawValue);
+              } else {
+                bitField0_ |= 0x00000040;
+                lockingOptions_ = value;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -5521,6 +5542,104 @@ public final class MysqlxCrud {
       }
 
       // @@protoc_insertion_point(enum_scope:Mysqlx.Crud.Find.RowLock)
+    }
+
+    /**
+     * Protobuf enum {@code Mysqlx.Crud.Find.RowLockOptions}
+     */
+    public enum RowLockOptions
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>NOWAIT = 1;</code>
+       *
+       * <pre>
+       * Do not wait to acquire row lock, fail with an error if a requested row is locked
+       * </pre>
+       */
+      NOWAIT(0, 1),
+      /**
+       * <code>SKIP_LOCKED = 2;</code>
+       *
+       * <pre>
+       * Do not wait to acquire a row lock, remove locked rows from the result set
+       * </pre>
+       */
+      SKIP_LOCKED(1, 2),
+      ;
+
+      /**
+       * <code>NOWAIT = 1;</code>
+       *
+       * <pre>
+       * Do not wait to acquire row lock, fail with an error if a requested row is locked
+       * </pre>
+       */
+      public static final int NOWAIT_VALUE = 1;
+      /**
+       * <code>SKIP_LOCKED = 2;</code>
+       *
+       * <pre>
+       * Do not wait to acquire a row lock, remove locked rows from the result set
+       * </pre>
+       */
+      public static final int SKIP_LOCKED_VALUE = 2;
+
+
+      public final int getNumber() { return value; }
+
+      public static RowLockOptions valueOf(int value) {
+        switch (value) {
+          case 1: return NOWAIT;
+          case 2: return SKIP_LOCKED;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<RowLockOptions>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static com.google.protobuf.Internal.EnumLiteMap<RowLockOptions>
+          internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<RowLockOptions>() {
+              public RowLockOptions findValueByNumber(int number) {
+                return RowLockOptions.valueOf(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(index);
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDescriptor().getEnumTypes().get(1);
+      }
+
+      private static final RowLockOptions[] VALUES = values();
+
+      public static RowLockOptions valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private RowLockOptions(int index, int value) {
+        this.index = index;
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:Mysqlx.Crud.Find.RowLockOptions)
     }
 
     private int bitField0_;
@@ -5778,6 +5897,21 @@ public final class MysqlxCrud {
       return locking_;
     }
 
+    public static final int LOCKING_OPTIONS_FIELD_NUMBER = 13;
+    private com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions lockingOptions_;
+    /**
+     * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+     */
+    public boolean hasLockingOptions() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+     */
+    public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions() {
+      return lockingOptions_;
+    }
+
     private void initFields() {
       collection_ = com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance();
       dataModel_ = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.DOCUMENT;
@@ -5789,6 +5923,7 @@ public final class MysqlxCrud {
       grouping_ = java.util.Collections.emptyList();
       groupingCriteria_ = com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance();
       locking_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.SHARED_LOCK;
+      lockingOptions_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.NOWAIT;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -5883,6 +6018,9 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeEnum(12, locking_.getNumber());
       }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeEnum(13, lockingOptions_.getNumber());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -5931,6 +6069,10 @@ public final class MysqlxCrud {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(12, locking_.getNumber());
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(13, lockingOptions_.getNumber());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -6028,6 +6170,7 @@ public final class MysqlxCrud {
      * :param grouping: column expression list for aggregation (GROUP BY)
      * :param grouping_criteria: filter criteria for aggregated groups
      * :param locking: perform row locking on matches
+     * :param locking_options: additional options how to handle locked rows
      * :Returns: :protobuf:msg:`Mysqlx.Resultset::`
      * </pre>
      */
@@ -6127,6 +6270,8 @@ public final class MysqlxCrud {
         bitField0_ = (bitField0_ & ~0x00000100);
         locking_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.SHARED_LOCK;
         bitField0_ = (bitField0_ & ~0x00000200);
+        lockingOptions_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.NOWAIT;
+        bitField0_ = (bitField0_ & ~0x00000400);
         return this;
       }
 
@@ -6231,6 +6376,10 @@ public final class MysqlxCrud {
           to_bitField0_ |= 0x00000020;
         }
         result.locking_ = locking_;
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.lockingOptions_ = lockingOptions_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -6368,6 +6517,9 @@ public final class MysqlxCrud {
         }
         if (other.hasLocking()) {
           setLocking(other.getLocking());
+        }
+        if (other.hasLockingOptions()) {
+          setLockingOptions(other.getLockingOptions());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -7936,6 +8088,41 @@ public final class MysqlxCrud {
       public Builder clearLocking() {
         bitField0_ = (bitField0_ & ~0x00000200);
         locking_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.SHARED_LOCK;
+        onChanged();
+        return this;
+      }
+
+      private com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions lockingOptions_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.NOWAIT;
+      /**
+       * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+       */
+      public boolean hasLockingOptions() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+       */
+      public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions() {
+        return lockingOptions_;
+      }
+      /**
+       * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+       */
+      public Builder setLockingOptions(com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000400;
+        lockingOptions_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
+       */
+      public Builder clearLockingOptions() {
+        bitField0_ = (bitField0_ & ~0x00000400);
+        lockingOptions_ = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.NOWAIT;
         onChanged();
         return this;
       }
@@ -17832,7 +18019,7 @@ public final class MysqlxCrud {
       "\n\003SET\020\001\022\017\n\013ITEM_REMOVE\020\002\022\014\n\010ITEM_SET\020\003\022\020" +
       "\n\014ITEM_REPLACE\020\004\022\016\n\nITEM_MERGE\020\005\022\020\n\014ARRA" +
       "Y_INSERT\020\006\022\020\n\014ARRAY_APPEND\020\007\022\017\n\013MERGE_PA" +
-      "TCH\020\010\"\324\003\n\004Find\022+\n\ncollection\030\002 \002(\0132\027.Mys",
+      "TCH\020\010\"\276\004\n\004Find\022+\n\ncollection\030\002 \002(\0132\027.Mys",
       "qlx.Crud.Collection\022*\n\ndata_model\030\003 \001(\0162" +
       "\026.Mysqlx.Crud.DataModel\022+\n\nprojection\030\004 " +
       "\003(\0132\027.Mysqlx.Crud.Projection\022#\n\010criteria" +
@@ -17842,52 +18029,55 @@ public final class MysqlxCrud {
       "sqlx.Crud.Order\022#\n\010grouping\030\010 \003(\0132\021.Mysq" +
       "lx.Expr.Expr\022,\n\021grouping_criteria\030\t \001(\0132" +
       "\021.Mysqlx.Expr.Expr\022*\n\007locking\030\014 \001(\0162\031.My" +
-      "sqlx.Crud.Find.RowLock\".\n\007RowLock\022\017\n\013SHA",
-      "RED_LOCK\020\001\022\022\n\016EXCLUSIVE_LOCK\020\002:\004\210\3520\021\"\250\002\n" +
-      "\006Insert\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Cru" +
-      "d.Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mysql" +
-      "x.Crud.DataModel\022\'\n\nprojection\030\003 \003(\0132\023.M" +
-      "ysqlx.Crud.Column\022)\n\003row\030\004 \003(\0132\034.Mysqlx." +
-      "Crud.Insert.TypedRow\022&\n\004args\030\005 \003(\0132\030.Mys" +
-      "qlx.Datatypes.Scalar\022\025\n\006upsert\030\006 \001(\010:\005fa" +
-      "lse\032,\n\010TypedRow\022 \n\005field\030\001 \003(\0132\021.Mysqlx." +
-      "Expr.Expr:\004\210\3520\022\"\253\002\n\006Update\022+\n\ncollection" +
-      "\030\002 \002(\0132\027.Mysqlx.Crud.Collection\022*\n\ndata_",
-      "model\030\003 \001(\0162\026.Mysqlx.Crud.DataModel\022#\n\010c" +
-      "riteria\030\004 \001(\0132\021.Mysqlx.Expr.Expr\022&\n\004args" +
-      "\030\010 \003(\0132\030.Mysqlx.Datatypes.Scalar\022!\n\005limi" +
-      "t\030\005 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005order\030\006 \003" +
-      "(\0132\022.Mysqlx.Crud.Order\022/\n\toperation\030\007 \003(" +
-      "\0132\034.Mysqlx.Crud.UpdateOperation:\004\210\3520\023\"\372\001" +
-      "\n\006Delete\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Cr" +
-      "ud.Collection\022*\n\ndata_model\030\002 \001(\0162\026.Mysq" +
-      "lx.Crud.DataModel\022#\n\010criteria\030\003 \001(\0132\021.My" +
-      "sqlx.Expr.Expr\022&\n\004args\030\006 \003(\0132\030.Mysqlx.Da",
-      "tatypes.Scalar\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.C" +
-      "rud.Limit\022!\n\005order\030\005 \003(\0132\022.Mysqlx.Crud.O" +
-      "rder:\004\210\3520\024\"\302\002\n\nCreateView\022+\n\ncollection\030" +
-      "\001 \002(\0132\027.Mysqlx.Crud.Collection\022\017\n\007define" +
-      "r\030\002 \001(\t\0228\n\talgorithm\030\003 \001(\0162\032.Mysqlx.Crud" +
-      ".ViewAlgorithm:\tUNDEFINED\0227\n\010security\030\004 " +
-      "\001(\0162\034.Mysqlx.Crud.ViewSqlSecurity:\007DEFIN" +
-      "ER\022+\n\005check\030\005 \001(\0162\034.Mysqlx.Crud.ViewChec" +
-      "kOption\022\016\n\006column\030\006 \003(\t\022\037\n\004stmt\030\007 \002(\0132\021." +
-      "Mysqlx.Crud.Find\022\037\n\020replace_existing\030\010 \001",
-      "(\010:\005false:\004\210\3520\036\"\215\002\n\nModifyView\022+\n\ncollec" +
-      "tion\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022\017\n\007d" +
-      "efiner\030\002 \001(\t\022-\n\talgorithm\030\003 \001(\0162\032.Mysqlx" +
-      ".Crud.ViewAlgorithm\022.\n\010security\030\004 \001(\0162\034." +
-      "Mysqlx.Crud.ViewSqlSecurity\022+\n\005check\030\005 \001" +
-      "(\0162\034.Mysqlx.Crud.ViewCheckOption\022\016\n\006colu" +
-      "mn\030\006 \003(\t\022\037\n\004stmt\030\007 \001(\0132\021.Mysqlx.Crud.Fin" +
-      "d:\004\210\3520\037\"W\n\010DropView\022+\n\ncollection\030\001 \002(\0132" +
-      "\027.Mysqlx.Crud.Collection\022\030\n\tif_exists\030\002 " +
-      "\001(\010:\005false:\004\210\3520 *$\n\tDataModel\022\014\n\010DOCUMEN",
-      "T\020\001\022\t\n\005TABLE\020\002*8\n\rViewAlgorithm\022\r\n\tUNDEF" +
-      "INED\020\001\022\t\n\005MERGE\020\002\022\r\n\tTEMPTABLE\020\003*+\n\017View" +
-      "SqlSecurity\022\013\n\007INVOKER\020\001\022\013\n\007DEFINER\020\002**\n" +
-      "\017ViewCheckOption\022\t\n\005LOCAL\020\001\022\014\n\010CASCADED\020" +
-      "\002B\031\n\027com.mysql.cj.x.protobuf"
+      "sqlx.Crud.Find.RowLock\0229\n\017locking_option",
+      "s\030\r \001(\0162 .Mysqlx.Crud.Find.RowLockOption" +
+      "s\".\n\007RowLock\022\017\n\013SHARED_LOCK\020\001\022\022\n\016EXCLUSI" +
+      "VE_LOCK\020\002\"-\n\016RowLockOptions\022\n\n\006NOWAIT\020\001\022" +
+      "\017\n\013SKIP_LOCKED\020\002:\004\210\3520\021\"\250\002\n\006Insert\022+\n\ncol" +
+      "lection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022*" +
+      "\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMod" +
+      "el\022\'\n\nprojection\030\003 \003(\0132\023.Mysqlx.Crud.Col" +
+      "umn\022)\n\003row\030\004 \003(\0132\034.Mysqlx.Crud.Insert.Ty" +
+      "pedRow\022&\n\004args\030\005 \003(\0132\030.Mysqlx.Datatypes." +
+      "Scalar\022\025\n\006upsert\030\006 \001(\010:\005false\032,\n\010TypedRo",
+      "w\022 \n\005field\030\001 \003(\0132\021.Mysqlx.Expr.Expr:\004\210\3520" +
+      "\022\"\253\002\n\006Update\022+\n\ncollection\030\002 \002(\0132\027.Mysql" +
+      "x.Crud.Collection\022*\n\ndata_model\030\003 \001(\0162\026." +
+      "Mysqlx.Crud.DataModel\022#\n\010criteria\030\004 \001(\0132" +
+      "\021.Mysqlx.Expr.Expr\022&\n\004args\030\010 \003(\0132\030.Mysql" +
+      "x.Datatypes.Scalar\022!\n\005limit\030\005 \001(\0132\022.Mysq" +
+      "lx.Crud.Limit\022!\n\005order\030\006 \003(\0132\022.Mysqlx.Cr" +
+      "ud.Order\022/\n\toperation\030\007 \003(\0132\034.Mysqlx.Cru" +
+      "d.UpdateOperation:\004\210\3520\023\"\372\001\n\006Delete\022+\n\nco" +
+      "llection\030\001 \002(\0132\027.Mysqlx.Crud.Collection\022",
+      "*\n\ndata_model\030\002 \001(\0162\026.Mysqlx.Crud.DataMo" +
+      "del\022#\n\010criteria\030\003 \001(\0132\021.Mysqlx.Expr.Expr" +
+      "\022&\n\004args\030\006 \003(\0132\030.Mysqlx.Datatypes.Scalar" +
+      "\022!\n\005limit\030\004 \001(\0132\022.Mysqlx.Crud.Limit\022!\n\005o" +
+      "rder\030\005 \003(\0132\022.Mysqlx.Crud.Order:\004\210\3520\024\"\302\002\n" +
+      "\nCreateView\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx" +
+      ".Crud.Collection\022\017\n\007definer\030\002 \001(\t\0228\n\talg" +
+      "orithm\030\003 \001(\0162\032.Mysqlx.Crud.ViewAlgorithm" +
+      ":\tUNDEFINED\0227\n\010security\030\004 \001(\0162\034.Mysqlx.C" +
+      "rud.ViewSqlSecurity:\007DEFINER\022+\n\005check\030\005 ",
+      "\001(\0162\034.Mysqlx.Crud.ViewCheckOption\022\016\n\006col" +
+      "umn\030\006 \003(\t\022\037\n\004stmt\030\007 \002(\0132\021.Mysqlx.Crud.Fi" +
+      "nd\022\037\n\020replace_existing\030\010 \001(\010:\005false:\004\210\3520" +
+      "\036\"\215\002\n\nModifyView\022+\n\ncollection\030\001 \002(\0132\027.M" +
+      "ysqlx.Crud.Collection\022\017\n\007definer\030\002 \001(\t\022-" +
+      "\n\talgorithm\030\003 \001(\0162\032.Mysqlx.Crud.ViewAlgo" +
+      "rithm\022.\n\010security\030\004 \001(\0162\034.Mysqlx.Crud.Vi" +
+      "ewSqlSecurity\022+\n\005check\030\005 \001(\0162\034.Mysqlx.Cr" +
+      "ud.ViewCheckOption\022\016\n\006column\030\006 \003(\t\022\037\n\004st" +
+      "mt\030\007 \001(\0132\021.Mysqlx.Crud.Find:\004\210\3520\037\"W\n\010Dro",
+      "pView\022+\n\ncollection\030\001 \002(\0132\027.Mysqlx.Crud." +
+      "Collection\022\030\n\tif_exists\030\002 \001(\010:\005false:\004\210\352" +
+      "0 *$\n\tDataModel\022\014\n\010DOCUMENT\020\001\022\t\n\005TABLE\020\002" +
+      "*8\n\rViewAlgorithm\022\r\n\tUNDEFINED\020\001\022\t\n\005MERG" +
+      "E\020\002\022\r\n\tTEMPTABLE\020\003*+\n\017ViewSqlSecurity\022\013\n" +
+      "\007INVOKER\020\001\022\013\n\007DEFINER\020\002**\n\017ViewCheckOpti" +
+      "on\022\t\n\005LOCAL\020\001\022\014\n\010CASCADED\020\002B\031\n\027com.mysql" +
+      ".cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -17945,7 +18135,7 @@ public final class MysqlxCrud {
     internal_static_Mysqlx_Crud_Find_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Mysqlx_Crud_Find_descriptor,
-        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Args", "Limit", "Order", "Grouping", "GroupingCriteria", "Locking", });
+        new java.lang.String[] { "Collection", "DataModel", "Projection", "Criteria", "Args", "Limit", "Order", "Grouping", "GroupingCriteria", "Locking", "LockingOptions", });
     internal_static_Mysqlx_Crud_Insert_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_Mysqlx_Crud_Insert_fieldAccessorTable = new

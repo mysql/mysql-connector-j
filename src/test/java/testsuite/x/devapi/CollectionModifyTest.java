@@ -42,6 +42,7 @@ import java.util.concurrent.Callable;
 import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
@@ -62,7 +63,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         this.collection.modify("true").set("a", "Value for a").execute();
         this.collection.modify("1 == 1").set("b", "Value for b").execute();
@@ -82,8 +88,13 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
-        this.collection.add("{\"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":\"100\", \"y\":\"200\", \"z\":1}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\", \"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
+        } else {
+            this.collection.add("{\"x\":\"100\", \"y\":\"200\", \"z\":1}").execute();
+            this.collection.add("{\"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
+        }
 
         this.collection.modify("true").unset("$.x").unset("$.y").execute();
         this.collection.modify("true").unset("$.a", "$.b").execute();
@@ -101,7 +112,11 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":100}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":100}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"x\":100}").execute();
+        }
         this.collection.modify("true").change("$.x", "99").execute();
 
         DocResult res = this.collection.find().execute();
@@ -114,7 +129,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":[8,16,32]}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":[8,16,32]}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"x\":[8,16,32]}").execute();
+        }
         this.collection.modify("true").arrayAppend("$.x", "64").execute();
 
         DocResult res = this.collection.find().execute();
@@ -133,7 +153,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":[1,2]}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":[1,2]}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"x\":[1,2]}").execute();
+        }
         this.collection.modify("true").arrayInsert("$.x[1]", 43).execute();
         // same as append
         this.collection.modify("true").arrayInsert("$.x[3]", 44).execute();
@@ -157,10 +182,17 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         DbDoc nestedDoc = new DbDocImpl().add("z", new JsonNumber().setValue("100"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
 
-        this.collection.add("{\"x\":1, \"y\":1}").execute();
-        this.collection.add("{\"x\":2, \"y\":2}").execute();
-        this.collection.add(doc).execute();
-        this.collection.add("{\"x\":4, \"m\":1}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":1, \"y\":1}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\", \"x\":2, \"y\":2}").execute();
+            this.collection.add(doc.add("_id", new JsonString().setValue("3"))).execute(); // Inject an _id.
+            this.collection.add("{\"_id\": \"4\", \"x\":4, \"m\":1}").execute();
+        } else {
+            this.collection.add("{\"x\":1, \"y\":1}").execute();
+            this.collection.add("{\"x\":2, \"y\":2}").execute();
+            this.collection.add(doc).execute();
+            this.collection.add("{\"x\":4, \"m\":1}").execute();
+        }
 
         assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
             public Void call() throws Exception {
@@ -214,9 +246,15 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         JsonArray xArray = new JsonArray().addValue(new JsonString().setValue("a")).addValue(new JsonNumber().setValue("1"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", xArray);
 
-        this.collection.add("{\"x\":1, \"y\":[\"b\", 2]}").execute();
-        this.collection.add("{\"x\":2, \"y\":22}").execute();
-        this.collection.add(doc).execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":1, \"y\":[\"b\", 2]}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\", \"x\":2, \"y\":22}").execute();
+            this.collection.add(doc.add("_id", new JsonString().setValue("3"))).execute(); // Inject an _id.
+        } else {
+            this.collection.add("{\"x\":1, \"y\":[\"b\", 2]}").execute();
+            this.collection.add("{\"x\":2, \"y\":22}").execute();
+            this.collection.add(doc).execute();
+        }
 
         this.collection.modify("true").arrayInsert("$.y[1]", 44).execute();
         this.collection.modify("x = 2").change("$.y", xArray).execute();
@@ -248,15 +286,20 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         }
 
         String docStr = "{\"B\" : 2, \"ID\" : 1, \"KEY\" : [1]}";
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            docStr = docStr.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         DbDoc doc1 = JsonParser.parseDoc(new StringReader(docStr));
 
-        this.collection.add(doc1).execute();
+        AddResult res = this.collection.add(doc1).execute();
         this.collection.modify("ID=1").set("$.B", doc1).execute();
 
         // expected doc
         DbDoc doc2 = JsonParser.parseDoc(new StringReader(docStr));
         doc2.put("B", doc1);
-        doc2.put("_id", doc1.get("_id"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            doc2.put("_id", new JsonString().setValue(res.getGeneratedIds().get(0)));
+        }
         DocResult docs = this.collection.find().execute();
         DbDoc doc = docs.next();
         assertEquals(doc2.toString(), doc.toString());

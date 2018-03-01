@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.AddResult;
@@ -63,9 +64,15 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         AddResult res = this.collection.add(json).execute();
-        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            assertEquals(0, res.getGeneratedIds().size());
+        }
 
         CompletableFuture<DocResult> docsF = this.collection.find("firstName like '%Fra%'").executeAsync();
         DocResult docs = docsF.get();
@@ -82,9 +89,15 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
         final int NUMBER_OF_QUERIES = 50;
 
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         AddResult res = this.collection.add(json).execute();
-        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            assertEquals(0, res.getGeneratedIds().size());
+        }
 
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
@@ -121,10 +134,16 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         CompletableFuture<AddResult> resF = this.collection.add(json).executeAsync();
         CompletableFuture<DocResult> docF = resF.thenCompose((AddResult res) -> {
-            assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-            assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+                assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+            } else {
+                assertEquals(0, res.getGeneratedIds().size());
+            }
             return this.collection.find("firstName like '%Fra%'").executeAsync();
         });
 
@@ -140,6 +159,9 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
         }
         // we guarantee serial execution
         String json = "{'n':1}".replaceAll("'", "\"");
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         this.collection.add(json).execute();
 
         @SuppressWarnings("rawtypes")

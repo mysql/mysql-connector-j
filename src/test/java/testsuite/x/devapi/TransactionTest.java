@@ -39,6 +39,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
@@ -66,10 +67,18 @@ public class TransactionTest extends DevApiBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").add("{}").execute();
 
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").add("{}").execute();
+        }
         this.session.startTransaction();
-        this.collection.add("{}").add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"3\"}").add("{\"_id\": \"4\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").add("{}").execute();
+        }
         assertEquals(4, this.collection.find().execute().count());
         this.session.rollback();
 
@@ -81,10 +90,18 @@ public class TransactionTest extends DevApiBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").add("{}").execute();
 
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").add("{}").execute();
+        }
         this.session.startTransaction();
-        this.collection.add("{}").add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"3\"}").add("{\"_id\": \"4\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").add("{}").execute();
+        }
         assertEquals(4, this.collection.find().execute().count());
         this.session.commit();
 
@@ -96,15 +113,28 @@ public class TransactionTest extends DevApiBaseTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         // Test for rollbackTo
 
         this.session.startTransaction();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         String sp1 = this.session.setSavepoint();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"3\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
             public Void call() throws Exception {
@@ -126,7 +156,11 @@ public class TransactionTest extends DevApiBaseTestCase {
         });
 
         String sp2 = this.session.setSavepoint("sp2");
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"4\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         assertEquals(4, this.collection.find().execute().count());
 
@@ -167,13 +201,25 @@ public class TransactionTest extends DevApiBaseTestCase {
         // Test for releaseSavepoint
 
         this.session.startTransaction();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"5\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         sp1 = this.session.setSavepoint();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"6\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         sp2 = this.session.setSavepoint("sp2");
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"7\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{}").execute();
+        }
 
         assertEquals(5, this.collection.find().execute().count());
 
@@ -212,6 +258,5 @@ public class TransactionTest extends DevApiBaseTestCase {
         this.session.commit();
 
         assertEquals(3, this.collection.find().execute().count());
-
     }
 }

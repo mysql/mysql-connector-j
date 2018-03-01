@@ -236,18 +236,26 @@ public class MetadataTest extends BaseTableTestCase {
         assertEquals("_id", idCol.getColumnName());
         assertEquals("_id", idCol.getColumnLabel());
         assertEquals(Type.STRING, idCol.getType());
-        assertEquals(128, idCol.getLength());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertEquals(32, idCol.getLength());
+        } else {
+            assertEquals(128, idCol.getLength());
+        }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
 
-        // Unlike ordinary tables, collections are always created in uft8mb4 charset, but collation was changed in 8.0.1
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
+        // Unlike ordinary tables, collections are always created in uft8mb4 charset, but collation was changed in 8.0.1.
+        // Since MySQL 8.0.5 the _id column has collation 'binary'.
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertEquals("binary", idCol.getCollationName());
+            assertEquals("binary", idCol.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.1"))) {
             assertEquals("utf8mb4_0900_ai_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
         } else {
             assertEquals("utf8mb4_general_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
         }
-
-        assertEquals("utf8mb4", idCol.getCharacterSetName());
         assertEquals(false, idCol.isPadded());
         assertEquals(false, idCol.isNullable());
         assertEquals(false, idCol.isAutoIncrement());

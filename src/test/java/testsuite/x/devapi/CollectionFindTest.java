@@ -122,7 +122,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             return;
         }
         try {
-            this.collection.add("{}").execute();
+            this.collection.add("{\"_id\": \"1\"}").execute();
             DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
             docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
             fail("Statement should raise an error");
@@ -140,9 +140,15 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             return;
         }
 
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\"}").execute();
+            this.collection.add("{\"_id\": \"3\"}").execute();
+        } else {
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+        }
         DocResult docs = this.collection.find().execute();
         int numDocs = 0;
         for (DbDoc d : docs) {
@@ -158,7 +164,11 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"xyz\":1}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"xyz\":1}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"xyz\":1}").execute();
+        }
         Table coll = this.schema.getCollectionAsTable(this.collection.getName());
         Row r = coll.select("doc").execute().next();
         DbDoc doc = r.getDbDoc("doc");
@@ -170,16 +180,25 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\"}").execute();
+            this.collection.add("{\"_id\": \"3\"}").execute();
+            this.collection.add("{\"_id\": \"4\"}").execute();
+        } else {
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+        }
 
         // limit 1, order by ID, save the first ID
         DocResult docs = this.collection.find().orderBy("$._id").limit(1).execute();
         assertTrue(docs.hasNext());
         String firstId = ((JsonString) docs.next().get("_id")).getString();
-        assertTrue(firstId.matches("[a-f0-9]{32}"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertTrue(firstId.matches("[a-f0-9]{28}"));
+        }
         assertFalse(docs.hasNext());
 
         // limit 3, offset 1, order by ID, make sure we don't see the first ID
@@ -198,7 +217,12 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":1, \"y\":2}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":1, \"y\":2}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"x\":1, \"y\":2}").execute();
+        }
 
         DocResult docs;
 
@@ -231,7 +255,12 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute();
+        }
 
         DocResult docs;
 
@@ -255,7 +284,11 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute();
+        }
 
         DocResult docs;
 
@@ -307,7 +340,11 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute(); // Requires manual _id.
+        } else {
+            this.collection.add("{\"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute();
+        }
 
         DocResult docs;
 
@@ -378,7 +415,11 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":100}").execute();
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":100}").execute();
+        } else {
+            this.collection.add("{\"x\":100}").execute();
+        }
 
         DbDoc d = this.collection.find().fields("CAST($.x as SIGNED) as x").execute().next();
         assertEquals(new Integer(100), ((JsonNumber) d.get("x")).getInteger());
@@ -526,8 +567,14 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"a\":1}").execute();
-        this.collection.add("{\"a\":2}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"a\":1}").execute();
+            this.collection.add("{\"_id\": \"2\", \"a\":2}").execute();
+        } else {
+            this.collection.add("{\"a\":1}").execute();
+            this.collection.add("{\"a\":2}").execute();
+        }
         this.collection.add("{\"_id\":\"existingId\",\"a\":3}").execute();
 
         DbDoc doc = this.collection.getOne("existingId");

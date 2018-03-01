@@ -37,32 +37,18 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
  * A result from the collection.add() statement.
  */
 public class AddResultImpl extends UpdateResult implements AddResult {
-    private List<String> lastDocIds;
-
     /**
      * Create a new result.
      *
      * @param ok
      *            the response from the server
-     * @param lastDocIds
-     *            the (optional) IDs of the inserted documents
      */
-    public AddResultImpl(StatementExecuteOk ok, List<String> lastDocIds) {
+    public AddResultImpl(StatementExecuteOk ok) {
         super(ok);
-        this.lastDocIds = lastDocIds;
     }
 
     @Override
-    public List<String> getDocumentIds() {
-        return this.lastDocIds;
+    public List<String> getGeneratedIds() {
+        return this.ok.getGeneratedIds();
     }
-
-    @Override
-    public String getDocumentId() {
-        if (this.lastDocIds.size() > 1) {
-            throw new XDevAPIError("Method getDocumentId() is allowed only for a single document add() result.");
-        }
-        return this.lastDocIds.get(this.lastDocIds.size() - 1);
-    }
-
 }

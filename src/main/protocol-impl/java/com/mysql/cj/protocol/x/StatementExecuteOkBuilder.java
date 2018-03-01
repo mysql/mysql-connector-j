@@ -30,7 +30,9 @@
 package com.mysql.cj.protocol.x;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.exceptions.WrongArgumentException;
 
@@ -40,6 +42,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 public class StatementExecuteOkBuilder {
     private long rowsAffected = 0;
     private Long lastInsertId = null;
+    private List<String> generatedIds = Collections.emptyList();
     private List<com.mysql.cj.protocol.Warning> warnings = new ArrayList<>();
 
     public void addNotice(Notice notice) {
@@ -59,6 +62,9 @@ public class StatementExecuteOkBuilder {
                     // TODO do something with notices. expose them to client
                     //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
                     break;
+                case Notice.SessionStateChanged_GENERATED_DOCUMENT_IDS:
+                    this.generatedIds = notice.getValueList().stream().map(v -> v.getVOctets().getValue().toStringUtf8()).collect(Collectors.toList());
+                    break;
                 case Notice.SessionStateChanged_CURRENT_SCHEMA:
                 case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
                 case Notice.SessionStateChanged_ROWS_FOUND:
@@ -77,6 +83,6 @@ public class StatementExecuteOkBuilder {
     }
 
     public StatementExecuteOk build() {
-        return new StatementExecuteOk(this.rowsAffected, this.lastInsertId, this.warnings);
+        return new StatementExecuteOk(this.rowsAffected, this.lastInsertId, this.generatedIds, this.warnings);
     }
 }

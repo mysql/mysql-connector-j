@@ -3,6 +3,8 @@
 
 Version 8.0.10
 
+  - WL#11419, DevAPI: New document _id generation support.
+
   - WL#11620, Change caching_sha2_password padding.
 
   - WL#11604, DevAPI: Add SHA256_MEMORY support.

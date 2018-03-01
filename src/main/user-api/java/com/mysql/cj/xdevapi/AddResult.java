@@ -37,16 +37,9 @@ import java.util.List;
 public interface AddResult extends Result {
 
     /**
-     * Get a list of all document ids for all documents added by collection.add().
+     * Get a list of document ids generated in the server for the documents added by collection.add().
      * 
-     * @return document ids
+     * @return all generated document ids
      */
-    List<String> getDocumentIds();
-
-    /**
-     * Get the unique identifier value when a single document is added by collection.add().
-     * 
-     * @return unique document id
-     */
-    String getDocumentId();
+    List<String> getGeneratedIds();
 }

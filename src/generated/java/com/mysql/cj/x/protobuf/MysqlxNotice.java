@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2334,17 +2334,28 @@ public final class MysqlxNotice {
     com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter getParam();
 
     /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
-    boolean hasValue();
+    java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> 
+        getValueList();
     /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
-    com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue();
+    com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index);
     /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
-    com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder();
+    int getValueCount();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+     */
+    java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+        getValueOrBuilderList();
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+     */
+    com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code Mysqlx.Notice.SessionStateChanged}
@@ -2422,16 +2433,11 @@ public final class MysqlxNotice {
               break;
             }
             case 18: {
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = value_.toBuilder();
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                value_ = new java.util.ArrayList<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar>();
+                mutable_bitField0_ |= 0x00000002;
               }
-              value_ = input.readMessage(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(value_);
-                value_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
+              value_.add(input.readMessage(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.PARSER, extensionRegistry));
               break;
             }
           }
@@ -2442,6 +2448,9 @@ public final class MysqlxNotice {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -2516,12 +2525,16 @@ public final class MysqlxNotice {
       PRODUCED_MESSAGE(8, 10),
       /**
        * <code>CLIENT_ID_ASSIGNED = 11;</code>
+       */
+      CLIENT_ID_ASSIGNED(9, 11),
+      /**
+       * <code>GENERATED_DOCUMENT_IDS = 12;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      CLIENT_ID_ASSIGNED(9, 11),
+      GENERATED_DOCUMENT_IDS(10, 12),
       ;
 
       /**
@@ -2562,12 +2575,16 @@ public final class MysqlxNotice {
       public static final int PRODUCED_MESSAGE_VALUE = 10;
       /**
        * <code>CLIENT_ID_ASSIGNED = 11;</code>
+       */
+      public static final int CLIENT_ID_ASSIGNED_VALUE = 11;
+      /**
+       * <code>GENERATED_DOCUMENT_IDS = 12;</code>
        *
        * <pre>
        * .. more to be added
        * </pre>
        */
-      public static final int CLIENT_ID_ASSIGNED_VALUE = 11;
+      public static final int GENERATED_DOCUMENT_IDS_VALUE = 12;
 
 
       public final int getNumber() { return value; }
@@ -2584,6 +2601,7 @@ public final class MysqlxNotice {
           case 9: return TRX_ROLLEDBACK;
           case 10: return PRODUCED_MESSAGE;
           case 11: return CLIENT_ID_ASSIGNED;
+          case 12: return GENERATED_DOCUMENT_IDS;
           default: return null;
         }
       }
@@ -2652,29 +2670,43 @@ public final class MysqlxNotice {
     }
 
     public static final int VALUE_FIELD_NUMBER = 2;
-    private com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value_;
+    private java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> value_;
     /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
-    public boolean hasValue() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue() {
+    public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getValueList() {
       return value_;
     }
     /**
-     * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder() {
+    public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+        getValueOrBuilderList() {
       return value_;
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+     */
+    public int getValueCount() {
+      return value_.size();
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+     */
+    public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index) {
+      return value_.get(index);
+    }
+    /**
+     * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+     */
+    public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
+        int index) {
+      return value_.get(index);
     }
 
     private void initFields() {
       param_ = com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.CURRENT_SCHEMA;
-      value_ = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance();
+      value_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -2686,8 +2718,8 @@ public final class MysqlxNotice {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (hasValue()) {
-        if (!getValue().isInitialized()) {
+      for (int i = 0; i < getValueCount(); i++) {
+        if (!getValue(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -2702,8 +2734,8 @@ public final class MysqlxNotice {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeEnum(1, param_.getNumber());
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, value_);
+      for (int i = 0; i < value_.size(); i++) {
+        output.writeMessage(2, value_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -2718,9 +2750,9 @@ public final class MysqlxNotice {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, param_.getNumber());
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+      for (int i = 0; i < value_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, value_);
+          .computeMessageSize(2, value_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2855,11 +2887,11 @@ public final class MysqlxNotice {
         param_ = com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.CURRENT_SCHEMA;
         bitField0_ = (bitField0_ & ~0x00000001);
         if (valueBuilder_ == null) {
-          value_ = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance();
+          value_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
         } else {
           valueBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -2892,10 +2924,11 @@ public final class MysqlxNotice {
           to_bitField0_ |= 0x00000001;
         }
         result.param_ = param_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
         if (valueBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            value_ = java.util.Collections.unmodifiableList(value_);
+            bitField0_ = (bitField0_ & ~0x00000002);
+          }
           result.value_ = value_;
         } else {
           result.value_ = valueBuilder_.build();
@@ -2919,8 +2952,31 @@ public final class MysqlxNotice {
         if (other.hasParam()) {
           setParam(other.getParam());
         }
-        if (other.hasValue()) {
-          mergeValue(other.getValue());
+        if (valueBuilder_ == null) {
+          if (!other.value_.isEmpty()) {
+            if (value_.isEmpty()) {
+              value_ = other.value_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+            } else {
+              ensureValueIsMutable();
+              value_.addAll(other.value_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.value_.isEmpty()) {
+            if (valueBuilder_.isEmpty()) {
+              valueBuilder_.dispose();
+              valueBuilder_ = null;
+              value_ = other.value_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+              valueBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getValueFieldBuilder() : null;
+            } else {
+              valueBuilder_.addAllMessages(other.value_);
+            }
+          }
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2931,8 +2987,8 @@ public final class MysqlxNotice {
           
           return false;
         }
-        if (hasValue()) {
-          if (!getValue().isInitialized()) {
+        for (int i = 0; i < getValueCount(); i++) {
+          if (!getValue(i).isInitialized()) {
             
             return false;
           }
@@ -2994,115 +3050,239 @@ public final class MysqlxNotice {
         return this;
       }
 
-      private com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value_ = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> valueBuilder_;
-      /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
-       */
-      public boolean hasValue() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+      private java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> value_ =
+        java.util.Collections.emptyList();
+      private void ensureValueIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          value_ = new java.util.ArrayList<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar>(value_);
+          bitField0_ |= 0x00000002;
+         }
       }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> valueBuilder_;
+
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue() {
+      public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getValueList() {
         if (valueBuilder_ == null) {
-          return value_;
+          return java.util.Collections.unmodifiableList(value_);
         } else {
-          return valueBuilder_.getMessage();
+          return valueBuilder_.getMessageList();
         }
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      public Builder setValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
+      public int getValueCount() {
+        if (valueBuilder_ == null) {
+          return value_.size();
+        } else {
+          return valueBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index) {
+        if (valueBuilder_ == null) {
+          return value_.get(index);
+        } else {
+          return valueBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public Builder setValue(
+          int index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
         if (valueBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          value_ = value;
+          ensureValueIsMutable();
+          value_.set(index, value);
           onChanged();
         } else {
-          valueBuilder_.setMessage(value);
+          valueBuilder_.setMessage(index, value);
         }
-        bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder setValue(
+          int index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
+        if (valueBuilder_ == null) {
+          ensureValueIsMutable();
+          value_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          valueBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public Builder addValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
+        if (valueBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureValueIsMutable();
+          value_.add(value);
+          onChanged();
+        } else {
+          valueBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public Builder addValue(
+          int index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
+        if (valueBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureValueIsMutable();
+          value_.add(index, value);
+          onChanged();
+        } else {
+          valueBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public Builder addValue(
           com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (valueBuilder_ == null) {
-          value_ = builderForValue.build();
+          ensureValueIsMutable();
+          value_.add(builderForValue.build());
           onChanged();
         } else {
-          valueBuilder_.setMessage(builderForValue.build());
+          valueBuilder_.addMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      public Builder mergeValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
+      public Builder addValue(
+          int index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder builderForValue) {
         if (valueBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              value_ != com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance()) {
-            value_ =
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.newBuilder(value_).mergeFrom(value).buildPartial();
-          } else {
-            value_ = value;
-          }
+          ensureValueIsMutable();
+          value_.add(index, builderForValue.build());
           onChanged();
         } else {
-          valueBuilder_.mergeFrom(value);
+          valueBuilder_.addMessage(index, builderForValue.build());
         }
-        bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public Builder addAllValue(
+          java.lang.Iterable<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> values) {
+        if (valueBuilder_ == null) {
+          ensureValueIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, value_);
+          onChanged();
+        } else {
+          valueBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder clearValue() {
         if (valueBuilder_ == null) {
-          value_ = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance();
+          value_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
           onChanged();
         } else {
           valueBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder getValueBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getValueFieldBuilder().getBuilder();
+      public Builder removeValue(int index) {
+        if (valueBuilder_ == null) {
+          ensureValueIsMutable();
+          value_.remove(index);
+          onChanged();
+        } else {
+          valueBuilder_.remove(index);
+        }
+        return this;
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder() {
-        if (valueBuilder_ != null) {
-          return valueBuilder_.getMessageOrBuilder();
-        } else {
-          return value_;
+      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder getValueBuilder(
+          int index) {
+        return getValueFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
+          int index) {
+        if (valueBuilder_ == null) {
+          return value_.get(index);  } else {
+          return valueBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
+           getValueOrBuilderList() {
+        if (valueBuilder_ != null) {
+          return valueBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(value_);
+        }
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder addValueBuilder() {
+        return getValueFieldBuilder().addBuilder(
+            com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder addValueBuilder(
+          int index) {
+        return getValueFieldBuilder().addBuilder(
+            index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
+       */
+      public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder> 
+           getValueBuilderList() {
+        return getValueFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
           com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
           getValueFieldBuilder() {
         if (valueBuilder_ == null) {
-          valueBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          valueBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder>(
-                  getValue(),
+                  value_,
+                  ((bitField0_ & 0x00000002) == 0x00000002),
                   getParentForChildren(),
                   isClean());
           value_ = null;
@@ -3162,16 +3342,17 @@ public final class MysqlxNotice {
       "(\r\022\013\n\003msg\030\003 \002(\t\")\n\005Level\022\010\n\004NOTE\020\001\022\013\n\007WA",
       "RNING\020\002\022\t\n\005ERROR\020\003\"P\n\026SessionVariableCha" +
       "nged\022\r\n\005param\030\001 \002(\t\022\'\n\005value\030\002 \001(\0132\030.Mys" +
-      "qlx.Datatypes.Scalar\"\325\002\n\023SessionStateCha" +
+      "qlx.Datatypes.Scalar\"\361\002\n\023SessionStateCha" +
       "nged\022;\n\005param\030\001 \002(\0162,.Mysqlx.Notice.Sess" +
-      "ionStateChanged.Parameter\022\'\n\005value\030\002 \001(\013" +
-      "2\030.Mysqlx.Datatypes.Scalar\"\327\001\n\tParameter" +
+      "ionStateChanged.Parameter\022\'\n\005value\030\002 \003(\013" +
+      "2\030.Mysqlx.Datatypes.Scalar\"\363\001\n\tParameter" +
       "\022\022\n\016CURRENT_SCHEMA\020\001\022\023\n\017ACCOUNT_EXPIRED\020" +
       "\002\022\027\n\023GENERATED_INSERT_ID\020\003\022\021\n\rROWS_AFFEC" +
       "TED\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n\014ROWS_MATCHED\020\006\022" +
       "\021\n\rTRX_COMMITTED\020\007\022\022\n\016TRX_ROLLEDBACK\020\t\022\024",
       "\n\020PRODUCED_MESSAGE\020\n\022\026\n\022CLIENT_ID_ASSIGN" +
-      "ED\020\013B\031\n\027com.mysql.cj.x.protobuf"
+      "ED\020\013\022\032\n\026GENERATED_DOCUMENT_IDS\020\014B\031\n\027com." +
+      "mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

@@ -56,7 +56,7 @@ public class NoticeFactory implements ProtocolEntityFactory<Notice, XMessage> {
 
             case Notice.XProtocolNoticeFrameType_SESS_STATE_CHANGED:
                 SessionStateChanged ssmsg = parseNotice(notice.getPayload(), SessionStateChanged.class);
-                return new Notice(ssmsg.getParam().getNumber(), ssmsg.getValue());
+                return new Notice(ssmsg.getParam().getNumber(), ssmsg.getValueList());
 
             default:
                 // TODO log error normally instead of sysout

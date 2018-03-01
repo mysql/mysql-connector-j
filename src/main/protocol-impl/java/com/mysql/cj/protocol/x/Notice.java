@@ -29,6 +29,8 @@
 
 package com.mysql.cj.protocol.x;
 
+import java.util.List;
+
 import com.mysql.cj.protocol.Warning;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
 
@@ -48,6 +50,7 @@ public class Notice implements Warning {
     public static final int SessionStateChanged_TRX_ROLLEDBACK = 9;
     public static final int SessionStateChanged_PRODUCED_MESSAGE = 10;
     public static final int SessionStateChanged_CLIENT_ID_ASSIGNED = 11;
+    public static final int SessionStateChanged_GENERATED_DOCUMENT_IDS = 12;
 
     private int noticeType = 0;
 
@@ -58,6 +61,7 @@ public class Notice implements Warning {
     private Integer paramType = null;
     private String paramName = null;
     private Scalar value = null;
+    private List<Scalar> valueList = null;
 
     /**
      * Constructor for XProtocolNoticeFrameType_WARNING
@@ -77,12 +81,12 @@ public class Notice implements Warning {
      * Constructor for XProtocolNoticeFrameType_SESS_STATE_CHANGED
      * 
      * @param paramType
-     * @param value
+     * @param valueList
      */
-    public Notice(int paramType, Scalar value) {
+    public Notice(int paramType, List<Scalar> valueList) {
         this.noticeType = XProtocolNoticeFrameType_SESS_STATE_CHANGED;
         this.paramType = paramType;
-        this.value = value;
+        this.valueList = valueList;
     }
 
     /**
@@ -125,7 +129,13 @@ public class Notice implements Warning {
     }
 
     public Scalar getValue() {
+        if (this.value == null && this.valueList != null && !this.valueList.isEmpty()) {
+            return this.valueList.get(0);
+        }
         return this.value;
     }
 
+    public List<Scalar> getValueList() {
+        return this.valueList;
+    }
 }

@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
@@ -50,9 +51,16 @@ public class CollectionRemoveTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\"}").execute();
+            this.collection.add("{\"_id\": \"3\"}").execute();
+        } else {
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+        }
 
         assertEquals(3, this.collection.count());
 
@@ -85,9 +93,16 @@ public class CollectionRemoveTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{}").execute();
-        this.collection.add("{}").execute();
-        this.collection.add("{\"x\":22}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\"}").execute();
+            this.collection.add("{\"_id\": \"3\", \"x\":22}").execute();
+        } else {
+            this.collection.add("{}").execute();
+            this.collection.add("{}").execute();
+            this.collection.add("{\"x\":22}").execute();
+        }
 
         assertEquals(3, this.collection.count());
         this.collection.remove("$.x = 22").orderBy("x", "x").execute();
@@ -99,8 +114,14 @@ public class CollectionRemoveTest extends CollectionTest {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{\"x\":1}").execute();
-        this.collection.add("{\"x\":2}").execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{\"_id\": \"1\", \"x\":1}").execute(); // Requires manual _id.
+            this.collection.add("{\"_id\": \"2\", \"x\":2}").execute();
+        } else {
+            this.collection.add("{\"x\":1}").execute();
+            this.collection.add("{\"x\":2}").execute();
+        }
         this.collection.add("{\"_id\":\"existingId\",\"x\":3}").execute();
 
         assertEquals(3, this.collection.count());

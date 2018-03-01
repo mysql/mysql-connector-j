@@ -73,9 +73,15 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             return;
         }
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+        }
         AddResult res = this.collection.add(json).execute();
-        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            assertEquals(0, res.getGeneratedIds().size());
+        }
 
         DocResult docs = this.collection.find("firstName like '%Fra%'").execute();
         DbDoc d = docs.next();
@@ -109,9 +115,15 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         DbDoc doc = new DbDocImpl().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            doc.add("_id", new JsonString().setValue("1")); // Inject an _id.
+        }
         AddResult res = this.collection.add(doc).execute();
-        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            assertEquals(0, res.getGeneratedIds().size());
+        }
 
         DocResult docs = this.collection.find("lastName like 'O\\'Kee%'").execute();
         DbDoc d = docs.next();
@@ -124,29 +136,32 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        AddResult res1 = this.collection
-                .add(new DbDocImpl().add("f1", new JsonString().setValue("doc1")), new DbDocImpl().add("f1", new JsonString().setValue("doc2"))).execute();
-        assertTrue(res1.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
-            public Void call() throws Exception {
-                res1.getDocumentId();
-                return null;
-            }
-        });
+
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
+            AddResult res1 = this.collection
+                    .add(new DbDocImpl().add("f1", new JsonString().setValue("doc1")), new DbDocImpl().add("f1", new JsonString().setValue("doc2"))).execute();
+            assertTrue(res1.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            AddResult res1 = this.collection.add(new DbDocImpl().add("_id", new JsonString().setValue("1")).add("f1", new JsonString().setValue("doc1")),
+                    new DbDocImpl().add("_id", new JsonString().setValue("2")).add("f1", new JsonString().setValue("doc2"))).execute(); // Inject _ids.
+            assertEquals(0, res1.getGeneratedIds().size());
+        }
 
         DocResult docs = this.collection.find("f1 like 'doc%'").execute();
         assertEquals(2, docs.count());
 
-        AddResult res2 = this.collection
-                .add(new DbDoc[] { new DbDocImpl().add("f1", new JsonString().setValue("doc3")), new DbDocImpl().add("f1", new JsonString().setValue("doc4")) })
-                .execute();
-        assertTrue(res2.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
-            public Void call() throws Exception {
-                res2.getDocumentId();
-                return null;
-            }
-        });
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
+            AddResult res2 = this.collection.add(
+                    new DbDoc[] { new DbDocImpl().add("f1", new JsonString().setValue("doc3")), new DbDocImpl().add("f1", new JsonString().setValue("doc4")) })
+                    .execute();
+            assertTrue(res2.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+        } else {
+            AddResult res2 = this.collection
+                    .add(new DbDoc[] { new DbDocImpl().add("_id", new JsonString().setValue("3")).add("f1", new JsonString().setValue("doc3")),
+                            new DbDocImpl().add("_id", new JsonString().setValue("4")).add("f1", new JsonString().setValue("doc4")) })
+                    .execute();
+            assertEquals(0, res2.getGeneratedIds().size());
+        }
 
         docs = this.collection.find("f1 like 'doc%'").execute();
         assertEquals(4, docs.count());
@@ -163,8 +178,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         doc.put("y", "this is y");
         doc.put("z", new BigDecimal("44.22"));
         AddResult res = this.collection.add(doc).execute();
-        assertTrue(res.getDocumentIds().get(0).matches("[a-f0-9]{32}"));
-        assertTrue(res.getDocumentId().matches("[a-f0-9]{32}"));
+        assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
 
         DocResult docs = this.collection.find("z >= 44.22").execute();
         DbDoc d = docs.next();
@@ -179,19 +193,21 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         }
         String json1 = "{'_id': 'Id#1', 'name': 'assignedId'}".replaceAll("'", "\"");
         String json2 = "{'name': 'autoId'}".replaceAll("'", "\"");
-        AddResult res = this.collection.add(json1).add(json2).execute();
+        AddResult res;
+        int expectedAssignedIds;
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            res = this.collection.add(json1).execute();
+            assertThrows(XDevAPIError.class, "ERROR 5115 \\(HY000\\) Document is missing a required field", () -> this.collection.add(json2).execute());
+            expectedAssignedIds = 0;
+        } else {
+            res = this.collection.add(json1).add(json2).execute();
+            expectedAssignedIds = 1;
+        }
 
-        List<String> ids = res.getDocumentIds();
-        assertEquals(2, ids.size());
+        List<String> ids = res.getGeneratedIds();
+        assertEquals(expectedAssignedIds, ids.size());
 
-        assertThrows(XDevAPIError.class, "Method getDocumentId\\(\\) is allowed only for a single document add\\(\\) result.", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.getDocumentId();
-                return null;
-            }
-        });
-
-        for (String strId : ids) {
+        for (String strId : ids) { // Although the _id="Id#1" is not returned in getGeneratedIds(), it may be in a future version from some other method.
             DocResult docs = this.collection.find("_id == '" + strId + "'").execute();
             DbDoc d = docs.next();
             JsonString val = (JsonString) d.get("name");
@@ -201,7 +217,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
                 assertEquals("autoId", val.getString());
             }
         }
-
     }
 
     @Test

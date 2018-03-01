@@ -53,9 +53,16 @@ public class CollectionTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        this.collection.add("{'a':'a'}".replaceAll("'", "\"")).execute();
-        this.collection.add("{'b':'b'}".replaceAll("'", "\"")).execute();
-        this.collection.add("{'c':'c'}".replaceAll("'", "\"")).execute();
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            this.collection.add("{'_id': '1', 'a':'a'}".replaceAll("'", "\"")).execute(); // Requires manual _id.
+            this.collection.add("{'_id': '2', 'b':'b'}".replaceAll("'", "\"")).execute();
+            this.collection.add("{'_id': '3', 'c':'c'}".replaceAll("'", "\"")).execute();
+        } else {
+            this.collection.add("{'a':'a'}".replaceAll("'", "\"")).execute();
+            this.collection.add("{'b':'b'}".replaceAll("'", "\"")).execute();
+            this.collection.add("{'c':'c'}".replaceAll("'", "\"")).execute();
+        }
         assertEquals(3, this.collection.count());
     }
 
