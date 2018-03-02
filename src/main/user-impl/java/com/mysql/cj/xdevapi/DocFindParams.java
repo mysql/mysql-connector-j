@@ -81,8 +81,11 @@ public class DocFindParams extends AbstractFindParams {
         if (this.having != null) {
             newFindParams.setGroupingCriteria(this.having);
         }
-        if (this.lock != -1) {
+        if (this.lock != null) {
             newFindParams.setLock(this.lock);
+        }
+        if (this.lockOption != null) {
+            newFindParams.setLockOption(this.lockOption);
         }
         return newFindParams;
     }

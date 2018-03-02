@@ -115,9 +115,27 @@ public interface FindStatement extends Statement<FindStatement, DocResult> {
     FindStatement lockShared();
 
     /**
+     * Locks matching rows against updates using the provided lock contention option.
+     * 
+     * @param lockContention
+     *            The {@link LockContention} value to set.
+     * @return {@link FindStatement}
+     */
+    FindStatement lockShared(LockContention lockContention);
+
+    /**
      * Locks matching rows exclusively so no other transactions can read or write to them.
      * 
      * @return {@link FindStatement}
      */
     FindStatement lockExclusive();
+
+    /**
+     * Locks matching rows exclusively so no other transactions can read or write to them, using the provided lock contention option.
+     * 
+     * @param lockContention
+     *            The {@link LockContention} value to set.
+     * @return {@link FindStatement}
+     */
+    FindStatement lockExclusive(LockContention lockContention);
 }

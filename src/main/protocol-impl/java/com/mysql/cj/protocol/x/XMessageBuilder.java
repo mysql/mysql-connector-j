@@ -60,6 +60,7 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.DataModel;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Limit;
@@ -160,8 +161,11 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         if (findParams.getGroupingCriteria() != null) {
             builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
         }
-        if (findParams.getLock() != -1) {
-            builder.setLocking(RowLock.valueOf(findParams.getLock()));
+        if (findParams.getLock() != null) {
+            builder.setLocking(RowLock.valueOf(findParams.getLock().asNumber()));
+        }
+        if (findParams.getLockOption() != null) {
+            builder.setLockingOptions(RowLockOptions.valueOf(findParams.getLockOption().asNumber()));
         }
         applyFilterParams(((FilterParams) findParams), builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());

@@ -79,8 +79,11 @@ public class TableFindParams extends AbstractFindParams {
         if (this.projection != null) {
             newFindParams.setFields(this.projection);
         }
-        if (this.lock != -1) {
+        if (this.lock != null) {
             newFindParams.setLock(this.lock);
+        }
+        if (this.lockOption != null) {
+            newFindParams.setLockOption(this.lockOption);
         }
         return newFindParams;
     }

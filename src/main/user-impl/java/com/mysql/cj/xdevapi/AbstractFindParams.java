@@ -44,7 +44,8 @@ public abstract class AbstractFindParams extends FilterParams implements FindPar
     private Expr groupingCriteria;
     protected String[] projection;
     protected List<Projection> fields;
-    protected int lock = -1;
+    protected RowLock lock;
+    protected RowLockOptions lockOption;
 
     public AbstractFindParams(String schemaName, String collectionName, boolean isRelational) {
         super(schemaName, collectionName, isRelational);
@@ -82,12 +83,20 @@ public abstract class AbstractFindParams extends FilterParams implements FindPar
         return this.groupingCriteria;
     }
 
-    public int getLock() {
+    public RowLock getLock() {
         return this.lock;
     }
 
-    public void setLock(int lock) {
-        this.lock = lock;
+    public void setLock(RowLock rowLock) {
+        this.lock = rowLock;
+    }
+
+    public RowLockOptions getLockOption() {
+        return this.lockOption;
+    }
+
+    public void setLockOption(RowLockOptions lockOption) {
+        this.lockOption = lockOption;
     }
 
     @Override

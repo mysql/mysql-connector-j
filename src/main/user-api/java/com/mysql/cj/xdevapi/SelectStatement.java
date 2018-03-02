@@ -95,11 +95,29 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
     SelectStatement lockShared();
 
     /**
+     * Locks matching rows against updates using the provided lock contention option.
+     * 
+     * @param lockContention
+     *            The {@link LockContention} value to set.
+     * @return {@link SelectStatement}
+     */
+    SelectStatement lockShared(LockContention lockContention);
+
+    /**
      * Locks matching rows exclusively so no other transactions can read or write to them.
      * 
      * @return {@link SelectStatement}
      */
     SelectStatement lockExclusive();
+
+    /**
+     * Locks matching rows exclusively so no other transactions can read or write to them, using the provided lock contention option.
+     * 
+     * @param lockContention
+     *            The {@link LockContention} value to set.
+     * @return {@link SelectStatement}
+     */
+    SelectStatement lockExclusive(LockContention lockContention);
 
     /**
      * Return FindParams defined for this statement.

@@ -29,8 +29,10 @@
 
 package testsuite.x.devapi;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
@@ -40,19 +42,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Column;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.SelectStatement;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.Statement;
 import com.mysql.cj.xdevapi.Table;
 import com.mysql.cj.xdevapi.Type;
 
@@ -566,5 +573,298 @@ public class TableSelectTest extends BaseTableTestCase {
             sqlUpdate("drop table if exists testTableRowLocks");
         }
 
+    }
+
+    @Test
+    public void testTableRowLockOptions() throws Exception {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
+            return;
+        }
+
+        Function<RowResult, List<String>> asStringList = rr -> rr.fetchAll().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+
+        sqlUpdate("DROP TABLE IF EXISTS testTableRowLockOptions");
+        sqlUpdate("CREATE TABLE testTableRowLockOptions (_id VARCHAR(32), a VARCHAR(20))");
+        sqlUpdate("CREATE UNIQUE INDEX myIndex ON testTableRowLockOptions (_id)"); // index is required to enable row locking
+        sqlUpdate("INSERT INTO testTableRowLockOptions VALUES ('1', '1'), ('2', '1'), ('3', '1')");
+
+        Session session1 = null;
+        Session session2 = null;
+
+        try {
+            session1 = new SessionFactory().getSession(this.testProperties);
+            Table table1 = session1.getDefaultSchema().getTable("testTableRowLockOptions");
+            session2 = new SessionFactory().getSession(this.testProperties);
+            Table table2 = session2.getDefaultSchema().getTable("testTableRowLockOptions");
+            RowResult res;
+            CompletableFuture<RowResult> futRes;
+
+            /*
+             * 1. Shared Lock in both sessions.
+             */
+
+            // session2.lockShared() returns data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockShared().execute();
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared().executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session1.rollback();
+
+            // session2.lockShared(NOWAIT) returns data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.NOWAIT).execute();
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.NOWAIT).executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session1.rollback();
+
+            // session2.lockShared(SKIP_LOCK) returns data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.SKIP_LOCKED).execute();
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.SKIP_LOCKED).executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            session1.rollback();
+
+            /*
+             * 2. Shared Lock in first session and exclusive lock in second.
+             */
+
+            // session2.lockExclusive() blocks until session1 ends.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            // session2.startTransaction();
+            // res = table2.select("_id").where("_id < '3'").lockExclusive().execute(); (Can't test)
+            // session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive().executeAsync();
+            final CompletableFuture<RowResult> fr1 = futRes;
+            assertThrows(TimeoutException.class, () -> fr1.get(3, TimeUnit.SECONDS));
+
+            session1.rollback(); // Unlocks session2.
+
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            // session2.lockExclusive(NOWAIT) should return locking error.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            assertThrows(XProtocolError.class,
+                    "ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.NOWAIT).execute());
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.NOWAIT).executeAsync();
+            final CompletableFuture<RowResult> fr2 = futRes;
+            assertThrows(ExecutionException.class,
+                    ".*XProtocolError: ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> fr2.get(3, TimeUnit.SECONDS));
+            session2.rollback();
+
+            session1.rollback();
+
+            // session2.lockExclusive(SKIP_LOCK) should return (unlocked) data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockShared().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.SKIP_LOCKED).execute();
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.SKIP_LOCKED).executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session1.rollback();
+
+            /*
+             * 3. Exclusive Lock in first session and shared lock in second.
+             */
+
+            // session2.lockShared() blocks until session1 ends.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            // session2.startTransaction();
+            // res = table2.select("_id").where("_id < '3'").lockShared().execute(); (Can't test)
+            // session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared().executeAsync();
+            final CompletableFuture<RowResult> fr3 = futRes;
+            assertThrows(TimeoutException.class, () -> fr3.get(3, TimeUnit.SECONDS));
+
+            session1.rollback(); // Unlocks session2.
+
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            // session2.lockShared(NOWAIT) should return locking error.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            assertThrows(XProtocolError.class,
+                    "ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.NOWAIT).execute());
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.NOWAIT).executeAsync();
+            final CompletableFuture<RowResult> fr4 = futRes;
+            assertThrows(ExecutionException.class,
+                    ".*XProtocolError: ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> fr4.get(3, TimeUnit.SECONDS));
+            session2.rollback();
+
+            session1.rollback();
+
+            // session2.lockShared(SKIP_LOCK) should return (unlocked) data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.SKIP_LOCKED).execute();
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockShared(Statement.LockContention.SKIP_LOCKED).executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session1.rollback();
+
+            /*
+             * 4. Exclusive Lock in both sessions.
+             */
+
+            // session2.lockExclusive() blocks until session1 ends.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            // session2.startTransaction();
+            // res = table2.select("_id").where("_id < '3'").lockExclusive().execute(); (Can't test)
+            // session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive().executeAsync();
+            final CompletableFuture<RowResult> fr5 = futRes;
+            assertThrows(TimeoutException.class, () -> fr5.get(3, TimeUnit.SECONDS));
+
+            session1.rollback(); // Unlocks session2.
+
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(2, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("1", "2"));
+            session2.rollback();
+
+            // session2.lockExclusive(NOWAIT) should return locking error.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            assertThrows(XProtocolError.class,
+                    "ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.NOWAIT).execute());
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.NOWAIT).executeAsync();
+            final CompletableFuture<RowResult> fr6 = futRes;
+            assertThrows(ExecutionException.class,
+                    ".*XProtocolError: ERROR 3572 \\(HY000\\) Statement aborted because lock\\(s\\) could not be acquired immediately and NOWAIT is set\\.",
+                    () -> fr6.get(3, TimeUnit.SECONDS));
+            session2.rollback();
+
+            session1.rollback();
+
+            // session2.lockExclusive(SKIP_LOCK) should return (unlocked) data immediately.
+            session1.startTransaction();
+            table1.select("_id").where("_id = '1'").lockExclusive().execute();
+
+            session2.startTransaction();
+            res = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.SKIP_LOCKED).execute();
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session2.startTransaction();
+            futRes = table2.select("_id").where("_id < '3'").lockExclusive(Statement.LockContention.SKIP_LOCKED).executeAsync();
+            res = futRes.get(3, TimeUnit.SECONDS);
+            assertTrue(futRes.isDone());
+            assertEquals(1, asStringList.apply(res).size());
+            assertThat(asStringList.apply(res), hasItems("2"));
+            session2.rollback();
+
+            session1.rollback();
+        } finally {
+            if (session1 != null) {
+                session1.close();
+            }
+            if (session2 != null) {
+                session2.close();
+            }
+            sqlUpdate("DROP TABLE IF EXISTS testTableRowLockOptions");
+        }
     }
 }

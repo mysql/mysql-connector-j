@@ -30,23 +30,47 @@
 package com.mysql.cj.xdevapi;
 
 public interface FindParams {
+    public enum RowLock {
+        /**
+         * Lock matching rows against updates.
+         */
+        SHARED_LOCK(1),
+        /**
+         * Lock matching rows so no other transaction can read or write to it.
+         */
+        EXCLUSIVE_LOCK(2);
 
-    /**
-     * <code>SHARED_LOCK = 1;</code>
-     *
-     * <pre>
-     * Lock matching rows against updates
-     * </pre>
-     */
-    public static final int SHARED_LOCK = 1;
-    /**
-     * <code>EXCLUSIVE_LOCK = 2;</code>
-     *
-     * <pre>
-     * Lock matching rows so no other transaction can read or write to it
-     * </pre>
-     */
-    public static final int EXCLUSIVE_LOCK = 2;
+        private int rowLock;
+
+        private RowLock(int rowLock) {
+            this.rowLock = rowLock;
+        }
+
+        public int asNumber() {
+            return rowLock;
+        }
+    }
+
+    public enum RowLockOptions {
+        /**
+         * Do not wait to acquire row lock, fail with an error if a requested row is locked.
+         */
+        NOWAIT(1),
+        /**
+         * Do not wait to acquire a row lock, remove locked rows from the result set.
+         */
+        SKIP_LOCKED(2);
+
+        private int rowLockOption;
+
+        private RowLockOptions(int rowLockOption) {
+            this.rowLockOption = rowLockOption;
+        }
+
+        public int asNumber() {
+            return rowLockOption;
+        }
+    }
 
     Object getCollection();
 
@@ -88,8 +112,11 @@ public interface FindParams {
 
     Object getGroupingCriteria();
 
-    int getLock();
+    RowLock getLock();
 
-    void setLock(int lock);
+    void setLock(RowLock rowLock);
 
+    RowLockOptions getLockOption();
+
+    void setLockOption(RowLockOptions rowLockOption);
 }

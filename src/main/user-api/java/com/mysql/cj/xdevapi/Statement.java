@@ -40,6 +40,24 @@ import java.util.stream.IntStream;
  */
 public interface Statement<STMT_T, RES_T> {
     /**
+     * The lock contention options for the locking modes available.
+     */
+    enum LockContention {
+        /**
+         * Default behavior. Wait until the row lock is released.
+         */
+        DEFAULT,
+        /**
+         * Do not wait to acquire row lock, fail with an error if a requested row is locked.
+         */
+        NOWAIT,
+        /**
+         * Do not wait to acquire a row lock, remove locked rows from the result set.
+         */
+        SKIP_LOCKED;
+    };
+
+    /**
      * Execute the statement synchronously.
      * 
      * @return result of statement execution

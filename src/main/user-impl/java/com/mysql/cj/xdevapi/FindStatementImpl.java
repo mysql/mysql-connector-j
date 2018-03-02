@@ -32,6 +32,8 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.xdevapi.FindParams.RowLock;
+import com.mysql.cj.xdevapi.FindParams.RowLockOptions;
 
 public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
     private MysqlxSession mysqlxSession;
@@ -78,13 +80,41 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement lockShared() {
-        this.findParams.setLock(FindParams.SHARED_LOCK);
+        return lockShared(LockContention.DEFAULT);
+    }
+
+    @Override
+    public FindStatement lockShared(LockContention lockContention) {
+        this.findParams.setLock(RowLock.SHARED_LOCK);
+        switch (lockContention) {
+            case NOWAIT:
+                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                break;
+            case SKIP_LOCKED:
+                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                break;
+            case DEFAULT:
+        }
         return this;
     }
 
     @Override
     public FindStatement lockExclusive() {
-        this.findParams.setLock(FindParams.EXCLUSIVE_LOCK);
+        return lockExclusive(LockContention.DEFAULT);
+    }
+
+    @Override
+    public FindStatement lockExclusive(LockContention lockContention) {
+        this.findParams.setLock(RowLock.EXCLUSIVE_LOCK);
+        switch (lockContention) {
+            case NOWAIT:
+                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                break;
+            case SKIP_LOCKED:
+                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                break;
+            case DEFAULT:
+        }
         return this;
     }
 }
