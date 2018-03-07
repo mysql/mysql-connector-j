@@ -81,7 +81,6 @@ import com.mysql.cj.protocol.Resultset.Type;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.SocketFactory;
-import com.mysql.cj.protocol.SocketMetadata;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.protocol.a.NativeProtocol;
@@ -142,11 +141,6 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public void connect(HostInfo hi, String user, String password, String database, int loginTimeout, TransactionEventHandler transactionManager)
             throws IOException {
-        connect(hi, hi.exposeAsProperties(), user, password, database, loginTimeout, transactionManager);
-    }
-
-    public void connect(HostInfo hi, Properties mergedProps, String user, String password, String database, int loginTimeout,
-            TransactionEventHandler transactionManager) throws IOException {
 
         this.hostInfo = hi;
 
@@ -155,8 +149,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
         // TODO do we need different types of physical connections?
         SocketConnection socketConnection = new NativeSocketConnection();
-        socketConnection.connect(this.hostInfo.getHost(), this.hostInfo.getPort(), mergedProps, getPropertySet(), getExceptionInterceptor(), this.log,
-                loginTimeout);
+        socketConnection.connect(this.hostInfo.getHost(), this.hostInfo.getPort(), this.propertySet, getExceptionInterceptor(), this.log, loginTimeout);
 
         // we use physical connection to create a -> protocol
         // this configuration places no knowledge of protocol or session on physical connection.
@@ -260,7 +253,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public boolean isServerLocal(Session sess) {
         SocketFactory factory = this.protocol.getSocketConnection().getSocketFactory();
-        return ((SocketMetadata) factory).isLocallyConnected(sess);
+        return factory.isLocallyConnected(sess);
     }
 
     /**

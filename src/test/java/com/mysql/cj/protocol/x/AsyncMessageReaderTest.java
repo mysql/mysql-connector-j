@@ -40,7 +40,6 @@ import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -51,10 +50,13 @@ import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.NetworkResources;
+import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.SocketFactory;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
@@ -180,9 +182,18 @@ public class AsyncMessageReaderTest {
 
         AsynchronousSocketChannel channel;
 
+        public BaseTestSocketConnection(AsynchronousSocketChannel channel) {
+            this.channel = channel;
+        }
+
         @Override
-        public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log,
-                int loginTimeout) {
+        public void connect(String host, int port, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout) {
+        }
+
+        @Override
+        public void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException {
+            // TODO Auto-generated method stub
+
         }
 
         @Override
@@ -210,10 +221,6 @@ public class AsyncMessageReaderTest {
         }
 
         @Override
-        public void setMysqlSocket(Socket mysqlSocket) {
-        }
-
-        @Override
         public FullReadInputStream getMysqlInput() {
             return null;
         }
@@ -225,10 +232,6 @@ public class AsyncMessageReaderTest {
         @Override
         public BufferedOutputStream getMysqlOutput() {
             return null;
-        }
-
-        @Override
-        public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
         }
 
         @Override
@@ -260,11 +263,6 @@ public class AsyncMessageReaderTest {
             return this.channel;
         }
 
-        @Override
-        public void setAsynchronousSocketChannel(AsynchronousSocketChannel channel) {
-            this.channel = channel;
-        }
-
     }
 
     /**
@@ -276,8 +274,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void testBug22972057() {
         BaseTestChannel channel = new BaseTestChannel();
-        BaseTestSocketConnection sc = new BaseTestSocketConnection();
-        sc.setAsynchronousSocketChannel(channel);
+        BaseTestSocketConnection sc = new BaseTestSocketConnection(channel);
         AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), sc);
         reader.start();
 
@@ -325,8 +322,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void testBug22972057_getNextMessageClass() {
         BaseTestChannel channel = new BaseTestChannel();
-        BaseTestSocketConnection sc = new BaseTestSocketConnection();
-        sc.setAsynchronousSocketChannel(channel);
+        BaseTestSocketConnection sc = new BaseTestSocketConnection(channel);
         AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), sc);
         reader.start();
 
@@ -373,8 +369,7 @@ public class AsyncMessageReaderTest {
     @Test
     public void errorAfterClosed() {
         BaseTestChannel channel = new BaseTestChannel();
-        BaseTestSocketConnection sc = new BaseTestSocketConnection();
-        sc.setAsynchronousSocketChannel(channel);
+        BaseTestSocketConnection sc = new BaseTestSocketConnection(channel);
         AsyncMessageReader reader = new AsyncMessageReader(new DefaultPropertySet(), sc);
         reader.start();
 

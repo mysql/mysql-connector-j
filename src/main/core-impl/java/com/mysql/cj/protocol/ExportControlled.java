@@ -29,13 +29,10 @@
 
 package com.mysql.cj.protocol;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -65,7 +62,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -94,7 +90,6 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import com.mysql.cj.ServerVersion;
-import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertySet;
@@ -127,29 +122,33 @@ public class ExportControlled {
      * Converts the socket being used in the given CoreIO to an SSLSocket by
      * performing the SSL/TLS handshake.
      * 
+     * @param rawSocket
+     *            original non-SSL socket
      * @param socketConnection
      *            the Protocol instance containing the socket to convert to an
      *            SSLSocket.
+     * @param serverVersion
+     *            ServerVersion object
+     * @return SSL socket
      * @throws SSLParamsException
-     * 
      *             if the handshake fails, or if this distribution of
-     *             Connector/J doesn't contain the SSL crytpo hooks needed to
+     *             Connector/J doesn't contain the SSL crypto hooks needed to
      *             perform the handshake.
      */
-    public static void transformSocketToSSLSocket(SocketConnection socketConnection, ServerVersion serverVersion)
+    public static Socket performTlsHandshake(Socket rawSocket, SocketConnection socketConnection, ServerVersion serverVersion)
             throws IOException, SSLParamsException, FeatureNotAvailableException {
-        SocketFactory sslFact = new StandardSSLSocketFactory(
-                getSSLSocketFactoryDefaultOrConfigured(socketConnection.getPropertySet(), socketConnection.getExceptionInterceptor()),
-                socketConnection.getSocketFactory(), socketConnection.getMysqlSocket());
 
-        socketConnection.setMysqlSocket(sslFact.connect(socketConnection.getHost(), socketConnection.getPort(), null, 0));
+        PropertySet pset = socketConnection.getPropertySet();
+
+        SSLSocket sslSocket = (SSLSocket) getSSLSocketFactoryDefaultOrConfigured(pset, socketConnection.getExceptionInterceptor()).createSocket(rawSocket,
+                socketConnection.getHost(), socketConnection.getPort(), true);
 
         String[] tryProtocols = null;
 
         // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
         // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
         // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
-        String enabledTLSProtocols = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
+        String enabledTLSProtocols = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
         if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
             tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
         } else {
@@ -165,7 +164,7 @@ public class ExportControlled {
             tryProtocols = new String[] { TLSv1_1, TLSv1 };
         }
         List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
-        List<String> jvmSupportedProtocols = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getSupportedProtocols());
+        List<String> jvmSupportedProtocols = Arrays.asList(sslSocket.getSupportedProtocols());
 
         List<String> allowedProtocols = new ArrayList<>();
         for (String protocol : TLS_PROTOCOLS) {
@@ -173,18 +172,17 @@ public class ExportControlled {
                 allowedProtocols.add(protocol);
             }
         }
-        ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledProtocols(allowedProtocols.toArray(new String[0]));
+        sslSocket.setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
         // check allowed cipher suites
-        String enabledSSLCipherSuites = socketConnection.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites)
-                .getValue();
+        String enabledSSLCipherSuites = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
         boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
 
         if (overrideCiphers) {
             // If "enabledSSLCipherSuites" is set we just check that JVM allows provided values,
             // we don't disable DH algorithm, that allows c/J to deal with custom server builds with different security restrictions
             List<String> allowedCiphers = new ArrayList<>();
-            List<String> availableCiphers = Arrays.asList(((SSLSocket) socketConnection.getMysqlSocket()).getEnabledCipherSuites());
+            List<String> availableCiphers = Arrays.asList(sslSocket.getEnabledCipherSuites());
             for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
                 if (availableCiphers.contains(cipher)) {
                     allowedCiphers.add(cipher);
@@ -192,7 +190,7 @@ public class ExportControlled {
             }
 
             // if some ciphers were filtered into allowedCiphers 
-            ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+            sslSocket.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
         } else {
             // If we don't override ciphers, then we check for known restrictions
 
@@ -204,64 +202,18 @@ public class ExportControlled {
                     || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.5.45")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")))) {
 
                 List<String> allowedCiphers = new ArrayList<>();
-                for (String cipher : ((SSLSocket) socketConnection.getMysqlSocket()).getEnabledCipherSuites()) {
+                for (String cipher : sslSocket.getEnabledCipherSuites()) {
                     if (cipher.indexOf("_DHE_") == -1 && cipher.indexOf("_DH_") == -1) {
                         allowedCiphers.add(cipher);
                     }
                 }
-                ((SSLSocket) socketConnection.getMysqlSocket()).setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+                sslSocket.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
             }
         }
 
-        ((SSLSocket) socketConnection.getMysqlSocket()).startHandshake();
+        sslSocket.startHandshake();
 
-        if (socketConnection.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
-            socketConnection.setMysqlInput(socketConnection.getMysqlSocket().getInputStream());
-        } else {
-            socketConnection.setMysqlInput(new BufferedInputStream(socketConnection.getMysqlSocket().getInputStream(), 16384));
-        }
-
-        socketConnection.setMysqlOutput(new BufferedOutputStream(socketConnection.getMysqlSocket().getOutputStream(), 16384));
-
-        socketConnection.getMysqlOutput().flush();
-
-        socketConnection.setSocketFactory(sslFact);
-
-    }
-
-    /**
-     * Implementation of internal socket factory to wrap the SSL socket.
-     */
-    public static class StandardSSLSocketFactory implements SocketFactory {
-        private SSLSocket rawSocket = null;
-        private final SSLSocketFactory sslFact;
-        private final SocketFactory existingSocketFactory;
-        private final Socket existingSocket;
-
-        public StandardSSLSocketFactory(SSLSocketFactory sslFact, SocketFactory existingSocketFactory, Socket existingSocket) {
-            this.sslFact = sslFact;
-            this.existingSocketFactory = existingSocketFactory;
-            this.existingSocket = existingSocket;
-        }
-
-        public Socket afterHandshake() throws SocketException, IOException {
-            this.existingSocketFactory.afterHandshake();
-            return this.rawSocket;
-        }
-
-        public Socket beforeHandshake() throws SocketException, IOException {
-            return this.rawSocket;
-        }
-
-        public Socket connect(String host, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
-            this.rawSocket = (SSLSocket) this.sslFact.createSocket(this.existingSocket, host, portNumber, true);
-            return this.rawSocket;
-        }
-
-        @Override
-        public boolean isLocallyConnected(Session sess) {
-            return this.existingSocketFactory.isLocallyConnected(sess);
-        }
+        return sslSocket;
     }
 
     private ExportControlled() { /* prevent instantiation */
@@ -597,7 +549,8 @@ public class ExportControlled {
         return encryptWithRSAPublicKey(source, key, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
     }
 
-    public static void startTlsOnAsynchronousChannel(SocketConnection socketConnection) throws SSLException {
+    public static AsynchronousSocketChannel startTlsOnAsynchronousChannel(AsynchronousSocketChannel channel, SocketConnection socketConnection)
+            throws SSLException {
 
         PropertySet propertySet = socketConnection.getPropertySet();
 
@@ -696,12 +649,9 @@ public class ExportControlled {
         }
         sslEngine.setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
-        AsynchronousSocketChannel channel = socketConnection.getAsynchronousSocketChannel();
-
         performTlsHandshake(sslEngine, channel);
 
-        // setup encrypted streams
-        socketConnection.setAsynchronousSocketChannel(new TlsAsynchronousSocketChannel(channel, sslEngine));
+        return new TlsAsynchronousSocketChannel(channel, sslEngine);
     }
 
     /**

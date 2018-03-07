@@ -42,7 +42,6 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Random;
 
 import org.junit.Test;
@@ -52,11 +51,14 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.jdbc.JdbcPropertySetImpl;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.NetworkResources;
+import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.SocketFactory;
 
@@ -237,8 +239,13 @@ public class SimplePacketReaderTest {
     public static class MockSocketConnection implements SocketConnection {
         public boolean forceClosed = false;
 
-        public void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log,
-                int loginTimeout) {
+        public void connect(String host, int port, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout) {
+        }
+
+        @Override
+        public void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException {
+            // TODO Auto-generated method stub
+
         }
 
         public void forceClose() {
@@ -259,9 +266,6 @@ public class SimplePacketReaderTest {
 
         public Socket getMysqlSocket() {
             return null;
-        }
-
-        public void setMysqlSocket(Socket mysqlSocket) {
         }
 
         public FullReadInputStream getMysqlInput() {
@@ -293,9 +297,6 @@ public class SimplePacketReaderTest {
             return null;
         }
 
-        public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
-        }
-
         public boolean isSSLEstablished() {
             return false;
         }
@@ -319,12 +320,6 @@ public class SimplePacketReaderTest {
         public AsynchronousSocketChannel getAsynchronousSocketChannel() {
             // TODO Auto-generated method stub
             return null;
-        }
-
-        @Override
-        public void setAsynchronousSocketChannel(AsynchronousSocketChannel channel) {
-            // TODO Auto-generated method stub
-
         }
     }
 }

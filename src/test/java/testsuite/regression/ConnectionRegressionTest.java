@@ -31,6 +31,7 @@ package testsuite.regression;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -2611,7 +2612,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         @Override
-        public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
+        public <T extends Closeable> T connect(String hostname, int portNumber, Properties props, int loginTimeout) throws IOException {
             assertEquals(9999, portNumber);
 
             throw new IOException();
@@ -6509,23 +6510,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug73053SocketFactory extends StandardSocketFactory {
-        Socket underlyingSocket;
-
+        @SuppressWarnings("unchecked")
         @Override
-        public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
-            return this.underlyingSocket = new ConnectionRegressionTest.TestBug73053SocketWrapper(super.connect(hostname, portNumber, props, loginTimeout));
-        }
-
-        @Override
-        public Socket beforeHandshake() throws SocketException, IOException {
-            super.beforeHandshake();
-            return this.underlyingSocket;
-        }
-
-        @Override
-        public Socket afterHandshake() throws SocketException, IOException {
-            super.afterHandshake();
-            return this.underlyingSocket;
+        public <T extends Closeable> T connect(String hostname, int portNumber, Properties props, int loginTimeout) throws IOException {
+            return (T) (this.rawSocket = new ConnectionRegressionTest.TestBug73053SocketWrapper(super.connect(hostname, portNumber, props, loginTimeout)));
         }
     }
 

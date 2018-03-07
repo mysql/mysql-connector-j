@@ -34,23 +34,25 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.Properties;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.AbstractSocketConnection;
 import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.ReadAheadInputStream;
+import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 
 public class NativeSocketConnection extends AbstractSocketConnection implements SocketConnection {
 
     @Override
-    public void connect(String hostName, int portNumber, Properties props, PropertySet propSet, ExceptionInterceptor excInterceptor, Log log,
-            int loginTimeout) {
+    public void connect(String hostName, int portNumber, PropertySet propSet, ExceptionInterceptor excInterceptor, Log log, int loginTimeout) {
 
         // TODO we don't need both Properties and PropertySet in method params
 
@@ -61,7 +63,7 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
             this.exceptionInterceptor = excInterceptor;
 
             this.socketFactory = createSocketFactory(propSet.getStringReadableProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue());
-            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, props, loginTimeout);
+            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, propSet.exposeAsProperties(), loginTimeout);
 
             int socketTimeout = propSet.getIntegerReadableProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
             if (socketTimeout != 0) {
@@ -72,7 +74,7 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
                 }
             }
 
-            this.mysqlSocket = this.socketFactory.beforeHandshake();
+            this.socketFactory.beforeHandshake();
 
             InputStream rawInputStream;
             if (propSet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
@@ -92,14 +94,20 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
     }
 
     @Override
-    public AsynchronousSocketChannel getAsynchronousSocketChannel() {
-        // TODO Auto-generated method stub
-        return null;
+    public void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException {
+
+        this.mysqlSocket = this.socketFactory.performTlsHandshake(this, serverSession);
+
+        this.mysqlInput = new FullReadInputStream(this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()
+                ? getMysqlSocket().getInputStream() : new BufferedInputStream(getMysqlSocket().getInputStream(), 16384));
+
+        this.mysqlOutput = new BufferedOutputStream(getMysqlSocket().getOutputStream(), 16384);
+        this.mysqlOutput.flush();
+
     }
 
     @Override
-    public void setAsynchronousSocketChannel(AsynchronousSocketChannel channel) {
-        // TODO Auto-generated method stub
-
+    public AsynchronousSocketChannel getAsynchronousSocketChannel() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 }

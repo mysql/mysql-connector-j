@@ -347,7 +347,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         send(packet, packet.getPosition());
 
         try {
-            ExportControlled.transformSocketToSSLSocket(this.socketConnection, this.serverSession.getServerVersion());
+            this.socketConnection.performTlsHandshake(this.serverSession);
         } catch (FeatureNotAvailableException nae) {
             throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession,
                     this.getPacketSentTimeHolder().getLastPacketSentTime(), nae);
@@ -426,7 +426,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         applyPacketDecorators(this.packetSender, this.packetReader);
 
         try {
-            this.socketConnection.setMysqlSocket(this.socketConnection.getSocketFactory().afterHandshake());
+            this.socketConnection.getSocketFactory().afterHandshake();
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession,
                     this.getPacketSentTimeHolder().getLastPacketSentTime(), this.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx,

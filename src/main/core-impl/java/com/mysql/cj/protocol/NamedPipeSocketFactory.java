@@ -29,6 +29,7 @@
 
 package com.mysql.cj.protocol;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -197,15 +198,15 @@ public class NamedPipeSocketFactory implements SocketFactory {
         super();
     }
 
-    public Socket afterHandshake() throws SocketException, IOException {
-        return this.namedPipeSocket;
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
+        return (T) this.namedPipeSocket;
     }
 
-    public Socket beforeHandshake() throws SocketException, IOException {
-        return this.namedPipeSocket;
-    }
-
-    public Socket connect(String host, int portNumber /* ignored */, Properties props, int loginTimeout) throws SocketException, IOException {
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends Closeable> T connect(String host, int portNumber /* ignored */, Properties props, int loginTimeout) throws IOException {
         String namedPipePath = props.getProperty(PropertyDefinitions.NAMED_PIPE_PROP_NAME);
 
         if (namedPipePath == null) {
@@ -217,9 +218,10 @@ public class NamedPipeSocketFactory implements SocketFactory {
 
         this.namedPipeSocket = new NamedPipeSocket(namedPipePath);
 
-        return this.namedPipeSocket;
+        return (T) this.namedPipeSocket;
     }
 
+    @Override
     public boolean isLocallyConnected(Session sess) {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;

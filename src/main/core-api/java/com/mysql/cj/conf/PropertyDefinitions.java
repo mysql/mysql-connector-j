@@ -137,6 +137,7 @@ public class PropertyDefinitions {
     public static final String CATEGORY_INTEGRATION = Messages.getString("ConnectionProperties.categoryIntegration");
     public static final String CATEGORY_JDBC = Messages.getString("ConnectionProperties.categoryJDBC");
     public static final String CATEGORY_XDEVAPI = Messages.getString("ConnectionProperties.categoryXDevAPI");
+    public static final String CATEGORY_USER_DEFINED = Messages.getString("ConnectionProperties.categoryUserDefined");
 
     public static final String[] PROPERTY_CATEGORIES = new String[] { CATEGORY_AUTH, CATEGORY_CONNECTION, CATEGORY_SESSION, CATEGORY_NETWORK, CATEGORY_SECURITY,
             CATEGORY_STATEMENTS, CATEGORY_PREPARED_STATEMENTS, CATEGORY_RESULT_SETS, CATEGORY_METADATA, CATEGORY_BLOBS, CATEGORY_DATETIMES, CATEGORY_HA,

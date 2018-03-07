@@ -29,6 +29,7 @@
 
 package com.mysql.cj.protocol;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -53,6 +54,9 @@ public class StandardSocketFactory implements SocketFactory {
     /** The underlying TCP/IP socket to use */
     protected Socket rawSocket = null;
 
+    /** The wrapper for underlying TCP/IP socket */
+    protected Socket sslSocket = null;
+
     /** The remaining login time in milliseconds. Initial value set from defined DriverManager.setLoginTimeout() */
     protected int loginTimeoutCountdown = 0;
 
@@ -61,41 +65,6 @@ public class StandardSocketFactory implements SocketFactory {
 
     /** Backup original Socket timeout to be restored after handshake */
     protected int socketTimeoutBackup = 0;
-
-    /**
-     * Called by the driver after issuing the MySQL protocol handshake and
-     * reading the results of the handshake.
-     * 
-     * @throws SocketException
-     *             if a socket error occurs
-     * @throws IOException
-     *             if an I/O error occurs
-     * 
-     * @return The socket to use after the handshake
-     */
-    public Socket afterHandshake() throws SocketException, IOException {
-        resetLoginTimeCountdown();
-        this.rawSocket.setSoTimeout(this.socketTimeoutBackup);
-        return this.rawSocket;
-    }
-
-    /**
-     * Called by the driver before issuing the MySQL protocol handshake. Should
-     * return the socket instance that should be used during the handshake.
-     * 
-     * @throws SocketException
-     *             if a socket error occurs
-     * @throws IOException
-     *             if an I/O error occurs
-     * 
-     * @return the socket to use before the handshake
-     */
-    public Socket beforeHandshake() throws SocketException, IOException {
-        resetLoginTimeCountdown();
-        this.socketTimeoutBackup = this.rawSocket.getSoTimeout();
-        this.rawSocket.setSoTimeout(getRealTimeout(this.socketTimeoutBackup));
-        return this.rawSocket;
-    }
 
     /**
      * Create the raw socket.
@@ -149,7 +118,8 @@ public class StandardSocketFactory implements SocketFactory {
         }
     }
 
-    public Socket connect(String hostname, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException {
+    @SuppressWarnings("unchecked")
+    public <T extends Closeable> T connect(String hostname, int portNumber, Properties props, int loginTimeout) throws IOException {
 
         this.loginTimeoutCountdown = loginTimeout;
 
@@ -216,11 +186,30 @@ public class StandardSocketFactory implements SocketFactory {
 
                 resetLoginTimeCountdown();
 
-                return this.rawSocket;
+                this.sslSocket = this.rawSocket;
+                return (T) this.rawSocket;
             }
         }
 
         throw new SocketException("Unable to create socket");
+    }
+
+    public void beforeHandshake() throws IOException {
+        resetLoginTimeCountdown();
+        this.socketTimeoutBackup = this.rawSocket.getSoTimeout();
+        this.rawSocket.setSoTimeout(getRealTimeout(this.socketTimeoutBackup));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
+        this.sslSocket = ExportControlled.performTlsHandshake(this.rawSocket, socketConnection, serverSession.getServerVersion());
+        return (T) this.sslSocket;
+    }
+
+    public void afterHandshake() throws IOException {
+        resetLoginTimeCountdown();
+        this.rawSocket.setSoTimeout(this.socketTimeoutBackup);
     }
 
     /**

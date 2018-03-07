@@ -628,6 +628,10 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug27226293() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
         this.collection.add("{ \"name\" : \"bob\" , \"age\": 45 }").execute();
 
         DocResult result = this.collection.find("name = 'bob'").execute();

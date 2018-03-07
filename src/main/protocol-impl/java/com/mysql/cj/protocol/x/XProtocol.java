@@ -39,10 +39,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-
-import javax.net.ssl.SSLException;
 
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.QueryResult;
@@ -57,10 +54,11 @@ import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
-import com.mysql.cj.protocol.ExportControlled;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
@@ -114,8 +112,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 // TODO: we should share SocketConnection unless there comes a time where they need to diverge
                 new NativeSocketConnection();
 
-        // TODO pass props?
-        socketConnection.connect(host, port, new Properties(), propertySet, null, null, 0);
+        socketConnection.connect(host, port, propertySet, null, null, 0);
 
         XProtocol protocol = new XProtocol();
         protocol.init(null, socketConnection, propertySet, null);
@@ -176,21 +173,19 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             throw new CJCommunicationsException("A secure connection is required but the server is not configured with SSL.");
         }
 
+        // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
+        ((AsyncMessageReader) this.reader).stopAfterNextMessage();
+        setCapability("tls", true);
+
         try {
-            // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
-            ((AsyncMessageReader) this.reader).stopAfterNextMessage();
-            setCapability("tls", true);
-
-            ExportControlled.startTlsOnAsynchronousChannel(this.socketConnection);
-
-            // resume message processing
-            ((AsyncMessageSender) this.writer).setChannel(this.socketConnection.getAsynchronousSocketChannel());
-            ((AsyncMessageReader) this.reader).start();
-
-        } catch (SSLException e) {
+            this.socketConnection.performTlsHandshake(null);
+        } catch (SSLParamsException | FeatureNotAvailableException | IOException e) {
             throw new CJCommunicationsException(e);
         }
 
+        // resume message processing
+        ((AsyncMessageSender) this.writer).setChannel(this.socketConnection.getAsynchronousSocketChannel());
+        ((AsyncMessageReader) this.reader).start();
     }
 
     public void beforeHandshake() {

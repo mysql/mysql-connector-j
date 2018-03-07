@@ -133,7 +133,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      *             if an error occurs
      */
     public java.sql.Connection getConnection(String userID, String pass) throws SQLException {
-        Properties props = new Properties();
+        Properties props = exposeAsProperties();
 
         if (userID != null) {
             props.setProperty(PropertyDefinitions.PNAME_user, userID);
@@ -142,8 +142,6 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         if (pass != null) {
             props.setProperty(PropertyDefinitions.PNAME_password, pass);
         }
-
-        exposeAsProperties(props);
 
         return getConnection(props);
     }
@@ -647,10 +645,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     }
 
     @Override
-    public Properties exposeAsProperties(Properties props) {
-        if (props == null) {
-            props = new Properties();
-        }
+    public Properties exposeAsProperties() {
+        Properties props = new Properties();
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
             ReadableProperty<?> propToGet = getReadableProperty(propName);

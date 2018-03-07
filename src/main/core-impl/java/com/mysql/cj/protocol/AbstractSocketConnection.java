@@ -39,6 +39,7 @@ import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.UnableToConnectException;
+import com.mysql.jdbc.SocketFactoryWrapper;
 
 public abstract class AbstractSocketConnection implements SocketConnection {
 
@@ -64,10 +65,6 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         return this.mysqlSocket;
     }
 
-    public void setMysqlSocket(Socket mysqlSocket) {
-        this.mysqlSocket = mysqlSocket;
-    }
-
     public FullReadInputStream getMysqlInput() {
         return this.mysqlInput;
     }
@@ -79,10 +76,6 @@ public abstract class AbstractSocketConnection implements SocketConnection {
 
     public BufferedOutputStream getMysqlOutput() {
         return this.mysqlOutput;
-    }
-
-    public void setMysqlOutput(BufferedOutputStream mysqlOutput) {
-        this.mysqlOutput = mysqlOutput;
     }
 
     public boolean isSSLEstablished() {
@@ -130,7 +123,13 @@ public abstract class AbstractSocketConnection implements SocketConnection {
                 throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("SocketConnection.0"), getExceptionInterceptor());
             }
 
-            return (SocketFactory) (Class.forName(socketFactoryClassName).newInstance());
+            Object sf = Class.forName(socketFactoryClassName).newInstance();
+            if (sf instanceof SocketFactory) {
+                return (SocketFactory) (Class.forName(socketFactoryClassName).newInstance());
+            }
+
+            // wrap legacy socket factories
+            return new SocketFactoryWrapper(sf);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
             throw ExceptionFactory.createException(UnableToConnectException.class,
                     Messages.getString("SocketConnection.1", new String[] { socketFactoryClassName }), getExceptionInterceptor());

@@ -178,6 +178,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
         if (props != null) {
             Properties infoCopy = (Properties) props.clone();
 
+            // TODO do we need to remove next properties (as it was before)?
             infoCopy.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
             infoCopy.remove(PropertyDefinitions.PNAME_user);
             infoCopy.remove(PropertyDefinitions.PNAME_password);
@@ -194,6 +195,14 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                 }
             }
 
+            // add user-defined properties
+            for (Object key : infoCopy.keySet()) {
+                String val = infoCopy.getProperty((String) key);
+                PropertyDefinition<String> def = new StringPropertyDefinition((String) key, null, val, PropertyDefinitions.RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.unknown"), "8.0.10", PropertyDefinitions.CATEGORY_USER_DEFINED, Integer.MIN_VALUE);
+                RuntimeProperty<String> p = new ModifiableStringProperty(def);
+                addProperty(p);
+            }
             postInitialization();
         }
     }
@@ -204,22 +213,18 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     }
 
     @Override
-    public Properties exposeAsProperties(Properties props) {
-        if (props == null) {
-            props = new Properties();
-        }
+    public Properties exposeAsProperties() {
+        Properties props = new Properties();
 
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToGet = getReadableProperty(propName);
-
-            String propValue = propToGet.getStringValue();
-
-            if (propValue != null) {
-                props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);
+        for (String propName : this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.keySet()) {
+            if (!props.containsKey(propName)) {
+                ReadableProperty<?> propToGet = getReadableProperty(propName);
+                String propValue = propToGet.getStringValue();
+                if (propValue != null) {
+                    props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);
+                }
             }
         }
-
         return props;
     }
-
 }

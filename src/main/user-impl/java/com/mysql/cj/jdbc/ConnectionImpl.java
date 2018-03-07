@@ -846,22 +846,20 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             // re-prepare them...
 
             try {
-                Properties mergedProps = this.propertySet.exposeAsProperties(this.props);
-
                 if (!this.autoReconnect.getValue()) {
-                    connectOneTryOnly(isForReconnect, mergedProps);
+                    connectOneTryOnly(isForReconnect);
 
                     return;
                 }
 
-                connectWithRetries(isForReconnect, mergedProps);
+                connectWithRetries(isForReconnect);
             } catch (SQLException ex) {
                 throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
             }
         }
     }
 
-    private void connectWithRetries(boolean isForReconnect, Properties mergedProps) throws SQLException {
+    private void connectWithRetries(boolean isForReconnect) throws SQLException {
         double timeout = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_initialTimeout).getValue();
         boolean connectionGood = false;
 
@@ -873,7 +871,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.session.forceClose();
 
                 JdbcConnection c = getProxy();
-                this.session.connect(this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
+                this.session.connect(this.origHostInfo, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
                 pingInternal(false, 0);
 
                 boolean oldAutoCommit;
@@ -973,13 +971,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    private void connectOneTryOnly(boolean isForReconnect, Properties mergedProps) throws SQLException {
+    private void connectOneTryOnly(boolean isForReconnect) throws SQLException {
         Exception connectionNotEstablishedBecause = null;
 
         try {
 
             JdbcConnection c = getProxy();
-            this.session.connect(this.origHostInfo, mergedProps, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
+            this.session.connect(this.origHostInfo, this.user, this.password, this.database, DriverManager.getLoginTimeout() * 1000, c);
 
             // save state from old connection
             boolean oldAutoCommit = getAutoCommit();

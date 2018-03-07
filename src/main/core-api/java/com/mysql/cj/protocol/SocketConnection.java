@@ -30,13 +30,15 @@
 package com.mysql.cj.protocol;
 
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.Properties;
 
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.log.Log;
 
 /**
@@ -51,8 +53,6 @@ public interface SocketConnection {
      *            the hostname to connect to
      * @param port
      *            the port number that the server is listening on
-     * @param props
-     *            the translated Properties from DriverManager.getConnection()
      * @param propertySet
      *            the PropertySet with required connection options
      * @param exceptionInterceptor
@@ -62,7 +62,9 @@ public interface SocketConnection {
      * @param loginTimeout
      *            the driver login time limit in milliseconds
      */
-    void connect(String host, int port, Properties props, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout);
+    void connect(String host, int port, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout);
+
+    void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException;
 
     void forceClose();
 
@@ -79,15 +81,11 @@ public interface SocketConnection {
 
     Socket getMysqlSocket();
 
-    void setMysqlSocket(Socket mysqlSocket);
-
     FullReadInputStream getMysqlInput();
 
     void setMysqlInput(InputStream mysqlInput);
 
     BufferedOutputStream getMysqlOutput();
-
-    void setMysqlOutput(BufferedOutputStream mysqlOutput);
 
     boolean isSSLEstablished();
 
@@ -104,7 +102,5 @@ public interface SocketConnection {
     }
 
     AsynchronousSocketChannel getAsynchronousSocketChannel();
-
-    void setAsynchronousSocketChannel(AsynchronousSocketChannel channel);
 
 }

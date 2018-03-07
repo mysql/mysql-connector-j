@@ -76,5 +76,5 @@ public interface PropertySet {
 
     void postInitialization();
 
-    Properties exposeAsProperties(Properties props);
+    Properties exposeAsProperties();
 }

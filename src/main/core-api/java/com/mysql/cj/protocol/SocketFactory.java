@@ -29,9 +29,8 @@
 
 package com.mysql.cj.protocol;
 
+import java.io.Closeable;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
 import java.util.Properties;
 
 /**
@@ -50,37 +49,11 @@ public interface SocketFactory extends SocketMetadata {
     public static final String TCP_NO_DELAY_DEFAULT_VALUE = "true";
 
     /**
-     * Called by the driver after issuing the MySQL protocol handshake and
-     * reading the results of the handshake.
-     * 
-     * @throws SocketException
-     *             if a socket error occurs
-     * @throws IOException
-     *             if an I/O error occurs
-     * 
-     * @return the socket to use after the handshake
-     */
-    Socket afterHandshake() throws SocketException, IOException;
-
-    /**
-     * Called by the driver before issuing the MySQL protocol handshake. Should
-     * return the socket instance that should be used during the handshake.
-     * 
-     * @throws SocketException
-     *             if a socket error occurs
-     * @throws IOException
-     *             if an I/O error occurs
-     * 
-     * @return the socket to use before the handshake
-     */
-    Socket beforeHandshake() throws SocketException, IOException;
-
-    /**
-     * Creates a new socket using the given properties. Properties are parsed by
+     * Creates a new socket or channel using the given properties. Properties are parsed by
      * the driver from the URL. All properties other than sensitive ones (user
      * and password) are passed to this method. The driver will instantiate the
      * socket factory with the class name given in the property
-     * &quot;socketFactory&quot;, where the standard is <code>com.mysql.cj.core.io.StandardSocketFactory</code> Implementing classes
+     * &quot;socketFactory&quot;, where the standard is <code>com.mysql.cj.protocol.StandardSocketFactory</code> Implementing classes
      * are responsible for handling synchronization of this method (if needed).
      * 
      * @param host
@@ -96,12 +69,47 @@ public interface SocketFactory extends SocketMetadata {
      *            instance.
      * @param loginTimeout
      *            login timeout in milliseconds
+     * @param <T>
+     *            result type
      * 
      * @return a socket connected to the given host
-     * @throws SocketException
-     *             if a socket error occurs
      * @throws IOException
      *             if an I/O error occurs
      */
-    Socket connect(String host, int portNumber, Properties props, int loginTimeout) throws SocketException, IOException;
+    <T extends Closeable> T connect(String host, int portNumber, Properties props, int loginTimeout) throws IOException;
+
+    /**
+     * Called by the driver before issuing the MySQL protocol handshake.
+     * 
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    default void beforeHandshake() throws IOException {
+    }
+
+    /**
+     * If required, called by the driver during MySQL protocol handshake to transform
+     * original socket to SSL socket and perform TLS handshake.
+     * 
+     * @param socketConnection
+     *            current SocketConnection
+     * @param serverSession
+     *            current ServerSession
+     * @param <T>
+     *            result type
+     * @return SSL socket
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException;
+
+    /**
+     * Called by the driver after completing the MySQL protocol handshake and
+     * reading the results of the authentication.
+     * 
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    default void afterHandshake() throws IOException {
+    }
 }

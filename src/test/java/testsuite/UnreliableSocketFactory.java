@@ -29,6 +29,7 @@
 
 package testsuite;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -164,8 +165,9 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         return lastHost == null ? false : lastHost.startsWith(STATUS_CONNECTED);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Socket connect(String host_name, int port_number, Properties prop, int loginTimeout) throws SocketException, IOException {
+    public <T extends Closeable> T connect(String host_name, int port_number, Properties prop, int loginTimeout) throws IOException {
         this.loginTimeoutCountdown = loginTimeout;
         this.hostname = host_name;
         this.portNumber = port_number;
@@ -185,7 +187,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         } finally {
             CONNECTION_ATTEMPTS.add(result + host_name);
         }
-        return socket;
+        return (T) socket;
     }
 
     private Socket getNewSocket() throws SocketException, IOException {
@@ -202,17 +204,9 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
             hostnameToConnectTo = this.hostname;
         }
 
-        return new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props, this.loginTimeoutCountdown), this.props, this.hostname);
-    }
-
-    @Override
-    public Socket afterHandshake() throws SocketException, IOException {
-        return getNewSocket();
-    }
-
-    @Override
-    public Socket beforeHandshake() throws SocketException, IOException {
-        return getNewSocket();
+        this.rawSocket = new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props, this.loginTimeoutCountdown), this.props,
+                this.hostname);
+        return this.rawSocket;
     }
 
     static void sleepMillisForProperty(Properties props, String name) {
@@ -226,6 +220,17 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     }
 
     class HangingSocket extends Socket {
+
+        final Socket underlyingSocket;
+        final Properties props;
+        final String aliasedHostname;
+
+        HangingSocket(Socket realSocket, Properties props, String aliasedHostname) {
+            this.underlyingSocket = realSocket;
+            this.props = props;
+            this.aliasedHostname = aliasedHostname;
+        }
+
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
 
@@ -432,17 +437,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         public String toString() {
             return this.underlyingSocket.toString();
         }
-
-        final Socket underlyingSocket;
-        final Properties props;
-        final String aliasedHostname;
-
-        HangingSocket(Socket realSocket, Properties props, String aliasedHostname) {
-            this.underlyingSocket = realSocket;
-            this.props = props;
-            this.aliasedHostname = aliasedHostname;
-        }
-
     }
 
     static class HangingInputStream extends InputStream {
