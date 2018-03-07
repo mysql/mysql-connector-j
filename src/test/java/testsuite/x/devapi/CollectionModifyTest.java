@@ -29,6 +29,7 @@
 
 package testsuite.x.devapi;
 
+import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -620,5 +621,24 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         assertNull(this.collection.getOne(null));
 
+    }
+
+    /**
+     * Tests fix for BUG#27226293, JSONNUMBER.GETINTEGER() & NUMBERFORMATEXCEPTION.
+     */
+    @Test
+    public void testBug27226293() {
+        this.collection.add("{ \"name\" : \"bob\" , \"age\": 45 }").execute();
+
+        DocResult result = this.collection.find("name = 'bob'").execute();
+        DbDoc doc = result.fetchOne();
+        assertEquals(new Integer(45), ((JsonNumber) doc.get("age")).getInteger());
+
+        // After fixing server Bug#88230 (MySQL 8.0.4) the next operation returns
+        // decimal age value 46.0 instead of integer 46
+        this.collection.modify("name='bob'").set("age", expr("$.age + 1")).execute();
+        doc = this.collection.find("name='bob'").execute().fetchOne();
+        int age = ((JsonNumber) doc.get("age")).getInteger();
+        assertEquals(46, age);
     }
 }

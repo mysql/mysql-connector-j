@@ -43,7 +43,7 @@ public class JsonNumber implements JsonValue {
      * @return value as Integer
      */
     public Integer getInteger() {
-        return Integer.valueOf(this.val);
+        return new BigDecimal(this.val).intValue();
     }
 
     /**

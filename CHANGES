@@ -3,6 +3,8 @@
 
 Version 8.0.10
 
+  - Fix for BUG#27226293, JSONNUMBER.GETINTEGER() & NUMBERFORMATEXCEPTION.
+
   - WL#10527, Clean up Protocol and Session interfaces.
 
 Version 8.0.9
