@@ -3,6 +3,16 @@
 
 Version 8.0.10
 
+  - Fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
+
+  - Fix for Bug#27231383, PROVIDE MAVEN-FRIENDLY COMMERCIAL PACKAGES WITHOUT "-BIN".
+
+  - Fix for Bug#26819691, SETTING PACKETDEBUGBUFFERSIZE=0 RESULTS IN CONNECTION FAILURE.
+
+  - Fix for Bug#88227 (27029657), Connector/J 5.1.44 cannot be used against MySQL 5.7.20 without warnings.
+
+  - Fix for Bug#27374581, CONNECTION FAILS WHEN GPL SERVER STARTED WITH TLS-VERSION=TLSV1.2.
+
   - WL#11419, DevAPI: New document _id generation support.
 
   - WL#11620, Change caching_sha2_password padding.

@@ -698,7 +698,7 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", CATEGORY_METADATA, Integer.MIN_VALUE),
 
                 new IntegerPropertyDefinition(PNAME_packetDebugBufferSize, NO_ALIAS, 20, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3", CATEGORY_DEBUGING_PROFILING, 7, 0, Integer.MAX_VALUE),
+                        Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3", CATEGORY_DEBUGING_PROFILING, 7, 1, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_padCharsWithSpace, NO_ALIAS, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.padCharsWithSpace"), "5.0.6", CATEGORY_RESULT_SETS, Integer.MIN_VALUE),

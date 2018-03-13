@@ -1929,7 +1929,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public void scanForAndThrowDataTruncation() {
         if ((this.streamingData == null) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
                 && getWarningCount() > 0) {
+            int warningCountOld = getWarningCount();
             convertShowWarningsToSQLWarnings(getWarningCount(), true);
+            setWarningCount(warningCountOld);
         }
     }
 

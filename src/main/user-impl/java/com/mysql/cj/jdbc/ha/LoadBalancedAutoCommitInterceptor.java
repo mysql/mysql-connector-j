@@ -42,6 +42,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.util.StringUtils;
 
 public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     private int matchingAfterStatementCount = 0;
@@ -49,6 +50,8 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     private String matchingAfterStatementRegex;
     private JdbcConnection conn;
     private LoadBalancedConnectionProxy proxy = null;
+
+    private boolean countStatements = false;
 
     public void destroy() {
         this.conn = null;
@@ -81,41 +84,45 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         try {
-            // don't care if auto-commit is not enabled
+            // Don't count SETs neither SHOWs. Those are mostly used internally and must not trigger a connection switch.
+            if (!this.countStatements || StringUtils.startsWithIgnoreCase(sql.get(), "SET") || StringUtils.startsWithIgnoreCase(sql.get(), "SHOW")) {
+                return originalResultSet;
+            }
+
+            // Don't care if auto-commit is not enabled.
             if (!this.conn.getAutoCommit()) {
                 this.matchingAfterStatementCount = 0;
-                // auto-commit is enabled:
-            } else {
+                return originalResultSet;
+            }
 
-                if (this.proxy == null && this.conn.isProxySet()) {
-                    JdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
-                    while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
-                        lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
-                    }
-                    if (lcl_proxy != null) {
-                        this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
-                    }
-
+            if (this.proxy == null && this.conn.isProxySet()) {
+                JdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
+                while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
+                    lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
                 }
-
-                if (this.proxy != null) {
-                    // increment the match count if no regex specified, or if matches:
-                    if (this.matchingAfterStatementRegex == null || sql.get().matches(this.matchingAfterStatementRegex)) {
-                        this.matchingAfterStatementCount++;
-                    }
+                if (lcl_proxy != null) {
+                    this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
                 }
-                // trigger rebalance if count exceeds threshold:
-                if (this.matchingAfterStatementCount >= this.matchingAfterStatementThreshold) {
-                    this.matchingAfterStatementCount = 0;
-                    try {
-                        if (this.proxy != null) {
-                            this.proxy.pickNewConnection();
-                        }
+            }
 
-                    } catch (SQLException e) {
-                        // eat this exception, the auto-commit statement completed, but we could not rebalance for some reason.  User may get exception when using
-                        // connection next.
-                    }
+            // Connection is not ready to rebalance yet.
+            if (this.proxy == null) {
+                return originalResultSet;
+            }
+
+            // Increment the match count if no regex specified, or if matches.
+            if (this.matchingAfterStatementRegex == null || sql.get().matches(this.matchingAfterStatementRegex)) {
+                this.matchingAfterStatementCount++;
+            }
+
+            // Trigger rebalance if count exceeds threshold.
+            if (this.matchingAfterStatementCount >= this.matchingAfterStatementThreshold) {
+                this.matchingAfterStatementCount = 0;
+                try {
+                    this.proxy.pickNewConnection();
+                } catch (SQLException e) {
+                    // eat this exception, the auto-commit statement completed, but we could not rebalance for some reason.  User may get exception when using
+                    // connection next.
                 }
             }
         } catch (SQLException ex) {
@@ -130,4 +137,11 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
         return null;
     }
 
+    void pauseCounters() {
+        this.countStatements = false;
+    }
+
+    void resumeCounters() {
+        this.countStatements = true;
+    }
 }

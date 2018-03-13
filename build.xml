@@ -657,7 +657,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Build a distribution 'image' that doesn't include docs. -->
     <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
-        <delete file="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}-bin.jar" />
+        <delete file="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}.jar" />
 
         <!-- JDBC 4+ support of service provider mechanism. -->
         <mkdir dir="${com.mysql.cj.build.dir.driver}/META-INF/services/" />
@@ -731,7 +731,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                        value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
         </manifest>
 
-        <jar jarfile="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}-bin.jar"
+        <jar jarfile="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}.jar"
              basedir="${com.mysql.cj.build.compiler.output}"
              includes="**/*.class,**/*.properties*,META-INF/**"
              excludes="testsuite/**,demo/**,instrumentation/**"

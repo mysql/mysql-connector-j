@@ -29,7 +29,6 @@
 
 package com.mysql.cj.conf.url;
 
-import static com.mysql.cj.conf.PropertyDefinitions.PNAME_useLocalSessionState;
 import static com.mysql.cj.conf.PropertyDefinitions.TYPE_PROPERTY_KEY;
 
 import java.util.ArrayList;
@@ -124,17 +123,6 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
         this.properties.putAll(properties);
         injectPerTypeProperties(this.properties);
         setupPropertiesTransformer(); // This is needed if new hosts come to be spawned in this connection URL.
-    }
-
-    /**
-     * Injects additional properties into the connection arguments while it's being constructed.
-     * 
-     * @param hostProps
-     *            the properties already containing all known connection arguments
-     */
-    @Override
-    protected void injectPerTypeProperties(Map<String, String> hostProps) {
-        hostProps.put(PNAME_useLocalSessionState, "true");
     }
 
     /**

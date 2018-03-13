@@ -627,6 +627,8 @@ public abstract class BaseTestCase extends TestCase {
      */
     @Override
     public void setUp() throws Exception {
+        System.out.println("Running test " + getClass().getName() + "#" + getName());
+        System.out.println("################################################################################");
         Class.forName(this.dbClass).newInstance();
         this.createdObjects = new ArrayList<>();
 
@@ -638,8 +640,6 @@ public abstract class BaseTestCase extends TestCase {
         this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
 
         this.serverVersion = ((JdbcConnection) this.conn).getServerVersion();
-
-        System.out.println("Done.\n");
 
         this.stmt = this.conn.createStatement();
 

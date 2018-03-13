@@ -250,6 +250,20 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     }
 
     @Override
+    void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
+        try {
+            super.syncSessionState(source, target, readOnly);
+        } catch (SQLException e1) {
+            try {
+                // Try again. It may happen that the connection had recovered in the meantime but the right syncing wasn't done yet.
+                super.syncSessionState(source, target, readOnly);
+            } catch (SQLException e2) {
+            }
+            // Swallow both exceptions. Replication connections must continue to "work" after swapping between masters and slaves.
+        }
+    }
+
+    @Override
     void doClose() throws SQLException {
         if (this.masterConnection != null) {
             this.masterConnection.close();

@@ -54,6 +54,7 @@ import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.ConnectionGroup;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
 import com.mysql.cj.jdbc.ConnectionImpl;
@@ -389,7 +390,30 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
         this.totalPhysicalConnections++;
 
+        for (QueryInterceptor stmtInterceptor : conn.getQueryInterceptorsInstances()) {
+            if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
+                ((LoadBalancedAutoCommitInterceptor) stmtInterceptor).resumeCounters();
+                break;
+            }
+        }
+
         return conn;
+    }
+
+    @Override
+    void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
+        LoadBalancedAutoCommitInterceptor lbAutoCommitStmtInterceptor = null;
+        for (QueryInterceptor stmtInterceptor : target.getQueryInterceptorsInstances()) {
+            if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
+                lbAutoCommitStmtInterceptor = (LoadBalancedAutoCommitInterceptor) stmtInterceptor;
+                lbAutoCommitStmtInterceptor.pauseCounters();
+                break;
+            }
+        }
+        super.syncSessionState(source, target, readOnly);
+        if (lbAutoCommitStmtInterceptor != null) {
+            lbAutoCommitStmtInterceptor.resumeCounters();
+        }
     }
 
     /**

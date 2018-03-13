@@ -98,6 +98,7 @@ import java.util.regex.Pattern;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.net.ssl.SSLContext;
 import javax.sql.PooledConnection;
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
@@ -160,7 +161,6 @@ import com.mysql.cj.protocol.a.authentication.MysqlOldPasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
-import com.mysql.cj.util.Util;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -2956,7 +2956,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assert (endConnCount > 0);
 
-            if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this testsuite?
+            if (endConnCount - startConnCount >= 20) {
+                // this may be bogus if run on a real system, we should probably look to see they're coming from this testsuite?
                 fail("We're leaking connections even when not failed over");
             }
         } finally {
@@ -3599,6 +3600,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return true;
         }
 
+        public void reset() {
+        }
+
     }
 
     public static class TwoQuestionsPlugin implements AuthenticationPlugin<NativePacketPayload> {
@@ -3635,6 +3639,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        public void reset() {
         }
 
     }
@@ -3676,6 +3683,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 toServer.add(bresp);
             }
             return true;
+        }
+
+        public void reset() {
         }
 
     }
@@ -4155,7 +4165,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256Url, propsAllowRetrieval, "wl5602user", false);
                 assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
-                // 3.2. Runtime setServerRSAPublicKeyFile must be denied 
+                // 3.2. Runtime setServerRSAPublicKeyFile must be denied
                 final Connection c2 = getConnectionWithProps(sha256Url, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
@@ -4166,7 +4176,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
                 c2.close();
 
-                // 3.3. Runtime setAllowPublicKeyRetrieval must be denied 
+                // 3.3. Runtime setAllowPublicKeyRetrieval must be denied
                 final Connection c3 = getConnectionWithProps(sha256Url, propsNoRetrieval);
                 assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
@@ -7130,6 +7140,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 serverVariables.put(this.rs.getString(1), this.rs.getString(2));
             }
 
+            // fix the renaming of "tx_isolation" to "transaction_isolation" that is made in NativeSession.loadServerVariables().
+            if (!serverVariables.containsKey("transaction_isolation") && serverVariables.containsKey("tx_isolation")) {
+                serverVariables.put("transaction_isolation", serverVariables.remove("tx_isolation"));
+            }
             Session session = con.getSession();
 
             // check values from "select @@var..."
@@ -7152,10 +7166,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(serverVariables.get("lower_case_table_names"), session.getServerSession().getServerVariable("lower_case_table_names"));
             assertEquals(serverVariables.get("max_allowed_packet"), session.getServerSession().getServerVariable("max_allowed_packet"));
             assertEquals(serverVariables.get("net_write_timeout"), session.getServerSession().getServerVariable("net_write_timeout"));
-            if (con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3))) {
-                assertEquals(serverVariables.get("have_query_cache"), session.getServerSession().getServerVariable("have_query_cache"));
-            }
-            if (!con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3)) || "YES".equalsIgnoreCase(serverVariables.get("have_query_cache"))) {
+            if (!con.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3))) {
                 assertEquals(serverVariables.get("query_cache_size"), session.getServerSession().getServerVariable("query_cache_size"));
                 assertEquals(serverVariables.get("query_cache_type"), session.getServerSession().getServerVariable("query_cache_type"));
             }
@@ -7169,10 +7180,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertEquals(serverVariables.get("system_time_zone"), session.getServerSession().getServerVariable("system_time_zone"));
             assertEquals(serverVariables.get("time_zone"), session.getServerSession().getServerVariable("time_zone"));
-
-            String s = versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation";
-            assertEquals(serverVariables.get(s), session.getServerSession().getServerVariable(s));
-
+            assertEquals(serverVariables.get("transaction_isolation"), session.getServerSession().getServerVariable("transaction_isolation"));
             assertEquals(serverVariables.get("wait_timeout"), session.getServerSession().getServerVariable("wait_timeout"));
             if (!versionMeetsMinimum(5, 5, 0)) {
                 assertEquals(serverVariables.get("language"), session.getServerSession().getServerVariable("language"));
@@ -8111,15 +8119,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
     /**
      * Tests fix for WL#8196, Support for TLSv1.2 Protocol.
      * 
-     * This test requires community server (with yaSSL) in -Dcom.mysql.cj.testsuite.url and
-     * commercial server (with OpenSSL) in -Dcom.mysql.cj.testsuite.url.openssl
+     * This test requires community server (preferably compiled with yaSSL) in -Dcom.mysql.cj.testsuite.url and commercial server (with OpenSSL) in
+     * -Dcom.mysql.cj.testsuite.url.openssl
      * 
      * Test certificates from test/config/ssl-test-certs must be installed on both servers.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     public void testTLSVersion() throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
 
         final String[] testDbUrls;
         Properties props = new Properties();
@@ -8138,52 +8147,55 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         for (String testDbUrl : testDbUrls) {
             System.out.println(testDbUrl);
-            System.out.println(System.getProperty(PropertyDefinitions.SYSP_java_version));
+            System.out.println("JVM version: " + System.getProperty(PropertyDefinitions.SYSP_java_version));
+            System.out.println("JVM supports TLS protocols: " + jvmSupportedProtocols);
             Connection sslConn = getConnectionWithProps(testDbUrl, props);
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
-
-            ResultSet rset = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
-            assertTrue(rset.next());
-            String tlsVersion = rset.getString(2);
-            System.out.println("TLS version: " + tlsVersion);
-            System.out.println();
             System.out.println("MySQL version: " + ((MysqlConnection) sslConn).getSession().getServerSession().getServerVersion());
-            String etp = ((MysqlConnection) sslConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
-            System.out.println("enabledTLSProtocols: " + etp);
-            System.out.println();
-            System.out.println("JVM version: " + Util.getJVMVersion());
-            System.out.println();
+            this.rs = sslConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
+            assertTrue(this.rs.next());
+            String tlsVersionUsed = this.rs.getString(2);
+            System.out.println("TLS version used: " + tlsVersionUsed);
 
             if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 10)) {
-                if (Util.isEnterpriseEdition(((JdbcConnection) sslConn).getServerVersion().toString())) {
-                    assertEquals("TLSv1.2", tlsVersion);
-                } else {
-                    assertEquals("TLSv1.1", tlsVersion);
+                this.rs = sslConn.createStatement().executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+                assertTrue(this.rs.next());
+                List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
+                String highestCommonTlsVersion = "";
+                for (String p : new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" }) {
+                    if (jvmSupportedProtocols.contains(p) && serverSupportedProtocols.contains(p)) {
+                        highestCommonTlsVersion = p;
+                        break;
+                    }
                 }
+                System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+                System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
+
+                assertEquals(highestCommonTlsVersion, tlsVersionUsed);
             } else {
-                assertEquals("TLSv1", tlsVersion);
+                assertEquals("TLSv1", tlsVersionUsed);
             }
+            System.out.println();
 
             sslConn.close();
         }
-
     }
 
     /**
-     * Tests fix for Bug#87379. This allows TLS version to be overridden through a new configuration
-     * option - enabledTLSProtocols. When set to some combination of TLSv1, TLSv1.1, or TLSv1.2 (comma-
-     * separated, no spaces), the default behaviour restricting the TLS version based on JRE and MySQL
-     * Server version is bypassed to enable or restrict specific TLS versions.
+     * Tests fix for Bug#87379. This allows TLS version to be overridden through a new configuration option - enabledTLSProtocols. When set to some combination
+     * of TLSv1, TLSv1.1, or TLSv1.2 (comma-separated, no spaces), the default behavior restricting the TLS version based on JRE and MySQL Server version is
+     * bypassed to enable or restrict specific TLS versions.
      * 
-     * This test requires community server (with yaSSL) in -Dcom.mysql.cj.testsuite.url and
-     * commercial server (with OpenSSL) in -Dcom.mysql.cj.testsuite.url.openssl
+     * This test requires community server (preferably compiled with yaSSL) in -Dcom.mysql.cj.testsuite.url and commercial server (with OpenSSL) in
+     * -Dcom.mysql.cj.testsuite.url.openssl
      * 
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     public void testEnableTLSVersion() throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
 
         final String[] testDbUrls;
         Properties props = new Properties();
@@ -8202,17 +8214,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         for (String testDbUrl : testDbUrls) {
             System.out.println(testDbUrl);
-            System.out.println(System.getProperty(PropertyDefinitions.SYSP_java_version));
+            System.out.println("JVM version: " + System.getProperty(PropertyDefinitions.SYSP_java_version));
+            System.out.println("JVM supports TLS protocols: " + jvmSupportedProtocols);
             Connection sslConn = getConnectionWithProps(testDbUrl, props);
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
-            List<String> expectedProtocols = new ArrayList<>();
-            expectedProtocols.add("TLSv1");
-            if (Util.getJVMVersion() > 6 && ((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 10)) {
-                ResultSet rs1 = sslConn.createStatement().executeQuery("SELECT @@global.tls_version");
-                assertTrue(rs1.next());
-                String supportedTLSVersions = rs1.getString(1);
-                System.out.println("Server reported TLS version support: " + supportedTLSVersions);
-                expectedProtocols.addAll(Arrays.asList(supportedTLSVersions.split("\\s*,\\s*")));
+            System.out.println("MySQL version: " + ((MysqlConnection) sslConn).getSession().getServerSession().getServerVersion());
+            List<String> commonSupportedProtocols = new ArrayList<>();
+            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 10)) {
+                this.rs = sslConn.createStatement().executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+                assertTrue(this.rs.next());
+                List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
+                System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+                commonSupportedProtocols.addAll(serverSupportedProtocols);
+                commonSupportedProtocols.retainAll(jvmSupportedProtocols);
+            } else {
+                commonSupportedProtocols.add("TLSv1");
             }
 
             String[] testingProtocols = { "TLSv1.2", "TLSv1.1", "TLSv1" };
@@ -8220,11 +8236,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 Properties testProps = new Properties();
                 testProps.putAll(props);
                 testProps.put(PropertyDefinitions.PNAME_enabledTLSProtocols, protocol);
-                System.out.println("Testing " + protocol + " expecting connection: " + expectedProtocols.contains(protocol));
+                System.out.println("Testing " + protocol + " expecting connection: " + commonSupportedProtocols.contains(protocol));
                 try {
                     Connection tlsConn = getConnectionWithProps(testDbUrl, testProps);
-                    if (!expectedProtocols.contains(protocol)) {
-                        fail("Expected to fail connection with " + protocol + " due to lack of server support.");
+                    if (!commonSupportedProtocols.contains(protocol)) {
+                        fail("Expected to fail connection with " + protocol + " due to lack of jvm/server support.");
                     }
                     ResultSet rset = tlsConn.createStatement().executeQuery("SHOW STATUS LIKE 'ssl_version'");
                     assertTrue(rset.next());
@@ -8232,12 +8248,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     assertEquals(protocol, tlsVersion);
                     tlsConn.close();
                 } catch (Exception e) {
-                    if (expectedProtocols.contains(protocol)) {
+                    if (commonSupportedProtocols.contains(protocol)) {
                         e.printStackTrace();
                         fail("Expected to be able to connect with " + protocol + " protocol, but failed.");
                     }
                 }
             }
+            System.out.println();
             sslConn.close();
         }
     }
@@ -8417,7 +8434,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
 
         /*
-         * Run-time case 2a: Running with Masters down (Masters doesn't recover).
+         * Run-time case 2a: Running with Masters down (Masters connection doesn't recover).
          */
         downedHosts.clear();
         UnreliableSocketFactory.flushAllStaticData();
@@ -8432,23 +8449,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // Use Slaves.
         testConn.setReadOnly(true);
         testBug21286268AssertConnectedToAndReadOnly(testConn, SLAVE, true);
-
-        // Use Masters (fail!).
-        testConn.setReadOnly(false);
         assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+
+        // Use Masters.
+        testConn.setReadOnly(false);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL); // Failed re-initializing Masters.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     localTestConn.createStatement().execute("SELECT 1");
                     return null;
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL);
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_FAIL, MASTER_FAIL); // No changes so far.
 
         /*
-         * Run-time case 2b: Running with Masters down (Masters recover in time).
+         * Run-time case 2b: Running with Masters down (Masters connection recover in time).
          */
         downedHosts.clear();
         UnreliableSocketFactory.flushAllStaticData();
@@ -8474,16 +8493,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Masters.
         testConn.setReadOnly(false);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
-        {
-            final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    localTestConn.createStatement().execute("SELECT 1");
-                    return null;
-                }
-            });
-        }
         assertConnectionsHistory(SLAVE_OK, MASTER_OK, MASTER_OK); // Masters connection re-initialized.
         testBug21286268AssertConnectedToAndReadOnly(testConn, MASTER, false);
 
@@ -8512,19 +8521,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Slaves.
         testConn.setReadOnly(true);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     localTestConn.createStatement().execute("SELECT 1");
                     return null;
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // No changes so far.
 
-        // Retry using Slaves. Will fail definitely.
+        // Retry using Slaves. Will fail indefinitely.
         {
             final Connection localTestConn = testConn;
             assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
@@ -8561,17 +8571,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // Use Slaves.
         testConn.setReadOnly(true);
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK); // No changes so far.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+
         {
             final Connection localTestConn = testConn;
-            assertThrows(SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
+            assertThrows(SQLException.class, "(?s)No operations allowed after connection closed.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     localTestConn.createStatement().execute("SELECT 1");
                     return null;
                 }
             });
         }
-        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // Failed re-initializing Slaves.
+        assertConnectionsHistory(SLAVE_OK, MASTER_OK, SLAVE_FAIL, SLAVE_FAIL); // No changes so far.
 
         // Retry using Slaves. Will fall-back to Masters as read-only.
         testConn.setReadOnly(true);
@@ -10433,6 +10444,96 @@ public class ConnectionRegressionTest extends BaseTestCase {
         if (this.sha256Conn != null && ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 6, 5)) {
             testConnectionAttributes(getNoDbUrl(sha256Url));
         }
+    }
 
+    /**
+     * Tests fix for Bug#88227 (27029657), Connector/J 5.1.44 cannot be used against MySQL 5.7.20 without warnings.
+     */
+    public void testBug88227() throws Exception {
+        java.sql.Connection testConn = getConnectionWithProps("statementInterceptors=" + Bug88227QueryInterceptor.class.getName());
+        Bug88227QueryInterceptor.mayHaveWarnings = false;
+        testConn.getTransactionIsolation();
+        testConn.isReadOnly();
+        testConn.close();
+    }
+
+    public static class Bug88227QueryInterceptor extends BaseQueryInterceptor {
+        public static boolean mayHaveWarnings = true;
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            assertFalse("Unexpected [SHOW WARNINGS] was issued", sql.get().contains("SHOW WARNINGS"));
+            return super.preProcess(sql, interceptedQuery);
+        }
+
+        @Override
+        public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
+            if (!mayHaveWarnings) {
+                assertEquals("Warnings while executing [" + sql + "]", 0, ((NativeSession) interceptedQuery.getSession()).getProtocol().getWarningCount());
+            }
+            return super.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
+        }
+    }
+
+    /**
+     * Tests fix for Bug#26819691, SETTING PACKETDEBUGBUFFERSIZE=0 RESULTS IN CONNECTION FAILURE.
+     */
+    public void testBug26819691() throws Exception {
+        assertThrows(SQLException.class, "The connection property 'packetDebugBufferSize' only accepts integer values in the range of 1 - 2147483647, "
+                + "the value '0' exceeds this range\\.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        getConnectionWithProps("packetDebugBufferSize=0,enablePacketDebug=true");
+                        return null;
+                    }
+                });
+
+        getConnectionWithProps("packetDebugBufferSize=1,enablePacketDebug=true").close();
+    }
+
+    /**
+     * Tests fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
+     */
+    public void testBug86741() throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT @@global.autocommit");
+        assertTrue(this.rs.next());
+        int prevAutocommit = this.rs.getInt(1);
+        this.stmt.execute("SET GLOBAL autocommit=0");
+        try {
+            Connection testConn;
+
+            testConn = getConnectionWithProps("");
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getFailoverConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getLoadBalancedConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+
+            testConn = getMasterSlaveReplicationConnection();
+            assertTrue("Wrong connection autocommit state", testConn.getAutoCommit());
+            this.rs = testConn.createStatement().executeQuery("SELECT @@global.autocommit, @@session.autocommit");
+            this.rs.next();
+            assertEquals("Wrong @@global.autocommit", 0, this.rs.getInt(1));
+            assertEquals("Wrong @@session.autocommit", 1, this.rs.getInt(2));
+            testConn.close();
+        } finally {
+            this.stmt.execute("SET GLOBAL autocommit=" + prevAutocommit);
+        }
     }
 }

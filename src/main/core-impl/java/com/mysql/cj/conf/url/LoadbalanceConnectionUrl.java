@@ -31,7 +31,6 @@ package com.mysql.cj.conf.url;
 
 import static com.mysql.cj.conf.PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold;
 import static com.mysql.cj.conf.PropertyDefinitions.PNAME_queryInterceptors;
-import static com.mysql.cj.conf.PropertyDefinitions.PNAME_useLocalSessionState;
 
 import java.util.Collection;
 import java.util.List;
@@ -98,8 +97,6 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      */
     @Override
     protected void injectPerTypeProperties(Map<String, String> props) {
-        props.put(PNAME_useLocalSessionState, "true");
-
         if (props.containsKey(PNAME_loadBalanceAutoCommitStatementThreshold)) {
             try {
                 int autoCommitSwapThreshold = Integer.parseInt(props.get(PNAME_loadBalanceAutoCommitStatementThreshold));

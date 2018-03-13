@@ -41,6 +41,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -314,11 +315,19 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param target
      *            The connection where to set state.
      */
-    static void syncSessionState(JdbcConnection source, JdbcConnection target) throws SQLException {
+    void syncSessionState(JdbcConnection source, JdbcConnection target) throws SQLException {
         if (source == null || target == null) {
             return;
         }
-        syncSessionState(source, target, source.isReadOnly());
+
+        ModifiableProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet()
+                .getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
+        sourceUseLocalSessionState.setValue(true);
+        boolean readOnly = source.isReadOnly();
+        sourceUseLocalSessionState.setValue(prevUseLocalSessionState);
+
+        syncSessionState(source, target, readOnly);
     }
 
     /**
@@ -331,7 +340,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @param readOnly
      *            The new read-only status.
      */
-    static void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
+    void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
         if (target != null) {
             target.setReadOnly(readOnly);
         }
@@ -339,10 +348,18 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         if (source == null || target == null) {
             return;
         }
+
+        ModifiableProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet()
+                .getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
+        sourceUseLocalSessionState.setValue(true);
+
         target.setAutoCommit(source.getAutoCommit());
         target.setCatalog(source.getCatalog());
         target.setTransactionIsolation(source.getTransactionIsolation());
         target.setSessionMaxRows(source.getSessionMaxRows());
+
+        sourceUseLocalSessionState.setValue(prevUseLocalSessionState);
     }
 
     /**

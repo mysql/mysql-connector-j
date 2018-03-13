@@ -29,9 +29,6 @@
 
 package com.mysql.cj.conf.url;
 
-import static com.mysql.cj.conf.PropertyDefinitions.PNAME_useLocalSessionState;
-
-import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.conf.ConnectionUrl;
@@ -49,16 +46,5 @@ public class FailoverConnectionUrl extends ConnectionUrl {
     public FailoverConnectionUrl(ConnectionUrlParser connStrParser, Properties info) {
         super(connStrParser, info);
         this.type = Type.FAILOVER_CONNECTION;
-    }
-
-    /**
-     * Injects additional properties into the connection arguments while it's being constructed.
-     * 
-     * @param props
-     *            the properties already containing all known connection arguments
-     */
-    @Override
-    protected void injectPerTypeProperties(Map<String, String> props) {
-        props.put(PNAME_useLocalSessionState, "true");
     }
 }

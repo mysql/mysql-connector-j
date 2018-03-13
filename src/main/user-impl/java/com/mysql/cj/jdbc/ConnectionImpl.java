@@ -571,8 +571,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * Is called by connectionInit(...)
      */
     private void checkTransactionIsolationLevel() {
-
-        String s = this.session.getServerSession().getServerVariable(versionMeetsMinimum(8, 0, 3) ? "transaction_isolation" : "tx_isolation");
+        String s = this.session.getServerSession().getServerVariable("transaction_isolation");
+        if (s == null) {
+            s = this.session.getServerSession().getServerVariable("tx_isolation");
+        }
 
         if (s != null) {
             Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -1244,11 +1246,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
+        return getMetadataSafeStatement(0);
+    }
+
+    public java.sql.Statement getMetadataSafeStatement(int maxRows) throws SQLException {
         java.sql.Statement stmt = createStatement();
 
-        if (stmt.getMaxRows() != 0) {
-            stmt.setMaxRows(0);
-        }
+        stmt.setMaxRows(maxRows == -1 ? 0 : maxRows);
 
         stmt.setEscapeProcessing(false);
 
@@ -1274,12 +1278,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         synchronized (getConnectionMutex()) {
             if (!this.useLocalSessionState.getValue()) {
-                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) ? "@@session.transaction_isolation" : "@@session.tx_isolation");
+                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
+                        ? "@@session.transaction_isolation" : "@@session.tx_isolation");
 
                 if (s != null) {
                     Integer intTI = mapTransIsolationNameToValue.get(s);
                     if (intTI != null) {
-                        return intTI.intValue();
+                        this.isolationLevel = intTI.intValue();
+                        return this.isolationLevel;
                     }
                     throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                             getExceptionInterceptor());
@@ -1496,7 +1502,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
             try {
-                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) ? "@@session.transaction_read_only" : "@@session.tx_read_only");
+                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
+                        ? "@@session.transaction_read_only" : "@@session.tx_read_only");
                 if (s != null) {
                     return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
                 }

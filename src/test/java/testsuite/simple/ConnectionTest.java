@@ -560,6 +560,16 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testIsolationLevel() throws Exception {
+        // Check initial transaction isolation level
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(true);
+        int initialTransactionIsolation = this.conn.getTransactionIsolation();
+
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(false);
+        int actualTransactionIsolation = this.conn.getTransactionIsolation();
+
+        assertEquals("Inital transaction isolation level doesn't match the server's", actualTransactionIsolation, initialTransactionIsolation);
+
+        // Check setting all allowed transaction isolation levels
         String[] isoLevelNames = new String[] { "Connection.TRANSACTION_NONE", "Connection.TRANSACTION_READ_COMMITTED",
                 "Connection.TRANSACTION_READ_UNCOMMITTED", "Connection.TRANSACTION_REPEATABLE_READ", "Connection.TRANSACTION_SERIALIZABLE" };
 
@@ -567,7 +577,6 @@ public class ConnectionTest extends BaseTestCase {
                 Connection.TRANSACTION_REPEATABLE_READ, Connection.TRANSACTION_SERIALIZABLE };
 
         DatabaseMetaData dbmd = this.conn.getMetaData();
-
         for (int i = 0; i < isolationLevels.length; i++) {
             if (dbmd.supportsTransactionIsolationLevel(isolationLevels[i])) {
                 this.conn.setTransactionIsolation(isolationLevels[i]);

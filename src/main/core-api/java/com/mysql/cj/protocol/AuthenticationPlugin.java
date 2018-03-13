@@ -106,7 +106,7 @@ public interface AuthenticationPlugin<M extends Message> {
     /**
      * Process authentication handshake data from server and optionally
      * produce data to be sent back to the server. The driver will keep
-     * calling this method until either a Exception is thrown
+     * calling this method until either an Exception is thrown
      * (authentication failure, please use appropriate SQLStates) or the
      * method returns false or driver receives an OK packet from the server
      * which indicates that the connection has been already approved.
@@ -142,5 +142,4 @@ public interface AuthenticationPlugin<M extends Message> {
      *         to this method made, true otherwise.
      */
     boolean nextAuthenticationStep(M fromServer, List<M> toServer);
-
 }

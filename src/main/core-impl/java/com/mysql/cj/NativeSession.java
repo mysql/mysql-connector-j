@@ -836,19 +836,17 @@ public class NativeSession extends CoreSession implements Serializable {
                 queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                if (versionMeetsMinimum(8, 0, 3)) {
-                    queryBuf.append(", @@have_query_cache AS have_query_cache");
-                } else {
+                if (!versionMeetsMinimum(8, 0, 3)) {
                     queryBuf.append(", @@query_cache_size AS query_cache_size");
                     queryBuf.append(", @@query_cache_type AS query_cache_type");
                 }
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
-                if (versionMeetsMinimum(8, 0, 3)) {
+                if (versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))) {
                     queryBuf.append(", @@transaction_isolation AS transaction_isolation");
                 } else {
-                    queryBuf.append(", @@tx_isolation AS tx_isolation");
+                    queryBuf.append(", @@tx_isolation AS transaction_isolation");
                 }
                 queryBuf.append(", @@wait_timeout AS wait_timeout");
 
@@ -862,23 +860,6 @@ public class NativeSession extends CoreSession implements Serializable {
                     if ((r = rs.getRows().next()) != null) {
                         for (int i = 0; i < f.length; i++) {
                             this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), r.getValue(i, vf));
-                        }
-                    }
-                }
-
-                if (versionMeetsMinimum(8, 0, 3) && "YES".equalsIgnoreCase(this.protocol.getServerSession().getServerVariables().get("have_query_cache"))) {
-                    resultPacket = sendCommand(
-                            this.commandBuilder.buildComQuery(null, "SELECT @@query_cache_size AS query_cache_size, @@query_cache_type AS query_cache_type"),
-                            false, 0);
-                    rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
-                    f = rs.getColumnDefinition().getFields();
-                    if (f.length > 0) {
-                        ValueFactory<String> vf = new StringValueFactory(f[0].getEncoding());
-                        Row r;
-                        if ((r = rs.getRows().next()) != null) {
-                            for (int i = 0; i < f.length; i++) {
-                                this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), r.getValue(i, vf));
-                            }
                         }
                     }
                 }
