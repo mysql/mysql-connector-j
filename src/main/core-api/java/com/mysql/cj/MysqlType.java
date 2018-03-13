@@ -589,7 +589,7 @@ public enum MysqlType implements SQLType {
         } else if (StringUtils.indexOfIgnoreCase(typeName, "TEXT") != -1) {
             return TEXT;
 
-        } else if (StringUtils.indexOfIgnoreCase(typeName, "GEOMETRY") != -1 // also covers "GEOMETRYCOLLECTION"
+        } else if (StringUtils.indexOfIgnoreCase(typeName, "GEOM") != -1 // covers "GEOMETRY", "GEOMETRYCOLLECTION" and "GEOMCOLLECTION"
                 || StringUtils.indexOfIgnoreCase(typeName, "POINT") != -1 // also covers "MULTIPOINT"
                 || StringUtils.indexOfIgnoreCase(typeName, "POLYGON") != -1 // also covers "MULTIPOLYGON"
         ) {

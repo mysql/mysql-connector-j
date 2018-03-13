@@ -150,6 +150,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'");
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'");
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'");
 
         sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,");
 
@@ -175,6 +176,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 65535");
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 65535");
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 65535");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 65535");
 
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
@@ -1144,6 +1146,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         buf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN -2");
         buf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN -2");
         buf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN -2");
+        buf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN -2");
 
         buf.append(" ELSE 1111");
         buf.append(" END ");
