@@ -4788,12 +4788,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             createUser("'must_change1'@'%'", "IDENTIFIED BY 'aha'");
             this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change1'@'%'");
             createUser("'must_change2'@'%'", "IDENTIFIED BY 'aha'");
-            this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
+            this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%'");
 
             // TODO workaround for Bug#77732, should be fixed in 5.7.9
-            if (versionMeetsMinimum(5, 7, 6)) {
-                this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change1'@'%' IDENTIFIED BY 'aha'");
-                this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change2'@'%' IDENTIFIED BY 'aha'");
+            if (versionMeetsMinimum(5, 7, 6) && !versionMeetsMinimum(8, 0, 5)) {
+                this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change1'@'%'");
+                this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change2'@'%'");
             }
 
             this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'must_change1'@'%', 'must_change2'@'%' PASSWORD EXPIRE"
