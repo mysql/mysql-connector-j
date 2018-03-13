@@ -675,7 +675,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             return;
         }
 
-        this.collection.add("{ \"name\" : \"bob\" , \"age\": 45 }").execute();
+        this.collection.add("{ \"_id\" : \"doc1\" , \"name\" : \"bob\" , \"age\": 45 }").execute();
 
         DocResult result = this.collection.find("name = 'bob'").execute();
         DbDoc doc = result.fetchOne();

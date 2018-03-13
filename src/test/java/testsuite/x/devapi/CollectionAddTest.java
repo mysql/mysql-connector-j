@@ -45,6 +45,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
@@ -197,7 +198,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         int expectedAssignedIds;
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             res = this.collection.add(json1).execute();
-            assertThrows(XDevAPIError.class, "ERROR 5115 \\(HY000\\) Document is missing a required field", () -> this.collection.add(json2).execute());
+            assertThrows(XProtocolError.class, "ERROR 5115 \\(HY000\\) Document is missing a required field", () -> this.collection.add(json2).execute());
             expectedAssignedIds = 0;
         } else {
             res = this.collection.add(json1).add(json2).execute();
