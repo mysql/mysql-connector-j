@@ -3933,13 +3933,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
             boolean gplWithRSA = allowsRsa(this.stmt);
 
             try {
-                this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser("'wl5602user'@'%'", "identified WITH sha256_password");
                 this.stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
                 createUser("'wl5602nopassword'@'%'", "identified WITH sha256_password");
                 this.stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
                         : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.stmt.executeUpdate("flush privileges");
@@ -4035,7 +4039,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             } finally {
                 this.stmt.executeUpdate("flush privileges");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
         }
 
@@ -4053,13 +4059,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 // create user with long password and sha256_password auth
-                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser(this.sha256Stmt, "'wl5602user'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl5602user'@'%'");
                 createUser(this.sha256Stmt, "'wl5602nopassword'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl5602nopassword'@'%'");
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.sha256Stmt.executeUpdate(((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
@@ -4348,7 +4358,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
 
             } finally {
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
 
         }
@@ -5752,11 +5764,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee"
                                         + "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee";
 
-                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!sha256Sess.versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser(this.sha256Stmt, "'wl6134user'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl6134user'@'%'");
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!sha256Sess.versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'" : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
                 this.sha256Stmt.executeUpdate("flush privileges");
@@ -5798,7 +5814,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     }
                 }
             } finally {
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!sha256Sess.versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
         }
     }
@@ -6322,7 +6340,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             try {
-                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser(this.sha256Stmt, "'bug18869381user1'@'%'", "identified WITH sha256_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user1'@'%'");
                 createUser(this.sha256Stmt, "'bug18869381user2'@'%'", "identified WITH sha256_password");
@@ -6331,8 +6351,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'" : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
                         : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
@@ -6373,7 +6395,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 testBug18869381WithProperties(props);
 
             } finally {
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
         }
     }
@@ -7386,9 +7410,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
                 testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName);
-                testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                if (!testConn.getSession().versionMeetsMinimum(8, 0, 5)) {
+                    testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                }
                 testStmt.execute("SET PASSWORD FOR '" + user + "'@'%' = PASSWORD('" + password + "')");
-                testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+                if (!testConn.getSession().versionMeetsMinimum(8, 0, 5)) {
+                    testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+                }
             } else {
                 // for cleartext_plugin_server plugin
                 testStmt.execute("CREATE USER '" + user + "'@'%' IDENTIFIED WITH " + pluginName + " AS '" + password + "'");
@@ -7418,9 +7446,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 testStmt.execute("ALTER USER '" + user + "'@'%' IDENTIFIED BY '" + password + "'");
             } else if (pwdHashingMethod >= 0) {
                 // for mysql_native_password, mysql_old_password and sha256_password plugins
-                testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                if (!testConn.getSession().versionMeetsMinimum(8, 0, 5)) {
+                    testStmt.execute("SET @@session.old_passwords = " + pwdHashingMethod);
+                }
                 testStmt.execute("SET PASSWORD FOR '" + user + "'@'%' = PASSWORD('" + password + "')");
-                testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+                if (!testConn.getSession().versionMeetsMinimum(8, 0, 5)) {
+                    testStmt.execute("SET @@session.old_passwords = @@global.old_passwords");
+                }
             } else {
                 // for cleartext_plugin_server plugin
                 dropUser(testStmt, "'" + user + "'@'%'");
@@ -7578,7 +7610,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             try {
-                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
 
                 createUser(this.sha256Stmt, "'bug75670user'@'%'", ""); // let --default-authentication-plugin option force sha256_password
                 this.rs = this.sha256Stmt.executeQuery("SELECT plugin FROM mysql.user WHERE user='bug75670user'");
@@ -7589,10 +7623,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     createUser(this.sha256Stmt, "'bug75670user_mnp'@'%'", "IDENTIFIED WITH mysql_native_password BY 'bug75670user_mnp'");
                     createUser(this.sha256Stmt, "'bug75670user_sha'@'%'", "IDENTIFIED WITH sha256_password BY 'bug75670user_sha'");
                 } else {
-                    this.sha256Stmt.execute("SET @@session.old_passwords = 0");
+                    if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                        this.sha256Stmt.execute("SET @@session.old_passwords = 0");
+                    }
                     createUser(this.sha256Stmt, "'bug75670user_mnp'@'%'", "IDENTIFIED WITH mysql_native_password");
                     this.sha256Stmt.execute("SET PASSWORD FOR 'bug75670user_mnp'@'%' = PASSWORD('bug75670user_mnp')");
-                    this.sha256Stmt.execute("SET @@session.old_passwords = 2");
+                    if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                        this.sha256Stmt.execute("SET @@session.old_passwords = 2");
+                    }
                     createUser(this.sha256Stmt, "'bug75670user_sha'@'%'", "IDENTIFIED WITH sha256_password");
                     this.sha256Stmt.execute("SET PASSWORD FOR 'bug75670user_sha'@'%' = PASSWORD('bug75670user_sha')");
                 }
@@ -7700,7 +7738,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     }
                 }
             } finally {
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
         }
     }
@@ -9855,13 +9895,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
             boolean gplWithRSA = allowsRsa(this.stmt);
 
             try {
-                this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser("'wl11060user'@'%'", "identified WITH caching_sha2_password");
                 this.stmt.executeUpdate("grant all on *.* to 'wl11060user'@'%'");
                 createUser("'wl11060nopassword'@'%'", "identified WITH caching_sha2_password");
                 this.stmt.executeUpdate("grant all on *.* to 'wl11060nopassword'@'%'");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'"
                         : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
                 this.stmt.executeUpdate("flush privileges");
@@ -9980,7 +10024,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             } finally {
                 this.stmt.executeUpdate("flush privileges");
-                this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!versionMeetsMinimum(8, 0, 5)) {
+                    this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
         }
 
@@ -9998,13 +10044,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             try {
                 // create user with long password and caching_sha2_password auth
-                this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                }
                 createUser(this.sha256Stmt, "'wl11060user'@'%'", "identified WITH caching_sha2_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl11060user'@'%'");
                 createUser(this.sha256Stmt, "'wl11060nopassword'@'%'", "identified WITH caching_sha2_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'wl11060nopassword'@'%'");
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+                    this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
+                }
                 this.sha256Stmt.executeUpdate(((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
@@ -10313,7 +10363,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
 
             } finally {
-                this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
+                    this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+                }
             }
 
         }

@@ -3,6 +3,8 @@
 
 Version 8.0.10
 
+  - Fix for BUG#90024 (27677574), SOME TESTS FAILED AGAINST MYSQL 8.0.5 BECAUSE OF DEPRECATED FEATURES REMOVAL.
+
   - Fix for Bug#86741 (26314325), Multi-Host connection with autocommit=0 getAutoCommit maybe wrong.
 
   - Fix for Bug#27231383, PROVIDE MAVEN-FRIENDLY COMMERCIAL PACKAGES WITHOUT "-BIN".
