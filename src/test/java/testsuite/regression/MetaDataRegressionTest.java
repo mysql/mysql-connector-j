@@ -1713,7 +1713,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
             sb.append("field45 MULTILINESTRING, ");
             sb.append("field46 MULTIPOLYGON, ");
             sb.append("field47 GEOMETRYCOLLECTION, ");
-            sb.append("field48 GEOMCOLLECTION ");
+            if (versionMeetsMinimum(8, 0, 5)) {
+                sb.append("field48 GEOMCOLLECTION ");
+            }
 
             sb.append(")");
             createTable("t_testBug23304", sb.toString());
