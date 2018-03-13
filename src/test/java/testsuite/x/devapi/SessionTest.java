@@ -139,7 +139,7 @@ public class SessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Test the client-side enforcing of server `mysqlx_max_allowed_packet'. This assumes a server-side value of 1MiB.
+     * Test the client-side enforcing of server `mysqlx_max_allowed_packet'.
      */
     @Test
     public void errorOnPacketTooBig() {
@@ -147,10 +147,15 @@ public class SessionTest extends DevApiBaseTestCase {
             return;
         }
         try {
-            int size = 2 * 1024 * 1024;
+            SqlStatement stmt = this.session.sql("select @@mysqlx_max_allowed_packet");
+            SqlResult res = stmt.execute();
+            Row r = res.next();
+            long mysqlxMaxAllowedPacket = r.getLong(0);
+
+            long size = 100 + mysqlxMaxAllowedPacket;
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < size; ++i) {
-                b.append('.');
+                b.append('a');
             }
             String s = b.append("\"}").toString();
             this.session.dropSchema(s);
