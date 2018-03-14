@@ -51,10 +51,8 @@
 %endif
 
 %if 0%{?commercial:1}
-%global name_suffix    -src
 %global lic_tag        Commercial
 %else
-%global name_suffix    %{nil}
 %global lic_tag        GPLv2
 %endif
 
@@ -159,7 +157,7 @@ cp %{with_docs}/en/txt/connector-j.txt   package-content/docs/
 
 %install
 install -d -m 0755 %{buildroot}%{_javadir}
-install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar %{buildroot}%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar
+install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@.jar %{buildroot}%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@.jar
 
 %clean
 rm -rf %{buildroot}
@@ -178,7 +176,7 @@ rm -rf %{buildroot}
 %doc package-content/docs/mvl.css
 %endif
 
-%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@-bin.jar
+%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@.jar
 
 %changelog
 * Mon Nov 27 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 8.0.9-1
