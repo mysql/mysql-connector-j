@@ -157,7 +157,7 @@ com.mysql.cj.dist.licenseUrl - license book location: [${com.mysql.cj.dist.licen
 
 com.mysql.cj.dist.dir - root directory for driver packaging: [${com.mysql.cj.dist.dir}]
 com.mysql.cj.dist.dir.prepare - directory for preparing packages: [${com.mysql.cj.dist.dir.prepare}]
-com.mysql.cj.dist.dir.package - directory for preparing packages for given driver full name: [${com.mysql.cj.dist.dir.package}]
+com.mysql.cj.dist.dir.package - directory for preparing packages for given package name: [${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.build.driver.extendedName}[${com.mysql.cj.dist.packageWithSourcesSuffix}|${com.mysql.cj.dist.packageNoSourcesSuffix}|_none_]-${com.mysql.cj.build.driver.version.full}]
 com.mysql.cj.dist.dir.prebuilt.docs - where to take prebuilt documentation files for adding them to packages: [${com.mysql.cj.dist.dir.prebuilt.docs}]
 
 com.mysql.cj.dist.deb.maintainerEmail - the deb package maintainer email: [${com.mysql.cj.dist.deb.maintainerEmail}]
@@ -217,7 +217,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <property name="com.mysql.cj.dist.dir" value="dist" />
     <property name="com.mysql.cj.dist.dir.prepare" value="${com.mysql.cj.dist.dir}/toArchive" />
-    <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.build.driver.fullName}" />
 
     <property name="com.mysql.cj.dist.deb.maintainerEmail" value="MySQL Release Engineering &lt;mysql-build@oss.oracle.com&gt;" />
 
@@ -758,7 +757,9 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <!-- Prepare a package for archiving (initialize). -->
-    <target name="-make-packages-init" depends="dist">
+    <target name="-make-packages-init" depends="-set-package-name, dist">
+        <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}" />
+        
         <mkdir dir="${com.mysql.cj.dist.dir}" />
         <mkdir dir="${com.mysql.cj.dist.dir.prepare}" />
         <mkdir dir="${com.mysql.cj.dist.dir.package}" />
@@ -911,7 +912,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <!-- Build the package name, including a reference to contained sources if not expected by default. -->
-    <target name="-set-package-name">
+    <target name="-set-package-name" unless="com.mysql.cj.dist.packageName">
         <condition property="com.mysql.cj.dist.packageSuffix" value="${com.mysql.cj.dist.packageWithSourcesSuffix}">
             <and>
                 <not>
