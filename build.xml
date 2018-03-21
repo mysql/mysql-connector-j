@@ -130,9 +130,9 @@ com.mysql.cj.build.driver.version.minor - minor version: [${com.mysql.cj.build.d
 com.mysql.cj.build.driver.version.subminor - subminor version: [${com.mysql.cj.build.driver.version.subminor}]
 com.mysql.cj.build.driver.version.status - version status, such as '-rc' or '-dmr': [${com.mysql.cj.build.driver.version.status}]
 
+com.mysql.cj.build.driver.version - standard version string (includes version status): [${com.mysql.cj.build.driver.version.numeric}${com.mysql.cj.build.driver.version.status}]
 com.mysql.cj.build.driver.version.series - product series, i.e. x.y: [${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}]
 com.mysql.cj.build.driver.version.numeric - numeric version, i.e. x.y.z: [${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}}
-com.mysql.cj.build.driver.version - standard version string (includes version status): [${com.mysql.cj.build.driver.version.numeric}${com.mysql.cj.build.driver.version.status}]
 com.mysql.cj.build.driver.version.extra - optional version information appended to the full version string: [${com.mysql.cj.build.driver.version.extra}]
 com.mysql.cj.build.driver.version.snapshot - optional version snapshot marker: [${com.mysql.cj.build.driver.version.snapshot}]
 com.mysql.cj.build.driver.version.full - full version string: [${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}]
@@ -151,7 +151,7 @@ com.mysql.cj.dist.packageName - final package name: [${com.mysql.cj.build.driver
 com.mysql.cj.dist.packageSuffix - suffix added to package name (depends on package type): [${com.mysql.cj.dist.packageWithSourcesSuffix}|${com.mysql.cj.dist.packageNoSourcesSuffix}|_unset_]
 com.mysql.cj.dist.packageWithSourcesSuffix - suffix for packages containing sources if not by default: [${com.mysql.cj.dist.packageWithSourcesSuffix}]
 com.mysql.cj.dist.packageNoSourcesSuffix - suffix for packages not containing sources if not by default: [${com.mysql.cj.dist.packageNoSourcesSuffix}]
-com.mysql.cj.dist.noSources - don't include sources into dist packages: [_uset]
+com.mysql.cj.dist.noSources - don't include sources into dist packages: [_unset]
 com.mysql.cj.dist.noMavenSources - don't include sources into Maven package: [_unset_]
 com.mysql.cj.dist.licenseUrl - license book location: [${com.mysql.cj.dist.licenseUrl}]
 
@@ -486,6 +486,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_VERSION_EXTRA" value="${com.mysql.cj.build.driver.version.extra}" />
             <filter token="MYSQL_CJ_VERSION_SNAPSHOT" value="${com.mysql.cj.build.driver.version.snapshot}" />
             <filter token="MYSQL_CJ_VERSION" value="${com.mysql.cj.build.driver.version.full}" />
+            <filter token="MYSQL_CJ_VERSION_SERIES" value="${com.mysql.cj.build.driver.version.series}" />
             <filter token="MYSQL_CJ_RPM_RELEASE_FULL" value="${com.mysql.cj.rpm_release.full}" />
             <filter token="MYSQL_CJ_REVISION" value="${com.mysql.cj.git_revision}" />
             <filter token="MYSQL_CJ_PROD_NAME" value="${com.mysql.cj.build.driver.name}" />
@@ -759,7 +760,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- Prepare a package for archiving (initialize). -->
     <target name="-make-packages-init" depends="-set-package-name, dist">
         <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}" />
-        
+
         <mkdir dir="${com.mysql.cj.dist.dir}" />
         <mkdir dir="${com.mysql.cj.dist.dir.prepare}" />
         <mkdir dir="${com.mysql.cj.dist.dir.package}" />
@@ -931,8 +932,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <istrue value="${com.mysql.cj.dist.noSources}" />
             </and>
         </condition>
-
-        <echo>${com.mysql.cj.dist.packageSuffix}</echo>
 
         <property name="com.mysql.cj.dist.packageName"
                   value="${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageSuffix}-${com.mysql.cj.build.driver.version.full}" />
@@ -1341,7 +1340,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <target name="-prepare-rpm-deb-commercial-props" if="${com.mysql.cj.build.commercial}">
-        <echo message="Using Commercial settings" />
+        <echo>Using Commercial settings</echo>
         <property name="deb_version_suffix" value="+commercial" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=commercial yes" />
@@ -1349,7 +1348,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <target name="-prepare-rpm-deb-gpl-props" unless="${com.mysql.cj.build.commercial}">
-        <echo message="Using GPL settings" />
+        <echo>Using GPL settings</echo>
         <property name="deb_version_suffix" value="" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=dummy yes" />
@@ -1380,8 +1379,11 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <fileset dir="." excludes="${com.mysql.cj.dist.dir}/**, ${com.mysql.cj.build.dir}/**" />
         </copy>
         <!-- We know tmp is empty beside what we want to pack -->
-        <tar destfile="${com.mysql.cj.build.dir}/rpm/SOURCES/${com.mysql.cj.build.driver.fullName}.tar.gz" basedir="${com.mysql.cj.build.dir}/tmp" />
+        <tar destfile="${com.mysql.cj.build.dir}/rpm/SOURCES/${com.mysql.cj.build.driver.fullName}.tar.gz"
+             basedir="${com.mysql.cj.build.dir}/tmp"
+             excludes="**/revision-info.properties" />
 
+        <local name="com.mysql.cj.build.dir.absolute" />
         <property name="com.mysql.cj.build.dir.absolute" location="${com.mysql.cj.build.dir}" />
 
         <exec executable="rpmbuild" failonerror="true">
@@ -1404,7 +1406,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ************************* -->
 
 
-    <target name="build-debian-pkg" depends="-init-copy-common, -prepare-rpm-deb-commercial-props, -prepare-rpm-deb-gpl-props">
+    <target name="build-debian-pkg"
+            depends="-init-copy-common, -set-no-sources, -set-package-name, -prepare-rpm-deb-commercial-props, -prepare-rpm-deb-gpl-props">
         <exec executable="lsb_release" outputproperty="lsb_id">
             <arg value="--short" />
             <arg value="--id" />
@@ -1442,14 +1445,16 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <fileset dir="src/build/misc/debian.in" />
             <filterset refid="versionFilterset" />
             <filterset>
-                <filter token="PRODUCT" value="MySQL Connector/J ${com.mysql.cj.build.driver.version.series}" />
+                <filter token="PRODUCT" value="${com.mysql.cj.build.driver.displayName} ${com.mysql.cj.build.driver.version.series}" />
                 <filter token="WITH_JARDEPS" value="${com.mysql.cj.extra.libs}" />
                 <filter token="YEAR" value="${time.year}" />
                 <filter token="PACKAGE_TIMESTAMP" value="${time.deb.packageTimeStamp}" />
                 <filter token="ID_RELEASE" value="${id_release}" />
                 <filter token="CODENAME" value="${codename}" />
                 <filter token="LIC_FILE" value="${lic_file}" />
+                <filter token="PRODUCT_NAME" value="${com.mysql.cj.build.driver.name}" />
                 <filter token="PRODUCT_SUFFIX" value="${com.mysql.cj.build.driver.extraName}" />
+                <filter token="PACKAGE_NAME" value="${com.mysql.cj.dist.packageName}" />
                 <filter token="DEB_VERSION_SUFFIX" value="${deb_version_suffix}" />
                 <filter token="VERSION_FULL" value="${com.mysql.cj.build.driver.version.full}" />
                 <filter token="MAINTAINER_EMAIL" value="${com.mysql.cj.dist.deb.maintainerEmail}" />

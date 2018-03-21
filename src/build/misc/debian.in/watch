@@ -1,2 +1,2 @@
 version=3
-http://mysql.osuosl.org/Downloads/mysql-connector-java-(.+)\.tar\.gz
+http://mysql.osuosl.org/Downloads/@PRODUCT_NAME@-(.+)\.tar\.gz

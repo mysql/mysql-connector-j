@@ -31,12 +31,12 @@ base_version = $(shell echo $(upstream_version) | sed -e's/r[0-9]\+$$//')
 
 ANT_COMMON_OPTIONS=\
   -Dcom.mysql.cj.build.dir.driver=build/driver \
+  -Dcom.mysql.cj.extra.libs=@WITH_JARDEPS@ \
   -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
   -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
-  -Dcom.mysql.cj.extra.libs=@WITH_JARDEPS@ \
   -Dcom.mysql.cj.build.driver.extraName=@PRODUCT_SUFFIX@ \
-  -Dcom.mysql.cj.build.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
+  -Dcom.mysql.cj.dist.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
   -Djava.awt.headless=true
 
 ifeq ($(ANT_HOME),)
@@ -71,4 +71,4 @@ override_dh_auto_build:
 	  full-package-no-sources
 
 override_dh_auto_clean:
-	$(ANT_CMD) clean
+	$(ANT_CMD) $(ANT_COMMON_OPTIONS) clean

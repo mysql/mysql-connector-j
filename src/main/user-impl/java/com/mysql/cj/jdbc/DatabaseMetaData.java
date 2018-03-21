@@ -2524,7 +2524,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws java.sql.SQLException
      */
     public String getDriverVersion() throws java.sql.SQLException {
-        return Constants.CJ_FULL_NAME + " ( Revision: " + Constants.CJ_REVISION + " )";
+        return Constants.CJ_FULL_NAME + " (Revision: " + Constants.CJ_REVISION + ")";
     }
 
     public java.sql.ResultSet getExportedKeys(String catalog, String schema, final String table) throws SQLException {

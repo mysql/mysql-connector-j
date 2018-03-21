@@ -89,18 +89,18 @@ Requires:       java-headless >= 1:1.8.0
 
 %description
 MySQL provides connectivity for client applications developed in the
-Java programming language with MySQL Connector/J, a driver that
+Java programming language with @MYSQL_CJ_DISPLAY_PROD_NAME@, a driver that
 implements the [Java Database Connectivity (JDBC) API]
 (http://www.oracle.com/technetwork/java/javase/jdbc/).
 
-MySQL Connector/J 6.0 is a JDBC Type 4 driver that is compatible with
+@MYSQL_CJ_DISPLAY_PROD_NAME@ @MYSQL_CJ_VERSION_SERIES@ is a JDBC Type 4 driver that is compatible with
 the [JDBC 4.2](http://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
 specification. The Type 4 designation means that the driver is a pure
 Java implementation of the MySQL protocol and does not rely on the
 MySQL client libraries.
 
 For detailed information please visit the official
-[MySQL Connector/J documentation]
+[@MYSQL_CJ_DISPLAY_PROD_NAME@ documentation]
 (http://dev.mysql.com/doc/connector-j/en/).
 
 %prep
@@ -109,12 +109,12 @@ For detailed information please visit the official
 %build
 COMMON_OPTIONS="\
   -Dcom.mysql.cj.build.dir.driver=build/driver
+  -Dcom.mysql.cj.extra.libs=%{with_jardeps} \
   -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
   -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
-  -Dcom.mysql.cj.extra.libs=%{with_jardeps} \
   -Dcom.mysql.cj.build.driver.extraName=@MYSQL_CJ_EXTRA_NAME@ \
-  -Dcom.mysql.cj.build.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
+  -Dcom.mysql.cj.dist.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
   -Djava.awt.headless=true"
 
 %if 0%{?with_ant:1}
@@ -135,6 +135,10 @@ COMMON_OPTIONS="${COMMON_OPTIONS} -Dcom.mysql.cj.build.jdk=${JAVA_HOME}"
 %if 0%{?commercial:1}
 COMMON_OPTIONS="${COMMON_OPTIONS} -Dcom.mysql.cj.build.commercial=true"
 %endif
+
+# Get the file revision-info.properties again because it was excluded
+# from SOURCES
+cp %{_tmppath}/@MYSQL_CJ_FULL_PROD_NAME@/revision-info.properties .
 
 ${ANT_CMD} \
    ${COMMON_OPTIONS} \

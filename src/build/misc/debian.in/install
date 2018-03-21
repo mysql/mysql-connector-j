@@ -1,6 +1,6 @@
-dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@.jar usr/share/java
+dist/toArchive/@PACKAGE_NAME@/@PRODUCT_NAME@@PRODUCT_SUFFIX@-@VERSION_FULL@.jar usr/share/java
 
 #legal
-dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/@LIC_FILE@ usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
-dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/README usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
-dist/toArchive/mysql-connector-java@PRODUCT_SUFFIX@-@VERSION_FULL@/CHANGES usr/share/doc/mysql-connector-java@PRODUCT_SUFFIX@
+dist/toArchive/@PACKAGE_NAME@/@LIC_FILE@ usr/share/doc/@PRODUCT_NAME@@PRODUCT_SUFFIX@
+dist/toArchive/@PACKAGE_NAME@/README usr/share/doc/@PRODUCT_NAME@@PRODUCT_SUFFIX@
+dist/toArchive/@PACKAGE_NAME@/CHANGES usr/share/doc/@PRODUCT_NAME@@PRODUCT_SUFFIX@
