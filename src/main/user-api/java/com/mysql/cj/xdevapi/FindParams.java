@@ -36,7 +36,7 @@ public interface FindParams {
          */
         SHARED_LOCK(1),
         /**
-         * Lock matching rows so no other transaction can read or write to it.
+         * Lock matching rows so no other transactions can read or write to it.
          */
         EXCLUSIVE_LOCK(2);
 

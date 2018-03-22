@@ -37,7 +37,7 @@ import java.io.InputStream;
 import com.mysql.cj.Messages;
 
 /**
- * InputStream wrapper which provides methods to aggregate reads of a given size. c.f. readFully(byte[],int,int).
+ * InputStream wrapper that provides methods to aggregate reads of a given size. c.f. readFully(byte[],int,int).
  */
 public class FullReadInputStream extends FilterInputStream {
 

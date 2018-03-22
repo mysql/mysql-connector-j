@@ -154,7 +154,7 @@ public class StringUtils {
     }
 
     /**
-     * Converts the given byte array into Hex String, stopping at given lenght.
+     * Converts the given byte array into Hex String, stopping at given length.
      * 
      * @param byteBuffer
      *            the byte array to convert
@@ -188,7 +188,7 @@ public class StringUtils {
     }
 
     /**
-     * Returns the first non whitespace char, converted to upper case
+     * Returns the first non-whitespace char, converted to upper case
      * 
      * @param searchIn
      *            the string to search in

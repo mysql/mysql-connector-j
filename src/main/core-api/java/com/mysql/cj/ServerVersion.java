@@ -90,7 +90,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
      *
      * @param min
      *            The minimum version to compare against.
-     * @return true if version meet the minimum specified by `min'
+     * @return true if version meets the minimum specified by `min'
      */
     public boolean meetsMinimum(ServerVersion min) {
         return compareTo(min) >= 0;

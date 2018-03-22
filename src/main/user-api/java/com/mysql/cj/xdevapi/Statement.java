@@ -48,11 +48,11 @@ public interface Statement<STMT_T, RES_T> {
          */
         DEFAULT,
         /**
-         * Do not wait to acquire row lock, fail with an error if a requested row is locked.
+         * Do not wait to acquire row lock. Fail with an error if a requested row is locked.
          */
         NOWAIT,
         /**
-         * Do not wait to acquire a row lock, remove locked rows from the result set.
+         * Do not wait to acquire a row lock. Remove locked rows from the result set.
          */
         SKIP_LOCKED;
     };

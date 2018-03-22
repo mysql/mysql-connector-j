@@ -646,11 +646,11 @@ public class CharsetMapping {
     }
 
     /**
-     * Does the character sets contain multi-byte encoded characters.
+     * Does the character set contain multi-byte encoded characters.
      * 
      * @param javaEncodingName
      *            java encoding name
-     * @return true if the character sets contains multi-byte encoded characters.
+     * @return true if the character set contains multi-byte encoded characters.
      */
     final public static boolean isMultibyteCharset(String javaEncodingName) {
         return MULTIBYTE_ENCODINGS.contains(javaEncodingName.toUpperCase(Locale.ENGLISH));
