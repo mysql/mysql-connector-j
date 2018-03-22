@@ -580,7 +580,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" if="${com.mysql.cj.build.noCrypto}">
         <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
-              toFile="${com.mysql.cj.dist.dir.package}/src/main/protocol-impl/java/com/mysql/cj/protocol/ExportControlled.java"
+              toFile="${com.mysql.cj.dist.dir.package}/src/main/core-impl/java/com/mysql/cj/protocol/ExportControlled.java"
               overwrite="true" />
     </target>
 
