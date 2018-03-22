@@ -3055,7 +3055,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     public void testBug16436511() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
-        assertEquals("MySQL Connector Java", dbmd.getDriverName());
+        assertEquals("MySQL Connector/J", dbmd.getDriverName());
     }
 
     /**

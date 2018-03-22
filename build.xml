@@ -202,7 +202,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <property name="com.mysql.cj.build.driver.version.full"
               value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
 
-    <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector Java" />
+    <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector/J" />
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.extraName" value="" />
     <property name="com.mysql.cj.build.driver.extendedName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}" />
