@@ -327,13 +327,22 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return "DATETIME";
 
             case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-                return "TINYBLOB";
+                if (getField(column).isBinary()) {
+                    return "TINYBLOB";
+                }
+                return "TINYTEXT";
 
             case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-                return "MEDIUMBLOB";
+                if (getField(column).isBinary()) {
+                    return "MEDIUMBLOB";
+                }
+                return "MEDIUMTEXT";
 
             case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-                return "LONGBLOB";
+                if (getField(column).isBinary()) {
+                    return "LONGBLOB";
+                }
+                return "LONGTEXT";
 
             case MysqlDefs.FIELD_TYPE_BLOB:
                 if (getField(column).isBinary()) {
