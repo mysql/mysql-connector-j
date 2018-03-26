@@ -221,6 +221,31 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
+     * Tests *text column type name bug
+     *
+     * @throws Exception
+     *             if any errors occur
+     */
+    public void testColumnTypeNameOfText() throws Exception {
+        try {
+            this.stmt.execute("DROP TABLE IF EXISTS textVarcharTest");
+            this.stmt.execute("CREATE TABLE textVarcharTest (FieldName1 TINYTEXT,  FieldName2 TEXT, FieldName3 MEDIUMTEXT, FieldName4 LONGTEXT);");
+
+            String query = "SELECT FieldName1, FieldName2, FieldName3, FieldName4 FROM textVarcharTest";
+            this.rs = this.stmt.executeQuery(query);
+
+            ResultSetMetaData rsmeta = this.rs.getMetaData();
+
+            assertTrue(rsmeta.getColumnTypeName(1).equalsIgnoreCase("TINYTEXT"));
+            assertTrue(rsmeta.getColumnTypeName(2).equalsIgnoreCase("TEXT"));
+            assertTrue(rsmeta.getColumnTypeName(3).equalsIgnoreCase("MEDIUMTEXT"));
+            assertTrue(rsmeta.getColumnTypeName(4).equalsIgnoreCase("LONGTEXT"));
+        } finally {
+            this.stmt.execute("DROP TABLE IF EXISTS textVarcharTest");
+        }
+    }
+
+    /**
      * Tests fix for BUG#1673, where DatabaseMetaData.getColumns() is not
      * returning correct column ordinal info for non '%' column name patterns.
      * 
