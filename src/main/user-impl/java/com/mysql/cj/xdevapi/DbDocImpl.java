@@ -74,7 +74,7 @@ import java.util.TreeMap;
  * </pre>
  * 
  * You can construct JSON document by {@link DbDoc}, {@link JsonString}, {@link JsonNumber}, {@link JsonArray} and {@link JsonLiteral} methods and get JSON
- * string representation by using {@link DbDoc#toString()} method. For example, to get the document shown above:
+ * string representation by using {@link #toString()} method. For example, to get the document shown above:
  * 
  * <pre>
  * DbDoc doc = new DbDoc().add(&quot;field1&quot;, new JsonString().setValue(&quot;value 1&quot;)).add(&quot;field2&quot;, new JsonNumber().setValue(&quot;12345.44E22&quot;))
