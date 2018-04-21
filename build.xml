@@ -190,7 +190,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <property name="com.mysql.cj.build.driver.version.major" value="8" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
-    <property name="com.mysql.cj.build.driver.version.subminor" value="11" />
+    <property name="com.mysql.cj.build.driver.version.subminor" value="12" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
     <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
