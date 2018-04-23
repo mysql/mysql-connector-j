@@ -194,4 +194,8 @@ public class SessionImpl implements Session {
     public SqlStatementImpl sql(String sql) {
         return new SqlStatementImpl(this.session, sql);
     }
+
+    public MysqlxSession getSession() {
+        return this.session;
+    }
 }

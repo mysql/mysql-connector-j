@@ -662,7 +662,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1.2", actual);
             testSession.close();
         } else {
-            assertThrows(CJCommunicationsException.class, "Server does not provide enough data to proceed with SSL handshake.",
+            assertThrows(CJCommunicationsException.class,
+                    ((SessionImpl) this.session).getSession().getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useAsyncProtocol).getValue()
+                            ? "Server does not provide enough data to proceed with SSL handshake."
+                            : "javax.net.ssl.SSLHandshakeException: Remote host closed connection during handshake",
                     () -> this.fact.getSession(props));
         }
 
