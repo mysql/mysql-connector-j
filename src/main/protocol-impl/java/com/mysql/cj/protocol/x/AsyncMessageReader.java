@@ -40,8 +40,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.GeneratedMessage;
@@ -53,8 +51,6 @@ import com.mysql.cj.conf.ReadableProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
-import com.mysql.cj.protocol.Message;
-import com.mysql.cj.protocol.MessageHeader;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.SocketConnection;
@@ -98,67 +94,68 @@ import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
  * </p>
  * TODO: write about async usage
  */
-public class AsyncMessageReader implements CompletionHandler<Integer, Void>, MessageReader<XMessageHeader, XMessage> {
-    private XMessageHeader header;
+public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessage> {
+    private static int READ_AHEAD_DEPTH = 10;
+
+    CompletedRead currentReadResult;
     /** Dynamic buffer to store the message body. */
-    private ByteBuffer messageBuf;
+    ByteBuffer messageBuf;
     private PropertySet propertySet;
     /** The channel that we operate on. */
-    private SocketConnection sc;
+    SocketConnection sc;
+
+    CompletionHandler<Integer, Void> headerCompletionHandler = new HeaderCompletionHandler();
+    CompletionHandler<Integer, Void> messageCompletionHandler = new MessageCompletionHandler();
+
+    ReadableProperty<Integer> asyncTimeout;
+
     /**
      * The current <code>MessageListener</code>. This is set to <code>null</code> immediately following the listener's indicator that it is done reading
      * messages. It is set again when the next message is read and the next <code>MessageListener</code> is taken from the queue.
      */
-    private MessageListener<XMessage> currentMessageListener;
+    MessageListener<XMessage> currentMessageListener;
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     private BlockingQueue<MessageListener<XMessage>> messageListenerQueue = new LinkedBlockingQueue<>();
 
-    private CompletableFuture<XMessageHeader> pendingMsgHeader;
+    BlockingQueue<CompletedRead> pendingCompletedReadQueue = new LinkedBlockingQueue<>(READ_AHEAD_DEPTH);
+
+    CompletableFuture<XMessageHeader> pendingMsgHeader;
     /** Lock to protect the pending message. */
-    private Object pendingMsgMonitor = new Object();
+    Object pendingMsgMonitor = new Object();
     /** Have we been signalled to stop after the next message? */
-    private boolean stopAfterNextMessage = false;
+    boolean stopAfterNextMessage = false;
 
-    /** Possible state of reading messages. */
-    private static enum ReadingState {
-        /** Waiting to read the header. */
-        READING_HEADER,
-        /** Waiting to read the message body. */
-        READING_MESSAGE
-    };
+    private static class CompletedRead {
+        public XMessageHeader header = null;
+        public GeneratedMessage message = null;
 
-    private ReadingState state;
+        public CompletedRead() {
+        }
+    }
 
     public AsyncMessageReader(PropertySet propertySet, SocketConnection socketConnection) {
         this.propertySet = propertySet;
         this.sc = socketConnection;
+        this.asyncTimeout = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
+
     }
 
-    /**
-     * Start the message reader on the provided channel.
-     */
     public void start() {
-        readMessageHeader();
+        this.headerCompletionHandler.completed(0, null); // initiates header read cycle
     }
 
-    /**
-     * Signal to the reader that it should stop reading messages after delivering the next message.
-     */
     public void stopAfterNextMessage() {
         this.stopAfterNextMessage = true;
     }
 
-    /**
-     * Queue a {@link MessageListener} to receive messages.
-     * 
-     * @param l
-     *            {@link MessageListener}
-     */
-    public void pushMessageListener(MessageListener<XMessage> l) {
+    private void checkClosed() {
         if (!this.sc.getAsynchronousSocketChannel().isOpen()) {
-            throw new CJCommunicationsException("async closed");
+            throw new CJCommunicationsException("Socket closed");
         }
+    }
 
+    public void pushMessageListener(MessageListener<XMessage> l) {
+        checkClosed();
         this.messageListenerQueue.add(l);
     }
 
@@ -177,226 +174,252 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
      *            whether to block waiting for a <code>MessageListener</code>
      * @return the new current <code>MessageListener</code>
      */
-    private MessageListener<XMessage> getMessageListener(boolean block) {
-        if (this.currentMessageListener == null) {
-            if (block) {
-                try {
-                    this.currentMessageListener = this.messageListenerQueue.take();
-                } catch (InterruptedException ex) {
-                    throw new CJCommunicationsException(ex);
+    MessageListener<XMessage> getMessageListener(boolean block) {
+        try {
+            if (this.currentMessageListener == null) {
+                this.currentMessageListener = block ? this.messageListenerQueue.take() : this.messageListenerQueue.poll();
+            }
+            return this.currentMessageListener;
+        } catch (InterruptedException ex) {
+            throw new CJCommunicationsException(ex);
+        }
+    }
+
+    private class HeaderCompletionHandler implements CompletionHandler<Integer, Void> {
+
+        public HeaderCompletionHandler() {
+        }
+
+        /**
+         * Handler for "read completed" event. Consume the header data in header.headerBuf and initiate the reading of the message body.
+         */
+        @Override
+        public void completed(Integer bytesRead, Void attachment) {
+            if (bytesRead < 0) { // async socket closed
+                onError(new CJCommunicationsException("Socket closed"));
+                return;
+            }
+
+            try {
+                if (AsyncMessageReader.this.currentReadResult == null) {
+                    AsyncMessageReader.this.currentReadResult = new CompletedRead();
+                    AsyncMessageReader.this.currentReadResult.header = new XMessageHeader();
                 }
-            } else {
-                this.currentMessageListener = this.messageListenerQueue.poll();
+
+                if (AsyncMessageReader.this.currentReadResult.header.getBuffer().position() < 5) {
+                    AsyncMessageReader.this.sc.getAsynchronousSocketChannel().read(AsyncMessageReader.this.currentReadResult.header.getBuffer(), null, this);
+                    return; // loop to #completed() again if we're still waiting for more data
+                }
+
+                //AsyncMessageReader.this.state = ReadingState.READING_MESSAGE;
+                // TODO: re-use buffers if possible. Note that synchronization will be necessary to prevent overwriting re-used buffers while still being parsed by
+                // previous read. Also the buffer will have to be managed accordingly so that "remaining" isn't longer than the message otherwise it may consume
+                // data from the next header+message
+                AsyncMessageReader.this.messageBuf = ByteBuffer.allocate(AsyncMessageReader.this.currentReadResult.header.getMessageSize());
+                // if there's no message listener waiting, expose the message class as pending for the next read
+                if (getMessageListener(false) == null) {
+                    synchronized (AsyncMessageReader.this.pendingMsgMonitor) {
+                        AsyncMessageReader.this.pendingMsgHeader = CompletableFuture.completedFuture(AsyncMessageReader.this.currentReadResult.header);
+                        AsyncMessageReader.this.pendingMsgMonitor.notify();
+                    }
+                }
+
+                AsyncMessageReader.this.messageCompletionHandler.completed(0, null); // initiates message read cycle
+
+            } catch (Throwable t) {
+                onError(t); // error reading => illegal state, close connection
             }
         }
-        return this.currentMessageListener;
+
+        /**
+         * Handler for "read failed" event.
+         */
+        @Override
+        public void failed(Throwable exc, Void attachment) {
+            if (getMessageListener(false) != null) {
+                // force any error to unblock pending message listener
+                synchronized (AsyncMessageReader.this.pendingMsgMonitor) {
+                    AsyncMessageReader.this.pendingMsgMonitor.notify();
+                }
+                if (AsynchronousCloseException.class.equals(exc.getClass())) {
+                    AsyncMessageReader.this.currentMessageListener.error(new CJCommunicationsException("Socket closed", exc));
+                } else {
+                    AsyncMessageReader.this.currentMessageListener.error(exc);
+                }
+            }
+            // it's "done" after sending a closed() or error() signal
+            AsyncMessageReader.this.currentMessageListener = null;
+        }
+
     }
 
-    /**
-     * Consume the header data in {@link headerBuf} and initiate the reading of the message body.
-     *
-     * This method is the only place <i>state</i> is changed.
-     */
-    private void readMessageHeader() {
-        this.state = ReadingState.READING_HEADER;
-        if (this.header == null) {
-            this.header = new XMessageHeader();
+    private class MessageCompletionHandler implements CompletionHandler<Integer, Void> {
+
+        public MessageCompletionHandler() {
         }
 
-        if (this.header.getBuffer().position() < 5) {
-            this.sc.getAsynchronousSocketChannel().read(this.header.getBuffer(), null, this);
-            return; // loop to #completed() again if we're still waiting for more data
+        /**
+         * Read and consume the message body and dispatch the message to the current/next {@link MessageListener}.
+         */
+        @Override
+        public void completed(Integer bytesRead, Void attachment) {
+            if (bytesRead < 0) { // async socket closed
+                onError(new CJCommunicationsException("Socket closed"));
+                return;
+            }
+
+            try {
+                if (AsyncMessageReader.this.messageBuf.position() < AsyncMessageReader.this.currentReadResult.header.getMessageSize()) {
+                    AsyncMessageReader.this.sc.getAsynchronousSocketChannel().read(AsyncMessageReader.this.messageBuf, null, this);
+                    return; // loop to #completed() again if we're still waiting for more data
+                }
+
+                // copy these before initiating the next read to prevent them being overwritten in another thread
+                ByteBuffer buf = AsyncMessageReader.this.messageBuf;
+                AsyncMessageReader.this.messageBuf = null;
+
+                Class<? extends GeneratedMessage> messageClass = MessageConstants
+                        .getMessageClassForType(AsyncMessageReader.this.currentReadResult.header.getMessageType());
+
+                // Capture this flag value before dispatching the message, otherwise we risk having a different value when using it later on.
+                boolean localStopAfterNextMessage = AsyncMessageReader.this.stopAfterNextMessage;
+
+                // dispatch the message to the listener before starting next read to ensure in-order delivery
+                buf.flip();
+                AsyncMessageReader.this.currentReadResult.message = parseMessage(messageClass, buf);
+                AsyncMessageReader.this.pendingCompletedReadQueue.add(AsyncMessageReader.this.currentReadResult);
+                AsyncMessageReader.this.currentReadResult = null;
+
+                dispatchMessage();
+
+                // As this is where the read loop begins, we can escape it here if requested.
+                // But we always read the next message if the current one is a notice.
+                if (localStopAfterNextMessage && messageClass != Frame.class) {
+                    AsyncMessageReader.this.stopAfterNextMessage = false; // TODO it's a suspicious action, can we really change the global variable value here after we stated that it may be reset after dispatchMessage() ?
+                    AsyncMessageReader.this.currentReadResult = null;
+                    return;
+                }
+
+                AsyncMessageReader.this.headerCompletionHandler.completed(0, null); // initiates header read cycle
+
+            } catch (Throwable t) {
+                onError(t); // error reading => illegal state, close connection
+            }
         }
 
-        this.state = ReadingState.READING_MESSAGE;
-        // TODO: re-use buffers if possible. Note that synchronization will be necessary to prevent overwriting re-used buffers while still being parsed by
-        // previous read. Also the buffer will have to be managed accordingly so that "remaining" isn't longer than the message otherwise it may consume
-        // data from the next header+message
-        this.messageBuf = ByteBuffer.allocate(this.header.getMessageSize());
-        readMessage();
-    }
-
-    /**
-     * Read &amp; consume the message body and dispatch the message to the current/next {@link MessageListener}.
-     */
-    private void readMessage() {
-        if (this.messageBuf.position() < this.header.getMessageSize()) {
-            this.sc.getAsynchronousSocketChannel().read(this.messageBuf, null, this);
-            return; // loop to #completed() again if we're still waiting for more data
+        @Override
+        public void failed(Throwable exc, Void attachment) {
+            if (getMessageListener(false) != null) {
+                // force any error to unblock pending message listener
+                synchronized (AsyncMessageReader.this.pendingMsgMonitor) {
+                    AsyncMessageReader.this.pendingMsgMonitor.notify();
+                }
+                if (AsynchronousCloseException.class.equals(exc.getClass())) {
+                    AsyncMessageReader.this.currentMessageListener.error(new CJCommunicationsException("Socket closed", exc));
+                } else {
+                    AsyncMessageReader.this.currentMessageListener.error(exc);
+                }
+            }
+            // it's "done" after sending a closed() or error() signal
+            AsyncMessageReader.this.currentMessageListener = null;
         }
 
-        // copy these before initiating the next read to prevent them being overwritten in another thread
-        ByteBuffer buf = this.messageBuf;
-        this.messageBuf = null;
-
-        Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(this.header.getMessageType());
-
-        // Capture this flag value before dispatching the message, otherwise we risk having a different value when using it later on.
-        boolean localStopAfterNextMessage = this.stopAfterNextMessage;
-
-        // dispatch the message to the listener before starting next read to ensure in-order delivery
-        buf.flip();
-        dispatchMessage(this.header, parseMessage(messageClass, buf));
-
-        // As this is where the read loop begins, we can escape it here if requested.
-        // But we always read the next message if the current one is a notice.
-        if (localStopAfterNextMessage && messageClass != Frame.class) {
-            this.stopAfterNextMessage = false; // TODO it's a suspicious action, can we really change the global variable value here after we stated that it may be reset after dispatchMessage() ?
-            this.header = null;
-            return;
+        /**
+         * Parse a message.
+         * 
+         * @param messageClass
+         *            class extending {@link GeneratedMessage}
+         * @param buf
+         *            message buffer
+         * @return {@link GeneratedMessage}
+         */
+        private GeneratedMessage parseMessage(Class<? extends GeneratedMessage> messageClass, ByteBuffer buf) {
+            try {
+                Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
+                return parser.parseFrom(CodedInputStream.newInstance(buf));
+            } catch (InvalidProtocolBufferException ex) {
+                throw AssertionFailedException.shouldNotHappen(ex);
+            }
         }
 
-        this.header = null;
-        readMessageHeader();
-    }
-
-    /**
-     * Parse a message.
-     * 
-     * @param messageClass
-     *            class extending {@link GeneratedMessage}
-     * @param buf
-     *            message buffer
-     * @return {@link GeneratedMessage}
-     */
-    private GeneratedMessage parseMessage(Class<? extends GeneratedMessage> messageClass, ByteBuffer buf) {
-        try {
-            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
-            return parser.parseFrom(CodedInputStream.newInstance(buf));
-        } catch (InvalidProtocolBufferException ex) {
-            throw AssertionFailedException.shouldNotHappen(ex);
-        }
     }
 
     /**
      * Dispatch a message to a listener or "peek-er" once it has been read and parsed.
      * 
-     * @param messageClass
-     *            class extending {@link GeneratedMessage}
      * @param message
      *            {@link GeneratedMessage}
      */
-    private void dispatchMessage(XMessageHeader hdr, GeneratedMessage message) {
-        if (message.getClass() == Frame.class && ((Frame) message).getScope() == Frame.Scope.GLOBAL) {
-            // we don't yet have any global notifications defined.
-            throw new RuntimeException("TODO: implement me");
-        }
+    void dispatchMessage() {
 
-        // if there's no message listener waiting, expose the message class as pending for the next read
-        if (getMessageListener(false) == null) {
-            synchronized (this.pendingMsgMonitor) {
-                this.pendingMsgHeader = CompletableFuture.completedFuture(hdr);
-                this.pendingMsgMonitor.notify();
-            }
-        }
-
-        getMessageListener(true);
-        // we must ensure that the message has been delivered and the pending message is cleared atomically under the pending message lock. otherwise the
-        // pending message may still be seen after the message has been delivered but before the pending message is cleared
-        //
-        // t1-nio-thread                                         | t2-user-thread
-        // ------------------------------------------------------+------------------------------------------------------
-        // pendingMsgClass exposed - no current listener         |
-        //                                                       | listener added
-        // getMessageListener(true) returns                      |
-        // dispatchMessage(), in currentMessageListener.apply()  |
-        //                                                       | getNextMessageClass(), pendingMsgClass != null
-        //                                                       | pendingMsgClass returned, but already being delivered
-        //                                                       |    in other thread
-        // pendingMsgClass = null                                |
-        //
-        synchronized (this.pendingMsgMonitor) {
-            // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
-            boolean currentListenerDone = this.currentMessageListener.createFromMessage(new XMessage(message));
-            if (currentListenerDone) {
-                this.currentMessageListener = null;
-            }
-            // clear this after the message is delivered
-            this.pendingMsgHeader = null;
-        }
-    }
-
-    /**
-     * Handler for "read completed" event. We check the state and handle the incoming data.
-     */
-    public void completed(Integer bytesRead, Void v) {
-        // async socket closed
-        if (bytesRead < 0) {
-            try {
-                this.sc.getAsynchronousSocketChannel().close();
-            } catch (IOException ex) {
-                throw AssertionFailedException.shouldNotHappen(ex);
-            } finally {
-                if (this.currentMessageListener == null) {
-                    this.currentMessageListener = this.messageListenerQueue.poll();
-                }
-                if (this.currentMessageListener != null) {
-                    this.currentMessageListener.closed();
-                }
-                // it's "done" after sending a closed() or error() signal
-                this.currentMessageListener = null;
-                // in case we have a getNextMessageClass() request pending
-                synchronized (this.pendingMsgMonitor) {
-                    this.pendingMsgHeader = new CompletableFuture<>();
-                    this.pendingMsgHeader.completeExceptionally(new CJCommunicationsException("Socket closed"));
-                    this.pendingMsgMonitor.notify();
-                }
-            }
+        if (this.pendingCompletedReadQueue.isEmpty()) {
             return;
         }
 
-        try {
-            if (this.state == ReadingState.READING_HEADER) {
-                readMessageHeader();
-            } else {
-                readMessage();
-            }
-        } catch (Throwable t) {
-            // error reading => illegal state, close connection
+        if (getMessageListener(true) != null) {
+            CompletedRead res;
             try {
-                this.sc.getAsynchronousSocketChannel().close();
-            } catch (Exception ex) {
+                res = this.pendingCompletedReadQueue.take();
+            } catch (InterruptedException e) {
+                throw new CJCommunicationsException("Failed to peek pending message", e);
             }
-            // notify all listeners of error
-            if (this.currentMessageListener != null) {
-                try {
-                    this.currentMessageListener.error(t);
-                } catch (Exception ex) {
-                }
-            }
-            this.messageListenerQueue.forEach(l -> {
-                try {
-                    l.error(t);
-                } catch (Exception ex) {
-                }
-            });
-            // in case we have a getNextMessageClass() request pending
+
+            GeneratedMessage message = res.message;
+
+            // we must ensure that the message has been delivered and the pending message is cleared atomically under the pending message lock. otherwise the
+            // pending message may still be seen after the message has been delivered but before the pending message is cleared
+            //
+            // t1-nio-thread                                         | t2-user-thread
+            // ------------------------------------------------------+------------------------------------------------------
+            // pendingMsgClass exposed - no current listener         |
+            //                                                       | listener added
+            // getMessageListener(true) returns                      |
+            // dispatchMessage(), in currentMessageListener.apply()  |
+            //                                                       | getNextMessageClass(), pendingMsgClass != null
+            //                                                       | pendingMsgClass returned, but already being delivered
+            //                                                       |    in other thread
+            // pendingMsgClass = null                                |
+            //
             synchronized (this.pendingMsgMonitor) {
-                this.pendingMsgHeader = new CompletableFuture<>();
-                this.pendingMsgHeader.completeExceptionally(t);
-                this.pendingMsgMonitor.notify();
+                // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
+                boolean currentListenerDone = this.currentMessageListener.createFromMessage(new XMessage(message));
+                if (currentListenerDone) {
+                    this.currentMessageListener = null;
+                }
+                // clear this after the message is delivered
+                this.pendingMsgHeader = null;
             }
-            this.messageListenerQueue.clear();
         }
     }
 
-    /**
-     * Handler for "read failed" event.
-     */
-    public void failed(Throwable exc, Void v) {
-        if (getMessageListener(false) != null) {
-            // force any error to unblock pending message listener
-            synchronized (this.pendingMsgMonitor) {
-                this.pendingMsgMonitor.notify();
-            }
-            if (AsynchronousCloseException.class.equals(exc.getClass())) {
-                this.currentMessageListener.closed();
-            } else {
-                this.currentMessageListener.error(exc);
-            }
+    void onError(Throwable t) {
+        try {
+            this.sc.getAsynchronousSocketChannel().close();
+        } catch (Exception ex) {
+            // ignore
         }
-        // it's "done" after sending a closed() or error() signal
-        this.currentMessageListener = null;
+
+        // notify all listeners of error
+        if (this.currentMessageListener != null) {
+            try {
+                this.currentMessageListener.error(t);
+            } catch (Exception ex) {
+            }
+            this.currentMessageListener = null;
+        }
+        this.messageListenerQueue.forEach(l -> {
+            try {
+                l.error(t);
+            } catch (Exception ex) {
+            }
+        });
+        // in case we have a getNextMessageClass() request pending
+        synchronized (this.pendingMsgMonitor) {
+            this.pendingMsgHeader = new CompletableFuture<>();
+            this.pendingMsgHeader.completeExceptionally(t);
+            this.pendingMsgMonitor.notify();
+        }
+        this.messageListenerQueue.clear();
     }
 
     /**
@@ -410,9 +433,7 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         XMessageHeader mh;
 
         synchronized (this.pendingMsgMonitor) {
-            if (!this.sc.getAsynchronousSocketChannel().isOpen()) {
-                throw new CJCommunicationsException("async closed");
-            }
+            checkClosed();
 
             while (this.pendingMsgHeader == null) {
                 try {
@@ -440,109 +461,61 @@ public class AsyncMessageReader implements CompletionHandler<Integer, Void>, Mes
         return mh;
     }
 
-    /**
-     * Synchronously read a message of the given type into to the given {@link Message} instance or into the new one if not present.
-     * 
-     * @param reuse
-     *            {@link Message} object to reuse
-     * @param hdr
-     *            {@link MessageHeader} object
-     * @return
-     * @throws IOException
-     * @throws CJCommunicationsException
-     *             wrapping an {@link IOException} during read or parse
-     * @throws XProtocolError
-     *             if an <i>Error</i> message is received from the server
-     */
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, XMessageHeader hdr) throws IOException {
-        Class<? extends GeneratedMessage> msgClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
-        return readSync(msgClass);
+        return readMessage(reuse, hdr.getMessageType());
     }
 
-    /**
-     * Synchronously read a message of the given type into to the given {@link Message} instance or into the new one if not present.
-     * 
-     * @param reuse
-     *            {@link Message} object to reuse
-     * @param expectedType
-     *            Expected type of message
-     * @return
-     * @throws IOException
-     * @throws WrongArgumentException
-     *             if the message is of a different type
-     * @throws CJCommunicationsException
-     *             wrapping an {@link IOException} during read or parse
-     * @throws XProtocolError
-     *             if an <i>Error</i> message is received from the server
-     */
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, int expectedType) throws IOException {
-        Class<? extends GeneratedMessage> msgClass = MessageConstants.getMessageClassForType(expectedType);
-        return readSync(msgClass);
-    }
+        Class<? extends GeneratedMessage> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
-    private <T extends GeneratedMessage> XMessage readSync(final Class<T> expectedClass) {
-        SyncReader<T> r = new SyncReader<>(this.propertySet, this, expectedClass);
-        return new XMessage(r.read());
+        CompletableFuture<XMessage> future = new CompletableFuture<>();
+        SyncXMessageListener<? extends GeneratedMessage> r = new SyncXMessageListener<>(future, expectedClass);
+        pushMessageListener(r);
+
+        try {
+            return future.get(this.asyncTimeout.getValue(), TimeUnit.SECONDS);
+        } catch (ExecutionException ex) {
+            if (XProtocolError.class.equals(ex.getCause().getClass())) {
+                // wrap the other thread's exception and include this thread's context
+                throw new XProtocolError((XProtocolError) ex.getCause());
+            }
+            throw new CJCommunicationsException(ex.getCause().getMessage(), ex.getCause());
+        } catch (InterruptedException | TimeoutException ex) {
+            throw new CJCommunicationsException(ex);
+        }
     }
 
     /**
      * Synchronously read a single message and propagate any errors to the current thread.
      */
-    private static final class SyncReader<T> implements MessageListener<XMessage> {
-        private CompletableFuture<Function<BiFunction<Class<? extends GeneratedMessage>, GeneratedMessage, T>, T>> future = new CompletableFuture<>();
+    private static final class SyncXMessageListener<T extends GeneratedMessage> implements MessageListener<XMessage> {
+        private CompletableFuture<XMessage> future;
         private Class<T> expectedClass;
-        private ReadableProperty<Integer> asyncTimeout;
 
-        public SyncReader(PropertySet propertySet, AsyncMessageReader rdr, Class<T> expectedClass) {
-            this.asyncTimeout = propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
+        public SyncXMessageListener(CompletableFuture<XMessage> future, Class<T> expectedClass) {
+            this.future = future;
             this.expectedClass = expectedClass;
-            rdr.pushMessageListener(this);
         }
 
         @SuppressWarnings("unchecked")
         @Override
         public Boolean createFromMessage(XMessage msg) {
-            return this.future.complete(c -> c.apply((Class<? extends GeneratedMessage>) msg.getMessage().getClass(), (GeneratedMessage) msg.getMessage()));
+            Class<? extends GeneratedMessage> msgClass = (Class<? extends GeneratedMessage>) msg.getMessage().getClass();
+            if (Error.class.equals(msgClass)) {
+                this.future.completeExceptionally(new XProtocolError(Error.class.cast(msg.getMessage())));
+                return true; /* done reading? */
+            } else if (this.expectedClass.equals(msgClass)) {
+                this.future.complete(msg);
+                return true; /* done reading? */
+            }
+            this.future.completeExceptionally(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + msg.getMessage()));
+            return true; /* done reading? */
         }
 
         public void error(Throwable ex) {
             this.future.completeExceptionally(ex);
         }
-
-        public void closed() {
-            this.future.completeExceptionally(new CJCommunicationsException("Socket closed"));
-        }
-
-        /**
-         * Read the message and transform any error to a {@link XProtocolError} and throw it as an exception.
-         * 
-         * @return message of type T
-         */
-        public T read() {
-            try {
-                return this.future.thenApply(f -> f.apply((msgClass, msg) -> {
-                    if (Error.class.equals(msgClass)) {
-                        throw new XProtocolError(Error.class.cast(msg));
-                    }
-                    // ensure that parsed message class matches incoming tag
-                    if (!msgClass.equals(this.expectedClass)) {
-                        throw new WrongArgumentException("Unexpected message class. Expected '" + this.expectedClass.getSimpleName()
-                                + "' but actually received '" + msgClass.getSimpleName() + "'");
-                    }
-                    return this.expectedClass.cast(msg);
-                })).get(this.asyncTimeout.getValue(), TimeUnit.SECONDS);
-            } catch (ExecutionException ex) {
-                if (XProtocolError.class.equals(ex.getCause().getClass())) {
-                    // wrap the other thread's exception and include this thread's context
-                    throw new XProtocolError((XProtocolError) ex.getCause());
-                }
-                throw new CJCommunicationsException(ex.getCause().getMessage(), ex.getCause());
-            } catch (InterruptedException | TimeoutException ex) {
-                throw new CJCommunicationsException(ex);
-            }
-        }
     }
-
 }

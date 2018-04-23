@@ -45,6 +45,11 @@ public class NoticeFactory implements ProtocolEntityFactory<Notice, XMessage> {
     @Override
     public Notice createFromMessage(XMessage message) {
         Frame notice = (Frame) message.getMessage();
+        if (notice.getScope() == Frame.Scope.GLOBAL) {
+            // TODO we don't yet have any global notifications defined.
+            // throw new RuntimeException("TODO: implement me");
+            return null;
+        }
         switch (notice.getType()) {
             case Notice.XProtocolNoticeFrameType_WARNING:
                 com.mysql.cj.x.protobuf.MysqlxNotice.Warning warn = parseNotice((notice).getPayload(), com.mysql.cj.x.protobuf.MysqlxNotice.Warning.class);

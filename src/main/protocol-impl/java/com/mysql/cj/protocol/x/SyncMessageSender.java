@@ -33,13 +33,12 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.CompletionHandler;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJCommunicationsException;
-import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
-import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.PacketSentTimeHolder;
 
@@ -60,14 +59,6 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         this.outputStream = os;
     }
 
-    /**
-     * Send a message.
-     *
-     * @param msg
-     *            the message to send
-     * @throws CJCommunicationsException
-     *             to wrap any occurring IOException
-     */
     public void send(XMessage message) {
         MessageLite msg = message.getMessage();
         try {
@@ -89,6 +80,17 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         }
     }
 
+    public void send(XMessage message, CompletionHandler<Long, Void> callback) {
+        MessageLite msg = message.getMessage();
+        try {
+            send(message);
+            long result = 4 + 1 + msg.getSerializedSize();
+            callback.completed(result, null);
+        } catch (Throwable t) {
+            callback.failed(t, null);
+        }
+    }
+
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
     }
@@ -97,18 +99,4 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         this.maxAllowedPacket = maxAllowedPacket;
     }
 
-    @Override
-    public void send(byte[] message, int messageLen, byte messageSequence) throws IOException {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public MessageSender<XMessage> undecorateAll() {
-        return this;
-    }
-
-    @Override
-    public MessageSender<XMessage> undecorate() {
-        return this;
-    }
 }

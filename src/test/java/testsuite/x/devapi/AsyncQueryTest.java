@@ -101,7 +101,11 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
-            futures.add(this.collection.find("firstName like '%Fra%'").executeAsync());
+            if (i % 5 == 0) {
+                futures.add(CompletableFuture.completedFuture(this.collection.find("firstName like '%Fra%'").execute()));
+            } else {
+                futures.add(this.collection.find("firstName like '%Fra%'").executeAsync());
+            }
         }
 
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {

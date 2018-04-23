@@ -32,7 +32,6 @@ package com.mysql.cj.protocol.x;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.GeneratedMessage;
-import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -72,10 +71,6 @@ public class StatementExecuteOkMessageListener implements MessageListener<XMessa
         }
         this.future.completeExceptionally(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + message.getMessage()));
         return true; /* done reading? */
-    }
-
-    public void closed() {
-        this.future.completeExceptionally(new CJCommunicationsException("Sock was closed"));
     }
 
     public void error(Throwable ex) {

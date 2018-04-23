@@ -32,7 +32,6 @@ package com.mysql.cj.protocol.x;
 import java.util.ArrayList;
 
 import com.google.protobuf.GeneratedMessage;
-import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
@@ -121,10 +120,6 @@ public class ResultMessageListener implements MessageListener<XMessage> {
 
         this.callbacks.onException(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + message.getMessage()));
         return false; /* done reading? */ // note, this doesn't comply with the specified semantics ResultListener
-    }
-
-    public void closed() {
-        this.callbacks.onException(new CJCommunicationsException("Socket was closed"));
     }
 
     public void error(Throwable ex) {

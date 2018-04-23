@@ -75,7 +75,17 @@ public interface MessageReader<H extends MessageHeader, M extends Message> {
      *             if an error occurs
      */
     default M readMessage(Optional<M> reuse, int expectedType) throws IOException {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    /**
+     * Queue a {@link MessageListener} to receive messages delivered asynchronously.
+     * 
+     * @param l
+     *            {@link MessageListener}
+     */
+    default void pushMessageListener(MessageListener<M> l) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
     /**
@@ -111,6 +121,20 @@ public interface MessageReader<H extends MessageHeader, M extends Message> {
      */
     default MessageReader<H, M> undecorate() {
         return this;
+    }
+
+    /**
+     * Start reading messages reader from the provided channel.
+     */
+    default void start() {
+        // no-op
+    }
+
+    /**
+     * Signal to the reader that it should stop reading messages after reading the next message.
+     */
+    default void stopAfterNextMessage() {
+        // no-op
     }
 
 }

@@ -41,9 +41,7 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJCommunicationsException;
-import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
-import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.SerializingBufferWriter;
 
@@ -67,13 +65,10 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
         this.bufferWriter = new SerializingBufferWriter(channel);
     }
 
-    /**
-     * Synchronously write a message.
-     */
     public void send(XMessage message) {
         CompletableFuture<Void> f = new CompletableFuture<>();
         // write a message asynchronously that will notify the future when complete
-        writeAsync(message, new ErrorToFutureCompletionHandler<Long>(f, () -> f.complete(null)));
+        send(message, new ErrorToFutureCompletionHandler<Long>(f, () -> f.complete(null)));
         // wait on the future to return
         try {
             f.get();
@@ -84,15 +79,7 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
         }
     }
 
-    /**
-     * Asynchronously write a message with a notification being delivered to <code>callback</code> upon completion of write of entire message.
-     *
-     * @param message
-     *            message extending {@link XMessage}
-     * @param callback
-     *            an optional callback to receive notification of when the message is completely written
-     */
-    public void writeAsync(XMessage message, CompletionHandler<Long, Void> callback) {
+    public void send(XMessage message, CompletionHandler<Long, Void> callback) {
         MessageLite msg = message.getMessage();
         int type = MessageConstants.getTypeForMessageClass(msg.getClass());
         int size = msg.getSerializedSize();
@@ -130,20 +117,5 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
      */
     public void setChannel(AsynchronousSocketChannel channel) {
         this.bufferWriter.setChannel(channel);
-    }
-
-    @Override
-    public void send(byte[] message, int messageLen, byte messageSequence) throws IOException {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public MessageSender<XMessage> undecorateAll() {
-        return this;
-    }
-
-    @Override
-    public MessageSender<XMessage> undecorate() {
-        return this;
     }
 }

@@ -31,6 +31,9 @@ package com.mysql.cj.protocol.x;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -38,8 +41,10 @@ import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.FullReadInputStream;
+import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.x.protobuf.Mysqlx.Error;
+import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 
 /**
  * Synchronous-only implementation of {@link MessageReader}. This implementation wraps an {@link java.io.InputStream}.
@@ -47,110 +52,159 @@ import com.mysql.cj.x.protobuf.Mysqlx.Error;
 public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage> {
     /** Stream as a source of messages. */
     private FullReadInputStream inputStream;
-    /** Have we already read the header for the next message? */
-    private boolean hasReadHeader = false;
+
     private XMessageHeader header;
+
+    /** Queue of <code>MessageListener</code>s waiting to process messages. */
+    BlockingQueue<MessageListener<XMessage>> messageListenerQueue = new LinkedBlockingQueue<>();
+
+    /** Lock to protect the pending message. */
+    Object dispatchingThreadMonitor = new Object();
+    /** Lock to protect async reads from sync ones. */
+    Object waitingSyncOperationMonitor = new Object();
+
+    Thread dispatchingThread = null;
 
     public SyncMessageReader(FullReadInputStream inputStream) {
         this.inputStream = inputStream;
     }
 
-    /**
-     * Read the header for the next message.
-     *
-     * <p>
-     * Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the message
-     * bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session multiplexing is
-     * supported by the protocol. The protocol will be able to accommodate it but we will have to separate reading data after the header (size).
-     * 
-     * @throws IOException
-     *             in case of reading error
-     */
-    private void readMessageHeader() throws IOException {
-        byte[] len = new byte[5];
-        this.inputStream.readFully(len);
-        this.header = new XMessageHeader(len);
-        this.hasReadHeader = true;
-    }
-
-    /**
-     * Clear the stored header.
-     */
-    private void clearHeader() {
-        this.hasReadHeader = false;
-        this.header = null;
-    }
-
-    @SuppressWarnings("unchecked")
     @Override
     public XMessageHeader readHeader() throws IOException {
-        if (!this.hasReadHeader) {
-            try {
-                readMessageHeader();
-            } catch (IOException ex) {
-                throw new CJCommunicationsException("Cannot read packet header", ex);
+        // waiting for ListenersDispatcher completion to perform sync call
+        synchronized (this.waitingSyncOperationMonitor) {
+            if (this.header == null) {
+                this.header = readHeaderLocal();
             }
+            if (this.header.getMessageType() == ServerMessages.Type.ERROR_VALUE) {
+                throw new XProtocolError(readMessageLocal(Error.class));
+            }
+            return this.header;
         }
-        int type = this.header.getMessageType(); // forces header read if necessary
+    }
 
-        Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(type);
+    private XMessageHeader readHeaderLocal() throws IOException {
 
-        if (messageClass == Error.class) {
-            // throw an error/exception if receive an Error message
-            throw new XProtocolError(readAndParse((Parser<Error>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(Error.class)));
+        try {
+            /*
+             * Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the
+             * message bytes. However since we know the type tag is present we also read it as part of the header. This may change in the future if session
+             * multiplexing is supported by the protocol. The protocol will be able to accommodate it but we will have to separate reading data after the
+             * header (size).
+             */
+            byte[] len = new byte[5];
+            this.inputStream.readFully(len);
+            this.header = new XMessageHeader(len);
+        } catch (IOException ex) {
+            // TODO close socket?
+            throw new CJCommunicationsException("Cannot read packet header", ex);
         }
 
         return this.header;
     }
 
-    private <T extends GeneratedMessage> T readAndParse(Parser<T> parser) {
+    @SuppressWarnings("unchecked")
+    private <T extends GeneratedMessage> T readMessageLocal(Class<T> messageClass) {
+        Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
         byte[] packet = new byte[this.header.getMessageSize()];
 
         try {
-            // for debugging
-            // System.err.println("Initiating read of message (size=" + this.payloadSize + ", tag=" + ServerMessages.Type.valueOf(this.messageType) + ")");
             this.inputStream.readFully(packet);
         } catch (IOException ex) {
+            // TODO close socket?
             throw new CJCommunicationsException("Cannot read packet payload", ex);
         }
 
         try {
             return parser.parseFrom(packet);
         } catch (InvalidProtocolBufferException ex) {
-            // wrap the protobuf exception. No further information is available
             throw new WrongArgumentException(ex);
         } finally {
-            // this must happen if we *successfully* read a packet. CJCommunicationsException will be thrown above if not
-            clearHeader();
+            // This must happen if we *successfully* read a packet. CJCommunicationsException will be thrown above if not
+            this.header = null;
         }
     }
 
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, XMessageHeader hdr) throws IOException {
-        Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
-        return new XMessage(readAndParse(messageClass));
+        return readMessage(reuse, hdr.getMessageType());
     }
 
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, int expectedType) throws IOException {
-        try {
-            Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(readHeader().getMessageType());
-            Class<? extends GeneratedMessage> expectedClass = MessageConstants.getMessageClassForType(expectedType);
+        // waiting for ListenersDispatcher completion to perform sync call
+        synchronized (this.waitingSyncOperationMonitor) {
+            try {
+                Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(readHeader().getMessageType());
+                Class<? extends GeneratedMessage> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
-            // ensure that parsed message class matches incoming tag
-            if (expectedClass != messageClass) {
-                throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '"
-                        + messageClass.getSimpleName() + "'");
+                // ensure that parsed message class matches incoming tag
+                if (expectedClass != messageClass) {
+                    throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '"
+                            + messageClass.getSimpleName() + "'");
+                }
+
+                return new XMessage(readMessageLocal(messageClass));
+            } catch (IOException e) {
+                throw new XProtocolError(e.getMessage(), e);
             }
-
-            return new XMessage(readAndParse(messageClass));
-        } catch (IOException e) {
-            throw new XProtocolError(e.getMessage(), e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends GeneratedMessage> T readAndParse(Class<T> messageClass) {
-        return readAndParse((Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass));
+    public void pushMessageListener(final MessageListener<XMessage> listener) {
+        try {
+            this.messageListenerQueue.put(listener);
+        } catch (InterruptedException e) {
+            throw new CJCommunicationsException("Cannot queue message listener.", e);
+        }
+
+        synchronized (this.dispatchingThreadMonitor) {
+            if (this.dispatchingThread == null) {
+                this.dispatchingThread = new Thread(new ListenersDispatcher(), "Message listeners dispatching thread");
+                this.dispatchingThread.start();
+            }
+        }
+    }
+
+    private class ListenersDispatcher implements Runnable {
+        /**
+         * The timeout value for queue.poll(timeout, unit) defining the time after that we close and unregister the dispatching thread.
+         * On the other hand, the bigger timeout value allows to keep dispatcher thread running while multiple concurrent asynchronous
+         * read operations are pending, thus avoiding the delays for new dispatching threads creation.
+         */
+        private static final long POLL_TIMEOUT = 200; // TODO expose via connection property
+
+        public ListenersDispatcher() {
+        }
+
+        @Override
+        public void run() {
+            synchronized (SyncMessageReader.this.waitingSyncOperationMonitor) {
+                try {
+                    while (true) {
+                        MessageListener<XMessage> l;
+                        if ((l = SyncMessageReader.this.messageListenerQueue.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)) == null) {
+                            synchronized (SyncMessageReader.this.dispatchingThreadMonitor) {
+                                if (SyncMessageReader.this.messageListenerQueue.peek() == null) {
+                                    SyncMessageReader.this.dispatchingThread = null;
+                                    break;
+                                }
+                            }
+                        }
+                        try {
+                            XMessage msg = null;
+                            do {
+                                XMessageHeader hdr = readHeader();
+                                msg = readMessage(null, hdr);
+                            } while (!l.createFromMessage(msg));
+                        } catch (Throwable t) {
+                            l.error(t);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    throw new CJCommunicationsException("Read operation interrupted.", e);
+                }
+            }
+        }
     }
 }

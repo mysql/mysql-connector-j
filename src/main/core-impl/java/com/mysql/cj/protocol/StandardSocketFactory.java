@@ -203,7 +203,8 @@ public class StandardSocketFactory implements SocketFactory {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
-        this.sslSocket = ExportControlled.performTlsHandshake(this.rawSocket, socketConnection, serverSession.getServerVersion());
+        this.sslSocket = ExportControlled.performTlsHandshake(this.rawSocket, socketConnection,
+                serverSession == null ? null : serverSession.getServerVersion());
         return (T) this.sslSocket;
     }
 

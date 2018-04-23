@@ -121,14 +121,14 @@ public class StringUtils {
     private static final String VALID_ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789$_#@";
 
     /**
-     * Returns the given bytes as a hex & ascii dump (up to length bytes).
+     * Returns the given bytes as a hex and ascii dump (up to length bytes).
      * 
      * @param byteBuffer
      *            the data to dump as hex
      * @param length
      *            the number of bytes to print
      * 
-     * @return a hex & ascii dump
+     * @return a hex and ascii dump
      */
     public static String dumpAsHex(byte[] byteBuffer, int length) {
         length = Math.min(length, byteBuffer.length);

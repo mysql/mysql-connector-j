@@ -36,7 +36,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.protobuf.GeneratedMessage;
-import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -106,10 +105,6 @@ public class SqlResultMessageListener implements MessageListener<XMessage> {
         }
         // done
         return this.okListener.createFromMessage(message);
-    }
-
-    public void closed() {
-        this.resultF.completeExceptionally(new CJCommunicationsException("Socket was closed"));
     }
 
     public void error(Throwable ex) {

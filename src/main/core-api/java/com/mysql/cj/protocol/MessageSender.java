@@ -30,6 +30,7 @@
 package com.mysql.cj.protocol;
 
 import java.io.IOException;
+import java.nio.channels.CompletionHandler;
 
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -39,15 +40,41 @@ import com.mysql.cj.exceptions.ExceptionFactory;
  */
 public interface MessageSender<M extends Message> {
 
-    void send(byte[] message, int messageLen, byte messageSequence) throws IOException;
+    /**
+     * Synchronously send the message to server.
+     * 
+     * @param message
+     *            byte array containing a message
+     * @param messageLen
+     *            length of the message
+     * @param messageSequence
+     *            message sequence index (used in a native protocol)
+     * @throws IOException
+     *             if an error occurs
+     */
+    default void send(byte[] message, int messageLen, byte messageSequence) throws IOException {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
 
     /**
-     * Send message to server.
+     * Synchronously send the message to server.
      * 
      * @param message
      *            {@link Message} instance
      */
     default void send(M message) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    /**
+     * Asynchronously write a message with a notification being delivered to <code>callback</code> upon completion of write of entire message.
+     *
+     * @param message
+     *            message extending {@link Message}
+     * @param callback
+     *            an optional callback to receive notification of when the message is completely written
+     */
+    default void send(M message, CompletionHandler<Long, Void> callback) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
@@ -67,7 +94,9 @@ public interface MessageSender<M extends Message> {
      * @return
      *         {@link MessageSender} instance
      */
-    MessageSender<M> undecorateAll();
+    default MessageSender<M> undecorateAll() {
+        return this;
+    }
 
     /**
      * Return the previous PacketSender instance from the decorators chain or the current PacketSender
@@ -76,5 +105,7 @@ public interface MessageSender<M extends Message> {
      * @return
      *         {@link MessageSender} instance
      */
-    MessageSender<M> undecorate();
+    default MessageSender<M> undecorate() {
+        return this;
+    }
 }

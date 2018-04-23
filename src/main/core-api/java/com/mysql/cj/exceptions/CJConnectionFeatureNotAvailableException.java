@@ -37,6 +37,10 @@ public class CJConnectionFeatureNotAvailableException extends CJCommunicationsEx
 
     private static final long serialVersionUID = -4129847384681995107L;
 
+    public CJConnectionFeatureNotAvailableException() {
+        super();
+    }
+
     public CJConnectionFeatureNotAvailableException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
             Exception underlyingException) {
         super(underlyingException);

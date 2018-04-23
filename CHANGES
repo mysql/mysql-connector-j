@@ -3,6 +3,9 @@
 
 Version 8.0.12
 
+  - Fix for Bug#27522054, POSSIBLE ASYNC XPROTOCOL MESSAGE HANDLING PERF ISSUE.
+    The "xdevapi.useAsyncProtocol" connection property default value is changed to "false".
+
 Version 8.0.11
 
   - WL#11293, DevAPI: Support new locking modes : NOWAIT and SKIP LOCKED.

@@ -933,7 +933,7 @@ public class PropertyDefinitions {
 
                 // TODO improve X DevAPI properties descriptions
 
-                new BooleanPropertyDefinition(PNAME_useAsyncProtocol, "xdevapiUseAsyncProtocol", DEFAULT_VALUE_TRUE, RUNTIME_NOT_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_useAsyncProtocol, "xdevapiUseAsyncProtocol", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new EnumPropertyDefinition<>(PNAME_sslMode, "xdevapiSSLMode", SslMode.REQUIRED, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslMode"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),

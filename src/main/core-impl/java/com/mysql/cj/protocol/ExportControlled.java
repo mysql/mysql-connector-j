@@ -113,9 +113,153 @@ public class ExportControlled {
     private static final String TLSv1_2 = "TLSv1.2";
     private static final String[] TLS_PROTOCOLS = new String[] { TLSv1_2, TLSv1_1, TLSv1 };
 
+    private ExportControlled() { /* prevent instantiation */
+    }
+
     public static boolean enabled() {
         // we may wish to un-static-ify this class this static method call may be removed entirely by the compiler
         return true;
+    }
+
+    private static String[] getAllowedCiphers(PropertySet pset, ServerVersion serverVersion, String[] socketCipherSuites) {
+        List<String> allowedCiphers = null;
+
+        String enabledSSLCipherSuites = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
+        if (!StringUtils.isNullOrEmpty(enabledSSLCipherSuites)) {
+            // If "enabledSSLCipherSuites" is set we check that JVM allows provided values.
+            // We don't disable DH algorithm. That allows c/J to deal with custom server builds with different security restrictions.
+            allowedCiphers = new ArrayList<>();
+            List<String> availableCiphers = Arrays.asList(socketCipherSuites);
+            for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
+                if (availableCiphers.contains(cipher)) {
+                    allowedCiphers.add(cipher);
+                }
+            }
+        } else if (serverVersion != null && (!(serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.6"))
+                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.26")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.0"))
+                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.5.45")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0"))))) {
+            // If we don't override ciphers, then we check for known restrictions
+
+            // Java 8 default java.security contains jdk.tls.disabledAlgorithms=DH keySize < 768
+            // That causes handshake failures with older MySQL servers, eg 5.6.11. Thus we have to disable DH for them when running on Java 8+
+            // TODO check later for Java 9 behavior
+            allowedCiphers = new ArrayList<>();
+            for (String cipher : socketCipherSuites) {
+                if (cipher.indexOf("_DHE_") == -1 && cipher.indexOf("_DH_") == -1) {
+                    allowedCiphers.add(cipher);
+                }
+            }
+        }
+
+        return allowedCiphers == null ? null : allowedCiphers.toArray(new String[] {});
+    }
+
+    private static String[] getAllowedProtocols(PropertySet pset, ServerVersion serverVersion, String[] socketProtocols) {
+
+        // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
+        // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
+        // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
+        String enabledTLSProtocols = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
+
+        // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
+        // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version.
+        String[] tryProtocols = null;
+        if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
+            tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
+        } else if (serverVersion != null && (serverVersion.meetsMinimum(ServerVersion.parseVersion("8.0.4"))
+                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString()))) {
+            // allow all known TLS versions for this subset of server versions by default
+            tryProtocols = TLS_PROTOCOLS;
+        } else {
+            // allow TLSv1 and TLSv1.1 for all server versions by default
+            tryProtocols = new String[] { TLSv1_1, TLSv1 };
+
+        }
+
+        List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
+        List<String> jvmSupportedProtocols = Arrays.asList(socketProtocols);
+
+        List<String> allowedProtocols = new ArrayList<>();
+        for (String protocol : TLS_PROTOCOLS) {
+            if (jvmSupportedProtocols.contains(protocol) && configuredProtocols.contains(protocol)) {
+                allowedProtocols.add(protocol);
+            }
+        }
+        return allowedProtocols.toArray(new String[0]);
+
+    }
+
+    private static class KeyStoreConf {
+        public String keyStoreUrl = null;
+        public String keyStorePassword = null;
+        public String keyStoreType = "JKS";
+
+        public KeyStoreConf() {
+        }
+
+        public KeyStoreConf(String keyStoreUrl, String keyStorePassword, String keyStoreType) {
+            this.keyStoreUrl = keyStoreUrl;
+            this.keyStorePassword = keyStorePassword;
+            this.keyStoreType = keyStoreType;
+        }
+    }
+
+    private static KeyStoreConf getTrustStoreConf(PropertySet propertySet, String keyStoreUrlPropertyName, String keyStorePasswordPropertyName,
+            String keyStoreTypePropertyName, boolean required) {
+
+        String trustStoreUrl = propertySet.getStringReadableProperty(keyStoreUrlPropertyName).getValue();
+        String trustStorePassword = propertySet.getStringReadableProperty(keyStorePasswordPropertyName).getValue();
+        String trustStoreType = propertySet.getStringReadableProperty(keyStoreTypePropertyName).getValue();
+
+        if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
+            trustStoreUrl = System.getProperty("javax.net.ssl.trustStore");
+            trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
+            trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
+            if (StringUtils.isNullOrEmpty(trustStoreType)) {
+                trustStoreType = propertySet.getStringReadableProperty(keyStoreTypePropertyName).getInitialValue();
+            }
+            // check URL
+            if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
+                try {
+                    new URL(trustStoreUrl);
+                } catch (MalformedURLException e) {
+                    trustStoreUrl = "file:" + trustStoreUrl;
+                }
+            }
+        }
+
+        if (required && StringUtils.isNullOrEmpty(trustStoreUrl)) {
+            throw new CJCommunicationsException("No truststore provided to verify the Server certificate.");
+        }
+
+        return new KeyStoreConf(trustStoreUrl, trustStorePassword, trustStoreType);
+    }
+
+    private static KeyStoreConf getKeyStoreConf(PropertySet propertySet, String keyStoreUrlPropertyName, String keyStorePasswordPropertyName,
+            String keyStoreTypePropertyName) {
+
+        String keyStoreUrl = propertySet.getStringReadableProperty(keyStoreUrlPropertyName).getValue();
+        String keyStorePassword = propertySet.getStringReadableProperty(keyStorePasswordPropertyName).getValue();
+        String keyStoreType = propertySet.getStringReadableProperty(keyStoreTypePropertyName).getValue();
+
+        if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
+            keyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
+            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
+            keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
+            if (StringUtils.isNullOrEmpty(keyStoreType)) {
+                keyStoreType = propertySet.getStringReadableProperty(keyStoreTypePropertyName).getInitialValue();
+            }
+            // check URL
+            if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
+                try {
+                    new URL(keyStoreUrl);
+                } catch (MalformedURLException e) {
+                    keyStoreUrl = "file:" + keyStoreUrl;
+                }
+            }
+        }
+
+        return new KeyStoreConf(keyStoreUrl, keyStorePassword, keyStoreType);
     }
 
     /**
@@ -140,82 +284,33 @@ public class ExportControlled {
 
         PropertySet pset = socketConnection.getPropertySet();
 
-        SSLSocket sslSocket = (SSLSocket) getSSLSocketFactoryDefaultOrConfigured(pset, socketConnection.getExceptionInterceptor()).createSocket(rawSocket,
-                socketConnection.getHost(), socketConnection.getPort(), true);
+        boolean verifyServerCert = pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue();
+        SslMode sslMode = pset.<SslMode> getEnumReadableProperty(PropertyDefinitions.PNAME_sslMode).getValue();
 
-        String[] tryProtocols = null;
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
+                : getTrustStoreConf(pset, PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, PropertyDefinitions.PNAME_trustCertificateKeyStorePassword,
+                        PropertyDefinitions.PNAME_trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
 
-        // If enabledTLSProtocols configuration option is set then override the default TLS version restrictions. This allows enabling TLSv1.2 for
-        // self-compiled MySQL versions supporting it, as well as the ability for users to restrict TLS connections to approved protocols (e.g., prohibiting
-        // TLSv1) on the client side.
-        // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
-        // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version.
-        String enabledTLSProtocols = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
-        if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
-            tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
-        } else if (serverVersion.meetsMinimum(ServerVersion.parseVersion("8.0.4"))
-                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString())) {
-            // allow all known TLS versions for this subset of server versions by default
-            tryProtocols = TLS_PROTOCOLS;
-        } else {
-            // allow TLSv1 and TLSv1.1 for all server versions by default
-            tryProtocols = new String[] { TLSv1_1, TLSv1 };
+        KeyStoreConf keyStore = getKeyStoreConf(pset, PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl,
+                PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, PropertyDefinitions.PNAME_clientCertificateKeyStoreType);
 
-        }
+        SSLSocketFactory socketFactory = getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
+                trustStore.keyStoreType, trustStore.keyStorePassword, serverVersion != null, verifyServerCert,
+                sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? socketConnection.getHost() : null, socketConnection.getExceptionInterceptor())
+                        .getSocketFactory();
 
-        List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
-        List<String> jvmSupportedProtocols = Arrays.asList(sslSocket.getSupportedProtocols());
-        List<String> allowedProtocols = new ArrayList<>();
-        for (String protocol : TLS_PROTOCOLS) {
-            if (jvmSupportedProtocols.contains(protocol) && configuredProtocols.contains(protocol)) {
-                allowedProtocols.add(protocol);
-            }
-        }
-        sslSocket.setEnabledProtocols(allowedProtocols.toArray(new String[0]));
+        SSLSocket sslSocket = (SSLSocket) socketFactory.createSocket(rawSocket, socketConnection.getHost(), socketConnection.getPort(), true);
 
-        // check allowed cipher suites
-        String enabledSSLCipherSuites = pset.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
-        boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
+        sslSocket.setEnabledProtocols(getAllowedProtocols(pset, serverVersion, sslSocket.getSupportedProtocols()));
 
-        if (overrideCiphers) {
-            // If "enabledSSLCipherSuites" is set we just check that JVM allows provided values,
-            // we don't disable DH algorithm, that allows c/J to deal with custom server builds with different security restrictions
-            List<String> allowedCiphers = new ArrayList<>();
-            List<String> availableCiphers = Arrays.asList(sslSocket.getEnabledCipherSuites());
-            for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
-                if (availableCiphers.contains(cipher)) {
-                    allowedCiphers.add(cipher);
-                }
-            }
-
-            // if some ciphers were filtered into allowedCiphers 
-            sslSocket.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
-        } else {
-            // If we don't override ciphers, then we check for known restrictions
-
-            // Java 8 default java.security contains jdk.tls.disabledAlgorithms=DH keySize < 768
-            // That causes handshake failures with older MySQL servers, eg 5.6.11. Thus we have to disable DH for them when running on Java 8+
-            // TODO check later for Java 9 behavior
-            if (!(serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.6"))
-                    || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.26")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.0"))
-                    || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.5.45")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")))) {
-
-                List<String> allowedCiphers = new ArrayList<>();
-                for (String cipher : sslSocket.getEnabledCipherSuites()) {
-                    if (cipher.indexOf("_DHE_") == -1 && cipher.indexOf("_DH_") == -1) {
-                        allowedCiphers.add(cipher);
-                    }
-                }
-                sslSocket.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
-            }
+        String[] allowedCiphers = getAllowedCiphers(pset, serverVersion, sslSocket.getEnabledCipherSuites());
+        if (allowedCiphers != null) {
+            sslSocket.setEnabledCipherSuites(allowedCiphers);
         }
 
         sslSocket.startHandshake();
 
         return sslSocket;
-    }
-
-    private ExportControlled() { /* prevent instantiation */
     }
 
     /**
@@ -315,66 +410,6 @@ public class ExportControlled {
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             this.origTm.checkClientTrusted(chain, authType);
         }
-    }
-
-    private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(PropertySet propertySet, ExceptionInterceptor exceptionInterceptor)
-            throws SSLParamsException {
-        String clientCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
-        String clientCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword)
-                .getValue();
-        String clientCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
-        String trustCertificateKeyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
-        String trustCertificateKeyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).getValue();
-        String trustCertificateKeyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getValue();
-
-        if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
-            clientCertificateKeyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
-            clientCertificateKeyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
-            clientCertificateKeyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
-            if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
-                clientCertificateKeyStoreType = "JKS";
-            }
-            // check URL
-            if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
-                try {
-                    new URL(clientCertificateKeyStoreUrl);
-                } catch (MalformedURLException e) {
-                    clientCertificateKeyStoreUrl = "file:" + clientCertificateKeyStoreUrl;
-                }
-            }
-        }
-
-        if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-            trustCertificateKeyStoreUrl = System.getProperty("javax.net.ssl.trustStore");
-            trustCertificateKeyStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
-            trustCertificateKeyStoreType = System.getProperty("javax.net.ssl.trustStoreType");
-            if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
-                trustCertificateKeyStoreType = "JKS";
-            }
-            // check URL
-            if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-                try {
-                    new URL(trustCertificateKeyStoreUrl);
-                } catch (MalformedURLException e) {
-                    trustCertificateKeyStoreUrl = "file:" + trustCertificateKeyStoreUrl;
-                }
-            }
-        }
-
-        boolean verifyServerCert = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue();
-
-        return getSSLContext(clientCertificateKeyStoreUrl, clientCertificateKeyStoreType, clientCertificateKeyStorePassword, trustCertificateKeyStoreUrl,
-                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, verifyServerCert, null, exceptionInterceptor).getSocketFactory();
-    }
-
-    /**
-     * Configure the {@link SSLContext} based on the supplier property set.
-     */
-    public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
-            String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword, boolean verifyServerCert,
-            String hostName, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
-        return getSSLContext(clientCertificateKeyStoreUrl, clientCertificateKeyStoreType, clientCertificateKeyStorePassword, trustCertificateKeyStoreUrl,
-                trustCertificateKeyStoreType, trustCertificateKeyStorePassword, true, verifyServerCert, hostName, exceptionInterceptor);
     }
 
     /**
@@ -556,97 +591,25 @@ public class ExportControlled {
         SslMode sslMode = propertySet.<SslMode> getEnumReadableProperty(PropertyDefinitions.PNAME_sslMode).getValue();
 
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        String trustStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl).getValue();
-
-        String trustStoreType = null;
-        String trustStorePassword = null;
-        if (verifyServerCert) {
-            trustStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue();
-            trustStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue();
-
-            if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
-                trustStoreUrl = System.getProperty("javax.net.ssl.trustStore");
-                trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
-                trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
-                if (StringUtils.isNullOrEmpty(trustStoreType)) {
-                    trustStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getInitialValue();
-                }
-                // check URL
-                if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
-                    try {
-                        new URL(trustStoreUrl);
-                    } catch (MalformedURLException e) {
-                        trustStoreUrl = "file:" + trustStoreUrl;
-                    }
-                }
-            }
-
-            if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
-                throw new CJCommunicationsException("No truststore provided to verify the Server certificate.");
-            }
-        }
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyDefinitions.PNAME_sslTrustStoreUrl,
+                PropertyDefinitions.PNAME_sslTrustStorePassword, PropertyDefinitions.PNAME_sslTrustStoreType, true);
 
         // TODO WL#9925 will redefine other SSL connection properties for X Protocol
-        String keyStoreUrl = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl).getValue();
-        String keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getValue();
-        String keyStorePassword = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword).getValue();
+        KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl,
+                PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, PropertyDefinitions.PNAME_clientCertificateKeyStoreType);
 
-        if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
-            keyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
-            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
-            keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
-            if (StringUtils.isNullOrEmpty(keyStoreType)) {
-                keyStoreType = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getInitialValue();
-            }
-            // check URL
-            if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
-                try {
-                    new URL(keyStoreUrl);
-                } catch (MalformedURLException e) {
-                    keyStoreUrl = "file:" + keyStoreUrl;
-                }
-            }
-        }
-
-        SSLContext sslContext = ExportControlled.getSSLContext(keyStoreUrl, keyStoreType, keyStorePassword, trustStoreUrl, trustStoreType, trustStorePassword,
-                false, verifyServerCert, sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? socketConnection.getHost() : null, null);
+        SSLContext sslContext = ExportControlled.getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
+                trustStore.keyStoreType, trustStore.keyStorePassword, false, verifyServerCert,
+                sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? socketConnection.getHost() : null, null);
         SSLEngine sslEngine = sslContext.createSSLEngine();
         sslEngine.setUseClientMode(true);
 
-        // check allowed cipher suites
-        String enabledSSLCipherSuites = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
-        boolean overrideCiphers = enabledSSLCipherSuites != null && enabledSSLCipherSuites.length() > 0;
+        sslEngine.setEnabledProtocols(getAllowedProtocols(propertySet, null, sslEngine.getSupportedProtocols()));
 
-        if (overrideCiphers) {
-            // If "enabledSSLCipherSuites" is set we check that JVM allows provided values,
-            List<String> allowedCiphers = new ArrayList<>();
-            List<String> availableCiphers = Arrays.asList(sslEngine.getEnabledCipherSuites());
-            for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
-                if (availableCiphers.contains(cipher)) {
-                    allowedCiphers.add(cipher);
-                }
-            }
-
-            // if some ciphers were filtered into allowedCiphers 
-            sslEngine.setEnabledCipherSuites(allowedCiphers.toArray(new String[] {}));
+        String[] allowedCiphers = getAllowedCiphers(propertySet, null, sslEngine.getEnabledCipherSuites());
+        if (allowedCiphers != null) {
+            sslEngine.setEnabledCipherSuites(allowedCiphers);
         }
-
-        // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
-        // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
-        // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
-        String enabledTLSProtocols = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
-        String[] tryProtocols = enabledTLSProtocols != null && enabledTLSProtocols.length() > 0 ? enabledTLSProtocols.split("\\s*,\\s*")
-                : new String[] { "TLSv1.1", "TLSv1" };
-        List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
-        List<String> jvmSupportedProtocols = Arrays.asList(sslEngine.getSupportedProtocols());
-
-        List<String> allowedProtocols = new ArrayList<>();
-        for (String p : TLS_PROTOCOLS) {
-            if (jvmSupportedProtocols.contains(p) && configuredProtocols.contains(p)) {
-                allowedProtocols.add(p);
-            }
-        }
-        sslEngine.setEnabledProtocols(allowedProtocols.toArray(new String[0]));
 
         performTlsHandshake(sslEngine, channel);
 

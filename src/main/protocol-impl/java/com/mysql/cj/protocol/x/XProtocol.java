@@ -45,11 +45,13 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
+import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJConnectionFeatureNotAvailableException;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -59,12 +61,11 @@ import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.protocol.ExportControlled;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.MessageSender;
-import com.mysql.cj.protocol.PacketReceivedTimeHolder;
-import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -94,7 +95,7 @@ import com.mysql.cj.xdevapi.SqlResult;
 public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XMessage> {
 
     private MessageReader<XMessageHeader, XMessage> reader;
-    private MessageSender<XMessage> writer;
+    private MessageSender<XMessage> sender;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
     private ProtocolEntityFactory<Field, XMessage> fieldFactory;
@@ -137,23 +138,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     /**
-     * Get the capabilities from the server.
-     * <p>
-     * <b>NOTE:</b> This must be called before authentication.
-     * 
-     * @return capabilities mapped by name
-     */
-    private XServerCapabilities getCapabilities() {
-        try {
-            this.writer.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesGet());
-            return new XServerCapabilities(((Capabilities) this.reader.readMessage(null, ServerMessages.Type.CONN_CAPABILITIES_VALUE).getMessage())
-                    .getCapabilitiesList().stream().collect(toMap(Capability::getName, Capability::getValue)));
-        } catch (IOException e) {
-            throw new XProtocolError(e.getMessage(), e);
-        }
-    }
-
-    /**
      * Set a capability of current session. Must be done before authentication ({@link #changeUser(String, String, String)}).
      * 
      * @param name
@@ -163,51 +147,57 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      */
     public void setCapability(String name, Object value) {
         ((XServerCapabilities) getServerSession().getCapabilities()).setCapability(name, value);
-        this.writer.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesSet(name, value));
+        this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesSet(name, value));
         readOk();
     }
 
     public void negotiateSSLConnection(int packLength) {
+
+        if (!ExportControlled.enabled()) {
+            throw new CJConnectionFeatureNotAvailableException();
+        }
 
         if (!((XServerCapabilities) this.serverSession.getCapabilities()).hasCapability("tls")) {
             throw new CJCommunicationsException("A secure connection is required but the server is not configured with SSL.");
         }
 
         // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
-        ((AsyncMessageReader) this.reader).stopAfterNextMessage();
+        this.reader.stopAfterNextMessage();
         setCapability("tls", true);
 
         try {
-            this.socketConnection.performTlsHandshake(null);
+            this.socketConnection.performTlsHandshake(null); //(this.serverSession);
         } catch (SSLParamsException | FeatureNotAvailableException | IOException e) {
             throw new CJCommunicationsException(e);
         }
 
-        // resume message processing
-        ((AsyncMessageSender) this.writer).setChannel(this.socketConnection.getAsynchronousSocketChannel());
-        ((AsyncMessageReader) this.reader).start();
+        if (this.socketConnection.isSynchronous()) {
+            // i/o streams were replaced, build new packet sender/reader
+            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
+            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+        } else {
+            // resume message processing
+            ((AsyncMessageSender) this.sender).setChannel(this.socketConnection.getAsynchronousSocketChannel());
+            this.reader.start();
+        }
     }
 
+    @SuppressWarnings("unchecked")
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
 
         if (this.socketConnection.isSynchronous()) {
+            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
             this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
-            this.writer = new SyncMessageSender(this.socketConnection.getMysqlOutput());
             this.managedResource = this.socketConnection.getMysqlSocket();
-
-            this.serverSession.setCapabilities(getCapabilities());
-            return;
+        } else {
+            this.sender = new AsyncMessageSender(this.socketConnection.getAsynchronousSocketChannel());
+            this.reader = new AsyncMessageReader(this.propertySet, this.socketConnection);
+            this.reader.start();
+            this.managedResource = this.socketConnection.getAsynchronousSocketChannel();
         }
 
-        XAsyncSocketConnection sc = (XAsyncSocketConnection) this.socketConnection;
-        this.reader = new AsyncMessageReader(this.propertySet, sc);
-        ((AsyncMessageReader) this.reader).start();
-        this.writer = new AsyncMessageSender(sc.getAsynchronousSocketChannel());
-
-        this.managedResource = sc.getAsynchronousSocketChannel();
-
-        this.serverSession.setCapabilities(getCapabilities());
+        this.serverSession.setCapabilities(readServerCapabilities());
 
         SslMode sslMode = this.propertySet.<SslMode> getEnumReadableProperty(PropertyDefinitions.PNAME_sslMode).getValue();
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
@@ -223,6 +213,20 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
 
         if (sslMode != SslMode.DISABLED) {
+            if (this.socketConnection.isSynchronous()) {
+                // for synchronous connection we reuse the legacy code thus we need
+                // to translate X Protocol specific connection options to legacy ones
+                this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(true);
+                this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
+                        .setValue(sslMode == SslMode.REQUIRED ? false : true);
+
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl))
+                        .setFromString(trustStoreUrl, null);
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword))
+                        .setFromString(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue(), null);
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType))
+                        .setFromString(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue(), null);
+            }
             negotiateSSLConnection(0);
         }
     }
@@ -436,8 +440,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
         com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.noticeFactory,
                 this.serverSession.getDefaultTimeZone());
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
-        ((AsyncMessageSender) this.writer).writeAsync(this.messageBuilder.buildSqlStatement(sql, args), resultHandler);
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
+        this.sender.send(this.messageBuilder.buildSqlStatement(sql, args), resultHandler);
         return f;
     }
 
@@ -453,9 +457,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public void asyncFind(FindParams findParams, ResultListener<StatementExecuteOk> callbacks, CompletableFuture<?> errorFuture) {
         newCommand();
         MessageListener<XMessage> l = new ResultMessageListener(this.fieldFactory, this.noticeFactory, callbacks);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture,
-                () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
-        ((AsyncMessageSender) this.writer).writeAsync(((XMessageBuilder) this.messageBuilder).buildFind(findParams), resultHandler);
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture, () -> this.reader.pushMessageListener(l));
+        this.sender.send(((XMessageBuilder) this.messageBuilder).buildFind(findParams), resultHandler);
     }
 
     public boolean isOpen() {
@@ -489,13 +492,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {
-        this.writer.setMaxAllowedPacket(maxAllowedPacket);
+        this.sender.setMaxAllowedPacket(maxAllowedPacket);
     }
 
     @Override
     public void send(Message message, int packetLen) {
         newCommand();
-        this.writer.send((XMessage) message);
+        this.sender.send((XMessage) message);
     }
 
     @SuppressWarnings("unchecked")
@@ -504,37 +507,30 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         newCommand();
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
         final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f, this.noticeFactory);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> ((AsyncMessageReader) this.reader).pushMessageListener(l));
-        ((AsyncMessageSender) this.writer).writeAsync((XMessage) message, resultHandler);
+        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
+        this.sender.send((XMessage) message, resultHandler);
         return (CompletableFuture<RES>) f;
     }
 
+    /**
+     * Get the capabilities from the server.
+     * <p>
+     * <b>NOTE:</b> This must be called before authentication.
+     * 
+     * @return capabilities mapped by name
+     */
     public ServerCapabilities readServerCapabilities() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+        try {
+            this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesGet());
+            return new XServerCapabilities(((Capabilities) this.reader.readMessage(null, ServerMessages.Type.CONN_CAPABILITIES_VALUE).getMessage())
+                    .getCapabilitiesList().stream().collect(toMap(Capability::getName, Capability::getValue)));
+        } catch (IOException e) {
+            throw new XProtocolError(e.getMessage(), e);
+        }
     }
 
     @Override
     public ExceptionInterceptor getExceptionInterceptor() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public PacketSentTimeHolder getPacketSentTimeHolder() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public PacketReceivedTimeHolder getPacketReceivedTimeHolder() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setPacketReceivedTimeHolder(PacketReceivedTimeHolder packetReceivedTimeHolder) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
