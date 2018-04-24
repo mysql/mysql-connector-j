@@ -29,36 +29,52 @@
 
 package com.mysql.cj.conf;
 
-import java.io.Serializable;
+import java.util.Properties;
 
-public abstract class AbstractReadableProperty<T> extends AbstractRuntimeProperty<T> implements ReadableProperty<T>, Serializable {
+import javax.naming.Reference;
 
-    private static final long serialVersionUID = -3424722534876438236L;
+import com.mysql.cj.exceptions.ExceptionInterceptor;
 
-    public AbstractReadableProperty() {
-        super();
-    }
+public class MemorySizeProperty extends IntegerProperty {
 
-    protected AbstractReadableProperty(PropertyDefinition<T> propertyDefinition) {
+    private static final long serialVersionUID = 4200558564320133284L;
+
+    private String initialValueAsString;
+
+    protected String valueAsString;
+
+    protected MemorySizeProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
+        this.valueAsString = propertyDefinition.getDefaultValue().toString();
     }
 
     @Override
-    public T getValue() {
-        return this.value;
+    public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(extractFrom, exceptionInterceptor);
+        this.initialValueAsString = this.valueAsString;
     }
 
     @Override
-    public T getInitialValue() {
-        return this.initialValue;
+    public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) {
+        super.initializeFrom(ref, exceptionInterceptor);
+        this.initialValueAsString = this.valueAsString;
     }
 
     @Override
     public String getStringValue() {
-        if (this.value != null) {
-            return this.value.toString();
-        }
-        return null;
+        return this.valueAsString;
     }
 
+    @Override
+    public void setValueInternal(Integer value, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
+        super.setValueInternal(value, valueAsString, exceptionInterceptor);
+        this.valueAsString = valueAsString == null ? String.valueOf(value.intValue()) : valueAsString;
+    }
+
+    @Override
+    public void resetValue() {
+        this.value = this.initialValue;
+        this.valueAsString = this.initialValueAsString;
+        invokeListeners();
+    }
 }

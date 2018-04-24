@@ -37,33 +37,19 @@ public interface PropertySet {
 
     void removeProperty(String name);
 
-    <T> ReadableProperty<T> getReadableProperty(String name);
+    <T> RuntimeProperty<T> getProperty(String name);
 
-    ReadableProperty<Boolean> getBooleanReadableProperty(String name);
+    RuntimeProperty<Boolean> getBooleanProperty(String name);
 
-    ReadableProperty<Integer> getIntegerReadableProperty(String name);
+    RuntimeProperty<Integer> getIntegerProperty(String name);
 
-    ReadableProperty<Long> getLongReadableProperty(String name);
+    RuntimeProperty<Long> getLongProperty(String name);
 
-    ReadableProperty<Integer> getMemorySizeReadableProperty(String name);
+    RuntimeProperty<Integer> getMemorySizeProperty(String name);
 
-    ReadableProperty<String> getStringReadableProperty(String name);
+    RuntimeProperty<String> getStringProperty(String name);
 
-    <T extends Enum<T>> ReadableProperty<T> getEnumReadableProperty(String name);
-
-    <T> ModifiableProperty<T> getModifiableProperty(String name);
-
-    ModifiableProperty<Boolean> getBooleanModifiableProperty(String name);
-
-    ModifiableProperty<Integer> getIntegerModifiableProperty(String name);
-
-    ModifiableProperty<Long> getLongModifiableProperty(String name);
-
-    ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name);
-
-    ModifiableProperty<String> getStringModifiableProperty(String name);
-
-    <T extends Enum<T>> ReadableProperty<T> getEnumModifiableProperty(String name);
+    <T extends Enum<T>> RuntimeProperty<T> getEnumProperty(String name);
 
     /**
      * Initializes the property set with driver properties that come from URL or passed to

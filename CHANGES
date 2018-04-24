@@ -3,6 +3,8 @@
 
 Version 8.0.12
 
+  - WL#11876, Improve connection properties design.
+
   - WL#11933, Connector/J 8.0 X DevAPI reference documentation update.
 
   - WL#11860, Ensure >= 75% code coverage.

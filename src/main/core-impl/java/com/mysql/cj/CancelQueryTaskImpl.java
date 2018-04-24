@@ -54,7 +54,7 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
     public CancelQueryTaskImpl(Query cancellee) {
         this.queryToCancel = cancellee;
         NativeSession session = (NativeSession) cancellee.getSession();
-        this.queryTimeoutKillsConnection = session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
+        this.queryTimeoutKillsConnection = session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
                 .getValue();
     }
 

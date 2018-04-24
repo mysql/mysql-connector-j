@@ -414,7 +414,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
                     this.session.dumpPacketRingBuffer();
                 }
 
@@ -430,7 +430,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 throw sqlEx;
             } catch (Exception ex) {
-                if (this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
                     this.session.dumpPacketRingBuffer();
                 }
 
@@ -477,8 +477,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             ColumnDefinition resultFields = ((ServerPreparedQuery) this.query).getResultFields();
 
             return resultFields == null || resultFields.getFields() == null ? null : new ResultSetMetaData(this.session, resultFields.getFields(),
-                    this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                    this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), this.exceptionInterceptor);
+                    this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
+                    this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), this.exceptionInterceptor);
         }
     }
 

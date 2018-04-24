@@ -39,6 +39,19 @@ public interface RuntimeProperty<T> {
 
     PropertyDefinition<T> getPropertyDefinition();
 
+    /**
+     * Explicitly set value of this RuntimeProperty according to the self-titled property value contained in extractFrom.
+     * This method is called during PropertySet initialization thus ignores the RUNTIME_NOT_MODIFIABLE flag.
+     * <p>
+     * This value will also be the initial one, i.e. {@link #resetValue()} will reset to this value, not the default one.
+     * <p>
+     * If extractFrom does not contain such property then this RuntimeProperty remains unchanged.
+     * 
+     * @param extractFrom
+     *            {@link Properties} object containing key-value pairs usually passed from connection string.
+     * @param exceptionInterceptor
+     *            exceptionInterceptor
+     */
     void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor);
 
     void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor);
@@ -64,5 +77,44 @@ public interface RuntimeProperty<T> {
     public static interface RuntimePropertyListener {
         void handlePropertyChange(RuntimeProperty<?> prop);
     }
+
+    /**
+     * Get internal value representation as Object.
+     * 
+     * @return value
+     */
+    T getValue();
+
+    /**
+     * Get initial value (default or defined in connection string/Properties)
+     * 
+     * @return value
+     */
+    T getInitialValue();
+
+    /**
+     * Get internal value representation as String.
+     * 
+     * @return value
+     */
+    String getStringValue();
+
+    /**
+     * Set the object value of a property directly. Validation against allowable values will be performed.
+     * 
+     * @param value
+     *            value
+     */
+    void setValue(T value);
+
+    /**
+     * Set the object value of a property directly. Validation against allowable values will be performed.
+     * 
+     * @param value
+     *            value
+     * @param exceptionInterceptor
+     *            exception interceptor
+     */
+    void setValue(T value, ExceptionInterceptor exceptionInterceptor);
 
 }

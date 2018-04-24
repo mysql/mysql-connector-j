@@ -122,6 +122,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.PasswordExpiredException;
+import com.mysql.cj.exceptions.PropertyNotModifiableException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
@@ -962,8 +963,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_useConfigs, "maxPerformance");
 
         Connection maxPerfConn = getConnectionWithProps(props);
-        assertEquals(true, ((JdbcConnection) maxPerfConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue()
-                .booleanValue());
+        assertEquals(true,
+                ((JdbcConnection) maxPerfConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue().booleanValue());
     }
 
     /**
@@ -2592,10 +2593,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Xid txid = new MysqlXid(new byte[] { 0x1 }, new byte[] { 0xf }, 3306);
 
-        xads1.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads1.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads1.setUrl(dbUrl);
 
-        xads2.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads2.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         xads2.setUrl(dbUrl);
 
         XAConnection c1 = xads1.getXAConnection();
@@ -3001,10 +3002,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testBug56955() throws Exception {
-        assertEquals("JKS", ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType)
-                .getStringValue());
-        assertEquals("JKS", ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType)
-                .getStringValue());
+        assertEquals("JKS",
+                ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).getStringValue());
+        assertEquals("JKS",
+                ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType).getStringValue());
     }
 
     public void testBug57262() throws Exception {
@@ -4210,9 +4211,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 // 3.2. Runtime setServerRSAPublicKeyFile must be denied
                 final Connection c2 = getConnectionWithProps(sha256Url, propsNoRetrieval);
-                assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
+                assertThrows(PropertyNotModifiableException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                        ((JdbcConnection) c2).getPropertySet().getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
                                 .setValue("src/test/config/ssl-test-certs/mykey.pub");
                         return null;
                     }
@@ -4221,9 +4222,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 // 3.3. Runtime setAllowPublicKeyRetrieval must be denied
                 final Connection c3 = getConnectionWithProps(sha256Url, propsNoRetrieval);
-                assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
+                assertThrows(PropertyNotModifiableException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
+                        ((JdbcConnection) c3).getPropertySet().getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
                         return null;
                     }
                 });
@@ -4788,7 +4789,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
                 + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                        ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                        ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                         ((JdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
@@ -5557,7 +5558,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String atts = null;
             try {
                 if (ctmp != null) {
-                    atts = ctmp.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue();
+                    atts = ctmp.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue();
                     if (atts != null && atts.equals(attributValue)) {
                         connectionNumber++;
                         if (show) {
@@ -5874,17 +5875,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 // test values of property 'blobSendChunkSize'
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", (int) (memMultiplier[i] * 1.2),
-                        connWithMemProps.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
+                        connWithMemProps.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue().intValue());
 
                 // test values of property 'largeRowSizeThreshold'
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4" + testMemUnits[i][j],
-                        connWithMemProps.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getStringValue());
+                        connWithMemProps.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getStringValue());
                 assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", (int) (memMultiplier[i] * 1.4),
-                        connWithMemProps.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue().intValue());
+                        connWithMemProps.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold).getValue().intValue());
 
                 // test values of property 'locatorFetchBufferSize'
-                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6), connWithMemProps
-                        .getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue().intValue());
+                assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'", (int) (memMultiplier[i] * 1.6),
+                        connWithMemProps.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue().intValue());
 
                 connWithMemProps.close();
             }
@@ -6240,10 +6241,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug67803() throws Exception {
         MysqlXADataSource dataSource = new MysqlXADataSource();
         dataSource.setUrl(dbUrl);
-        dataSource.<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
-        dataSource.<Integer> getJdbcModifiableProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
-        dataSource.<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
-        dataSource.<String> getModifiableProperty(PropertyDefinitions.PNAME_exceptionInterceptors)
+        dataSource.getProperty(PropertyDefinitions.PNAME_useCursorFetch).setValue(true);
+        dataSource.getProperty(PropertyDefinitions.PNAME_defaultFetchSize).setValue(50);
+        dataSource.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
+        dataSource.getProperty(PropertyDefinitions.PNAME_exceptionInterceptors)
                 .setValue("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
 
         XAConnection testXAConn1 = dataSource.getXAConnection();
@@ -7276,12 +7277,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         MysqlXADataSource xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
 
-        xads.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(false);
+        xads.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(false);
         con = xads.getXAConnection();
         assertTrue(con instanceof MysqlXAConnection);
         testBug62452WithConnection(con);
 
-        xads.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         con = xads.getXAConnection();
         assertTrue(con instanceof SuspendableXAConnection);
         testBug62452WithConnection(con);
@@ -7391,15 +7392,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             testBug20825727CreateUser(testDbUrl, "testBug20825727", simplePwd, encoding, pluginName, pwdHashingMethod);
                             testStep = "login with simple password";
                             testBug20825727TestLogin(testDbUrl,
-                                    testConn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled,
-                                    rsaEnabled, "testBug20825727", simplePwd, encoding, pluginName);
+                                    testConn.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled, rsaEnabled,
+                                    "testBug20825727", simplePwd, encoding, pluginName);
 
                             testStep = "change password";
                             testBug20825727ChangePassword(testDbUrl, "testBug20825727", complexPwd, encoding, pluginName, pwdHashingMethod);
                             testStep = "login with complex password";
                             testBug20825727TestLogin(testDbUrl,
-                                    testConn.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled,
-                                    rsaEnabled, "testBug20825727", complexPwd, encoding, pluginName);
+                                    testConn.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(), sslEnabled, rsaEnabled,
+                                    "testBug20825727", complexPwd, encoding, pluginName);
                         } catch (SQLException e) {
                             e.printStackTrace();
                             fail("Failed at '" + testStep + "' using encoding '" + encoding + "' and plugin '" + pluginName
@@ -7989,18 +7990,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // 1. No explicit useSSL
             sslConn = getConnectionWithProps(props);
             if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
-                        .isExplicitlySet());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
 
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-                assertFalse(
-                        ((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
                 assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
             } else {
-                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-                assertTrue(
-                        ((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
+                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
                 assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
             }
 
@@ -8020,12 +8018,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
             sslConn = getConnectionWithProps(props);
 
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
-                    .isExplicitlySet());
+            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
+            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
 
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
+            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
             assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
             testBug21947042_PrintCipher(sslConn);
@@ -8047,12 +8044,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
             sslConn = getConnectionWithProps(props);
 
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
-                    .isExplicitlySet());
+            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
+            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
 
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
+            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
+            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
             assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
             testBug21947042_PrintCipher(sslConn);
@@ -9734,9 +9730,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Connection testConn = getConnectionWithProps(props);
 
             assertEquals(testCase, useLocTransSt, ((JdbcConnection) testConn).getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_useLocalTransactionState).getValue().booleanValue());
-            assertEquals(testCase, useElideSetAC, ((JdbcConnection) testConn).getPropertySet()
-                    .getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue().booleanValue());
+                    .getBooleanProperty(PropertyDefinitions.PNAME_useLocalTransactionState).getValue().booleanValue());
+            assertEquals(testCase, useElideSetAC,
+                    ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue().booleanValue());
 
             testConn.close();
         } while ((useLocTransSt = !useLocTransSt) || (useElideSetAC = !useElideSetAC));
@@ -10208,9 +10204,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 // 3.2. Runtime setServerRSAPublicKeyFile must be denied 
                 final Connection c2 = getConnectionWithProps(sha256Url, propsNoRetrieval);
-                assertThrows(SQLException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
+                assertThrows(PropertyNotModifiableException.class, "Dynamic change of ''serverRSAPublicKeyFile'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnection) c2).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
+                        ((JdbcConnection) c2).getPropertySet().getProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile)
                                 .setValue("src/test/config/ssl-test-certs/mykey.pub");
                         return null;
                     }
@@ -10219,9 +10215,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 // 3.3. Runtime setAllowPublicKeyRetrieval must be denied 
                 final Connection c3 = getConnectionWithProps(sha256Url, propsNoRetrieval);
-                assertThrows(SQLException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
+                assertThrows(PropertyNotModifiableException.class, "Dynamic change of ''allowPublicKeyRetrieval'' is not allowed.", new Callable<Void>() {
                     public Void call() throws Exception {
-                        ((JdbcConnection) c3).getPropertySet().getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
+                        ((JdbcConnection) c3).getPropertySet().getProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).setValue(true);
                         return null;
                     }
                 });

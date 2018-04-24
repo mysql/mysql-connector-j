@@ -38,7 +38,7 @@ import java.util.List;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -62,12 +62,12 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
     protected String seed = null;
     protected boolean publicKeyRequested = false;
     protected String publicKeyString = null;
-    protected ReadableProperty<String> serverRSAPublicKeyFile = null;
+    protected RuntimeProperty<String> serverRSAPublicKeyFile = null;
 
     @Override
     public void init(Protocol<NativePacketPayload> prot) {
         this.protocol = prot;
-        this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
+        this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile);
 
         String pkURL = this.serverRSAPublicKeyFile.getValue();
         if (pkURL != null) {
@@ -122,7 +122,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
                     toServer.add(bresp);
 
                 } else {
-                    if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                    if (!this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
                         throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
                                 this.protocol.getExceptionInterceptor());
 
@@ -186,9 +186,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
 
         } catch (IOException ioEx) {
 
-            throw ExceptionFactory.createException(WrongArgumentException.class,
-                    Messages.getString("Sha256PasswordPlugin.0", propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue()
-                            ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Sha256PasswordPlugin.0",
+                    propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? new Object[] { "" } : new Object[] { "'" + pkPath + "'" }),
                     exceptionInterceptor);
 
         } finally {

@@ -29,7 +29,7 @@
 
 package com.mysql.cj.protocol.a;
 
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -42,7 +42,7 @@ public abstract class AbstractRowFactory implements ProtocolEntityFactory<Result
     protected ColumnDefinition columnDefinition;
     protected Resultset.Concurrency resultSetConcurrency;
     protected boolean canReuseRowPacketForBufferRow;
-    protected ReadableProperty<Integer> useBufferRowSizeThreshold;
+    protected RuntimeProperty<Integer> useBufferRowSizeThreshold;
     protected ExceptionInterceptor exceptionInterceptor;
     protected ValueDecoder valueDecoder;
 

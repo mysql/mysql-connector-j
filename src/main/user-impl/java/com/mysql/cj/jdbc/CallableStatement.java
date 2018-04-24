@@ -293,7 +293,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             MysqlType mysqlType = MysqlType.getByName(mysqlTypeName);
             switch (mysqlType) {
                 case YEAR:
-                    if (!CallableStatement.this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue()) {
+                    if (!CallableStatement.this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue()) {
                         return Short.class.getName();
                     }
                     // TODO Adjust for pseudo-boolean ?
@@ -461,7 +461,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
 
-        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
     }
 
     /**
@@ -594,7 +594,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
-        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,16 +29,11 @@
 
 package com.mysql.cj.conf;
 
-public class ReadableStringProperty extends AbstractReadableProperty<String> {
+public class EnumProperty<T extends Enum<T>> extends AbstractRuntimeProperty<T> {
 
-    private static final long serialVersionUID = -4141084145739428803L;
+    private static final long serialVersionUID = -60853080911910124L;
 
-    protected ReadableStringProperty(PropertyDefinition<String> propertyDefinition) {
+    protected EnumProperty(PropertyDefinition<T> propertyDefinition) {
         super(propertyDefinition);
-    }
-
-    @Override
-    public String getStringValue() {
-        return this.value;
     }
 }

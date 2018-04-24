@@ -134,8 +134,8 @@ public class ParseInfo {
                     // no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
                     if (this.firstStmtChar == 'I') {
                         this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql,
-                                session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).getValue(),
-                                session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue(),
+                                session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).getValue(),
+                                session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue(),
                                 session.getServerSession().isNoBackslashEscapesSet());
                         this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
                     }
@@ -263,7 +263,7 @@ public class ParseInfo {
                     && !this.parametersInDuplicateKeyClause;
 
             if (this.canRewriteAsMultiValueInsert
-                    && session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()) {
+                    && session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()) {
                 buildRewriteBatchedParams(sql, session, encoding);
             }
         }

@@ -54,9 +54,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
@@ -269,12 +269,12 @@ public class NativeSession extends CoreSession implements Serializable {
     }
 
     public void setSocketTimeout(int milliseconds) {
-        getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(milliseconds); // for re-connects
+        getPropertySet().getProperty(PropertyDefinitions.PNAME_socketTimeout).setValue(milliseconds); // for re-connects
         ((NativeProtocol) this.protocol).setSocketTimeout(milliseconds);
     }
 
     public int getSocketTimeout() {
-        ModifiableProperty<Integer> sto = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_socketTimeout);
+        RuntimeProperty<Integer> sto = getPropertySet().getProperty(PropertyDefinitions.PNAME_socketTimeout);
         return sto.getValue();
     }
 
@@ -439,7 +439,7 @@ public class NativeSession extends CoreSession implements Serializable {
      */
     public boolean configureClientCharacterSet(boolean dontCheckServerMatch) {
         String realJavaEncoding = this.characterEncoding.getValue();
-        ModifiableProperty<String> characterSetResults = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_characterSetResults);
+        RuntimeProperty<String> characterSetResults = getPropertySet().getProperty(PropertyDefinitions.PNAME_characterSetResults);
         boolean characterSetAlreadyConfigured = false;
 
         try {
@@ -659,7 +659,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             }
 
-            String connectionCollation = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
+            String connectionCollation = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
             if (connectionCollation != null) {
                 StringBuilder setBuf = new StringBuilder("SET collation_connection = ".length() + connectionCollation.length());
                 setBuf.append("SET collation_connection = ").append(connectionCollation);
@@ -733,7 +733,7 @@ public class NativeSession extends CoreSession implements Serializable {
             try {
                 Class<?> factoryClass;
 
-                factoryClass = Class.forName(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).getStringValue());
+                factoryClass = Class.forName(getPropertySet().getStringProperty(PropertyDefinitions.PNAME_serverConfigCacheFactory).getStringValue());
 
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
@@ -766,12 +766,12 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             } catch (ClassNotFoundException e) {
                 throw ExceptionFactory.createException(Messages.getString("Connection.CantFindCacheFactory",
-                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                        new Object[] { getPropertySet().getStringProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
                                 PropertyDefinitions.PNAME_parseInfoCacheFactory }),
                         e, getExceptionInterceptor());
             } catch (InstantiationException | IllegalAccessException | CJException e) {
                 throw ExceptionFactory.createException(Messages.getString("Connection.CantLoadCacheFactory",
-                        new Object[] { getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
+                        new Object[] { getPropertySet().getStringProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue(),
                                 PropertyDefinitions.PNAME_parseInfoCacheFactory }),
                         e, getExceptionInterceptor());
             }
@@ -821,7 +821,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 version = buf.toString();
             }
 
-            String versionComment = (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() || version == null) ? ""
+            String versionComment = (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue() || version == null) ? ""
                     : "/* " + version + " */";
 
             this.protocol.getServerSession().setServerVariables(new HashMap<String, String>());
@@ -896,7 +896,7 @@ public class NativeSession extends CoreSession implements Serializable {
     }
 
     public void setSessionVariables() {
-        String sessionVariables = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
+        String sessionVariables = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_sessionVariables).getValue();
         if (sessionVariables != null) {
             List<String> variablesToSet = new ArrayList<>();
             for (String part : StringUtils.split(sessionVariables, ",", "\"'(", "\"')", "\"'", true)) {
@@ -939,7 +939,7 @@ public class NativeSession extends CoreSession implements Serializable {
             }
         }
 
-        if (customCharset == null && getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
+        if (customCharset == null && getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_detectCustomCollations).getValue()) {
             customCharset = new HashMap<>();
             customMblen = new HashMap<>();
 
@@ -1186,9 +1186,9 @@ public class NativeSession extends CoreSession implements Serializable {
                     this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
 
         } catch (CJException sqlE) {
-            if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
+            if (getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_dumpQueriesOnException).getValue()) {
                 String extractedSql = NativePacketPayload.extractSqlFromPacket(query, packet, endOfQueryPacketPosition,
-                        getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
+                        getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue());
                 StringBuilder messageBuf = new StringBuilder(extractedSql.length() + 32);
                 messageBuf.append("\n\nQuery being executed when exception was thrown:\n");
                 messageBuf.append(extractedSql);
@@ -1257,8 +1257,8 @@ public class NativeSession extends CoreSession implements Serializable {
             checkClosed();
         }
 
-        long pingMillisLifetime = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
-        int pingMaxOperations = getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
+        long pingMillisLifetime = getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_selfDestructOnPingSecondsLifetime).getValue();
+        int pingMaxOperations = getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_selfDestructOnPingMaxOperations).getValue();
 
         if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
                 || (pingMaxOperations > 0 && pingMaxOperations <= getCommandCount())) {

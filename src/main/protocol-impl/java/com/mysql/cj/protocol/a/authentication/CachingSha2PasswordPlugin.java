@@ -124,7 +124,7 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
                     toServer.add(bresp);
 
                 } else {
-                    if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                    if (!this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
                         throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
                                 this.protocol.getExceptionInterceptor());
 

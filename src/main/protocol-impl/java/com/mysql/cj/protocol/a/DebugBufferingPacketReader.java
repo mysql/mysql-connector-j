@@ -34,7 +34,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.util.StringUtils;
 
@@ -49,13 +49,13 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
 
     private MessageReader<NativePacketHeader, NativePacketPayload> packetReader;
     private LinkedList<StringBuilder> packetDebugBuffer;
-    private ReadableProperty<Integer> packetDebugBufferSize;
+    private RuntimeProperty<Integer> packetDebugBufferSize;
     private String lastHeaderPayload = "";
 
     private boolean packetSequenceReset = false;
 
     public DebugBufferingPacketReader(MessageReader<NativePacketHeader, NativePacketPayload> packetReader, LinkedList<StringBuilder> packetDebugBuffer,
-            ReadableProperty<Integer> packetDebugBufferSize) {
+            RuntimeProperty<Integer> packetDebugBufferSize) {
         this.packetReader = packetReader;
         this.packetDebugBuffer = packetDebugBuffer;
         this.packetDebugBufferSize = packetDebugBufferSize;

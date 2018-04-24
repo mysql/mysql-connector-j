@@ -46,7 +46,7 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
@@ -69,19 +69,19 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
     protected int numberOfExecutions = 0;
 
-    protected ReadableProperty<Boolean> useStreamLengthsInPrepStmts;
-    protected ReadableProperty<Boolean> sendFractionalSeconds;
-    private ReadableProperty<Boolean> treatUtilDateAsTimestamp;
+    protected RuntimeProperty<Boolean> useStreamLengthsInPrepStmts;
+    protected RuntimeProperty<Boolean> sendFractionalSeconds;
+    private RuntimeProperty<Boolean> treatUtilDateAsTimestamp;
 
     /** Is this query a LOAD DATA query? */
     protected boolean isLoadDataQuery = false;
 
     public AbstractQueryBindings(int parameterCount, Session sess) {
         this.session = sess;
-        this.charEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-        this.sendFractionalSeconds = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
-        this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        this.sendFractionalSeconds = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
+        this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
 
         initBindValues(parameterCount);
     }

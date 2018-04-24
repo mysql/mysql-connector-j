@@ -334,7 +334,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
                 boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
-                String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                         .getStringValue();
 
                 if (useLength && (length != -1)) {
@@ -393,7 +393,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(i);
         } else {
             try {
-                String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
                         .getStringValue();
 
                 if (forcedEncoding == null) {
@@ -434,7 +434,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setDouble(int parameterIndex, double x) {
-        if (!this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+        if (!this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
                 && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedStatement.64", new Object[] { x }),
                     this.session.getExceptionInterceptor());

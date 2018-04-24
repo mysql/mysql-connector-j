@@ -435,18 +435,18 @@ public class TranslateExceptions {
         // MysqlDataSource extends JdbcPropertySetImpl implements DataSource, Referenceable, Serializable, JdbcPropertySet
         clazz = pool.get(MysqlDataSource.class.getName());
         instrumentJdbcMethods(clazz, javax.sql.DataSource.class);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getStringProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setStringProperty", new CtClass[] { ctString, ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getBooleanProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setBooleanProperty", new CtClass[] { ctString, CtClass.booleanType }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getIntegerProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setIntegerProperty", new CtClass[] { ctString, CtClass.intType }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getLongProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setLongProperty", new CtClass[] { ctString, CtClass.longType }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getMemorySizeProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setMemorySizeProperty", new CtClass[] { ctString, CtClass.intType }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getEnumProperty", new CtClass[] { ctString }), null);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("setEnumProperty", new CtClass[] { ctString, ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getStringRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setStringRuntimeProperty", new CtClass[] { ctString, ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getBooleanRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setBooleanRuntimeProperty", new CtClass[] { ctString, CtClass.booleanType }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getIntegerRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setIntegerRuntimeProperty", new CtClass[] { ctString, CtClass.intType }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getLongRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setLongRuntimeProperty", new CtClass[] { ctString, CtClass.longType }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getMemorySizeRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setMemorySizeRuntimeProperty", new CtClass[] { ctString, CtClass.intType }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("getEnumRuntimeProperty", new CtClass[] { ctString }), null);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("setEnumRuntimeProperty", new CtClass[] { ctString, ctString }), null);
         clazz.writeFile(args[0]);
 
         /*

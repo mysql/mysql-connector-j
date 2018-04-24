@@ -169,7 +169,7 @@ public class BlobFromLocator implements java.sql.Blob {
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
         return new BufferedInputStream(new LocatorInputStream(),
-                this.creatorResultSet.getSession().getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
+                this.creatorResultSet.getSession().getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
     }
 
     @Override

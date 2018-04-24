@@ -46,7 +46,7 @@ public class TextRowFactory extends AbstractRowFactory implements ProtocolEntity
         this.columnDefinition = colDefinition;
         this.resultSetConcurrency = resultSetConcurrency;
         this.canReuseRowPacketForBufferRow = canReuseRowPacketForBufferRow;
-        this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
+        this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
         this.exceptionInterceptor = protocol.getExceptionInterceptor();
         this.valueDecoder = new MysqlTextValueDecoder();
     }

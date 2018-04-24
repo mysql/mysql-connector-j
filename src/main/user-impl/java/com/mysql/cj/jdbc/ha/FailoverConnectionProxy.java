@@ -127,10 +127,10 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
         connProps.initializeProperties(connectionUrl.getConnectionArgumentsAsProperties());
 
-        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
-        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
-        this.failoverReadOnly = connProps.getBooleanReadableProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
-        this.retriesAllDown = connProps.getIntegerReadableProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
+        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
+        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
+        this.failoverReadOnly = connProps.getBooleanProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
+        this.retriesAllDown = connProps.getIntegerProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
 
         this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;
 

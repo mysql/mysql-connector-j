@@ -66,13 +66,13 @@ public class LongPropertyDefinition extends AbstractPropertyDefinition<Long> {
     }
 
     /**
-     * Creates instance of ReadableLongProperty or ModifiableLongProperty depending on isRuntimeModifiable() result.
+     * Creates instance of LongProperty.
      * 
      * @return RuntimeProperty
      */
     @Override
     public RuntimeProperty<Long> createRuntimeProperty() {
-        return isRuntimeModifiable() ? new ModifiableLongProperty(this) : new ReadableLongProperty(this);
+        return new LongProperty(this);
     }
 
 }

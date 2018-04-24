@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.Message;
@@ -57,12 +57,12 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     /** The number of parameters in this PreparedStatement */
     protected int parameterCount;
 
-    protected ReadableProperty<Boolean> autoClosePStmtStreams;
+    protected RuntimeProperty<Boolean> autoClosePStmtStreams;
 
     /** Command index of currently executing batch command. */
     protected int batchCommandIndex = -1;
 
-    protected ReadableProperty<Boolean> useStreamLengthsInPrepStmts;
+    protected RuntimeProperty<Boolean> useStreamLengthsInPrepStmts;
 
     private byte[] streamConvertBuf = null;
 
@@ -71,8 +71,8 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     public AbstractPreparedQuery(NativeSession sess) {
         super(sess);
 
-        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
         this.usingAnsiMode = !this.session.getServerSession().useAnsiQuotedIdentifiers();
     }
 

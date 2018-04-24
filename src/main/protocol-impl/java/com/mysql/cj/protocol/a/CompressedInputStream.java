@@ -35,7 +35,7 @@ import java.io.InputStream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.util.StringUtils;
 
@@ -53,7 +53,7 @@ public class CompressedInputStream extends InputStream {
     private Inflater inflater;
 
     /** Connection property reference */
-    private ReadableProperty<Boolean> traceProtocol;
+    private RuntimeProperty<Boolean> traceProtocol;
 
     /** Connection logger */
     private Log log;
@@ -77,7 +77,7 @@ public class CompressedInputStream extends InputStream {
      * @param log
      *            logger
      */
-    public CompressedInputStream(InputStream streamFromServer, ReadableProperty<Boolean> traceProtocol, Log log) {
+    public CompressedInputStream(InputStream streamFromServer, RuntimeProperty<Boolean> traceProtocol, Log log) {
         this.traceProtocol = traceProtocol;
         this.log = log;
         this.in = streamFromServer;

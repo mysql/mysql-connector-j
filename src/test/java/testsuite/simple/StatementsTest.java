@@ -1844,7 +1844,7 @@ public class StatementsTest extends BaseTestCase {
             ((com.mysql.cj.jdbc.JdbcStatement) this.stmt).setLocalInfileInputStream(stream);
             this.stmt.execute(
                     "LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                            ((MysqlConnection) this.conn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                            ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                             this.serverVersion));
             assertEquals(-1, stream.read());
             this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");

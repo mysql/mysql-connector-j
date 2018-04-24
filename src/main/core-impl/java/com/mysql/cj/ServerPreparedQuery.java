@@ -34,7 +34,7 @@ import java.io.InputStream;
 import java.io.Reader;
 
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -74,22 +74,22 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /** Field-level metadata for result sets. From statement prepare. */
     private ColumnDefinition resultFields;
 
-    protected ReadableProperty<Boolean> gatherPerfMetrics;
+    protected RuntimeProperty<Boolean> gatherPerfMetrics;
 
     protected boolean logSlowQueries = false;
 
     private boolean useAutoSlowLog;
 
-    protected ReadableProperty<Integer> slowQueryThresholdMillis;
+    protected RuntimeProperty<Integer> slowQueryThresholdMillis;
 
-    protected ReadableProperty<Boolean> explainSlowQueries;
+    protected RuntimeProperty<Boolean> explainSlowQueries;
 
     protected boolean queryWasSlow = false;
 
     protected NativeMessageBuilder commandBuilder = new NativeMessageBuilder(); // TODO use shared builder
 
     public static ServerPreparedQuery getInstance(NativeSession sess) {
-        if (sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue()) {
+        if (sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue()) {
             return new ServerPreparedQueryTestcaseGenerator(sess);
         }
         return new ServerPreparedQuery(sess);
@@ -97,11 +97,11 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
     protected ServerPreparedQuery(NativeSession sess) {
         super(sess);
-        this.gatherPerfMetrics = sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
-        this.logSlowQueries = sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
-        this.useAutoSlowLog = sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
-        this.slowQueryThresholdMillis = sess.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis);
-        this.explainSlowQueries = sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries);
+        this.gatherPerfMetrics = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
+        this.logSlowQueries = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
+        this.useAutoSlowLog = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+        this.slowQueryThresholdMillis = sess.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis);
+        this.explainSlowQueries = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_explainSlowQueries);
 
     }
 
@@ -125,7 +125,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             boolean loadDataQuery = StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA");
 
             String characterEncoding = null;
-            String connectionEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+            String connectionEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
             if (!loadDataQuery && (connectionEncoding != null)) {
                 characterEncoding = connectionEncoding;
@@ -564,7 +564,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
                 int bytesInPacket = 0;
                 int totalBytesRead = 0;
                 int bytesReadAtLastSend = 0;
-                int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
+                int packetIsFullAt = this.session.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
                 packet.setPosition(0);
                 packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_STMT_SEND_LONG_DATA);
@@ -622,10 +622,10 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     public void storeReader(int parameterIndex, NativePacketPayload packet, Reader inStream) {
         this.session.checkClosed();
         synchronized (this.session) {
-            String forcedEncoding = this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
+            String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
             String clobEncoding = (forcedEncoding == null
-                    ? this.session.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
+                    ? this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue() : forcedEncoding);
 
             int maxBytesChar = 2;
 
@@ -648,7 +648,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             int bytesInPacket = 0;
             int totalBytesRead = 0;
             int bytesReadAtLastSend = 0;
-            int packetIsFullAt = this.session.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
+            int packetIsFullAt = this.session.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_blobSendChunkSize).getValue();
 
             try {
                 packet.setPosition(0);
@@ -778,7 +778,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     private String truncateQueryToLog(String sql) {
         String queryStr = null;
 
-        int maxQuerySizeToLog = this.session.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
+        int maxQuerySizeToLog = this.session.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog).getValue();
         if (sql.length() > maxQuerySizeToLog) {
             StringBuilder queryBuf = new StringBuilder(maxQuerySizeToLog + 12);
             queryBuf.append(sql.substring(0, maxQuerySizeToLog));

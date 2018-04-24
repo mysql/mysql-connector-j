@@ -146,7 +146,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         checkUpdatability();
 
         this.populateInserterWithDefaultValues = this.getSession().getPropertySet()
-                .getBooleanReadableProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
+                .getBooleanProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
         this.hasLongColumnInfo = this.getSession().getServerSession().hasLongColumnInfo();
     }
 
@@ -300,7 +300,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.getSession().getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
+            if (this.getSession().getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
                 java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;

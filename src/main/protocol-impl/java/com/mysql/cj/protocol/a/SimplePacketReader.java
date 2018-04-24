@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.SocketConnection;
@@ -45,11 +45,11 @@ import com.mysql.cj.protocol.SocketConnection;
 public class SimplePacketReader implements MessageReader<NativePacketHeader, NativePacketPayload> {
 
     protected SocketConnection socketConnection;
-    protected ReadableProperty<Integer> maxAllowedPacket;
+    protected RuntimeProperty<Integer> maxAllowedPacket;
 
     private byte readPacketSequence = -1;
 
-    public SimplePacketReader(SocketConnection socketConnection, ReadableProperty<Integer> maxAllowedPacket) {
+    public SimplePacketReader(SocketConnection socketConnection, RuntimeProperty<Integer> maxAllowedPacket) {
         this.socketConnection = socketConnection;
         this.maxAllowedPacket = maxAllowedPacket;
     }

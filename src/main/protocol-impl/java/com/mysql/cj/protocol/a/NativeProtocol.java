@@ -68,10 +68,8 @@ import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.conf.RuntimeProperty.RuntimePropertyListener;
 import com.mysql.cj.exceptions.CJCommunicationsException;
@@ -162,8 +160,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     protected byte packetSequence = 0;
     protected boolean useCompression = false;
 
-    private ModifiableProperty<Integer> maxAllowedPacket;
-    private ReadableProperty<Boolean> useServerPrepStmts;
+    private RuntimeProperty<Integer> maxAllowedPacket;
+    private RuntimeProperty<Boolean> useServerPrepStmts;
 
     //private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
@@ -195,8 +193,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     private int statementExecutionDepth = 0;
     private List<QueryInterceptor> queryInterceptors;
 
-    private ReadableProperty<Boolean> maintainTimeStats;
-    private ReadableProperty<Integer> maxQuerySizeToLog;
+    private RuntimeProperty<Boolean> maintainTimeStats;
+    private RuntimeProperty<Integer> maxQuerySizeToLog;
 
     private InputStream localInfileInputStream;
 
@@ -261,14 +259,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         this.transactionManager = trManager;
 
-        this.maintainTimeStats = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
-        this.maxQuerySizeToLog = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog);
-        this.useAutoSlowLog = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
-        this.logSlowQueries = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
-        this.maxAllowedPacket = this.propertySet.getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
-        this.profileSQL = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-        this.autoGenerateTestcaseScript = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
-        this.useServerPrepStmts = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
+        this.maintainTimeStats = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_maintainTimeStats);
+        this.maxQuerySizeToLog = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog);
+        this.useAutoSlowLog = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_autoSlowLog).getValue();
+        this.logSlowQueries = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
+        this.maxAllowedPacket = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        this.profileSQL = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
+        this.autoGenerateTestcaseScript = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript).getValue();
+        this.useServerPrepStmts = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
 
         this.reusablePacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
         //this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
@@ -278,7 +276,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         //this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
             this.useNanosForElapsedTime = true;
 
             this.queryTimingUnits = Messages.getString("Nanoseconds");
@@ -286,7 +284,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             this.queryTimingUnits = Messages.getString("Milliseconds");
         }
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue()) {
             calculateSlowQueryThreshold();
         }
 
@@ -412,11 +410,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         // Can't enable compression until after handshake
         //
         if (((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0)
-                && pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_useCompression).getValue()
+                && pset.getBooleanProperty(PropertyDefinitions.PNAME_useCompression).getValue()
                 && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
             this.useCompression = true;
             this.socketConnection.setMysqlInput(new CompressedInputStream(this.socketConnection.getMysqlInput(),
-                    pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol), this.log));
+                    pset.getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol), this.log));
             this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
             this.packetSender = this.compressedPacketSender;
         }
@@ -432,8 +430,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         // listen for properties changes to allow decorators reconfiguration
         this.maintainTimeStats.addListener(this);
-        pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).addListener(this);
-        pset.getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).addListener(this);
+        pset.getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).addListener(this);
+        pset.getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).addListener(this);
     }
 
     @Override
@@ -473,19 +471,19 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             messageReader = ttReader;
         }
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).getValue()) {
             sender = new TracingPacketSender(sender, this.log, this.socketConnection.getHost(), getServerSession().getCapabilities().getThreadId());
             messageReader = new TracingPacketReader(messageReader, this.log);
         }
 
-        if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+        if (this.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
 
             debugRingBuffer = new LinkedList<>();
 
             sender = new DebugBufferingPacketSender(sender, debugRingBuffer,
-                    this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
+                    this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
             messageReader = new DebugBufferingPacketReader(messageReader, debugRingBuffer,
-                    this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
+                    this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_packetDebugBufferSize));
         }
 
         // do it after other decorators to have trace and debug applied to individual packets 
@@ -535,7 +533,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         try {
             sendCommand(this.commandBuilder.buildComInitDb(getSharedSendPacket(), database), false, 0);
         } catch (CJException ex) {
-            if (this.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue()) {
+            if (this.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue()) {
                 sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "CREATE DATABASE IF NOT EXISTS " + database), false, 0);
 
                 sendCommand(this.commandBuilder.buildComInitDb(getSharedSendPacket(), database), false, 0);
@@ -778,7 +776,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             String xOpenErrorMessage = MysqlErrorNumbers.get(xOpen);
 
-            boolean useOnlyServerErrorMessages = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).getValue();
+            boolean useOnlyServerErrorMessages = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useOnlyServerErrorMessages).getValue();
             if (!useOnlyServerErrorMessages) {
                 if (xOpenErrorMessage != null) {
                     errorBuf.append(xOpenErrorMessage);
@@ -876,7 +874,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
         String statementComment = this.queryComment;
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_includeThreadNamesAsStatementComment).getValue()) {
             statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
         }
 
@@ -1001,7 +999,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     boolean logSlow = false;
 
                     if (!this.useAutoSlowLog) {
-                        logSlow = queryTime > this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
+                        logSlow = queryTime > this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
                     } else {
                         logSlow = this.metricsHolder.isAbonormallyLongQuery(queryTime);
                         this.metricsHolder.reportQueryTime(queryTime);
@@ -1055,7 +1053,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                         new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
                                 eventDuration, this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 
-                if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
+                if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_explainSlowQueries).getValue()) {
                     if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
                         queryPacket.setPosition(1); // skip first byte 
                         explainSlowQuery(query.toString(), profileQueryToLog);
@@ -1346,10 +1344,10 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     private void calculateSlowQueryThreshold() {
-        this.slowQueryThreshold = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
+        this.slowQueryThreshold = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis).getValue();
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue()) {
-            long nanosThreshold = this.propertySet.getLongReadableProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).getValue();
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useNanosForElapsedTime).getValue()) {
+            long nanosThreshold = this.propertySet.getLongProperty(PropertyDefinitions.PNAME_slowQueryThresholdNanos).getValue();
 
             if (nanosThreshold != 0) {
                 this.slowQueryThreshold = nanosThreshold;
@@ -1380,7 +1378,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * Determines if the database charset is the same as the platform charset
      */
     public void checkForCharsetMismatch() {
-        String characterEncoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String characterEncoding = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
         if (characterEncoding != null) {
             String encodingToCheck = jvmPlatformCharset;
 
@@ -1491,10 +1489,10 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     public String getPasswordCharacterEncoding() {
         String encoding;
-        if ((encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue()) != null) {
+        if ((encoding = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding).getStringValue()) != null) {
             return encoding;
         }
-        if ((encoding = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()) != null) {
+        if ((encoding = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()) != null) {
             return encoding;
         }
         return "UTF-8";
@@ -1529,9 +1527,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_TINY:
                 // Adjust for pseudo-boolean
                 if (length == 1) {
-                    if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
+                    if (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
                         return MysqlType.BOOLEAN;
-                    } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue()) {
+                    } else if (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue()) {
                         return MysqlType.BIT;
                     }
                 }
@@ -1576,8 +1574,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_VARCHAR:
             case MysqlType.FIELD_TYPE_VAR_STRING:
 
-                if (isOpaqueBinary
-                        && !(isFromFunction && propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                if (isOpaqueBinary && !(isFromFunction && propertySet.getBooleanProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
                     return MysqlType.VARBINARY;
                 }
 
@@ -1603,24 +1600,24 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             case MysqlType.FIELD_TYPE_TINY_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
-                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                        || propertySet.getBooleanProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
+                        || isFromFunction && (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
                     return MysqlType.TINYTEXT;
                 }
                 return MysqlType.TINYBLOB;
 
             case MysqlType.FIELD_TYPE_MEDIUM_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
-                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                        || propertySet.getBooleanProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
+                        || isFromFunction && (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
                     return MysqlType.MEDIUMTEXT;
                 }
                 return MysqlType.MEDIUMBLOB;
 
             case MysqlType.FIELD_TYPE_LONG_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
-                        || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                        || propertySet.getBooleanProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
+                        || isFromFunction && (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
                     return MysqlType.LONGTEXT;
                 }
                 return MysqlType.LONGBLOB;
@@ -1637,8 +1634,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 } else if (length <= MysqlType.BLOB.getPrecision()) {
                     if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
-                            || propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
-                            || isFromFunction && (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
+                            || propertySet.getBooleanProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()
+                            || isFromFunction && (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs).getValue())) {
                         newMysqlTypeId = MysqlType.FIELD_TYPE_VARCHAR;
                         return MysqlType.TEXT;
                     }
@@ -1654,7 +1651,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 return findMysqlType(propertySet, newMysqlTypeId, colFlag, length, tableName, originalTableName, collationIndex, encoding);
 
             case MysqlType.FIELD_TYPE_STRING:
-                if (isOpaqueBinary && !propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
+                if (isOpaqueBinary && !propertySet.getBooleanProperty(PropertyDefinitions.PNAME_blobsAreStrings).getValue()) {
                     return MysqlType.BINARY;
                 }
                 return MysqlType.CHAR;
@@ -1848,7 +1845,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         BufferedInputStream fileIn = null;
 
         try {
-            if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
+            if (!this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), this.exceptionInterceptor);
             }
 
@@ -1858,7 +1855,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             if (hookedStream != null) {
                 fileIn = new BufferedInputStream(hookedStream);
-            } else if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).getValue()) {
+            } else if (!this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile).getValue()) {
                 fileIn = new BufferedInputStream(new FileInputStream(fileName));
             } else {
                 // First look for ':'
@@ -1885,7 +1882,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         } catch (IOException ioEx) {
             StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.60"));
 
-            boolean isParanoid = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue();
+            boolean isParanoid = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue();
             if (fileName != null && !isParanoid) {
                 messageBuf.append("'");
                 messageBuf.append(fileName);
@@ -1940,7 +1937,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     public void checkForOutstandingStreamingData() {
         if (this.streamingData != null) {
-            boolean shouldClobber = this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
+            boolean shouldClobber = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue();
 
             if (!shouldClobber) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
@@ -1969,7 +1966,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     public void scanForAndThrowDataTruncation() {
-        if ((this.streamingData == null) && this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
+        if ((this.streamingData == null) && this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getValue()
                 && getWarningCount() > 0) {
             int warningCountOld = getWarningCount();
             convertShowWarningsToSQLWarnings(getWarningCount(), true);
@@ -2002,7 +1999,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     private void appendDeadlockStatusInformation(Session sess, String xOpen, StringBuilder errorBuf) {
-        if (sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
+        if (sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
                 && (xOpen.startsWith("40") || xOpen.startsWith("41")) && getStreamingData() == null) {
 
             try {
@@ -2033,7 +2030,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             }
         }
 
-        if (sess.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
+        if (sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions).getValue()) {
             errorBuf.append("\n\n*** Java threads running at time of deadlock ***\n\n");
 
             ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
@@ -2230,7 +2227,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             configuredTimeZoneOnServer = this.serverSession.getServerVariable("system_time_zone");
         }
 
-        String canonicalTimezone = getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
+        String canonicalTimezone = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_serverTimezone).getValue();
 
         if (configuredTimeZoneOnServer != null) {
             // user can override this with driver properties, so don't detect if that's the case
@@ -2271,7 +2268,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             }
 
             if (this.useServerPrepStmts.getValue()) {
-                ModifiableProperty<Integer> blobSendChunkSize = this.propertySet.<Integer> getModifiableProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
+                RuntimeProperty<Integer> blobSendChunkSize = this.propertySet.getProperty(PropertyDefinitions.PNAME_blobSendChunkSize);
                 int preferredBlobSendChunkSize = blobSendChunkSize.getValue();
 
                 // LONG_DATA and MySQLIO packet header size

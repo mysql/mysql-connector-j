@@ -393,9 +393,9 @@ public class NativeServerSession implements ServerSession {
     public String getEncodingForIndex(int charsetIndex) {
         String javaEncoding = null;
 
-        String characterEncoding = this.propertySet.<String> getReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String characterEncoding = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
-        if (this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).getValue()) {
             return characterEncoding;
         }
 

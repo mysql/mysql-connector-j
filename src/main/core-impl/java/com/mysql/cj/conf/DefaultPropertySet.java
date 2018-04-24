@@ -37,7 +37,6 @@ import java.util.Properties;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
-import com.mysql.cj.exceptions.PropertyNotModifiableException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class DefaultPropertySet implements PropertySet, Serializable {
@@ -77,9 +76,9 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> ReadableProperty<T> getReadableProperty(String name) {
+    public <T> RuntimeProperty<T> getProperty(String name) {
         try {
-            ReadableProperty<T> prop = (ReadableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            RuntimeProperty<T> prop = (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
             if (prop != null) {
                 return prop;
             }
@@ -92,86 +91,33 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     }
 
     @Override
-    public ReadableProperty<Boolean> getBooleanReadableProperty(String name) {
-        return getReadableProperty(name);
+    public RuntimeProperty<Boolean> getBooleanProperty(String name) {
+        return getProperty(name);
     }
 
     @Override
-    public ReadableProperty<Integer> getIntegerReadableProperty(String name) {
-        return getReadableProperty(name);
+    public RuntimeProperty<Integer> getIntegerProperty(String name) {
+        return getProperty(name);
     }
 
     @Override
-    public ReadableProperty<Long> getLongReadableProperty(String name) {
-        return getReadableProperty(name);
+    public RuntimeProperty<Long> getLongProperty(String name) {
+        return getProperty(name);
     }
 
     @Override
-    public ReadableProperty<Integer> getMemorySizeReadableProperty(String name) {
-        return getReadableProperty(name);
+    public RuntimeProperty<Integer> getMemorySizeProperty(String name) {
+        return getProperty(name);
     }
 
     @Override
-    public ReadableProperty<String> getStringReadableProperty(String name) {
-        return getReadableProperty(name);
+    public RuntimeProperty<String> getStringProperty(String name) {
+        return getProperty(name);
     }
 
     @Override
-    public <T extends Enum<T>> ReadableProperty<T> getEnumReadableProperty(String name) {
-        return getReadableProperty(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> ModifiableProperty<T> getModifiableProperty(String name) {
-        RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-
-        if (prop != null) {
-            if (ModifiableProperty.class.isAssignableFrom(prop.getClass())) {
-                try {
-                    return (ModifiableProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-
-                } catch (ClassCastException ex) {
-                    // TODO improve message
-                    throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
-                }
-            }
-            throw ExceptionFactory.createException(PropertyNotModifiableException.class,
-                    Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + prop.getPropertyDefinition().getName() + "'" }));
-        }
-
-        throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
-
-    }
-
-    @Override
-    public ModifiableProperty<Boolean> getBooleanModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Integer> getIntegerModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Long> getLongModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<Integer> getMemorySizeModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public ModifiableProperty<String> getStringModifiableProperty(String name) {
-        return getModifiableProperty(name);
-    }
-
-    @Override
-    public <T extends Enum<T>> ModifiableProperty<T> getEnumModifiableProperty(String name) {
-        return getModifiableProperty(name);
+    public <T extends Enum<T>> RuntimeProperty<T> getEnumProperty(String name) {
+        return getProperty(name);
     }
 
     public void initializeProperties(Properties props) {
@@ -187,7 +133,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
             for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
                 try {
-                    ReadableProperty<?> propToSet = getReadableProperty(propName);
+                    RuntimeProperty<?> propToSet = getProperty(propName);
                     propToSet.initializeFrom(infoCopy, null);
 
                 } catch (CJException e) {
@@ -200,7 +146,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                 String val = infoCopy.getProperty((String) key);
                 PropertyDefinition<String> def = new StringPropertyDefinition((String) key, null, val, PropertyDefinitions.RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.unknown"), "8.0.10", PropertyDefinitions.CATEGORY_USER_DEFINED, Integer.MIN_VALUE);
-                RuntimeProperty<String> p = new ModifiableStringProperty(def);
+                RuntimeProperty<String> p = new StringProperty(def);
                 addProperty(p);
             }
             postInitialization();
@@ -218,7 +164,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
         for (String propName : this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.keySet()) {
             if (!props.containsKey(propName)) {
-                ReadableProperty<?> propToGet = getReadableProperty(propName);
+                RuntimeProperty<?> propToGet = getProperty(propName);
                 String propValue = propToGet.getStringValue();
                 if (propValue != null) {
                     props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);

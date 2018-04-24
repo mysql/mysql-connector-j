@@ -207,7 +207,7 @@ public class ExceptionFactory {
         }
 
         if (propertySet != null) {
-            isInteractiveClient = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_interactiveClient).getValue();
+            isInteractiveClient = propertySet.getBooleanProperty(PropertyDefinitions.PNAME_interactiveClient).getValue();
 
             String serverTimeoutSecondsStr = null;
 
@@ -284,7 +284,7 @@ public class ExceptionFactory {
             // Attempt to determine the reason for the underlying exception (we can only make a best-guess here)
             //
             if (underlyingException instanceof BindException) {
-                String localSocketAddress = propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_localSocketAddress).getValue();
+                String localSocketAddress = propertySet.getStringProperty(PropertyDefinitions.PNAME_localSocketAddress).getValue();
                 if (localSocketAddress != null && !Util.interfaceExists(localSocketAddress)) {
                     exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
                 } else {
@@ -298,8 +298,8 @@ public class ExceptionFactory {
             // We haven't figured out a good reason, so copy it.
             exceptionMessageBuf.append(Messages.getString("CommunicationsException.20"));
 
-            if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats).getValue()
-                    && !propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue()) {
+            if (propertySet.getBooleanProperty(PropertyDefinitions.PNAME_maintainTimeStats).getValue()
+                    && !propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue()) {
                 exceptionMessageBuf.append("\n\n");
                 if (lastPacketReceivedTimeMs != 0) {
                     Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };

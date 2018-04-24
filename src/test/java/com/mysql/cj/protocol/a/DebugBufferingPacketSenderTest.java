@@ -40,7 +40,7 @@ import org.junit.Test;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.IntegerPropertyDefinition;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableIntegerProperty;
+import com.mysql.cj.conf.IntegerProperty;
 
 /**
  * Tests for {@link DebugBufferingPacketSender}.
@@ -50,7 +50,7 @@ public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
     public void packetPushedToDebugBufferTest() throws IOException {
         LinkedList<StringBuilder> debugBuffer = new LinkedList<>();
         DebugBufferingPacketSender sender = new DebugBufferingPacketSender(getNoopPacketSender(), debugBuffer,
-                new ReadableIntegerProperty(new IntegerPropertyDefinition(PropertyDefinitions.PNAME_packetDebugBufferSize, PropertyDefinitions.NO_ALIAS, 20,
+                new IntegerProperty(new IntegerPropertyDefinition(PropertyDefinitions.PNAME_packetDebugBufferSize, PropertyDefinitions.NO_ALIAS, 20,
                         PropertyDefinitions.RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.packetDebugBufferSize"), "3.1.3",
                         PropertyDefinitions.CATEGORY_DEBUGING_PROFILING, 7, 0, Integer.MAX_VALUE)));
         byte packet[] = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 };

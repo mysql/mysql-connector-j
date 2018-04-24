@@ -598,7 +598,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES");
 
         StringBuilder conditionBuf = new StringBuilder();
-        if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+        if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
             conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
         }
         if (catalog != null) {
@@ -714,7 +714,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" FROM INFORMATION_SCHEMA.PARAMETERS");
 
         StringBuilder conditionBuf = new StringBuilder();
-        if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+        if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
             conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
         }
         if (catalog != null) {

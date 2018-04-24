@@ -64,28 +64,28 @@ public class AddMethods {
             String pname = def.hasCcAlias() ? def.getCcAlias() : def.getName();
 
             if (def instanceof StringPropertyDefinition) {
-                addGetter(clazz, pname, String.class.getName(), "getStringProperty");
-                addSetter(clazz, pname, String.class.getName(), "setStringProperty");
+                addGetter(clazz, pname, String.class.getName(), "getStringRuntimeProperty");
+                addSetter(clazz, pname, String.class.getName(), "setStringRuntimeProperty");
 
             } else if (def instanceof BooleanPropertyDefinition) {
-                addGetter(clazz, pname, Boolean.TYPE.getName(), "getBooleanProperty");
-                addSetter(clazz, pname, Boolean.TYPE.getName(), "setBooleanProperty");
+                addGetter(clazz, pname, Boolean.TYPE.getName(), "getBooleanRuntimeProperty");
+                addSetter(clazz, pname, Boolean.TYPE.getName(), "setBooleanRuntimeProperty");
 
             } else if (def instanceof IntegerPropertyDefinition) {
-                addGetter(clazz, pname, Integer.TYPE.getName(), "getIntegerProperty");
-                addSetter(clazz, pname, Integer.TYPE.getName(), "setIntegerProperty");
+                addGetter(clazz, pname, Integer.TYPE.getName(), "getIntegerRuntimeProperty");
+                addSetter(clazz, pname, Integer.TYPE.getName(), "setIntegerRuntimeProperty");
 
             } else if (def instanceof LongPropertyDefinition) {
-                addGetter(clazz, pname, Long.TYPE.getName(), "getLongProperty");
-                addSetter(clazz, pname, Long.TYPE.getName(), "setLongProperty");
+                addGetter(clazz, pname, Long.TYPE.getName(), "getLongRuntimeProperty");
+                addSetter(clazz, pname, Long.TYPE.getName(), "setLongRuntimeProperty");
 
             } else if (def instanceof MemorySizePropertyDefinition) {
-                addGetter(clazz, pname, Integer.TYPE.getName(), "getMemorySizeProperty");
-                addSetter(clazz, pname, Integer.TYPE.getName(), "setMemorySizeProperty");
+                addGetter(clazz, pname, Integer.TYPE.getName(), "getMemorySizeRuntimeProperty");
+                addSetter(clazz, pname, Integer.TYPE.getName(), "setMemorySizeRuntimeProperty");
 
             } else if (def instanceof EnumPropertyDefinition<?>) {
-                addGetter(clazz, pname, String.class.getName(), "getEnumProperty");
-                addSetter(clazz, pname, "java.lang.String", "setEnumProperty");
+                addGetter(clazz, pname, String.class.getName(), "getEnumRuntimeProperty");
+                addSetter(clazz, pname, "java.lang.String", "setEnumRuntimeProperty");
 
             } else {
                 throw new Exception("Unknown " + def.getName() + " property type.");

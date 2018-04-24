@@ -32,20 +32,20 @@ package com.mysql.cj.protocol.a;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.util.StringUtils;
 
 public class DebugBufferingPacketSender implements MessageSender<NativePacketPayload> {
     private MessageSender<NativePacketPayload> packetSender;
     private LinkedList<StringBuilder> packetDebugBuffer;
-    private ReadableProperty<Integer> packetDebugBufferSize;
+    private RuntimeProperty<Integer> packetDebugBufferSize;
     private int maxPacketDumpLength = 1024;
 
     private static final int DEBUG_MSG_LEN = 64;
 
     public DebugBufferingPacketSender(MessageSender<NativePacketPayload> packetSender, LinkedList<StringBuilder> packetDebugBuffer,
-            ReadableProperty<Integer> packetDebugBufferSize) {
+            RuntimeProperty<Integer> packetDebugBufferSize) {
         this.packetSender = packetSender;
         this.packetDebugBuffer = packetDebugBuffer;
         this.packetDebugBufferSize = packetDebugBufferSize;

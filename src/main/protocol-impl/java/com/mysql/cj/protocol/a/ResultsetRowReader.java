@@ -34,7 +34,7 @@ import java.util.Optional;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
 import com.mysql.cj.protocol.ResultsetRow;
@@ -45,13 +45,13 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
 
     protected PropertySet propertySet;
 
-    protected ReadableProperty<Integer> useBufferRowSizeThreshold;
+    protected RuntimeProperty<Integer> useBufferRowSizeThreshold;
 
     public ResultsetRowReader(NativeProtocol prot) {
         this.protocol = prot;
 
         this.propertySet = this.protocol.getPropertySet();
-        this.useBufferRowSizeThreshold = this.propertySet.getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
+        this.useBufferRowSizeThreshold = this.propertySet.getMemorySizeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
     }
 
     /**

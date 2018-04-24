@@ -72,11 +72,11 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
      *             if an error occurs
      */
     private XAConnection wrapConnection(Connection conn) throws SQLException {
-        if (getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
-                || ((JdbcConnection) conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
+        if (getBooleanProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
+                || ((JdbcConnection) conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
             return SuspendableXAConnection.getInstance((JdbcConnection) conn);
         }
 
-        return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanReadableProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
+        return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
     }
 }

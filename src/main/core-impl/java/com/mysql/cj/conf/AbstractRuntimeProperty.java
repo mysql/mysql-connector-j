@@ -38,7 +38,10 @@ import java.util.Properties;
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.PropertyNotModifiableException;
 
 public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, Serializable {
 
@@ -70,36 +73,32 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     @Override
     public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
-        String extractedValue = extractFrom.getProperty(getPropertyDefinition().getName());
-        extractFrom.remove(getPropertyDefinition().getName());
-        initializeFrom(extractedValue, exceptionInterceptor);
+        String name = getPropertyDefinition().getName();
+        if (extractFrom.containsKey(name)) {
+            String extractedValue = (String) extractFrom.remove(name);
+            if (extractedValue != null) {
+                setValueInternal(extractedValue, exceptionInterceptor);
+                this.initialValue = this.value;
+            }
+        }
     }
 
     @Override
     public void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) {
         RefAddr refAddr = ref.get(getPropertyDefinition().getName());
-
         if (refAddr != null) {
             String refContentAsString = (String) refAddr.getContent();
-
-            initializeFrom(refContentAsString, exceptionInterceptor);
+            if (refContentAsString != null) {
+                setValueInternal(refContentAsString, exceptionInterceptor);
+                this.initialValue = this.value;
+            }
         }
-    }
-
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        if (extractedValue != null) {
-            setFromString(extractedValue, exceptionInterceptor);
-        }
-    }
-
-    public void setFromString(String value, ExceptionInterceptor exceptionInterceptor) {
-        this.value = getPropertyDefinition().parseObject(value, exceptionInterceptor);
-        this.wasExplicitlySet = true;
     }
 
     @Override
     public void resetValue() {
-        // no-op for readable properties
+        this.value = this.initialValue;
+        invokeListeners();
     }
 
     public boolean isExplicitlySet() {
@@ -111,7 +110,15 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
         if (this.listeners == null) {
             this.listeners = new ArrayList<>();
         }
-        if (!this.listeners.contains(l)) {
+
+        boolean found = false;
+        for (WeakReference<RuntimePropertyListener> weakReference : this.listeners) {
+            if (l.equals(weakReference.get())) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             this.listeners.add(new WeakReference<>(l));
         }
     }
@@ -121,7 +128,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
         if (this.listeners != null) {
             for (WeakReference<RuntimePropertyListener> wr : this.listeners) {
                 RuntimePropertyListener l = wr.get();
-                if (l == listener) {
+                if (l.equals(listener)) {
                     this.listeners.remove(wr);
                     break;
                 }
@@ -142,4 +149,79 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
         }
     }
 
+    @Override
+    public T getValue() {
+        return this.value;
+    }
+
+    @Override
+    public T getInitialValue() {
+        return this.initialValue;
+    }
+
+    @Override
+    public String getStringValue() {
+        return this.value == null ? null : this.value.toString();
+    }
+
+    /**
+     * Set the value of a property from a string value.
+     * It involves the {@link PropertyDefinition#parseObject(String, ExceptionInterceptor)} to validate and parse the string.
+     * 
+     * @param value
+     *            value
+     * @param exceptionInterceptor
+     *            exception interceptor
+     */
+    public void setValueInternal(String value, ExceptionInterceptor exceptionInterceptor) {
+        setValueInternal(getPropertyDefinition().parseObject(value, exceptionInterceptor), value, exceptionInterceptor);
+    }
+
+    /**
+     * Internal method for setting property value ignoring the RUNTIME_NOT_MODIFIABLE flag.
+     * 
+     * @param value
+     *            value
+     * @param valueAsString
+     *            value represented by String
+     * @param exceptionInterceptor
+     *            exception interceptor
+     */
+    public void setValueInternal(T value, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
+        if (getPropertyDefinition().isRangeBased()) {
+            checkRange(value, valueAsString, exceptionInterceptor);
+        }
+        this.value = value;
+        this.wasExplicitlySet = true;
+    }
+
+    /**
+     * For range-based property checks that value fit into range given by PropertyDefinition.
+     * 
+     * @param val
+     *            value
+     * @param valueAsString
+     *            value represented by String
+     * @param exceptionInterceptor
+     *            exception interceptor
+     */
+    protected void checkRange(T val, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
+        // no-op for not range-based properties
+    }
+
+    @Override
+    public void setValue(T value) {
+        setValue(value, null);
+    }
+
+    @Override
+    public void setValue(T value, ExceptionInterceptor exceptionInterceptor) {
+        if (getPropertyDefinition().isRuntimeModifiable()) {
+            setValueInternal(value, null, exceptionInterceptor);
+            invokeListeners();
+        } else {
+            throw ExceptionFactory.createException(PropertyNotModifiableException.class,
+                    Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + getPropertyDefinition().getName() + "'" }));
+        }
+    }
 }

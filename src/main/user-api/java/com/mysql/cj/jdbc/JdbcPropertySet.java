@@ -33,12 +33,9 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertySet;
 
 public interface JdbcPropertySet extends PropertySet {
-
-    <T> ModifiableProperty<T> getJdbcModifiableProperty(String name) throws SQLException;
 
     /**
      * Exposes all ConnectionPropertyInfo instances as DriverPropertyInfo

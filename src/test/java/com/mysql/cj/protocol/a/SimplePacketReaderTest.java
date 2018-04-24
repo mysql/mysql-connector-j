@@ -46,9 +46,9 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
@@ -70,7 +70,7 @@ public class SimplePacketReaderTest {
     // the basic operation: make sure header bytes are interpreted properly
     @Test
     public void basicHeaderRead() throws IOException {
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         maxAllowedPacket.setValue(100000);
         // mix up the bits so we know they're interpreted correctly
         SocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1, 42 });
@@ -87,7 +87,7 @@ public class SimplePacketReaderTest {
     // test checking of maxAllowedPacket
     @Test
     public void exceedMaxAllowedPacketHeaderRead() throws IOException {
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         maxAllowedPacket.setValue(1024);
         // read header with packet size = maxAllowedPacket => SUCCESS
         MockSocketConnection connection = new FixedBufferSocketConnection(new byte[] { 0, 4, 0, 42 });
@@ -108,7 +108,7 @@ public class SimplePacketReaderTest {
     // we only supply 3 bytes when 4 are needed
     @Test
     public void truncatedPacketHeaderRead() throws IOException {
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         MockSocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1 });
         MessageReader<NativePacketHeader, NativePacketPayload> reader = new SimplePacketReader(connection, maxAllowedPacket);
         try {
@@ -122,7 +122,7 @@ public class SimplePacketReaderTest {
     // trivial payload test
     @Test
     public void readBasicPayload() throws IOException {
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         SocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1, 6, 5, 4 });
         MessageReader<NativePacketHeader, NativePacketPayload> reader = new SimplePacketReader(connection, maxAllowedPacket);
         NativePacketPayload b = reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }));
@@ -140,7 +140,7 @@ public class SimplePacketReaderTest {
     // test error handling when reading payload
     @Test
     public void readPayloadErrors() throws IOException {
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         MockSocketConnection connection = new FixedBufferSocketConnection(new byte[] { 5, 4 });
         MessageReader<NativePacketHeader, NativePacketPayload> reader = new SimplePacketReader(connection, maxAllowedPacket);
 
@@ -202,7 +202,7 @@ public class SimplePacketReaderTest {
 
         // >>>>>>>> read the packets <<<<<<<<
 
-        ModifiableProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getModifiableProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
         MockSocketConnection connection = new FixedBufferSocketConnection(buffer.array());
         MessageReader<NativePacketHeader, NativePacketPayload> reader = new SimplePacketReader(connection, maxAllowedPacket);
         NativePacketPayload readBuffer = new NativePacketPayload(new byte[maxPacketSize]);

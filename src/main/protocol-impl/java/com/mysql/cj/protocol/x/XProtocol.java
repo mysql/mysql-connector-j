@@ -108,10 +108,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public static XProtocol getInstance(String host, int port, PropertySet propertySet) {
 
-        SocketConnection socketConnection = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_useAsyncProtocol).getValue()
-                ? new XAsyncSocketConnection() :
-                // TODO: we should share SocketConnection unless there comes a time where they need to diverge
-                new NativeSocketConnection();
+        SocketConnection socketConnection = propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useAsyncProtocol).getValue() ? new XAsyncSocketConnection()
+                : new NativeSocketConnection();
 
         socketConnection.connect(host, port, propertySet, null, null, 0);
 
@@ -182,7 +180,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
 
@@ -199,9 +196,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         this.serverSession.setCapabilities(readServerCapabilities());
 
-        SslMode sslMode = this.propertySet.<SslMode> getEnumReadableProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        String trustStoreUrl = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl).getValue();
+        String trustStoreUrl = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl).getValue();
 
         if (!verifyServerCert && !StringUtils.isNullOrEmpty(trustStoreUrl)) {
             StringBuilder msg = new StringBuilder("Incompatible security settings. The property '");
@@ -216,16 +213,15 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             if (this.socketConnection.isSynchronous()) {
                 // for synchronous connection we reuse the legacy code thus we need
                 // to translate X Protocol specific connection options to legacy ones
-                this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_useSSL).setValue(true);
-                this.propertySet.getBooleanModifiableProperty(PropertyDefinitions.PNAME_verifyServerCertificate)
-                        .setValue(sslMode == SslMode.REQUIRED ? false : true);
+                this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useSSL).setValue(true);
+                this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(sslMode == SslMode.REQUIRED ? false : true);
 
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl))
-                        .setFromString(trustStoreUrl, null);
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword))
-                        .setFromString(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue(), null);
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType))
-                        .setFromString(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue(), null);
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl))
+                        .setValueInternal(trustStoreUrl, null);
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword))
+                        .setValueInternal(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue(), null);
+                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType))
+                        .setValueInternal(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue(), null);
             }
             negotiateSSLConnection(0);
         }

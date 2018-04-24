@@ -29,31 +29,16 @@
 
 package com.mysql.cj.conf;
 
-public interface ReadableProperty<T> extends RuntimeProperty<T> {
+public class StringProperty extends AbstractRuntimeProperty<String> {
 
-    /**
-     * Get internal value representation as Object.
-     * 
-     * @return value
-     */
-    T getValue();
+    private static final long serialVersionUID = -4141084145739428803L;
 
-    /**
-     * Get initial value (default or defined in connection string/Properties)
-     * 
-     * @return value
-     */
-    T getInitialValue();
+    protected StringProperty(PropertyDefinition<String> propertyDefinition) {
+        super(propertyDefinition);
+    }
 
-    /**
-     * Get internal value representation as String.
-     * 
-     * @return value
-     */
-    String getStringValue();
-
-    // TODO: MYSQLCONNJ-92. Listeners, other driver components may want to add to be notified about property changes
-    //void addListener(Listener l);
-    //void removeListener(Listener l);
-
+    @Override
+    public String getStringValue() {
+        return this.value;
+    }
 }

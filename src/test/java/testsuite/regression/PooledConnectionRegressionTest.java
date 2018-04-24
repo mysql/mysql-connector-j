@@ -420,7 +420,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
         xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
-        xads.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
         this.pstmt.close();

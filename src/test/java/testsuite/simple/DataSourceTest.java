@@ -151,7 +151,7 @@ public class DataSourceTest extends BaseTestCase {
     public void testChangeUserAndCharsets() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
-        ds.getJdbcModifiableProperty(PropertyDefinitions.PNAME_characterEncoding).setValue("utf-8");
+        ds.getProperty(PropertyDefinitions.PNAME_characterEncoding).setValue("utf-8");
         PooledConnection pooledConnection = ds.getPooledConnection();
 
         Connection connToMySQL = pooledConnection.getConnection();

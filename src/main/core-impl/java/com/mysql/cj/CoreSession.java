@@ -40,10 +40,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -76,14 +75,14 @@ public abstract class CoreSession implements Session {
     protected long connectionCreationTimeMillis = 0;
     protected HostInfo hostInfo = null;
 
-    protected ReadableProperty<Boolean> gatherPerfMetrics;
-    protected ModifiableProperty<String> characterEncoding;
-    protected ReadableProperty<Boolean> useOldUTF8Behavior;
-    protected ReadableProperty<Boolean> disconnectOnExpiredPasswords;
-    protected ReadableProperty<Boolean> cacheServerConfiguration;
-    protected ModifiableProperty<Boolean> autoReconnect;
-    protected ReadableProperty<Boolean> autoReconnectForPools;
-    protected ReadableProperty<Boolean> maintainTimeStats;
+    protected RuntimeProperty<Boolean> gatherPerfMetrics;
+    protected RuntimeProperty<String> characterEncoding;
+    protected RuntimeProperty<Boolean> useOldUTF8Behavior;
+    protected RuntimeProperty<Boolean> disconnectOnExpiredPasswords;
+    protected RuntimeProperty<Boolean> cacheServerConfiguration;
+    protected RuntimeProperty<Boolean> autoReconnect;
+    protected RuntimeProperty<Boolean> autoReconnectForPools;
+    protected RuntimeProperty<Boolean> maintainTimeStats;
 
     /** The max-rows setting for current session */
     protected int sessionMaxRows = -1;
@@ -96,19 +95,18 @@ public abstract class CoreSession implements Session {
         this.hostInfo = hostInfo;
         this.propertySet = propSet;
 
-        this.gatherPerfMetrics = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
-        this.characterEncoding = getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_characterEncoding);
-        this.useOldUTF8Behavior = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior);
-        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
-        this.cacheServerConfiguration = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_cacheServerConfiguration);
-        this.autoReconnect = getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_autoReconnect);
-        this.autoReconnectForPools = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
-        this.maintainTimeStats = getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_maintainTimeStats);
+        this.gatherPerfMetrics = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
+        this.characterEncoding = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding);
+        this.useOldUTF8Behavior = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior);
+        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
+        this.cacheServerConfiguration = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheServerConfiguration);
+        this.autoReconnect = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoReconnect);
+        this.autoReconnectForPools = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
+        this.maintainTimeStats = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_maintainTimeStats);
 
-        this.log = LogFactory.getLogger(getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_logger).getStringValue(),
-                Log.LOGGER_INSTANCE_NAME);
-        if (getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_profileSQL).getValue()
-                || getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+        this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
+        if (getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue()
+                || getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
             ProfilerEventHandlerFactory.getInstance(this);
         }
     }

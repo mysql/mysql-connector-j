@@ -69,7 +69,7 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
 
         if (conn == null) {
             conn = new MysqlXAConnection(connectionToWrap,
-                    connectionToWrap.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
+                    connectionToWrap.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
             XIDS_TO_PHYSICAL_CONNECTIONS.put(xid, conn);
         }
 

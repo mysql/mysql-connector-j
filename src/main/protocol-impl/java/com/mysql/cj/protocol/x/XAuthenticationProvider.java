@@ -36,7 +36,7 @@ import java.util.List;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -65,7 +65,7 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
     @Override
     public void changeUser(ServerSession serverSession, String userName, String password, String database) {
         boolean overTLS = ((XServerCapabilities) this.protocol.getServerSession().getCapabilities()).getTls();
-        ReadableProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumReadableProperty(PropertyDefinitions.PNAME_auth);
+        RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyDefinitions.PNAME_auth);
         List<AuthMech> tryAuthMech;
         if (overTLS || authMechProp.isExplicitlySet()) {
             tryAuthMech = Arrays.asList(authMechProp.getValue());

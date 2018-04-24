@@ -125,8 +125,8 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                 }
             }
 
-            if (!this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
-                    && this.protocol.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
+            if (!this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
+                    && this.protocol.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
                 int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
 
                 this.protocol.clearInputStream();
@@ -134,14 +134,14 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                 try {
                     this.protocol.sendCommand(
                             this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
-                                    this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
+                                    this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
                             false, 0);
                 } catch (Exception ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                 }
             }
 
-            if (this.protocol.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+            if (this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
                 if (hadMore) {
 
                     ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.owner.getSession());

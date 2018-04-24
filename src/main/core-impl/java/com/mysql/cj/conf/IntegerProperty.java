@@ -29,40 +29,26 @@
 
 package com.mysql.cj.conf;
 
-import java.io.Serializable;
-
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.WrongArgumentException;
 
-public class ModifiableBooleanProperty extends ReadableBooleanProperty implements ModifiableProperty<Boolean>, Serializable {
+public class IntegerProperty extends AbstractRuntimeProperty<Integer> {
 
-    private static final long serialVersionUID = 7810312684423192133L;
+    private static final long serialVersionUID = 9208223182595760858L;
 
-    protected ModifiableBooleanProperty(PropertyDefinition<Boolean> propertyDefinition) {
+    public IntegerProperty(PropertyDefinition<Integer> propertyDefinition) {
         super(propertyDefinition);
     }
 
     @Override
-    protected void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) {
-        super.initializeFrom(extractedValue, exceptionInterceptor);
-        this.initialValue = this.value;
+    protected void checkRange(Integer val, String valueAsString, ExceptionInterceptor exceptionInterceptor) {
+        if ((val.intValue() < getPropertyDefinition().getLowerBound()) || (val.intValue() > getPropertyDefinition().getUpperBound())) {
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    "The connection property '" + getPropertyDefinition().getName() + "' only accepts integer values in the range of "
+                            + getPropertyDefinition().getLowerBound() + " - " + getPropertyDefinition().getUpperBound() + ", the value '"
+                            + (valueAsString == null ? val.intValue() : valueAsString) + "' exceeds this range.",
+                    exceptionInterceptor);
+        }
     }
-
-    @Override
-    public void setValue(Boolean value) {
-        setValue(value, null);
-    }
-
-    @Override
-    public void setValue(Boolean value, ExceptionInterceptor exceptionInterceptor) {
-        this.value = value;
-        this.wasExplicitlySet = true;
-        invokeListeners();
-    }
-
-    @Override
-    public void resetValue() {
-        this.value = this.initialValue;
-        invokeListeners();
-    }
-
 }

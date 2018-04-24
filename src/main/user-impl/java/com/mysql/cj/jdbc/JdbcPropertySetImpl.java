@@ -34,12 +34,9 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.cj.conf.DefaultPropertySet;
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinition;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
-import com.mysql.cj.exceptions.CJException;
-import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.util.StringUtils;
 
 public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPropertySet {
@@ -47,27 +44,18 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
     private static final long serialVersionUID = -8223499903182568260L;
 
     @Override
-    public <T> ModifiableProperty<T> getJdbcModifiableProperty(String name) throws SQLException {
-        try {
-            return getModifiableProperty(name);
-        } catch (CJException ex) {
-            throw SQLExceptionsMapping.translateException(ex);
-        }
-    }
-
-    @Override
     public void postInitialization() {
 
         // Adjust max rows
-        if (getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue() == 0) {
+        if (getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue() == 0) {
             // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
-            super.<Integer> getModifiableProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), null);
+            super.<Integer> getProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), null);
         }
 
         //
         // Check character encoding
         //
-        String testEncoding = getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String testEncoding = getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
 
         if (testEncoding != null) {
             // Attempt to use the encoding, and bail out if it can't be used
@@ -75,9 +63,9 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
             StringUtils.getBytes(testString, testEncoding);
         }
 
-        if (getBooleanReadableProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()) {
+        if (getBooleanProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()) {
             // assume server-side prepared statements are wanted because they're required for this functionality
-            super.<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
+            super.<Boolean> getProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
         }
     }
 
@@ -94,13 +82,13 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         int i = slotsToReserve;
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            driverProperties[i++] = getAsDriverPropertyInfo(getReadableProperty(propName));
+            driverProperties[i++] = getAsDriverPropertyInfo(getProperty(propName));
         }
 
         return driverProperties;
     }
 
-    private DriverPropertyInfo getAsDriverPropertyInfo(ReadableProperty<?> pr) {
+    private DriverPropertyInfo getAsDriverPropertyInfo(RuntimeProperty<?> pr) {
         PropertyDefinition<?> pdef = pr.getPropertyDefinition();
 
         DriverPropertyInfo dpi = new DriverPropertyInfo(pdef.getName(), null);

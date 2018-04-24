@@ -102,7 +102,7 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
         } else {
             // check for file request
             if (columnCount == NativePacketPayload.NULL_LENGTH) {
-                String charEncoding = this.protocol.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
                 String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
                 resultPacket = this.protocol.sendFileToServer(fileName);
             }

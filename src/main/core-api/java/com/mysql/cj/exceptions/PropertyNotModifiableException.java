@@ -29,12 +29,6 @@
 
 package com.mysql.cj.exceptions;
 
-import com.mysql.cj.conf.ModifiableProperty;
-import com.mysql.cj.conf.ReadableProperty;
-
-/**
- * {@link ModifiableProperty} attempted on {@link ReadableProperty}
- */
 public class PropertyNotModifiableException extends CJException {
 
     private static final long serialVersionUID = -8001652264426656450L;

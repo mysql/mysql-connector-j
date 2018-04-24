@@ -47,7 +47,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -107,7 +107,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
     CompletionHandler<Integer, Void> headerCompletionHandler = new HeaderCompletionHandler();
     CompletionHandler<Integer, Void> messageCompletionHandler = new MessageCompletionHandler();
 
-    ReadableProperty<Integer> asyncTimeout;
+    RuntimeProperty<Integer> asyncTimeout;
 
     /**
      * The current <code>MessageListener</code>. This is set to <code>null</code> immediately following the listener's indicator that it is done reading
@@ -136,7 +136,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
     public AsyncMessageReader(PropertySet propertySet, SocketConnection socketConnection) {
         this.propertySet = propertySet;
         this.sc = socketConnection;
-        this.asyncTimeout = this.propertySet.getIntegerReadableProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
+        this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
 
     }
 

@@ -47,7 +47,7 @@ public class ProfilerEventHandlerFactory {
 
         if (handler == null) {
             handler = (ProfilerEventHandler) Util.getInstance(
-                    sess.getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
+                    sess.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
                     new Object[0], sess.getExceptionInterceptor());
 
             handler.init(sess.getLog());

@@ -561,10 +561,10 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testIsolationLevel() throws Exception {
         // Check initial transaction isolation level
-        ((MysqlConnection) this.conn).getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(true);
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(true);
         int initialTransactionIsolation = this.conn.getTransactionIsolation();
 
-        ((MysqlConnection) this.conn).getPropertySet().getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(false);
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(false);
         int actualTransactionIsolation = this.conn.getTransactionIsolation();
 
         assertEquals("Inital transaction isolation level doesn't match the server's", actualTransactionIsolation, initialTransactionIsolation);
@@ -763,7 +763,7 @@ public class ConnectionTest extends BaseTestCase {
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                ((MysqlConnection) loadConn).getPropertySet().getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                ((MysqlConnection) loadConn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
                 ((JdbcConnection) loadConn).getServerVersion());
 
         try {
@@ -821,8 +821,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().<Boolean> getJdbcModifiableProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile)
-                    .setValue(false);
+            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -1086,9 +1085,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
         this.stmt.execute("SELECT 1");
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().<Boolean> getModifiableProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
         this.stmt.execute("SELECT 1");
     }
 
@@ -1885,25 +1884,25 @@ public class ConnectionTest extends BaseTestCase {
 
         // Default property value.
         JdbcConnection testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
-        assertEquals(-1, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
-        assertEquals(-1, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
 
         // Property in properties only.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
-        assertEquals(123, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
 
         testUrl += (testUrl.indexOf('?') == -1 ? "?" : "&") + "maxRows=321";
 
         // Property in URL only.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
-        assertEquals(321, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
-        assertEquals(321, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
 
         // Property in both.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
-        assertEquals(123, testConn.getPropertySet().getIntegerReadableProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
     }
 
     /**
@@ -2042,7 +2041,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
 
             // remove traceProtocol
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(false);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2056,7 +2055,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
 
             // remove maintainTimeStats
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(false);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2071,7 +2070,7 @@ public class ConnectionTest extends BaseTestCase {
             assertNotEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
 
             // remove enablePacketDebug
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(false);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2081,7 +2080,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().getClass());
 
             // add maintainTimeStats
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(true);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(true);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2096,8 +2095,8 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
 
             // remove listener and try to enable traceProtocol, it should be missed in this case
-            p.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_traceProtocol).removeListener(p);
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(true); // please note that the property is changed anyways, see the next step
+            p.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).removeListener(p);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(true); // please note that the property is changed anyways, see the next step
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2109,7 +2108,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().getClass());
 
             // ensure that other listeners are still working
-            p.getPropertySet().getModifiableProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(true);
+            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(true);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 

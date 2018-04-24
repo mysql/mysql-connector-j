@@ -46,7 +46,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -233,7 +233,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      */
     public void setPropertiesViaRef(Reference ref) throws SQLException {
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToSet = getReadableProperty(propName);
+            RuntimeProperty<?> propToSet = getProperty(propName);
 
             if (ref != null) {
                 propToSet.initializeFrom(ref, null);
@@ -267,7 +267,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         // Now store all of the 'non-standard' properties...
         //
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToStore = getReadableProperty(propName);
+            RuntimeProperty<?> propToStore = getProperty(propName);
 
             String val = propToStore.getStringValue();
             if (val != null) {
@@ -437,8 +437,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected String getStringProperty(String name) throws SQLException {
-        return getStringReadableProperty(name).getValue();
+    protected String getStringRuntimeProperty(String name) throws SQLException {
+        return getStringProperty(name).getValue();
     }
 
     /**
@@ -451,14 +451,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    @SuppressWarnings("unchecked")
-    protected void setStringProperty(String name, String value) throws SQLException {
-        ReadableProperty<String> prop = getStringReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getStringModifiableProperty(name).setValue(value);
-        } else {
-            ((AbstractRuntimeProperty<String>) prop).setFromString(value, null);
-        }
+    protected void setStringRuntimeProperty(String name, String value) throws SQLException {
+        ((AbstractRuntimeProperty<String>) getStringProperty(name)).setValueInternal(value, null, null);
     }
 
     /**
@@ -470,8 +464,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected boolean getBooleanProperty(String name) throws SQLException {
-        return getBooleanReadableProperty(name).getValue();
+    protected boolean getBooleanRuntimeProperty(String name) throws SQLException {
+        return getBooleanProperty(name).getValue();
     }
 
     /**
@@ -484,14 +478,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    @SuppressWarnings("unchecked")
-    protected void setBooleanProperty(String name, boolean value) throws SQLException {
-        ReadableProperty<Boolean> prop = getBooleanReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getBooleanModifiableProperty(name).setValue(value);
-        } else {
-            ((AbstractRuntimeProperty<Boolean>) prop).setFromString("" + value, null);
-        }
+    protected void setBooleanRuntimeProperty(String name, boolean value) throws SQLException {
+        ((AbstractRuntimeProperty<Boolean>) getBooleanProperty(name)).setValueInternal(value, null, null);
     }
 
     /**
@@ -503,8 +491,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected int getIntegerProperty(String name) throws SQLException {
-        return getIntegerReadableProperty(name).getValue();
+    protected int getIntegerRuntimeProperty(String name) throws SQLException {
+        return getIntegerProperty(name).getValue();
     }
 
     /**
@@ -517,14 +505,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    @SuppressWarnings("unchecked")
-    protected void setIntegerProperty(String name, int value) throws SQLException {
-        ReadableProperty<Integer> prop = getIntegerReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getIntegerModifiableProperty(name).setValue(value);
-        } else {
-            ((AbstractRuntimeProperty<Integer>) prop).setFromString("" + value, null);
-        }
+    protected void setIntegerRuntimeProperty(String name, int value) throws SQLException {
+        ((AbstractRuntimeProperty<Integer>) getIntegerProperty(name)).setValueInternal(value, null, null);
     }
 
     /**
@@ -536,8 +518,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected long getLongProperty(String name) throws SQLException {
-        return getLongReadableProperty(name).getValue();
+    protected long getLongRuntimeProperty(String name) throws SQLException {
+        return getLongProperty(name).getValue();
     }
 
     /**
@@ -550,14 +532,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    @SuppressWarnings("unchecked")
-    protected void setLongProperty(String name, long value) throws SQLException {
-        ReadableProperty<Long> prop = getLongReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getLongModifiableProperty(name).setValue(value);
-        } else {
-            ((AbstractRuntimeProperty<Long>) prop).setFromString("" + value, null);
-        }
+    protected void setLongRuntimeProperty(String name, long value) throws SQLException {
+        ((AbstractRuntimeProperty<Long>) getLongProperty(name)).setValueInternal(value, null, null);
     }
 
     /**
@@ -569,8 +545,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected int getMemorySizeProperty(String name) throws SQLException {
-        return getMemorySizeReadableProperty(name).getValue();
+    protected int getMemorySizeRuntimeProperty(String name) throws SQLException {
+        return getMemorySizeProperty(name).getValue();
     }
 
     /**
@@ -583,14 +559,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    @SuppressWarnings("unchecked")
-    protected void setMemorySizeProperty(String name, int value) throws SQLException {
-        ReadableProperty<Integer> prop = getIntegerReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getMemorySizeModifiableProperty(name).setValue(value);
-        } else {
-            ((AbstractRuntimeProperty<Integer>) prop).setFromString("" + value, null);
-        }
+    protected void setMemorySizeRuntimeProperty(String name, int value) throws SQLException {
+        ((AbstractRuntimeProperty<Integer>) getMemorySizeProperty(name)).setValueInternal(value, null, null);
     }
 
     /**
@@ -602,8 +572,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected String getEnumProperty(String name) throws SQLException {
-        return getEnumReadableProperty(name).getStringValue();
+    protected String getEnumRuntimeProperty(String name) throws SQLException {
+        return getEnumProperty(name).getStringValue();
     }
 
     /**
@@ -616,13 +586,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws SQLException
      *             if error occurs
      */
-    protected void setEnumProperty(String name, String value) throws SQLException {
-        ReadableProperty<?> prop = getEnumReadableProperty(name);
-        if (prop.getPropertyDefinition().isRuntimeModifiable()) {
-            getEnumModifiableProperty(name).setFromString(value, null);
-        } else {
-            ((AbstractRuntimeProperty<?>) prop).setFromString("" + value, null);
-        }
+    protected void setEnumRuntimeProperty(String name, String value) throws SQLException {
+        ((AbstractRuntimeProperty<?>) getEnumProperty(name)).setValueInternal(value, null);
     }
 
     @Override
@@ -630,7 +595,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         Properties props = new Properties();
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            ReadableProperty<?> propToGet = getReadableProperty(propName);
+            RuntimeProperty<?> propToGet = getProperty(propName);
 
             String propValue = propToGet.getStringValue();
 

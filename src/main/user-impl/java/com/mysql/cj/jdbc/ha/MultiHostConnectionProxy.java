@@ -41,8 +41,8 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.ModifiableProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.util.Util;
@@ -348,8 +348,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return;
         }
 
-        ModifiableProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet()
-                .getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState);
         boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
         sourceUseLocalSessionState.setValue(true);
         boolean readOnly = source.isReadOnly();
@@ -379,8 +378,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return;
         }
 
-        ModifiableProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet()
-                .getBooleanModifiableProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState);
         boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
         sourceUseLocalSessionState.setValue(true);
 
