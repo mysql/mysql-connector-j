@@ -34,6 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -44,6 +45,7 @@ import org.junit.Test;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.DatabaseObject;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
@@ -70,7 +72,6 @@ public class SchemaTest extends DevApiBaseTestCase {
         assertFalse(otherDefaultSchema == this.schema);
         assertTrue(otherDefaultSchema.equals(this.schema));
         assertTrue(this.schema.equals(otherDefaultSchema));
-        assertFalse(this.schema.equals(this.session));
 
         Session otherSession = new SessionImpl(this.testHostInfo);
         Schema diffSessionSchema = otherSession.getDefaultSchema();
@@ -191,12 +192,14 @@ public class SchemaTest extends DevApiBaseTestCase {
             Table table = this.schema.getTable(tableName);
             Table view = this.schema.getTable(viewName);
 
-            List<Table> tables = this.schema.getTables();
+            List<DatabaseObject> tables = new ArrayList<>();
+            tables.addAll(this.schema.getTables());
             assertFalse(tables.contains(coll));
             assertTrue(tables.contains(table));
             assertTrue(tables.contains(view));
 
-            tables = this.schema.getTables("%tables_t%");
+            tables = new ArrayList<>();
+            tables.addAll(this.schema.getTables("%tables_t%"));
             assertFalse(tables.contains(coll));
             assertTrue(tables.contains(table));
             assertFalse(tables.contains(view));

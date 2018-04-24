@@ -30,8 +30,6 @@
 package com.mysql.cj.protocol.a;
 
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.ReadableProperty;
-import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.Resultset;
@@ -43,15 +41,9 @@ import com.mysql.cj.protocol.a.result.TextBufferRow;
 
 public class TextRowFactory extends AbstractRowFactory implements ProtocolEntityFactory<ResultsetRow, NativePacketPayload> {
 
-    protected ColumnDefinition columnDefinition;
-    protected Resultset.Concurrency resultSetConcurrency;
-    protected boolean canReuseRowPacketForBufferRow;
-    protected ReadableProperty<Integer> useBufferRowSizeThreshold;
-    protected ExceptionInterceptor exceptionInterceptor;
-
-    public TextRowFactory(NativeProtocol protocol, ColumnDefinition columnDefinition, Resultset.Concurrency resultSetConcurrency,
+    public TextRowFactory(NativeProtocol protocol, ColumnDefinition colDefinition, Resultset.Concurrency resultSetConcurrency,
             boolean canReuseRowPacketForBufferRow) {
-        this.columnDefinition = columnDefinition;
+        this.columnDefinition = colDefinition;
         this.resultSetConcurrency = resultSetConcurrency;
         this.canReuseRowPacketForBufferRow = canReuseRowPacketForBufferRow;
         this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
